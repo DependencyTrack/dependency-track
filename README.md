@@ -1,11 +1,11 @@
 Dependency-Track
 =========
 
-Dependency-Track is a web application that allows organizations to document the use of third-party components across multiple applications and versions. In essence, it's an asset management application for documenting the use of third-party libraries in applications.
+Dependency-Track is a web application that allows organizations to document the use of third-party components across multiple applications and versions.
 
 The OWASP Top Ten 2013 introduces, for the first time, the use of third-party components with known vulnerabilities. Dependency-Track aims to document the usage of all components, the vendors, libraires, versions and licenses used and provide visibility into the use of vulnerable components.
 
-The development of Dependency-Track is sponsored by [Axway]
+Development of Dependency-Track is sponsored by [Axway]
 
 More information can be found on the [wiki].
 

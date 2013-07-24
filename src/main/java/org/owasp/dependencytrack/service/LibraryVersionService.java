@@ -118,4 +118,9 @@ public class LibraryVersionService {
         return libraryVersionDao.allLibrary();
     }
 
+    @Transactional
+    public void addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID) {
+
+        libraryVersionDao.addLibraries( libraryname,libraryversion,vendor,  license,  file,  language,  secuniaID);
+    }
 }

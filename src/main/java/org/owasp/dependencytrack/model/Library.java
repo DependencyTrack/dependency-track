@@ -84,11 +84,11 @@ public class Library implements Cloneable {
         this.license = license;
     }
 
-    public int getSecunia() {
+    public Integer getSecunia() {
         return secunia;
     }
 
-    public void setSecunia(int secunia) {
+    public void setSecunia(Integer secunia) {
         this.secunia = secunia;
     }
 

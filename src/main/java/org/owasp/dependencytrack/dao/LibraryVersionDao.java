@@ -324,7 +324,55 @@ public class LibraryVersionDao {
         Query query = sessionFactory.getCurrentSession().createQuery(
                 "from LibraryVersion ");
 
+
         return query.list();
 
     }
+
+   public void  addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID)
+    {
+        LibraryVendor libraryVendor = new LibraryVendor();
+
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        libraryVendor.setVendor(vendor);
+        session.save(libraryVendor);
+
+        License licenses = new License();
+        try {
+            Blob blob = Hibernate.createBlob(file.getInputStream());
+
+            licenses.setFilename(file.getOriginalFilename());
+            licenses.setContenttype(file.getContentType());
+            licenses.setLicensename(license);
+            licenses.setText(blob);
+            session.save(licenses);
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+
+        Library library = new Library();
+        library.setLibraryname(libraryname);
+        library.setLibraryVendor(libraryVendor);
+        library.setLicense(licenses);
+        library.setSecunia(secuniaID);
+        library.setLanguage(language);
+        session.save(library);
+
+        LibraryVersion libVersion = new LibraryVersion();
+        libVersion.setLibrary(library);
+        libVersion.setLibraryversion(libraryversion);
+        session.save(libVersion);
+
+
+        session.getTransaction().commit();
+        session.close();
+
+    }
+
+
+
 }

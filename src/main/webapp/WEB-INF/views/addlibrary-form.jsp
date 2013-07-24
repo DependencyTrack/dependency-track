@@ -26,7 +26,7 @@
                         </tr>
                         <tr>
                             <td><label for="Licensefile">License File</label></td>
-                            <td><input id="Licensefile" name="Licensefile" /></td>
+                            <td><input id="Licensefile" name="Licensefile" type="file" /></td>
 
                         </tr>
 

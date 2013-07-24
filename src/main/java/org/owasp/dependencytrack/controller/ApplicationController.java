@@ -319,6 +319,23 @@ public class ApplicationController {
         return "librariesPage";
     }
 
+    /*
+      Adds a library regardless of application association
+    */
+    @RequestMapping(value = "/addlibraries", method = RequestMethod.POST)
+    public String addLibraries(ModelMap modelMap,
+                                @RequestParam("libraryname") String libraryname,
+                                @RequestParam("libraryversion") String libraryversion,
+                                @RequestParam("vendor") String vendor,
+                                @RequestParam("license") String license,
+                                @RequestParam("Licensefile") MultipartFile file,
+                                @RequestParam("language") String language,
+                                @RequestParam("secuniaID") int secuniaID) {
+
+        libraryVersionService.addLibraries(libraryname,libraryversion, vendor, license, file, language, secuniaID);
+
+        return "redirect:/libraries" ;
+    }
 	
 
 	/*

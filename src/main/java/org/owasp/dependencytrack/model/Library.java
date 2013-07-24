@@ -36,8 +36,8 @@ public class Library implements Cloneable {
     @JoinColumn(name = "LICENSEID")
     private License license;
 
-    @Column(name = "SECUNIA")
-    private int secunia;
+    @Column(name = "SECUNIA", nullable = true)
+    private Integer secunia;
 
     @ManyToOne
     @JoinColumn(name = "LIBRARYVENDORID")

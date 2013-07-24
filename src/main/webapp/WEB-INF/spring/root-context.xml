@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2013 OWASP Foundation
+  ~
+  ~ This file is part of OWASP Dependency-Track.
+  ~
+  ~ Dependency-Track is free software: you can redistribute it and/or modify it under the terms of the
+  ~ GNU General Public License as published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ Dependency-Track is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+  ~ even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  ~ Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with Dependency-Track.
+  ~ If not, see http://www.gnu.org/license/.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- Root Context: defines shared resources visible to all other web components -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <property name="loginUrl" value="/login"/>
+        <property name="successUrl" value="/home"/>
+        <property name="filterChainDefinitionMap">
+            <map>
+                <!-- Add mapping to all the urls in dtrack -->
+                <entry key="/**" value="anon"/>
+                <!-- <entry key="/login" value="anon"/> -->
+                <!-- <entry key="/logout" value="user"/> -->
+                <!-- <entry key="/home" value="user"/> -->
+                <!-- <entry key="/products" value="user"/> -->
+            </map>
+        </property>
+    </bean>
+
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="myLdapRealm"/>
+    </bean>
+
+    <bean id="myLdapRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
+        <property name="url" value="ldap://phx.ldap-ad.axway.int:389"/>
+        <property name="principalSuffix" value="@axway"/>
+    </bean>
+
+
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+</beans>

@@ -1,0 +1,151 @@
+@charset "utf-8";
+/*
+ * Copyright 2013 OWASP Foundation
+ *
+ * This file is part of OWASP Dependency-Track.
+ *
+ * Dependency-Track is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * Dependency-Track is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with Dependency-Track.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    line-height: 1;
+    color: #444444;
+    font-family: "Open Sans", sans-serif;
+    font-size: 1em;
+    background: #fafafa url('images/grey-grain-texture.png') repeat;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizelegibility;
+}
+
+html {
+    padding: 0;
+    margin: 0;
+}
+
+.pageheader {
+    margin: 0;
+    padding: 0;
+    min-width: 430px;
+    width: auto !important;
+    width: 430px;
+    height: 48px;
+    background: url('images/header-background.png') repeat-x;
+    -webkit-box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.25);
+    box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.25);
+}
+
+.pageheader .logo, .pageheader .logo img {
+    float: left;
+    border: none;
+}
+
+.pageheader #name {
+    float: right;
+    display: inline-block;
+    vertical-align: middle;
+    height: 48px;
+    color: #cccccc;
+    font-size: 1.250em;
+    line-height: 48px;
+    margin-right: 14px;
+    text-shadow: 2px 2px 4px #333333;
+}
+
+.content-outer-container {
+    margin: 0;
+    padding: 16px 14px 14px;
+}
+
+.content-inner-container {
+    -webkit-box-shadow: 0px 0px 10px rgba(50, 50, 50, 0.40);
+    -moz-box-shadow: 0px 0px 10px rgba(50, 50, 50, 0.40);
+    box-shadow: 0px 0px 10px rgba(50, 50, 50, 0.40);
+}
+
+.content {
+    /*padding: 1px 20px 20px 20px; */
+    padding: 20px;
+    background-color: #ffffff;
+}
+
+.title-container {
+    height:50px;
+    line-height:50px;
+    padding: 0 20px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #d2d2d2;
+}
+
+.title {
+    float:left;
+    font-weight: 400;
+    font-size: 1.250em;
+    color: #000000;
+}
+
+.title-buttons {
+    float:right;
+    padding-top:0;
+    padding-bottom:0;
+    margin:0;
+}
+
+.footer {
+    border-top: 1px solid #aaa;
+}
+
+.footer .copyright {
+    margin: 10px auto;
+    text-align: center;
+    font-size: 0.750em;
+}
+
+.list {
+    margin: 0;
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+}
+
+.list th {
+    font-weight: bold;
+    padding: 8px;
+    background: #cccccc;
+    border-bottom: 1px solid #fff;
+    color: #222222;
+}
+
+.list td {
+    padding: 8px;
+    background: #ffffff;
+    border-bottom: 1px solid #fff;
+    color: #222222;
+    border-top: 1px solid transparent;
+}
+
+.list tr:hover td {
+    background: #f5f5f5;
+    color: #222222;
+}
+
+.modal .modal-header h4 {
+    text-align: left;
+}
+
+.delete-span {
+    float: right;
+    margin-top: -5px;
+    font-weight: normal;
+}

@@ -32,7 +32,7 @@ Dependency-Track is Copyright (c) 2013 OWASP Foundation. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the GPLv3 license. See the [LICENSE.txt] [GPLv3] file for the full license.
 
-Dependency-Track makes use of several other open source libraries. Please see the [NOTICE.txt] [notices] file for more information.
+Dependency-Track makes use of several other open source libraries. Please see the [NOTICES.txt] [notices] file for more information.
 
 
   [wiki]: https://github.com/stevespringett/dependency-track/wiki

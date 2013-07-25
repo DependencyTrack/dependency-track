@@ -34,12 +34,21 @@ html {
     margin: 0;
 }
 
+p {
+    margin-bottom: 2em;
+    line-height: 1.2em;
+}
+
+a img {
+    border: 0;
+}
+
 .pageheader {
     margin: 0;
     padding: 0;
-    min-width: 430px;
+    min-width: 500px;
     width: auto !important;
-    width: 430px;
+    width: 500px;
     height: 48px;
     background: url('images/header-background.png') repeat-x;
     -webkit-box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.25);

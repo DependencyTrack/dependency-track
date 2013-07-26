@@ -17,6 +17,8 @@
 
 package org.owasp.dependencytrack.model;
 
+
+
 import javax.persistence.*;
 
 @Entity
@@ -28,8 +30,8 @@ public class ApplicationDependency implements Cloneable {
     @GeneratedValue
     private Integer id;
 
-    @OneToOne
-    @JoinColumn(name = "LIBRARYVERSIONID")
+    @OneToOne (cascade = CascadeType.ALL)
+    @JoinColumn(name = "LIBRARYVERSIONID" )
     private LibraryVersion libraryVersion;
 
     @ManyToOne

@@ -34,3 +34,24 @@ $(document).on("click", ".open-AddApplicationVersionModal", function () {
 $(document).on("click", ".open-AddDependencyModal", function () {
     //$(".modal-body #addid").val( $(this).data("id") );
 });
+
+/*LIBRARY EDIT OPTION*/
+
+$(document).on("click", ".open-EditLibrariesModal", function () {
+    $("#deleteLibrary").attr("href", "removelibrary/" + $(this).data('libraryversionid') );
+
+    $(".modal-body #editvendorid").val( $(this).data("vendorid") );
+    $(".modal-body #editlicenseid").val( $(this).data("licenseid") );
+    $(".modal-body #editlibraryid").val( $(this).data("libraryid") );
+    $(".modal-body #editlibraryversionid").val( $(this).data("libraryversionid") );
+
+    $(".modal-body #librarynameedit").val( $(this).data("libraryname") );
+    $(".modal-body #libraryversionedit").val( $(this).data("libraryversion") );
+    $(".modal-body #vendoredit").val( $(this).data("vendor") );
+    $(".modal-body #licenseedit").val( $(this).data("licensename") );
+    $(".modal-body #languageedit").val( $(this).data("language") );
+    $(".modal-body #secuniaIDedit").val( $(this).data("secunia") );
+});
+
+
+

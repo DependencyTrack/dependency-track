@@ -20,6 +20,7 @@ package org.owasp.dependencytrack.model;
 import javax.persistence.*;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.util.Set;
 
 @Entity
 @Table(name = "LICENSES")
@@ -47,6 +48,11 @@ public class License implements Cloneable {
 
     @Column(name = "CONTENTTYPE")
     private String contenttype;
+
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "license")
+    private Set<Library> libraries;
+
+
 
     public Object clone() {
         License obj = new License();

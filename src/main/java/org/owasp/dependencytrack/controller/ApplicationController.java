@@ -178,23 +178,6 @@ public class ApplicationController {
         return "redirect:/applicationVersion/" + appversionid;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @RequestMapping(value = "/cloneApplication/{applicationversionid}", method = RequestMethod.GET)
     public String cloneProduct(ModelMap modelMap, @PathVariable("applicationversionid") int applicationversionid) {
         modelMap.addAttribute("applicationversionid", applicationversionid);
@@ -243,69 +226,41 @@ public class ApplicationController {
         return "redirect:/library/" + applicationversionid;
     }
 
-    @RequestMapping(value = "/updatelibrary/{applicationversionid}/{vendorid}/{licenseid}/{libraryid}/{libraryversionid}/{libraryname}/{libraryversion}/{vendor}/{license}/{language}/{secuniaID}", method = RequestMethod.GET)
-    public String updateLibrary(ModelMap modelMap,
-                                @PathVariable("vendorid") int vendorid,
-                                @PathVariable("licenseid") int licenseid,
-                                @PathVariable("libraryid") int libraryid,
-                                @PathVariable("applicationversionid") int applicationversionid,
-                                @PathVariable("libraryversionid") int libraryversionid,
+     /*
+      Updates a library regardless of application association
+    */
 
-                                @PathVariable("libraryname") String libraryname,
-                                @PathVariable("libraryversion") String libraryversion,
-                                @PathVariable("vendor") String vendor,
-                                @PathVariable("license") String license,
-                                @PathVariable("language") String language,
-                                @PathVariable("secuniaID") int secuniaID) {
-
-        modelMap.addAttribute("vendorid", vendorid);
-        modelMap.addAttribute("licenseid", licenseid);
-        modelMap.addAttribute("libraryid", libraryid);
-        modelMap.addAttribute("applicationversionid", applicationversionid);
-        modelMap.addAttribute("libraryversionid", libraryversionid);
-
-        modelMap.addAttribute("libraryname", libraryname);
-        modelMap.addAttribute("libraryversion", libraryversion);
-        modelMap.addAttribute("vendor", vendor);
-        modelMap.addAttribute("license", license);
-        modelMap.addAttribute("language", language);
-        modelMap.addAttribute("secuniaID", secuniaID);
-
-        return "updatelibrary";
-    }
-
-    @RequestMapping(value = "/updatelibrary/{applicationversionid}/{vendorid}/{licenseid}/{libraryid}/{libraryversionid}", method = RequestMethod.POST)
+    @RequestMapping(value = "/updatelibrary", method = RequestMethod.POST)
     public String updatingLibrary(ModelMap modelMap,
-                                  @PathVariable("vendorid") int vendorid,
-                                  @PathVariable("licenseid") int licenseid,
-                                  @PathVariable("libraryid") int libraryid,
-                                  @PathVariable("applicationversionid") int applicationversionid,
-                                  @PathVariable("libraryversionid") int libraryversionid,
+                                  @RequestParam("editvendorid") int vendorid,
+                                  @RequestParam("editlicenseid") int licenseid,
+                                  @RequestParam("editlibraryid") int libraryid,
+                                  @RequestParam("editlibraryversionid") int libraryversionid,
 
-                                  @RequestParam("Licensefile") MultipartFile file,
                                   @RequestParam("libraryname") String libraryname,
+                                  @RequestParam("Licensefile") MultipartFile file,
                                   @RequestParam("libraryversion") String libraryversion,
                                   @RequestParam("vendor") String vendor,
                                   @RequestParam("license") String license,
                                   @RequestParam("language") String language,
-                                  @RequestParam("secuniaID") int secuniaID) {
+                                  @RequestParam("secuniaID") int secuniaID ) {
 
         libraryVersionService.updateLibrary(vendorid, licenseid, libraryid,
                 libraryversionid, libraryname, libraryversion, vendor, license, file,
                 language, secuniaID);
 
-        return "redirect:/library/" + applicationversionid;
+
+
+        return "redirect:/libraries";
     }
 
-    @RequestMapping(value = "/removelibrary/{applicationversionid}/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/removelibrary/{libraryversionid}", method = RequestMethod.GET)
     public String removeLibrary(ModelMap modelMap,
-                                @PathVariable("id") Integer id,
-                                @PathVariable("applicationversionid") Integer applicationversionid) {
-        // SecurityUtils.getSubject().logout();
+                                @PathVariable("libraryversionid") Integer libraryversionid) {
 
-        libraryVersionService.removeLibrary(id);
+        libraryVersionService.removeLibrary(libraryversionid);
 
-        return "redirect:/library/" + applicationversionid;
+        return "redirect:/libraries";
     }
 
 

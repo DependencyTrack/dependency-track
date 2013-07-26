@@ -52,10 +52,12 @@
     </beans:bean>
 
     <!-- Automatically start the embedded H2 database server -->
+    <!--
     <beans:bean id="org.h2.tools.Server" class="org.h2.tools.Server" factory-method="createTcpServer"
                 init-method="start" destroy-method="stop">
         <beans:constructor-arg value="-tcp,-tcpAllowOthers,-tcpPort,9092" />
     </beans:bean>
+    -->
 
     <beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
                 destroy-method="close" p:driverClassName="org.h2.Driver"

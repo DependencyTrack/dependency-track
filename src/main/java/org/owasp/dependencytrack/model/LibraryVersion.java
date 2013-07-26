@@ -32,7 +32,7 @@ public class LibraryVersion implements Cloneable {
     @OrderBy
     private String libraryversion;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "LIBRARYID", nullable = false)
     private Library library;
 

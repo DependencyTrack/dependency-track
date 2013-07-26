@@ -32,14 +32,15 @@ public class Library implements Cloneable {
     @Column(name = "LIBRARYNAME")
     private String libraryname;
 
-    @OneToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "LICENSEID")
+    @OrderBy
     private License license;
 
     @Column(name = "SECUNIA", nullable = true)
     private Integer secunia;
 
-    @ManyToOne
+    @ManyToOne (cascade = CascadeType.ALL)
     @JoinColumn(name = "LIBRARYVENDORID")
     @OrderBy
     private LibraryVendor libraryVendor;

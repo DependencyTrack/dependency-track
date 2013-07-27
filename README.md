@@ -21,9 +21,9 @@ Finally, deploy the resulting WAR to your web application server (Tomcat, Jetty,
 Mailing List
 -
 
-Subscribe: [dependency-track+subscribe@googlegroups.com] [subscribe]
+Subscribe: [https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project] [subscribe]
 
-Post: [dependency-track@googlegroups.com] [post]
+Post: [owasp_dependency_track_project@lists.owasp.org] [post]
 
 Copyright & License
 -
@@ -35,9 +35,9 @@ Permission to modify and redistribute is granted under the terms of the GPLv3 li
 Dependency-Track makes use of several other open source libraries. Please see the [NOTICES.txt] [notices] file for more information.
 
 
-  [wiki]: https://github.com/stevespringett/dependency-track/wiki
-  [subscribe]: mailto:dependency-track+subscribe@googlegroups.com
-  [post]: mailto:dependency-track@googlegroups.com
+  [wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
+  [subscribe]: https://https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
+  [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt
   [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt
   [axway]: http://www.axway.com

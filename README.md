@@ -36,7 +36,7 @@ Dependency-Track makes use of several other open source libraries. Please see th
 
 
   [wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
-  [subscribe]: https://https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
+  [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
   [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt
   [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt

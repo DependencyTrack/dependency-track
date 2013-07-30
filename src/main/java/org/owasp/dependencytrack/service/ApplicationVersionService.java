@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 OWASP Foundation
+ * Copyright 2013 Axway
  *
  * This file is part of OWASP Dependency-Track.
  *
@@ -59,7 +59,7 @@ public class ApplicationVersionService {
     @Transactional
     public void cloneApplication(Integer applicationid,String applicationname)
     {
-        applicationVersionDao.cloneApplication(applicationid,applicationname);
+        applicationVersionDao.cloneApplication(applicationid, applicationname);
     }
 
     @Transactional
@@ -71,7 +71,7 @@ public class ApplicationVersionService {
     @Transactional
     public void updateApplicationVersion(int id, String appversion)
     {
-        applicationVersionDao.updateApplicationVersion(id,appversion);
+        applicationVersionDao.updateApplicationVersion(id, appversion);
 
     }
 

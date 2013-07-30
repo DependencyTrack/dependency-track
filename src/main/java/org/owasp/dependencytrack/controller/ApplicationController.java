@@ -145,7 +145,6 @@ public class ApplicationController {
     public String removeApplicationVersion(@PathVariable("appversionid") int id) {
 
 
-       // applicationService.deleteApplication(id);
         return "redirect:/applications";
     }
 

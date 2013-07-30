@@ -183,16 +183,36 @@ public class LibraryVersionDao {
         Deletes the dependency between the ID of the specified ApplicationVersion and LibraryVersion
      */
     @SuppressWarnings("unchecked")
-    public void deleteDependency(int appversionid, int libversionid) {
-        Query query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency where " +
-                "appversionid=:appversionid and libraryversionid=:libversionid");
+    public void deleteDependency(int appversionid, int libversionid)
+    {
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        Query query = session.createQuery("from ApplicationVersion AS appver where " +
+                "appver.id=:appversionid");
         query.setParameter("appversionid", appversionid);
+
+        ApplicationVersion applicationVersion = (ApplicationVersion) query.list().get(0);
+
+        query = session.createQuery("from LibraryVersion AS libver where " +
+                "libver.id=:libversionid" );
         query.setParameter("libversionid", libversionid);
 
-        List<ApplicationDependency> result = query.list();
-        for (ApplicationDependency dependency: result) {
-            sessionFactory.getCurrentSession().delete(dependency);
-        }
+        LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
+
+        query = session.createQuery("from ApplicationDependency AS appdep where " +
+                "appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion" );
+        query.setParameter("libraryVersion", libraryVersion);
+        query.setParameter("applicationVersion", applicationVersion);
+
+        ApplicationDependency applicationDependency = (ApplicationDependency) query.list().get(0);
+
+        session.delete(applicationDependency);
+
+        session.getTransaction().commit();
+        session.close();
+
+
     }
 
     public List<ApplicationDependency> listLibraryVersion(int applicationId) {
@@ -325,13 +345,17 @@ public class LibraryVersionDao {
                 "from ApplicationDependency " + "where libraryVersion=:libraryVersion");
 
         query.setParameter("libraryVersion",version);
-        ApplicationDependency applicationDependency;
+       List <ApplicationDependency> applicationDependency;
 
 
         if (!query.list().isEmpty()) {
 
-            applicationDependency =  (ApplicationDependency) query.list().get(0);
-            sessionFactory.getCurrentSession().delete(applicationDependency);
+            applicationDependency =   query.list();
+            for(ApplicationDependency dependency: applicationDependency)
+            {
+            sessionFactory.getCurrentSession().delete(dependency);
+            }
+            sessionFactory.getCurrentSession().delete(version);
         }
         else if (null != version)
         {
@@ -342,9 +366,9 @@ public class LibraryVersionDao {
     @SuppressWarnings("unchecked")
     public List<License> listLicense(Integer id) {
         Query query = sessionFactory.getCurrentSession().createQuery(
-                "from License " + "where libraryVersion=:libraryVersion");
+                "from License " + "where id=:licid");
 
-        query.setParameter("libraryVersion", id);
+        query.setParameter("licid", id);
 
         return query.list();
 

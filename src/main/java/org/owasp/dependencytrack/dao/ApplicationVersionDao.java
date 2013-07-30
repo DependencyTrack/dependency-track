@@ -100,53 +100,104 @@ public class ApplicationVersionDao {
         session.close();
     }
 
-    public void cloneApplication(Integer appversionid) {
-        Query query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency AS appdep where appdep.appVersion.id=:id");
-        query.setParameter("id", appversionid);
+    public void cloneApplication(int applicationid, String applicationname)
+    {
+        Query query = sessionFactory.getCurrentSession().createQuery("from Application where id=:id");
+        query.setParameter("id", applicationid);
 
-        ApplicationDependency pDep = (ApplicationDependency) query.list().get(0);
-        List<ApplicationDependency> lDep = query.list();
+        Application findapplication = (Application)query.list().get(0);
+
+        query = sessionFactory.getCurrentSession().createQuery("from ApplicationVersion AS appver where appver.application=:findapplication");
+        query.setParameter("findapplication", findapplication);
+
+        List<ApplicationVersion>applicationVersions = query.list();
 
         Session session = sessionFactory.openSession();
         session.beginTransaction();
 
-        Application application = pDep.getApplicationVersion().getApplication();
-        Application newApplication = (Application) application.clone();
-        session.save(newApplication);
+        Application application = new Application();
+        application.setName(applicationname);
+        session.save(application);
 
-        ApplicationVersion applicationVersion = pDep.getApplicationVersion();
-        applicationVersion.setApplication(newApplication);
-        ApplicationVersion newApplicationVersion = (ApplicationVersion) applicationVersion.clone();
-        session.save(newApplicationVersion);
+        for (ApplicationVersion appver : applicationVersions)
+        {
+            query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency AS appdep where appdep.applicationVersion=:id");
+            query.setParameter("id", appver);
 
-        for (ApplicationDependency dependencies : lDep) {
-            LibraryVendor libraryVendor = dependencies.getLibraryVersion().getLibrary().getLibraryVendor();
-            LibraryVendor newLibraryVendor = (LibraryVendor) libraryVendor.clone();
-            session.save(newLibraryVendor);
+            List<ApplicationDependency>applicationDependencies = query.list();
 
-            License license = dependencies.getLibraryVersion().getLibrary().getLicense();
-            License newLicense = (License) license.clone();
-            session.save(newLicense);
+            ApplicationVersion applicationVersion = appver;
+            ApplicationVersion newApplicationVersion = (ApplicationVersion) applicationVersion.clone();
+            newApplicationVersion.setApplication(application);
+            session.save(newApplicationVersion);
 
-            Library library = dependencies.getLibraryVersion().getLibrary();
-            Library newLibrary = (Library) library.clone();
-            newLibrary.setLibraryVendor(newLibraryVendor);
-            newLibrary.setLicense(newLicense);
-            session.save(newLibrary);
+            for (ApplicationDependency appdep : applicationDependencies)
+            {
+                ApplicationDependency applicationDependency = appdep;
+                ApplicationDependency newDependencies = (ApplicationDependency) applicationDependency.clone();
+                newDependencies.setApplicationVersion(newApplicationVersion);
+                session.save(newDependencies);
+            }
 
-            LibraryVersion libraryVersion = dependencies.getLibraryVersion();
-            LibraryVersion newLibraryVersion = (LibraryVersion) libraryVersion.clone();
-            newLibraryVersion.setLibrary(newLibrary);
-            session.save(newLibraryVersion);
-
-            ApplicationDependency applicationDependency = dependencies;
-            ApplicationDependency newDependencies = (ApplicationDependency) applicationDependency.clone();
-            newDependencies.setLibraryVersion(newLibraryVersion);
-            newDependencies.setApplicationVersion(newApplicationVersion);
-            session.save(newDependencies);
         }
         session.getTransaction().commit();
         session.close();
+
     }
+
+
+
+    public void cloneApplicationVersion(int applicationid, String newversion, String curappver)
+    {
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        Query query = session.createQuery("from Application AS apps where apps.id=:findapplication");
+        query.setParameter("findapplication",applicationid);
+
+        Application app = (Application) query.list().get(0);
+
+        query = session.createQuery("from ApplicationVersion AS appver where appver.application=:findapplication and appver.version=:curappver");
+        query.setParameter("findapplication",app);
+        query.setParameter("curappver",curappver);
+
+        ApplicationVersion applicationVersion = (ApplicationVersion)query.list().get(0);
+        ApplicationVersion newApplicationVersion = (ApplicationVersion) applicationVersion.clone();
+        newApplicationVersion.setVersion(newversion);
+        session.save(newApplicationVersion);
+
+        query = session.createQuery("from ApplicationDependency AS appdep where appdep.applicationVersion=:findappverr");
+        query.setParameter("findappverr",applicationVersion);
+
+
+        List<ApplicationDependency> applicationDependencies = query.list();
+
+
+        for (ApplicationDependency appdep : applicationDependencies)
+        {
+            ApplicationDependency applicationDependency = appdep;
+            ApplicationDependency newDependencies = (ApplicationDependency) applicationDependency.clone();
+            newDependencies.setApplicationVersion(newApplicationVersion);
+            session.save(newDependencies);
+        }
+
+
+        session.getTransaction().commit();
+        session.close();
+
+    }
+
+     public void updateApplicationVersion(int id, String appversion)
+     {
+         Query query = sessionFactory.getCurrentSession().createQuery(
+                 "update ApplicationVersion set version=:ver " + "where id=:appverid");
+
+         query.setParameter("ver", appversion);
+         query.setParameter("appverid", id);
+         int result = query.executeUpdate();
+
+     }
+
+
 
 }

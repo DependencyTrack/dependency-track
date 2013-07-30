@@ -18,9 +18,7 @@
 package org.owasp.dependencytrack.service;
 
 import org.owasp.dependencytrack.dao.ApplicationVersionDao;
-import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
-import org.owasp.dependencytrack.model.LibraryVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,9 +57,21 @@ public class ApplicationVersionService {
     }
 
     @Transactional
-    public void cloneApplication(Integer appversionid) {
-        applicationVersionDao.cloneApplication(appversionid);
+    public void cloneApplication(Integer applicationid,String applicationname)
+    {
+        applicationVersionDao.cloneApplication(applicationid,applicationname);
+    }
 
+    @Transactional
+    public void cloneApplicationVersion(Integer applicationid,String newversion, String applicationversion)
+    {
+        applicationVersionDao.cloneApplicationVersion(applicationid, newversion, applicationversion);
+    }
+
+    @Transactional
+    public void updateApplicationVersion(int id, String appversion)
+    {
+        applicationVersionDao.updateApplicationVersion(id,appversion);
 
     }
 

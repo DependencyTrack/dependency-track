@@ -36,8 +36,6 @@ public class ApplicationVersion implements Cloneable {
     @JoinColumn(name = "APPID", nullable=false)
     private Application application;
 
-    @OneToMany(mappedBy = "applicationVersion")
-    private Set<ApplicationDependency> dependencies;
 
     public Object clone() {
         ApplicationVersion obj = new ApplicationVersion();
@@ -70,11 +68,5 @@ public class ApplicationVersion implements Cloneable {
         this.application = application;
     }
 
-    public Set<ApplicationDependency> getDependencies() {
-        return dependencies;
-    }
 
-    public void setDependencies(Set<ApplicationDependency> dependencies) {
-        this.dependencies = dependencies;
-    }
 }

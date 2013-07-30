@@ -53,5 +53,44 @@ $(document).on("click", ".open-EditLibrariesModal", function () {
     $(".modal-body #secuniaIDedit").val( $(this).data("secunia") );
 });
 
+/*CLONE APPLICATION*/
+$(document).on("click", ".open-CloneApplicationModal", function ()
+{
+    $(".modal-body #applicationid").val( $(this).data("id") );
 
 
+});
+
+/*CLONE APPLICATION VERSION*/
+$(document).on("click", ".open-CloneApplicationVersionModal", function ()
+{
+    $(".modal-body #applicationid").val( $(this).data("id") );
+    $(".modal-body #applicationversion").val( $(this).data("version") );
+});
+
+
+
+
+/* LICENSE DISPLAY AND DOWNLOAD*/
+$(document).on("click", ".open-LicenseLibrariesModal", function ()
+{
+   $("#viewlicense").attr("src", "viewlicense/" + $(this).data('licenseid') );
+
+
+    $(".modal-body #licenseid").val( $(this).data("licenseid") );
+    $(".modal-body #licensename").val( $(this).data("licensename") );
+    $(".modal-body #licensfileename").val( $(this).data("licensfileename") );
+
+
+});
+
+
+/* EDIT APPVERSION*/
+$(document).on("click", ".open-EditDependencyModal", function ()
+{
+
+    $("#deleteAppVer").attr("href", "/deleteApplicationVersion/" + $(this).data('id') );
+    $(".modal-body #appversionid").val( $(this).data("id") );
+    $(".modal-body #editappver").val( $(this).data("ver") );
+
+});

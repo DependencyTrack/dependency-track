@@ -2,6 +2,7 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
+
 <div id="librariesContainer">
     <c:if test="${!empty libList}">
         <table class="list tablesorter">
@@ -23,7 +24,7 @@
                     <td>${libList.library.libraryVendor.vendor}</td>
                     <td>${libList.library.libraryname}</td>
                     <td>${libList.libraryversion}</td>
-                    <td>${libList.library.license.licensename}</td>
+                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}"href="#licenseLibrariesModal"> ${libList.library.license.licensename}</a></td>
                     <td>${libList.library.language}</td>
                     <td>${libList.library.secunia}</td>
                     <td style="vertical-align:top;text-align:right;">
@@ -59,36 +60,100 @@
         <div class="modal-body">
             <table>
                 <tr>
+                    <div style="display:inline">
                     <td><label for="libraryname">Library Name</label></td>
-                    <td><input id="libraryname" name="libraryname" type="text" /></td>
-
+                    <td>
+                        <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="$('input#libraryname').val($(this).val());">
+                            <option value="">--</option>
+                            <c:forEach items="${libList}" var="libList">
+                                <option value="${libList.library.libraryname}">${libList.library.libraryname}</option>
+                            </c:forEach>
+                        </select>
+                        <input id="libraryname" name ="libnamesel" style="  position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                    </td>
+                    </div>
                 </tr>
+
+
+
                 <tr>
                     <td><label for="libraryversion">Library Version</label></td>
-                    <td><input id="libraryversion" name="libraryversion" type="text" /></td>
-
+                    <td>
+                        <div style="display:inline">
+                        <select id="libraryversionid" name="libraryname"   onchange="$('input#libraryversion').val($(this).val());">
+                            <option value="">--</option>
+                            <c:forEach items="${libList}" var="libList">
+                                <option value="${libList.libraryversion}">${libList.libraryversion}</option>
+                            </c:forEach>
+                        </select>
+                        <input id="libraryversion" name ="libversel" style="  position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                    </div></td>
                 </tr>
+
+
+
+
+
                 <tr>
                     <td><label for="vendor">Vendor</label></td>
-                    <td><input id="vendor" name="vendor" type="text" /></td>
-
+                    <td>
+                        <div style="display:inline">
+                        <select id="vendorid" name="libraryname"  onchange="$('input#vendor').val($(this).val());">
+                            <option value="">--</option>
+                            <c:forEach items="${libList}" var="libList">
+                                <option value="${libList.library.libraryVendor.vendor}">${libList.library.libraryVendor.vendor}</option>
+                            </c:forEach>
+                        </select>
+                        <input id="vendor" name ="vendorsel"style=" position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                         </div>
+                    </td>
                 </tr>
+
+
+
+
+
+
+
                 <tr>
                     <td><label for="license">License</label></td>
-                    <td><input id="license" name="license" type="text" /></td>
-
+                    <td>
+                        <div style="display:inline">
+                        <select id="licenseids" name="license"  onchange="$('input#license').val($(this).val());">
+                            <option value="">--</option>
+                            <c:forEach items="${libList}" var="libList">
+                                <option value="${libList.library.license.licensename}">${libList.library.license.licensename}</option>
+                            </c:forEach>
+                        </select>
+                        <input id="license" name ="licensesel" style=" position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                            </div>
+                    </td>
                 </tr>
+
                 <tr>
                     <td><label for="Licensefile">License File</label></td>
                     <td><input id="Licensefile" name="Licensefile" type="file" /></td>
 
                 </tr>
 
+
+
                 <tr>
                     <td><label for="language">Language</label></td>
-                    <td><input id="language" name="language" type="text" /></td>
-
+                    <td>
+                        <div style="display:inline">
+                        <select id="languageid" name="language"  onchange="$('input#language').val($(this).val());">
+                            <option value="">--</option>
+                            <c:forEach items="${libList}" var="libList">
+                                <option value="${libList.library.language}">${libList.library.language}</option>
+                            </c:forEach>
+                        </select>
+                        <input id="language" name ="languagesel" style="position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                            </div>
+                    </td>
                 </tr>
+
+
                 <tr>
                     <td><label for="secuniaID">SecuniaID</label></td>
                     <td><input id="secuniaID" name="secuniaID" type="text" /></td>
@@ -109,7 +174,7 @@
 
    <%--editting libraries without being associated to applications--%>
 
-<div id="editLibrariesModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="editApplicationModalLabel" aria-hidden="true">
+<div id="editLibrariesModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="editLibrariesModalLabel" aria-hidden="true">
     <div class="modal-header">
         <h4 id="editLibrariesModalLabel">Edit Library
             <span class="delete-span">
@@ -125,6 +190,7 @@
                         <td><input id="librarynameedit" name="libraryname" type="text" value=""/></td>
 
                     </tr>
+
                     <tr>
                         <td><label for="libraryversion">Library Version</label></td>
                         <td><input id="libraryversionedit" name="libraryversion" type="text" value=""/></td>
@@ -174,3 +240,43 @@
     </form:form>
 </div>
 
+<div id="licenseLibrariesModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="licenseLibrariesModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <h4 id="licenseLibrariesModalLabel">View License
+
+        </h4>
+    </div>
+    <form:form id="licenseLibrariesForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/downloadlicense" method="post" autocomplete="off" enctype="multipart/form-data">
+        <div class="modal-body">
+            <table>
+                <tr>
+                    <td><label for="licensename">Library Name</label></td>
+                    <td><input id="licensename" name="licensename" type="text" value="" readonly/></td>
+
+                </tr>
+                <tr>
+                    <td><label for="licensfileename">Library Version</label></td>
+                    <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
+
+                </tr>
+                <tr>
+                    <td><label for="viewlicense">License File</label></td>
+                    <td>
+
+                <iframe  id="viewlicense" src="" width="400" height="400"></iframe>  </td>
+                </tr>
+            </table>
+
+
+                <input type="hidden" id="licenseid" name="licenseid" value=""/>
+
+        </div>
+
+
+
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+            <button class="modalSubmit btn btn-primary">Download</button>
+        </div>
+    </form:form>
+</div>

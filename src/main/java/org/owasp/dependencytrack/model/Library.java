@@ -32,7 +32,7 @@ public class Library implements Cloneable {
     @Column(name = "LIBRARYNAME")
     private String libraryname;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "LICENSEID")
     @OrderBy
     private License license;
@@ -40,16 +40,16 @@ public class Library implements Cloneable {
     @Column(name = "SECUNIA", nullable = true)
     private Integer secunia;
 
-    @ManyToOne (cascade = CascadeType.ALL)
+    @ManyToOne (cascade = CascadeType.REMOVE)
     @JoinColumn(name = "LIBRARYVENDORID")
     @OrderBy
     private LibraryVendor libraryVendor;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "library")
-    private Set<LibraryVersion> versions;
-
     @Column(name = "LANG")
     private String language;
+
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "library")
+    private Set<LibraryVersion> versions;
 
     public Object clone() {
         Library obj = new Library();

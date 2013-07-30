@@ -63,15 +63,39 @@ public class ApplicationDao {
     }
 
     public void deleteApplication(int id) {
-        Application application = (Application) sessionFactory.getCurrentSession().load(Application.class, id);
-        if (null != application) {
-            for (ApplicationVersion version : application.getVersions()) {
-                for (ApplicationDependency dependency : version.getDependencies())
-                    sessionFactory.getCurrentSession().delete(dependency);
-                sessionFactory.getCurrentSession().delete(version);
+        Session session = sessionFactory.openSession();
+        session.beginTransaction();
+        Application curapp = (Application) session.load(Application.class, id);
+
+        Query query = session.createQuery(
+                "from ApplicationVersion " + "where application=:curapp");
+        query.setParameter("curapp", curapp);
+
+        List <ApplicationVersion> applicationVersions = query.list();
+
+        for(ApplicationVersion curver:applicationVersions)
+        {
+
+        query = session.createQuery(
+                "from ApplicationDependency " + "where applicationVersion=:curver");
+
+        query.setParameter("curver",curver);
+        List <ApplicationDependency> applicationDependency;
+
+
+        if (!query.list().isEmpty()) {
+
+            applicationDependency =   query.list();
+            for(ApplicationDependency dependency: applicationDependency)
+            {
+               session.delete(dependency);
             }
-            sessionFactory.getCurrentSession().delete(application);
         }
-    }
+            session.delete(curver);
+        }
+        session.delete(curapp);
+        session.getTransaction().commit();
+        session.close();
+}
 
 }

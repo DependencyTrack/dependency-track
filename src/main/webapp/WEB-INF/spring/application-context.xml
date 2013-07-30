@@ -38,11 +38,20 @@
     <resources mapping="favicon.ico"  location="/resources/favicon.ico" order="-10"/>
     <resources mapping="/resources/**" location="/resources/"/>
 
+    <beans:bean id="properties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <beans:property name="locations">
+            <beans:list><beans:value>classpath:application.properties</beans:value></beans:list>
+        </beans:property>
+    </beans:bean>
+
     <!-- Resolves views selected for rendering by @Controllers to .jsp resources
         in the /WEB-INF/views directory -->
     <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <beans:property name="prefix" value="/WEB-INF/views/"/>
         <beans:property name="suffix" value=".jsp"/>
+        <beans:property name="exposedContextBeanNames">
+            <beans:list><beans:value>properties</beans:value></beans:list>
+        </beans:property>
     </beans:bean>
 
 

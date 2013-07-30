@@ -16,5 +16,5 @@
   --%>
 
     <div class="footer">
-        <div class="copyright">&#169; 2013 OWASP Foundation</div>
+        <div class="identifier">OWASP Dependency-Track v${properties.version}</div>
     </div>

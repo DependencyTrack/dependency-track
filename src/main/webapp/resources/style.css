@@ -132,10 +132,11 @@ a img {
     border-top: 1px solid #aaa;
 }
 
-.footer .copyright {
-    margin: 10px auto;
+.footer .identifier {
+    margin: 10px 16px 0;
     text-align: center;
     font-size: 0.750em;
+    float: right;
 }
 
 .list {

@@ -22,10 +22,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>OWASP Dependency-Track: ${param.title}</title>
+    <title>${properties.longname}: ${param.title}</title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-    <meta name="copyright" content="&#169; 2013 OWASP Foundation. All rights reserved."/>
+    <meta name="copyright" content="&#169; 2013 Axway. All rights reserved."/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="<c:url value="${pageContext.request.contextPath}/resources/favicon.ico"/>" />
     <link rel="stylesheet" type="text/css" href="<c:url value="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css"/>" media="screen"/>

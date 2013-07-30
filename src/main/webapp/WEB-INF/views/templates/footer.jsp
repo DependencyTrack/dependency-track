@@ -16,5 +16,5 @@
   --%>
 
     <div class="footer">
-        <div class="identifier">OWASP Dependency-Track v${properties.version}</div>
+        <div class="identifier">${properties.longname} v${properties.version}</div>
     </div>

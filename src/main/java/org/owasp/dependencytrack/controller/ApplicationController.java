@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 OWASP Foundation
+ * Copyright 2013 Axway
  *
  * This file is part of OWASP Dependency-Track.
  *
@@ -123,7 +123,7 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/updateApplicationVersion", method = RequestMethod.POST)
     public String updatingApplicationVersion(@RequestParam("appversionid") int id, @RequestParam("editappver") String appversion) {
-        System.out.println(id+""+appversion);
+        System.out.println(id + "" + appversion);
         applicationVersionService.updateApplicationVersion(id, appversion);
 
         return "redirect:/applications";
@@ -207,7 +207,7 @@ public class ApplicationController {
     public String cloneApplication(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneAppName") String applicationname)
     {
 
-        applicationVersionService.cloneApplication(applicationid,applicationname);
+        applicationVersionService.cloneApplication(applicationid, applicationname);
 
         System.out.println("inside clone");
 

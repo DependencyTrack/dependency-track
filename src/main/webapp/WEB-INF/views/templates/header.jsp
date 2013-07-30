@@ -1,6 +1,6 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
   <%--
-  ~ Copyright 2013 OWASP Foundation
+  ~ Copyright 2013 Axway
   ~
   ~ This file is part of OWASP Dependency-Track.
   ~
@@ -13,7 +13,7 @@
   ~ Public License for more details.
   ~
   ~ You should have received a copy of the GNU General Public License along with Dependency-Track.
-  ~ If not, see http://www.gnu.org/license/.
+  ~ If not, see http://www.gnu.org/licenses/.
   --%>
 
 <div class="pageheader">

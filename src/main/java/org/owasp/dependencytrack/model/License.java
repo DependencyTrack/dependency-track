@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 OWASP Foundation
+ * Copyright 2013 Axway
  *
  * This file is part of OWASP Dependency-Track.
  *

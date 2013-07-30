@@ -23,7 +23,7 @@
 <p>
     The <a href="https://www.owasp.org/index.php/Top_10_2013">OWASP Top Ten 2013</a> introduces, for the first time,
     the use of third-party components with known vulnerabilities. ${properties.shortname} aims to document the usage of
-    all components, the vendors, libraires, versions and licenses used and provide visibility into the use of vulnerable
+    all components, the vendors, libraries, versions and licenses used and provide visibility into the use of vulnerable
     components.
 </p>
 

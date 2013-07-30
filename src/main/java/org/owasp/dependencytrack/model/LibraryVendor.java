@@ -34,7 +34,7 @@ public class LibraryVendor implements Cloneable {
     @OrderBy
     private String vendor;
 
-    @OneToMany(mappedBy = "libraryVendor")
+    @OneToMany(mappedBy = "libraryVendor", fetch=FetchType.EAGER)
     private Set<Library> libraries;
 
     public Object clone() {

@@ -29,7 +29,7 @@
 
 <p>
     Additional information can be found on the
-    <a href="https://www.owasp.org/index.php/OWASP_Dependency_Track_Project">${properties.longname} Project Page</a>
+    <a href="https://www.owasp.org/index.php/OWASP_Dependency_Track_Project">${properties.longname} Project Page</a>.
 </p>
 
 <pre>

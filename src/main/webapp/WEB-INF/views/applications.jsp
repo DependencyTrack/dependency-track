@@ -29,22 +29,14 @@
                     <td style="vertical-align:top;">${fn:length(application.versions)}</td>
                     <td style="vertical-align:top;text-align:right;">
                         <div class="btn-group">
+                            <a data-toggle="modal" data-id="${application.id}" class="open-CloneApplicationModal btn" href="#cloneApplicationModal">Clone Application</a>
                             <a data-toggle="modal" data-id="${application.id}" class="open-AddApplicationVersionModal btn" href="#addApplicationVersionModal">Add Version</a>
                             <a data-toggle="modal" data-id="${application.id}" data-name="${application.name}" class="open-EditApplicationModal btn" href="#editApplicationModal">Edit</a>
                         </div>
                     </td>
                 </tr>
 
-                <!--
-                <tr id="applicationDetails${applicationVersion.application.id}">
-                    <td></td>
-                    <td><a href="library/${applicationVersion.id}">${applicationVersion.version}</a></td>
-                    <td><a href="addApplicationVersion/${applicationVersion.application.name}/${applicationVersion.application.id}">Add Version</a></td>
-                    <td><a href="updateApplication/${applicationVersion.id}/${applicationVersion.application.name}/${applicationVersion.version}/${applicationVersion.application.id}">Edit Version</a></td>
-                    <td><a href="removeApplication/${applicationVersion.id}">Delete</a></td>
-                    <td><a href="cloneApplication/${applicationVersion.id}">Clone</a></td>
-                </tr>
-                -->
+
             </c:forEach>
         </table>
     </c:if>
@@ -116,6 +108,28 @@
         <div class="modal-footer">
             <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
             <button class="modalSubmit btn btn-primary">Add Version</button>
+        </div>
+    </form:form>
+</div>
+
+<div id="cloneApplicationModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="cloneApplicationModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <h4 id="cloneApplicationModalLabel">Enter New Application Name</h4>
+    </div>
+    <%--add link to controller--%>
+    <form:form id="cloneApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/cloneApplication" method="post" autocomplete="off">
+        <div class="modal-body">
+            <table>
+                <tr>
+                    <td><label for="cloneAppName">Name</label></td>
+                    <td><input id="cloneAppName" name="cloneAppName" type="text" autofocus="autofocus" required="required"/></td>
+                </tr>
+            </table>
+            <input type="hidden" id="applicationid" name="applicationid" value=""/>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+            <button class="modalSubmit btn btn-primary">Clone</button>
         </div>
     </form:form>
 </div>

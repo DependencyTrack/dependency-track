@@ -119,11 +119,33 @@ public class ApplicationController {
     }
 
     /*
+     * Updates an applications' version
+     */
+    @RequestMapping(value = "/updateApplicationVersion", method = RequestMethod.POST)
+    public String updatingApplicationVersion(@RequestParam("appversionid") int id, @RequestParam("editappver") String appversion) {
+        System.out.println(id+""+appversion);
+        applicationVersionService.updateApplicationVersion(id, appversion);
+
+        return "redirect:/applications";
+    }
+
+    /*
      * Deletes the application with the specified id
      */
     @RequestMapping(value = "/deleteApplication/{id}", method = RequestMethod.GET)
     public String removeApplication(@PathVariable("id") int id) {
         applicationService.deleteApplication(id);
+        return "redirect:/applications";
+    }
+
+    /*
+    * Deletes the application Version with the specified id
+    */
+    @RequestMapping(value = "/deleteApplicationVersion/{id}", method = RequestMethod.GET)
+    public String removeApplicationVersion(@PathVariable("appversionid") int id) {
+
+        System.out.println("in removeApplicationVersion"+id);
+       // applicationService.deleteApplication(id);
         return "redirect:/applications";
     }
 
@@ -175,15 +197,37 @@ public class ApplicationController {
     public String deleteDependency(@RequestParam("appversionid") int appversionid,
                                    @RequestParam("versionid") int versionid) {
         libraryVersionService.deleteDependency(appversionid, versionid);
+                                    System.out.println("deleteDependency called");
         return "redirect:/applicationVersion/" + appversionid;
     }
 
-    @RequestMapping(value = "/cloneApplication/{applicationversionid}", method = RequestMethod.GET)
-    public String cloneProduct(ModelMap modelMap, @PathVariable("applicationversionid") int applicationversionid) {
-        modelMap.addAttribute("applicationversionid", applicationversionid);
-        applicationVersionService.cloneApplication(applicationversionid);
+
+    /*CLONE APPLICATION INCLUDING ALL VERSION*/
+
+    @RequestMapping(value = "/cloneApplication", method = RequestMethod.POST)
+    public String cloneApplication(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneAppName") String applicationname)
+    {
+
+        applicationVersionService.cloneApplication(applicationid,applicationname);
+
+        System.out.println("inside clone");
+
         return "redirect:/applications";
     }
+
+
+     /*CLONE APPLICATION VERSION INCLUDING ALL VERSION*/
+
+    @RequestMapping(value = "/cloneApplicationVersion", method = RequestMethod.POST)
+    public String cloneApplicationVersion(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneVersionNumber") String newversion, @RequestParam("applicationversion") String applicationversion)
+    {
+
+        applicationVersionService.cloneApplicationVersion(applicationid, newversion, applicationversion);
+
+
+        return "redirect:/applications";
+    }
+
 
 	/*
 	 * ------ Applications and Version end ------
@@ -279,12 +323,12 @@ public class ApplicationController {
     */
     @RequestMapping(value = "/addlibraries", method = RequestMethod.POST)
     public String addLibraries(ModelMap modelMap,
-                                @RequestParam("libraryname") String libraryname,
-                                @RequestParam("libraryversion") String libraryversion,
-                                @RequestParam("vendor") String vendor,
-                                @RequestParam("license") String license,
+                                @RequestParam("libnamesel") String libraryname,
+                                @RequestParam("libversel") String libraryversion,
+                                @RequestParam("vendorsel") String vendor,
+                                @RequestParam("licensesel") String license,
                                 @RequestParam("Licensefile") MultipartFile file,
-                                @RequestParam("language") String language,
+                                @RequestParam("languagesel") String language,
                                 @RequestParam("secuniaID") int secuniaID) {
 
         libraryVersionService.addLibraries(libraryname,libraryversion, vendor, license, file, language, secuniaID);
@@ -314,25 +358,59 @@ public class ApplicationController {
         return "license";
     }
 
-    @RequestMapping(value = "/downloadlicense/{applicationversionid}/{license}", method = RequestMethod.GET)
+    @RequestMapping(value = "/downloadlicense", method = RequestMethod.POST)
     public void downloadLicense(Map<String, Object> map,
                                 HttpServletResponse response,
-                                @PathVariable("license") Integer licenseid,
-                                @PathVariable("applicationversionid") Integer applicationversionid) {
-        // SecurityUtils.getSubject().logout();
+                                @RequestParam("licenseid") Integer licenseid) {
+
+
+
 
         List<License> licenses = libraryVersionService.listLicense(licenseid);
         License newLicense = licenses.get(0);
 
 
         try {
-            System.out.println("crashed after tis");
+
             response.setHeader("Content-Disposition", "inline;filename=\""
                     + newLicense.getFilename() + "\"");
-            System.out.println("file name" + newLicense.getFilename());
+            response.setHeader("Content-Type", "application/octet-stream;");
             OutputStream out = response.getOutputStream();
-            response.setContentType(newLicense.getContenttype());
+
+
             IOUtils.copy(newLicense.getText().getBinaryStream(), out);
+            out.flush();
+            out.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        }
+
+
+    @RequestMapping(value = "/viewlicense/{licenseid}", method = RequestMethod.GET)
+    public void viewLicense(Map<String, Object> map,
+                            HttpServletResponse response,
+                            @PathVariable("licenseid") Integer licenseid) {
+
+
+        List<License> licenses = libraryVersionService.listLicense(licenseid);
+        License newLicense = licenses.get(0);
+
+        try {
+
+      /*      response.setHeader("Content-Disposition", "inline;filename=\""
+                    + newLicense.getFilename() + "\"");
+*/
+            OutputStream out = response.getOutputStream();
+
+
+            IOUtils.copy(newLicense.getText().getBinaryStream(), out);
+
             out.flush();
             out.close();
 
@@ -345,7 +423,9 @@ public class ApplicationController {
 
     }
 
+
     /*
+
         The about page
      */
     @RequestMapping(value = "/about", method = RequestMethod.GET)

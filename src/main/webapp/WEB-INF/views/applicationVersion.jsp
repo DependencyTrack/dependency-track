@@ -86,3 +86,56 @@
         </div>
     </form:form>
 </div>
+
+  <%--cloning individual application version--%>
+<div id="cloneVersionModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="cloneVersionModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <h4 id="cloneVersionModalLabel">Enter New Version Number</h4>
+    </div>
+    <%--add link to controller--%>
+    <form:form id="cloneVersionForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/cloneApplicationVersion" method="post" autocomplete="off">
+        <div class="modal-body">
+            <table>
+                <tr>
+                    <td><label for="cloneVersionNumber">Version Number</label></td>
+                    <td><input id="cloneVersionNumber" name="cloneVersionNumber" type="text" autofocus="autofocus" required="required"/></td>
+                </tr>
+            </table>
+            <input type="hidden" id="applicationid" name="applicationid" value=""/>
+            <input type="hidden" id="applicationversion" name="applicationversion" value=""/>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+            <button class="modalSubmit btn btn-primary">Clone</button>
+        </div>
+    </form:form>
+</div>
+
+<div id="editDependencyModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="editDependencyModal" aria-hidden="true">
+    <div class="modal-header">
+        <h4 id="editDependencyModalLabel">Update Application Version
+          <%--<span class="delete-span">
+				<a class="btn btn-danger header-button" href="" id="deleteAppVer"  onclick="return confirm('Are you sure you want to delete this version') ">Delete</a>
+			</span>--%>
+        </h4>
+    </div>
+    <form:form id="addApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/updateApplicationVersion" method="post" autocomplete="off">
+        <div class="modal-body">
+            <table>
+                <tr>
+                    <td><label for="editappver">Version</label></td>
+                    <td><input id="editappver" name="editappver" type="text" value=""/></td>
+
+                </tr>
+
+
+            </table>
+            <input type="hidden" id="appversionid" name="appversionid" value="${applicationVersion.id}"/>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+            <button class="modalSubmit btn btn-primary">Update</button>
+        </div>
+    </form:form>
+</div>

@@ -30,11 +30,11 @@ public class ApplicationDependency implements Cloneable {
     @GeneratedValue
     private Integer id;
 
-    @OneToOne (cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "LIBRARYVERSIONID" )
     private LibraryVersion libraryVersion;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "APPVERSIONID")
     private ApplicationVersion applicationVersion;
 

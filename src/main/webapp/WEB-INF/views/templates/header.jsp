@@ -20,5 +20,5 @@
         <div class="logo">
             <a href="${pageContext.request.contextPath}"><img  src="<c:url value="${pageContext.request.contextPath}/resources/images/corner.png"/>" width="104" height="48" alt="OWASP Logo"/></a>
         </div>
-        <span id="name">OWASP Dependency-Track</span>
+        <span id="name">${properties.longname}</span>
     </div>

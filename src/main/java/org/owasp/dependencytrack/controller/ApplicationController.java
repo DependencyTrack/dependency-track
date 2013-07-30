@@ -144,7 +144,7 @@ public class ApplicationController {
     @RequestMapping(value = "/deleteApplicationVersion/{id}", method = RequestMethod.GET)
     public String removeApplicationVersion(@PathVariable("appversionid") int id) {
 
-        System.out.println("in removeApplicationVersion"+id);
+
        // applicationService.deleteApplication(id);
         return "redirect:/applications";
     }

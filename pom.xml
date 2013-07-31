@@ -63,6 +63,36 @@
 
     <dependencies>
 
+      <!--security headers -->
+        <dependency>
+            <groupId>com.sourceclear.headlines</groupId>
+            <artifactId>complete</artifactId>
+            <version>0.1.4</version>
+        </dependency>
+
+        <!--security hdiv -->
+        <dependency>
+            <groupId>org.hdiv</groupId>
+            <artifactId>hdiv-core</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hdiv</groupId>
+            <artifactId>hdiv-config</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hdiv</groupId>
+            <artifactId>hdiv-spring-mvc</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hdiv</groupId>
+            <artifactId>hdiv-jstl-taglibs-1.2</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+
+
         <!-- file upload jars start -->
         <dependency>
             <groupId>commons-fileupload</groupId>
@@ -352,9 +382,8 @@
         <!-- Servlet -->
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
-            <scope>provided</scope>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp</groupId>

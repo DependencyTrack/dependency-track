@@ -32,6 +32,43 @@
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
+
+
+    <!-- The filter-name matches name of a 'shiroFilter' bean inside applicationContext.xml -->
+    <filter>
+        <filter-name>shiroFilter</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+        <init-param>
+            <param-name>targetFilterLifecycle</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+<!--
+    <filter>
+        <filter-name>headlines</filter-name>
+        <filter-class>com.sourceclear.headlines.HeadLinesFilter</filter-class>
+    </filter>-->
+
+    <!-- Make sure any request you want accessible to Shiro is filtered. /* catches all -->
+    <!-- requests.  Usually this filter mapping is defined first (before all others) to -->
+    <!-- ensure that Shiro works in subsequent filters in the filter chain:             -->
+    <filter-mapping>
+
+        <filter-name>shiroFilter</filter-name>
+
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+        <dispatcher>INCLUDE</dispatcher>
+        <dispatcher>ERROR</dispatcher>
+
+    </filter-mapping>
+
+    <!--<filter-mapping>
+        <filter-name>headlines</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>-->
+
     <!-- Processes application requests -->
     <servlet>
         <servlet-name>application</servlet-name>
@@ -48,28 +85,14 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
-    <!-- The filter-name matches name of a 'shiroFilter' bean inside applicationContext.xml -->
-    <filter>
-        <filter-name>shiroFilter</filter-name>
-        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-        <init-param>
-            <param-name>targetFilterLifecycle</param-name>
-            <param-value>true</param-value>
-        </init-param>
-    </filter>
 
 
-    <!-- Make sure any request you want accessible to Shiro is filtered. /* catches all -->
-    <!-- requests.  Usually this filter mapping is defined first (before all others) to -->
-    <!-- ensure that Shiro works in subsequent filters in the filter chain:             -->
-    <filter-mapping>
-        <filter-name>shiroFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-        <dispatcher>REQUEST</dispatcher>
-        <dispatcher>FORWARD</dispatcher>
-        <dispatcher>INCLUDE</dispatcher>
-        <dispatcher>ERROR</dispatcher>
-    </filter-mapping>
 
+
+    <!--&lt;!&ndash;security headers&ndash;&gt;
+
+
+
+-->
 
 </web-app>

@@ -56,9 +56,23 @@ public class ApplicationVersionDao {
         return new ApplicationVersion();
     }
 
-    public void removeApplicationVersion(Integer id) {
+    public void deleteApplicationVersion(Integer id) {
+        /*Session session = sessionFactory.openSession();
+        session.beginTransaction();*/
         ApplicationVersion applicationVersion = (ApplicationVersion) sessionFactory
                 .getCurrentSession().load(ApplicationVersion.class, id);
+        Query query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency where applicationVersion=:appver");
+        query.setParameter("appver", applicationVersion);
+
+        if(!query.list().isEmpty())
+        {
+            List <ApplicationDependency> applicationDependencies = query.list();
+            for (ApplicationDependency appdep: applicationDependencies)
+            {
+                sessionFactory.getCurrentSession().delete(appdep);
+            }
+        }
+
         if (null != applicationVersion) {
             sessionFactory.getCurrentSession().delete(applicationVersion);
         }

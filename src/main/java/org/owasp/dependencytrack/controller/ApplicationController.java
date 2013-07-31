@@ -142,8 +142,9 @@ public class ApplicationController {
     * Deletes the application Version with the specified id
     */
     @RequestMapping(value = "/deleteApplicationVersion/{id}", method = RequestMethod.GET)
-    public String removeApplicationVersion(@PathVariable("appversionid") int id) {
+    public String deleteApplicationVersion(@PathVariable("id") int id) {
 
+        applicationVersionService.deleteApplicationVersion(id);
 
         return "redirect:/applications";
     }

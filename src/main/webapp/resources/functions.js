@@ -89,7 +89,7 @@ $(document).on("click", ".open-LicenseLibrariesModal", function ()
 $(document).on("click", ".open-EditDependencyModal", function ()
 {
 
-    $("#deleteAppVer").attr("href", "/deleteApplicationVersion/" + $(this).data('id') );
+    $("#deleteAppVer").attr("href", "../../deleteApplicationVersion/" + $(this).data('id') );
     $(".modal-body #appversionid").val( $(this).data("id") );
     $(".modal-body #editappver").val( $(this).data("ver") );
 

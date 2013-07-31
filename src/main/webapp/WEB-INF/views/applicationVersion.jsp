@@ -132,9 +132,9 @@
 <div id="editDependencyModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="editDependencyModal" aria-hidden="true">
     <div class="modal-header">
         <h4 id="editDependencyModalLabel">Update Application Version
-          <%--<span class="delete-span">
+          <span class="delete-span">
 				<a class="btn btn-danger header-button" href="" id="deleteAppVer"  onclick="return confirm('Are you sure you want to delete this version') ">Delete</a>
-			</span>--%>
+			</span>
         </h4>
     </div>
     <form:form id="addApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/updateApplicationVersion" method="post" autocomplete="off">

@@ -42,8 +42,8 @@ public class ApplicationVersionService {
     }
 
     @Transactional
-    public void removeApplicationVersion(Integer id) {
-        applicationVersionDao.removeApplicationVersion(id);
+    public void deleteApplicationVersion(Integer id) {
+        applicationVersionDao.deleteApplicationVersion(id);
     }
 
     @Transactional

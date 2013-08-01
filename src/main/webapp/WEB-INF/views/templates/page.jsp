@@ -2,22 +2,6 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
-<%--
-  ~ Copyright 2013 Axway
-  ~
-  ~ This file is part of OWASP Dependency-Track.
-  ~
-  ~ Dependency-Track is free software: you can redistribute it and/or modify it under the terms of the
-  ~ GNU General Public License as published by the Free Software Foundation, either version 3 of the
-  ~ License, or (at your option) any later version.
-  ~
-  ~ Dependency-Track is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  ~ even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-  ~ Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License along with Dependency-Track.
-  ~ If not, see http://www.gnu.org/licenses/.
-  --%>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -44,9 +28,9 @@
 <div class="navbar navbar-static-top">
     <div class="navbar-inner">
         <ul class="nav">
-            <li class="<c:if test="${param.content!='applications'}">in</c:if>active"><a href="<c:url value="${pageContext.request.contextPath}/applications"/>">Applications</a></li>
-            <li class="<c:if test="${param.content!='libraries'}">in</c:if>active"><a href="<c:url value="${pageContext.request.contextPath}/libraries"/>">Libraries</a></li>
-            <li class="<c:if test="${param.content!='about'}">in</c:if>active"><a href="<c:url value="${pageContext.request.contextPath}/about"/>">About</a></li>
+            <li class="<c:if test="${param.content!='applications'}">in</c:if>active"><a href="<c:url value="${pageContext.request.contextPath}/applications"/>"><spring:message code="navbar.applications"/></a></li>
+            <li class="<c:if test="${param.content!='libraries'}">in</c:if>active"><a href="<c:url value="${pageContext.request.contextPath}/libraries"/>"><spring:message code="navbar.libraries"/></a></li>
+            <li class="<c:if test="${param.content!='about'}">in</c:if>active"><a href="<c:url value="${pageContext.request.contextPath}/about"/>"><spring:message code="navbar.about"/></a></li>
         </ul>
     </div>
 </div>

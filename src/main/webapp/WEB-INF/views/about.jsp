@@ -16,6 +16,6 @@
 </p>
 
 <pre>
-    Version:    ${properties.version}
-    Build Date: ${properties.builddate}
+    <spring:message code="label.version"/>:    ${properties.version}
+    <spring:message code="label.date.build"/>: ${properties.builddate}
 </pre>

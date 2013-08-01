@@ -1,3 +1,4 @@
+<%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <p>
     ${properties.shortname} is a web application that allows organizations to document the use of third-party components
     across multiple applications and versions.

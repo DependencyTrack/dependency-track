@@ -16,9 +16,9 @@
   ~ If not, see http://www.gnu.org/licenses/.
   -->
 
-<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
 
 
     <!-- The definition of the Root Spring Container shared by all Servlets and Filters -->
@@ -53,9 +53,7 @@
     <!-- requests.  Usually this filter mapping is defined first (before all others) to -->
     <!-- ensure that Shiro works in subsequent filters in the filter chain:             -->
     <filter-mapping>
-
         <filter-name>shiroFilter</filter-name>
-
         <url-pattern>/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
         <dispatcher>FORWARD</dispatcher>
@@ -85,14 +83,12 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
-
-
-
-
-    <!--&lt;!&ndash;security headers&ndash;&gt;
-
-
-
--->
+    <session-config>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>true</secure>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
 
 </web-app>

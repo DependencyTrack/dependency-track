@@ -98,4 +98,13 @@
     <context:annotation-config/>
     <context:component-scan base-package="org.owasp.dependencytrack"/>
 
+
+    <beans:bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <beans:property name="exceptionMappings">
+            <beans:props>
+                <beans:prop key="java.lang.Exception">errorpage</beans:prop>
+            </beans:props>
+        </beans:property>
+    </beans:bean>
+
 </beans:beans>

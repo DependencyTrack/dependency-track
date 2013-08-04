@@ -91,4 +91,9 @@
         <tracking-mode>COOKIE</tracking-mode>
     </session-config>
 
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/WEB-INF/views/errorpage.jsp</location>
+    </error-page>
+
 </web-app>

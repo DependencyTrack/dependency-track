@@ -16,12 +16,12 @@
             <c:forEach items="${applicationList}" var="application">
                 <tr>
                     <td id="applicationCaret>${application.id}" data-toggle="collapse" data-target="#applicationDetails${application.id}" style="vertical-align:top;width:20px;height:20px;"><span class="caret"></span></td>
-                    <td style="vertical-align:top;"><a href="javascript:void(0);" data-toggle="collapse" data-target="#applicationDetails${application.id}">${application.name}</a>
+                    <td style="vertical-align:top;"><a href="javascript:void(0);" data-toggle="collapse" data-target="#applicationDetails${application.id}"><c:out value="${application.name}"/></a>
                         <div id="applicationDetails${application.id}" class="collapse">
                             <ul class="nav nav-list">
                                 <li class="nav-header"><spring:message code="label.versions"/></li>
                             <c:forEach items="${application.versions}" var="version">
-                                <li><a href="applicationVersion/${version.id}">${version.version}</a></li>
+                                <li><a href="applicationVersion/${version.id}"><c:out value="${version.version}"/></a></li>
                             </c:forEach>
                             </ul>
                         </div>

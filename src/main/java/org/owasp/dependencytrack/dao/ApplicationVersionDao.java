@@ -32,14 +32,7 @@ public class ApplicationVersionDao {
     @Autowired
     private SessionFactory sessionFactory;
 
-    @SuppressWarnings("unchecked")
-    public List<ApplicationVersion> listApplicationVersions() {
 
-        Query query = sessionFactory.getCurrentSession().createQuery(
-                "FROM ApplicationVersion");
-
-        return query.list();
-    }
 
     /*
         Returns an application version with the specified id

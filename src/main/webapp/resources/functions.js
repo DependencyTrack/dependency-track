@@ -112,6 +112,11 @@ $(document).on("click", ".open-LicenseLibrariesModal", function ()
     $(".modal-body #licensename").val( $(this).data("licensename") );
     $(".modal-body #licensfileename").val( $(this).data("licensfileename") );
 
+    if (($(this).data("licensefiletype") != "text/plain") ||($(this).data("licensefiletype") != "text/html") ) {
+        var frame = document.getElementById("hideviewlicense");
+        frame.parentNode.removeChild(frame);
+
+    }
 
 });
 

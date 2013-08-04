@@ -23,7 +23,7 @@
                     <td><c:out value="${libList.library.libraryVendor.vendor}"/></td>
                     <td><c:out value="${libList.library.libraryname}"/></td>
                     <td><c:out value="${libList.libraryversion}"/></td>
-                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}"href="#licenseLibrariesModal">${libList.library.license.licensename}</a></td>
+                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}"href="#licenseLibrariesModal">${libList.library.license.licensename}</a></td>
                     <td><c:out value="${libList.library.language}"/></td>
                     <td><c:out value="${libList.library.secunia}"/></td>
                     <td style="vertical-align:top;text-align:right;">
@@ -258,11 +258,11 @@
                     <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
 
                 </tr>
-                <tr>
-                    <td><label for="viewlicense">License File</label></td>
+                <tr id="hideviewlicense">
+                    <td><label for="viewlicense">View File</label></td>
                     <td>
 
-                <iframe  id="viewlicense" src="" width="400" height="400"></iframe>  </td>
+                <iframe id="viewlicense" src="" width="400" height="400" seamless> </iframe>  </td>
                 </tr>
             </table>
 

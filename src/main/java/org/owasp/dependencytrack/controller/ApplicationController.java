@@ -21,7 +21,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.model.Application;
+import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.LibraryVersionService;
@@ -353,7 +356,7 @@ public class ApplicationController {
             response.setHeader("Content-Type", "application/octet-stream;");
             OutputStream out = response.getOutputStream();
 
-
+            System.out.println(newLicense.getContenttype());
             IOUtils.copy(newLicense.getText().getBinaryStream(), out);
             out.flush();
             out.close();
@@ -369,14 +372,15 @@ public class ApplicationController {
 
 
     @RequestMapping(value = "/viewlicense/{licenseid}", method = RequestMethod.GET)
-    public void viewLicense(Map<String, Object> map,
+    public String viewLicense(Map<String, Object> map,
                             HttpServletResponse response,
                             @PathVariable("licenseid") Integer licenseid) {
 
 
         List<License> licenses = libraryVersionService.listLicense(licenseid);
         License newLicense = licenses.get(0);
-
+        if (newLicense.getContenttype().equals("text/plain")||newLicense.getContenttype().equals("text/html"))
+        {
         try {
 
             response.setHeader("Content-Disposition", "inline;filename=\""
@@ -395,7 +399,12 @@ public class ApplicationController {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
+        }
+        else
+        {
+        return "emptyfile";
+    }
+        return "";
     }
 
 

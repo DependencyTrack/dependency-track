@@ -115,7 +115,6 @@ public class ApplicationController {
     /*SEARCH APPLICATION*/
     @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
     public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid, @RequestParam("serapplibver") int libverid) {
-        System.out.println("lib id"+libid+"libverid"+libverid);
         map.put("application", new ApplicationVersion());
         map.put("applicationList", applicationService.searchApplications(libid, libverid));
         map.put("check",true);
@@ -146,7 +145,6 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/updateApplicationVersion", method = RequestMethod.POST)
     public String updatingApplicationVersion(@RequestParam("appversionid") int id, @RequestParam("editappver") String appversion) {
-        System.out.println(id + "" + appversion);
         applicationVersionService.updateApplicationVersion(id, appversion);
 
         return "redirect:/applications";
@@ -186,7 +184,6 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/libraryHierarchy", method = RequestMethod.GET)
     public String getLibraryHierarchy(Map<String, Object> map) {
-        System.out.println("called hirerchy");
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
         return "libraryHierarchy";
     }
@@ -221,7 +218,6 @@ public class ApplicationController {
     public String deleteDependency(@RequestParam("appversionid") int appversionid,
                                    @RequestParam("versionid") int versionid) {
         libraryVersionService.deleteDependency(appversionid, versionid);
-                                    System.out.println("deleteDependency called");
         return "redirect:/applicationVersion/" + appversionid;
     }
 
@@ -234,7 +230,6 @@ public class ApplicationController {
 
         applicationVersionService.cloneApplication(applicationid, applicationname);
 
-        System.out.println("inside clone");
 
         return "redirect:/applications";
     }
@@ -355,8 +350,6 @@ public class ApplicationController {
                     + newLicense.getFilename() + "\"");
             response.setHeader("Content-Type", "application/octet-stream;");
             OutputStream out = response.getOutputStream();
-
-            System.out.println(newLicense.getContenttype());
             IOUtils.copy(newLicense.getText().getBinaryStream(), out);
             out.flush();
             out.close();

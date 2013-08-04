@@ -215,22 +215,6 @@ public class LibraryVersionDao {
 
     }
 
-    public List<ApplicationDependency> listLibraryVersion(int applicationId) {
-        // TODO Auto-generated method stub
-
-        Query query = sessionFactory.getCurrentSession().createQuery("from ApplicationVersion where id=:appid");
-        query.setParameter("appid", applicationId);
-
-        List<ApplicationVersion> result = query.list();
-        ApplicationVersion dependencies = result.get(0);
-
-        query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency where appversionid=:app");
-        query.setParameter("app", result.get(0));
-
-        List<ApplicationDependency> res = query.list();
-
-        return res;
-    }
 
     public void updateLibrary(int vendorid, int licenseid, int libraryid, int libraryversionid,
                               String libraryname, String libraryversion, String vendor,

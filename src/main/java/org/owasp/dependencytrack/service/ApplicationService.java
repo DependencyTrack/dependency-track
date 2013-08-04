@@ -51,4 +51,9 @@ public class ApplicationService {
         applicationDao.deleteApplication(id);
     }
 
+
+    @Transactional
+    public List<Application> searchApplications(int libid,int libverid) {
+       return applicationDao.searchApplications( libid,libverid);
+    }
 }

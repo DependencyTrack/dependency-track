@@ -23,18 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 public class ApplicationVersionService {
 
     @Autowired
     private ApplicationVersionDao applicationVersionDao;
-
-    @Transactional
-    public List<ApplicationVersion> listApplicationVersions() {
-        return applicationVersionDao.listApplicationVersions();
-    }
 
     @Transactional
     public ApplicationVersion getApplicationVersion(int id) {

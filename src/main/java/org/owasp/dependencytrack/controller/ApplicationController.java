@@ -103,8 +103,19 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
     public String application(Map<String, Object> map) {
+        map.put("check",false);
         map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
+        return "applicationsPage";
+    }
+
+    /*SEARCH APPLICATION*/
+    @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
+    public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid, @RequestParam("serapplibver") int libverid) {
+        System.out.println("lib id"+libid+"libverid"+libverid);
+        map.put("application", new ApplicationVersion());
+        map.put("applicationList", applicationService.searchApplications(libid, libverid));
+        map.put("check",true);
         return "applicationsPage";
     }
 
@@ -172,6 +183,7 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/libraryHierarchy", method = RequestMethod.GET)
     public String getLibraryHierarchy(Map<String, Object> map) {
+        System.out.println("called hirerchy");
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
         return "libraryHierarchy";
     }
@@ -246,38 +258,6 @@ public class ApplicationController {
 	 * ------ Library start ------
 	 */
 
-    @RequestMapping(value = "/library/{applicationversionid}", method = RequestMethod.GET)
-    public String library(ModelMap modelMap, Map<String, Object> map,
-                          @PathVariable("applicationversionid") int applicationversionid) {
-        modelMap.addAttribute("applicationversionid", applicationversionid);
-        map.put("applicationDependencies", new ApplicationDependency());
-        map.put("appDep", libraryVersionService.listLibraryVersion(applicationversionid));
-        return "library";
-    }
-
-    @RequestMapping(value = "/addlibrary/{applicationversionid}", method = RequestMethod.GET)
-    public String addLibrary(ModelMap modelMap,
-                             @PathVariable("applicationversionid") int applicationversionid) {
-        modelMap.addAttribute("applicationversionid", applicationversionid);
-        return "addlibrary";
-    }
-
-    @RequestMapping(value = "/addlibrary/{applicationversionid}", method = RequestMethod.POST)
-    public String addingLibrary(ModelMap modelMap,
-                                @PathVariable("applicationversionid") int applicationversionid,
-                                @RequestParam("libraryname") String libraryname,
-                                @RequestParam("libraryversion") String libraryversion,
-                                @RequestParam("vendor") String vendor,
-                                @RequestParam("license") String license,
-                                @RequestParam("Licensefile") MultipartFile file,
-                                @RequestParam("language") String language,
-                                @RequestParam("secuniaID") int secuniaID) {
-
-        libraryVersionService.addLibraryVersion(applicationversionid, libraryname,
-                libraryversion, vendor, license, file, language, secuniaID);
-
-        return "redirect:/library/" + applicationversionid;
-    }
 
      /*
       Updates a library regardless of application association
@@ -354,19 +334,6 @@ public class ApplicationController {
 	 * ------ License start ------
 	 */
 
-    @RequestMapping(value = "/librarylicense/{applicationversionid}/{licenseid}", method = RequestMethod.GET)
-    public String listLicense(Map<String, Object> map,
-                              @PathVariable("licenseid") Integer id,
-                              @PathVariable("applicationversionid") Integer applicationversionid) {
-        // SecurityUtils.getSubject().logout();
-
-        map.put("license", new License());
-        map.put("licenseList", libraryVersionService.listLicense(id));
-        map.put("applicationversionid", applicationversionid);
-
-        return "license";
-    }
-
     @RequestMapping(value = "/downloadlicense", method = RequestMethod.POST)
     public void downloadLicense(Map<String, Object> map,
                                 HttpServletResponse response,
@@ -412,12 +379,11 @@ public class ApplicationController {
 
         try {
 
-      /*      response.setHeader("Content-Disposition", "inline;filename=\""
+            response.setHeader("Content-Disposition", "inline;filename=\""
                     + newLicense.getFilename() + "\"");
-*/
             OutputStream out = response.getOutputStream();
 
-
+            response.setContentType(newLicense.getContenttype());
             IOUtils.copy(newLicense.getText().getBinaryStream(), out);
 
             out.flush();

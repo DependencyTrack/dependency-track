@@ -9,17 +9,17 @@
             <json:property name="id" value="${vendor.id}"/>
             <json:property name="vendor" value="${vendor.vendor}"/>
 
+
             <json:array name="libraries" var="library" items="${vendor.libraries}">
                 <json:object>
-                    <json:property name="id" value="${library.id}"/>
-                    <json:property name="name" value="${library.libraryname}"/>
-                    <json:property name="license" value="${library.license}"/>
-                    <json:property name="language" value="${library.language}"/>
+                    <json:property name="libid" value="${library.id}"/>
+                    <json:property name="libname" value="${library.libraryname}"/>
+
 
                     <json:array name="versions" var="version" items="${library.versions}">
                         <json:object>
-                            <json:property name="id" value="${version.id}"/>
-                            <json:property name="version" value="${version.libraryversion}"/>
+                            <json:property name="libverid" value="${version.id}"/>
+                            <json:property name="libver" value="${version.libraryversion}"/>
                         </json:object>
                     </json:array>
 

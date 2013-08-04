@@ -18,9 +18,9 @@
             <tbody>
             <c:forEach items="${dependencies}" var="libraryVersion">
             <tr>
-                <td style="vertical-align:middle;">${libraryVersion.library.libraryVendor.vendor}</td>
-                <td style="vertical-align:middle;">${libraryVersion.library.libraryname}</td>
-                <td style="vertical-align:middle;">${libraryVersion.libraryversion}</td>
+                <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryVendor.vendor}"/></td>
+                <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryname}"/></td>
+                <td style="vertical-align:middle;"><c:out value="${libraryVersion.libraryversion}"/></td>
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>
                     <a class="btn btn-danger header-button" id="deleteLink" href="${pageContext.request.contextPath}/deleteDependency?appversionid=${applicationVersion.id}&versionid=${libraryVersion.id}" onclick="return confirm('${confirmDeleteMessage}')"><spring:message code="label.delete"/></a>

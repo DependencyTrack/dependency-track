@@ -1,4 +1,5 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <p>
     ${properties.shortname} is a web application that allows organizations to document the use of third-party components
     across multiple applications and versions.
@@ -17,6 +18,6 @@
 </p>
 
 <pre>
-    <spring:message code="label.version"/>:    ${properties.version}
-    <spring:message code="label.date.build"/>: ${properties.builddate}
+    <spring:message code="label.version"/>:<c:out value="${properties.version}"/>
+    <spring:message code="label.date.build"/>:<c:out value="${properties.builddate} "/>
 </pre>

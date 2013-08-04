@@ -20,12 +20,12 @@
             <tbody>
             <c:forEach items="${libList}" var="libList">
                 <tr>
-                    <td>${libList.library.libraryVendor.vendor}</td>
-                    <td>${libList.library.libraryname}</td>
-                    <td>${libList.libraryversion}</td>
-                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}"href="#licenseLibrariesModal"> ${libList.library.license.licensename}</a></td>
-                    <td>${libList.library.language}</td>
-                    <td>${libList.library.secunia}</td>
+                    <td><c:out value="${libList.library.libraryVendor.vendor}"/></td>
+                    <td><c:out value="${libList.library.libraryname}"/></td>
+                    <td><c:out value="${libList.libraryversion}"/></td>
+                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}"href="#licenseLibrariesModal">${libList.library.license.licensename}</a></td>
+                    <td><c:out value="${libList.library.language}"/></td>
+                    <td><c:out value="${libList.library.secunia}"/></td>
                     <td style="vertical-align:top;text-align:right;">
                         <div class="btn-group">
                             <a data-toggle="modal"
@@ -65,7 +65,7 @@
                         <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="$('input#libraryname').val($(this).val());">
                             <option value="">--</option>
                             <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.libraryname}">${libList.library.libraryname}</option>
+                                <option value="${libList.library.libraryname}"><c:out value="${libList.library.libraryname}"/></option>
                             </c:forEach>
                         </select>
                         <input id="libraryname" name ="libnamesel" style="  position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
@@ -82,7 +82,7 @@
                         <select id="libraryversionid" name="libraryname"   onchange="$('input#libraryversion').val($(this).val());">
                             <option value="">--</option>
                             <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.libraryversion}">${libList.libraryversion}</option>
+                                <option value="${libList.libraryversion}"><c:out value="${libList.libraryversion}"/></option>
                             </c:forEach>
                         </select>
                         <input id="libraryversion" name ="libversel" style="  position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
@@ -100,7 +100,7 @@
                         <select id="vendorid" name="libraryname"  onchange="$('input#vendor').val($(this).val());">
                             <option value="">--</option>
                             <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.libraryVendor.vendor}">${libList.library.libraryVendor.vendor}</option>
+                                <option value="${libList.library.libraryVendor.vendor}"><c:out value="${libList.library.libraryVendor.vendor}"/></option>
                             </c:forEach>
                         </select>
                         <input id="vendor" name ="vendorsel"style=" position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
@@ -121,7 +121,7 @@
                         <select id="licenseids" name="license"  onchange="$('input#license').val($(this).val());">
                             <option value="">--</option>
                             <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.license.licensename}">${libList.library.license.licensename}</option>
+                                <option value="${libList.library.license.licensename}"><c:out value="${libList.library.license.licensename}"/></option>
                             </c:forEach>
                         </select>
                         <input id="license" name ="licensesel" style=" position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
@@ -144,7 +144,7 @@
                         <select id="languageid" name="language"  onchange="$('input#language').val($(this).val());">
                             <option value="">--</option>
                             <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.language}">${libList.library.language}</option>
+                                <option value="${libList.library.language}"><c:out value="${libList.library.language}"/></option>
                             </c:forEach>
                         </select>
                         <input id="language" name ="languagesel" style="position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
@@ -249,12 +249,12 @@
         <div class="modal-body">
             <table>
                 <tr>
-                    <td><label for="licensename">Library Name</label></td>
+                    <td><label for="licensename">License Name</label></td>
                     <td><input id="licensename" name="licensename" type="text" value="" readonly/></td>
 
                 </tr>
                 <tr>
-                    <td><label for="licensfileename">Library Version</label></td>
+                    <td><label for="licensfileename">License File</label></td>
                     <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
 
                 </tr>

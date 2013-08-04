@@ -23,9 +23,11 @@ import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.LibraryVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -98,4 +100,47 @@ public class ApplicationDao {
         session.close();
 }
 
+
+    public List<Application> searchApplications(int libid,int libverid)
+    {
+
+        Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
+
+        query.setParameter("libverid",libverid);
+        LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
+
+        System.out.println(libraryVersion.getId()+""+libraryVersion.getLibraryversion());
+        System.out.println("one size "+query.list().size());
+
+        query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency where libraryVersion=:libver");
+        query.setParameter("libver",libraryVersion);
+
+        System.out.println("two "+query.list().size());
+
+       List< ApplicationDependency >apdep= query.list();
+        List<Integer> ids = new ArrayList<Integer>();
+
+        for(ApplicationDependency appdep:apdep)
+        {
+            ids.add(appdep.getApplicationVersion().getId());
+        }
+
+
+        query = sessionFactory.getCurrentSession().createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
+        query.setParameterList("appverid", ids);
+
+
+        System.out.println("size"+ query.list().size());
+        List<ApplicationVersion> newappver= query.list();
+
+        ArrayList <Application> newapp= new ArrayList<Application>();
+
+        for(ApplicationVersion version :newappver)
+        {
+            newapp.add(version.getApplication());
+        }
+
+
+        return newapp;
+    }
 }

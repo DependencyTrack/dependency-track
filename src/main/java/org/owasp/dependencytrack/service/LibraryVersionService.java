@@ -32,19 +32,6 @@ public class LibraryVersionService {
     @Autowired
     private LibraryVersionDao libraryVersionDao;
 
-    @Transactional
-    public void addLibraryVersion(int appversionid, String libraryname,
-                                  String libraryversion, String vendor, String license, MultipartFile file,
-                                  String language, int secuniaID) {
-
-        libraryVersionDao.addLibraryVersion(appversionid, libraryname,
-                libraryversion, vendor, license, file, language, secuniaID);
-    }
-
-    @Transactional
-    public List<ApplicationDependency> listLibraryVersion(int appversionid) {
-        return libraryVersionDao.listLibraryVersion(appversionid);
-    }
 
     @Transactional
     public List<LibraryVersion> getDependencies(ApplicationVersion version) {
@@ -69,29 +56,7 @@ public class LibraryVersionService {
         return libraryVersionDao.getLibraryHierarchy();
     }
 
-    /*
-        Returns a List of all LibraryVendors available in the application
-     */
-    @Transactional
-    public List<LibraryVendor> getVendors() {
-        return libraryVersionDao.getVendors();
-    }
 
-    /*
-        Returns a List of all Libraries made by the specified LibraryVendor
-     */
-    @Transactional
-    public List<Library> getLibraries(int id) {
-        return libraryVersionDao.getLibraries(id);
-    }
-
-    /*
-        Returns a List of all LibraryVersions for the specified Library
-     */
-    @Transactional
-    public List<LibraryVersion> getVersions(int id) {
-        return libraryVersionDao.getVersions(id);
-    }
 
     @Transactional
     public void updateLibrary(int vendorid, int licenseid, int libraryid,

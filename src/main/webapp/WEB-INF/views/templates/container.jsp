@@ -6,6 +6,7 @@
             <div class="title-buttons">${param.buttons}</div>
         </div>
         <div class="content">
+
             <jsp:include page="/WEB-INF/views/${param.content}.jsp"/>
         </div>
     </div>

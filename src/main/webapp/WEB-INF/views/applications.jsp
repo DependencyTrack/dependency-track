@@ -10,7 +10,9 @@
             <tr>
                 <th></th>
                 <th><spring:message code="label.name"/></th>
+        <c:if  test="${!check}">
                 <th><spring:message code="label.versions"/></th>
+            </c:if>
                 <th></th>
             </tr>
             <c:forEach items="${applicationList}" var="application">
@@ -37,17 +39,19 @@
                             </ul>
                         </div>
                     </td>
+                    <c:if  test="${!check}">
                     <td style="vertical-align:top;">${fn:length(application.versions)}</td>
                     <td style="vertical-align:top;text-align:right;">
-                        <c:if  test="${!check}">
+
                         <div class="btn-group">
                             <a data-toggle="modal" data-id="${application.id}" class="open-CloneApplicationModal btn" href="#cloneApplicationModal"><spring:message code="label.application.clone"/></a>
                             <a data-toggle="modal" data-id="${application.id}" class="open-AddApplicationVersionModal btn" href="#addApplicationVersionModal"><spring:message code="label.version.add"/></a>
                             <a data-toggle="modal" data-id="${application.id}" data-name="${application.name}" class="open-EditApplicationModal btn" href="#editApplicationModal"><spring:message code="label.edit"/></a>
                         </div>
-                        </c:if>
+
                     </td>
                 </tr>
+            </c:if>
             </c:forEach>
         </table>
     </c:if>

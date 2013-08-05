@@ -20,23 +20,34 @@
                         <div id="applicationDetails${application.id}" class="collapse">
                             <ul class="nav nav-list">
                                 <li class="nav-header"><spring:message code="label.versions"/></li>
+                                <c:if  test="${!check}">
                             <c:forEach items="${application.versions}" var="version">
                                 <li><a href="applicationVersion/${version.id}"><c:out value="${version.version}"/></a></li>
                             </c:forEach>
+                                </c:if>
+                                <c:if  test="${check}">
+                                <c:if  test="${!empty versionlist}">
+                                    <c:forEach items="${versionlist}" var="verv">
+                                        <c:if  test="${application.id eq verv.application.id}">
+                                        <li><a href="applicationVersion/${verv.id}"><c:out value="${verv.version}"/></a></li>
+                                        </c:if>
+                                    </c:forEach>
+                                </c:if>
+                                </c:if>
                             </ul>
                         </div>
                     </td>
                     <td style="vertical-align:top;">${fn:length(application.versions)}</td>
                     <td style="vertical-align:top;text-align:right;">
+                        <c:if  test="${!check}">
                         <div class="btn-group">
                             <a data-toggle="modal" data-id="${application.id}" class="open-CloneApplicationModal btn" href="#cloneApplicationModal"><spring:message code="label.application.clone"/></a>
                             <a data-toggle="modal" data-id="${application.id}" class="open-AddApplicationVersionModal btn" href="#addApplicationVersionModal"><spring:message code="label.version.add"/></a>
                             <a data-toggle="modal" data-id="${application.id}" data-name="${application.name}" class="open-EditApplicationModal btn" href="#editApplicationModal"><spring:message code="label.edit"/></a>
                         </div>
+                        </c:if>
                     </td>
                 </tr>
-
-
             </c:forEach>
         </table>
     </c:if>

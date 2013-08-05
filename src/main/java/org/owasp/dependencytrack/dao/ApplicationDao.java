@@ -101,7 +101,7 @@ public class ApplicationDao {
 }
 
 
-    public List<Application> searchApplications(int libid,int libverid)
+    public List<Application> searchApplications(int libverid)
     {
 
         Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
@@ -109,13 +109,9 @@ public class ApplicationDao {
         query.setParameter("libverid",libverid);
         LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
-        System.out.println(libraryVersion.getId()+""+libraryVersion.getLibraryversion());
-        System.out.println("one size "+query.list().size());
-
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency where libraryVersion=:libver");
         query.setParameter("libver",libraryVersion);
 
-        System.out.println("two "+query.list().size());
 
        List< ApplicationDependency >apdep= query.list();
         List<Integer> ids = new ArrayList<Integer>();
@@ -129,8 +125,6 @@ public class ApplicationDao {
         query = sessionFactory.getCurrentSession().createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
-
-        System.out.println("size"+ query.list().size());
         List<ApplicationVersion> newappver= query.list();
 
         ArrayList <Application> newapp= new ArrayList<Application>();
@@ -142,5 +136,36 @@ public class ApplicationDao {
 
 
         return newapp;
+    }
+
+
+    public List<ApplicationVersion> searchApplicationsVersion(int libverid)
+    {
+
+        Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
+
+        query.setParameter("libverid",libverid);
+        LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
+
+
+        query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency where libraryVersion=:libver");
+        query.setParameter("libver",libraryVersion);
+
+
+
+        List< ApplicationDependency >apdep= query.list();
+        List<Integer> ids = new ArrayList<Integer>();
+
+        for(ApplicationDependency appdep:apdep)
+        {
+            ids.add(appdep.getApplicationVersion().getId());
+        }
+
+        query = sessionFactory.getCurrentSession().createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
+        query.setParameterList("appverid", ids);
+
+        List<ApplicationVersion> newappver= query.list();
+
+        return newappver;
     }
 }

@@ -30,22 +30,13 @@ $(document).on("click",".open-SearchApplicationModal", function (){
         dataType: 'json', // Choosing a JSON datatype
         success: function(data) // Variable data contains the data we get from serverside
         {
-         /*   $("#serapplib").empty();*/
-     /*       $.each(data, function () {
-                $("#serapplib").append($("<option />").val(this.vendors[0].libraries[0].libid).text(this.vendors[0].libraries[0]. libname));
-            });*/
-           // alert(data.vendors.length);
-
             for (var i=0;i<data.vendors.length;i++){
-                $('<option/>').val(data.vendors[i].id).html(data.vendors[i].id).appendTo('#serapplibven');
                 $('<option/>').val(data.vendors[i].libraries[0].libid).html(data.vendors[i].libraries[0].libname).appendTo('#serapplib');
+            }
+            for (var i=0;i<data.vendors.length;i++){
                 $('<option/>').val(data.vendors[i].libraries[0].versions[0]. libverid).html(data.vendors[i].libraries[0].versions[0].libver).appendTo('#serapplibver');
 
             }
-
-           /* $(".modal-body #serapplib").val(data.vendors[0].libraries[0]. libname );
-            $(".modal-body #serapplibver").val(data.vendors[0].libraries[0].versions[0]. libver );
-            $(".modal-body #serapplibven").val(data.vendors[0]. vendor );*/
         }
 
         });

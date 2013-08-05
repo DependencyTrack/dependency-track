@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.service;
 
 import org.owasp.dependencytrack.dao.ApplicationDao;
 import org.owasp.dependencytrack.model.Application;
+import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +54,13 @@ public class ApplicationService {
 
 
     @Transactional
-    public List<Application> searchApplications(int libid,int libverid) {
-       return applicationDao.searchApplications( libid,libverid);
+    public List<Application> searchApplications(int libverid) {
+       return applicationDao.searchApplications(libverid);
+    }
+
+
+    @Transactional
+    public List<ApplicationVersion> searchApplicationsVersion(int libverid) {
+        return applicationDao.searchApplicationsVersion(libverid);
     }
 }

@@ -115,8 +115,13 @@ public class ApplicationController {
     /*SEARCH APPLICATION*/
     @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
     public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid, @RequestParam("serapplibver") int libverid) {
-        map.put("application", new ApplicationVersion());
-        map.put("applicationList", applicationService.searchApplications(libid, libverid));
+
+        map.put("applicationList", applicationService.searchApplications(libverid));
+
+         map.put("versionlist",applicationService.searchApplicationsVersion(libverid));
+        List <ApplicationVersion> av = applicationService.searchApplicationsVersion(libverid);
+                       System.out.println("version check "+ av.get(0).getVersion());
+        System.out.println("version check "+ av.get(0).getApplication().getName());
         map.put("check",true);
         return "applicationsPage";
     }

@@ -32,8 +32,6 @@ $(document).on("click",".open-SearchApplicationModal", function (){
         {
             for (var i=0;i<data.vendors.length;i++){
                 $('<option/>').val(data.vendors[i].libraries[0].libid).html(data.vendors[i].libraries[0].libname).appendTo('#serapplib');
-            }
-            for (var i=0;i<data.vendors.length;i++){
                 $('<option/>').val(data.vendors[i].libraries[0].versions[0]. libverid).html(data.vendors[i].libraries[0].versions[0].libver).appendTo('#serapplibver');
 
             }

@@ -45,7 +45,7 @@
                         <select id="adddepvendor" name="vendor" autofocus="autofocus" required="required">
                             <option value="">--</option>
                             <c:forEach items="${libraryVendors}" var="libraryVendor">
-                                <option value="${libraryVendor.vendor}">${libraryVendor.vendor}</option>
+                                <option value="${libraryVendor.vendor}-${libraryVendor.id}">${libraryVendor.vendor}</option>
                             </c:forEach>
                         </select>
                     </td>
@@ -57,7 +57,7 @@
                             <option value="">--</option>
                             <c:forEach items="${libraryVendors}" var="libraryVendor">
                                 <c:forEach items="${libraryVendor.libraries}" var="library">
-                                    <option value="${library.libraryname}" class="${libraryVendor.vendor}">${library.libraryname}</option>
+                                    <option value="${library.libraryname}-${library.id}" class="${libraryVendor.vendor}-${libraryVendor.id}">${library.libraryname}</option>
                                 </c:forEach>
                             </c:forEach>
                         </select>
@@ -71,7 +71,7 @@
                             <c:forEach items="${libraryVendors}" var="libraryVendor">
                                 <c:forEach items="${libraryVendor.libraries}" var="library">
                                     <c:forEach items="${library.versions}" var="version">
-                                        <option value="${version.id}" class="${library.libraryname}">${version.libraryversion}</option>
+                                        <option value="${version.id}" class="${library.libraryname}-${library.id}">${version.libraryversion}</option>
                                     </c:forEach>
                                 </c:forEach>
                             </c:forEach>

@@ -36,11 +36,15 @@ $(document).on("click",".open-SearchApplicationModal", function (){
         uri =  '../../libraryHierarchy';
     }
 
+    document.getElementById('serapplib').options.length = 0;
+    document.getElementById('serapplibver').options.length = 0;
     $.ajax({ // ajax call starts
         url: uri, // JQuery loads serverside.php
         dataType: 'json', // Choosing a JSON datatype
         success: function(data) // Variable data contains the data we get from serverside
         {
+            $('<option/>').val(" ").html("--").appendTo('#serapplib');
+            $('<option/>').val(" ").html("--").appendTo('#serapplibver');
             var vendjs,libjs,verjs;
               for(var i=0;i<data.vendors.length;i++)
               {

@@ -7,9 +7,9 @@
     <packaging>war</packaging>
     <version>0.1.0-SNAPSHOT</version>
 
-    <name>DependencyTrack</name>
-    <url>https://github.com/stevespringett/dependency-track.git</url>
-    <description>Dependency-Track is a webapp that can track third party components and libraries used in software</description>
+    <name>Dependency-Track</name>
+    <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
+    <description>Dependency-Track is a web application that tracks third-party components and libraries used in software</description>
     <inceptionYear>2013</inceptionYear>
     <organization>
         <name>OWASP</name>
@@ -20,7 +20,7 @@
             <name>Steve Springett</name>
             <email>Steve.Springett@owasp.org</email>
             <organization>OWASP</organization>
-            <organizationUrl>https://www.owasp.org/index.php/OWASP_Dependency_Track</organizationUrl>
+            <organizationUrl>https://www.owasp.org/</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -30,7 +30,7 @@
             <name>Nikhil Chitlur Navakiran</name>
             <email>nchitlurnavakiran@axway.com</email>
             <organization>Axway</organization>
-            <organizationUrl>https://www.owasp.org/index.php/OWASP_Dependency_Track</organizationUrl>
+            <organizationUrl>https://www.axway.com/</organizationUrl>
             <roles>
                 <role>developer</role>
             </roles>

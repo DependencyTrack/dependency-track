@@ -325,6 +325,10 @@ public class LibraryVersionDao {
 
         LibraryVersion version = (LibraryVersion) querylib.list().get(0);
 
+
+        int libid= ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
+
+
         Query query = sessionFactory.getCurrentSession().createQuery(
                 "from ApplicationDependency " + "where libraryVersion=:libraryVersion");
 
@@ -344,6 +348,19 @@ public class LibraryVersionDao {
         else if (null != version)
         {
             sessionFactory.getCurrentSession().delete(version);
+        }
+
+        query = sessionFactory.getCurrentSession().createQuery(
+                "from LibraryVersion " + "where library.id=:id");
+        query.setParameter("id",libid);
+
+        System.out.println("number of versions "+query.list().size());
+
+        if(query.list().isEmpty())
+        {
+            Library lib = (Library) sessionFactory.getCurrentSession().load(
+                    Library.class, id);
+            sessionFactory.getCurrentSession().delete(lib);
         }
     }
 
@@ -370,36 +387,70 @@ public class LibraryVersionDao {
 
    public void  addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID)
     {
-        LibraryVendor libraryVendor = new LibraryVendor();
-
+        LibraryVendor libraryVendor;
+        License licenses ;
+        Library library;
         Session session = sessionFactory.openSession();
         session.beginTransaction();
 
+        Query query= session.createQuery("from LibraryVendor where upper(vendor) =upper(:vendor) ");
+        query.setParameter("vendor", vendor);
+
+        if(query.list().isEmpty())
+        {
+            libraryVendor= new LibraryVendor();
         libraryVendor.setVendor(vendor);
         session.save(libraryVendor);
-
-        License licenses = new License();
-        try {
-            Blob blob = Hibernate.createBlob(file.getInputStream());
-
-            licenses.setFilename(file.getOriginalFilename());
-            licenses.setContenttype(file.getContentType());
-            licenses.setLicensename(license);
-            licenses.setText(blob);
-            session.save(licenses);
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
+        }
+        else
+        {
+           libraryVendor = (LibraryVendor) query.list().get(0);
         }
 
-        Library library = new Library();
+        query= session.createQuery("from License where upper(licensename) =upper(:license) ");
+        query.setParameter("license", license);
+
+
+         if(query.list().isEmpty())
+         {
+             licenses = new License();
+
+              try {
+                    Blob blob = Hibernate.createBlob(file.getInputStream());
+
+                    licenses.setFilename(file.getOriginalFilename());
+                    licenses.setContenttype(file.getContentType());
+                    licenses.setLicensename(license);
+                    licenses.setText(blob);
+                    session.save(licenses);
+
+                    } catch (IOException e)
+                       {
+                        e.printStackTrace();
+                       }
+         }
+        else
+         {
+            licenses = (License)query.list().get(0);
+         }
+
+        query= session.createQuery("from Library where upper(libraryname) =upper(:libraryname) ");
+        query.setParameter("libraryname", libraryname);
+
+        if(query.list().isEmpty())
+        {
+        library = new Library();
         library.setLibraryname(libraryname);
         library.setLibraryVendor(libraryVendor);
         library.setLicense(licenses);
         library.setSecunia(secuniaID);
         library.setLanguage(language);
         session.save(library);
+        }
+        else
+        {
+            library = (Library)query.list().get(0);
+        }
 
         LibraryVersion libVersion = new LibraryVersion();
         libVersion.setLibrary(library);

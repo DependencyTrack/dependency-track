@@ -24,15 +24,19 @@
 
 $(document).on("click",".open-SearchApplicationModal", function (){
 
-
+    var select = document.getElementById("DropList");
+    var length = select.options.length;
+    for (i = 0; i < length; i++) {
+        select.options[i] = null;
+    }
     $.ajax({ // ajax call starts
         url: 'libraryHierarchy', // JQuery loads serverside.php
         dataType: 'json', // Choosing a JSON datatype
         success: function(data) // Variable data contains the data we get from serverside
         {
             for (var i=0;i<data.vendors.length;i++){
-                $('<option/>').val(data.vendors[i].libraries[0].libid).html(data.vendors[i].libraries[0].libname).appendTo('#serapplib');
-                $('<option/>').val(data.vendors[i].libraries[0].versions[0]. libverid).html(data.vendors[i].libraries[0].versions[0].libver).appendTo('#serapplibver');
+                $('<option/>').val(data.vendors[i].libraries[0].libid).html(data.vendors[i].libraries[0].libname).insertAfter('#serapplib');
+                $('<option/>').val(data.vendors[i].libraries[0].versions[0]. libverid).html(data.vendors[i].libraries[0].versions[0].libver).insertAfter('#serapplibver');
 
             }
         }

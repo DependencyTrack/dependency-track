@@ -62,17 +62,16 @@
                     <div style="display:inline">
                     <td><label for="libraryname">Library Name</label></td>
                     <td>
-                        <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="$('input#libraryname').val($(this).val());">
+                        <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="populatetextbox('input#libraryname',this)">
                             <option value="">--</option>
-                            <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.libraryname}"><c:out value="${libList.library.libraryname}"/></option>
+                            <c:forEach items="${uniquelibList}" var="libList">
+                                <option value="${libList.libraryname}"><c:out value="${libList.libraryname}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="libraryname" name ="libnamesel" style="  position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                        <input id="libraryname" name ="libnamesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </td>
                     </div>
                 </tr>
-
 
 
                 <tr>
@@ -81,16 +80,13 @@
                         <div style="display:inline">
                         <select id="libraryversionid" name="libraryname"   onchange="$('input#libraryversion').val($(this).val());">
                             <option value="">--</option>
-                            <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.libraryversion}"><c:out value="${libList.libraryversion}"/></option>
+                            <c:forEach items="${uniqueVer}" var="libList">
+                                <option value="${libList}"><c:out value="${libList}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="libraryversion" name ="libversel" style="  position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                        <input id="libraryversion" name ="libversel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </div></td>
                 </tr>
-
-
-
 
 
                 <tr>
@@ -99,19 +95,14 @@
                         <div style="display:inline">
                         <select id="vendorid" name="libraryname"  onchange="$('input#vendor').val($(this).val());">
                             <option value="">--</option>
-                            <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.libraryVendor.vendor}"><c:out value="${libList.library.libraryVendor.vendor}"/></option>
+                            <c:forEach items="${uniquevenList}" var="libList">
+                                <option value="${libList.vendor}"><c:out value="${libList.vendor}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="vendor" name ="vendorsel"style=" position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                        <input id="vendor" name ="vendorsel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                          </div>
                     </td>
                 </tr>
-
-
-
-
-
 
 
                 <tr>
@@ -120,11 +111,11 @@
                         <div style="display:inline">
                         <select id="licenseids" name="license"  onchange="$('input#license').val($(this).val());">
                             <option value="">--</option>
-                            <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.license.licensename}"><c:out value="${libList.library.license.licensename}"/></option>
+                            <c:forEach items="${uniquelicList}" var="libList">
+                                <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="license" name ="licensesel" style=" position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                        <input id="license" name ="licensesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                             </div>
                     </td>
                 </tr>
@@ -143,11 +134,11 @@
                         <div style="display:inline">
                         <select id="languageid" name="language"  onchange="$('input#language').val($(this).val());">
                             <option value="">--</option>
-                            <c:forEach items="${libList}" var="libList">
-                                <option value="${libList.library.language}"><c:out value="${libList.library.language}"/></option>
+                            <c:forEach items="${uniqueLang}" var="libList">
+                                <option value="${libList}"><c:out value="${libList}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="language" name ="languagesel" style="position:relative; height: 25px; border: 0px; left: -224px; width: 191px; top: -5px;" />
+                        <input id="language" name ="languagesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                             </div>
                     </td>
                 </tr>
@@ -258,10 +249,9 @@
                     <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
 
                 </tr>
-                <tr id="hideviewlicense">
+                <tr>
                     <td><label for="viewlicense">View File</label></td>
                     <td>
-
                 <iframe id="viewlicense" src="" width="400" height="400" seamless> </iframe>  </td>
                 </tr>
             </table>

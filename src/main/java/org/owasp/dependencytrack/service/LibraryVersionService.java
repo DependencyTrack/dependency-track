@@ -84,6 +84,31 @@ public class LibraryVersionService {
     }
 
     @Transactional
+    public List<Library> uniqueLibrary() {
+        return libraryVersionDao.uniqueLibrary();
+    }
+
+    @Transactional
+    public List<License> uniqueLicense() {
+        return libraryVersionDao.uniqueLicense();
+    }
+
+    @Transactional
+    public List<LibraryVendor> uniqueVendor() {
+        return libraryVersionDao.uniqueVendor();
+    }
+
+    @Transactional
+    public List<String> uniqueLang() {
+        return libraryVersionDao.uniqueLang();
+    }
+
+    @Transactional
+    public List<String> uniqueVer() {
+        return libraryVersionDao.uniqueVer();
+    }
+
+    @Transactional
     public void addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID) {
 
         libraryVersionDao.addLibraries( libraryname,libraryversion,vendor,  license,  file,  language,  secuniaID);

@@ -21,10 +21,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.owasp.dependencytrack.model.Application;
-import org.owasp.dependencytrack.model.ApplicationVersion;
-import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.*;
 import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.LibraryVersionService;
@@ -307,6 +304,11 @@ public class ApplicationController {
     public String allLibrary(Map<String, Object> map) {
         map.put("LibraryVersion", new LibraryVersion());
         map.put("libList", libraryVersionService.allLibrary());
+        map.put("uniquelibList", libraryVersionService.uniqueLibrary());
+        map.put("uniquelicList", libraryVersionService.uniqueLicense());
+        map.put("uniquevenList", libraryVersionService.uniqueVendor());
+        map.put("uniqueLang", libraryVersionService.uniqueLang());
+        map.put("uniqueVer", libraryVersionService.uniqueVer());
         return "librariesPage";
     }
 
@@ -400,6 +402,7 @@ public class ApplicationController {
         }
         else
         {
+            System.out.println("in else");
         return "emptyfile";
     }
         return "";

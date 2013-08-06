@@ -385,6 +385,50 @@ public class LibraryVersionDao {
 
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Library> uniqueLibrary() {
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "select distinct lib from Library as lib");
+
+        return query.list();
+
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public List<License> uniqueLicense() {
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "select distinct lic from License as lic");
+
+        return query.list();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<LibraryVendor> uniqueVendor() {
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "select distinct lic from LibraryVendor as lic");
+
+        return query.list();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> uniqueLang() {
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "select distinct lib.language from Library as lib");
+        return query.list();
+
+    }
+
+    @SuppressWarnings("unchecked")
+        public List<String> uniqueVer() {
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "select distinct libver.libraryversion from LibraryVersion as libver");
+        return query.list();
+
+    }
+
    public void  addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID)
     {
         LibraryVendor libraryVendor;

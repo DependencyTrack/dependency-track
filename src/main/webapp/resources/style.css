@@ -27,6 +27,13 @@ a img {
     border: 0;
 }
 
+iframe[seamless] {
+    background-color: transparent;
+    border: 0 none transparent;
+    padding: 0;
+    overflow: hidden;
+}
+
 .pageheader {
     margin: 0;
     padding: 0;

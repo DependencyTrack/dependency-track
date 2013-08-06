@@ -250,7 +250,7 @@
                 <tr>
                     <td><label for="viewlicense">View File</label></td>
                     <td>
-                        <iframe id="viewlicense" width="400" height="400" seamless></iframe>
+                        <iframe id="viewlicense" width="400" height="400" src="" seamless="seamless" sandbox="allow-same-origin"></iframe>
                     </td>
                 </tr>
             </table>

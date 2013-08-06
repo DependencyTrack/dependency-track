@@ -64,11 +64,11 @@
     <dependencies>
 
       <!--security headers -->
-        <dependency>
+       <!-- <dependency>
             <groupId>com.sourceclear.headlines</groupId>
             <artifactId>complete</artifactId>
             <version>0.1.4</version>
-        </dependency>
+        </dependency>-->
 
         <!--security hdiv -->
         <dependency>

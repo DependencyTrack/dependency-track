@@ -24,21 +24,42 @@
 
 $(document).on("click",".open-SearchApplicationModal", function (){
 
-    var select = document.getElementById("DropList");
-    var length = select.options.length;
-    for (i = 0; i < length; i++) {
-        select.options[i] = null;
+    var pathname = window.location.pathname;
+    var checkpath=pathname.split("/").length;
+    var uri =  'libraryHierarchy';
+    if(checkpath<2)
+    {
+        uri =  'libraryHierarchy';
     }
+    else
+    {
+        uri =  '../../libraryHierarchy';
+    }
+
     $.ajax({ // ajax call starts
-        url: 'libraryHierarchy', // JQuery loads serverside.php
+        url: uri, // JQuery loads serverside.php
         dataType: 'json', // Choosing a JSON datatype
         success: function(data) // Variable data contains the data we get from serverside
         {
-            for (var i=0;i<data.vendors.length;i++){
-                $('<option/>').val(data.vendors[i].libraries[0].libid).html(data.vendors[i].libraries[0].libname).insertAfter('#serapplib');
-                $('<option/>').val(data.vendors[i].libraries[0].versions[0]. libverid).html(data.vendors[i].libraries[0].versions[0].libver).insertAfter('#serapplibver');
+            var vendjs,libjs,verjs;
+              for(var i=0;i<data.vendors.length;i++)
+              {
 
-            }
+                     vendjs=data.vendors[i];
+                  for(var j=0;j<vendjs.libraries.length;j++)
+                  {
+
+                      libjs=vendjs.libraries[j];
+                      $('<option/>').val(libjs.libid).html(libjs.libname).appendTo('#serapplib');
+                      for(var k=0;k<libjs.versions.length;k++)
+                      {
+                          verjs=libjs.versions[k];
+                          $('<option/>').val(verjs. libverid).html(verjs.libver).appendTo('#serapplibver');
+                      }
+
+                  }
+              }
+
         }
 
         });
@@ -123,3 +144,9 @@ $(document).on("click", ".open-EditDependencyModal", function ()
     $(".modal-body #editappver").val( $(this).data("ver") );
 
 });
+
+ function populatetextbox(id,str)
+ {
+     var value = str.options[str.selectedIndex].value;
+     $(id).val(value);
+ }

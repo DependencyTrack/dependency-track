@@ -242,23 +242,19 @@
                 <tr>
                     <td><label for="licensename">License Name</label></td>
                     <td><input id="licensename" name="licensename" type="text" value="" readonly/></td>
-
                 </tr>
                 <tr>
                     <td><label for="licensfileename">License File</label></td>
                     <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
-
                 </tr>
                 <tr>
                     <td><label for="viewlicense">View File</label></td>
                     <td>
-                <iframe id="viewlicense" src="" width="400" height="400" seamless> </iframe>  </td>
+                        <iframe id="viewlicense" width="400" height="400" seamless></iframe>
+                    </td>
                 </tr>
             </table>
-
-
-                <input type="hidden" id="licenseid" name="licenseid" value=""/>
-
+            <input type="hidden" id="licenseid" name="licenseid" value=""/>
         </div>
 
 

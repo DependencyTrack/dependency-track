@@ -123,8 +123,7 @@ $(document).on("click", ".open-CloneApplicationVersionModal", function ()
 /* LICENSE DISPLAY AND DOWNLOAD*/
 $(document).on("click", ".open-LicenseLibrariesModal", function ()
 {
-   $("#viewlicense").attr("src", "viewlicense/" + $(this).data('licenseid') );
-
+    $("#viewlicense").attr("src", "viewlicense/" + $(this).data('licenseid') );
 
     $(".modal-body #licenseid").val( $(this).data("licenseid") );
     $(".modal-body #licensename").val( $(this).data("licensename") );
@@ -133,7 +132,6 @@ $(document).on("click", ".open-LicenseLibrariesModal", function ()
     if (($(this).data("licensefiletype") != "text/plain") ||($(this).data("licensefiletype") != "text/html") ) {
         var frame = document.getElementById("hideviewlicense");
         frame.parentNode.removeChild(frame);
-
     }
 
 });

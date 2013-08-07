@@ -37,9 +37,6 @@ public class Library implements Cloneable {
     @OrderBy
     private License license;
 
-    @Column(name = "SECUNIA", nullable = true)
-    private Integer secunia;
-
     @ManyToOne
     @JoinColumn(name = "LIBRARYVENDORID")
     @OrderBy
@@ -57,7 +54,7 @@ public class Library implements Cloneable {
         obj.setLibraryname(this.libraryname);
         obj.setLibraryVendor(this.libraryVendor);
         obj.setLicense(this.license);
-        obj.setSecunia(this.secunia);
+
         return obj;
     }
 
@@ -85,13 +82,6 @@ public class Library implements Cloneable {
         this.license = license;
     }
 
-    public Integer getSecunia() {
-        return secunia;
-    }
-
-    public void setSecunia(Integer secunia) {
-        this.secunia = secunia;
-    }
 
     public LibraryVendor getLibraryVendor() {
         return libraryVendor;

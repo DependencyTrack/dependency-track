@@ -25,7 +25,7 @@
                     <td><c:out value="${libList.libraryversion}"/></td>
                     <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}"href="#licenseLibrariesModal">${libList.library.license.licensename}</a></td>
                     <td><c:out value="${libList.library.language}"/></td>
-                    <td><c:out value="${libList.library.secunia}"/></td>
+                    <td><c:out value="${libList.secunia}"/></td>
                     <td style="vertical-align:top;text-align:right;">
                         <div class="btn-group">
                             <a data-toggle="modal"
@@ -40,7 +40,7 @@
                                data-libraryversion ="${libList.libraryversion}"
                                data-licensename ="${libList.library.license.licensename}"
                                data-language ="${libList.library.language}"
-                               data-secunia ="${libList.library.secunia}"
+                               data-secunia ="${libList.secunia}"
                                class="open-EditLibrariesModal btn" href="#editLibrariesModal">Edit</a>
                         </div>
                     </td>

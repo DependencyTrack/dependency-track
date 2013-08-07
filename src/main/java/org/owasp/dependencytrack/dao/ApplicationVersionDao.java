@@ -33,7 +33,6 @@ public class ApplicationVersionDao {
     private SessionFactory sessionFactory;
 
 
-
     /*
         Returns an application version with the specified id
      */
@@ -57,11 +56,9 @@ public class ApplicationVersionDao {
         Query query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency where applicationVersion=:appver");
         query.setParameter("appver", applicationVersion);
 
-        if(!query.list().isEmpty())
-        {
-            List <ApplicationDependency> applicationDependencies = query.list();
-            for (ApplicationDependency appdep: applicationDependencies)
-            {
+        if (!query.list().isEmpty()) {
+            List<ApplicationDependency> applicationDependencies = query.list();
+            for (ApplicationDependency appdep : applicationDependencies) {
                 sessionFactory.getCurrentSession().delete(appdep);
             }
         }
@@ -107,17 +104,16 @@ public class ApplicationVersionDao {
         session.close();
     }
 
-    public void cloneApplication(int applicationid, String applicationname)
-    {
+    public void cloneApplication(int applicationid, String applicationname) {
         Query query = sessionFactory.getCurrentSession().createQuery("from Application where id=:id");
         query.setParameter("id", applicationid);
 
-        Application findapplication = (Application)query.list().get(0);
+        Application findapplication = (Application) query.list().get(0);
 
         query = sessionFactory.getCurrentSession().createQuery("from ApplicationVersion AS appver where appver.application=:findapplication");
         query.setParameter("findapplication", findapplication);
 
-        List<ApplicationVersion>applicationVersions = query.list();
+        List<ApplicationVersion> applicationVersions = query.list();
 
         Session session = sessionFactory.openSession();
         session.beginTransaction();
@@ -126,20 +122,18 @@ public class ApplicationVersionDao {
         application.setName(applicationname);
         session.save(application);
 
-        for (ApplicationVersion appver : applicationVersions)
-        {
+        for (ApplicationVersion appver : applicationVersions) {
             query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency AS appdep where appdep.applicationVersion=:id");
             query.setParameter("id", appver);
 
-            List<ApplicationDependency>applicationDependencies = query.list();
+            List<ApplicationDependency> applicationDependencies = query.list();
 
             ApplicationVersion applicationVersion = appver;
             ApplicationVersion newApplicationVersion = (ApplicationVersion) applicationVersion.clone();
             newApplicationVersion.setApplication(application);
             session.save(newApplicationVersion);
 
-            for (ApplicationDependency appdep : applicationDependencies)
-            {
+            for (ApplicationDependency appdep : applicationDependencies) {
                 ApplicationDependency applicationDependency = appdep;
                 ApplicationDependency newDependencies = (ApplicationDependency) applicationDependency.clone();
                 newDependencies.setApplicationVersion(newApplicationVersion);
@@ -153,35 +147,32 @@ public class ApplicationVersionDao {
     }
 
 
-
-    public void cloneApplicationVersion(int applicationid, String newversion, String curappver)
-    {
+    public void cloneApplicationVersion(int applicationid, String newversion, String curappver) {
         Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         Query query = session.createQuery("from Application AS apps where apps.id=:findapplication");
-        query.setParameter("findapplication",applicationid);
+        query.setParameter("findapplication", applicationid);
 
         Application app = (Application) query.list().get(0);
 
         query = session.createQuery("from ApplicationVersion AS appver where appver.application=:findapplication and appver.version=:curappver");
-        query.setParameter("findapplication",app);
-        query.setParameter("curappver",curappver);
+        query.setParameter("findapplication", app);
+        query.setParameter("curappver", curappver);
 
-        ApplicationVersion applicationVersion = (ApplicationVersion)query.list().get(0);
+        ApplicationVersion applicationVersion = (ApplicationVersion) query.list().get(0);
         ApplicationVersion newApplicationVersion = (ApplicationVersion) applicationVersion.clone();
         newApplicationVersion.setVersion(newversion);
         session.save(newApplicationVersion);
 
         query = session.createQuery("from ApplicationDependency AS appdep where appdep.applicationVersion=:findappverr");
-        query.setParameter("findappverr",applicationVersion);
+        query.setParameter("findappverr", applicationVersion);
 
 
         List<ApplicationDependency> applicationDependencies = query.list();
 
 
-        for (ApplicationDependency appdep : applicationDependencies)
-        {
+        for (ApplicationDependency appdep : applicationDependencies) {
             ApplicationDependency applicationDependency = appdep;
             ApplicationDependency newDependencies = (ApplicationDependency) applicationDependency.clone();
             newDependencies.setApplicationVersion(newApplicationVersion);
@@ -194,17 +185,15 @@ public class ApplicationVersionDao {
 
     }
 
-     public void updateApplicationVersion(int id, String appversion)
-     {
-         Query query = sessionFactory.getCurrentSession().createQuery(
-                 "update ApplicationVersion set version=:ver " + "where id=:appverid");
+    public void updateApplicationVersion(int id, String appversion) {
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "update ApplicationVersion set version=:ver " + "where id=:appverid");
 
-         query.setParameter("ver", appversion);
-         query.setParameter("appverid", id);
-         int result = query.executeUpdate();
+        query.setParameter("ver", appversion);
+        query.setParameter("appverid", id);
+        int result = query.executeUpdate();
 
-     }
-
+    }
 
 
 }

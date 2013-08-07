@@ -53,7 +53,6 @@ public class License implements Cloneable {
     private Set<Library> libraries;
 
 
-
     public Object clone() {
         License obj = new License();
         obj.setLicensename(this.licensename);

@@ -29,11 +29,11 @@ public class ApplicationVersion implements Cloneable {
     @GeneratedValue
     private Integer id;
 
-    @Column(name = "VERSION", nullable=false)
+    @Column(name = "VERSION", nullable = false)
     private String version;
 
     @ManyToOne
-    @JoinColumn(name = "APPID", nullable=false)
+    @JoinColumn(name = "APPID", nullable = false)
     private Application application;
 
 

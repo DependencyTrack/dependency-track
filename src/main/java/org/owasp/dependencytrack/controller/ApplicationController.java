@@ -21,7 +21,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.model.Application;
+import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.LibraryVersionService;
@@ -103,7 +106,7 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
     public String application(Map<String, Object> map) {
-        map.put("check",false);
+        map.put("check", false);
         map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
         return "applicationsPage";
@@ -113,19 +116,16 @@ public class ApplicationController {
     @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
     public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid, @RequestParam("serapplibver") int libverid) {
 
-          if (libverid!=-1)
-          {
-        map.put("applicationList", applicationService.searchApplications(libverid));
-        map.put("versionlist",applicationService.searchApplicationsVersion(libverid));
-        map.put("check",true);
-          }
-        else
-          {
-              System.out.println("check lib id "+libid);
-              map.put("applicationList", applicationService.searchAllApplications(libid));
-              map.put("versionlist",applicationService.searchAllApplicationsVersions(libid));
-              map.put("check",true);
-          }
+        if (libverid != -1) {
+            map.put("applicationList", applicationService.searchApplications(libverid));
+            map.put("versionlist", applicationService.searchApplicationsVersion(libverid));
+            map.put("check", true);
+        } else {
+            System.out.println("check lib id " + libid);
+            map.put("applicationList", applicationService.searchAllApplications(libid));
+            map.put("versionlist", applicationService.searchAllApplicationsVersions(libid));
+            map.put("check", true);
+        }
         System.out.println("after executing if and else");
         return "applicationsPage";
     }
@@ -234,8 +234,7 @@ public class ApplicationController {
     /*CLONE APPLICATION INCLUDING ALL VERSION*/
 
     @RequestMapping(value = "/cloneApplication", method = RequestMethod.POST)
-    public String cloneApplication(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneAppName") String applicationname)
-    {
+    public String cloneApplication(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneAppName") String applicationname) {
 
         applicationVersionService.cloneApplication(applicationid, applicationname);
 
@@ -247,8 +246,7 @@ public class ApplicationController {
      /*CLONE APPLICATION VERSION INCLUDING ALL VERSION*/
 
     @RequestMapping(value = "/cloneApplicationVersion", method = RequestMethod.POST)
-    public String cloneApplicationVersion(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneVersionNumber") String newversion, @RequestParam("applicationversion") String applicationversion)
-    {
+    public String cloneApplicationVersion(ModelMap modelMap, @RequestParam("applicationid") int applicationid, @RequestParam("cloneVersionNumber") String newversion, @RequestParam("applicationversion") String applicationversion) {
 
         applicationVersionService.cloneApplicationVersion(applicationid, newversion, applicationversion);
 
@@ -258,11 +256,11 @@ public class ApplicationController {
 
 
 	/*
-	 * ------ Applications and Version end ------
+     * ------ Applications and Version end ------
 	 */
 
 	/*
-	 * ------ Library start ------
+     * ------ Library start ------
 	 */
 
 
@@ -283,12 +281,11 @@ public class ApplicationController {
                                   @RequestParam("vendor") String vendor,
                                   @RequestParam("license") String license,
                                   @RequestParam("language") String language,
-                                  @RequestParam("secuniaID") int secuniaID ) {
+                                  @RequestParam("secuniaID") int secuniaID) {
 
         libraryVersionService.updateLibrary(vendorid, licenseid, libraryid,
                 libraryversionid, libraryname, libraryversion, vendor, license, file,
                 language, secuniaID);
-
 
 
         return "redirect:/libraries";
@@ -324,17 +321,17 @@ public class ApplicationController {
     */
     @RequestMapping(value = "/addlibraries", method = RequestMethod.POST)
     public String addLibraries(ModelMap modelMap,
-                                @RequestParam("libnamesel") String libraryname,
-                                @RequestParam("libversel") String libraryversion,
-                                @RequestParam("vendorsel") String vendor,
-                                @RequestParam("licensesel") String license,
-                                @RequestParam("Licensefile") MultipartFile file,
-                                @RequestParam("languagesel") String language,
-                                @RequestParam("secuniaID") int secuniaID) {
+                               @RequestParam("libnamesel") String libraryname,
+                               @RequestParam("libversel") String libraryversion,
+                               @RequestParam("vendorsel") String vendor,
+                               @RequestParam("licensesel") String license,
+                               @RequestParam("Licensefile") MultipartFile file,
+                               @RequestParam("languagesel") String language,
+                               @RequestParam("secuniaID") int secuniaID) {
 
-        libraryVersionService.addLibraries(libraryname,libraryversion, vendor, license, file, language, secuniaID);
+        libraryVersionService.addLibraries(libraryname, libraryversion, vendor, license, file, language, secuniaID);
 
-        return "redirect:/libraries" ;
+        return "redirect:/libraries";
     }
 	
 
@@ -350,8 +347,6 @@ public class ApplicationController {
     public void downloadLicense(Map<String, Object> map,
                                 HttpServletResponse response,
                                 @RequestParam("licenseid") Integer licenseid) {
-
-
 
 
         List<License> licenses = libraryVersionService.listLicense(licenseid);
@@ -375,43 +370,40 @@ public class ApplicationController {
             e.printStackTrace();
         }
 
-        }
+    }
 
 
     @RequestMapping(value = "/viewlicense/{licenseid}", method = RequestMethod.GET)
     public String viewLicense(Map<String, Object> map,
-                            HttpServletResponse response,
-                            @PathVariable("licenseid") Integer licenseid) {
+                              HttpServletResponse response,
+                              @PathVariable("licenseid") Integer licenseid) {
 
 
         List<License> licenses = libraryVersionService.listLicense(licenseid);
         License newLicense = licenses.get(0);
-        if (newLicense.getContenttype().equals("text/plain")||newLicense.getContenttype().equals("text/html"))
-        {
-        try {
+        if (newLicense.getContenttype().equals("text/plain") || newLicense.getContenttype().equals("text/html")) {
+            try {
 
-            response.setHeader("Content-Disposition", "inline;filename=\""
-                    + newLicense.getFilename() + "\"");
-            OutputStream out = response.getOutputStream();
+                response.setHeader("Content-Disposition", "inline;filename=\""
+                        + newLicense.getFilename() + "\"");
+                OutputStream out = response.getOutputStream();
 
-            response.setContentType(newLicense.getContenttype());
-            IOUtils.copy(newLicense.getText().getBinaryStream(), out);
+                response.setContentType(newLicense.getContenttype());
+                IOUtils.copy(newLicense.getText().getBinaryStream(), out);
 
-            out.flush();
-            out.close();
+                out.flush();
+                out.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        } else {
+
+            return "emptyfile";
         }
-        }
-        else
-        {
-
-        return "emptyfile";
-    }
         return "";
     }
 

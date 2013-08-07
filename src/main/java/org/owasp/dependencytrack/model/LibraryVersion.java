@@ -36,10 +36,14 @@ public class LibraryVersion implements Cloneable {
     @JoinColumn(name = "LIBRARYID", nullable = false)
     private Library library;
 
+    @Column(name = "SECUNIA", nullable = true)
+    private Integer secunia;
+
     public Object clone() {
         LibraryVersion obj = new LibraryVersion();
         obj.setLibrary(this.library);
         obj.setLibraryversion(this.libraryversion);
+        obj.setSecunia(this.secunia);
         return obj;
     }
 
@@ -65,6 +69,14 @@ public class LibraryVersion implements Cloneable {
 
     public void setLibrary(Library library) {
         this.library = library;
+    }
+
+    public Integer getSecunia() {
+        return secunia;
+    }
+
+    public void setSecunia(Integer secunia) {
+        this.secunia = secunia;
     }
 
 }

@@ -113,13 +113,20 @@ public class ApplicationController {
     @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
     public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid, @RequestParam("serapplibver") int libverid) {
 
+          if (libverid!=-1)
+          {
         map.put("applicationList", applicationService.searchApplications(libverid));
-
-         map.put("versionlist",applicationService.searchApplicationsVersion(libverid));
-        List <ApplicationVersion> av = applicationService.searchApplicationsVersion(libverid);
-                       System.out.println("version check "+ av.get(0).getVersion());
-        System.out.println("version check "+ av.get(0).getApplication().getName());
+        map.put("versionlist",applicationService.searchApplicationsVersion(libverid));
         map.put("check",true);
+          }
+        else
+          {
+              System.out.println("check lib id "+libid);
+              map.put("applicationList", applicationService.searchAllApplications(libid));
+              map.put("versionlist",applicationService.searchAllApplicationsVersions(libid));
+              map.put("check",true);
+          }
+        System.out.println("after executing if and else");
         return "applicationsPage";
     }
 
@@ -402,7 +409,7 @@ public class ApplicationController {
         }
         else
         {
-            System.out.println("in else");
+
         return "emptyfile";
     }
         return "";

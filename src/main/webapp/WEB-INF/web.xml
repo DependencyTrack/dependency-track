@@ -83,6 +83,13 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
+   <!-- <jsp-config>
+        <taglib>
+            <taglib-uri>http://java.sun.com/jsp/jstl/core</taglib-uri>
+            <taglib-location>/WEB-INF/tlds/hdiv-c.tld</taglib-location>
+        </taglib>
+    </jsp-config>-->
+
     <session-config>
         <cookie-config>
             <http-only>true</http-only>

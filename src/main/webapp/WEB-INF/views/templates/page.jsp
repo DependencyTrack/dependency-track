@@ -66,6 +66,14 @@
             <table>
 
                 <tr>
+                    <td><label for="serappven">Library Vendor</label></td>
+                    <td><select id="serappven" name="serappven" autofocus="autofocus" required="required">
+                        <option value="">--</option>
+                    </select></td>
+                        <%--<td><input id="serapplib" name="serapplib" type="text" value=""/></td>--%>
+                </tr>
+
+                <tr>
                     <td><label for="serapplib">Library Name</label></td>
                     <td><select id="serapplib" name="serapplib" autofocus="autofocus" required="required">
                         <option value="">--</option>
@@ -75,7 +83,7 @@
                 <tr>
                     <td><label for="serapplibver">Library Version</label></td>
 
-                    <td><select id="serapplibver" name="serapplibver" autofocus="autofocus" required="required">
+                    <td><select id="serapplibver" name="serapplibver" autofocus="autofocus" >
                         <option value="">--</option>
                     </select></td>
                 </tr>

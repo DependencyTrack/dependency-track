@@ -72,51 +72,47 @@ public class ApplicationDao {
                 "from ApplicationVersion " + "where application=:curapp");
         query.setParameter("curapp", curapp);
 
-        List <ApplicationVersion> applicationVersions = query.list();
+        List<ApplicationVersion> applicationVersions = query.list();
 
-        for(ApplicationVersion curver:applicationVersions)
-        {
+        for (ApplicationVersion curver : applicationVersions) {
 
-        query = session.createQuery(
-                "from ApplicationDependency " + "where applicationVersion=:curver");
+            query = session.createQuery(
+                    "from ApplicationDependency " + "where applicationVersion=:curver");
 
-        query.setParameter("curver",curver);
-        List <ApplicationDependency> applicationDependency;
+            query.setParameter("curver", curver);
+            List<ApplicationDependency> applicationDependency;
 
 
-        if (!query.list().isEmpty()) {
+            if (!query.list().isEmpty()) {
 
-            applicationDependency =   query.list();
-            for(ApplicationDependency dependency: applicationDependency)
-            {
-               session.delete(dependency);
+                applicationDependency = query.list();
+                for (ApplicationDependency dependency : applicationDependency) {
+                    session.delete(dependency);
+                }
             }
-        }
             session.delete(curver);
         }
         session.delete(curapp);
         session.getTransaction().commit();
         session.close();
-}
+    }
 
 
-    public Set<Application> searchApplications(int libverid)
-    {
+    public Set<Application> searchApplications(int libverid) {
 
         Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
 
-        query.setParameter("libverid",libverid);
+        query.setParameter("libverid", libverid);
         LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency where libraryVersion=:libver");
-        query.setParameter("libver",libraryVersion);
+        query.setParameter("libver", libraryVersion);
 
 
-       List< ApplicationDependency >apdep= query.list();
+        List<ApplicationDependency> apdep = query.list();
         List<Integer> ids = new ArrayList<Integer>();
 
-        for(ApplicationDependency appdep:apdep)
-        {
+        for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
 
@@ -124,12 +120,11 @@ public class ApplicationDao {
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
-        List<ApplicationVersion> newappver= query.list();
+        List<ApplicationVersion> newappver = query.list();
 
-        ArrayList <Application> newapp= new ArrayList<Application>();
+        ArrayList<Application> newapp = new ArrayList<Application>();
 
-        for(ApplicationVersion version :newappver)
-        {
+        for (ApplicationVersion version : newappver) {
             newapp.add(version.getApplication());
         }
         Set<Application> setnewapp = new HashSet<Application>(newapp);
@@ -139,51 +134,47 @@ public class ApplicationDao {
     }
 
 
-    public List<ApplicationVersion> searchApplicationsVersion(int libverid)
-    {
+    public List<ApplicationVersion> searchApplicationsVersion(int libverid) {
 
         Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
 
-        query.setParameter("libverid",libverid);
+        query.setParameter("libverid", libverid);
         LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
 
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency where libraryVersion=:libver");
-        query.setParameter("libver",libraryVersion);
+        query.setParameter("libver", libraryVersion);
 
 
-
-        List< ApplicationDependency >apdep= query.list();
+        List<ApplicationDependency> apdep = query.list();
         List<Integer> ids = new ArrayList<Integer>();
 
-        for(ApplicationDependency appdep:apdep)
-        {
+        for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
 
         query = sessionFactory.getCurrentSession().createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
-        List<ApplicationVersion> newappver= query.list();
+        List<ApplicationVersion> newappver = query.list();
 
         return newappver;
     }
-    public Set<Application> searchAllApplications(int libid)
-    {
+
+    public Set<Application> searchAllApplications(int libid) {
 
         Query query = sessionFactory.getCurrentSession().createQuery("select lib.versions FROM Library as lib where lib.id=:libid");
-        query.setParameter("libid",libid);
+        query.setParameter("libid", libid);
 
-        List<LibraryVersion> libver =query.list();
+        List<LibraryVersion> libver = query.list();
 
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
-        query.setParameterList("libver",libver);
+        query.setParameterList("libver", libver);
 
-        List< ApplicationDependency >apdep= query.list();
+        List<ApplicationDependency> apdep = query.list();
         List<Integer> ids = new ArrayList<Integer>();
 
-        for(ApplicationDependency appdep:apdep)
-        {
+        for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
 
@@ -191,12 +182,11 @@ public class ApplicationDao {
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
-        List<ApplicationVersion> newappver= query.list();
+        List<ApplicationVersion> newappver = query.list();
 
-        ArrayList <Application> newapp= new ArrayList<Application>();
+        ArrayList<Application> newapp = new ArrayList<Application>();
 
-        for(ApplicationVersion version :newappver)
-        {
+        for (ApplicationVersion version : newappver) {
             newapp.add(version.getApplication());
         }
         Set<Application> setnewapp = new HashSet<Application>(newapp);
@@ -206,22 +196,20 @@ public class ApplicationDao {
 
     }
 
-    public List<ApplicationVersion> searchAllApplicationsVersions(int libid)
-    {
+    public List<ApplicationVersion> searchAllApplicationsVersions(int libid) {
 
         Query query = sessionFactory.getCurrentSession().createQuery("select lib.versions FROM Library as lib where lib.id=:libid");
-        query.setParameter("libid",libid);
+        query.setParameter("libid", libid);
 
-        List<LibraryVersion> libver =query.list();
+        List<LibraryVersion> libver = query.list();
 
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
-        query.setParameterList("libver",libver);
+        query.setParameterList("libver", libver);
 
-        List< ApplicationDependency >apdep= query.list();
+        List<ApplicationDependency> apdep = query.list();
         List<Integer> ids = new ArrayList<Integer>();
 
-        for(ApplicationDependency appdep:apdep)
-        {
+        for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
 
@@ -229,9 +217,7 @@ public class ApplicationDao {
         query = sessionFactory.getCurrentSession().createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
-        List<ApplicationVersion> newappver= query.list();
-
-
+        List<ApplicationVersion> newappver = query.list();
 
 
         return newappver;

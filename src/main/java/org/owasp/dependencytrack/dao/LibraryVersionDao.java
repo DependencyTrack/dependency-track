@@ -41,16 +41,16 @@ public class LibraryVersionDao {
     /*
         Returns a List of all LibraryVendors available in the application along with all child objects
      */
-    public List<LibraryVendor> getLibraryHierarchy(){
+    public List<LibraryVendor> getLibraryHierarchy() {
         List<LibraryVendor> retlist = new ArrayList<LibraryVendor>();
         Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVendor order by vendor asc");
-        for (LibraryVendor vendor: (List<LibraryVendor>)query.list()) {
+        for (LibraryVendor vendor : (List<LibraryVendor>) query.list()) {
             Query query2 = sessionFactory.getCurrentSession().createQuery("FROM Library where libraryVendor=:vendor order by libraryname asc");
             query2.setParameter("vendor", vendor);
-            for (Library library: (List<Library>)query2.list()) {
+            for (Library library : (List<Library>) query2.list()) {
                 Query query3 = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where library=:library order by libraryversion asc");
                 query3.setParameter("library", library);
-                List<LibraryVersion> versions = (List<LibraryVersion>)query3.list();
+                List<LibraryVersion> versions = (List<LibraryVersion>) query3.list();
                 library.setVersions(new HashSet<LibraryVersion>(versions));
                 vendor.addLibrary(library);
             }
@@ -123,13 +123,14 @@ public class LibraryVersionDao {
         library.setLibraryname(libraryname);
         library.setLibraryVendor(libraryVendor);
         library.setLicense(licenses);
-        library.setSecunia(secuniaID);
+
         library.setLanguage(language);
         session.save(library);
 
         LibraryVersion libVersion = new LibraryVersion();
         libVersion.setLibrary(library);
         libVersion.setLibraryversion(libraryversion);
+        libVersion.setSecunia(secuniaID);
         session.save(libVersion);
 
         ApplicationDependency dependencies = new ApplicationDependency();
@@ -151,7 +152,7 @@ public class LibraryVersionDao {
 
         List<LibraryVersion> libvers = new ArrayList<LibraryVersion>();
         List<ApplicationDependency> deps = query.list();
-        for (ApplicationDependency dep: deps) {
+        for (ApplicationDependency dep : deps) {
             libvers.add(dep.getLibraryVersion());
         }
         return libvers;
@@ -183,8 +184,7 @@ public class LibraryVersionDao {
         Deletes the dependency between the ID of the specified ApplicationVersion and LibraryVersion
      */
     @SuppressWarnings("unchecked")
-    public void deleteDependency(int appversionid, int libversionid)
-    {
+    public void deleteDependency(int appversionid, int libversionid) {
         Session session = sessionFactory.openSession();
         session.beginTransaction();
 
@@ -195,13 +195,13 @@ public class LibraryVersionDao {
         ApplicationVersion applicationVersion = (ApplicationVersion) query.list().get(0);
 
         query = session.createQuery("from LibraryVersion AS libver where " +
-                "libver.id=:libversionid" );
+                "libver.id=:libversionid");
         query.setParameter("libversionid", libversionid);
 
         LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
         query = session.createQuery("from ApplicationDependency AS appdep where " +
-                "appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion" );
+                "appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion");
         query.setParameter("libraryVersion", libraryVersion);
         query.setParameter("applicationVersion", applicationVersion);
 
@@ -270,22 +270,21 @@ public class LibraryVersionDao {
             }
 
 
-
             query = sessionFactory.getCurrentSession().createQuery(
                     "from License "
                             + "where id=:licenseid");
             query.setParameter("licenseid", licenseid);
-            License licenses = (License)query.list().get(0);
+            License licenses = (License) query.list().get(0);
 
             query = sessionFactory.getCurrentSession().createQuery(
                     "update Library set libraryname=:libraryname,"
-                            + "license=:licenses," + "secunia=:secunia,"
+                            + "license=:licenses,"
                             + "libraryVendor=:libraryVendor,"
                             + "language=:language " + "where id=:libraryid");
 
             query.setParameter("libraryname", libraryname);
             query.setParameter("licenses", licenses);
-            query.setParameter("secunia", secuniaID);
+
             query.setParameter("libraryVendor", libraryVendor);
             query.setParameter("language", language);
             query.setParameter("libraryid", libraryid);
@@ -293,21 +292,20 @@ public class LibraryVersionDao {
             result = query.executeUpdate();
 
 
-
             query = sessionFactory.getCurrentSession().createQuery(
                     "from Library "
                             + "where id=:libraryid");
             query.setParameter("libraryid", libraryid);
-            Library library = (Library)query.list().get(0)  ;
-
+            Library library = (Library) query.list().get(0);
 
 
             query = sessionFactory.getCurrentSession().createQuery(
-                    "update LibraryVersion set libraryversion=:libraryversion,"
+                    "update LibraryVersion set libraryversion=:libraryversion," + "secunia=:secunia,"
                             + "library=:library" + " where id=:libverid");
 
             query.setParameter("libraryversion", libraryversion);
             query.setParameter("library", library);
+            query.setParameter("secunia", secuniaID);
             query.setParameter("libverid", libraryversionid);
 
             result = query.executeUpdate();
@@ -326,38 +324,34 @@ public class LibraryVersionDao {
         LibraryVersion version = (LibraryVersion) querylib.list().get(0);
 
 
-        int libid= ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
+        int libid = ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
 
 
         Query query = sessionFactory.getCurrentSession().createQuery(
                 "from ApplicationDependency " + "where libraryVersion=:libraryVersion");
 
-        query.setParameter("libraryVersion",version);
-       List <ApplicationDependency> applicationDependency;
+        query.setParameter("libraryVersion", version);
+        List<ApplicationDependency> applicationDependency;
 
 
         if (!query.list().isEmpty()) {
 
-            applicationDependency =   query.list();
-            for(ApplicationDependency dependency: applicationDependency)
-            {
-            sessionFactory.getCurrentSession().delete(dependency);
+            applicationDependency = query.list();
+            for (ApplicationDependency dependency : applicationDependency) {
+                sessionFactory.getCurrentSession().delete(dependency);
             }
             sessionFactory.getCurrentSession().delete(version);
-        }
-        else if (null != version)
-        {
+        } else if (null != version) {
             sessionFactory.getCurrentSession().delete(version);
         }
 
         query = sessionFactory.getCurrentSession().createQuery(
                 "from LibraryVersion " + "where library.id=:id");
-        query.setParameter("id",libid);
+        query.setParameter("id", libid);
 
-        System.out.println("number of versions "+query.list().size());
+        System.out.println("number of versions " + query.list().size());
 
-        if(query.list().isEmpty())
-        {
+        if (query.list().isEmpty()) {
             Library lib = (Library) sessionFactory.getCurrentSession().load(
                     Library.class, id);
             sessionFactory.getCurrentSession().delete(lib);
@@ -422,83 +416,73 @@ public class LibraryVersionDao {
     }
 
     @SuppressWarnings("unchecked")
-        public List<String> uniqueVer() {
+    public List<String> uniqueVer() {
         Query query = sessionFactory.getCurrentSession().createQuery(
                 "select distinct libver.libraryversion from LibraryVersion as libver");
         return query.list();
 
     }
 
-   public void  addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID)
-    {
+    public void addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, int secuniaID) {
         LibraryVendor libraryVendor;
-        License licenses ;
+        License licenses;
         Library library;
         Session session = sessionFactory.openSession();
         session.beginTransaction();
 
-        Query query= session.createQuery("from LibraryVendor where upper(vendor) =upper(:vendor) ");
+        Query query = session.createQuery("from LibraryVendor where upper(vendor) =upper(:vendor) ");
         query.setParameter("vendor", vendor);
 
-        if(query.list().isEmpty())
-        {
-            libraryVendor= new LibraryVendor();
-        libraryVendor.setVendor(vendor);
-        session.save(libraryVendor);
-        }
-        else
-        {
-           libraryVendor = (LibraryVendor) query.list().get(0);
+        if (query.list().isEmpty()) {
+            libraryVendor = new LibraryVendor();
+            libraryVendor.setVendor(vendor);
+            session.save(libraryVendor);
+        } else {
+            libraryVendor = (LibraryVendor) query.list().get(0);
         }
 
-        query= session.createQuery("from License where upper(licensename) =upper(:license) ");
+        query = session.createQuery("from License where upper(licensename) =upper(:license) ");
         query.setParameter("license", license);
 
 
-         if(query.list().isEmpty())
-         {
-             licenses = new License();
+        if (query.list().isEmpty()) {
+            licenses = new License();
 
-              try {
-                    Blob blob = Hibernate.createBlob(file.getInputStream());
+            try {
+                Blob blob = Hibernate.createBlob(file.getInputStream());
 
-                    licenses.setFilename(file.getOriginalFilename());
-                    licenses.setContenttype(file.getContentType());
-                    licenses.setLicensename(license);
-                    licenses.setText(blob);
-                    session.save(licenses);
+                licenses.setFilename(file.getOriginalFilename());
+                licenses.setContenttype(file.getContentType());
+                licenses.setLicensename(license);
+                licenses.setText(blob);
+                session.save(licenses);
 
-                    } catch (IOException e)
-                       {
-                        e.printStackTrace();
-                       }
-         }
-        else
-         {
-            licenses = (License)query.list().get(0);
-         }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            licenses = (License) query.list().get(0);
+        }
 
-        query= session.createQuery("from Library where upper(libraryname) =upper(:libraryname) ");
+        query = session.createQuery("from Library where upper(libraryname) =upper(:libraryname) ");
         query.setParameter("libraryname", libraryname);
 
-        if(query.list().isEmpty())
-        {
-        library = new Library();
-        library.setLibraryname(libraryname);
-        library.setLibraryVendor(libraryVendor);
-        library.setLicense(licenses);
-        library.setSecunia(secuniaID);
-        library.setLanguage(language);
-        session.save(library);
-        }
-        else
-        {
-            library = (Library)query.list().get(0);
+        if (query.list().isEmpty()) {
+            library = new Library();
+            library.setLibraryname(libraryname);
+            library.setLibraryVendor(libraryVendor);
+            library.setLicense(licenses);
+
+            library.setLanguage(language);
+            session.save(library);
+        } else {
+            library = (Library) query.list().get(0);
         }
 
         LibraryVersion libVersion = new LibraryVersion();
         libVersion.setLibrary(library);
         libVersion.setLibraryversion(libraryversion);
+        libVersion.setSecunia(secuniaID);
         session.save(libVersion);
 
 
@@ -506,7 +490,6 @@ public class LibraryVersionDao {
         session.close();
 
     }
-
 
 
 }

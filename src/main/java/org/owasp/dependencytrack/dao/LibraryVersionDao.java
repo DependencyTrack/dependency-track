@@ -85,64 +85,7 @@ public class LibraryVersionDao {
         return query.list();
     }
 
-    public void addLibraryVersion(int appversionid, String libraryname,
-                                  String libraryversion, String vendor, String license,
-                                  MultipartFile file, String language, int secuniaID) {
-
-        Query query = sessionFactory.getCurrentSession().createQuery(
-                "from ApplicationVersion " + "where id=:appverid");
-
-        query.setParameter("appverid", appversionid);
-
-        List<ApplicationVersion> result = query.list();
-
-        LibraryVendor libraryVendor = new LibraryVendor();
-
-        Session session = sessionFactory.openSession();
-        session.beginTransaction();
-
-        libraryVendor.setVendor(vendor);
-        session.save(libraryVendor);
-
-        License licenses = new License();
-        try {
-            Blob blob = Hibernate.createBlob(file.getInputStream());
-
-            licenses.setFilename(file.getOriginalFilename());
-            licenses.setContenttype(file.getContentType());
-            licenses.setLicensename(license);
-            licenses.setText(blob);
-            session.save(licenses);
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        Library library = new Library();
-        library.setLibraryname(libraryname);
-        library.setLibraryVendor(libraryVendor);
-        library.setLicense(licenses);
-
-        library.setLanguage(language);
-        session.save(library);
-
-        LibraryVersion libVersion = new LibraryVersion();
-        libVersion.setLibrary(library);
-        libVersion.setLibraryversion(libraryversion);
-        libVersion.setSecunia(secuniaID);
-        session.save(libVersion);
-
-        ApplicationDependency dependencies = new ApplicationDependency();
-        dependencies.setLibraryVersion(libVersion);
-        dependencies.setApplicationVersion(result.get(0));
-
-        session.save(dependencies);
-        session.getTransaction().commit();
-        session.close();
-    }
-
-    /*
+     /*
         Returns a list of LibraryVersion objects that the specified ApplicationVersion has a dependency on
      */
     @SuppressWarnings("unchecked")
@@ -464,8 +407,9 @@ public class LibraryVersionDao {
             licenses = (License) query.list().get(0);
         }
 
-        query = session.createQuery("from Library where upper(libraryname) =upper(:libraryname) ");
+        query = session.createQuery("from Library as lib where upper(lib.libraryname) =upper(:libraryname) and lib.libraryVendor=:vendor ");
         query.setParameter("libraryname", libraryname);
+        query.setParameter("vendor", libraryVendor);
 
         if (query.list().isEmpty()) {
             library = new Library();
@@ -490,6 +434,4 @@ public class LibraryVersionDao {
         session.close();
 
     }
-
-
 }

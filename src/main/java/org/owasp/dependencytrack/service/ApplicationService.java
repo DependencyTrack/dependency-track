@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ApplicationService {
@@ -54,13 +55,22 @@ public class ApplicationService {
 
 
     @Transactional
-    public List<Application> searchApplications(int libverid) {
+    public Set<Application> searchApplications(int libverid) {
        return applicationDao.searchApplications(libverid);
     }
 
+    @Transactional
+    public Set<Application> searchAllApplications(int libid) {
+        return applicationDao.searchAllApplications(libid);
+    }
 
     @Transactional
     public List<ApplicationVersion> searchApplicationsVersion(int libverid) {
         return applicationDao.searchApplicationsVersion(libverid);
+    }
+
+    @Transactional
+    public List<ApplicationVersion> searchAllApplicationsVersions(int libid) {
+        return applicationDao.searchAllApplicationsVersions(libid);
     }
 }

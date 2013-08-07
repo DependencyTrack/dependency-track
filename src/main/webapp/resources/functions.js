@@ -38,33 +38,40 @@ $(document).on("click",".open-SearchApplicationModal", function (){
 
     document.getElementById('serapplib').options.length = 0;
     document.getElementById('serapplibver').options.length = 0;
+    document.getElementById('serappven').options.length = 0;
     $.ajax({ // ajax call starts
         url: uri, // JQuery loads serverside.php
         dataType: 'json', // Choosing a JSON datatype
         success: function(data) // Variable data contains the data we get from serverside
         {
+            $('<option/>').val(" ").html("--").appendTo('#serappven');
             $('<option/>').val(" ").html("--").appendTo('#serapplib');
-            $('<option/>').val(" ").html("--").appendTo('#serapplibver');
+            //$('<option/>').val(" ").html("--").appendTo('#serapplibver');
             var vendjs,libjs,verjs;
               for(var i=0;i<data.vendors.length;i++)
               {
-
-                     vendjs=data.vendors[i];
+                  vendjs=data.vendors[i];
+                  $('<option/>').val(vendjs.id).html(vendjs.vendor).appendTo('#serappven');
                   for(var j=0;j<vendjs.libraries.length;j++)
                   {
-
                       libjs=vendjs.libraries[j];
-                      $('<option/>').val(libjs.libid).html(libjs.libname).appendTo('#serapplib');
+                      var id = libjs.libid;
+                      $('<option/>').addClass(vendjs.id.toString()).val(libjs.libid).html(libjs.libname).appendTo('#serapplib');
+                      $('<option/>').addClass(id.toString()).val(-1).html("ALL").appendTo('#serapplibver');
+
                       for(var k=0;k<libjs.versions.length;k++)
                       {
                           verjs=libjs.versions[k];
-                          $('<option/>').val(verjs. libverid).html(verjs.libver).appendTo('#serapplibver');
+
+                          $('<option/>').addClass(id.toString()).val(verjs. libverid).html(verjs.libver).appendTo('#serapplibver');
+
                       }
-
-                  }
+                 }
               }
-
+            $("#serapplib").chainedTo("#serappven");
+            $("#serapplibver").chainedTo("#serapplib");
         }
+
 
         });
 });

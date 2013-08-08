@@ -113,9 +113,7 @@
             <artifactId>spring-orm</artifactId>
             <version>${org.springframework-version}</version>
         </dependency>
-
-
-        <!-- loal secion factory bean end -->
+        <!-- local section factory bean end -->
 
         <!-- faces start -->
         <dependency>

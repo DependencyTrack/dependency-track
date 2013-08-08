@@ -14,12 +14,14 @@
                 <json:object>
                     <json:property name="libid" value="${library.id}"/>
                     <json:property name="libname" value="${library.libraryname}"/>
+                    
 
 
                     <json:array name="versions" var="version" items="${library.versions}">
                         <json:object>
                             <json:property name="libverid" value="${version.id}"/>
                             <json:property name="libver" value="${version.libraryversion}"/>
+
                         </json:object>
                     </json:array>
 

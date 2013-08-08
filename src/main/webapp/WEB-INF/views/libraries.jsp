@@ -58,15 +58,27 @@
         <form:form id="addLibrariesForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/addlibraries" method="post" autocomplete="off" enctype="multipart/form-data">
         <div class="modal-body">
             <table>
+
+                <tr>
+                    <td><label for="vendor">Vendor</label></td>
+                    <td>
+                        <div style="display:inline">
+                            <select id="vendorid" name="libraryname"  onchange="$('input#vendor').val($('#vendorid option:selected').text());">
+                                <option value="">--</option>
+
+                            </select>
+                            <input id="vendor" name ="vendorsel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        </div>
+                    </td>
+                </tr>
+
                 <tr>
                     <div style="display:inline">
                     <td><label for="libraryname">Library Name</label></td>
                     <td>
-                        <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="populatetextbox('input#libraryname',this)">
+                        <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="$('input#libraryname').val($('#librarynameid option:selected').text());">
                             <option value="">--</option>
-                            <c:forEach items="${uniquelibList}" var="libList">
-                                <option value="${libList.libraryname}"><c:out value="${libList.libraryname}"/></option>
-                            </c:forEach>
+
                         </select>
                         <input id="libraryname" name ="libnamesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </td>
@@ -78,31 +90,16 @@
                     <td><label for="libraryversion">Library Version</label></td>
                     <td>
                         <div style="display:inline">
-                        <select id="libraryversionid" name="libraryname"   onchange="$('input#libraryversion').val($(this).val());">
+                        <select id="libraryversionid" name="libraryname"   onchange="$('input#libraryversion').val($('#libraryversionid option:selected').text());">
                             <option value="">--</option>
-                            <c:forEach items="${uniqueVer}" var="libList">
-                                <option value="${libList}"><c:out value="${libList}"/></option>
-                            </c:forEach>
+
                         </select>
                         <input id="libraryversion" name ="libversel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </div></td>
                 </tr>
 
 
-                <tr>
-                    <td><label for="vendor">Vendor</label></td>
-                    <td>
-                        <div style="display:inline">
-                        <select id="vendorid" name="libraryname"  onchange="$('input#vendor').val($(this).val());">
-                            <option value="">--</option>
-                            <c:forEach items="${uniquevenList}" var="libList">
-                                <option value="${libList.vendor}"><c:out value="${libList.vendor}"/></option>
-                            </c:forEach>
-                        </select>
-                        <input id="vendor" name ="vendorsel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
-                         </div>
-                    </td>
-                </tr>
+
 
 
                 <tr>

@@ -423,12 +423,19 @@ public class LibraryVersionDao {
             library = (Library) query.list().get(0);
         }
 
+        query = session.createQuery("from LibraryVersion as libver where libver.library =:library and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
+        query.setParameter("library", library);
+        query.setParameter("vendor", libraryVendor);
+        query.setParameter("libver", libraryversion);
+
+        if (query.list().isEmpty())
+        {
         LibraryVersion libVersion = new LibraryVersion();
         libVersion.setLibrary(library);
         libVersion.setLibraryversion(libraryversion);
         libVersion.setSecunia(secuniaID);
         session.save(libVersion);
-
+        }
 
         session.getTransaction().commit();
         session.close();

@@ -22,7 +22,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "LIBRARY")
-public class Library implements Cloneable {
+public final class Library implements Cloneable {
 
     @Id
     @Column(name = "ID")

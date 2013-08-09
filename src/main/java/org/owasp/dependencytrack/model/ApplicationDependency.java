@@ -22,7 +22,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "APPLICATIONDEPENDENCY")
-public class ApplicationDependency implements Cloneable {
+public final class ApplicationDependency implements Cloneable {
 
     @Id
     @Column(name = "ID")

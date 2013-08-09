@@ -17,6 +17,7 @@
 
 package org.owasp.dependencytrack.dao;
 
+import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -163,7 +165,7 @@ public class LibraryVersionDao {
                               String libraryname, String libraryversion, String vendor,
                               String license, MultipartFile file, String language, int secuniaID) {
 
-
+        InputStream licenseInputStream = null;
         try {
             Query query = sessionFactory.getCurrentSession().createQuery(
                     "update LibraryVendor set vendor=:vendor "
@@ -183,7 +185,8 @@ public class LibraryVersionDao {
 
             Blob blob;
 
-            blob = Hibernate.createBlob(file.getInputStream());
+            licenseInputStream = file.getInputStream();
+            blob = Hibernate.createBlob(licenseInputStream);
 
             if (file.isEmpty()) {
 
@@ -255,6 +258,8 @@ public class LibraryVersionDao {
 
         } catch (Exception e) {
 
+        } finally {
+            IOUtils.closeQuietly(licenseInputStream);
         }
     }
 
@@ -391,8 +396,10 @@ public class LibraryVersionDao {
         if (query.list().isEmpty()) {
             licenses = new License();
 
+            InputStream licenseInputStream = null;
             try {
-                Blob blob = Hibernate.createBlob(file.getInputStream());
+                licenseInputStream = file.getInputStream();
+                Blob blob = Hibernate.createBlob(licenseInputStream);
 
                 licenses.setFilename(file.getOriginalFilename());
                 licenses.setContenttype(file.getContentType());
@@ -402,7 +409,10 @@ public class LibraryVersionDao {
 
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                IOUtils.closeQuietly(licenseInputStream);
             }
+
         } else {
             licenses = (License) query.list().get(0);
         }

@@ -40,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.List;
@@ -352,22 +353,23 @@ public class ApplicationController {
         List<License> licenses = libraryVersionService.listLicense(licenseid);
         License newLicense = licenses.get(0);
 
-
+        InputStream in = null;
+        OutputStream out = null;
         try {
-
-            response.setHeader("Content-Disposition", "inline;filename=\""
-                    + newLicense.getFilename() + "\"");
+            response.setHeader("Content-Disposition", "inline;filename=\"" + newLicense.getFilename() + "\"");
             response.setHeader("Content-Type", "application/octet-stream;");
-            OutputStream out = response.getOutputStream();
-            IOUtils.copy(newLicense.getText().getBinaryStream(), out);
+            in = newLicense.getText().getBinaryStream();
+            out = response.getOutputStream();
+            IOUtils.copy(in, out);
             out.flush();
-            out.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        } finally {
+            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
         }
 
     }
@@ -378,28 +380,29 @@ public class ApplicationController {
                               HttpServletResponse response,
                               @PathVariable("licenseid") Integer licenseid) {
 
-
         List<License> licenses = libraryVersionService.listLicense(licenseid);
         License newLicense = licenses.get(0);
         if (newLicense.getContenttype().equals("text/plain") || newLicense.getContenttype().equals("text/html")) {
+
+            InputStream in = null;
+            OutputStream out = null;
             try {
-
-                response.setHeader("Content-Disposition", "inline;filename=\""
-                        + newLicense.getFilename() + "\"");
-                OutputStream out = response.getOutputStream();
-
+                response.setHeader("Content-Disposition", "inline;filename=\"" + newLicense.getFilename() + "\"");
+                in = newLicense.getText().getBinaryStream();
+                out = response.getOutputStream();
                 response.setContentType(newLicense.getContenttype());
-                IOUtils.copy(newLicense.getText().getBinaryStream(), out);
-
+                IOUtils.copy(in, out);
                 out.flush();
-                out.close();
-
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (SQLException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
+            } finally {
+                IOUtils.closeQuietly(in);
+                IOUtils.closeQuietly(out);
             }
+
         } else {
 
             return "emptyfile";

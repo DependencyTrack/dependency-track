@@ -63,12 +63,19 @@
 
     <dependencies>
 
-      <!--security headers -->
-        <!--<dependency>
+        <!-- security headers -->
+        <dependency>
             <groupId>com.sourceclear.headlines</groupId>
             <artifactId>complete</artifactId>
             <version>0.1.4</version>
-        </dependency>-->
+        </dependency>
+
+        <!-- html sanitizer -->
+        <dependency>
+            <artifactId>owasp-java-html-sanitizer</artifactId>
+            <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+            <version>r198</version>
+        </dependency>
 
         <!--security hdiv -->
         <dependency>

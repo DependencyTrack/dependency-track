@@ -43,6 +43,7 @@ public class LibraryVersionDao {
     /*
         Returns a List of all LibraryVendors available in the application along with all child objects
      */
+    @SuppressWarnings("unchecked")
     public List<LibraryVendor> getLibraryHierarchy() {
         List<LibraryVendor> retlist = new ArrayList<LibraryVendor>();
         Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVendor order by vendor asc");
@@ -64,6 +65,7 @@ public class LibraryVersionDao {
     /*
         Returns a List of all LibraryVendors
      */
+    @SuppressWarnings("unchecked")
     public List<LibraryVendor> getVendors() {
         Query query = sessionFactory.getCurrentSession().createQuery("FROM Library order by libraryname asc");
         return query.list();
@@ -72,6 +74,7 @@ public class LibraryVersionDao {
     /*
         Returns a List of all Libraries made by the specified LibraryVendor
      */
+    @SuppressWarnings("unchecked")
     public List<Library> getLibraries(int id) {
         Query query = sessionFactory.getCurrentSession().createQuery("FROM Library WHERE libraryVendor=:id order by libraryname asc");
         query.setParameter("id", id);
@@ -81,6 +84,7 @@ public class LibraryVersionDao {
     /*
         Returns a List of all LibraryVersions for the specified Library
      */
+    @SuppressWarnings("unchecked")
     public List<LibraryVersion> getVersions(int id) {
         Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion WHERE library=:id order by libraryversion asc");
         query.setParameter("id", id);
@@ -173,7 +177,7 @@ public class LibraryVersionDao {
 
             query.setParameter("vendorid", vendorid);
             query.setParameter("vendor", vendor);
-            int result = query.executeUpdate();
+            query.executeUpdate();
 
             query = sessionFactory.getCurrentSession().createQuery(
                     "from LibraryVendor "
@@ -197,7 +201,7 @@ public class LibraryVersionDao {
                 query.setParameter("licenseid", licenseid);
                 query.setParameter("lname", license);
 
-                result = query.executeUpdate();
+                query.executeUpdate();
 
             } else {
                 query = sessionFactory.getCurrentSession().createQuery(
@@ -212,7 +216,7 @@ public class LibraryVersionDao {
                 query.setParameter("filename", file.getOriginalFilename());
                 query.setParameter("contenttype", file.getContentType());
 
-                result = query.executeUpdate();
+                query.executeUpdate();
             }
 
 
@@ -235,7 +239,7 @@ public class LibraryVersionDao {
             query.setParameter("language", language);
             query.setParameter("libraryid", libraryid);
 
-            result = query.executeUpdate();
+            query.executeUpdate();
 
 
             query = sessionFactory.getCurrentSession().createQuery(
@@ -254,15 +258,16 @@ public class LibraryVersionDao {
             query.setParameter("secunia", secuniaID);
             query.setParameter("libverid", libraryversionid);
 
-            result = query.executeUpdate();
+            query.executeUpdate();
 
         } catch (Exception e) {
-
+            // do nothing
         } finally {
             IOUtils.closeQuietly(licenseInputStream);
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void removeLibrary(int id) {
         Query querylib = sessionFactory.getCurrentSession().createQuery(
                 "from LibraryVersion " + "where id=:libraryVersion");

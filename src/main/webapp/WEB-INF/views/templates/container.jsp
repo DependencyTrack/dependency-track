@@ -19,18 +19,18 @@
     }};
 
     private static final PolicyFactory htmlButtonPolicy = new HtmlPolicyBuilder()
-            .allowElements("a")
-            .allowAttributes("href").onElements("a")
-            .allowAttributes("id").onElements("a")
-            .allowAttributes("role").onElements("a")
-            .allowAttributes("class").onElements("a")
-            .allowAttributes("data-toggle").onElements("a")
-            .allowAttributes("data-id").onElements("a")
-            .allowAttributes("data-ver").onElements("a")
-            .allowAttributes("data-version").onElements("a")
-            .allowElements("div")
-            .allowAttributes("class").onElements("div")
-            .toFactory();
+        .allowElements("a")
+        .allowAttributes("href").onElements("a")
+        .allowAttributes("id").onElements("a")
+        .allowAttributes("role").onElements("a")
+        .allowAttributes("class").onElements("a")
+        .allowAttributes("data-toggle").onElements("a")
+        .allowAttributes("data-id").onElements("a")
+        .allowAttributes("data-ver").onElements("a")
+        .allowAttributes("data-version").onElements("a")
+        .allowElements("div")
+        .allowAttributes("class").onElements("div")
+        .toFactory();
 %>
 <%
     pageContext.setAttribute("contentWhitelist", contentWhitelist);

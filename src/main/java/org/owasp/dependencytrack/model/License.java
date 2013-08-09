@@ -24,7 +24,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "LICENSES")
-public class License implements Cloneable {
+public final class License implements Cloneable {
 
     @Id
     @Column(name = "ID")

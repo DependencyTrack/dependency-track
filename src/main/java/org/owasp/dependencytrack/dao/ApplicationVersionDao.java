@@ -75,7 +75,7 @@ public class ApplicationVersionDao {
 
         query.setParameter("name", appname);
         query.setParameter("appverid", appid);
-        int result = query.executeUpdate();
+        query.executeUpdate();
 
         Application application = new Application();
         application.setId(appid);
@@ -87,7 +87,7 @@ public class ApplicationVersionDao {
         query.setParameter("ver", appversion);
         query.setParameter("app", application);
         query.setParameter("appverid", appversionid);
-        result = query.executeUpdate();
+        query.executeUpdate();
     }
 
     public void addApplicationVersion(int appid, String appversion) {
@@ -191,7 +191,7 @@ public class ApplicationVersionDao {
 
         query.setParameter("ver", appversion);
         query.setParameter("appverid", id);
-        int result = query.executeUpdate();
+        query.executeUpdate();
 
     }
 

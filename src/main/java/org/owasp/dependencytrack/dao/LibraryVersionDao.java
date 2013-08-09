@@ -260,7 +260,8 @@ public class LibraryVersionDao {
 
             query.executeUpdate();
 
-        } catch (Exception e) {
+        } catch (IOException e) {
+            // todo: log this
             // do nothing
         } finally {
             IOUtils.closeQuietly(licenseInputStream);

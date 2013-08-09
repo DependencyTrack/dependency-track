@@ -22,7 +22,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "APPLICATIONVERSION")
-public class ApplicationVersion implements Cloneable {
+public final class ApplicationVersion implements Cloneable {
 
     @Id
     @Column(name = "ID")

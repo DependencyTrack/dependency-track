@@ -21,7 +21,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "LIBRARYVERSION")
-public class LibraryVersion implements Cloneable {
+public final class LibraryVersion implements Cloneable {
 
     @Id
     @Column(name = "ID")

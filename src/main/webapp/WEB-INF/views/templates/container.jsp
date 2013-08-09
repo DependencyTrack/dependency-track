@@ -8,7 +8,7 @@
         The value of param.content passed to this template must match the white-list
         defined in the following map.
      */
-    private static Map<String,String> contentWhitelist = new HashMap<String,String>() {{
+    private static final Map<String,String> contentWhitelist = new HashMap<String,String>() {{
         put("about", "about.jsp");
         put("applications", "applications.jsp");
         put("applicationVersion", "applicationVersion.jsp");

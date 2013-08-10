@@ -107,4 +107,8 @@
         </beans:property>
     </beans:bean>
 
+  <!--  <beans:bean id ="multipartResolver" class ="org.hdiv.web.multipart.HDIVMultipartResolver">
+        <beans:property name="maxUploadSize" value="100000"/>
+    </beans:bean>
+-->
 </beans:beans>

@@ -78,7 +78,7 @@
         </dependency>
 
         <!--security hdiv -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.hdiv</groupId>
             <artifactId>hdiv-core</artifactId>
             <version>2.1.1</version>
@@ -97,7 +97,7 @@
             <groupId>org.hdiv</groupId>
             <artifactId>hdiv-jstl-taglibs-1.2</artifactId>
             <version>2.1.1</version>
-        </dependency>
+        </dependency>-->
 
 
         <!-- file upload jars start -->

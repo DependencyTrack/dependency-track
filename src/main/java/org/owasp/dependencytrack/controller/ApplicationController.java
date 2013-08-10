@@ -122,12 +122,12 @@ public class ApplicationController {
             map.put("versionlist", applicationService.searchApplicationsVersion(libverid));
             map.put("check", true);
         } else {
-            System.out.println("check lib id " + libid);
+
             map.put("applicationList", applicationService.searchAllApplications(libid));
             map.put("versionlist", applicationService.searchAllApplicationsVersions(libid));
             map.put("check", true);
         }
-        System.out.println("after executing if and else");
+
         return "applicationsPage";
     }
 

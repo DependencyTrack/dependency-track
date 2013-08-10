@@ -63,7 +63,7 @@
                     <td><label for="vendor">Vendor</label></td>
                     <td>
                         <div style="display:inline">
-                            <select id="vendorid" name="libraryname"  onchange="$('input#vendor').val($('#vendorid option:selected').text());">
+                            <select id="vendorid" name="libraryname" class="vendoridclass" >
                                 <option value="">--</option>
 
                             </select>
@@ -76,7 +76,7 @@
                     <div style="display:inline">
                     <td><label for="libraryname">Library Name</label></td>
                     <td>
-                        <select id="librarynameid" name="libraryname" autofocus="autofocus"  onchange="$('input#libraryname').val($('#librarynameid option:selected').text());">
+                        <select id="librarynameid" name="libraryname" autofocus="autofocus" class="librarynameidclass" >
                             <option value="">--</option>
 
                         </select>
@@ -90,7 +90,7 @@
                     <td><label for="libraryversion">Library Version</label></td>
                     <td>
                         <div style="display:inline">
-                        <select id="libraryversionid" name="libraryname"   onchange="$('input#libraryversion').val($('#libraryversionid option:selected').text());">
+                        <select id="libraryversionid" name="libraryname" class="libraryversionidclass">
                             <option value="">--</option>
 
                         </select>
@@ -165,7 +165,7 @@
     <div class="modal-header">
         <h4 id="editLibrariesModalLabel">Edit Library
             <span class="delete-span">
-				<a class="btn btn-danger header-button" id="deleteLibrary" href="" onclick="return confirm('Possibly Deleting a library bound to multiple application.Are you sure you want to delete the application?')">Delete</a>
+				<a class="btn btn-danger header-button" id="deleteLibrary" href="" onclick="return confirm('Possibly Deleting a library bound to multiple application.Are you sure you want to delete the Library?')"><spring:message code="label.delete"/></a>
 			</span>
         </h4>
     </div>

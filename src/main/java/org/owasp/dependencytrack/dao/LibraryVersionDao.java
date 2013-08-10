@@ -91,9 +91,9 @@ public class LibraryVersionDao {
         return query.list();
     }
 
-     /*
-        Returns a list of LibraryVersion objects that the specified ApplicationVersion has a dependency on
-     */
+    /*
+       Returns a list of LibraryVersion objects that the specified ApplicationVersion has a dependency on
+    */
     @SuppressWarnings("unchecked")
     public List<LibraryVersion> getDependencies(ApplicationVersion version) {
         Query query = sessionFactory.getCurrentSession().createQuery("from ApplicationDependency where applicationVersion=:version");
@@ -272,14 +272,17 @@ public class LibraryVersionDao {
     public void removeLibrary(int id) {
         Query querylib = sessionFactory.getCurrentSession().createQuery(
                 "from LibraryVersion " + "where id=:libraryVersion");
-
         querylib.setParameter("libraryVersion", id);
 
         LibraryVersion version = (LibraryVersion) querylib.list().get(0);
 
 
         int libid = ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
+        querylib = sessionFactory.getCurrentSession().createQuery(
+                "select lib.versions  from Library as lib " + "where lib.id=:libid");
+        querylib.setParameter("libid", libid);
 
+        int count = querylib.list().size();
 
         Query query = sessionFactory.getCurrentSession().createQuery(
                 "from ApplicationDependency " + "where libraryVersion=:libraryVersion");
@@ -287,29 +290,29 @@ public class LibraryVersionDao {
         query.setParameter("libraryVersion", version);
         List<ApplicationDependency> applicationDependency;
 
-
-        if (!query.list().isEmpty()) {
+        if (!query.list().isEmpty() && count == 1) {
 
             applicationDependency = query.list();
             for (ApplicationDependency dependency : applicationDependency) {
                 sessionFactory.getCurrentSession().delete(dependency);
             }
             sessionFactory.getCurrentSession().delete(version);
-        } else if (null != version) {
+            Library curlib = (Library) sessionFactory.getCurrentSession().load(Library.class, libid);
+            sessionFactory.getCurrentSession().delete(curlib);
+        } else if (version != null && count == 1) {
+            sessionFactory.getCurrentSession().delete(version);
+            Library curlib = (Library) sessionFactory.getCurrentSession().load(Library.class, libid);
+            sessionFactory.getCurrentSession().delete(curlib);
+        } else if (!query.list().isEmpty()) {
+            applicationDependency = query.list();
+            for (ApplicationDependency dependency : applicationDependency) {
+                sessionFactory.getCurrentSession().delete(dependency);
+            }
+            sessionFactory.getCurrentSession().delete(version);
+        } else if (version != null) {
             sessionFactory.getCurrentSession().delete(version);
         }
 
-        query = sessionFactory.getCurrentSession().createQuery(
-                "from LibraryVersion " + "where library.id=:id");
-        query.setParameter("id", libid);
-
-        System.out.println("number of versions " + query.list().size());
-
-        if (query.list().isEmpty()) {
-            Library lib = (Library) sessionFactory.getCurrentSession().load(
-                    Library.class, id);
-            sessionFactory.getCurrentSession().delete(lib);
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -444,13 +447,12 @@ public class LibraryVersionDao {
         query.setParameter("vendor", libraryVendor);
         query.setParameter("libver", libraryversion);
 
-        if (query.list().isEmpty())
-        {
-        LibraryVersion libVersion = new LibraryVersion();
-        libVersion.setLibrary(library);
-        libVersion.setLibraryversion(libraryversion);
-        libVersion.setSecunia(secuniaID);
-        session.save(libVersion);
+        if (query.list().isEmpty()) {
+            LibraryVersion libVersion = new LibraryVersion();
+            libVersion.setLibrary(library);
+            libVersion.setLibraryversion(libraryversion);
+            libVersion.setSecunia(secuniaID);
+            session.save(libVersion);
         }
 
         session.getTransaction().commit();

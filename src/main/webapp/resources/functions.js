@@ -189,3 +189,19 @@ $(document).on("click", ".open-AddLibraryModal", function () {
     });
 
 });
+
+
+$(document).on("change",".libraryversionidclass",function() {
+    $('input#libraryversion').val($('#libraryversionid option:selected').text());
+});
+
+$(document).on("change",".librarynameidclass",function() {
+    $('input#libraryname').val($('#librarynameid option:selected').text());
+});
+
+$(document).on("change",".vendoridclass",function() {
+
+    $(document.getElementById('vendor')).val($('#vendorid option:selected').text());
+});
+
+

@@ -375,7 +375,7 @@ public class ApplicationController {
     }
 
     /**
-     * Remove the libraryVersion with the specified ID
+     * Remove the libraryVersion with the specified ID.
      * @param modelMap a Spring ModelMap
      * @param libraryversionid The LibraryVersion ID
      * @return a String
@@ -407,7 +407,7 @@ public class ApplicationController {
     }
 
     /**
-     * Adds a library regardless of application association
+     * Adds a library regardless of application association.
      * @param modelMap a Spring ModelMap
      * @param libraryname The name of the Library
      * @param libraryversion The version of the Library
@@ -433,7 +433,7 @@ public class ApplicationController {
     }
 
     /**
-     * Download license action
+     * Download license action.
      * @param map map of parameters
      * @param response a Response object
      * @param licenseid the ID of the License to download
@@ -469,7 +469,7 @@ public class ApplicationController {
     }
 
     /**
-     * View license action
+     * View license action.
      * @param map map of parameters
      * @param response a Response object
      * @param licenseid the ID of the License to download
@@ -510,7 +510,7 @@ public class ApplicationController {
     }
 
     /**
-     * The about page
+     * The about page.
      * @return a String
      */
     @RequestMapping(value = "/about", method = RequestMethod.GET)

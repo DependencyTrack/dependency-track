@@ -1,0 +1,19 @@
+^/\*\s*$
+^ \* This file is part of Dependency-Track\.\s*$
+^ \*\s*$
+^ \* Dependency-Track is free software\: you can redistribute it and/or modify it\s*$
+^ \* under the terms of the GNU General Public License as published by the Free\s*$
+^ \* Software Foundation, either version 3 of the License, or \(at your option\) any\s*$
+^ \* later version\.
+^ \*\s*$
+^ \* Dependency-Track is distributed in the hope that it will be useful, but\s*$
+^ \* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or\s*$
+^ \* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more\s*$
+^ \* details\.\s*$
+^ \*\s*$
+^ \* You should have received a copy of the GNU General Public License along with\s*$
+^ \* Dependency-Track\. If not, see http://www.gnu.org/licenses/\.\s*$
+^ \*\s*$
+^ \* Copyright \(c\) Axway\. All Rights Reserved\.\s*$
+^ \*/\s*$
+^package

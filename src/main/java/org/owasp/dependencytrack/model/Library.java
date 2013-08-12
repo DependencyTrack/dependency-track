@@ -1,55 +1,88 @@
 /*
- * Copyright 2013 Axway
+ * This file is part of Dependency-Track.
  *
- * This file is part of OWASP Dependency-Track.
+ * Dependency-Track is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
  *
- * Dependency-Track is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * Dependency-Track is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * Dependency-Track is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
+ * You should have received a copy of the GNU General Public License along with
+ * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  *
- * You should have received a copy of the GNU General Public License along with Dependency-Track.
- * If not, see http://www.gnu.org/licenses/.
+ * Copyright (c) Axway. All Rights Reserved.
  */
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
 import java.util.Set;
 
 @Entity
 @Table(name = "LIBRARY")
 public final class Library implements Cloneable {
 
+    /**
+     * The unique identifier of the persisted object.
+     */
     @Id
     @Column(name = "ID")
     @GeneratedValue
     private Integer id;
 
+    /**
+     * The name of the library (i.e. Commons-Lang).
+     */
     @Column(name = "LIBRARYNAME")
     private String libraryname;
 
+    /**
+     * The license the library is licensed under.
+     */
     @ManyToOne
     @JoinColumn(name = "LICENSEID")
     @OrderBy
     private License license;
 
+    /**
+     * The vendor of the library (i.e. Apache).
+     */
     @ManyToOne
     @JoinColumn(name = "LIBRARYVENDORID")
     @OrderBy
     private LibraryVendor libraryVendor;
 
+    /**
+     * The programming language the library was written in (i.e. Java).
+     */
     @Column(name = "LANG")
     private String language;
 
+    /**
+     * A Set of all versions of this library
+     */
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "library")
     private Set<LibraryVersion> versions;
 
+    /**
+     * Clones this specific object (minus the objects id).
+     * @return a New object
+     */
     public Object clone() {
-        Library obj = new Library();
+        final Library obj = new Library();
         obj.setLanguage(this.language);
         obj.setLibraryname(this.libraryname);
         obj.setLibraryVendor(this.libraryVendor);

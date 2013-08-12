@@ -1,23 +1,32 @@
 /*
- * Copyright 2013 Axway
+ * This file is part of Dependency-Track.
  *
- * This file is part of OWASP Dependency-Track.
+ * Dependency-Track is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
  *
- * Dependency-Track is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * Dependency-Track is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * Dependency-Track is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
+ * You should have received a copy of the GNU General Public License along with
+ * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  *
- * You should have received a copy of the GNU General Public License along with Dependency-Track.
- * If not, see http://www.gnu.org/licenses/.
+ * Copyright (c) Axway. All Rights Reserved.
  */
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,20 +34,33 @@ import java.util.Set;
 @Table(name = "LIBRARYVENDOR")
 public final class LibraryVendor implements Cloneable {
 
+    /**
+     * The unique identifier of the persisted object.
+     */
     @Id
     @Column(name = "ID")
     @GeneratedValue
     private Integer id;
 
+    /**
+     * The String label of the vendor (i.e. Apache)
+     */
     @Column(name = "VENDOR")
     @OrderBy
     private String vendor;
 
+    /**
+     * A Set of libraries this vendor has created
+     */
     @OneToMany(mappedBy = "libraryVendor", fetch = FetchType.EAGER)
     private Set<Library> libraries;
 
+    /**
+     * Clones this specific object (minus the objects id).
+     * @return a New object
+     */
     public Object clone() {
-        LibraryVendor obj = new LibraryVendor();
+        final LibraryVendor obj = new LibraryVendor();
         obj.setVendor(this.vendor);
         return obj;
     }
@@ -67,9 +89,14 @@ public final class LibraryVendor implements Cloneable {
         this.libraries = libraries;
     }
 
+    /**
+     * Add a Library to this LibraryVendor.
+     * @param library A Library object
+     */
     public void addLibrary(Library library) {
-        if (libraries == null)
+        if (libraries == null) {
             libraries = new HashSet<Library>();
+        }
         libraries.add(library);
     }
 }

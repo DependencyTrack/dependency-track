@@ -457,6 +457,18 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>2.5.2</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.10</version>
+                <configuration>
+                    <enableRulesSummary>false</enableRulesSummary>
+                    <configLocation>${basedir}/config/checkstyle-checks.xml</configLocation>
+                    <headerLocation>${basedir}/config/checkstyle-header.txt</headerLocation>
+                    <suppressionsLocation>${basedir}/config/checkstyle-suppressions.xml</suppressionsLocation>
+                    <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+                </configuration>
+            </plugin>
             <!-- Uncomment to execute a Dependency-Check analysis
             <plugin>
                 <groupId>org.owasp</groupId>

@@ -28,7 +28,7 @@ Post: [owasp_dependency_track_project@lists.owasp.org] [post]
 Copyright & License
 -
 
-Dependency-Track is Copyright (c) 2013 OWASP Foundation. All Rights Reserved.
+Dependency-Track is Copyright (c) Axway. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the GPLv3 license. See the [LICENSE.txt] [GPLv3] file for the full license.
 

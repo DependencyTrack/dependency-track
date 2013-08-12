@@ -1,5 +1,5 @@
 Dependency-Track
-Copyright (c) 2013 OWASP Foundation. All Rights Reserved.
+Copyright (c) Axway. All Rights Reserved.
 
 The licenses for the software listed below can be found in the META-INF/licenses/[dependency name].
 

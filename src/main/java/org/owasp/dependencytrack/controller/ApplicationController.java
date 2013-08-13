@@ -95,11 +95,16 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public String loginchk(@RequestParam("username") String username,
-                           @RequestParam("password") String passwd, ModelMap modelMap) {
-
+                           @RequestParam("password") String passwd)
+    {
         final UsernamePasswordToken token = new UsernamePasswordToken(username, passwd);
         try {
             SecurityUtils.getSubject().login(token);
+
+            if (SecurityUtils.getSubject().isAuthenticated()) {
+                return "redirect:/applications";
+            }
+
         } catch (AuthenticationException e) {
 
         }
@@ -113,13 +118,13 @@ public class ApplicationController {
      * @return a String
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
-    public String login(ModelMap modelMap) {
+    public String login() {
         String s = "login";
         if (SecurityUtils.getSubject().isAuthenticated()) {
-            s = "redirect:/home";
-        }
+                return "redirect:/applications";
+            }
         return s;
-    }
+        }
 
     /**
      * Logout action.
@@ -127,7 +132,7 @@ public class ApplicationController {
      * @return a String
      */
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
-    public String logout(ModelMap modelMap) {
+    public String logout() {
         SecurityUtils.getSubject().logout();
         return "redirect:/login";
     }

@@ -26,15 +26,21 @@
     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
         <property name="securityManager" ref="securityManager"/>
         <property name="loginUrl" value="/login"/>
-        <property name="successUrl" value="/home"/>
+        <property name="successUrl" value="/applications"/>
         <property name="filterChainDefinitionMap">
             <map>
                 <!-- Add mapping to all the urls in dtrack -->
-                <entry key="/**" value="anon"/>
-                <!-- <entry key="/login" value="anon"/> -->
-                <!-- <entry key="/logout" value="user"/> -->
-                <!-- <entry key="/home" value="user"/> -->
-                <!-- <entry key="/products" value="user"/> -->
+               <!-- <entry key="/**" value="user"/>-->
+                 <!--<entry key="/login" value="anon"/>
+                 <entry key="/logout" value="user"/>
+                 <entry key="/applications" value="user"/>
+                 <entry key="/applicationVersion" value="user"/>
+                 <entry key="/libraries" value="user"/>
+                <entry key="/libraryHierarchy" value="user"/>
+                <entry key="/searchApplication" value="user"/>
+                 <entry key="/error" value="user"/>
+                 <entry key="/about" value="user"/>-->
+
             </map>
         </property>
     </bean>

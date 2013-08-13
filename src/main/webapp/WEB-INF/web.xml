@@ -103,7 +103,7 @@
     <session-config>
         <cookie-config>
             <http-only>true</http-only>
-            <secure>true</secure>
+            <secure>false</secure>
         </cookie-config>
         <tracking-mode>COOKIE</tracking-mode>
     </session-config>

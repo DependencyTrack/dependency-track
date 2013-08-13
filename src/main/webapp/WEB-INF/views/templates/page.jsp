@@ -56,13 +56,16 @@
     <div class="navbar-inner">
         <ul class="nav">
             <li class="<c:if test="${param.content!='applications'}">in</c:if>active"><a
-                    href="<c:url value="${pageContext.request.contextPath}/applications"/>">Applications</a></li>
+                    href="<c:url value="${pageContext.request.contextPath}/applications"/>"><c:out value="Applications"/> </a></li>
             <li class="<c:if test="${param.content!='libraries'}">in</c:if>active"><a
-                    href="<c:url value="${pageContext.request.contextPath}/libraries"/>">Libraries</a></li>
-            <li><a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal">Search</a>
+                    href="<c:url value="${pageContext.request.contextPath}/libraries"/>"><c:out value="Libraries"/></a></li>
+            <li><a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><c:out value="Search"/></a>
             </li>
             <li class="<c:if test="${param.content!='about'}">in</c:if>active"><a
-                    href="<c:url value="${pageContext.request.contextPath}/about"/>">About</a></li>
+                    href="<c:url value="${pageContext.request.contextPath}/about"/>"><c:out value="About"/></a></li>
+            <li class="<c:if test="${param.content!='logout'}">in</c:if>active"><a  style=" position: relative;
+    left:65em;"
+                    href="<c:url value="${pageContext.request.contextPath}/logout"/>"><c:out value="Logout"/></a></li>
         </ul>
     </div>
 </div>
@@ -109,8 +112,8 @@
 
         </div>
         <div class="modal-footer">
-            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-            <button class="modalSubmit btn btn-primary">Search</button>
+            <button class="btn" data-dismiss="modal" aria-hidden="true"><c:out value="Close"/></button>
+            <button class="modalSubmit btn btn-primary"><c:out value="Search"/></button>
         </div>
     </form:form>
 </div>

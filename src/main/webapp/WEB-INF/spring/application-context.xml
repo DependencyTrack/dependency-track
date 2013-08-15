@@ -70,7 +70,7 @@
     </beans:bean>
     -->
 
-    <beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+  <!--  <beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
                 destroy-method="close" p:driverClassName="org.h2.Driver"
                 p:url="jdbc:h2:tcp://localhost:9092/~/dependency-track" p:username="sa" p:password="" />
 
@@ -85,7 +85,7 @@
                 <beans:prop key="hibernate.hbm2ddl.auto">update</beans:prop>
             </beans:props>
         </beans:property>
-    </beans:bean>
+    </beans:bean>-->
 
     <beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <!-- one of the properties available; the maximum file size in bytes -->
@@ -109,8 +109,5 @@
         </beans:property>
     </beans:bean>
 
-  <!--  <beans:bean id ="multipartResolver" class ="org.hdiv.web.multipart.HDIVMultipartResolver">
-        <beans:property name="maxUploadSize" value="100000"/>
-    </beans:bean>
--->
+
 </beans:beans>

@@ -20,6 +20,7 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!-- Root Context: defines shared resources visible to all other web components -->
@@ -29,9 +30,9 @@
         <property name="successUrl" value="/applications"/>
         <property name="filterChainDefinitionMap">
             <map>
-                <!-- Add mapping to all the urls in dtrack -->
-               <!-- <entry key="/**" value="user"/>-->
-                 <!--<entry key="/login" value="anon"/>
+                <!-- Add mapping to all the urls in Dependency Track -->
+               
+                 <entry key="/login" value="anon"/>
                  <entry key="/logout" value="user"/>
                  <entry key="/applications" value="user"/>
                  <entry key="/applicationVersion" value="user"/>
@@ -39,22 +40,47 @@
                 <entry key="/libraryHierarchy" value="user"/>
                 <entry key="/searchApplication" value="user"/>
                  <entry key="/error" value="user"/>
-                 <entry key="/about" value="user"/>-->
+                 <entry key="/about" value="user"/>
 
             </map>
         </property>
     </bean>
 
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+                destroy-method="close" p:driverClassName="org.h2.Driver"
+                p:url="jdbc:h2:tcp://localhost:9092/~/dependency-track" p:username="sa" p:password="" />
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:hibernate.cfg.xml"/>
+        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.H2Dialect</prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
     <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
         <property name="realm" ref="myLdapRealm"/>
     </bean>
 
-    <bean id="myLdapRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
+ <!--   <bean id="myLdapRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
         <property name="url" value="ldap://phx.ldap-ad.axway.int:389"/>
         <property name="principalSuffix" value="@axway"/>
+    </bean>-->
+
+    <bean id="myLdapRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
+        <property name="dataSource" ref="dataSource"/>
+
+        <property name="saltStyle" value="COLUMN"/>
     </bean>
 
-
-    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
-
+    <!--<bean id="matcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+        <property name="hashIterations" value="1024"/>
+        <property name="storedCredentialsHexEncoded" value="false" />
+    </bean>-->
 </beans>

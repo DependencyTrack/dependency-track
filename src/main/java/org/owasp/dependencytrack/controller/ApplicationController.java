@@ -30,17 +30,14 @@ import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.LibraryVersionService;
+import org.owasp.dependencytrack.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
@@ -73,6 +70,12 @@ public class ApplicationController {
     private ApplicationVersionService applicationVersionService;
 
     /**
+     * The Dependency-Track UserService.
+     */
+    @Autowired
+    private UserService userService;
+
+    /**
      * The Dependency-Track LibraryVersionService.
      */
     @Autowired
@@ -90,14 +93,14 @@ public class ApplicationController {
      * Login action.
      * @param username The username to login with
      * @param passwd The password to login with
-     * @param modelMap The Spring ModelMap
      * @return A String
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public String loginchk(@RequestParam("username") String username,
                            @RequestParam("password") String passwd)
     {
-        final UsernamePasswordToken token = new UsernamePasswordToken(username, passwd);
+        String pwd = userService.hashpwd(username, passwd);
+        final UsernamePasswordToken token = new UsernamePasswordToken(username, pwd);
         try {
             SecurityUtils.getSubject().login(token);
 
@@ -114,12 +117,11 @@ public class ApplicationController {
 
     /**
      * Login action.
-     * @param modelMap The Spring ModelMap
      * @return a String
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String login() {
-        String s = "login";
+        String s = "loginPage";
         if (SecurityUtils.getSubject().isAuthenticated()) {
                 return "redirect:/applications";
             }
@@ -128,7 +130,6 @@ public class ApplicationController {
 
     /**
      * Logout action.
-     * @param modelMap The Spring ModelMap
      * @return a String
      */
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
@@ -137,6 +138,16 @@ public class ApplicationController {
         return "redirect:/login";
     }
 
+    /**
+     * Logout action.
+     * @return a String
+     */
+    @RequestMapping(value = "/registerUser", method = RequestMethod.POST)
+    public String registerUser(@RequestParam("username") String username,
+                               @RequestParam("password") String password) {
+        userService.registerUser(username,password);
+        return "redirect:/login";
+    }
     /**
      * Default page action.
      * @return a String

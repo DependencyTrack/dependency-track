@@ -31,6 +31,7 @@
         <mapping class="org.owasp.dependencytrack.model.LibraryVendor" />
         <mapping class="org.owasp.dependencytrack.model.License" />
         <mapping class="org.owasp.dependencytrack.model.ApplicationDependency" />
+        <mapping class="org.owasp.dependencytrack.model.Users" />
     </session-factory>
          
 </hibernate-configuration>

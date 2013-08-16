@@ -8,31 +8,38 @@
   
 
 
-       
-<c:if test="${errorMessage != null}">
-<b class="error">${errorMessage}</b>
-</c:if>
-       
+
+<div id="loginContainer">
        <form:form name="login" method="POST">
-       <div class="table">
-           <div class="table_row">
-              <div>Username:</div><div><input name="username" value="" type="text" required="required"/></div>
+           <div class="modal-body">
+               <table>
+                   <tr>
+                     <td>  <c:if test="${errorMsg != null}">
+                           <p><c:out value="${errorMsg}"/></p>
+                       </c:if></td>
+                   </tr>
+                   <tr>
+                       <td><label for="username"><c:out value="User Name"/></label></td>
+                       <td><input name="username" value="" type="text" required="required"/></td>
+                   </tr>
+                   <tr>
+                       <td><label for="password"><c:out value="Password"/></label></td>
+                       <td><input name="password" type="password" required="required"/></td>
+                   </tr>
+                   <tr>
+                       <td>&nbsp;</td>
+                       <td><input name="submit" class="btn btn-primary" value="Login" type="submit"/> &nbsp;
+                       <a data-toggle="modal" class="btn" href="#registerUserModal"><c:out value="Create an Account"/></a></td>
+                   </tr>
+                   </table>
+
            </div>
-           <div class="table_row">
-              <div>Password:</div><div><input name="password" value="" type="password" required="required"/></div>
-           </div>
-           <div class="table_row">
-                  <input name="submit" class="btn btn-primary" value="Login" type="submit"/>
-           </div>
-           <div class="table_row">
-              <div> </div> <a data-toggle="modal" class="btn" href="#registerUserModal"><c:out value="Register"/></a></div>
-           </div>
-       </div>
        </form:form>
+ </div>
 
 <div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true">
     <div class="modal-header">
-        <h4 id="registerUserModalLabel"><c:out value="Register New User"/></h4>
+        <h4 id="registerUserModalLabel"><c:out value="Create a new Dependency Track Account"/></h4>
     </div>
     <form:form id="registerUserForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/registerUser" method="post" autocomplete="off">
         <div class="modal-body">

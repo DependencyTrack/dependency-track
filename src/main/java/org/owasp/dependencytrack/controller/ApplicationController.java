@@ -144,8 +144,12 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/registerUser", method = RequestMethod.POST)
     public String registerUser(@RequestParam("username") String username,
-                               @RequestParam("password") String password) {
+                               @RequestParam("password") String password,
+                               @RequestParam("chkpassword") String chkpassword) {
+        if(password.equals(chkpassword))
+        {
         userService.registerUser(username,password);
+        }
         return "redirect:/login";
     }
     /**

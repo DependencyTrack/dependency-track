@@ -150,9 +150,17 @@ public class ApplicationDao {
             ids.add(appdep.getApplicationVersion().getId());
         }
 
+        if(!ids.isEmpty())
+        {
         query = sessionFactory.getCurrentSession().
                 createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
+
+        System.out.println(query.list().get(0));
+        if(query.list().size()==0)
+        {
+            return null;
+        }
 
         final List<ApplicationVersion> newappver = query.list();
         final ArrayList<Application> newapp = new ArrayList<Application>();
@@ -161,6 +169,11 @@ public class ApplicationDao {
             newapp.add(version.getApplication());
         }
         return new HashSet<Application>(newapp);
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /**
@@ -188,12 +201,18 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-
+         if (!ids.isEmpty())
+         {
         query = sessionFactory.getCurrentSession().
                 createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
         return query.list();
+         }
+        else
+         {
+             return null;
+         }
     }
 
     /**
@@ -220,7 +239,8 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-
+        if(!ids.isEmpty())
+        {
 
         query = sessionFactory.getCurrentSession().
                 createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
@@ -233,6 +253,11 @@ public class ApplicationDao {
             newapp.add(version.getApplication());
         }
         return new HashSet<Application>(newapp);
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /**
@@ -259,13 +284,19 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-
+        if(!ids.isEmpty())
+        {
 
         query = sessionFactory.getCurrentSession().
                 createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
         query.setParameterList("appverid", ids);
 
         return query.list();
+        }
+        else
+        {
+            return null;
+        }
     }
 
 }

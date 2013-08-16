@@ -41,7 +41,7 @@ public final class Users {
     /**
      * The name users use to logon.
      */
-    @Column(name = "USERNAME")
+    @Column(name = "USERNAME",unique=true)
     private String username;
 
     /**

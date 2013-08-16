@@ -34,7 +34,7 @@
     <div class="modal-header">
         <h4 id="registerUserModalLabel"><c:out value="Register New User"/></h4>
     </div>
-    <form:form id="addApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/registerUser" method="post" autocomplete="off">
+    <form:form id="registerUserForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/registerUser" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>

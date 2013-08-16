@@ -62,17 +62,8 @@ public class UserDao {
     {
         Query query = sessionFactory.getCurrentSession().createQuery("FROM Users where username =:usrn");
         query.setParameter("usrn",username);
-
         Users users = (Users) query.list().get(0);
-
-        System.out.println(users.getPassword_salt());
-
-
-
         String hashedPasswordBase64 = new Sha256Hash(password,users.getPassword_salt()).toBase64();
-
-        System.out.println("the hashed password is"+ hashedPasswordBase64 );
-
         return hashedPasswordBase64;
     }
 }

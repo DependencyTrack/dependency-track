@@ -42,13 +42,14 @@ $(document).on("click", ".open-SearchApplicationModal", function () {
         dataType: 'json', // Choosing a JSON datatype
         success: function (data) // Variable data contains the data we get from serverside
         {
-            $('<option/>').val(" ").html("--").appendTo('#serappven');
-            $('<option/>').val(" ").html("--").appendTo('#serapplib');
-            //$('<option/>').val(" ").html("--").appendTo('#serapplibver');
+            $('<option/>').val("").html("--").appendTo('#serappven');
+            $('<option/>').addClass("").val("").html("--").appendTo('#serapplib');
+            $('<option/>').addClass("").val("").html("--").appendTo('#serapplibver');
             var vendjs, libjs, verjs;
             for (var i = 0; i < data.vendors.length; i++) {
                 vendjs = data.vendors[i];
                 $('<option/>').val(vendjs.id).html(vendjs.vendor).appendTo('#serappven');
+
                 for (var j = 0; j < vendjs.libraries.length; j++) {
                     libjs = vendjs.libraries[j];
                     var id = libjs.libid;
@@ -160,9 +161,9 @@ $(document).on("click", ".open-AddLibraryModal", function () {
         dataType: 'json', // Choosing a JSON datatype
         success: function (data) // Variable data contains the data we get from serverside
         {
-            $('<option/>').val(" ").html("--").appendTo('#vendorid');
-            $('<option/>').val(" ").html("--").appendTo('#librarynameid');
-            //$('<option/>').val(" ").html("--").appendTo('#serapplibver');
+            $('<option/>').val("").html("--").appendTo('#vendorid');
+            $('<option/>').addClass("").val("").html("--").appendTo('#librarynameid');
+            $('<option/>').addClass("").val("").html("--").appendTo('#libraryversionid');
             var vendjs, libjs, verjs;
             for (var i = 0; i < data.vendors.length; i++) {
                 vendjs = data.vendors[i];
@@ -202,6 +203,16 @@ $(document).on("change",".librarynameidclass",function() {
 $(document).on("change",".vendoridclass",function() {
 
     $(document.getElementById('vendor')).val($('#vendorid option:selected').text());
+});
+
+$(document).on("change",".licenseidsclass",function() {
+
+    $(document.getElementById('license')).val($('#licenseids option:selected').text());
+});
+
+$(document).on("change",".languageidclass",function() {
+
+    $(document.getElementById('language')).val($('#languageid option:selected').text());
 });
 
 

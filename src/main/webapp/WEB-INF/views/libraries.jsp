@@ -67,7 +67,7 @@
                                 <option value="">--</option>
 
                             </select>
-                            <input id="vendor" name ="vendorsel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                            <input id="vendor" name ="vendorsel" type="text" placeholder="--" style="position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                         </div>
                     </td>
                 </tr>
@@ -80,7 +80,7 @@
                             <option value="">--</option>
 
                         </select>
-                        <input id="libraryname" name ="libnamesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="libraryname" name ="libnamesel" type="text" placeholder="--" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </td>
                     </div>
                 </tr>
@@ -94,7 +94,7 @@
                             <option value="">--</option>
 
                         </select>
-                        <input id="libraryversion" name ="libversel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="libraryversion" name ="libversel" type="text"  style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </div></td>
                 </tr>
 
@@ -106,13 +106,13 @@
                     <td><label for="license">License</label></td>
                     <td>
                         <div style="display:inline">
-                        <select id="licenseids" name="license"  onchange="$('input#license').val($(this).val());">
+                        <select id="licenseids" name="license"  class="licenseidsclass">
                             <option value="">--</option>
                             <c:forEach items="${uniquelicList}" var="libList">
                                 <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="license" name ="licensesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="license" name ="licensesel" type="text"  style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                             </div>
                     </td>
                 </tr>
@@ -129,13 +129,13 @@
                     <td><label for="language">Language</label></td>
                     <td>
                         <div style="display:inline">
-                        <select id="languageid" name="language"  onchange="$('input#language').val($(this).val());">
+                        <select id="languageid" name="language"  class="languageidclass">
                             <option value="">--</option>
                             <c:forEach items="${uniqueLang}" var="libList">
                                 <option value="${libList}"><c:out value="${libList}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="language" name ="languagesel" type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="language" name ="languagesel"  type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                             </div>
                     </td>
                 </tr>

@@ -16,13 +16,13 @@
        <form:form name="login" method="POST">
        <div class="table">
            <div class="table_row">
-              <div>Username:</div><div><input name="username" value="" type="text"/></div>
+              <div>Username:</div><div><input name="username" value="" type="text" required="required"/></div>
            </div>
            <div class="table_row">
-              <div>Password:</div><div><input name="password" value="" type="password"/></div>
+              <div>Password:</div><div><input name="password" value="" type="password" required="required"/></div>
            </div>
            <div class="table_row">
-                  <input name="submit" class="btn" value="Login" type="submit"/>
+                  <input name="submit" class="btn btn-primary" value="Login" type="submit"/>
            </div>
            <div class="table_row">
               <div> </div> <a data-toggle="modal" class="btn" href="#registerUserModal"><c:out value="Register"/></a></div>
@@ -52,7 +52,7 @@
             </table>
         </div>
         <div class="modal-footer">
-            <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+            <button class="btn " data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
             <button class="modalSubmit btn btn-primary"><c:out value="Register"/></button>
         </div>
     </form:form>

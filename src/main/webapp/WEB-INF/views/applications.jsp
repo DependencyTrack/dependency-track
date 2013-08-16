@@ -55,6 +55,9 @@
             </c:forEach>
         </table>
     </c:if>
+    <c:if  test="${empty applicationList}">
+        <p> <c:out value="No application can be found based on your search. "/></p>
+    </c:if>
 </div>
 
 <div id="applicationModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="applicationModalLabel" aria-hidden="true">

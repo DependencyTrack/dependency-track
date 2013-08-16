@@ -67,7 +67,7 @@
                                 <option value="">--</option>
 
                             </select>
-                            <input id="vendor" name ="vendorsel" type="text" placeholder="--" style="position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                            <input id="vendor" name ="vendorsel" type="text" required="required" style="position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                         </div>
                     </td>
                 </tr>
@@ -80,7 +80,7 @@
                             <option value="">--</option>
 
                         </select>
-                        <input id="libraryname" name ="libnamesel" type="text" placeholder="--" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="libraryname" name ="libnamesel" type="text" required="required" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </td>
                     </div>
                 </tr>
@@ -94,7 +94,7 @@
                             <option value="">--</option>
 
                         </select>
-                        <input id="libraryversion" name ="libversel" type="text"  style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="libraryversion" name ="libversel" type="text"  required="required" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                     </div></td>
                 </tr>
 
@@ -112,7 +112,7 @@
                                 <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="license" name ="licensesel" type="text"  style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="license" name ="licensesel" type="text" required="required" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                             </div>
                     </td>
                 </tr>
@@ -135,7 +135,7 @@
                                 <option value="${libList}"><c:out value="${libList}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="language" name ="languagesel"  type="text" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
+                        <input id="language" name ="languagesel"  type="text" required="required" style="  position:relative; height: 20px; border: 0px; left: -223px; width: 183px;" />
                             </div>
                     </td>
                 </tr>
@@ -143,7 +143,7 @@
 
                 <tr>
                     <td><label for="secuniaID">SecuniaID</label></td>
-                    <td><input id="secuniaID" name="secuniaID" type="text" /></td>
+                    <td><input id="secuniaID" name="secuniaID" required="required" type="text" /></td>
 
                 </tr>
 

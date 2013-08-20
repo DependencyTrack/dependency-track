@@ -22,17 +22,23 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xmlns:beans="http://www.springframework.org/schema/beans"
              xmlns:context="http://www.springframework.org/schema/context"
+             xmlns:task="http://www.springframework.org/schema/task"
              xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
              xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
     <!-- DispatcherServlet Context: defines this servlet's request-processing
         infrastructure -->
 
     <!-- Enables the Spring MVC @Controller programming model -->
     <annotation-driven/>
+
+    <!-- Enables Spring Task annotations -->
+    <task:annotation-driven/>
+    <beans:bean id="dependencyCheckDataUpdater" class="org.owasp.dependencytrack.tasks.DependencyCheckDataUpdater"></beans:bean>
 
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
         up static resources in the ${webappRoot}/resources directory -->

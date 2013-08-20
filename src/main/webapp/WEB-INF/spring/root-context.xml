@@ -48,7 +48,7 @@
 
     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
                 destroy-method="close" p:driverClassName="org.h2.Driver"
-                p:url="jdbc:h2:~/dependency-track;AUTO_SERVER=TRUE" p:username="sa" p:password="" />
+                p:url="jdbc:h2:~/dependency-track/database;AUTO_SERVER=TRUE" p:username="sa" p:password="" />
 
     <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>

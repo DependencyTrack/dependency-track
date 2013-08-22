@@ -16,7 +16,6 @@
         put("applicationVersion", "applicationVersion.jsp");
         put("error", "error.jsp");
         put("libraries", "libraries.jsp");
-        put("login", "login.jsp");
     }};
 
     private static final PolicyFactory htmlButtonPolicy = new HtmlPolicyBuilder()

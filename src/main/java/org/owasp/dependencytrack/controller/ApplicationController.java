@@ -96,12 +96,14 @@ public class ApplicationController {
 
     /**
      * Login action.
+     * @param map Map
      * @param username The username to login with
      * @param passwd The password to login with
      * @return A String
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public String loginchk(@RequestParam("username") String username, @RequestParam("password") String passwd) {
+    public String loginchk(Map<String, Object> map,
+                           @RequestParam("username") String username, @RequestParam("password") String passwd) {
         final String pwd = userService.hashpwd(username, passwd);
         final UsernamePasswordToken token = new UsernamePasswordToken(username, pwd);
         try {
@@ -111,11 +113,11 @@ public class ApplicationController {
             if (SecurityUtils.getSubject().isAuthenticated()) {
                 return "redirect:/applications";
             }
-
         } catch (AuthenticationException e) {
             LOGGER.info("Login failure: " + username);
+            map.put("authenticationException", true);
         }
-        return "redirect:/login";
+        return "loginPage";
     }
 
     /**

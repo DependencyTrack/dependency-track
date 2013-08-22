@@ -9,7 +9,7 @@
 
     <name>Dependency-Track</name>
     <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
-    <description>OWASP Dependency-Track is a Java web application that allows organizations to document the use of third-party components across multiple applications and versions.</description>
+    <description>OWASP Dependency-Track is a web application that allows organizations to document the use of third-party components across multiple applications and versions.</description>
     <inceptionYear>2013</inceptionYear>
     <organization>
         <name>OWASP</name>

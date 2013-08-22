@@ -55,17 +55,22 @@
 <div class="navbar navbar-static-top">
     <div class="navbar-inner">
         <ul class="nav">
-            <li class="<c:if test="${param.content!='applications'}">in</c:if>active"><a
-                    href="<c:url value="${pageContext.request.contextPath}/applications"/>"><c:out value="Applications"/> </a></li>
-            <li class="<c:if test="${param.content!='libraries'}">in</c:if>active"><a
-                    href="<c:url value="${pageContext.request.contextPath}/libraries"/>"><c:out value="Libraries"/></a></li>
-            <li><a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><c:out value="Search"/></a>
+            <li class="<c:if test="${param.content!='applications'}">in</c:if>active">
+                <a href="<c:url value="${pageContext.request.contextPath}/applications"/>"><spring:message code="label.applications"/></a>
             </li>
-            <li class="<c:if test="${param.content!='about'}">in</c:if>active"><a
-                    href="<c:url value="${pageContext.request.contextPath}/about"/>"><c:out value="About"/></a></li>
-            <li class="<c:if test="${param.content!='logout'}">in</c:if>active"><a  style=" position: relative;
-    left:65em;"
-                    href="<c:url value="${pageContext.request.contextPath}/logout"/>"><c:out value="Logout"/></a></li>
+            <li class="<c:if test="${param.content!='libraries'}">in</c:if>active">
+                <a href="<c:url value="${pageContext.request.contextPath}/libraries"/>"><spring:message code="label.libraries"/></a>
+            </li>
+            <li>
+                <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
+            </li>
+        </ul>
+        <ul class="nav pull-right">
+            <li class="<c:if test="${param.content!='about'}">in</c:if>active">
+                <a href="<c:url value="${pageContext.request.contextPath}/about"/>"><spring:message code="label.about"/></a>
+            </li>
+            <li class="divider-vertical"></li>
+            <li class="inactive"><a href="<c:url value="${pageContext.request.contextPath}/logout"/>"><spring:message code="label.logout"/></a></li>
         </ul>
     </div>
 </div>

@@ -38,7 +38,7 @@
     <beans:bean id="dependencyCheckDataUpdater" class="org.owasp.dependencytrack.tasks.DependencyCheckDataUpdater"></beans:bean>
 
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
-        up static resources in the ${webappRoot}/resources directory -->l
+        up static resources in the ${webappRoot}/resources directory -->
     <resources mapping="favicon.ico"  location="/resources/favicon.ico" order="-10"/>
     <resources mapping="/resources/**" location="/resources/"/>
 
@@ -83,5 +83,11 @@
             </beans:props>
         </beans:property>
     </beans:bean>
+
+    <!-- CSRF Prevention -->
+    <beans:bean name="requestDataValueProcessor" class="org.owasp.dependencytrack.controller.token.TokenRequestDataValueProcessor"/>
+    <interceptors>
+        <beans:bean class="org.owasp.dependencytrack.controller.token.TokenHandlerInterceptor"/>
+    </interceptors>
 
 </beans:beans>

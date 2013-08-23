@@ -37,11 +37,11 @@
                 <spring:message code="login.failure.message"/>
             </div>
         </c:if>
-            <form action="${pageContext.request.contextPath}/login" method="post">
+            <form:form id="loginForm" action="${pageContext.request.contextPath}/login" method="post">
                 <input type="text" name="username" placeholder="${usernameLabel}" required="required"/>
                 <input type="password" name="password" placeholder="${passwordLabel}" required="required" autocomplete="off"/>
                 <button type="submit" class="btn btn-primary btn-login"><spring:message code="login.button"/></button>
-            </form>
+            </form:form>
             <div class="login-links">
                 <a data-toggle="modal" href="#registerUserModal"><spring:message code="login.account.question"/> <strong><spring:message code="login.signup"/></strong></a>
             </div>

@@ -23,7 +23,7 @@
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.libraryversion}"/></td>
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>
-                    <a class="btn btn-danger header-button" id="deleteLink" href="${pageContext.request.contextPath}/deleteDependency?appversionid=${applicationVersion.id}&versionid=${libraryVersion.id}" onclick="return confirm('${confirmDeleteMessage}')"><spring:message code="label.delete"/></a>
+                    <a class="btn btn-danger header-button" id="deleteLink" href="<c:url value="/deleteDependency?appversionid=${applicationVersion.id}&versionid=${libraryVersion.id}"/>" onclick="return confirm('${confirmDeleteMessage}')"><spring:message code="label.delete"/></a>
                 </td>
             </tr>
             </c:forEach>
@@ -36,7 +36,9 @@
     <div class="modal-header">
         <h4 id="addDependencyModalLabel"><spring:message code="label.dependency.new"/></h4>
     </div>
-    <form:form id="addApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/addDependency" method="post" autocomplete="off">
+
+    <c:url value="/addDependency" var="addDependencyUrl"/>
+    <form:form id="addApplicationForm" style="margin-bottom:0" action="${addDependencyUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>
@@ -93,8 +95,9 @@
     <div class="modal-header">
         <h4 id="cloneVersionModalLabel"><spring:message code="label.version.clone"/></h4>
     </div>
-    <%--add link to controller--%>
-    <form:form id="cloneVersionForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/cloneApplicationVersion" method="post" autocomplete="off">
+
+    <c:url value="/cloneApplicationVersion" var="cloneApplicationVersionUrl"/>
+    <form:form id="cloneVersionForm" style="margin-bottom:0" action="${cloneApplicationVersionUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>
@@ -122,7 +125,9 @@
 			</span>
         </h4>
     </div>
-    <form:form id="addApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/updateApplicationVersion" method="post" autocomplete="off">
+
+    <c:url value="/updateApplicationVersion" var="updateApplicationVersionUrl"/>
+    <form:form id="addApplicationForm" style="margin-bottom:0" action="${updateApplicationVersionUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>

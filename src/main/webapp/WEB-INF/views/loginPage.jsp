@@ -13,12 +13,12 @@
     <meta charset="utf-8">
     <meta name="copyright" content="&#169; 2013 Axway. All rights reserved."/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="<c:url value="${pageContext.request.contextPath}/resources/favicon.ico"/>"/>
-    <link rel="stylesheet" type="text/css" href="<c:url value="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css"/>" media="screen"/>
-    <link rel="stylesheet" type="text/css" href="<c:url value="${pageContext.request.contextPath}/resources/style.css"/>"/>
-    <script type="text/javascript" src="<c:url value="${pageContext.request.contextPath}/resources/jquery-1.10.2.min.js"/>"></script>
-    <script type="text/javascript" src="<c:url value="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.min.js"/>"></script>
-    <script type="text/javascript" src="<c:url value="${pageContext.request.contextPath}/resources/functions.js"/>"></script>
+    <link rel="icon" href="<c:url value="/resources/favicon.ico"/>"/>
+    <link rel="stylesheet" type="text/css" href="<c:url value = "/resources/bootstrap/css/bootstrap.min.css"/>" media="screen"/>
+    <link rel="stylesheet" type="text/css" href="<c:url value="/resources/style.css"/>"/>
+    <script type="text/javascript" src="<c:url value="/resources/jquery-1.10.2.min.js"/>"></script>
+    <script type="text/javascript" src="<c:url value="/resources/bootstrap/js/bootstrap.min.js"/>"></script>
+    <script type="text/javascript" src="<c:url value="/resources/functions.js"/>"></script>
 </head>
 <body>
 
@@ -26,7 +26,7 @@
     <h3><c:out value="${properties.longname}"/></h3>
     <div class="login-box clearfix">
         <div class="login-logo">
-            <img src="${pageContext.request.contextPath}/resources/images/OWASP-logo-100x100.png" alt="OWASP Logo"/>
+            <img src="<c:url value="/resources/images/OWASP-logo-100x100.png"/>" alt="OWASP Logo"/>
         </div>
         <hr />
         <div class="login-form">
@@ -37,7 +37,9 @@
                 <spring:message code="login.failure.message"/>
             </div>
         </c:if>
-            <form:form id="loginForm" action="${pageContext.request.contextPath}/login" method="post">
+
+            <c:url value="/login" var="loginUrl"/>
+            <form:form id="loginForm" action="${loginUrl}" method="post">
                 <input type="text" name="username" placeholder="${usernameLabel}" required="required"/>
                 <input type="password" name="password" placeholder="${passwordLabel}" required="required" autocomplete="off"/>
                 <button type="submit" class="btn btn-primary btn-login"><spring:message code="login.button"/></button>
@@ -55,7 +57,9 @@
     <div class="modal-header">
         <h4 id="registerUserModalLabel"><spring:message code="login.create.account"/></h4>
     </div>
-    <form:form id="registerUserForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/registerUser" method="post" autocomplete="off">
+
+    <c:url value="/registerUser" var="registerUserUrl"/>
+    <form:form id="registerUserForm" style="margin-bottom:0" action="${registerUserUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>

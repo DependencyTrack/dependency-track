@@ -30,9 +30,6 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
-    <!-- DispatcherServlet Context: defines this servlet's request-processing
-        infrastructure -->
-
     <!-- Enables the Spring MVC @Controller programming model -->
     <annotation-driven/>
 
@@ -41,8 +38,7 @@
     <beans:bean id="dependencyCheckDataUpdater" class="org.owasp.dependencytrack.tasks.DependencyCheckDataUpdater"></beans:bean>
 
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
-        up static resources in the ${webappRoot}/resources directory -->
-
+        up static resources in the ${webappRoot}/resources directory -->l
     <resources mapping="favicon.ico"  location="/resources/favicon.ico" order="-10"/>
     <resources mapping="/resources/**" location="/resources/"/>
 
@@ -62,36 +58,10 @@
         </beans:property>
     </beans:bean>
 
-
     <beans:bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
         <beans:property name="basename" value="classpath:messages"/>
         <beans:property name="defaultEncoding" value="UTF-8"/>
     </beans:bean>
-
-    <!-- Automatically start the embedded H2 database server -->
-    <!--
-    <beans:bean id="org.h2.tools.Server" class="org.h2.tools.Server" factory-method="createTcpServer"
-                init-method="start" destroy-method="stop">
-        <beans:constructor-arg value="-tcp,-tcpAllowOthers,-tcpPort,9092" />
-    </beans:bean>
-    -->
-
-  <!--  <beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
-                destroy-method="close" p:driverClassName="org.h2.Driver"
-                p:url="jdbc:h2:tcp://localhost:9092/~/dependency-track" p:username="sa" p:password="" />
-
-    <beans:bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
-        <beans:property name="dataSource" ref="dataSource"/>
-        <beans:property name="configLocation" value="classpath:hibernate.cfg.xml"/>
-        <beans:property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration"/>
-        <beans:property name="hibernateProperties">
-            <beans:props>
-                <beans:prop key="hibernate.dialect">org.hibernate.dialect.H2Dialect</beans:prop>
-                <beans:prop key="hibernate.show_sql">false</beans:prop>
-                <beans:prop key="hibernate.hbm2ddl.auto">update</beans:prop>
-            </beans:props>
-        </beans:property>
-    </beans:bean>-->
 
     <beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <!-- one of the properties available; the maximum file size in bytes -->
@@ -106,7 +76,6 @@
     <context:annotation-config/>
     <context:component-scan base-package="org.owasp.dependencytrack"/>
 
-
     <beans:bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
         <beans:property name="exceptionMappings">
             <beans:props>
@@ -114,6 +83,5 @@
             </beans:props>
         </beans:property>
     </beans:bean>
-
 
 </beans:beans>

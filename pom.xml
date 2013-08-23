@@ -92,7 +92,7 @@
             <version>0.1.4</version>
         </dependency>
 
-        <!-- html sanitizer -->
+        <!-- OWASP HTML Sanitizer -->
         <dependency>
             <artifactId>owasp-java-html-sanitizer</artifactId>
             <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>

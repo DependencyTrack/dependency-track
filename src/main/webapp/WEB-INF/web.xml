@@ -1,23 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ This file is part of Dependency-Track.
-  ~
-  ~ Dependency-Track is free software: you can redistribute it and/or modify it
-  ~ under the terms of the GNU General Public License as published by the Free
-  ~ Software Foundation, either version 3 of the License, or (at your option) any
-  ~ later version.
-  ~
-  ~ Dependency-Track is distributed in the hope that it will be useful, but
-  ~ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  ~ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-  ~ details.
-  ~
-  ~ You should have received a copy of the GNU General Public License along with
-  ~ Dependency-Track. If not, see http://www.gnu.org/licenses/.
-  ~
-  ~ Copyright (c) Axway. All Rights Reserved.
-  -->
-
 <web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
@@ -26,25 +7,13 @@
     <!-- The definition of the Root Spring Container shared by all Servlets and Filters -->
     <context-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>/WEB-INF/spring/root-context.xml
-
-        </param-value>
-
+        <param-value>WEB-INF/spring/root-context.xml</param-value>
     </context-param>
 
-    <!-- Creates the Spring Container shared by all Servlets and Filters -->
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
-    <!-- HDIV Init Listener -->
- <!--   <listener>
-        <listener-class>org.hdiv.listener.InitListener</listener-class>
-    </listener>-->
-
-
-
-    <!-- The filter-name matches name of a 'shiroFilter' bean inside applicationContext.xml -->
     <filter>
         <filter-name>shiroFilter</filter-name>
         <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
@@ -53,11 +22,6 @@
             <param-value>true</param-value>
         </init-param>
     </filter>
-<!--
-    <filter>
-        <filter-name>headlines</filter-name>
-        <filter-class>com.sourceclear.headlines.HeadLinesFilter</filter-class>
-    </filter>-->
 
     <!-- Make sure any request you want accessible to Shiro is filtered. /* catches all -->
     <!-- requests.  Usually this filter mapping is defined first (before all others) to -->
@@ -69,15 +33,8 @@
         <dispatcher>FORWARD</dispatcher>
         <dispatcher>INCLUDE</dispatcher>
         <dispatcher>ERROR</dispatcher>
-
     </filter-mapping>
 
-    <!--<filter-mapping>
-        <filter-name>headlines</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>-->
-
-    <!-- Processes application requests -->
     <servlet>
         <servlet-name>application</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -93,13 +50,6 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
-   <!-- <jsp-config>
-        <taglib>
-            <taglib-uri>http://java.sun.com/jsp/jstl/core</taglib-uri>
-            <taglib-location>/WEB-INF/tlds/hdiv-c.tld</taglib-location>
-        </taglib>
-    </jsp-config>-->
-
     <session-config>
         <cookie-config>
             <http-only>true</http-only>
@@ -112,22 +62,5 @@
         <exception-type>java.lang.Exception</exception-type>
         <location>/WEB-INF/views/errorpage.jsp</location>
     </error-page>
-
-    <!--&lt;!&ndash; HDIV Validator Filter &ndash;&gt;
-    <filter>
-        <filter-name>ValidatorFilter</filter-name>
-        <filter-class>org.hdiv.filter.ValidatorFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>ValidatorFilter</filter-name>
-        <servlet-name>application</servlet-name>
-    </filter-mapping>
-
-    <jsp-config>
-        <taglib>
-            <taglib-uri>http://java.sun.com/jsp/jstl/core</taglib-uri>
-            <taglib-location>/WEB-INF/tlds/hdiv-c.tld</taglib-location>
-        </taglib>
-    </jsp-config>-->
 
 </web-app>

@@ -55,7 +55,9 @@
     <div class="modal-header">
         <h4 id="applicationModalLabel">New Library</h4>
     </div>
-        <form:form id="addLibrariesForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/addlibraries" method="post" autocomplete="off" enctype="multipart/form-data">
+
+        <c:url value="/addlibraries" var="addlibrariesUrl"/>
+        <form:form id="addLibrariesForm" style="margin-bottom:0" action="${addlibrariesUrl}" method="post" autocomplete="off" enctype="multipart/form-data">
         <div class="modal-body">
             <table>
 
@@ -169,7 +171,9 @@
 			</span>
         </h4>
     </div>
-    <form:form id="editLibrariesForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/updatelibrary" method="post" autocomplete="off" enctype="multipart/form-data">
+
+    <c:url value="/updatelibrary" var="updatelibraryUrl"/>
+    <form:form id="editLibrariesForm" style="margin-bottom:0" action="${updatelibraryUrl}" method="post" autocomplete="off" enctype="multipart/form-data">
         <div class="modal-body">
                 <table>
                     <tr>
@@ -233,7 +237,9 @@
 
         </h4>
     </div>
-    <form:form id="licenseLibrariesForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/downloadlicense" method="post" autocomplete="off" enctype="multipart/form-data">
+
+    <c:url value="/downloadlicense" var="downloadlicenseUrl"/>
+    <form:form id="licenseLibrariesForm" style="margin-bottom:0" action="${downloadlicenseUrl}" method="post" autocomplete="off" enctype="multipart/form-data">
         <div class="modal-body">
             <table>
                 <tr>

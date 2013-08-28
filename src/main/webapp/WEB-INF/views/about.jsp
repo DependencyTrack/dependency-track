@@ -18,6 +18,6 @@
 </p>
 
 <pre>
-    <spring:message code="label.version"/>:<c:out value="${properties.version}"/>
-    <spring:message code="label.date.build"/>:<c:out value="${properties.builddate} "/>
+    <spring:message code="label.version"/>:    <c:out value="${properties.version}"/>
+    <spring:message code="label.date.build"/>: <c:out value="${properties.builddate} "/>
 </pre>

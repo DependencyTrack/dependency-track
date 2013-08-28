@@ -5,11 +5,11 @@
     <groupId>org.owasp</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
-    <description>OWASP Dependency-Track is a Java web application that allows organizations to document the use of third-party components across multiple applications and versions.</description>
+    <description>OWASP Dependency-Track is a web application that allows organizations to document the use of third-party components across multiple applications and versions.</description>
     <inceptionYear>2013</inceptionYear>
     <organization>
         <name>OWASP</name>
@@ -63,6 +63,27 @@
 
     <dependencies>
 
+        <!-- OWASP Dependency-Check -->
+        <dependency>
+            <groupId>org.owasp</groupId>
+            <artifactId>dependency-check-core</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.owasp</groupId>
+            <artifactId>dependency-check-core</artifactId>
+            <version>1.0.1</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.5</version>
+        </dependency>
+
         <!-- security headers -->
         <dependency>
             <groupId>com.sourceclear.headlines</groupId>
@@ -70,34 +91,12 @@
             <version>0.1.4</version>
         </dependency>
 
-        <!-- html sanitizer -->
+        <!-- OWASP HTML Sanitizer -->
         <dependency>
             <artifactId>owasp-java-html-sanitizer</artifactId>
             <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
             <version>r198</version>
         </dependency>
-
-        <!--security hdiv -->
-        <!--<dependency>
-            <groupId>org.hdiv</groupId>
-            <artifactId>hdiv-core</artifactId>
-            <version>2.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hdiv</groupId>
-            <artifactId>hdiv-config</artifactId>
-            <version>2.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hdiv</groupId>
-            <artifactId>hdiv-spring-mvc</artifactId>
-            <version>2.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hdiv</groupId>
-            <artifactId>hdiv-jstl-taglibs-1.2</artifactId>
-            <version>2.1.1</version>
-        </dependency>-->
 
 
         <!-- file upload jars start -->
@@ -155,7 +154,6 @@
         <!-- Spring Security End -->
 
         <!-- h2 database -->
-
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -164,7 +162,6 @@
 
 
         <!-- to fix basic data source start -->
-
         <dependency>
             <groupId>commons-pool</groupId>
             <artifactId>commons-pool</artifactId>
@@ -225,8 +222,6 @@
             <artifactId>jta</artifactId>
             <version>1.0.1B</version>
         </dependency>
-
-
         <!-- Hibernate end -->
 
         <!-- cglib enhancer -->

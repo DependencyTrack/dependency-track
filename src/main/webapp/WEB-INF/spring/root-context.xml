@@ -31,24 +31,23 @@
         <property name="filterChainDefinitionMap">
             <map>
                 <!-- Add mapping to all the urls in Dependency Track -->
-               
-                 <entry key="/login" value="anon"/>
-                 <entry key="/logout" value="user"/>
-                 <entry key="/applications" value="user"/>
-                 <entry key="/applicationVersion" value="user"/>
-                 <entry key="/libraries" value="user"/>
+                <entry key="/login" value="anon"/>
+                <entry key="/logout" value="user"/>
+                <entry key="/applications" value="user"/>
+                <entry key="/applicationVersion" value="user"/>
+                <entry key="/libraries" value="user"/>
                 <entry key="/libraryHierarchy" value="user"/>
                 <entry key="/searchApplication" value="user"/>
-                 <entry key="/error" value="user"/>
-                 <entry key="/about" value="user"/>
-
+                <entry key="/error" value="user"/>
+                <entry key="/about" value="user"/>
+                <entry key="/dcdata" value="anon"/>
             </map>
         </property>
     </bean>
 
     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
                 destroy-method="close" p:driverClassName="org.h2.Driver"
-                p:url="jdbc:h2:~/dependency-track;AUTO_SERVER=TRUE" p:username="sa" p:password="" />
+                p:url="jdbc:h2:~/dependency-track/database;AUTO_SERVER=TRUE" p:username="sa" p:password="" />
 
     <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
@@ -65,22 +64,25 @@
 
     <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
     <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
-        <property name="realm" ref="myLdapRealm"/>
+        <property name="realm" ref="authRealm"/>
     </bean>
 
- <!--   <bean id="myLdapRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
-        <property name="url" value="ldap://phx.ldap-ad.axway.int:389"/>
-        <property name="principalSuffix" value="@axway"/>
-    </bean>-->
+    <!--
+    <bean id="authRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
+        <property name="url" value="ldap://hostname:389"/>
+        <property name="principalSuffix" value="@windowsdomain"/>
+    </bean>
+    -->
 
-    <bean id="myLdapRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
+    <bean id="authRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
         <property name="dataSource" ref="dataSource"/>
-
         <property name="saltStyle" value="COLUMN"/>
     </bean>
 
-    <!--<bean id="matcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+    <!--
+    <bean id="matcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
         <property name="hashIterations" value="1024"/>
         <property name="storedCredentialsHexEncoded" value="false" />
-    </bean>-->
+    </bean>
+    -->
 </beans>

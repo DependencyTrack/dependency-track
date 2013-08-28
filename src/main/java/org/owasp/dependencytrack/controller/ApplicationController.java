@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
@@ -36,12 +37,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -91,28 +96,28 @@ public class ApplicationController {
 
     /**
      * Login action.
+     * @param map Map
      * @param username The username to login with
      * @param passwd The password to login with
      * @return A String
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public String loginchk(@RequestParam("username") String username,
-                           @RequestParam("password") String passwd)
-    {
-        String pwd = userService.hashpwd(username, passwd);
+    public String loginchk(Map<String, Object> map,
+                           @RequestParam("username") String username, @RequestParam("password") String passwd) {
+        final String pwd = userService.hashpwd(username, passwd);
         final UsernamePasswordToken token = new UsernamePasswordToken(username, pwd);
         try {
             SecurityUtils.getSubject().login(token);
 
+            LOGGER.info("Login successful: " + username);
             if (SecurityUtils.getSubject().isAuthenticated()) {
                 return "redirect:/applications";
             }
-
         } catch (AuthenticationException e) {
-
+            LOGGER.info("Login failure: " + username);
+            map.put("authenticationException", true);
         }
-        return "redirect:/login";
-
+        return "loginPage";
     }
 
     /**
@@ -121,7 +126,7 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String login() {
-        String s = "loginPage";
+        final String s = "loginPage";
         if (SecurityUtils.getSubject().isAuthenticated()) {
                 return "redirect:/applications";
             }
@@ -140,15 +145,17 @@ public class ApplicationController {
 
     /**
      * Logout action.
+     * @param username The username supplied during the registration of a user account
+     * @param password The password supplied during the registration of a user account
+     * @param chkpassword The second password (retype) supplied during the registration of a user account
      * @return a String
      */
     @RequestMapping(value = "/registerUser", method = RequestMethod.POST)
     public String registerUser(@RequestParam("username") String username,
                                @RequestParam("password") String password,
                                @RequestParam("chkpassword") String chkpassword) {
-        if(password.equals(chkpassword))
-        {
-        userService.registerUser(username,password);
+        if (password.equals(chkpassword)) {
+            userService.registerUser(username, password);
         }
         return "redirect:/login";
     }
@@ -201,13 +208,12 @@ public class ApplicationController {
     /**
      * Add Application action. Adds an application and associated version number
      * @param application The Application to add
-     * @param result a BindingResult
      * @param version a String of the version number to add
      * @return a String
      */
     @RequestMapping(value = "/addApplication", method = RequestMethod.POST)
     public String addApplication(@ModelAttribute("application") Application application,
-                                 BindingResult result, @RequestParam("version") String version) {
+                                 @RequestParam("version") String version) {
         applicationService.addApplication(application, version);
         return "redirect:/applications";
     }
@@ -329,13 +335,12 @@ public class ApplicationController {
 
     /**
      * Clone the Application including all ApplicationVersions.
-     * @param modelMap A Spring ModelMap
      * @param applicationid The ID of the Application to clone
      * @param applicationname The name of the cloned Application
      * @return a String
      */
     @RequestMapping(value = "/cloneApplication", method = RequestMethod.POST)
-    public String cloneApplication(ModelMap modelMap, @RequestParam("applicationid") int applicationid,
+    public String cloneApplication(@RequestParam("applicationid") int applicationid,
                                    @RequestParam("cloneAppName") String applicationname) {
         applicationVersionService.cloneApplication(applicationid, applicationname);
         return "redirect:/applications";
@@ -343,14 +348,13 @@ public class ApplicationController {
 
     /**
      * Clone the ApplicationVersion.
-     * @param modelMap a Spring ModelMap
      * @param applicationid The ID of the Application to clone
      * @param newversion The version of the cloned ApplicationVersion
      * @param applicationversion The ApplicationVersion to clone
-     * @return
+     * @return a String
      */
     @RequestMapping(value = "/cloneApplicationVersion", method = RequestMethod.POST)
-    public String cloneApplicationVersion(ModelMap modelMap, @RequestParam("applicationid") int applicationid,
+    public String cloneApplicationVersion(@RequestParam("applicationid") int applicationid,
                                           @RequestParam("cloneVersionNumber") String newversion,
                                           @RequestParam("applicationversion") String applicationversion) {
         applicationVersionService.cloneApplicationVersion(applicationid, newversion, applicationversion);
@@ -359,7 +363,6 @@ public class ApplicationController {
 
     /**
      * Updates a library regardless of application association.
-     * @param modelMap a Spring ModelMap
      * @param vendorid The ID of the LibraryVendor
      * @param licenseid The ID of the License
      * @param libraryid The ID of the Library
@@ -374,12 +377,10 @@ public class ApplicationController {
      * @return a String
      */
     @RequestMapping(value = "/updatelibrary", method = RequestMethod.POST)
-    public String updatingLibrary(ModelMap modelMap,
-                                  @RequestParam("editvendorid") int vendorid,
+    public String updatingLibrary(@RequestParam("editvendorid") int vendorid,
                                   @RequestParam("editlicenseid") int licenseid,
                                   @RequestParam("editlibraryid") int libraryid,
                                   @RequestParam("editlibraryversionid") int libraryversionid,
-
                                   @RequestParam("libraryname") String libraryname,
                                   @RequestParam("Licensefile") MultipartFile file,
                                   @RequestParam("libraryversion") String libraryversion,
@@ -396,21 +397,17 @@ public class ApplicationController {
 
     /**
      * Remove the libraryVersion with the specified ID.
-     * @param modelMap a Spring ModelMap
      * @param libraryversionid The LibraryVersion ID
      * @return a String
      */
     @RequestMapping(value = "/removelibrary/{libraryversionid}", method = RequestMethod.GET)
-    public String removeLibrary(ModelMap modelMap,
-                                @PathVariable("libraryversionid") Integer libraryversionid) {
-
+    public String removeLibrary(@PathVariable("libraryversionid") Integer libraryversionid) {
         libraryVersionService.removeLibrary(libraryversionid);
-
         return "redirect:/libraries";
     }
 
     /**
-     * Returns a list of all libraries regardless of application association
+     * Returns a list of all libraries regardless of application association.
      * @param map a map of parameters
      * @return a String
      */
@@ -428,7 +425,6 @@ public class ApplicationController {
 
     /**
      * Adds a library regardless of application association.
-     * @param modelMap a Spring ModelMap
      * @param libraryname The name of the Library
      * @param libraryversion The version of the Library
      * @param vendor The vendor of the Library
@@ -436,11 +432,10 @@ public class ApplicationController {
      * @param file The license file
      * @param language The programming language the Library was written in
      * @param secuniaID The Secunia ID of the LibraryVersion
-     * @return
+     * @return a String
      */
     @RequestMapping(value = "/addlibraries", method = RequestMethod.POST)
-    public String addLibraries(ModelMap modelMap,
-                               @RequestParam("libnamesel") String libraryname,
+    public String addLibraries(@RequestParam("libnamesel") String libraryname,
                                @RequestParam("libversel") String libraryversion,
                                @RequestParam("vendorsel") String vendor,
                                @RequestParam("licensesel") String license,
@@ -454,13 +449,11 @@ public class ApplicationController {
 
     /**
      * Download license action.
-     * @param map map of parameters
      * @param response a Response object
      * @param licenseid the ID of the License to download
      */
     @RequestMapping(value = "/downloadlicense", method = RequestMethod.POST)
-    public void downloadLicense(Map<String, Object> map,
-                                HttpServletResponse response,
+    public void downloadLicense(HttpServletResponse response,
                                 @RequestParam("licenseid") Integer licenseid) {
 
 
@@ -490,18 +483,17 @@ public class ApplicationController {
 
     /**
      * View license action.
-     * @param map map of parameters
      * @param response a Response object
      * @param licenseid the ID of the License to download
+     * @return a String
      */
     @RequestMapping(value = "/viewlicense/{licenseid}", method = RequestMethod.GET)
-    public String viewLicense(Map<String, Object> map,
-                              HttpServletResponse response,
+    public String viewLicense(HttpServletResponse response,
                               @PathVariable("licenseid") Integer licenseid) {
 
         final List<License> licenses = libraryVersionService.listLicense(licenseid);
         final License newLicense = licenses.get(0);
-        if (newLicense.getContenttype().equals("text/plain") || newLicense.getContenttype().equals("text/html")) {
+        if ("text/plain".equals(newLicense.getContenttype()) || "text/html".equals(newLicense.getContenttype())) {
 
             InputStream in = null;
             OutputStream out = null;
@@ -527,6 +519,30 @@ public class ApplicationController {
             return "emptyfile";
         }
         return "";
+    }
+
+    /**
+     * Service to download the Dependency-Check datafile archive.
+     * @param response an HttpServletResponse object
+     */
+    @RequestMapping(value = "/dcdata", method = RequestMethod.GET)
+    public void getFile(HttpServletResponse response) {
+        InputStream fis = null;
+        OutputStream out = null;
+        try {
+            fis = new FileInputStream(Constants.DATA_ZIP);
+            response.setHeader("Content-Disposition", "inline;filename=\"" + Constants.DATA_FILENAME + "\"");
+            response.setHeader("Content-Type", "application/octet-stream;");
+            out = response.getOutputStream();
+            IOUtils.copy(fis, out);
+            out.flush();
+        } catch (IOException ex) {
+            LOGGER.info("Error writing Dependency-Check datafile to output stream.");
+            throw new RuntimeException("IOError writing file to output stream");
+        } finally {
+            IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(fis);
+        }
     }
 
     /**

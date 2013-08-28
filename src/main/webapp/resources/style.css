@@ -153,5 +153,100 @@ iframe[seamless] {
 
 #shift-logout
 {
+}
 
+.alert {
+    margin: 20px auto;
+    width: 70%;
+}
+
+#login-block {
+    padding-top: 50px;
+    padding-bottom: 25px;
+}
+
+#login-block h3 {
+    color: #ffffff;
+    text-align: center;
+    font-size: 1.375em;
+    text-shadow: 2px 2px 2px #444444;
+    font-weight: normal;
+
+}
+
+.login-box {
+    margin: 0 auto;
+    width: 420px;
+    background: transparent url(images/login-bg.png) repeat;
+    border: 4px solid rgba(255, 255, 255, 0.31);
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    -o-background-clip: padding-box;
+    background-clip: padding-box;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+}
+
+.login-logo {
+    opacity: 0.9;
+    text-align: center;
+    padding: 15px 0 10px;
+}
+
+.login-form form p {
+    width: 80%;
+    margin: 5px auto 10px;
+    text-align: center;
+}
+
+.login-box hr {
+    margin: 10px auto 20px;
+    width: 70%;
+    border-top: 1px solid #dddbda;
+    border-bottom: 1px solid #FFF;
+}
+
+/* Login Form */
+.login-form input {
+    display: block;
+    margin: 0 auto 15px;
+    width: 70%;
+    background: #d6d6d6;
+    border: 1px solid #bfbfbf;
+    color: #6c6c6c;
+    padding: 8px;
+}
+
+/* Login Button */
+.btn.btn-login {
+    width: 120px;
+    display: block;
+    margin: 20px auto 20px;
+    color: white;
+    text-transform: uppercase ;
+}
+
+.btn.btn-login.btn-reset {
+    width: 180px;
+}
+
+.login-links {
+    text-align: center;
+}
+
+.login-links a {
+    color: #6c6c6c;
+    display: inline-block;
+    padding: 5px;
+    -webkit-transition: all .5s ease;
+    -moz-transition: all .5s ease;
+    -ms-transition: all .5s ease;
+    -o-transition: all .5s ease;
+    transition: all .5s ease;;
+}
+
+.login-links a:hover {
+    text-decoration: none;
+    color: #e13c3c;
 }

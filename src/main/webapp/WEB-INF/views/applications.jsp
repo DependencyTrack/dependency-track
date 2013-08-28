@@ -64,7 +64,9 @@
     <div class="modal-header">
         <h4 id="applicationModalLabel"><spring:message code="label.application.new"/></h4>
     </div>
-    <form:form id="addApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/addApplication" method="post" autocomplete="off">
+
+    <c:url value="/addApplication" var="addApplicationUrl"/>
+    <form:form id="addApplicationForm" style="margin-bottom:0" action="${addApplicationUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>
@@ -93,7 +95,9 @@
 			</span>
         </h4>
     </div>
-    <form:form id="editApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/updateApplication" method="post" autocomplete="off">
+
+    <c:url value="/updateApplication" var="updateApplicationUrl"/>
+    <form:form id="editApplicationForm" style="margin-bottom:0" action="${updateApplicationUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>
@@ -114,7 +118,9 @@
     <div class="modal-header">
         <h4 id="addApplicationVersionModalLabel"><spring:message code="label.version.add"/></h4>
     </div>
-    <form:form id="addApplicationVersionForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/addApplicationVersion" method="post" autocomplete="off">
+
+    <c:url value="/addApplicationVersion" var="addApplicationVersionUrl"/>
+    <form:form id="addApplicationVersionForm" style="margin-bottom:0" action="${addApplicationVersionUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>
@@ -135,8 +141,9 @@
     <div class="modal-header">
         <h4 id="cloneApplicationModalLabel"><spring:message code="label.application.clone"/></h4>
     </div>
-    <%--add link to controller--%>
-    <form:form id="cloneApplicationForm" style="margin-bottom:0" action="${pageContext.request.contextPath}/cloneApplication" method="post" autocomplete="off">
+
+    <c:url value="/cloneApplication" var="cloneApplicationUrl"/>
+    <form:form id="cloneApplicationForm" style="margin-bottom:0" action="${cloneApplicationUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>
                 <tr>

@@ -44,15 +44,17 @@
                 <input type="password" name="password" placeholder="${passwordLabel}" required="required" autocomplete="off"/>
                 <button type="submit" class="btn btn-primary btn-login"><spring:message code="login.button"/></button>
             </form:form>
+            <c:if test="${properties.signupEnabled}">
             <div class="login-links">
                 <a data-toggle="modal" href="#registerUserModal"><spring:message code="login.account.question"/> <strong><spring:message code="login.signup"/></strong></a>
             </div>
+            </c:if>
         </div>
     </div>
 </div>
 
 
-
+<c:if test="${properties.signupEnabled}">
 <div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true">
     <div class="modal-header">
         <h4 id="registerUserModalLabel"><spring:message code="login.create.account"/></h4>
@@ -82,6 +84,7 @@
         </div>
     </form:form>
 </div>
+</c:if>
 
 </body>
 </html>

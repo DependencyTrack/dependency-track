@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
@@ -87,6 +88,12 @@ public class ApplicationController {
     private LibraryVersionService libraryVersionService;
 
     /**
+     * Dependency-Track's centralized Configuration class
+     */
+    @Autowired
+    private Config config;
+
+    /**
      * Initialization method gets called after controller is constructed.
      */
     @PostConstruct
@@ -128,10 +135,10 @@ public class ApplicationController {
     public String login() {
         final String s = "loginPage";
         if (SecurityUtils.getSubject().isAuthenticated()) {
-                return "redirect:/applications";
-            }
-        return s;
+            return "redirect:/applications";
         }
+        return s;
+    }
 
     /**
      * Logout action.
@@ -154,7 +161,7 @@ public class ApplicationController {
     public String registerUser(@RequestParam("username") String username,
                                @RequestParam("password") String password,
                                @RequestParam("chkpassword") String chkpassword) {
-        if (password.equals(chkpassword)) {
+        if (config.isSignupEnabled() && password.equals(chkpassword)) {
             userService.registerUser(username, password);
         }
         return "redirect:/login";

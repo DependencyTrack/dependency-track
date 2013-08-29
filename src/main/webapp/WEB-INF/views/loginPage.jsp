@@ -11,7 +11,7 @@
     <title><c:out value="${properties.longname}"/></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-    <meta name="copyright" content="&#169; 2013 Axway. All rights reserved."/>
+    <meta name="copyright" content="Copyright Axway. All rights reserved."/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="<c:url value="/resources/favicon.ico"/>"/>
     <link rel="stylesheet" type="text/css" href="<c:url value = "/resources/bootstrap/css/bootstrap.min.css"/>" media="screen"/>

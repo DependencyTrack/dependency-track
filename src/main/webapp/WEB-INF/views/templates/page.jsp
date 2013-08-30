@@ -73,8 +73,7 @@
 <div id="searchApplicationModal" class="modal hide fade" tabindex="-1" role="dialog"
      aria-labelledby="searchApplicationModal" aria-hidden="true">
     <div class="modal-header">
-        <h4 id="searchApplicationModalLabel">Search Application
-        </h4>
+        <h4 id="searchApplicationModalLabel"><spring:message code="label.applications.search"/></h4>
     </div>
 
     <c:url value="/searchApplication" var="searchApplicationUrl"/>
@@ -83,19 +82,19 @@
         <div class="modal-body">
             <table>
                 <tr>
-                    <td><label for="serappven">Library Vendor</label></td>
+                    <td><label for="serappven"><spring:message code="label.library.vendor"/></label></td>
                     <td><select id="serappven" name="serappven" autofocus="autofocus" required="required">
                         <option value="">--</option>
                     </select></td>
                 </tr>
                 <tr>
-                    <td><label for="serapplib">Library Name</label></td>
+                    <td><label for="serapplib"><spring:message code="label.library.name"/></label></td>
                     <td><select id="serapplib" name="serapplib" autofocus="autofocus" required="required">
                         <option value="">--</option>
                     </select></td>
                 </tr>
                 <tr>
-                    <td><label for="serapplibver">Library Version</label></td>
+                    <td><label for="serapplibver"><spring:message code="label.library.version"/></label></td>
                     <td><select id="serapplibver" name="serapplibver" autofocus="autofocus">
                         <option value="">--</option>
                     </select></td>
@@ -103,8 +102,8 @@
             </table>
         </div>
         <div class="modal-footer">
-            <button class="btn" data-dismiss="modal" aria-hidden="true"><c:out value="Close"/></button>
-            <button class="modalSubmit btn btn-primary"><c:out value="Search"/></button>
+            <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+            <button class="modalSubmit btn btn-primary"><spring:message code="label.search"/></button>
         </div>
     </form:form>
 </div>

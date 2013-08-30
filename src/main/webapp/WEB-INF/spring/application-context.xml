@@ -18,74 +18,76 @@
   ~ Copyright (c) Axway. All Rights Reserved.
   -->
 
-<beans:beans xmlns="http://www.springframework.org/schema/mvc"
-             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xmlns:beans="http://www.springframework.org/schema/beans"
-             xmlns:context="http://www.springframework.org/schema/context"
-             xmlns:util="http://www.springframework.org/schema/util"
-             xmlns:task="http://www.springframework.org/schema/task"
-             xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
-             xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
-		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+	   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
     <!-- Enables the Spring MVC @Controller programming model -->
-    <annotation-driven/>
+    <mvc:annotation-driven/>
 
     <!-- Enables Spring Task annotations -->
     <task:annotation-driven/>
-    <beans:bean id="dependencyCheckDataUpdater" class="org.owasp.dependencytrack.tasks.DependencyCheckDataUpdater"></beans:bean>
+
+    <!-- Dependency-Check data updater scheduler and packager -->
+    <bean id="dependencyCheckDataUpdater" class="org.owasp.dependencytrack.tasks.DependencyCheckDataUpdater" />
 
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
         up static resources in the ${webappRoot}/resources directory -->
-    <resources mapping="favicon.ico"  location="/resources/favicon.ico" order="-10"/>
-    <resources mapping="/resources/**" location="/resources/"/>
+    <mvc:resources mapping="favicon.ico"  location="/resources/favicon.ico" order="-10"/>
+    <mvc:resources mapping="/resources/**" location="/resources/"/>
 
     <util:properties id="properties" location="classpath:application.properties" />
 
     <!-- Resolves views selected for rendering by @Controllers to .jsp resources
         in the /WEB-INF/views directory -->
-    <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <beans:property name="prefix" value="/WEB-INF/views/"/>
-        <beans:property name="suffix" value=".jsp"/>
-        <beans:property name="exposedContextBeanNames">
-            <beans:list><beans:value>properties</beans:value></beans:list>
-        </beans:property>
-    </beans:bean>
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="exposedContextBeanNames">
+            <list><value>properties</value></list>
+        </property>
+    </bean>
 
-    <beans:bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
-        <beans:property name="basename" value="classpath:messages"/>
-        <beans:property name="defaultEncoding" value="UTF-8"/>
-    </beans:bean>
+    <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basename" value="classpath:messages"/>
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
 
-    <beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <!-- one of the properties available; the maximum file size in bytes -->
-        <beans:property name="maxUploadSize" value="10000000"/>
-    </beans:bean>
+        <property name="maxUploadSize" value="10000000"/>
+    </bean>
 
     <tx:annotation-driven/>
-    <beans:bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
-        <beans:property name="sessionFactory" ref="sessionFactory"/>
-    </beans:bean>
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
 
     <context:annotation-config/>
     <context:component-scan base-package="org.owasp.dependencytrack"/>
 
-    <beans:bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
-        <beans:property name="exceptionMappings">
-            <beans:props>
-                <beans:prop key="java.lang.Exception">errorpage</beans:prop>
-            </beans:props>
-        </beans:property>
-    </beans:bean>
+    <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <property name="exceptionMappings">
+            <props>
+                <prop key="java.lang.Exception">errorpage</prop>
+            </props>
+        </property>
+    </bean>
 
     <!-- CSRF Prevention -->
-    <beans:bean name="requestDataValueProcessor" class="org.owasp.dependencytrack.controller.token.TokenRequestDataValueProcessor"/>
-    <interceptors>
-        <beans:bean class="org.owasp.dependencytrack.controller.token.TokenHandlerInterceptor"/>
-    </interceptors>
+    <bean name="requestDataValueProcessor" class="org.owasp.dependencytrack.controller.token.TokenRequestDataValueProcessor"/>
+    <mvc:interceptors>
+        <bean class="org.owasp.dependencytrack.controller.token.TokenHandlerInterceptor"/>
+    </mvc:interceptors>
 
-</beans:beans>
+</beans>

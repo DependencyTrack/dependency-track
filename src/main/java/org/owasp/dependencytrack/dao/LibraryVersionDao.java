@@ -376,7 +376,7 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVersion> allLibrary() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
+        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion order by library");
         return query.list();
     }
 
@@ -386,7 +386,7 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<Library> uniqueLibrary() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("select distinct lib from Library as lib");
+        final Query query = sessionFactory.getCurrentSession().createQuery("select distinct lib from Library as lib order by libraryname");
         return query.list();
     }
 
@@ -396,7 +396,7 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<License> uniqueLicense() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("select distinct lic from License as lic");
+        final Query query = sessionFactory.getCurrentSession().createQuery("select distinct lic from License as lic order by licensename");
         return query.list();
     }
 
@@ -407,7 +407,7 @@ public class LibraryVersionDao {
     @SuppressWarnings("unchecked")
     public List<LibraryVendor> uniqueVendor() {
         final Query query = sessionFactory.getCurrentSession().
-                createQuery("select distinct lic from LibraryVendor as lic");
+                createQuery("select distinct lic from LibraryVendor as lic order by vendor");
 
         return query.list();
 

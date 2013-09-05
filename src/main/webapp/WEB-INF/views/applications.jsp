@@ -56,7 +56,7 @@
         </table>
     </c:if>
     <c:if  test="${empty applicationList}">
-        <p> <c:out value="No application can be found based on your search. "/></p>
+        <p> <c:out value="No application are present. "/></p>
     </c:if>
 </div>
 

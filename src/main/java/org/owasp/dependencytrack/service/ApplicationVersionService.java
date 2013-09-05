@@ -41,10 +41,7 @@ public class ApplicationVersionService {
         applicationVersionDao.deleteApplicationVersion(id);
     }
 
-    @Transactional
-    public void updateApplication(int appversionid, int appid, String appname, String appversion) {
-        applicationVersionDao.updateApplication(appversionid, appid, appname, appversion);
-    }
+
 
     @Transactional
     public void addApplicationVersion(int appid, String appversion) {

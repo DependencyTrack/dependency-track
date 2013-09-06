@@ -56,7 +56,7 @@
         </table>
     </c:if>
     <c:if  test="${empty applicationList}">
-        <p> <c:out value="No application are present. "/></p>
+        <p><spring:message code="label.empty.search.results"/></p>
     </c:if>
 </div>
 

@@ -38,11 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
@@ -375,7 +371,6 @@ public class ApplicationController {
      * @param libraryid The ID of the Library
      * @param libraryversionid The ID of the LibraryVersion
      * @param libraryname The name of the Library
-     * @param file The license file
      * @param libraryversion The version label of the Library
      * @param vendor The String representation of the Vendor
      * @param license The license the Library is licensed under
@@ -389,7 +384,6 @@ public class ApplicationController {
                                   @RequestParam("editlibraryid") int libraryid,
                                   @RequestParam("editlibraryversionid") int libraryversionid,
                                   @RequestParam("libraryname") String libraryname,
-                                  @RequestParam("Licensefile") MultipartFile file,
                                   @RequestParam("libraryversion") String libraryversion,
                                   @RequestParam("vendor") String vendor,
                                   @RequestParam("license") String license,
@@ -397,7 +391,7 @@ public class ApplicationController {
                                   @RequestParam("secuniaID") int secuniaID) {
 
         libraryVersionService.updateLibrary(vendorid, licenseid, libraryid,
-                libraryversionid, libraryname, libraryversion, vendor, license, file,
+                libraryversionid, libraryname, libraryversion, vendor, license,
                 language, secuniaID);
         return "redirect:/libraries";
     }
@@ -561,4 +555,16 @@ public class ApplicationController {
         return "aboutPage";
     }
 
+    /**
+     * Upload a License
+     *@param licenseid the ID of the License to download
+     */
+    @RequestMapping(value = "/uploadlicense", method = RequestMethod.POST)
+    public String uploadLicense(@RequestParam("uploadlicenseid") Integer licenseid,
+                              @RequestParam("uploadlicensefile") MultipartFile file,
+                              @RequestParam("editlicensename") String editlicensename)
+    {
+                libraryVersionService.uploadLicense(licenseid, file, editlicensename);
+        return "redirect:/libraries";
+    }
 }

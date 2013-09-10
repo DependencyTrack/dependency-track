@@ -94,18 +94,20 @@
                     <td><label for="license"><spring:message code="label.license"/></label></td>
                     <td>
                         <div style="display:inline">
+                            <c:if test="${!empty libList}">
                         <select id="licenseids" name="license"  class="licenseidsclass">
                             <option value="">--</option>
                             <c:forEach items="${uniquelicList}" var="libList">
                                 <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
                             </c:forEach>
                         </select>
-                        <input id="license" name ="licensesel" type="text" required="required" style="  position:relative; height: 20px; border: 0; left: -223px; width: 183px;" />
+                            </c:if>
+                        <input id="license" name ="licensesel" class="licenselosefocus" type="text" required="required" style="  position:relative; height: 20px; border: 0; left: -223px; width: 183px;" />
                         </div>
                     </td>
                 </tr>
                 <tr>
-                    <td><label for="Licensefile"><spring:message code="label.license.file"/></label></td>
+                    <td><label id="Licensefilelabel" for="Licensefile"><spring:message code="label.license.file" /></label></td>
                     <td><input id="Licensefile" name="Licensefile" type="file" /></td>
                 </tr>
                 <tr>
@@ -153,6 +155,10 @@
         <div class="modal-body">
                 <table>
                     <tr>
+                        <td><label for="vendoredit"><spring:message code="label.vendor"/></label></td>
+                        <td><input id="vendoredit" name="vendor" type="text" value=""/></td>
+                    </tr>
+                    <tr>
                         <td><label for="librarynameedit"><spring:message code="label.name"/></label></td>
                         <td><input id="librarynameedit" name="libraryname" type="text" value=""/></td>
                     </tr>
@@ -160,17 +166,19 @@
                         <td><label for="libraryversionedit"><spring:message code="label.version"/></label></td>
                         <td><input id="libraryversionedit" name="libraryversion" type="text" value=""/></td>
                     </tr>
+
                     <tr>
-                        <td><label for="vendoredit"><spring:message code="label.vendor"/></label></td>
-                        <td><input id="vendoredit" name="vendor" type="text" value=""/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="licenseedit"><spring:message code="label.license"/></label></td>
-                        <td><input id="licenseedit" name="license" type="text" value=""/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="Licensefileedit"><spring:message code="label.license.file"/></label></td>
-                        <td><input id="Licensefileedit" name="Licensefile" type="file" /></td>
+                        <td><label for="licenseeditids"><spring:message code="label.license"/></label></td>
+                        <td>
+                            <div style="display:inline">
+                                <select id="licenseeditids" name="license">
+                                    <option value="">--</option>
+                                    <c:forEach items="${uniquelicList}" var="libList">
+                                        <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                        </td>
                     </tr>
                     <tr>
                         <td><label for="languageedit"><spring:message code="label.language"/></label></td>
@@ -210,21 +218,47 @@
                     <td><label for="licensfileename"><spring:message code="label.license.file"/></label></td>
                     <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
                 </tr>
-                <tr>
-                    <td><label for="viewlicense"><spring:message code="label.license"/></label></td>
-                    <td>
-                        <iframe id="viewlicense" width="400" height="400" src="" seamless="seamless" sandbox="allow-same-origin"></iframe>
-                    </td>
-                </tr>
             </table>
+            <iframe id="viewlicense" width="500" height="400" src="" seamless="seamless" sandbox="allow-same-origin"></iframe>
             <input type="hidden" id="licenseid" name="licenseid" value=""/>
+
         </div>
 
 
 
         <div class="modal-footer">
+
             <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+            <a data-toggle="modal" class="open-licenseFileUploadModalButton btn btn-primary" data-dismiss="modal" href="#licenseFileUploadModal" ><spring:message code="label.upload"/></a>
             <button class="modalSubmit btn btn-primary"><spring:message code="label.download"/></button>
+
+        </div>
+    </form:form>
+</div>
+
+<div id="licenseFileUploadModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="licenseFileUploadModal" aria-hidden="true">
+    <div class="modal-header">
+        <h4 id="licenseFileUploadModalLabel"><spring:message code="label.license.upload"/></h4>
+    </div>
+
+    <c:url value="/uploadlicense" var="uploadlicenseUrl"/>
+    <form:form id="uploadLicenseFileForm" style="margin-bottom:0" action="${uploadlicenseUrl}" method="post" autocomplete="off" enctype="multipart/form-data">
+        <div class="modal-body">
+            <table>
+                <tr>
+                    <td><label for="editlicensename"><spring:message code="label.name"/></label></td>
+                    <td><input id="editlicensename" name="editlicensename" type="text" value="" /></td>
+                </tr>
+                <tr>
+                    <td><label for="uploadlicensefile"><spring:message code="label.license.file" /></label></td>
+                    <td><input id="uploadlicensefile" name="uploadlicensefile" type="file" value="" /></td>
+                </tr>
+                <input type="hidden" id="uploadlicenseid" name="uploadlicenseid" value=""/>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+            <button class="modalSubmit btn btn-primary"><spring:message code="label.upload"/></button>
         </div>
     </form:form>
 </div>

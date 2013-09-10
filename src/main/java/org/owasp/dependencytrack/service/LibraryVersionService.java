@@ -63,10 +63,10 @@ public class LibraryVersionService {
     @Transactional
     public void updateLibrary(int vendorid, int licenseid, int libraryid,
                               int libraryversionid, String libraryname, String libraryversion,
-                              String vendor, String license, MultipartFile file, String language, int secuniaID) {
+                              String vendor, String license,  String language, int secuniaID) {
 
         libraryVersionDao.updateLibrary(vendorid, licenseid, libraryid,
-                libraryversionid, libraryname, libraryversion, vendor, license, file,
+                libraryversionid, libraryname, libraryversion, vendor, license,
                 language, secuniaID);
     }
 
@@ -115,4 +115,12 @@ public class LibraryVersionService {
 
         libraryVersionDao.addLibraries( libraryname,libraryversion,vendor,  license,  file,  language,  secuniaID);
     }
+
+    @Transactional
+    public void uploadLicense(int licenseid,MultipartFile file, String editlicensename) {
+        libraryVersionDao.uploadLicense(licenseid,file,editlicensename);
+    }
+
+
+
 }

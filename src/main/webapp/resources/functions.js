@@ -19,6 +19,8 @@ $(document).ready(function () {
     $("table.tablesorter").tablesorter();
     $("#adddeplibrary").chainedTo("#adddepvendor");
     $("#adddepversion").chainedTo("#adddeplibrary");
+    $(document.getElementById('Licensefile')).hide();
+    $(document.getElementById('Licensefilelabel')).hide();
 });
 
 
@@ -127,10 +129,19 @@ $(document).on("click", ".open-LicenseLibrariesModal", function () {
     $(".modal-body #licensename").val($(this).data("licensename"));
     $(".modal-body #licensfileename").val($(this).data("licensfileename"));
 
+
     if (($(this).data("licensefiletype") != "text/plain") || ($(this).data("licensefiletype") != "text/html")) {
         var frame = document.getElementById("hideviewlicense");
         frame.parentNode.removeChild(frame);
     }
+});
+
+$(document).on("click", ".open-licenseFileUploadModalButton", function () {
+    var id = $(".modal-body #licenseid").val();
+    //var id = $("#licenseLibrariesModal .modal-body #licenseid").va;
+    $(".modal-body #uploadlicenseid").val(id);
+    var licensename=$(".modal-body #licensename").val();
+    $(".modal-body #editlicensename").val(licensename);
 
 });
 
@@ -150,8 +161,6 @@ function populatetextbox(id, str) {
 }
 
 $(document).on("click", ".open-AddLibraryModal", function () {
-    //$(".modal-body #addid").val( $(this).data("id") );
-
 
     document.getElementById('vendorid').options.length = 0;
     document.getElementById('librarynameid').options.length = 0;
@@ -215,4 +224,20 @@ $(document).on("change",".languageidclass",function() {
     $(document.getElementById('language')).val($('#languageid option:selected').text());
 });
 
+$(document).on("change",".licenselosefocus",function() {
 
+    var values = [];
+    $('#licenseids option').each(function() {
+        values.push( $(this).attr('value') );
+    });
+    var name = $(document.getElementById('license')).val();
+    var i;
+    for (i = 0; i < values.length; i++)
+    {
+        if(values[i]!= name)
+        {
+        $(document.getElementById('Licensefile')).show();
+        $(document.getElementById('Licensefilelabel')).show();
+        }
+    }
+});

@@ -200,16 +200,13 @@ public class LibraryVersionDao {
      * @param libraryversion The updated version label
      * @param vendor The updated vendor label
      * @param license The updated license label
-     * @param file The updated license file
      * @param language The updated programming language
      * @param secuniaID The updated Secunia ID
      */
     public void updateLibrary(int vendorid, int licenseid, int libraryid, int libraryversionid,
                               String libraryname, String libraryversion, String vendor,
-                              String license, MultipartFile file, String language, int secuniaID) {
+                              String license,  String language, int secuniaID) {
 
-        InputStream licenseInputStream = null;
-        try {
             Query query = sessionFactory.getCurrentSession().createQuery(
                     "update LibraryVendor set vendor=:vendor "
                             + "where id=:vendorid");
@@ -225,43 +222,21 @@ public class LibraryVersionDao {
 
             final LibraryVendor libraryVendor = (LibraryVendor) query.list().get(0);
 
-            Blob blob;
-
-            licenseInputStream = file.getInputStream();
-            blob = Hibernate.createBlob(licenseInputStream);
-
-            if (file.isEmpty()) {
-
+            if(license.isEmpty())
+            {
                 query = sessionFactory.getCurrentSession().createQuery(
-                        "update License set licensename=:lname "
-                                + "where id=:licenseid");
-
-                query.setParameter("licenseid", licenseid);
-                query.setParameter("lname", license);
-
-                query.executeUpdate();
-
-            } else {
-                query = sessionFactory.getCurrentSession().createQuery(
-                        "update License set licensename=:lname,"
-                                + "text=:blobfile," + "filename=:filename,"
-                                + "contenttype=:contenttype "
-                                + "where id=:licenseid");
-
-                query.setParameter("licenseid", licenseid);
-                query.setParameter("lname", license);
-                query.setParameter("blobfile", blob);
-                query.setParameter("filename", file.getOriginalFilename());
-                query.setParameter("contenttype", file.getContentType());
-
-                query.executeUpdate();
+                        "from License "
+                                + "where id=:id");
+                query.setParameter("id", licenseid);
             }
-
+            else
+            {
 
             query = sessionFactory.getCurrentSession().createQuery(
                     "from License "
-                            + "where id=:licenseid");
-            query.setParameter("licenseid", licenseid);
+                            + "where licensename=:name");
+            query.setParameter("name", license);
+            }
             final License licenses = (License) query.list().get(0);
 
             query = sessionFactory.getCurrentSession().createQuery(
@@ -295,15 +270,7 @@ public class LibraryVersionDao {
             query.setParameter("library", library);
             query.setParameter("secunia", secuniaID);
             query.setParameter("libverid", libraryversionid);
-
             query.executeUpdate();
-
-        } catch (IOException e) {
-            // todo: log this
-            // do nothing
-        } finally {
-            IOUtils.closeQuietly(licenseInputStream);
-        }
     }
 
     /**
@@ -525,5 +492,55 @@ public class LibraryVersionDao {
         session.getTransaction().commit();
         session.close();
     }
+
+
+   public void uploadLicense(int licenseid, MultipartFile file, String editlicensename)
+   {
+       try
+       {
+       InputStream licenseInputStream = null;
+       Blob blob;
+           final Query query;
+
+       if (file.isEmpty())
+       {
+           query = sessionFactory.getCurrentSession().createQuery(
+                   "update License set licensename=:lname "
+                           + "where id=:licenseid");
+
+           query.setParameter("licenseid", licenseid);
+           query.setParameter("lname", editlicensename);
+
+           query.executeUpdate();
+
+       }
+           else
+       {
+       licenseInputStream = file.getInputStream();
+       blob = Hibernate.createBlob(licenseInputStream);
+
+        query = sessionFactory.getCurrentSession().createQuery(
+               "update License set licensename=:lname,"
+                       + "text=:blobfile," + "filename=:filename,"
+                       + "contenttype=:contenttype "
+                       + "where id=:licenseid");
+
+       query.setParameter("licenseid", licenseid);
+       query.setParameter("lname", editlicensename);
+       query.setParameter("blobfile", blob);
+       query.setParameter("filename", file.getOriginalFilename());
+       query.setParameter("contenttype", file.getContentType());
+
+       query.executeUpdate();
+       }
+       }
+
+       catch (Exception e)
+       {
+
+       }
+   }
+
+
 
 }

@@ -46,7 +46,7 @@ $(document).on("click", ".open-SearchApplicationModal", function () {
         {
             $('<option/>').val("").html("--").appendTo('#serappven');
             $('<option/>').addClass("").val("").html("--").appendTo('#serapplib');
-            $('<option/>').addClass("").val("").html("--").appendTo('#serapplibver');
+            $('<option/>').addClass("").val(-1).html("--").appendTo('#serapplibver');
             var vendjs, libjs, verjs;
             for (var i = 0; i < data.vendors.length; i++) {
                 vendjs = data.vendors[i];

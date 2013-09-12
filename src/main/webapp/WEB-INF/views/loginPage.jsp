@@ -66,15 +66,15 @@
             <table>
                 <tr>
                     <td><label for="username"><spring:message code="label.username"/></label></td>
-                    <td><input id="username" name="username" type="text" autofocus="autofocus" required="required"/></td>
+                    <td><input id="username" name="username" type="text" autofocus="autofocus" pattern=".{5,}" title="5 characters minimum" required="required"/></td>
                 </tr>
                 <tr>
                     <td><label for="password"><spring:message code="label.password"/></label></td>
-                    <td><input id="password" name="password" type="password" required="required"/></td>
+                    <td><input id="password" name="password" type="password" pattern=".{8,}" title="8 characters minimum" required="required"/></td>
                 </tr>
                 <tr>
                     <td><label for="chkpassword"><spring:message code="label.password.confirm"/></label></td>
-                    <td><input id="chkpassword" name="chkpassword" type="password" required="required"/></td>
+                    <td><input id="chkpassword" name="chkpassword" type="password" pattern=".{8,}" title="8 characters minimum" required="required"/></td>
                 </tr>
             </table>
         </div>

@@ -126,7 +126,7 @@
                 </tr>
                 <tr>
                     <td><label for="secuniaID"><spring:message code="label.secunia.id"/></label></td>
-                    <td><input id="secuniaID" name="secuniaID" type="text" /></td>
+                    <td><input id="secuniaID" name="secuniaID" type="text" pattern="\d+" title="Numbers only" /></td>
                 </tr>
             </table>
         </div>
@@ -186,7 +186,7 @@
                     </tr>
                     <tr>
                         <td><label for="secuniaIDedit"><spring:message code="label.secunia.id"/></label></td>
-                        <td><input id="secuniaIDedit" name="secuniaID" type="text" value=""/></td>
+                        <td><input id="secuniaIDedit" name="secuniaID" type="text" pattern="\d+" title="Numbers only" value=""/></td>
                     </tr>
                 </table>
                 <input type="hidden" id="editvendorid" name="editvendorid" value=""/>

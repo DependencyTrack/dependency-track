@@ -241,3 +241,29 @@ $(document).on("change",".licenselosefocus",function() {
         }
     }
 });
+
+$(document).on("click", ".open-CoarseSearchModal", function () {
+
+    var pathname = window.location.pathname;
+    var checkpath = pathname.split("/").length;
+    var uri = 'libraryHierarchy';
+    if (checkpath < 2) {
+        uri = 'libraryHierarchy';
+    }
+    else {
+        uri = '../../libraryHierarchy';
+    }
+
+        $.ajax({ // ajax call starts
+        url: uri, // JQuery loads serverside.php
+        dataType: 'json', // Choosing a JSON datatype
+        success: function (data) // Variable data contains the data we get from serverside
+        {
+            for (var i = 0; i < data.vendors.length; i++) {
+                vendjs = data.vendors[i];
+
+                $('<option/>').val(vendjs.id).html(vendjs.vendor).appendTo('#coarseSearchVendor');
+            }
+        }
+    });
+});

@@ -209,6 +209,22 @@ public class ApplicationController {
     }
 
     /**
+     * Search action.
+     * @param map a map of parameters
+     * @param vendorId The ID of the Vendor to search on
+     * @return a String
+     */
+    @RequestMapping(value = "/coarseSearchApplication", method = RequestMethod.POST)
+    public String coarseSearchApplication(Map<String, Object> map, @RequestParam("coarseSearchVendor") int vendorId)
+    {
+        System.out.println(vendorId);
+        map.put("applicationList", applicationService.coarseSearchApplications(vendorId));
+        map.put("versionlist", applicationService.coarseSearchApplicationVersions(vendorId));
+        map.put("check", true);
+        return "applicationsPage";
+    }
+
+    /**
      * Add Application action. Adds an application and associated version number
      * @param application The Application to add
      * @param version a String of the version number to add

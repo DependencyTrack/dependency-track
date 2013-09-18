@@ -75,4 +75,14 @@ public class ApplicationService {
     public List<ApplicationVersion> searchAllApplicationsVersions(int libid) {
         return applicationDao.searchAllApplicationsVersions(libid);
     }
+
+    @Transactional
+    public Set<Application> coarseSearchApplications(int libid) {
+        return applicationDao.coarseSearchApplications(libid);
+    }
+
+    @Transactional
+    public List<ApplicationVersion> coarseSearchApplicationVersions(int libid) {
+        return applicationDao.coarseSearchApplicationVersions(libid);
+    }
 }

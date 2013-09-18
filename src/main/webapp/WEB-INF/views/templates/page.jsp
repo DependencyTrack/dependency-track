@@ -71,11 +71,25 @@
 <jsp:include page="/WEB-INF/views/templates/footer.jsp"/>
 
 <div id="searchApplicationModal" class="modal hide fade" tabindex="-1" role="dialog"
-     aria-labelledby="searchApplicationModal" aria-hidden="true">
+     aria-labelledby="searchApplicationModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-header">
-        <h4 id="searchApplicationModalLabel"><spring:message code="label.applications.search"/></h4>
+        <h4 id="searchApplicationModalLabel"><spring:message code="label.fineSearch"/></h4>
     </div>
-
+    <div class="navbar navbar-static-top">
+        <div class="navbar-inner">
+            <ul class="nav">
+                <li class="active">
+                    <a data-toggle="modal"  href="#"><spring:message code="label.fineSearch"/></a>
+                </li>
+                <li>
+                    <a data-toggle="modal" data-dismiss="modal" class="open-CoarseSearchModal" href="#coarseSearchModal"><spring:message code="label.corseSearch"/></a>
+                </li>
+                <li>
+                    <a data-toggle="modal" data-dismiss="modal" class="open-KeywordSearchModal"  href="#keywordSearchModal"><spring:message code="label.keywordSearch"/></a>
+                </li>
+                </ul>
+            </div>
+     </div>
     <c:url value="/searchApplication" var="searchApplicationUrl"/>
     <form:form id="searchApplicationForm" style="margin-bottom:0"
                action="${searchApplicationUrl}" method="post" autocomplete="off">
@@ -107,5 +121,81 @@
         </div>
     </form:form>
 </div>
+<div id="coarseSearchModal" class="modal hide fade" tabindex="-1" role="dialog"
+     aria-labelledby="searchApplicationModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-header">
+        <h4 id="coarsesearchModalLabel"><spring:message code="label.corseSearch"/></h4>
+    </div>
+    <div class="navbar navbar-static-top">
+        <div class="navbar-inner">
+            <ul class="nav">
+                <li>
+                    <a data-toggle="modal" data-dismiss="modal" href="#searchApplicationModal"><spring:message code="label.fineSearch"/></a>
+                </li>
+                <li class="active">
+                    <a data-toggle="modal"  href="#"><spring:message code="label.corseSearch"/></a>
+                </li>
+                <li>
+                    <a data-toggle="modal" data-dismiss="modal" href="#keywordSearchModal"><spring:message code="label.keywordSearch"/></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <c:url value="/coarseSearchApplication" var="coarseSearchApplicationUrl"/>
+    <form:form id="coarseSearchApplicationForm" style="margin-bottom:0"
+               action="${coarseSearchApplicationUrl}" method="post" autocomplete="off">
+    <div class="modal-body">
+        <table>
+            <tr>
+                <td><label for="coarseSearchVendor"><spring:message code="label.library.vendor"/></label></td>
+                <td><select id="coarseSearchVendor" name="coarseSearchVendor" autofocus="autofocus" required="required">
+                    <option value="">--</option>
+                </select></td>
+            </tr>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+        <button class="modalSubmit btn btn-primary" type="submit"><spring:message code="label.search"/></button>
+    </div>
+    </form:form>
+</div>
+
+</div>
+<div id="keywordSearchModal" class="modal hide fade" tabindex="-1" role="dialog"
+     aria-labelledby="searchApplicationModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-header">
+        <h4 id="keywordsearchModalLabel"><spring:message code="label.keywordSearch"/></h4>
+    </div>
+    <div class="navbar navbar-static-top">
+        <div class="navbar-inner">
+            <ul class="nav">
+                <li>
+                    <a data-toggle="modal" data-dismiss="modal" href="#searchApplicationModal"><spring:message code="label.fineSearch"/></a>
+                </li>
+                <li >
+                    <a data-toggle="modal"  data-dismiss="modal" href="#coarseSearchModal"><spring:message code="label.corseSearch"/></a>
+                </li>
+                <li class="active">
+                    <a data-toggle="modal"  href="#"><spring:message code="label.keywordSearch"/></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="modal-body">
+    <table>
+        <tr>
+            <td><label for="keywordSearchVendor"><spring:message code="label.search"/></label></td>
+
+            <td><input id="keywordSearchVendor" name="keywordSearchVendor" type="text" placeholder="Enter keyword"/></td>
+        </tr>
+    </table>
+     </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+        <button class="modalSubmit btn btn-primary" type="submit"><spring:message code="label.search"/></button>
+    </div>
+</div>
+
 </body>
 </html>

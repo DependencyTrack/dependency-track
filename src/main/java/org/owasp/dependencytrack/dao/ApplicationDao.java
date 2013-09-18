@@ -299,4 +299,87 @@ public class ApplicationDao {
         }
     }
 
+    /**
+     * Returns a List of Application that have a library of this vendor
+     * @param vendorID The ID of the Library to search on
+     * @return a List of ApplicationVersion objects
+     */
+    @SuppressWarnings("unchecked")
+    public Set<Application> coarseSearchApplications(int vendorID) {
+        Query query = sessionFactory.getCurrentSession().
+                createQuery("select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
+        query.setParameter("vendorID", vendorID);
+
+        final List<LibraryVersion> libver = query.list();
+
+        query = sessionFactory.getCurrentSession().
+                createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
+        query.setParameterList("libver", libver);
+
+        final List<ApplicationDependency> apdep = query.list();
+        final List<Integer> ids = new ArrayList<Integer>();
+
+        for (ApplicationDependency appdep : apdep) {
+            ids.add(appdep.getApplicationVersion().getId());
+        }
+        if(!ids.isEmpty())
+        {
+
+            query = sessionFactory.getCurrentSession().
+                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
+            query.setParameterList("appverid", ids);
+
+            final List<ApplicationVersion> newappver = query.list();
+            final ArrayList<Application> newapp = new ArrayList<Application>();
+
+            for (ApplicationVersion version : newappver) {
+                newapp.add(version.getApplication());
+            }
+            return new HashSet<Application>(newapp);
+        }
+        else
+        {
+            return null;
+        }
+
+    }
+
+    /**
+     * Returns a List of ApplicationVersions that have a dependency on the specified Library Vendor.
+     * @param vendorID The ID of the Vendor to search on
+     * @return a List of ApplicationVersion objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<ApplicationVersion> coarseSearchApplicationVersions(int vendorID) {
+
+        Query query = sessionFactory.getCurrentSession().
+                createQuery("select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
+        query.setParameter("vendorID", vendorID);
+
+        final List<LibraryVersion> libver = query.list();
+
+        query = sessionFactory.getCurrentSession().
+                createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
+        query.setParameterList("libver", libver);
+
+        final List<ApplicationDependency> apdep = query.list();
+        final List<Integer> ids = new ArrayList<Integer>();
+
+        for (ApplicationDependency appdep : apdep) {
+            ids.add(appdep.getApplicationVersion().getId());
+        }
+        if(!ids.isEmpty())
+        {
+
+            query = sessionFactory.getCurrentSession().
+                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
+            query.setParameterList("appverid", ids);
+
+            return query.list();
+        }
+        else
+        {
+            return null;
+        }
+    }
 }

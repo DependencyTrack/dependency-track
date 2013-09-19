@@ -182,12 +182,15 @@
             </ul>
         </div>
     </div>
+    <c:url value="/keywordSearchLibraries" var="keywordSearchLibrariesUrl"/>
+    <form:form id="keywordSearchLibrariesForm" style="margin-bottom:0"
+               action="${keywordSearchLibrariesUrl}" method="post" autocomplete="off">
     <div class="modal-body">
     <table>
         <tr>
             <td><label for="keywordSearchVendor"><spring:message code="label.search"/></label></td>
 
-            <td><input id="keywordSearchVendor" name="keywordSearchVendor" type="text" placeholder="Enter keyword"/></td>
+            <td><input id="keywordSearchVendor" name="keywordSearchVendor" type="text" required="required" placeholder="Enter keyword"/></td>
         </tr>
     </table>
      </div>
@@ -195,6 +198,7 @@
         <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
         <button class="modalSubmit btn btn-primary" type="submit"><spring:message code="label.search"/></button>
     </div>
+    </form:form>
 </div>
 
 </body>

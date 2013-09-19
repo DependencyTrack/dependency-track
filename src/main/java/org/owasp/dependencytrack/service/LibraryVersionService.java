@@ -121,6 +121,9 @@ public class LibraryVersionService {
         libraryVersionDao.uploadLicense(licenseid,file,editlicensename);
     }
 
-
+    @Transactional
+    public List<LibraryVersion> keywordSearchLibraries(String searchTerm) {
+        return libraryVersionDao.keywordSearchLibraries(searchTerm);
+    }
 
 }

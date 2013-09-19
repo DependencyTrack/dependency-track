@@ -217,11 +217,25 @@ public class ApplicationController {
     @RequestMapping(value = "/coarseSearchApplication", method = RequestMethod.POST)
     public String coarseSearchApplication(Map<String, Object> map, @RequestParam("coarseSearchVendor") int vendorId)
     {
-        System.out.println(vendorId);
+
         map.put("applicationList", applicationService.coarseSearchApplications(vendorId));
         map.put("versionlist", applicationService.coarseSearchApplicationVersions(vendorId));
         map.put("check", true);
         return "applicationsPage";
+    }
+
+    /**
+     * Search action.
+     * @param map a map of parameters
+     * @param searchTerm is the search term
+     * @return a String
+     */
+    @RequestMapping(value = "/keywordSearchLibraries", method = RequestMethod.POST)
+    public String keywordSearchLibraries(Map<String, Object> map, @RequestParam("keywordSearchVendor") String searchTerm)
+    {
+        map.put("libList", libraryVersionService.keywordSearchLibraries(searchTerm));
+
+        return "librariesPage";
     }
 
     /**

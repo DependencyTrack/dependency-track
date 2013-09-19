@@ -343,7 +343,7 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVersion> allLibrary() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion order by library");
+        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion order by library.libraryname");
         return query.list();
     }
 
@@ -541,6 +541,16 @@ public class LibraryVersionDao {
        }
    }
 
-
+    /**
+     * Returns a List of all LibraryVersions. based on search term
+     * @return a List of all LibraryVersion objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<LibraryVersion> keywordSearchLibraries(String searchTerm) {
+        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion as libver where upper(libver.library.libraryname) " +
+                "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) LIKE upper(:searchTerm) order by libver.library.libraryname");
+        query.setParameter("searchTerm","%"+searchTerm+"%");
+        return query.list();
+    }
 
 }

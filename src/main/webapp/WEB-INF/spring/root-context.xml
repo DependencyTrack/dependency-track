@@ -41,6 +41,7 @@
                 <entry key="/error" value="user"/>
                 <entry key="/about" value="user"/>
                 <entry key="/dcdata" value="anon"/>
+                <entry key="/**" value="user"/>
             </map>
         </property>
     </bean>

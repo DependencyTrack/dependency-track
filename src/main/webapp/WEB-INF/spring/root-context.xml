@@ -31,6 +31,7 @@
         <property name="filterChainDefinitionMap">
             <map>
                 <!-- Add mapping to all the urls in Dependency Track -->
+                <entry key="/resources/**" value="anon"/>
                 <entry key="/login" value="anon"/>
                 <entry key="/logout" value="user"/>
                 <entry key="/applications" value="user"/>

@@ -94,7 +94,7 @@
                     <td><label for="license"><spring:message code="label.license"/></label></td>
                     <td>
                         <div style="display:inline">
-                            <c:if test="${!empty libList}">
+                            <c:if test="${!empty uniquelicList}">
                         <select id="licenseids" name="license"  class="licenseidsclass">
                             <option value="">--</option>
                             <c:forEach items="${uniquelicList}" var="libList">

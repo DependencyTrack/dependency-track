@@ -39,6 +39,7 @@ $(document).on("click", ".open-SearchApplicationModal", function () {
     document.getElementById('serapplib').options.length = 0;
     document.getElementById('serapplibver').options.length = 0;
     document.getElementById('serappven').options.length = 0;
+    document.getElementById('coarseSearchVendor').options.length = 0;
     $.ajax({ // ajax call starts
         url: uri, // JQuery loads serverside.php
         dataType: 'json', // Choosing a JSON datatype
@@ -47,10 +48,12 @@ $(document).on("click", ".open-SearchApplicationModal", function () {
             $('<option/>').val("").html("--").appendTo('#serappven');
             $('<option/>').addClass("").val("").html("--").appendTo('#serapplib');
             $('<option/>').addClass("").val(-1).html("--").appendTo('#serapplibver');
+            $('<option/>').val("").html("--").appendTo('#coarseSearchVendor');
             var vendjs, libjs, verjs;
             for (var i = 0; i < data.vendors.length; i++) {
                 vendjs = data.vendors[i];
                 $('<option/>').val(vendjs.id).html(vendjs.vendor).appendTo('#serappven');
+                $('<option/>').val(vendjs.id).html(vendjs.vendor).appendTo('#coarseSearchVendor');
 
                 for (var j = 0; j < vendjs.libraries.length; j++) {
                     libjs = vendjs.libraries[j];
@@ -242,28 +245,3 @@ $(document).on("change",".licenselosefocus",function() {
     }
 });
 
-$(document).on("click", ".open-CoarseSearchModal", function () {
-
-    var pathname = window.location.pathname;
-    var checkpath = pathname.split("/").length;
-    var uri = 'libraryHierarchy';
-    if (checkpath < 2) {
-        uri = 'libraryHierarchy';
-    }
-    else {
-        uri = '../../libraryHierarchy';
-    }
-
-        $.ajax({ // ajax call starts
-        url: uri, // JQuery loads serverside.php
-        dataType: 'json', // Choosing a JSON datatype
-        success: function (data) // Variable data contains the data we get from serverside
-        {
-            for (var i = 0; i < data.vendors.length; i++) {
-                vendjs = data.vendors[i];
-
-                $('<option/>').val(vendjs.id).html(vendjs.vendor).appendTo('#coarseSearchVendor');
-            }
-        }
-    });
-});

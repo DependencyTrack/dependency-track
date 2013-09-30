@@ -149,8 +149,8 @@
                     <table>
                         <tr>
                             <td><label for="keywordSearchVendor"><spring:message code="label.search"/></label></td>
-
-                            <td><input id="keywordSearchVendor" name="keywordSearchVendor" type="text" required="required" placeholder="Enter keyword"/></td>
+                            <spring:message code="label.enterKeyword" var="enterKeywordLabel"/>
+                            <td><input id="keywordSearchVendor" name="keywordSearchVendor" type="text" required="required" placeholder="${enterKeywordLabel}"/></td>
                         </tr>
                     </table>
                 </div>

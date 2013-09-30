@@ -418,7 +418,7 @@ public class ApplicationController {
                                   @RequestParam("vendor") String vendor,
                                   @RequestParam("license") String license,
                                   @RequestParam("language") String language,
-                                  @RequestParam("secuniaID") int secuniaID) {
+                                  @RequestParam(value="secuniaID", required=false) Integer secuniaID) {
 
         libraryVersionService.updateLibrary(vendorid, licenseid, libraryid,
                 libraryversionid, libraryname, libraryversion, vendor, license,
@@ -472,7 +472,7 @@ public class ApplicationController {
                                @RequestParam("licensesel") String license,
                                @RequestParam("Licensefile") MultipartFile file,
                                @RequestParam("languagesel") String language,
-                               @RequestParam("secuniaID") int secuniaID) {
+                               @RequestParam(value="secuniaID", required=false) Integer secuniaID) {
 
         libraryVersionService.addLibraries(libraryname, libraryversion, vendor, license, file, language, secuniaID);
         return "redirect:/libraries";

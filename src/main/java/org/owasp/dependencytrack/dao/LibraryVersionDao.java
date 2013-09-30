@@ -205,7 +205,7 @@ public class LibraryVersionDao {
      */
     public void updateLibrary(int vendorid, int licenseid, int libraryid, int libraryversionid,
                               String libraryname, String libraryversion, String vendor,
-                              String license,  String language, int secuniaID) {
+                              String license,  String language, Integer secuniaID) {
 
             Query query = sessionFactory.getCurrentSession().createQuery(
                     "update LibraryVendor set vendor=:vendor "
@@ -413,7 +413,7 @@ public class LibraryVersionDao {
      * @param secuniaID The Secunia ID of the version of the Library
      */
     public void addLibraries(String libraryname, String libraryversion, String vendor,
-                             String license, MultipartFile file, String language, int secuniaID) {
+                             String license, MultipartFile file, String language, Integer secuniaID) {
         LibraryVendor libraryVendor;
         License licenses;
         Library library;

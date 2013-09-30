@@ -82,7 +82,7 @@
                     <a data-toggle="modal"  href="#"><spring:message code="label.fineSearch"/></a>
                 </li>
                 <li>
-                    <a data-toggle="modal" data-dismiss="modal" class="open-CoarseSearchModal" href="#coarseSearchModal"><spring:message code="label.corseSearch"/></a>
+                    <a data-toggle="modal" data-dismiss="modal" class="open-CoarseSearchModal" href="#coarseSearchModal"><spring:message code="label.coarseSearch"/></a>
                 </li>
                 <li>
                     <a data-toggle="modal" data-dismiss="modal" class="open-KeywordSearchModal"  href="#keywordSearchModal"><spring:message code="label.keywordSearch"/></a>
@@ -124,7 +124,7 @@
 <div id="coarseSearchModal" class="modal hide fade" tabindex="-1" role="dialog"
      aria-labelledby="searchApplicationModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-header">
-        <h4 id="coarsesearchModalLabel"><spring:message code="label.corseSearch"/></h4>
+        <h4 id="coarsesearchModalLabel"><spring:message code="label.coarseSearch"/></h4>
     </div>
     <div class="navbar navbar-static-top">
         <div class="navbar-inner">
@@ -133,7 +133,7 @@
                     <a data-toggle="modal" data-dismiss="modal" href="#searchApplicationModal"><spring:message code="label.fineSearch"/></a>
                 </li>
                 <li class="active">
-                    <a data-toggle="modal"  href="#"><spring:message code="label.corseSearch"/></a>
+                    <a data-toggle="modal"  href="#"><spring:message code="label.coarseSearch"/></a>
                 </li>
                 <li>
                     <a data-toggle="modal" data-dismiss="modal" href="#keywordSearchModal"><spring:message code="label.keywordSearch"/></a>
@@ -174,7 +174,7 @@
                     <a data-toggle="modal" data-dismiss="modal" href="#searchApplicationModal"><spring:message code="label.fineSearch"/></a>
                 </li>
                 <li >
-                    <a data-toggle="modal"  data-dismiss="modal" href="#coarseSearchModal"><spring:message code="label.corseSearch"/></a>
+                    <a data-toggle="modal"  data-dismiss="modal" href="#coarseSearchModal"><spring:message code="label.coarseSearch"/></a>
                 </li>
                 <li class="active">
                     <a data-toggle="modal"  href="#"><spring:message code="label.keywordSearch"/></a>

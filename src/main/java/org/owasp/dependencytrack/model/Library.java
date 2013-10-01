@@ -47,6 +47,7 @@ public final class Library implements Cloneable {
      * The name of the library (i.e. Commons-Lang).
      */
     @Column(name = "LIBRARYNAME")
+    @OrderBy
     private String libraryname;
 
     /**

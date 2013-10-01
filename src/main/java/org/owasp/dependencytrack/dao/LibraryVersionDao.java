@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Repository
@@ -56,19 +57,20 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVendor> getLibraryHierarchy() {
-        final List<LibraryVendor> retlist = new ArrayList<LibraryVendor>();
+        final ArrayList<LibraryVendor> retlist = new ArrayList<LibraryVendor>();
         final Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVendor order by vendor asc");
         for (LibraryVendor vendor : (List<LibraryVendor>) query.list()) {
             final Query query2 = sessionFactory.getCurrentSession().
                     createQuery("FROM Library where libraryVendor=:vendor order by libraryname asc");
             query2.setParameter("vendor", vendor);
-            for (Library library : (List<Library>) query2.list()) {
+            LinkedHashSet<Library> libraries = new LinkedHashSet(query2.list());
+            vendor.setLibraries(libraries);
+            for (Library library : (ArrayList<Library>) query2.list()) {
                 final Query query3 = sessionFactory.getCurrentSession().
                         createQuery("FROM LibraryVersion where library=:library order by libraryversion asc");
                 query3.setParameter("library", library);
-                final List<LibraryVersion> versions = (List<LibraryVersion>) query3.list();
+                final ArrayList<LibraryVersion> versions = (ArrayList<LibraryVersion>) query3.list();
                 library.setVersions(new HashSet<LibraryVersion>(versions));
-                vendor.addLibrary(library);
             }
             retlist.add(vendor);
         }

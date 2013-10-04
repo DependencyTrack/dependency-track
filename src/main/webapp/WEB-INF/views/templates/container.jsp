@@ -12,6 +12,7 @@
      */
     private static final Map<String,String> contentWhitelist = new HashMap<String,String>() {{
         put("about", "about.jsp");
+        put("usermanagement", "userManagement.jsp");
         put("applications", "applications.jsp");
         put("applicationVersion", "applicationVersion.jsp");
         put("error", "error.jsp");

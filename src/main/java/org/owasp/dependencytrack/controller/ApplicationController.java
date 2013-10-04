@@ -597,4 +597,39 @@ public class ApplicationController {
                 libraryVersionService.uploadLicense(licenseid, file, editlicensename);
         return "redirect:/libraries";
     }
+
+    /**
+     * Admin User Management
+     */
+    @RequestMapping(value = "/usermanagement", method = RequestMethod.GET)
+    public String userManagement(Map<String, Object> map)
+    {
+    map.put("userList",userService.accountManagement());
+    return "userManagementPage";
+}
+
+
+    /**
+     * Admin User Management which validates a user
+     */
+    @RequestMapping(value = "/validateuser/{id}", method = RequestMethod.GET)
+    public String validateUser(@PathVariable("id") Integer userid)
+    {
+
+        userService.validateuser(userid);
+
+        return "userManagementPage";
+    }
+
+    /**
+     * Admin User Management which deletes a user
+     */
+    @RequestMapping(value = "/deleteuser/{id}", method = RequestMethod.GET)
+    public String deleteUser(@PathVariable("id") Integer userid)
+    {
+
+        userService.deleteUser(userid);
+
+        return "userManagementPage";
+    }
 }

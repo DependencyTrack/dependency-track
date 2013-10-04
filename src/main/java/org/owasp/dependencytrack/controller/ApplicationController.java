@@ -606,7 +606,7 @@ public class ApplicationController {
     {
     map.put("userList",userService.accountManagement());
     return "userManagementPage";
-}
+    }
 
 
     /**
@@ -631,5 +631,16 @@ public class ApplicationController {
         userService.deleteUser(userid);
 
         return "userManagementPage";
+    }
+
+    /**
+     * Mapping to dashboard which gives vulnerability overview
+     */
+    @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
+    public String dashboard(Map<String, Object> map)
+    {
+        map.put("application", new Application());
+        map.put("applicationList", applicationService.listApplications());
+        return "dashboardPage";
     }
 }

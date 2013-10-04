@@ -250,3 +250,35 @@ iframe[seamless] {
     text-decoration: none;
     color: #e13c3c;
 }
+
+/*for threea coloumn display*/
+
+.sidebar-nav {
+    padding: 9px 0;
+}
+
+.row-fluid > .sidebar-nav {
+    position: relative;
+    top: 0;
+    left:auto;
+    width: 220px;
+}
+
+.left {
+    float:left;
+}
+
+.right {
+    float:right;
+}
+
+.fixed-fluid {
+    margin-left: 240px;
+}
+.fluid-fixed {
+    margin-right: 240px;
+    margin-left:auto !important;
+}
+.fixed-fixed {
+    margin: 0 240px;
+}

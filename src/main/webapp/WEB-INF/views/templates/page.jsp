@@ -46,6 +46,10 @@
 <div class="navbar navbar-static-top">
     <div class="navbar-inner">
         <ul class="nav">
+            <li class="<c:if test="${param.content!='dashboard'}">in</c:if>active">
+                <a href="<c:url value="/dashboard"/>"><spring:message code="label.dashboard"/></a>
+            </li>
+
             <li class="<c:if test="${param.content!='applications'}">in</c:if>active">
                 <a href="<c:url value="/applications"/>"><spring:message code="label.applications"/></a>
             </li>

@@ -17,6 +17,8 @@
 
 package org.owasp.dependencytrack.model;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 
 /**
@@ -56,6 +58,12 @@ public final class Users {
     @Column(name = "PASSWORD_SALT")
     private String password_salt;
 
+    /**
+     * Admin validates a registered user and gives him access to the website
+     */
+    @Column(name = "CHECKVALID")
+    private String checkvalid ;
+
     public Integer getId() {
         return id;
     }
@@ -86,5 +94,13 @@ public final class Users {
 
     public void setPassword_salt(String password_salt) {
         this.password_salt = password_salt;
+    }
+
+    public String getCheckvalid() {
+        return checkvalid;
+    }
+
+    public void setCheckvalid(String checkvalid) {
+        this.checkvalid = checkvalid;
     }
 }

@@ -18,9 +18,12 @@
 package org.owasp.dependencytrack.service;
 
 import org.owasp.dependencytrack.dao.UserDao;
+import org.owasp.dependencytrack.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,6 +41,7 @@ public class UserService {
     public void registerUser(String username,String password)
     {
         userDao.registerUser(username,password);
+
     }
 
     @Transactional
@@ -46,4 +50,21 @@ public class UserService {
        return userDao.hashpwd(username, password);
     }
 
+    @Transactional
+    public List<Users> accountManagement()
+    {
+        return userDao.accountManagement();
+    }
+
+    @Transactional
+      public void validateuser(int userid)
+    {
+        userDao.validateuser(userid);
+    }
+
+    @Transactional
+    public void deleteUser(int userid)
+    {
+        userDao.deleteUser(userid);
+    }
 }

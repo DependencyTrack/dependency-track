@@ -21,10 +21,13 @@ import org.apache.shiro.crypto.RandomNumberGenerator;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
 import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -54,6 +57,7 @@ public class UserDao {
         Users users = new Users();
         users.setPassword(hashedPasswordBase64);
         users.setUsername(username);
+        users.setCheckvalid ("false");
         users.setPassword_salt(salt.toString());
         sessionFactory.getCurrentSession().save(users);
     }
@@ -70,4 +74,54 @@ public class UserDao {
         String hashedPasswordBase64 = new Sha256Hash(password,users.getPassword_salt()).toBase64();
         return hashedPasswordBase64;
     }
+
+    public List<Users> accountManagement()
+    {
+        Query query = sessionFactory.getCurrentSession().createQuery("FROM Users ");
+
+        List<Users> userlist = query.list();
+
+        return userlist;
+    }
+
+    public void validateuser(int userid)
+    {
+        Query query = sessionFactory.getCurrentSession().createQuery("select usr.checkvalid FROM Users as usr where usr.id= :userid");
+        query.setParameter("userid",userid);
+
+        String currentState = (String)query.list().get(0);
+
+        if(currentState.equals("true"))
+        {
+            query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.checkvalid  = :checkinvalid" +
+                    " where usr.id = :userid");
+            query.setParameter("checkinvalid", "false");
+            query.setParameter("userid",userid );
+            query.executeUpdate();
 }
+        else
+        {
+            query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.checkvalid  = :checkvalid" +
+                    " where usr.id = :userid");
+            query.setParameter("checkvalid", "true");
+            query.setParameter("userid",userid );
+            query.executeUpdate();
+        }
+        }
+
+
+    public void deleteUser(int userid)
+    {
+        final Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        Query query = sessionFactory.getCurrentSession().createQuery(" FROM Users as usr where usr.id= :userid");
+        query.setParameter("userid",userid);
+
+        Users curUser = (Users) query.list().get(0);
+
+        session.delete(curUser);
+        session.getTransaction().commit();
+        session.close();
+    }
+ }

@@ -55,6 +55,9 @@
             <li>
                 <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
             </li>
+            <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
+                <a href="<c:url value="/usermanagement"/>"><spring:message code="label.userManagement"/></a>
+            </li>
         </ul>
         <ul class="nav pull-right">
             <li class="<c:if test="${param.content!='about'}">in</c:if>active">

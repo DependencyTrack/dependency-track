@@ -57,7 +57,7 @@ public class UserDao {
         Users users = new Users();
         users.setPassword(hashedPasswordBase64);
         users.setUsername(username);
-        users.setCheckvalid ("false");
+        users.setCheckvalid(false);
         users.setPassword_salt(salt.toString());
         sessionFactory.getCurrentSession().save(users);
     }
@@ -89,13 +89,13 @@ public class UserDao {
         Query query = sessionFactory.getCurrentSession().createQuery("select usr.checkvalid FROM Users as usr where usr.id= :userid");
         query.setParameter("userid",userid);
 
-        String currentState = (String)query.list().get(0);
+        Boolean currentState = (Boolean) query.list().get(0);
 
-        if(currentState.equals("true"))
+        if(currentState)
         {
             query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.checkvalid  = :checkinvalid" +
                     " where usr.id = :userid");
-            query.setParameter("checkinvalid", "false");
+            query.setParameter("checkinvalid", false);
             query.setParameter("userid",userid );
             query.executeUpdate();
 }
@@ -103,7 +103,7 @@ public class UserDao {
         {
             query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.checkvalid  = :checkvalid" +
                     " where usr.id = :userid");
-            query.setParameter("checkvalid", "true");
+            query.setParameter("checkvalid", true);
             query.setParameter("userid",userid );
             query.executeUpdate();
         }

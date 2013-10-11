@@ -43,7 +43,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;

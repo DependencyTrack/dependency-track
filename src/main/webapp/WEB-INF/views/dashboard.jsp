@@ -23,16 +23,17 @@
                             </c:forEach>
 
                         </div>
-                  </div>
+                 </div>
                  </div>
         </c:forEach>
-            </div>
+
+        </div>
         </div>
 
     </c:if>
 
         <div class="well sidebar-nav right">
-            <ul class="nav nav-list">
+            <ul class="nav nav-list   font-family: sans-serifc ">
                 <li class="nav-header">Application Standing</li>
                 <li><a href="#">AIS</a></li>
                 <li><a href="#">Integrator</a></li>
@@ -42,15 +43,58 @@
             </ul>
         </div><!--/.well -->
 
-        <div class="content fixed-fixed">
-            <div class="hero-unit">
-                <ul class="nav nav-pills">
-                    <li class="nav-header"><a href="#"><spring:message code="label.dashboard.graphOne"/></a></li>
-                    <li class="nav-header"><a href="#"><spring:message code="label.dashboard.graphTwo"/></a></li>
-                    <li class="nav-header"><a href="#"><spring:message code="label.dashboard.graphThree"/></a></li>
-                </ul>
+        <div class="content fixed-fixed ">
+            <div class="row ">
+                <div class="span12 ">
+
+                    <ul class="nav nav-tabs">
+                        <li class="active">
+                            <a href="#graphOne" data-toggle="tab"><spring:message code="label.dashboard.graphOne"/></a>
+                        </li>
+                        <li>
+                            <a href="#graphTwo" data-toggle="tab"><spring:message code="label.dashboard.graphTwo"/></a>
+                        </li>
+                        <li>
+                            <a href="#graphThree" data-toggle="tab"><spring:message code="label.dashboard.graphThree"/></a>
+                        </li>
+                    </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane active" id="graphOne">
+
+                               <p> Place holder for graph one</p>
+
+                            <div class="modal-footer">
+
+                            </div>
+
+                    </div>
+                    <div class="tab-pane" id="graphTwo">
+
+                        <p> Place holder for graph 2</p>
+                            <div class="modal-footer">
+
+                            </div>
+
+                    </div>
+                    <div class="tab-pane" id="graphThree">
+
+                        <p>Place holder for graph 3</p>
+
+                            <div class="modal-footer">
+
+                            </div>
+
+
+                    </div>
+                </div>
+                    </div>
+                </div>
             </div>
-          </div>
+
+        </div>
+
+
     </div>
 </div>
 

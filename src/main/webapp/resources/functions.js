@@ -245,3 +245,38 @@ $(document).on("change",".licenselosefocus",function() {
     }
 });
 
+$(document).on("change",".checkvalidity",function() {
+
+    var id = $(this).val();
+
+    var uri = 'validateuser/'+id;
+
+    $.ajax({
+        url: uri,
+        type: 'GET',
+        dataType: "text",
+        success: function (data) // Variable data contains the data we get from serverside
+        {
+            $('#userManagaementContainer').load(window.location.href + ' #userManagaementContainer');
+        }
+    });
+
+});
+
+$(document).on("click",".deleteUser",function() {
+
+    var id = $(this).data('userid');
+
+    var uri = 'deleteuser/'+id;
+
+    $.ajax({
+        url: uri,
+        type: 'GET',
+        dataType: "text",
+        success: function (data) // Variable data contains the data we get from serverside
+        {
+            $('#userManagaementContainer').load(window.location.href + ' #userManagaementContainer');
+        }
+    });
+
+});

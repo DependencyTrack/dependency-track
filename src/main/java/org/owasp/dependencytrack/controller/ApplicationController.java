@@ -42,6 +42,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -90,6 +92,12 @@ public class ApplicationController {
     private Config config;
 
     /**
+     * The ServletContext in which Dependency-Track is running in
+     */
+    @Autowired
+    private ServletContext servletContext;
+
+    /**
      * Initialization method gets called after controller is constructed.
      */
     @PostConstruct
@@ -128,7 +136,8 @@ public class ApplicationController {
      * @return a String
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
-    public String login() {
+    public String login(HttpServletResponse response) {
+        response.setHeader("SET-COOKIE", "CONTEXTPATH=" + servletContext.getContextPath() + "; HttpOnly");
         final String s = "loginPage";
         if (SecurityUtils.getSubject().isAuthenticated()) {
             return "redirect:/applications";

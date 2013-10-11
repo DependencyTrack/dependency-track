@@ -15,6 +15,10 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 
+function contextPath() {
+    return $.cookie("CONTEXTPATH");
+}
+
 $(document).ready(function () {
     $("table.tablesorter").tablesorter();
     $("#adddeplibrary").chainedTo("#adddepvendor");
@@ -23,9 +27,8 @@ $(document).ready(function () {
     $(document.getElementById('Licensefilelabel')).hide();
 });
 
-
 $(document).on("click", ".open-SearchApplicationModal", function () {
-    var uri = $.cookie("CONTEXTPATH") + "/libraryHierarchy";
+    var uri = contextPath() + "/libraryHierarchy";
 
     document.getElementById('serapplib').options.length = 0;
     document.getElementById('serapplibver').options.length = 0;
@@ -70,7 +73,7 @@ $(document).on("click", ".open-SearchApplicationModal", function () {
 
 
 $(document).on("click", ".open-EditApplicationModal", function () {
-    $("#deleteLink").attr("href", "deleteApplication/" + $(this).data('id'));
+    $("#deleteLink").attr("href", contextPath() + "/deleteApplication/" + $(this).data('id'));
     $(".modal-body #editid").val($(this).data("id"));
     $(".modal-body #editname").val($(this).data("name"));
 });
@@ -86,7 +89,7 @@ $(document).on("click", ".open-AddDependencyModal", function () {
 /*LIBRARY EDIT OPTION*/
 
 $(document).on("click", ".open-EditLibrariesModal", function () {
-    $("#deleteLibrary").attr("href", "removelibrary/" + $(this).data('libraryversionid'));
+    $("#deleteLibrary").attr("href", contextPath() + "/removelibrary/" + $(this).data('libraryversionid'));
 
     $(".modal-body #editvendorid").val($(this).data("vendorid"));
     $(".modal-body #editlicenseid").val($(this).data("licenseid"));
@@ -117,7 +120,7 @@ $(document).on("click", ".open-CloneApplicationVersionModal", function () {
 
 /* LICENSE DISPLAY AND DOWNLOAD*/
 $(document).on("click", ".open-LicenseLibrariesModal", function () {
-    $("#viewlicense").attr("src", "viewlicense/" + $(this).data('licenseid'));
+    $("#viewlicense").attr("src", contextPath() + "/viewlicense/" + $(this).data('licenseid'));
 
     $(".modal-body #licenseid").val($(this).data("licenseid"));
     $(".modal-body #licensename").val($(this).data("licensename"));
@@ -142,7 +145,7 @@ $(document).on("click", ".open-licenseFileUploadModalButton", function () {
 
 /* EDIT APPVERSION*/
 $(document).on("click", ".open-EditDependencyModal", function () {
-    $("#deleteAppVer").attr("href", $.cookie("CONTEXTPATH") + "/deleteApplicationVersion/" + $(this).data('id'));
+    $("#deleteAppVer").attr("href", contextPath() + "/deleteApplicationVersion/" + $(this).data('id'));
     $(".modal-body #appversionid").val($(this).data("id"));
     $(".modal-body #editappver").val($(this).data("ver"));
 
@@ -159,7 +162,7 @@ $(document).on("click", ".open-AddLibraryModal", function () {
     document.getElementById('librarynameid').options.length = 0;
     document.getElementById('libraryversionid').options.length = 0;
     $.ajax({ // ajax call starts
-        url: 'libraryHierarchy', // JQuery loads serverside.php
+        url: contextPath() + '/libraryHierarchy', // JQuery loads serverside.php
         dataType: 'json', // Choosing a JSON datatype
         success: function (data) // Variable data contains the data we get from serverside
         {
@@ -239,7 +242,7 @@ $(document).on("change",".checkvalidity",function() {
 
     var id = $(this).val();
 
-    var uri = 'validateuser/'+id;
+    var uri = contextPath() + '/validateuser/'+id;
 
     $.ajax({
         url: uri,
@@ -254,10 +257,8 @@ $(document).on("change",".checkvalidity",function() {
 });
 
 $(document).on("click",".deleteUser",function() {
-
     var id = $(this).data('userid');
-
-    var uri = 'deleteuser/'+id;
+    var uri = contextPath() + '/deleteuser/'+id;
 
     $.ajax({
         url: uri,

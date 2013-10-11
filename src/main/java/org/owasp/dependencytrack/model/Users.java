@@ -62,7 +62,7 @@ public final class Users {
      * Admin validates a registered user and gives him access to the website
      */
     @Column(name = "CHECKVALID")
-    private String checkvalid ;
+    private boolean checkvalid ;
 
     public Integer getId() {
         return id;
@@ -96,11 +96,11 @@ public final class Users {
         this.password_salt = password_salt;
     }
 
-    public String getCheckvalid() {
+    public boolean isCheckvalid() {
         return checkvalid;
     }
 
-    public void setCheckvalid(String checkvalid) {
+    public void setCheckvalid(boolean checkvalid) {
         this.checkvalid = checkvalid;
     }
 }

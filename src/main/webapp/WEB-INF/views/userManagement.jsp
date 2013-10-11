@@ -19,7 +19,7 @@
                     <td>${userList.username}</td>
                     <td>
                         <c:choose>
-                            <c:when test="${userList.checkvalid =='true'}">
+                            <c:when test="${userList.checkvalid}">
                                 <input type="checkbox" name="checkvalidity" class="checkvalidity" value="${userList.id}"
                                                checked/>
                             </c:when>

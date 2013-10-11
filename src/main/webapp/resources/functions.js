@@ -25,16 +25,7 @@ $(document).ready(function () {
 
 
 $(document).on("click", ".open-SearchApplicationModal", function () {
-
-    var pathname = window.location.pathname;
-    var checkpath = pathname.split("/").length;
-    var uri = 'libraryHierarchy';
-    if (checkpath < 2) {
-        uri = 'libraryHierarchy';
-    }
-    else {
-        uri = '../../libraryHierarchy';
-    }
+    var uri = $.cookie("CONTEXTPATH") + "/libraryHierarchy";
 
     document.getElementById('serapplib').options.length = 0;
     document.getElementById('serapplibver').options.length = 0;

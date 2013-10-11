@@ -151,8 +151,7 @@ $(document).on("click", ".open-licenseFileUploadModalButton", function () {
 
 /* EDIT APPVERSION*/
 $(document).on("click", ".open-EditDependencyModal", function () {
-
-    $("#deleteAppVer").attr("href", "../../deleteApplicationVersion/" + $(this).data('id'));
+    $("#deleteAppVer").attr("href", $.cookie("CONTEXTPATH") + "/deleteApplicationVersion/" + $(this).data('id'));
     $(".modal-body #appversionid").val($(this).data("id"));
     $(".modal-body #editappver").val($(this).data("ver"));
 

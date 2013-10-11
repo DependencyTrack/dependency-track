@@ -43,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -136,7 +137,7 @@ public class ApplicationController {
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String login(HttpServletResponse response) {
-        response.setHeader("SET-COOKIE", "CONTEXTPATH=" + servletContext.getContextPath() + "; HttpOnly");
+        response.addCookie(new Cookie("CONTEXTPATH", servletContext.getContextPath()));
         final String s = "loginPage";
         if (SecurityUtils.getSubject().isAuthenticated()) {
             return "redirect:/applications";

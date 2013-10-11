@@ -46,6 +46,10 @@
 <div class="navbar navbar-static-top">
     <div class="navbar-inner">
         <ul class="nav">
+            <li class="<c:if test="${param.content!='dashboard'}">in</c:if>active">
+                <a href="<c:url value="/dashboard"/>"><spring:message code="label.dashboard"/></a>
+            </li>
+
             <li class="<c:if test="${param.content!='applications'}">in</c:if>active">
                 <a href="<c:url value="/applications"/>"><spring:message code="label.applications"/></a>
             </li>
@@ -54,6 +58,9 @@
             </li>
             <li>
                 <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
+            </li>
+            <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
+                <a href="<c:url value="/usermanagement"/>"><spring:message code="label.userManagement"/></a>
             </li>
         </ul>
         <ul class="nav pull-right">

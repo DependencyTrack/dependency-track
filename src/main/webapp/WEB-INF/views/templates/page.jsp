@@ -2,6 +2,7 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
 <%--
   ~ This file is part of Dependency-Track.
   ~
@@ -39,6 +40,13 @@
     <script type="text/javascript" src="<c:url value="/resources/tablesorter/jquery.tablesorter.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/bootstrap/js/bootstrap.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/functions.js"/>"></script>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="<c:url value="/resources/charts.js"/>"></script>
+    <script type="text/javascript" src="<c:url value="/resources/coloumChart.js"/>"></script>
+
+
+
 </head>
 <body>
 
@@ -60,9 +68,11 @@
             <li>
                 <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
             </li>
+            <shiro:hasRole name="admin">
             <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
                 <a href="<c:url value="/usermanagement"/>"><spring:message code="label.userManagement"/></a>
             </li>
+            </shiro:hasRole>
         </ul>
         <ul class="nav pull-right">
             <li class="<c:if test="${param.content!='about'}">in</c:if>active">

@@ -70,6 +70,11 @@
         <property name="realm" ref="authRealm"/>
     </bean>
 
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor"/>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+
     <!--
     <bean id="authRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
         <property name="url" value="ldap://hostname:389"/>
@@ -80,6 +85,8 @@
     <bean id="authRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
         <property name="dataSource" ref="dataSource"/>
         <property name="saltStyle" value="COLUMN"/>
+        <property name="userRolesQuery"
+         value="SELECT role FROM Roles r, Users u WHERE u.username=?" />
     </bean>
 
     <!--

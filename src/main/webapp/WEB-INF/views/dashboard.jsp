@@ -62,16 +62,17 @@
                 <div class="tab-content">
                     <div class="tab-pane active" id="graphOne">
 
-                               <p> Place holder for graph one</p>
+                        <div id="chart_div" style="width: 900px; height: 500px;"></div>
 
-                            <div class="modal-footer">
+
+                        <div class="modal-footer">
 
                             </div>
 
                     </div>
                     <div class="tab-pane" id="graphTwo">
 
-                        <p> Place holder for graph 2</p>
+
                             <div class="modal-footer">
 
                             </div>
@@ -79,7 +80,7 @@
                     </div>
                     <div class="tab-pane" id="graphThree">
 
-                        <p>Place holder for graph 3</p>
+
 
                             <div class="modal-footer">
 

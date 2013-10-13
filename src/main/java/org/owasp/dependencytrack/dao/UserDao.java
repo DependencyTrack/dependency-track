@@ -23,6 +23,7 @@ import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.owasp.dependencytrack.model.Roles;
 import org.owasp.dependencytrack.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -53,11 +54,14 @@ public class UserDao {
 
         String hashedPasswordBase64 = new Sha256Hash(password,salt.toString()).toBase64();
 
+        Query query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
+        query.setParameter("role","user");
 
         Users users = new Users();
         users.setPassword(hashedPasswordBase64);
         users.setUsername(username);
         users.setCheckvalid(false);
+        users.setRoles((Roles)query.list().get(0));
         users.setPassword_salt(salt.toString());
         sessionFactory.getCurrentSession().save(users);
     }

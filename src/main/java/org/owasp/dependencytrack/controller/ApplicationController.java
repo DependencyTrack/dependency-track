@@ -23,6 +23,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.annotation.Logical;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
@@ -175,6 +177,7 @@ public class ApplicationController {
      * Default page action.
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String application() {
         return "redirect:/applications";
@@ -185,6 +188,7 @@ public class ApplicationController {
      * @param map A map of parameters
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
     public String application(Map<String, Object> map) {
         map.put("check", false);
@@ -200,6 +204,7 @@ public class ApplicationController {
      * @param libverid The ID of the LibraryVersion to search on
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
     public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid,
                                     @RequestParam("serapplibver") int libverid) {
@@ -223,6 +228,7 @@ public class ApplicationController {
      * @param vendorId The ID of the Vendor to search on
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/coarseSearchApplication", method = RequestMethod.POST)
     public String coarseSearchApplication(Map<String, Object> map, @RequestParam("coarseSearchVendor") int vendorId)
     {
@@ -239,6 +245,7 @@ public class ApplicationController {
      * @param searchTerm is the search term
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/keywordSearchLibraries", method = RequestMethod.POST)
     public String keywordSearchLibraries(Map<String, Object> map, @RequestParam("keywordSearchVendor") String searchTerm)
     {
@@ -253,6 +260,7 @@ public class ApplicationController {
      * @param version a String of the version number to add
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/addApplication", method = RequestMethod.POST)
     public String addApplication(@ModelAttribute("application") Application application,
                                  @RequestParam("version") String version) {
@@ -266,6 +274,7 @@ public class ApplicationController {
      * @param name The updated name of the application
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/updateApplication", method = RequestMethod.POST)
     public String updatingProduct(@RequestParam("id") int id, @RequestParam("name") String name) {
         applicationService.updateApplication(id, name);
@@ -278,6 +287,7 @@ public class ApplicationController {
      * @param appversion The version label
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/updateApplicationVersion", method = RequestMethod.POST)
     public String updatingApplicationVersion(@RequestParam("appversionid") int id,
                                              @RequestParam("editappver") String appversion) {
@@ -290,6 +300,7 @@ public class ApplicationController {
      * @param id The ID of the Application to delete
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/deleteApplication/{id}", method = RequestMethod.GET)
     public String removeApplication(@PathVariable("id") int id) {
         applicationService.deleteApplication(id);
@@ -301,6 +312,7 @@ public class ApplicationController {
      * @param id The ID of the ApplicationVersion to delete
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/deleteApplicationVersion/{id}", method = RequestMethod.GET)
     public String deleteApplicationVersion(@PathVariable("id") int id) {
 
@@ -315,6 +327,7 @@ public class ApplicationController {
      * @param version The version label
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/addApplicationVersion", method = RequestMethod.POST)
     public String addApplicationVersion(@RequestParam("id") int id, @RequestParam("version") String version) {
         applicationVersionService.addApplicationVersion(id, version);
@@ -326,6 +339,7 @@ public class ApplicationController {
      * @param map a map of parameters
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/libraryHierarchy", method = RequestMethod.GET)
     public String getLibraryHierarchy(Map<String, Object> map) {
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
@@ -339,6 +353,7 @@ public class ApplicationController {
      * @param id the ID of the Application to list versions for
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/applicationVersion/{id}", method = RequestMethod.GET)
     public String listApplicationVersion(ModelMap modelMap, Map<String, Object> map, @PathVariable("id") int id) {
         final ApplicationVersion version = applicationVersionService.getApplicationVersion(id);
@@ -355,6 +370,7 @@ public class ApplicationController {
      * @param versionid The ID of the LibraryVersion
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/addDependency", method = RequestMethod.POST)
     public String addDependency(@RequestParam("appversionid") int appversionid,
                                 @RequestParam("versionid") int versionid) {
@@ -368,6 +384,7 @@ public class ApplicationController {
      * @param versionid The ID of the LibraryVersion
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/deleteDependency", method = RequestMethod.GET)
     public String deleteDependency(@RequestParam("appversionid") int appversionid,
                                    @RequestParam("versionid") int versionid) {
@@ -381,6 +398,7 @@ public class ApplicationController {
      * @param applicationname The name of the cloned Application
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/cloneApplication", method = RequestMethod.POST)
     public String cloneApplication(@RequestParam("applicationid") int applicationid,
                                    @RequestParam("cloneAppName") String applicationname) {
@@ -395,6 +413,7 @@ public class ApplicationController {
      * @param applicationversion The ApplicationVersion to clone
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/cloneApplicationVersion", method = RequestMethod.POST)
     public String cloneApplicationVersion(@RequestParam("applicationid") int applicationid,
                                           @RequestParam("cloneVersionNumber") String newversion,
@@ -417,6 +436,7 @@ public class ApplicationController {
      * @param secuniaID The Secunia ID of the LibraryVersion
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/updatelibrary", method = RequestMethod.POST)
     public String updatingLibrary(@RequestParam("editvendorid") int vendorid,
                                   @RequestParam("editlicenseid") int licenseid,
@@ -440,6 +460,7 @@ public class ApplicationController {
      * @param libraryversionid The LibraryVersion ID
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/removelibrary/{libraryversionid}", method = RequestMethod.GET)
     public String removeLibrary(@PathVariable("libraryversionid") Integer libraryversionid) {
         libraryVersionService.removeLibrary(libraryversionid);
@@ -451,6 +472,7 @@ public class ApplicationController {
      * @param map a map of parameters
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/libraries", method = RequestMethod.GET)
     public String allLibrary(Map<String, Object> map) {
         map.put("LibraryVersion", new LibraryVersion());
@@ -474,6 +496,7 @@ public class ApplicationController {
      * @param secuniaID The Secunia ID of the LibraryVersion
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/addlibraries", method = RequestMethod.POST)
     public String addLibraries(@RequestParam("libnamesel") String libraryname,
                                @RequestParam("libversel") String libraryversion,
@@ -492,6 +515,7 @@ public class ApplicationController {
      * @param response a Response object
      * @param licenseid the ID of the License to download
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/downloadlicense", method = RequestMethod.POST)
     public void downloadLicense(HttpServletResponse response,
                                 @RequestParam("licenseid") Integer licenseid) {
@@ -527,6 +551,7 @@ public class ApplicationController {
      * @param licenseid the ID of the License to download
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/viewlicense/{licenseid}", method = RequestMethod.GET)
     public String viewLicense(HttpServletResponse response,
                               @PathVariable("licenseid") Integer licenseid) {
@@ -589,6 +614,7 @@ public class ApplicationController {
      * The about page.
      * @return a String
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/about", method = RequestMethod.GET)
     public String about() {
         return "aboutPage";
@@ -610,6 +636,7 @@ public class ApplicationController {
     /**
      * Admin User Management
      */
+    @RequiresRoles("admin")
     @RequestMapping(value = "/usermanagement", method = RequestMethod.GET)
     public String userManagement(Map<String, Object> map)
     {
@@ -621,6 +648,7 @@ public class ApplicationController {
     /**
      * Admin User Management which validates a user
      */
+    @RequiresRoles("admin")
     @RequestMapping(value = "/validateuser/{id}", method = RequestMethod.GET)
     public String validateUser(@PathVariable("id") Integer userid)
     {
@@ -633,6 +661,7 @@ public class ApplicationController {
     /**
      * Admin User Management which deletes a user
      */
+    @RequiresRoles("admin")
     @RequestMapping(value = "/deleteuser/{id}", method = RequestMethod.GET)
     public String deleteUser(@PathVariable("id") Integer userid)
     {
@@ -645,6 +674,7 @@ public class ApplicationController {
     /**
      * Mapping to dashboard which gives vulnerability overview
      */
+    @RequiresRoles(value={"admin","user"},logical= Logical.OR)
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
     public String dashboard(Map<String, Object> map)
     {

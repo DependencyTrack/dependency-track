@@ -64,6 +64,17 @@ public final class Users {
     @Column(name = "CHECKVALID")
     private boolean checkvalid ;
 
+
+    /**
+     * The license the library is licensed under.
+     */
+    @ManyToOne
+    @JoinColumn(name = "ROLEID")
+    @OrderBy
+    private Roles roles;
+
+
+
     public Integer getId() {
         return id;
     }
@@ -102,5 +113,13 @@ public final class Users {
 
     public void setCheckvalid(boolean checkvalid) {
         this.checkvalid = checkvalid;
+    }
+
+    public Roles getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Roles roles) {
+        this.roles = roles;
     }
 }

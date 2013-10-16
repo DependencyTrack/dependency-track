@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -48,12 +48,15 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     /**
      * Specify default license names and files
      */
-    private static final Map<String, String> LICENSES;
+    private static final LinkedHashMap<String, String> LICENSES;
     static {
-        LICENSES = new HashMap<String, String>();
+        LICENSES = new LinkedHashMap<String, String>();
         LICENSES.put("Apache License 1.0", "licenses/Apache/LICENSE-1.0.txt");
         LICENSES.put("Apache License 1.1", "licenses/Apache/LICENSE-1.1.txt");
         LICENSES.put("Apache License 2.0", "licenses/Apache/LICENSE-2.0.txt");
+        LICENSES.put("BSD License - Original (4 Clause)", "licenses/BSD/bsd-original-4clause.txt");
+        LICENSES.put("BSD License - Revised (3 Clause)", "licenses/BSD/bsd-revised-3clause.txt");
+        LICENSES.put("BSD License - Simplified (2 Clause)", "licenses/BSD/bsd-simplified-2clause.txt");
         LICENSES.put("CDDL 1.0", "licenses/CDDL/cddl-1.0.txt");
         LICENSES.put("Common Public License 1.0", "licenses/CPL/cpl-1.0.txt");
         LICENSES.put("Eclipse Public License 1.0", "licenses/EPL/epl-1.0.txt");
@@ -109,11 +112,12 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             return;
         }
 
-        session.beginTransaction();
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("Adding default licenses to datastore.");
         }
         for (Map.Entry<String, String> entry: LICENSES.entrySet()) {
+            session.beginTransaction();
+
             final String licenseName = entry.getKey();
             final String licenseFile = entry.getValue();
 
@@ -139,9 +143,8 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             } finally {
                 IOUtils.closeQuietly(inputStream);
             }
-
+            session.getTransaction().commit();
         }
-        session.getTransaction().commit();
         session.close();
     }
 }

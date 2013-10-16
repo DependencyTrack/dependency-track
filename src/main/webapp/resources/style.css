@@ -145,6 +145,13 @@ iframe[seamless] {
     text-align: left;
 }
 
+#licenseLibrariesModal {
+    width: 70%; /* desired relative width */
+    left: 15%; /* (100%-width)/2 */
+    margin-left:auto;
+    margin-right:auto;
+}
+
 .delete-span {
     float: right;
     margin-top: -5px;

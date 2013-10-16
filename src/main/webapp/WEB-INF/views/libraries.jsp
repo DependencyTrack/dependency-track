@@ -219,7 +219,7 @@
                     <td><input id="licensfileename" name="licensfileename" type="text" value="" readonly/></td>
                 </tr>
             </table>
-            <iframe id="viewlicense" width="500" height="400" src="" seamless="seamless" sandbox="allow-same-origin"></iframe>
+            <iframe id="viewlicense" width="100%" height="400" src="" seamless="seamless" sandbox="allow-same-origin"></iframe>
             <input type="hidden" id="licenseid" name="licenseid" value=""/>
 
         </div>

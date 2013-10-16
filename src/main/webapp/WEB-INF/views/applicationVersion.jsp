@@ -12,6 +12,7 @@
                 <th><spring:message code="label.vendor"/></th>
                 <th><spring:message code="label.library"/></th>
                 <th><spring:message code="label.version"/></th>
+                <th><spring:message code="label.license"/></th>
                 <th></th>
             </tr>
             </thead>
@@ -21,6 +22,7 @@
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryVendor.vendor}"/></td>
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryname}"/></td>
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.libraryversion}"/></td>
+                <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.license.licensename}"/></td>
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>
                     <a class="btn btn-danger header-button" id="deleteLink" href="<c:url value="/deleteDependency?appversionid=${applicationVersion.id}&versionid=${libraryVersion.id}"/>" onclick="return confirm('${confirmDeleteMessage}')"><spring:message code="label.delete"/></a>

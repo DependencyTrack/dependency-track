@@ -1,6 +1,10 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+
+<spring:message code="label.role.admin" var="admin"/>
+<spring:message code="label.role.moderator" var="moderator"/>
 
 <div id="librariesContainer">
     <c:if test="${!empty libList}">
@@ -13,7 +17,9 @@
                 <th><spring:message code="label.license"/></th>
                 <th><spring:message code="label.language"/></th>
                 <th><spring:message code="label.secunia.id"/></th>
+                <shiro:hasAnyRoles name="${admin},${moderator}">
                 <th>&nbsp;</th>
+                    </shiro:hasAnyRoles>
             </tr>
             </thead>
             <tbody>
@@ -25,6 +31,7 @@
                     <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}" href="#licenseLibrariesModal">${libList.library.license.licensename}</a></td>
                     <td><c:out value="${libList.library.language}"/></td>
                     <td><c:out value="${libList.secunia}"/></td>
+                    <shiro:hasAnyRoles name="${admin},${moderator}">
                     <td style="vertical-align:top;text-align:right;">
                         <div class="btn-group">
                             <a data-toggle="modal"
@@ -41,6 +48,7 @@
                                class="open-EditLibrariesModal btn" href="#editLibrariesModal">Edit</a>
                         </div>
                     </td>
+                        </shiro:hasAnyRoles>
                 </tr>
             </c:forEach>
             </tbody>
@@ -229,7 +237,9 @@
         <div class="modal-footer">
 
             <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+            <shiro:hasAnyRoles name="${admin},${moderator}">
             <a data-toggle="modal" class="open-licenseFileUploadModalButton btn btn-primary" data-dismiss="modal" href="#licenseFileUploadModal" ><spring:message code="label.upload"/></a>
+            </shiro:hasAnyRoles>
             <button class="modalSubmit btn btn-primary"><spring:message code="label.download"/></button>
 
         </div>

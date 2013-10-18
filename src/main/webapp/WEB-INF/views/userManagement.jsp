@@ -55,8 +55,9 @@
 </div>
 
 
-<div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true">
-    <div class="modal-header">
+<div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true"
+     data-backdrop="static" data-keyboard="false">
+    <div class="modal-header" >
         <h4 id="registerUserModalLabel"><spring:message code="login.create.account"/></h4>
     </div>
 
@@ -75,6 +76,17 @@
                 <tr>
                     <td><label for="chkpassword"><spring:message code="label.password.confirm"/></label></td>
                     <td><input id="chkpassword" name="chkpassword" type="password" pattern=".{8,}" title="8 characters minimum" required="required"/></td>
+                </tr>
+                <td><label for="adminrolenamenameid"><spring:message code="label.userRole"/></label></td>
+                <td>
+                <select id="adminrolenamenameid" name="role" class="role" autofocus="autofocus">
+                        <c:forEach items="${roleList}" var="roleList">
+                            <option value="${roleList.id} ">${roleList.role}</option>
+                        </c:forEach>
+                </select>
+                        </td>
+                    <tr>
+
                 </tr>
             </table>
         </div>

@@ -169,17 +169,18 @@ public class ApplicationController {
     @RequestMapping(value = "/registerUser", method = RequestMethod.POST)
     public String registerUser(@RequestParam("username") String username,
                                @RequestParam("password") String password,
-                               @RequestParam("chkpassword") String chkpassword) {
+                               @RequestParam("chkpassword") String chkpassword,
+                               @RequestParam("role") Integer role) {
         Subject currentUser =
                 SecurityUtils.getSubject();
         if (password.equals(chkpassword) && currentUser.hasRole("admin")) {
-            userService.registerUser(username, password);
+            userService.registerUser(username, password,role);
             return "redirect:/usermanagement";
 
         }
         else if (config.isSignupEnabled() && password.equals(chkpassword))
         {
-            userService.registerUser(username, password);
+            userService.registerUser(username, password,role);
         }
         return "redirect:/login";
     }
@@ -690,7 +691,7 @@ public class ApplicationController {
     public String changeUserRole(@PathVariable("id") Integer userid,@PathVariable("role") Integer role)
     {
 
-        userService.changeUserRole(userid,role);
+        userService.changeUserRole(userid, role);
 
         return "userManagementPage";
     }

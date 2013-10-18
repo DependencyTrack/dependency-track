@@ -48,15 +48,24 @@ public class UserDao {
     private SessionFactory sessionFactory;
 
 
-    public void registerUser(String username,String password)
+    public void registerUser(String username,String password,Integer role)
     {
         RandomNumberGenerator rng = new SecureRandomNumberGenerator();
         Object salt = rng.nextBytes();
 
         String hashedPasswordBase64 = new Sha256Hash(password,salt.toString()).toBase64();
-
-        Query query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
+        Query query;
+        if(role==null)
+        {
+         query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
         query.setParameter("role","user");
+        }
+        else
+        {
+            query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.id  =:role");
+            query.setParameter("role",role.intValue());
+        }
+
 
         Users users = new Users();
         users.setPassword(hashedPasswordBase64);

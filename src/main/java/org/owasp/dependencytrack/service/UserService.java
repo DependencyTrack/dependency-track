@@ -39,9 +39,9 @@ public class UserService {
     private UserDao userDao;
 
     @Transactional
-    public void registerUser(String username,String password)
+    public void registerUser(String username,String password, Integer role)
     {
-        userDao.registerUser(username,password);
+        userDao.registerUser(username,password, role);
 
     }
 

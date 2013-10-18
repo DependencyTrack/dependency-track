@@ -55,7 +55,8 @@
 
 
 <c:if test="${properties.signupEnabled}">
-<div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true">
+<div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true"
+     data-backdrop="static" data-keyboard="false">
     <div class="modal-header">
         <h4 id="registerUserModalLabel"><spring:message code="login.create.account"/></h4>
     </div>
@@ -79,6 +80,7 @@
             </table>
         </div>
         <div class="modal-footer">
+            <input id="roleval" name="role" type="hidden" value=""/>
             <button class="btn " data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
             <button class="modalSubmit btn btn-primary"><spring:message code="label.register"/></button>
         </div>

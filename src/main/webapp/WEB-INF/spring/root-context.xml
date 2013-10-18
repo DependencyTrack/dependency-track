@@ -86,7 +86,7 @@
         <property name="dataSource" ref="dataSource"/>
         <property name="saltStyle" value="COLUMN"/>
         <property name="userRolesQuery"
-         value="SELECT role FROM Roles r, Users u WHERE u.username=?" />
+         value="SELECT role FROM Roles r, Users u WHERE u.username=? and r.ID=u.ROLEID" />
     </bean>
 
     <!--

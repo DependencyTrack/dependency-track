@@ -25,6 +25,7 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresRoles;
+import org.apache.shiro.subject.Subject;
 import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
@@ -164,11 +165,20 @@ public class ApplicationController {
      * @param chkpassword The second password (retype) supplied during the registration of a user account
      * @return a String
      */
+
     @RequestMapping(value = "/registerUser", method = RequestMethod.POST)
     public String registerUser(@RequestParam("username") String username,
                                @RequestParam("password") String password,
                                @RequestParam("chkpassword") String chkpassword) {
-        if (config.isSignupEnabled() && password.equals(chkpassword)) {
+        Subject currentUser =
+                SecurityUtils.getSubject();
+        if (password.equals(chkpassword) && currentUser.hasRole("admin")) {
+            userService.registerUser(username, password);
+            return "redirect:/usermanagement";
+
+        }
+        else if (config.isSignupEnabled() && password.equals(chkpassword))
+        {
             userService.registerUser(username, password);
         }
         return "redirect:/login";
@@ -641,6 +651,7 @@ public class ApplicationController {
     public String userManagement(Map<String, Object> map)
     {
     map.put("userList",userService.accountManagement());
+        map.put("roleList",userService.getRoleList());
     return "userManagementPage";
     }
 
@@ -667,6 +678,19 @@ public class ApplicationController {
     {
 
         userService.deleteUser(userid);
+
+        return "userManagementPage";
+    }
+
+    /**
+     * Admin User Management which deletes a user
+     */
+    @RequiresRoles("admin")
+    @RequestMapping(value = "/changeuserrole/{id}/{role}", method = RequestMethod.GET)
+    public String changeUserRole(@PathVariable("id") Integer userid,@PathVariable("role") Integer role)
+    {
+
+        userService.changeUserRole(userid,role);
 
         return "userManagementPage";
     }

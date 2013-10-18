@@ -2,6 +2,11 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+
+
+<spring:message code="label.role.admin" var="admin"/>
+<spring:message code="label.role.moderator" var="moderator"/>
 
 <div id="applicationVersionContainer">
     <c:if test="${!empty applicationVersion}">
@@ -13,7 +18,10 @@
                 <th><spring:message code="label.library"/></th>
                 <th><spring:message code="label.version"/></th>
                 <th><spring:message code="label.license"/></th>
+
+                <shiro:hasAnyRoles name="${admin},${moderator}">
                 <th></th>
+                </shiro:hasAnyRoles>
             </tr>
             </thead>
             <tbody>
@@ -23,10 +31,12 @@
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryname}"/></td>
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.libraryversion}"/></td>
                 <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.license.licensename}"/></td>
+                <shiro:hasAnyRoles name="${admin},${moderator}">
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>
                     <a class="btn btn-danger header-button" id="deleteLink" href="<c:url value="/deleteDependency?appversionid=${applicationVersion.id}&versionid=${libraryVersion.id}"/>" onclick="return confirm('${confirmDeleteMessage}')"><spring:message code="label.delete"/></a>
                 </td>
+                </shiro:hasAnyRoles>
             </tr>
             </c:forEach>
             </tbody>

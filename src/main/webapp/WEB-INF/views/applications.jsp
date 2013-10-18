@@ -2,6 +2,7 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
 
 <div id="applicationContainer">
     <c:if test="${!empty applicationList}">
@@ -42,12 +43,15 @@
                     <c:if  test="${!check}">
                     <td style="vertical-align:top;">${fn:length(application.versions)}</td>
                     <td style="vertical-align:top;text-align:right;">
-
+                        <spring:message code="label.role.admin" var="admin"/>
+                        <spring:message code="label.role.moderator" var="moderator"/>
+                        <shiro:hasAnyRoles name="${admin},${moderator}">
                         <div class="btn-group">
                             <a data-toggle="modal" data-id="${application.id}" class="open-CloneApplicationModal btn" href="#cloneApplicationModal"><spring:message code="label.application.clone"/></a>
                             <a data-toggle="modal" data-id="${application.id}" class="open-AddApplicationVersionModal btn" href="#addApplicationVersionModal"><spring:message code="label.version.add"/></a>
                             <a data-toggle="modal" data-id="${application.id}" data-name="${application.name}" class="open-EditApplicationModal btn" href="#editApplicationModal"><spring:message code="label.edit"/></a>
                         </div>
+                        </shiro:hasAnyRoles>
 
                     </td>
                 </tr>

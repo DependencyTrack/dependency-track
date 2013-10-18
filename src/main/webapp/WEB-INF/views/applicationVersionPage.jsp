@@ -2,11 +2,17 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
 
 <spring:message code="label.dependency.add" var="addDependencyLabel"/>
 <spring:message code="label.clone" var="cloneLabel"/>
 <spring:message code="label.edit" var="editLabel"/>
 
+<spring:message code="label.role.admin" var="admin"/>
+<spring:message code="label.role.moderator" var="moderator"/>
+<spring:message code="label.role.user" var="user"/>
+
+<shiro:hasAnyRoles name="${admin},${moderator}">
 <jsp:include page="/WEB-INF/views/templates/page.jsp">
     <jsp:param name="title" value="${applicationVersion.application.name} - ${applicationVersion.version}"/>
 
@@ -18,3 +24,11 @@
 
     <jsp:param name="content" value="applicationVersion"/>
 </jsp:include>
+    </shiro:hasAnyRoles>
+
+<shiro:hasRole name="${user}">
+    <jsp:include page="/WEB-INF/views/templates/page.jsp">
+        <jsp:param name="title" value="${applicationVersion.application.name} - ${applicationVersion.version}"/>
+        <jsp:param name="content" value="applicationVersion"/>
+</jsp:include>
+</shiro:hasRole>

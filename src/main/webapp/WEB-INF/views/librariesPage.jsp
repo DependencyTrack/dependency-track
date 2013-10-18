@@ -1,8 +1,24 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
 <spring:message code="label.libraries" var="title"/>
 <spring:message code="label.library.add" var="addButtonLabel"/>
+
+<spring:message code="label.role.admin" var="admin"/>
+<spring:message code="label.role.moderator" var="moderator"/>
+<spring:message code="label.role.user" var="user"/>
+
+
+<shiro:hasAnyRoles name="${admin},${moderator}">
 <jsp:include page="/WEB-INF/views/templates/page.jsp">
     <jsp:param name="title" value="${title}"/>
     <jsp:param name="content" value="libraries"/>
     <jsp:param name="buttons" value='<a id="addLibraryModalButton" href="#libraryModal" role="button" class="open-AddLibraryModal btn" data-toggle="modal">${addButtonLabel}</a>'/>
 </jsp:include>
+</shiro:hasAnyRoles>
+
+<shiro:hasRole name="${user}">
+    <jsp:include page="/WEB-INF/views/templates/page.jsp">
+        <jsp:param name="title" value="${title}"/>
+        <jsp:param name="content" value="libraries"/>
+    </jsp:include>
+</shiro:hasRole>

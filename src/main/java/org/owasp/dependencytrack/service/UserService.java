@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.service;
 
 import org.owasp.dependencytrack.dao.UserDao;
+import org.owasp.dependencytrack.model.Roles;
 import org.owasp.dependencytrack.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,9 +39,9 @@ public class UserService {
     private UserDao userDao;
 
     @Transactional
-    public void registerUser(String username,String password)
+    public void registerUser(String username,String password, Integer role)
     {
-        userDao.registerUser(username,password);
+        userDao.registerUser(username,password, role);
 
     }
 
@@ -66,5 +67,17 @@ public class UserService {
     public void deleteUser(int userid)
     {
         userDao.deleteUser(userid);
+    }
+
+    @Transactional
+    public List<Roles> getRoleList()
+    {
+       return userDao.getRoleList();
+    }
+
+    @Transactional
+    public void changeUserRole(int userid,int role)
+    {
+        userDao.changeUserRole(userid, role);
     }
 }

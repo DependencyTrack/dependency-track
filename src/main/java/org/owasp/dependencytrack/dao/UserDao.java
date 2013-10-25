@@ -28,6 +28,7 @@ import org.owasp.dependencytrack.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,15 +48,24 @@ public class UserDao {
     private SessionFactory sessionFactory;
 
 
-    public void registerUser(String username,String password)
+    public void registerUser(String username,String password,Integer role)
     {
         RandomNumberGenerator rng = new SecureRandomNumberGenerator();
         Object salt = rng.nextBytes();
 
         String hashedPasswordBase64 = new Sha256Hash(password,salt.toString()).toBase64();
-
-        Query query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
+        Query query;
+        if(role==null)
+        {
+         query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
         query.setParameter("role","user");
+        }
+        else
+        {
+            query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.id  =:role");
+            query.setParameter("role",role.intValue());
+        }
+
 
         Users users = new Users();
         users.setPassword(hashedPasswordBase64);
@@ -125,6 +135,33 @@ public class UserDao {
         Users curUser = (Users) query.list().get(0);
 
         session.delete(curUser);
+        session.getTransaction().commit();
+        session.close();
+    }
+
+    public List<Roles> getRoleList()
+    {
+        final Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        Query query = sessionFactory.getCurrentSession().createQuery(" FROM Roles  ");
+
+        ArrayList<Roles> rolelist = (ArrayList<Roles>) query.list();
+        session.close();
+        return  rolelist;
+    }
+
+    public void changeUserRole(int userid,int role)
+    {
+        final Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+        Query query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.roles.id  = :role" +
+                " where usr.id = :userid");
+        query.setParameter("role", role);
+        query.setParameter("userid",userid );
+        query.executeUpdate();
+
         session.getTransaction().commit();
         session.close();
     }

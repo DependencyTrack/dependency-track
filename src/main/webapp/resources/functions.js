@@ -271,3 +271,22 @@ $(document).on("click",".deleteUser",function() {
     });
 
 });
+
+$(document).on("change",".rolename",function() {
+
+    var id = $(this).data('userid');
+    var role = $(this).val();
+
+    var uri = contextPath() + '/changeuserrole/'+id+'/'+role;
+
+    $.ajax({
+        url: uri,
+        type: 'GET',
+        dataType: "text",
+        success: function (data) // Variable data contains the data we get from serverside
+        {
+            $('#userManagaementContainer').load(window.location.href + ' #userManagaementContainer');
+        }
+    });
+
+});

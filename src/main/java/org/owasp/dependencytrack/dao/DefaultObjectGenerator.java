@@ -24,6 +24,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.Roles;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -77,6 +78,14 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         LICENSES.put("Sun Public License 1.0", "licenses/SPL/spl-1.0.txt");
     }
 
+    private static final LinkedHashMap<Integer, String> ROLE = new LinkedHashMap<Integer, String>();
+    static
+    {
+        ROLE.put(1,"user");
+        ROLE.put(2,"moderator");
+        ROLE.put(3,"admin");
+
+    }
     /**
      * The Hibernate SessionFactory
      */
@@ -92,6 +101,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         try {
             loadDefaultLicenses();
+            loadDefaultRoles();
         } catch (IOException e) {
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(e.getMessage());
@@ -145,6 +155,35 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             }
             session.getTransaction().commit();
         }
+        session.close();
+    }
+
+    /**
+     * Loads the default Roles into the database if no Role data exists.
+     */
+    public void loadDefaultRoles()
+    {
+
+
+        final Session session = sessionFactory.openSession();
+        session.beginTransaction();
+
+
+        final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
+
+
+        // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
+        if (count > 0) {
+            return;
+        }
+
+        for(String role:ROLE.values())
+        {
+            final Roles newrole = new Roles();
+            newrole.setRole(role);
+            session.save(newrole);
+        }
+        session.getTransaction().commit();
         session.close();
     }
 }

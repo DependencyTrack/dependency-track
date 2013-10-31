@@ -36,6 +36,7 @@ import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.LibraryVersionService;
 import org.owasp.dependencytrack.service.UserService;
+import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,10 +49,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -602,7 +600,7 @@ public class ApplicationController {
      * @param response an HttpServletResponse object
      */
     @RequestMapping(value = "/dcdata", method = RequestMethod.GET)
-    public void getFile(HttpServletResponse response) {
+    public void getDataMirrorFile(HttpServletResponse response) {
         InputStream fis = null;
         OutputStream out = null;
         try {
@@ -614,6 +612,33 @@ public class ApplicationController {
             out.flush();
         } catch (IOException ex) {
             LOGGER.info("Error writing Dependency-Check datafile to output stream.");
+            throw new RuntimeException("IOError writing file to output stream");
+        } finally {
+            IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(fis);
+        }
+    }
+
+    /**
+     * Service to download NIST CPE/CVE XML data files.
+     * @param response an HttpServletResponse object
+     * @param filename the xml file to download
+     */
+    @RequestMapping(value = "/nist/{filename:.+}", method = RequestMethod.GET)
+    public void getNistFile(HttpServletResponse response, @PathVariable("filename") String filename) throws IOException {
+        if (!NistDataMirrorUpdater.isValidNistFile(filename)) {
+            response.sendError(404);
+        }
+        InputStream fis = null;
+        OutputStream out = null;
+        try {
+            fis = new FileInputStream(Constants.NIST_DIR + File.separator + filename);
+            response.setHeader("Content-Type", "application/xml;");
+            out = response.getOutputStream();
+            IOUtils.copy(fis, out);
+            out.flush();
+        } catch (IOException ex) {
+            LOGGER.info("Error writing NIST datafile to output stream.");
             throw new RuntimeException("IOError writing file to output stream");
         } finally {
             IOUtils.closeQuietly(out);

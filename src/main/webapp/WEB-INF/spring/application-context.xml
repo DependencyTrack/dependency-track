@@ -43,6 +43,9 @@
     <!-- Dependency-Check data updater scheduler and packager -->
     <bean id="dependencyCheckDataUpdater" class="org.owasp.dependencytrack.tasks.DependencyCheckDataUpdater" />
 
+    <!-- NIST data updater scheduler -->
+    <bean id="nistDataMirrorUpdater" class="org.owasp.dependencytrack.tasks.NistDataMirrorUpdater" />
+
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
         up static resources in the ${webappRoot}/resources directory -->
     <mvc:resources mapping="favicon.ico"  location="/resources/favicon.ico" order="-10"/>

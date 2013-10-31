@@ -48,4 +48,8 @@ public final class Constants {
      */
     public static final String DATA_ZIP = APP_DIR + File.separator + DATA_FILENAME;
 
+    /**
+     * Specify the NIST data directory used by Dependency-Check.
+     */
+    public static final String NIST_DIR = APP_DIR + File.separator + "nist";
 }

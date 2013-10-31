@@ -68,6 +68,11 @@ public class NistDataMirrorUpdater {
         }
     }
 
+    /**
+     * Perform a download of NIST data and save it to the nist data directory
+     * @param cveUrl The url to download
+     * @throws IOException
+     */
     private void doDownload(String cveUrl) throws IOException {
         BufferedInputStream bis = null;
         BufferedOutputStream bos = null;
@@ -106,6 +111,11 @@ public class NistDataMirrorUpdater {
         }
     }
 
+    /**
+     * Performs exact match validation to ensure the specified filename matches a known NIST filename
+     * @param filename the filename to check
+     * @return a boolean value
+     */
     public static boolean isValidNistFile(String filename) {
         if (filename.equals(CVE_12_MODIFIED_URL.substring(CVE_12_MODIFIED_URL.lastIndexOf('/') + 1)) ||
                 filename.equals(CVE_20_MODIFIED_URL.substring(CVE_20_MODIFIED_URL.lastIndexOf('/') + 1))) {

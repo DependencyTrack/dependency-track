@@ -33,6 +33,7 @@
         <mapping class="org.owasp.dependencytrack.model.ApplicationDependency" />
         <mapping class="org.owasp.dependencytrack.model.Roles" />
         <mapping class="org.owasp.dependencytrack.model.Users" />
+        <mapping class="org.owasp.dependencytrack.model.Permissions" />
     </session-factory>
          
 </hibernate-configuration>

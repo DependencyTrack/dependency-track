@@ -17,24 +17,20 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "ROLES")
-public class Roles {
 
+@Entity
+@Table(name = "PERMISSIONS")
+public class Permissions {
     /**
      * The unique identifier of the persisted object.
      */
@@ -46,38 +42,28 @@ public class Roles {
     /**
      * The role that is associated with a users.
      */
-    @Column(name = "ROLE", unique = true)
-    private String role;
+    @Column(name = "PERMISSIONNAME", unique = true)
+    private String permissionname;
 
 
     /**
-     * The Users that are associated with this role.
+     * The roles associated with this permission.
      */
-    @OneToMany(mappedBy = "roles", fetch = FetchType.EAGER)
-    private Set<Users> usr;
-
-    /**
-     * The many to many relationship between roles and permissions .
-     */
-    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
-    @JoinTable(name = "ROLES_PERMISSIONS",
-            joinColumns = { @JoinColumn(name = "ROLES_ID") },
-            inverseJoinColumns = { @JoinColumn(name = "PERMISSIONS_ID") })
-    private Set<Permissions> perm= new HashSet<Permissions>();
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "perm")
+    private Set<Roles> maprole = new HashSet<Roles>();
 
     /**
      * Default Constructor
      */
-    public Roles() { }
+    public Permissions() { }
 
     /**
-     * Constructor specifying the role name
-     * @param rolename the name of the role
+     * Constructor specifying the permission name
+     * @param permissionname the name of the permission
      */
-    public Roles(String rolename) {
-          role = rolename;
+    public Permissions(String permissionname) {
+        this.permissionname = permissionname;
     }
-
 
     public Integer getId() {
         return id;
@@ -87,27 +73,19 @@ public class Roles {
         this.id = id;
     }
 
-    public String getRole() {
-        return role;
+    public String getPermissionname() {
+        return permissionname;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setPermissionname(String permissionname) {
+        this.permissionname = permissionname;
     }
 
-    public Set<Users> getUsr() {
-        return usr;
+    public Set<Roles> getMaprole() {
+        return maprole;
     }
 
-    public void setUsr(Set<Users> usr) {
-        this.usr = usr;
-    }
-
-    public Set<Permissions> getPerm() {
-        return perm;
-    }
-
-    public void setPerm(Set<Permissions> perm) {
-        this.perm = perm;
+    public void setMaprole(Set<Roles> maprole) {
+        this.maprole = maprole;
     }
 }

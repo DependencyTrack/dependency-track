@@ -24,6 +24,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.Permissions;
 import org.owasp.dependencytrack.model.Roles;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -78,14 +80,54 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         LICENSES.put("Sun Public License 1.0", "licenses/SPL/spl-1.0.txt");
     }
 
+    /**
+     * Specify default roles
+     */
     private static final LinkedHashMap<Integer, String> ROLE = new LinkedHashMap<Integer, String>();
     static
     {
-        ROLE.put(1,"user");
-        ROLE.put(2,"moderator");
-        ROLE.put(3,"admin");
+        ROLE.put(1, "user");
+        ROLE.put(2, "moderator");
+        ROLE.put(3, "admin");
 
     }
+    /**
+     * Specify default Permission names
+     */
+    private static final LinkedHashMap<Integer, String> PERMISSION = new LinkedHashMap<Integer, String>();
+    static {
+        PERMISSION.put(1, "applications");
+        PERMISSION.put(2, "searchApplication");
+        PERMISSION.put(3, "coarseSearchApplication");
+        PERMISSION.put(4, "keywordSearchLibraries");
+        PERMISSION.put(5, "addApplication");
+        PERMISSION.put(6, "updateApplication");
+        PERMISSION.put(7, "updateApplicationVersion");
+        PERMISSION.put(8, "deleteApplication");
+        PERMISSION.put(9, "deleteApplicationVersion");
+        PERMISSION.put(10, "addApplicationVersion");
+        PERMISSION.put(11, "libraryHierarchy");
+        PERMISSION.put(12, "applicationVersion");
+        PERMISSION.put(13, "addDependency");
+        PERMISSION.put(14, "deleteDependency");
+        PERMISSION.put(15, "cloneApplication");
+        PERMISSION.put(16, "cloneApplicationVersion");
+        PERMISSION.put(17, "updatelibrary");
+        PERMISSION.put(18, "removelibrary");
+        PERMISSION.put(19, "libraries");
+        PERMISSION.put(20, "addlibraries");
+        PERMISSION.put(21, "downloadlicense");
+        PERMISSION.put(22, "viewlicense");
+        PERMISSION.put(23, "dcdata");
+        PERMISSION.put(24, "about");
+        PERMISSION.put(25, "uploadlicense");
+        PERMISSION.put(26, "usermanagement");
+        PERMISSION.put(27, "validateuser");
+        PERMISSION.put(28, "deleteuser");
+        PERMISSION.put(29, "changeuserrole");
+        PERMISSION.put(30, "dashboard");
+    }
+
     /**
      * The Hibernate SessionFactory
      */
@@ -161,28 +203,38 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     /**
      * Loads the default Roles into the database if no Role data exists.
      */
-    public void loadDefaultRoles()
-    {
-
-
+    public void loadDefaultRoles() {
         final Session session = sessionFactory.openSession();
-        session.beginTransaction();
-
-
         final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
-
 
         // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
         if (count > 0) {
             return;
         }
 
-        for(String role:ROLE.values())
-        {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Adding default roles to datastore.");
+        }
+
+        session.beginTransaction();
+
+        final HashSet<Permissions> addPerm = new HashSet<Permissions>();
+        final Permissions [] newpermissions = new Permissions[PERMISSION.size()];
+        int i = 0;
+        for (String perm:PERMISSION.values()) {
+             newpermissions[i] = new Permissions(perm);
+            // session.save(newpermissions[i]);
+            addPerm.add(newpermissions[i]);
+            i++;
+        }
+
+        for (String role:ROLE.values()) {
             final Roles newrole = new Roles();
             newrole.setRole(role);
+            newrole.setPerm(addPerm);
             session.save(newrole);
         }
+
         session.getTransaction().commit();
         session.close();
     }

@@ -37,7 +37,11 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class DefaultObjectGenerator implements ApplicationListener<ContextRefreshedEvent> {
@@ -83,8 +87,13 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
      * Specify default roles
      */
     private static enum ROLE {
+        /** The name (as stored in the database) of the user role */
         USER,
+
+        /** The name (as stored in the database) of the moderator role */
         MODERATOR,
+
+        /** The name (as stored in the database) of the admin role */
         ADMIN
     }
 
@@ -242,10 +251,10 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         // Retrieve a list of all persisted permissions
         final Query query = session.createQuery("FROM Permissions");
-        List<Permissions> permissions = query.list();
+        final List<Permissions> permissions = query.list();
 
         // Create a temporary list to hold only user permissions
-        List<Permissions> userPermissions = new ArrayList<Permissions>();
+        final List<Permissions> userPermissions = new ArrayList<Permissions>();
 
         // Iterate though all permissions and populate a temporary list of only the user permissions
         for (Permissions permission: permissions) {
@@ -257,7 +266,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         session.beginTransaction();
 
         for (ROLE name: ROLE.values()) {
-            Roles role = new Roles(name.name().toLowerCase());
+            final Roles role = new Roles(name.name().toLowerCase());
             if (name == ROLE.USER) {
                 role.setPerm(new HashSet<Permissions>(userPermissions));
             } else {

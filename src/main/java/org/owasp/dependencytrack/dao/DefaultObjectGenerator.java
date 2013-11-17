@@ -21,6 +21,7 @@ package org.owasp.dependencytrack.dao;
 
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.License;
@@ -36,9 +37,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DefaultObjectGenerator implements ApplicationListener<ContextRefreshedEvent> {
@@ -83,49 +82,47 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     /**
      * Specify default roles
      */
-    private static final LinkedHashMap<Integer, String> ROLE = new LinkedHashMap<Integer, String>();
-    static
-    {
-        ROLE.put(1, "user");
-        ROLE.put(2, "moderator");
-        ROLE.put(3, "admin");
-
+    private static enum ROLE {
+        USER,
+        MODERATOR,
+        ADMIN
     }
+
     /**
      * Specify default Permission names
      */
-    private static final LinkedHashMap<Integer, String> PERMISSION = new LinkedHashMap<Integer, String>();
+    private static final LinkedHashMap<String, ROLE> PERMISSIONS = new LinkedHashMap<String, ROLE>();
     static {
-        PERMISSION.put(1, "applications");
-        PERMISSION.put(2, "searchApplication");
-        PERMISSION.put(3, "coarseSearchApplication");
-        PERMISSION.put(4, "keywordSearchLibraries");
-        PERMISSION.put(5, "addApplication");
-        PERMISSION.put(6, "updateApplication");
-        PERMISSION.put(7, "updateApplicationVersion");
-        PERMISSION.put(8, "deleteApplication");
-        PERMISSION.put(9, "deleteApplicationVersion");
-        PERMISSION.put(10, "addApplicationVersion");
-        PERMISSION.put(11, "libraryHierarchy");
-        PERMISSION.put(12, "applicationVersion");
-        PERMISSION.put(13, "addDependency");
-        PERMISSION.put(14, "deleteDependency");
-        PERMISSION.put(15, "cloneApplication");
-        PERMISSION.put(16, "cloneApplicationVersion");
-        PERMISSION.put(17, "updatelibrary");
-        PERMISSION.put(18, "removelibrary");
-        PERMISSION.put(19, "libraries");
-        PERMISSION.put(20, "addlibraries");
-        PERMISSION.put(21, "downloadlicense");
-        PERMISSION.put(22, "viewlicense");
-        PERMISSION.put(23, "dcdata");
-        PERMISSION.put(24, "about");
-        PERMISSION.put(25, "uploadlicense");
-        PERMISSION.put(26, "usermanagement");
-        PERMISSION.put(27, "validateuser");
-        PERMISSION.put(28, "deleteuser");
-        PERMISSION.put(29, "changeuserrole");
-        PERMISSION.put(30, "dashboard");
+        PERMISSIONS.put("applications", ROLE.USER);
+        PERMISSIONS.put("searchApplication", ROLE.USER);
+        PERMISSIONS.put("coarseSearchApplication", ROLE.USER);
+        PERMISSIONS.put("keywordSearchLibraries", ROLE.USER);
+        PERMISSIONS.put("libraryHierarchy", ROLE.USER);
+        PERMISSIONS.put("applicationVersion", ROLE.USER);
+        PERMISSIONS.put("libraries", ROLE.USER);
+        PERMISSIONS.put("downloadlicense", ROLE.USER);
+        PERMISSIONS.put("viewlicense", ROLE.USER);
+        PERMISSIONS.put("dcdata", ROLE.USER);
+        PERMISSIONS.put("about", ROLE.USER);
+        PERMISSIONS.put("dashboard", ROLE.USER);
+        PERMISSIONS.put("addApplication", ROLE.MODERATOR);
+        PERMISSIONS.put("updateApplication", ROLE.MODERATOR);
+        PERMISSIONS.put("updateApplicationVersion", ROLE.MODERATOR);
+        PERMISSIONS.put("deleteApplication", ROLE.MODERATOR);
+        PERMISSIONS.put("deleteApplicationVersion", ROLE.MODERATOR);
+        PERMISSIONS.put("addApplicationVersion", ROLE.MODERATOR);
+        PERMISSIONS.put("addDependency", ROLE.MODERATOR);
+        PERMISSIONS.put("deleteDependency", ROLE.MODERATOR);
+        PERMISSIONS.put("cloneApplication", ROLE.MODERATOR);
+        PERMISSIONS.put("cloneApplicationVersion", ROLE.MODERATOR);
+        PERMISSIONS.put("updatelibrary", ROLE.MODERATOR);
+        PERMISSIONS.put("removelibrary", ROLE.MODERATOR);
+        PERMISSIONS.put("addlibraries", ROLE.MODERATOR);
+        PERMISSIONS.put("uploadlicense", ROLE.MODERATOR);
+        PERMISSIONS.put("usermanagement", ROLE.MODERATOR);
+        PERMISSIONS.put("validateuser", ROLE.MODERATOR);
+        PERMISSIONS.put("deleteuser", ROLE.MODERATOR);
+        PERMISSIONS.put("changeuserrole", ROLE.MODERATOR);
     }
 
     /**
@@ -143,6 +140,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         try {
             loadDefaultLicenses();
+            loadDefaultPermissions();
             loadDefaultRoles();
         } catch (IOException e) {
             if (LOGGER.isWarnEnabled()) {
@@ -155,7 +153,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
      * Loads the default licenses into the database if no license data exists.
      * @throws IOException An exception if the license file cannot be found
      */
-    public void loadDefaultLicenses() throws IOException {
+    private void loadDefaultLicenses() throws IOException {
         final Session session = sessionFactory.openSession();
         final int count = ((Long) session.createQuery("select count(*) from License").uniqueResult()).intValue();
 
@@ -201,13 +199,39 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     }
 
     /**
+     * Loads the default permissions into the database if no permission data exists.
+     */
+    private void loadDefaultPermissions() {
+        final Session session = sessionFactory.openSession();
+        final int count = ((Long) session.createQuery("select count(*) from Permissions ").uniqueResult()).intValue();
+
+        // Check to see if data already exists in the table.
+        if (count > 0) {
+            return;
+        }
+
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Adding default permissions to datastore.");
+        }
+
+        session.beginTransaction();
+        for (Map.Entry<String, ROLE> entry: PERMISSIONS.entrySet()) {
+            final Permissions permission = new Permissions(entry.getKey());
+            session.save(permission);
+        }
+        session.getTransaction().commit();
+        session.close();
+    }
+
+    /**
      * Loads the default Roles into the database if no Role data exists.
      */
+    @SuppressWarnings("unchecked")
     public void loadDefaultRoles() {
         final Session session = sessionFactory.openSession();
         final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
 
-        // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
+        // Check to see if data already exists in the table.
         if (count > 0) {
             return;
         }
@@ -216,23 +240,30 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             LOGGER.info("Adding default roles to datastore.");
         }
 
-        session.beginTransaction();
+        // Retrieve a list of all persisted permissions
+        final Query query = session.createQuery("FROM Permissions");
+        List<Permissions> permissions = query.list();
 
-        final HashSet<Permissions> addPerm = new HashSet<Permissions>();
-        final Permissions [] newpermissions = new Permissions[PERMISSION.size()];
-        int i = 0;
-        for (String perm:PERMISSION.values()) {
-             newpermissions[i] = new Permissions(perm);
-            // session.save(newpermissions[i]);
-            addPerm.add(newpermissions[i]);
-            i++;
+        // Create a temporary list to hold only user permissions
+        List<Permissions> userPermissions = new ArrayList<Permissions>();
+
+        // Iterate though all permissions and populate a temporary list of only the user permissions
+        for (Permissions permission: permissions) {
+            if (PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER) {
+                userPermissions.add(permission);
+            }
         }
 
-        for (String role:ROLE.values()) {
-            final Roles newrole = new Roles();
-            newrole.setRole(role);
-            newrole.setPerm(addPerm);
-            session.save(newrole);
+        session.beginTransaction();
+
+        for (ROLE name: ROLE.values()) {
+            Roles role = new Roles(name.name().toLowerCase());
+            if (name == ROLE.USER) {
+                role.setPerm(new HashSet<Permissions>(userPermissions));
+            } else {
+                role.setPerm(new HashSet<Permissions>(permissions));
+            }
+            session.save(role);
         }
 
         session.getTransaction().commit();

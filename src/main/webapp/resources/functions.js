@@ -290,3 +290,18 @@ $(document).on("change",".rolename",function() {
     });
 
 });
+
+//slider
+$("[data-slider]")
+    .each(function () {
+        alert("data");
+        var input = $(this);
+        $("<span>")
+            .addClass("output")
+            .insertAfter($(this));
+    })
+    .bind("slider:ready slider:changed", function (event, data) {
+        $(this)
+            .nextAll(".output:first")
+            .html(data.value.toFixed(3));
+    });

@@ -88,6 +88,10 @@
         <property name="saltStyle" value="COLUMN"/>
         <property name="userRolesQuery"
          value="SELECT role FROM Roles r, Users u WHERE u.username=? and r.ID=u.ROLEID" />
+        <property name="permissionsQuery"
+                  value="SELECT p.PERMISSIONNAME FROM ROLES r, PERMISSIONS p, ROLES_PERMISSIONS rp
+                         WHERE r.ID=rp.ROLES_ID AND p.ID=rp.PERMISSIONS_ID AND r.ROLE=?" />
+        <property name="permissionsLookupEnabled" value="true"></property>
     </bean>
 
     <!--

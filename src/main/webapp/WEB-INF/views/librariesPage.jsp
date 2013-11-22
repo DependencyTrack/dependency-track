@@ -5,10 +5,10 @@
 
 <spring:message code="label.role.admin" var="admin"/>
 <spring:message code="label.role.moderator" var="moderator"/>
-<spring:message code="label.role.user" var="user"/>
+<spring:message code="permissions.addlibraries" var="addlibraries"/>
 
 
-<shiro:hasAnyRoles name="${admin},${moderator}">
+<shiro:hasPermission  name="${addlibraries}">
 <jsp:include page="/WEB-INF/views/templates/page.jsp">
     <jsp:param name="title" value="${title}"/>
     <jsp:param name="content" value="libraries"/>
@@ -16,7 +16,7 @@
 </jsp:include>
 </shiro:hasAnyRoles>
 
-<shiro:hasRole name="${user}">
+<shiro:hasRole name="${addlibraries}">
     <jsp:include page="/WEB-INF/views/templates/page.jsp">
         <jsp:param name="title" value="${title}"/>
         <jsp:param name="content" value="libraries"/>

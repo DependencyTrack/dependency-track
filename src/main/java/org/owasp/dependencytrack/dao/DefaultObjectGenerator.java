@@ -37,11 +37,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 
 @Component
 public class DefaultObjectGenerator implements ApplicationListener<ContextRefreshedEvent> {
@@ -128,10 +125,10 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         PERMISSIONS.put("removelibrary", ROLE.MODERATOR);
         PERMISSIONS.put("addlibraries", ROLE.MODERATOR);
         PERMISSIONS.put("uploadlicense", ROLE.MODERATOR);
-        PERMISSIONS.put("usermanagement", ROLE.MODERATOR);
-        PERMISSIONS.put("validateuser", ROLE.MODERATOR);
-        PERMISSIONS.put("deleteuser", ROLE.MODERATOR);
-        PERMISSIONS.put("changeuserrole", ROLE.MODERATOR);
+        PERMISSIONS.put("usermanagement", ROLE.ADMIN);
+        PERMISSIONS.put("validateuser", ROLE.ADMIN);
+        PERMISSIONS.put("deleteuser", ROLE.ADMIN);
+        PERMISSIONS.put("changeuserrole", ROLE.ADMIN);
     }
 
     /**
@@ -263,14 +260,35 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             }
         }
 
+        // Create a temporary list to hold only user permissions
+        final List<Permissions> moderatorPermissions = new ArrayList<Permissions>();
+
+        for (Permissions permission: permissions) {
+            if ((PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER)
+                   || (PERMISSIONS.get(permission.getPermissionname()) == ROLE.MODERATOR)) {
+                moderatorPermissions.add(permission);
+            }
+        }
+
+        // Create a temporary list to hold only user permissions
+        final List<Permissions> adminPermissions = new ArrayList<Permissions>();
+        for (Permissions permission: permissions) {
+                adminPermissions.add(permission);
+        }
+
+
         session.beginTransaction();
 
         for (ROLE name: ROLE.values()) {
             final Roles role = new Roles(name.name().toLowerCase());
             if (name == ROLE.USER) {
                 role.setPerm(new HashSet<Permissions>(userPermissions));
-            } else {
-                role.setPerm(new HashSet<Permissions>(permissions));
+            }
+            else if (name == ROLE.MODERATOR) {
+                role.setPerm(new HashSet<Permissions>(moderatorPermissions));
+             }
+            else if (name == ROLE.ADMIN) {
+                role.setPerm(new HashSet<Permissions>(adminPermissions));
             }
             session.save(role);
         }

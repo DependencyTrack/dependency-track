@@ -40,6 +40,11 @@
     <script type="text/javascript" src="<c:url value="/resources/tablesorter/jquery.tablesorter.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/bootstrap/js/bootstrap.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/functions.js"/>"></script>
+    <%--slider js--%>
+    <!-- Include jQuery -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="resources/simple-slider.js"></script>
+    <link href="resources/simple-slider.css" rel="stylesheet" type="text/css" />
 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript" src="<c:url value="/resources/charts.js"/>"></script>
@@ -68,11 +73,12 @@
             <li>
                 <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
             </li>
-            <shiro:hasRole name="admin">
+            <spring:message code="permissions.usermanagement" var="usermanagement"/>
+            <shiro:hasPermission name="${usermanagement}">
             <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
                 <a href="<c:url value="/usermanagement"/>"><spring:message code="label.userManagement"/></a>
             </li>
-            </shiro:hasRole>
+            </shiro:hasPermission>
         </ul>
         <ul class="nav pull-right">
             <li class="<c:if test="${param.content!='about'}">in</c:if>active">

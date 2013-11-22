@@ -24,6 +24,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.Logical;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
 import org.owasp.dependencytrack.Config;
@@ -40,6 +41,9 @@ import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +57,7 @@ import java.io.*;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 @Controller
 public class ApplicationController {
@@ -169,16 +174,13 @@ public class ApplicationController {
                                @RequestParam("password") String password,
                                @RequestParam("chkpassword") String chkpassword,
                                @RequestParam("role") Integer role) {
-        Subject currentUser =
+        final Subject currentUser =
                 SecurityUtils.getSubject();
         if (password.equals(chkpassword) && currentUser.hasRole("admin")) {
-            userService.registerUser(username, password,role);
-            return "redirect:/usermanagement";
-
-        }
-        else if (config.isSignupEnabled() && password.equals(chkpassword))
-        {
-            userService.registerUser(username, password,role);
+            userService.registerUser(username, password, role);
+            return "redirect:/usermanagement"; }
+        else if (config.isSignupEnabled() && password.equals(chkpassword)) {
+            userService.registerUser(username, password, role);
         }
         return "redirect:/login";
     }
@@ -186,9 +188,10 @@ public class ApplicationController {
      * Default page action.
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("applications")
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String application() {
+
         return "redirect:/applications";
     }
 
@@ -197,12 +200,19 @@ public class ApplicationController {
      * @param map A map of parameters
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("applications")
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
     public String application(Map<String, Object> map) {
         map.put("check", false);
         map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
+        final Resource resource = new ClassPathResource("/application.properties");
+        try {
+          final Properties props = PropertiesLoaderUtils.loadProperties(resource);
+            props.setProperty("schedule", "mytime");
+        }
+        catch (Exception e) {
+        }
         return "applicationsPage";
     }
 
@@ -213,7 +223,7 @@ public class ApplicationController {
      * @param libverid The ID of the LibraryVersion to search on
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("searchApplication")
     @RequestMapping(value = "/searchApplication", method = RequestMethod.POST)
     public String searchApplication(Map<String, Object> map, @RequestParam("serapplib") int libid,
                                     @RequestParam("serapplibver") int libverid) {
@@ -237,7 +247,7 @@ public class ApplicationController {
      * @param vendorId The ID of the Vendor to search on
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("coarseSearchApplication")
     @RequestMapping(value = "/coarseSearchApplication", method = RequestMethod.POST)
     public String coarseSearchApplication(Map<String, Object> map, @RequestParam("coarseSearchVendor") int vendorId)
     {
@@ -254,9 +264,10 @@ public class ApplicationController {
      * @param searchTerm is the search term
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("keywordSearchLibraries")
     @RequestMapping(value = "/keywordSearchLibraries", method = RequestMethod.POST)
-    public String keywordSearchLibraries(Map<String, Object> map, @RequestParam("keywordSearchVendor") String searchTerm)
+    public String keywordSearchLibraries(Map<String, Object> map,
+                                         @RequestParam("keywordSearchVendor") String searchTerm)
     {
         map.put("libList", libraryVersionService.keywordSearchLibraries(searchTerm));
 
@@ -269,7 +280,7 @@ public class ApplicationController {
      * @param version a String of the version number to add
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("addApplication")
     @RequestMapping(value = "/addApplication", method = RequestMethod.POST)
     public String addApplication(@ModelAttribute("application") Application application,
                                  @RequestParam("version") String version) {
@@ -283,7 +294,7 @@ public class ApplicationController {
      * @param name The updated name of the application
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("updateApplication")
     @RequestMapping(value = "/updateApplication", method = RequestMethod.POST)
     public String updatingProduct(@RequestParam("id") int id, @RequestParam("name") String name) {
         applicationService.updateApplication(id, name);
@@ -296,7 +307,7 @@ public class ApplicationController {
      * @param appversion The version label
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("updateApplicationVersion")
     @RequestMapping(value = "/updateApplicationVersion", method = RequestMethod.POST)
     public String updatingApplicationVersion(@RequestParam("appversionid") int id,
                                              @RequestParam("editappver") String appversion) {
@@ -309,7 +320,7 @@ public class ApplicationController {
      * @param id The ID of the Application to delete
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("deleteApplication")
     @RequestMapping(value = "/deleteApplication/{id}", method = RequestMethod.GET)
     public String removeApplication(@PathVariable("id") int id) {
         applicationService.deleteApplication(id);
@@ -321,7 +332,7 @@ public class ApplicationController {
      * @param id The ID of the ApplicationVersion to delete
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("deleteApplicationVersion")
     @RequestMapping(value = "/deleteApplicationVersion/{id}", method = RequestMethod.GET)
     public String deleteApplicationVersion(@PathVariable("id") int id) {
 
@@ -336,7 +347,7 @@ public class ApplicationController {
      * @param version The version label
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("addApplicationVersion")
     @RequestMapping(value = "/addApplicationVersion", method = RequestMethod.POST)
     public String addApplicationVersion(@RequestParam("id") int id, @RequestParam("version") String version) {
         applicationVersionService.addApplicationVersion(id, version);
@@ -348,7 +359,7 @@ public class ApplicationController {
      * @param map a map of parameters
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("libraryHierarchy")
     @RequestMapping(value = "/libraryHierarchy", method = RequestMethod.GET)
     public String getLibraryHierarchy(Map<String, Object> map) {
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
@@ -362,7 +373,7 @@ public class ApplicationController {
      * @param id the ID of the Application to list versions for
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("applicationVersion")
     @RequestMapping(value = "/applicationVersion/{id}", method = RequestMethod.GET)
     public String listApplicationVersion(ModelMap modelMap, Map<String, Object> map, @PathVariable("id") int id) {
         final ApplicationVersion version = applicationVersionService.getApplicationVersion(id);
@@ -379,7 +390,7 @@ public class ApplicationController {
      * @param versionid The ID of the LibraryVersion
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("addDependency")
     @RequestMapping(value = "/addDependency", method = RequestMethod.POST)
     public String addDependency(@RequestParam("appversionid") int appversionid,
                                 @RequestParam("versionid") int versionid) {
@@ -393,7 +404,7 @@ public class ApplicationController {
      * @param versionid The ID of the LibraryVersion
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("deleteDependency")
     @RequestMapping(value = "/deleteDependency", method = RequestMethod.GET)
     public String deleteDependency(@RequestParam("appversionid") int appversionid,
                                    @RequestParam("versionid") int versionid) {
@@ -407,7 +418,7 @@ public class ApplicationController {
      * @param applicationname The name of the cloned Application
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("cloneApplication")
     @RequestMapping(value = "/cloneApplication", method = RequestMethod.POST)
     public String cloneApplication(@RequestParam("applicationid") int applicationid,
                                    @RequestParam("cloneAppName") String applicationname) {
@@ -422,7 +433,7 @@ public class ApplicationController {
      * @param applicationversion The ApplicationVersion to clone
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("cloneApplicationVersion")
     @RequestMapping(value = "/cloneApplicationVersion", method = RequestMethod.POST)
     public String cloneApplicationVersion(@RequestParam("applicationid") int applicationid,
                                           @RequestParam("cloneVersionNumber") String newversion,
@@ -445,7 +456,7 @@ public class ApplicationController {
      * @param secuniaID The Secunia ID of the LibraryVersion
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("updatelibrary")
     @RequestMapping(value = "/updatelibrary", method = RequestMethod.POST)
     public String updatingLibrary(@RequestParam("editvendorid") int vendorid,
                                   @RequestParam("editlicenseid") int licenseid,
@@ -456,7 +467,7 @@ public class ApplicationController {
                                   @RequestParam("vendor") String vendor,
                                   @RequestParam("license") String license,
                                   @RequestParam("language") String language,
-                                  @RequestParam(value="secuniaID", required=false) Integer secuniaID) {
+                                  @RequestParam(value = "secuniaID", required = false) Integer secuniaID) {
 
         libraryVersionService.updateLibrary(vendorid, licenseid, libraryid,
                 libraryversionid, libraryname, libraryversion, vendor, license,
@@ -469,7 +480,7 @@ public class ApplicationController {
      * @param libraryversionid The LibraryVersion ID
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("removelibrary")
     @RequestMapping(value = "/removelibrary/{libraryversionid}", method = RequestMethod.GET)
     public String removeLibrary(@PathVariable("libraryversionid") Integer libraryversionid) {
         libraryVersionService.removeLibrary(libraryversionid);
@@ -481,7 +492,7 @@ public class ApplicationController {
      * @param map a map of parameters
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("libraries")
     @RequestMapping(value = "/libraries", method = RequestMethod.GET)
     public String allLibrary(Map<String, Object> map) {
         map.put("LibraryVersion", new LibraryVersion());
@@ -505,7 +516,7 @@ public class ApplicationController {
      * @param secuniaID The Secunia ID of the LibraryVersion
      * @return a String
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("addlibraries")
     @RequestMapping(value = "/addlibraries", method = RequestMethod.POST)
     public String addLibraries(@RequestParam("libnamesel") String libraryname,
                                @RequestParam("libversel") String libraryversion,
@@ -513,7 +524,7 @@ public class ApplicationController {
                                @RequestParam("licensesel") String license,
                                @RequestParam("Licensefile") MultipartFile file,
                                @RequestParam("languagesel") String language,
-                               @RequestParam(value="secuniaID", required=false) Integer secuniaID) {
+                               @RequestParam(value = "secuniaID", required = false) Integer secuniaID) {
 
         libraryVersionService.addLibraries(libraryname, libraryversion, vendor, license, file, language, secuniaID);
         return "redirect:/libraries";
@@ -524,7 +535,7 @@ public class ApplicationController {
      * @param response a Response object
      * @param licenseid the ID of the License to download
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("downloadlicense")
     @RequestMapping(value = "/downloadlicense", method = RequestMethod.POST)
     public void downloadLicense(HttpServletResponse response,
                                 @RequestParam("licenseid") Integer licenseid) {
@@ -560,7 +571,7 @@ public class ApplicationController {
      * @param licenseid the ID of the License to download
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("viewlicense")
     @RequestMapping(value = "/viewlicense/{licenseid}", method = RequestMethod.GET)
     public String viewLicense(HttpServletResponse response,
                               @PathVariable("licenseid") Integer licenseid) {
@@ -599,6 +610,7 @@ public class ApplicationController {
      * Service to download the Dependency-Check datafile archive.
      * @param response an HttpServletResponse object
      */
+    @RequiresPermissions("dcdata")
     @RequestMapping(value = "/dcdata", method = RequestMethod.GET)
     public void getDataMirrorFile(HttpServletResponse response) {
         InputStream fis = null;
@@ -625,7 +637,8 @@ public class ApplicationController {
      * @param filename the xml file to download
      */
     @RequestMapping(value = "/nist/{filename:.+}", method = RequestMethod.GET)
-    public void getNistFile(HttpServletResponse response, @PathVariable("filename") String filename) throws IOException {
+    public void getNistFile(HttpServletResponse response,
+                            @PathVariable("filename") String filename) throws IOException {
         if (!NistDataMirrorUpdater.isValidNistFile(filename)) {
             response.sendError(404);
         }
@@ -650,7 +663,7 @@ public class ApplicationController {
      * The about page.
      * @return a String
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("about")
     @RequestMapping(value = "/about", method = RequestMethod.GET)
     public String about() {
         return "aboutPage";
@@ -660,23 +673,22 @@ public class ApplicationController {
      * Upload a License
      *@param licenseid the ID of the License to download
      */
-    @RequiresRoles(value={"admin","moderator"},logical= Logical.OR)
+    @RequiresPermissions("uploadlicense")
     @RequestMapping(value = "/uploadlicense", method = RequestMethod.POST)
     public String uploadLicense(@RequestParam("uploadlicenseid") Integer licenseid,
                               @RequestParam("uploadlicensefile") MultipartFile file,
                               @RequestParam("editlicensename") String editlicensename)
     {
                 libraryVersionService.uploadLicense(licenseid, file, editlicensename);
-        return "redirect:/libraries";
+                return "redirect:/libraries";
     }
 
     /**
      * Admin User Management
      */
-    @RequiresRoles("admin")
+    @RequiresPermissions("usermanagement")
     @RequestMapping(value = "/usermanagement", method = RequestMethod.GET)
-    public String userManagement(Map<String, Object> map)
-    {
+    public String userManagement(Map<String, Object> map) {
     map.put("userList",userService.accountManagement());
         map.put("roleList",userService.getRoleList());
     return "userManagementPage";
@@ -686,51 +698,46 @@ public class ApplicationController {
     /**
      * Admin User Management which validates a user
      */
-    @RequiresRoles("admin")
+    @RequiresPermissions("validateuser")
     @RequestMapping(value = "/validateuser/{id}", method = RequestMethod.GET)
-    public String validateUser(@PathVariable("id") Integer userid)
-    {
-
+    public String validateUser(@PathVariable("id") Integer userid) {
         userService.validateuser(userid);
-
         return "userManagementPage";
     }
 
     /**
      * Admin User Management which deletes a user
      */
-    @RequiresRoles("admin")
+    @RequiresPermissions("deleteuser")
     @RequestMapping(value = "/deleteuser/{id}", method = RequestMethod.GET)
-    public String deleteUser(@PathVariable("id") Integer userid)
-    {
-
+    public String deleteUser(@PathVariable("id") Integer userid) {
         userService.deleteUser(userid);
-
         return "userManagementPage";
     }
 
     /**
      * Admin User Management which deletes a user
      */
-    @RequiresRoles("admin")
+    @RequiresPermissions("changeuserrole")
     @RequestMapping(value = "/changeuserrole/{id}/{role}", method = RequestMethod.GET)
-    public String changeUserRole(@PathVariable("id") Integer userid,@PathVariable("role") Integer role)
-    {
-
+    public String changeUserRole(@PathVariable("id") Integer userid, @PathVariable("role") Integer role) {
         userService.changeUserRole(userid, role);
-
         return "userManagementPage";
     }
 
     /**
      * Mapping to dashboard which gives vulnerability overview
      */
-    @RequiresRoles(value={"admin","user","moderator"},logical= Logical.OR)
+    @RequiresPermissions("dashboard")
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
-    public String dashboard(Map<String, Object> map)
-    {
+    public String dashboard(Map<String, Object> map){
         map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
         return "dashboardPage";
     }
+   /* @Scheduled(fixedDelay = 5000)
+    public void demoServiceMethod()
+    {
+        System.out.println("Method executed at every 5 seconds. Current time is :: "+ new Date());
+    }*/
 }

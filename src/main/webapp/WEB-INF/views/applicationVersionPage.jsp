@@ -10,9 +10,9 @@
 
 <spring:message code="label.role.admin" var="admin"/>
 <spring:message code="label.role.moderator" var="moderator"/>
-<spring:message code="label.role.user" var="user"/>
+<spring:message code="permissions.addDependency" var="permissions.addDependency"/>
 
-<shiro:hasAnyRoles name="${admin},${moderator}">
+<shiro:hasPermission name="${addDependency}">
 <jsp:include page="/WEB-INF/views/templates/page.jsp">
     <jsp:param name="title" value="${applicationVersion.application.name} - ${applicationVersion.version}"/>
 
@@ -24,11 +24,11 @@
 
     <jsp:param name="content" value="applicationVersion"/>
 </jsp:include>
-    </shiro:hasAnyRoles>
+    </shiro:hasPermission>
 
-<shiro:hasRole name="${user}">
+<shiro:lacksPermission name="${addDependency}">
     <jsp:include page="/WEB-INF/views/templates/page.jsp">
         <jsp:param name="title" value="${applicationVersion.application.name} - ${applicationVersion.version}"/>
         <jsp:param name="content" value="applicationVersion"/>
 </jsp:include>
-</shiro:hasRole>
+</shiro:lacksPermission>

@@ -13,6 +13,8 @@
                 <th><spring:message code="label.name"/></th>
         <c:if  test="${!check}">
                 <th><spring:message code="label.versions"/></th>
+                <th><spring:message code="label.Schedule"/></th>
+                <%--<th><spring:message code="label.Schedule.Value"/></th>--%>
             </c:if>
                 <th></th>
             </tr>
@@ -41,17 +43,35 @@
                         </div>
                     </td>
                     <c:if  test="${!check}">
-                    <td style="vertical-align:top;">${fn:length(application.versions)}</td>
+
+                        <td style="vertical-align:top;">${fn:length(application.versions)}</td>
+                        <td style="vertical-align:top;">
+
+
+                            <input class="sliderbar" type="text" data-slider="true">
+                        </td>
+                        <%--<td style="vertical-align:top;">
+                            <span class="output">0</span>
+
+                        </td>--%>
+
                     <td style="vertical-align:top;text-align:right;">
-                        <spring:message code="label.role.admin" var="admin"/>
-                        <spring:message code="label.role.moderator" var="moderator"/>
-                        <shiro:hasAnyRoles name="${admin},${moderator}">
+                        <spring:message code="permissions.cloneApplication" var="cloneApplication"/>
+                        <spring:message code="permissions.addApplicationVersion" var="addApplicationVersion"/>
+                        <spring:message code="permissions.updateApplication" var="updateApplication"/>
+
                         <div class="btn-group">
+                            <shiro:hasPermission name="${cloneApplication}">
                             <a data-toggle="modal" data-id="${application.id}" class="open-CloneApplicationModal btn" href="#cloneApplicationModal"><spring:message code="label.application.clone"/></a>
+                            </shiro:hasPermission>
+                            <shiro:hasPermission name="${addApplicationVersion}">
                             <a data-toggle="modal" data-id="${application.id}" class="open-AddApplicationVersionModal btn" href="#addApplicationVersionModal"><spring:message code="label.version.add"/></a>
+                            </shiro:hasPermission>
+                            <shiro:hasPermission name="${updateApplication}">
                             <a data-toggle="modal" data-id="${application.id}" data-name="${application.name}" class="open-EditApplicationModal btn" href="#editApplicationModal"><spring:message code="label.edit"/></a>
+                            </shiro:hasPermission>
                         </div>
-                        </shiro:hasAnyRoles>
+
 
                     </td>
                 </tr>

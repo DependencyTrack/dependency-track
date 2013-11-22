@@ -237,7 +237,7 @@
         <div class="modal-footer">
 
             <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
-            <shiro:hasPermission name="${permissions.uploadlicense}">
+            <shiro:hasPermission name="${uploadlicense}">
             <a data-toggle="modal" class="open-licenseFileUploadModalButton btn btn-primary" data-dismiss="modal" href="#licenseFileUploadModal" ><spring:message code="label.upload"/></a>
             </shiro:hasPermission>
             <button class="modalSubmit btn btn-primary"><spring:message code="label.download"/></button>

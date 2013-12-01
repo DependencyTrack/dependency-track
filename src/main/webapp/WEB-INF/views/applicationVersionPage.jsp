@@ -10,7 +10,7 @@
 
 <spring:message code="label.role.admin" var="admin"/>
 <spring:message code="label.role.moderator" var="moderator"/>
-<spring:message code="permissions.addDependency" var="permissions.addDependency"/>
+<spring:message code="permissions.addDependency" var="addDependency"/>
 
 <shiro:hasPermission name="${addDependency}">
 <jsp:include page="/WEB-INF/views/templates/page.jsp">

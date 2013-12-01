@@ -19,7 +19,8 @@
 
                         <div class="accordion-inner">
                             <c:forEach items="${applicationList.versions}" var="version">
-                                <a href="#"><c:out value="${version.version}"/></a>
+                                <a href="#" class="visualizeData" id="visualizeData" data-applicationid="${applicationList.id}" data-versionid="${version.id}">Version <c:out value="${version.version}"/></a>
+                                <br>
                             </c:forEach>
 
                         </div>
@@ -62,7 +63,7 @@
                 <div class="tab-content">
                     <div class="tab-pane active" id="graphOne">
 
-                        <div id="chart_div" style="width: 900px; height: 500px;"></div>
+                        <div id="chart_divone" style="width: 100%;height: 100%; position: relative;"></div>
 
 
                         <div class="modal-footer">
@@ -70,7 +71,12 @@
                             </div>
 
                     </div>
-                    <div class="tab-pane" id="graphTwo">
+                    <div class="tab-pane active" id="graphTwo">
+
+                        <div id="chart_divtwo" style="width: 100%;height: 100%; position: relative;"></div>
+
+
+
 
 
                             <div class="modal-footer">
@@ -78,7 +84,11 @@
                             </div>
 
                     </div>
-                    <div class="tab-pane" id="graphThree">
+                    <div class="tab-pane " id="graphThree">
+
+
+                        <div id="chart_divthree" style="width: 100%;height: 100%; position: relative;"> ></div>
+
 
 
 
@@ -86,7 +96,7 @@
 
                             </div>
 
-
+                    </div>
                     </div>
                 </div>
                     </div>

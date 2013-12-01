@@ -23,10 +23,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
+import org.json.JSONObject;
 import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
@@ -212,6 +211,7 @@ public class ApplicationController {
             props.setProperty("schedule", "mytime");
         }
         catch (Exception e) {
+
         }
         return "applicationsPage";
     }
@@ -670,7 +670,7 @@ public class ApplicationController {
     }
 
     /**
-     * Upload a License
+     * Upload a License.
      *@param licenseid the ID of the License to download
      */
     @RequiresPermissions("uploadlicense")
@@ -730,7 +730,7 @@ public class ApplicationController {
      */
     @RequiresPermissions("dashboard")
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
-    public String dashboard(Map<String, Object> map){
+    public String dashboard(Map<String, Object> map) {
         map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
         return "dashboardPage";
@@ -740,4 +740,21 @@ public class ApplicationController {
     {
         System.out.println("Method executed at every 5 seconds. Current time is :: "+ new Date());
     }*/
+
+    /**
+     * Mapping to dashboard which gives vulnerability overview
+     */
+    @RequiresPermissions("dashboard")
+    @RequestMapping(value = "/chartdata", method = RequestMethod.GET)
+    public @ResponseBody String chartdata(Map<String, Object> map){
+
+        final String data = "my data";
+
+         map.put("Vulnerability1", 3);
+
+       final JSONObject   myString = new JSONObject(map);
+
+
+        return myString.toString();
+    }
 }

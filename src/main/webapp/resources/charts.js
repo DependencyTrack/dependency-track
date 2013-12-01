@@ -18,19 +18,148 @@
 google.load("visualization", "1", {packages:["corechart"]});
 google.setOnLoadCallback(drawChart);
 function drawChart() {
-    var data = google.visualization.arrayToDataTable([
-        ['Year', 'Sales', 'Expenses'],
-        ['2004',  1000,      400],
-        ['2005',  1170,      460],
-        ['2006',  660,       1120],
-        ['2007',  1030,      540]
+
+
+    var dataone = new google.visualization.DataTable();
+    dataone.addColumn('string', 'Date');
+    dataone.addColumn('number', 'First Release Vulnerabilities');
+    dataone.addRows([
+        ['11/20/2013', 3],
+        ['11/30/2013', 2],
+
     ]);
 
-    var options = {
-        title: 'Company Performance'
+    ;
+    var datatwo = new google.visualization.DataTable();
+
+    datatwo.addColumn('string', 'Scan');
+    datatwo.addColumn('number', 'Vulnerability Count');
+
+    datatwo.addRows([
+        ['8/30/2013', 32],
+        ['9/30/2013', 31],
+        ['10/30/2013', 33],
+        ['11/30/2013', 13],
+    ]);
+
+
+
+
+    var datathree = new google.visualization.DataTable();
+    datathree.addColumn('string', 'Vulnerability Type');
+    datathree.addColumn('number', 'Severity');
+    datathree.addRows([
+        ['Vulv1', 9],
+        ['Vulv2', 5],
+        ['Vulv3', 6],
+        ['Vulv4', 7],
+
+    ]);
+
+
+    // Set chart options
+    var optionsone = {'title':'First Release Vulnerability'
+        };
+    var optionstwo = {'title':'Number of Vulnerability'
+    };
+    var optionsthree = {'title':'Severity of vulnerability'
     };
 
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.visualization.LineChart(document.getElementById('chart_divone'));
+    chart.draw(dataone, optionsone);
+        chart = new google.visualization.LineChart(document.getElementById('chart_divtwo'));
+    chart.draw(datatwo, optionstwo);
+    chart = new google.visualization.BarChart(document.getElementById('chart_divthree'));
+    chart.draw(datathree, optionsthree);
+
+
+
+    /*var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(newdata, options);*/
 }
 
+$(document).on("click", ".visualizeData", function () {
+
+    var versionid = $(this).data('versionid');
+
+    var applicationid=$(this).data("applicationid");
+
+
+ var uri = '/dtrack/chartdata/';
+
+     $.ajax({
+     url: uri,
+     type: 'GET',
+     dataType: "json",
+     success: function (data) // Variable data contains the data we get from serverside
+     {
+
+     }
+     });
+
+
+
+    var dataone = new google.visualization.DataTable();
+    dataone.addColumn('string', 'Date');
+    dataone.addColumn('number', 'First Release Vulnerabilities');
+    dataone.addRows([
+        ['11/5/2013', 13],
+        ['11/10/2013', 9],
+        ['11/20/2013', 8],
+        ['11/30/2013', 2],
+
+    ]);
+
+    ;
+    var datatwo = new google.visualization.DataTable();
+
+    datatwo.addColumn('string', 'Scan');
+    datatwo.addColumn('number', 'Vulnerability Count');
+
+    datatwo.addRows([
+        ['8/30/2013', 32],
+        ['9/30/2013', 31],
+        ['10/30/2013', 33],
+        ['11/30/2013', 13],
+    ]);
+
+
+
+
+    var datathree = new google.visualization.DataTable();
+    datathree.addColumn('string', 'Vulnerability Type');
+    datathree.addColumn('number', 'Severity');
+    datathree.addRows([
+        ['Vulv1', 9],
+        ['Vulv2', 5],
+        ['Vulv3', 6],
+        ['Vulv4', 7],
+
+    ]);
+
+
+    // Set chart options
+    var optionsone = {'title':'First Release Vulnerability',
+                        'width':600,
+                        'height':300 };
+    var optionstwo = {'title':'Number of Vulnerability',
+        'width':600,
+        'height':300
+    };
+    var optionsthree = {'title':'Severity of vulnerability',
+        'width':600,
+        'height':300
+    };
+
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.visualization.LineChart(document.getElementById('chart_divone'));
+    chart.draw(dataone, optionsone);
+    chart = new google.visualization.LineChart(document.getElementById('chart_divtwo'));
+    chart.draw(datatwo, optionstwo);
+    chart = new google.visualization.BarChart(document.getElementById('chart_divthree'));
+    chart.draw(datathree, optionsthree);
+
+});

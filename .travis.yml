@@ -1,6 +1,22 @@
 language: java
 jdk: oraclejdk7
 
+env:
+  global:
+   # The next declration is the encrypted COVERITY_SCAN_TOKEN, created
+   # via the "travis encrypt" command using the project repo's public key
+   - secure: "TQZGDK1eLnY/PFC41ESFRob0dfmhIehuY9n3OVu3gUKrLjEZS5VqTWczx54jrtB0bHH46ZogthATjpaJwgOoAI2AuqHiz3reCAgKA4XE/gGhgiIDLUTUg+fbG6frEPRjWB/OBamCWIip3pB6Acm/nqczFCAVfK2OIyQZvyCGFO0="
+
+addons:
+  coverity_scan:
+    project:
+      name: "stevespringett/dependency-track"
+      description: "Dependency-Track Coverity Scan"
+    notification_email: Steve.Springett@owasp.org
+    build_command_prepend:
+    build_command:
+    branch_pattern: coverity_scan
+    
 before_install:
   # Maven 3.2.1
   - wget http://www.us.apache.org/dist/maven/maven-3/3.2.1/binaries/apache-maven-3.2.1-bin.tar.gz

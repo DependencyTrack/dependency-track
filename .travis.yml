@@ -14,7 +14,7 @@ addons:
       description: "Dependency-Track Coverity Scan"
     notification_email: Steve.Springett@owasp.org
     build_command_prepend:
-    build_command:
+    build_command: mvn clean package
     branch_pattern: coverity_scan
     
 before_install:
@@ -28,4 +28,4 @@ before_install:
 script: mvn clean package
 
 after_script:
-  # Unit tests go here
+

@@ -312,7 +312,6 @@ $(document).on("change",".slider",function() {
 //slider
 $("[data-slider]")
     .each(function () {
-        alert("data");
         var input = $(this);
         $("<span>")
             .addClass("output")

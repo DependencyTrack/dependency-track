@@ -219,7 +219,7 @@ public class ApplicationController {
      */
     @RequiresPermissions("applications")
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
-    public String application(Map<String, Object> map) {
+    public String application(Map<String, Object> map, HttpServletRequest request) {
         map.put("check", false);
         map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
@@ -230,6 +230,21 @@ public class ApplicationController {
         } catch (Exception e) {
 
         }
+     try
+     {
+        final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
+        final URL url = new URL(libraryHierarchyUrl);
+        final URLConnection con = url.openConnection();
+        final InputStream in = con.getInputStream();
+        String encoding = con.getContentEncoding();
+        encoding = encoding == null ? "UTF-8" : encoding;
+        final String body = IOUtils.toString(in, encoding);
+         libraryHierarchyData = body;
+
+    } catch (Exception ioe) {
+        ioe.printStackTrace();
+    }
+
         return "applicationsPage";
     }
 
@@ -706,6 +721,18 @@ public class ApplicationController {
     @RequiresPermissions("about")
     @RequestMapping(value = "/about", method = RequestMethod.GET)
     public String about() {
+        try {
+
+                applicationService.scanApplication(libraryHierarchyData);
+                //Sleep to make sure scan results are files are generated
+                /*Thread.sleep(10000);
+                applicationService.analyzeScanResults();
+*/
+        }
+        catch (Exception e)
+        {
+             e.printStackTrace();
+        }
         return "aboutPage";
     }
 
@@ -754,14 +781,7 @@ public class ApplicationController {
             // save properties to project root folder
             prop.store(output, null);
             output.close();
-            InputStream input = new FileInputStream("application.properties");
 
-            // load a properties file
-            prop.load(input);
-
-            // get the property value and print it out
-            System.out.println(prop.getProperty("scanschedule"));
-            input.close();
         } catch (IOException e) {
 
         }
@@ -810,61 +830,83 @@ public class ApplicationController {
     }
 
     @Scheduled(cron = "0 0 12 1/5 * ?")
-    public void scanScheduleWeelky(HttpServletRequest request) {
-        try {
+    public void scanScheduleWeelky() {
 
-            final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
-            final URL url = new URL(libraryHierarchyUrl);
-            final URLConnection con = url.openConnection();
-            final InputStream in = con.getInputStream();
-            String encoding = con.getContentEncoding();
-            encoding = encoding == null ? "UTF-8" : encoding;
-            final String body = IOUtils.toString(in, encoding);
-            applicationService.scanApplication(body);
-            applicationService.analyzeScanResults();
-        } catch (Exception ioe) {
-            ioe.printStackTrace();
-        }
+            try
+            { final Properties prop = new Properties();
+                final InputStream input = new FileInputStream("application.properties");
+
+                // load a properties file
+                prop.load(input);
+
+                // get the property value and print it out
+                System.out.println();
+                if (Integer.parseInt(prop.getProperty("scanschedule")) == 5)
+                {
+                applicationService.scanApplication(libraryHierarchyData);
+                    //Sleep to make sure scan results are files are generated
+                    Thread.sleep(100000);
+                applicationService.analyzeScanResults();
+                }
+                input.close();
+            }
+            catch (Exception e)
+            {
+
+            }
 
     }
 
 
     @Scheduled(cron = "0 0 12 1/15 * ? ")
-    public void scanScheduleDaily(HttpServletRequest request) {
+    public void scanScheduleDaily() {
         try {
 
-            final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
-            final URL url = new URL(libraryHierarchyUrl);
-            final URLConnection con = url.openConnection();
-            final InputStream in = con.getInputStream();
-            String encoding = con.getContentEncoding();
-            encoding = encoding == null ? "UTF-8" : encoding;
-            final String body = IOUtils.toString(in, encoding);
-            applicationService.scanApplication(body);
-            applicationService.analyzeScanResults();
-        } catch (Exception ioe) {
-            ioe.printStackTrace();
-        }
+              final Properties prop = new Properties();
+                final InputStream input = new FileInputStream("application.properties");
+
+                prop.load(input);
+
+                System.out.println();
+                if (Integer.parseInt(prop.getProperty("scanschedule")) == 15)
+                {
+                applicationService.scanApplication(libraryHierarchyData);
+                    //Sleep to make sure scan results are files are generated
+                    Thread.sleep(100000);
+                applicationService.analyzeScanResults();
+                }
+                input.close();
+            }
+            catch (Exception e)
+            {
+
+            }
+
     }
 
     @Scheduled(cron = "0 0 12 1/25 * ? ")
-    public void scanScheduleMonthly(HttpServletRequest request) {
+    public void scanScheduleMonthly() {
         try {
 
-            final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
-            final URL url = new URL(libraryHierarchyUrl);
-            final URLConnection con = url.openConnection();
-            final InputStream in = con.getInputStream();
-            String encoding = con.getContentEncoding();
-            encoding = encoding == null ? "UTF-8" : encoding;
-            final String body = IOUtils.toString(in, encoding);
-            applicationService.scanApplication(body);
-            applicationService.analyzeScanResults();
-        } catch (Exception ioe) {
-            ioe.printStackTrace();
-        }
-    }
+                final Properties prop = new Properties();
+                final InputStream input = new FileInputStream("application.properties");
 
+                prop.load(input);
+
+                if (Integer.parseInt(prop.getProperty("scanschedule")) == 25)
+                {
+                applicationService.scanApplication(libraryHierarchyData);
+                    //Sleep to make sure scan results are files are generated
+                    Thread.sleep(100000);
+                applicationService.analyzeScanResults();
+                }
+                input.close();
+            }
+            catch (Exception e)
+            {
+
+            }
+    }
     /**
      * Mapping to dashboard which gives vulnerability overview
      */

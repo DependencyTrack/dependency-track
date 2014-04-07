@@ -58,7 +58,7 @@ public class ApplicationService {
 
     @Transactional
     public Set<Application> searchApplications(int libverid) {
-       return applicationDao.searchApplications(libverid);
+        return applicationDao.searchApplications(libverid);
     }
 
     @Transactional
@@ -84,5 +84,15 @@ public class ApplicationService {
     @Transactional
     public List<ApplicationVersion> coarseSearchApplicationVersions(int libid) {
         return applicationDao.coarseSearchApplicationVersions(libid);
+    }
+
+    @Transactional
+    public void scanApplication(String libraryHierarchyBody) {
+        applicationDao.scanApplication(libraryHierarchyBody);
+    }
+
+    @Transactional
+    public void analyzeScanResults() {
+        applicationDao.analyzeScanResults();
     }
 }

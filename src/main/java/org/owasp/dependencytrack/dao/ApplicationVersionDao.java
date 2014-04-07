@@ -22,12 +22,12 @@ package org.owasp.dependencytrack.dao;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.owasp.dependencytrack.model.Application;
-import org.owasp.dependencytrack.model.ApplicationDependency;
-import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.json.JSONObject;
+import org.owasp.dependencytrack.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -42,6 +42,7 @@ public class ApplicationVersionDao {
 
     /**
      * Returns an ApplicationVersion with the specified ID.
+     *
      * @param id The ID of the ApplicationVersion to return
      * @return An ApplicationVersion object
      */
@@ -59,6 +60,7 @@ public class ApplicationVersionDao {
 
     /**
      * Deletes an ApplicationVersion with the specified ID.
+     *
      * @param id The ID of the ApplicationVersion to delete
      */
     @SuppressWarnings("unchecked")
@@ -85,7 +87,8 @@ public class ApplicationVersionDao {
 
     /**
      * Adds an ApplicationVersion to the specified Application with the specified version string.
-     * @param appid The Application to add a version to
+     *
+     * @param appid      The Application to add a version to
      * @param appversion The string representation of the version
      */
     public void addApplicationVersion(int appid, String appversion) {
@@ -104,7 +107,8 @@ public class ApplicationVersionDao {
 
     /**
      * Clone the specified Application (by ID) and give it a new name.
-     * @param applicationid The ID of the Application object to clone
+     *
+     * @param applicationid   The ID of the Application object to clone
      * @param applicationname The new name of the cloned Application
      */
     @SuppressWarnings("unchecked")
@@ -135,14 +139,13 @@ public class ApplicationVersionDao {
 
             query = session.createQuery("from ApplicationDependency AS appdep where appdep.applicationVersion.id=:id");
             query.setParameter("id", appver.getId());
-            if(!query.list().isEmpty())
-            {
-            final List<ApplicationDependency> applicationDependencies = query.list();
-            for (ApplicationDependency appdep : applicationDependencies) {
-                final ApplicationDependency newDependencies = (ApplicationDependency) appdep.clone();
-                newDependencies.setApplicationVersion(newApplicationVersion);
-                session.save(newDependencies);
-            }
+            if (!query.list().isEmpty()) {
+                final List<ApplicationDependency> applicationDependencies = query.list();
+                for (ApplicationDependency appdep : applicationDependencies) {
+                    final ApplicationDependency newDependencies = (ApplicationDependency) appdep.clone();
+                    newDependencies.setApplicationVersion(newApplicationVersion);
+                    session.save(newDependencies);
+                }
             }
         }
         session.getTransaction().commit();
@@ -151,9 +154,10 @@ public class ApplicationVersionDao {
 
     /**
      * Clones the specified Application.
+     *
      * @param applicationid The ID of the Application to clone
-     * @param newversion The new version string of the cloned ApplicationVersion
-     * @param curappver The current version string of the ApplicationVersion to clone
+     * @param newversion    The new version string of the cloned ApplicationVersion
+     * @param curappver     The current version string of the ApplicationVersion to clone
      */
     @SuppressWarnings("unchecked")
     public void cloneApplicationVersion(int applicationid, String newversion, String curappver) {
@@ -194,7 +198,8 @@ public class ApplicationVersionDao {
 
     /**
      * Updates the specified ApplicationVersion with a new string representation of the version.
-     * @param id The ID of the ApplicationVersion to update
+     *
+     * @param id         The ID of the ApplicationVersion to update
      * @param appversion The new version label to use
      */
     public void updateApplicationVersion(int id, String appversion) {
@@ -206,4 +211,45 @@ public class ApplicationVersionDao {
         query.executeUpdate();
     }
 
+    public String chartdata(int id) {
+        /*Get all the libraries with this application id
+         only get those libraries which are present in scan result
+
+        */
+        final JSONObject obj = new JSONObject();
+        try {
+            Query query = sessionFactory.getCurrentSession().createQuery(
+                    "select appdep.libraryVersion from ApplicationDependency as appdep where appdep.applicationVersion.id=:id");
+            query.setParameter("id", id);
+
+            final List<LibraryVersion> libraryVersions = query.list();
+
+            query = sessionFactory.getCurrentSession().createQuery(
+                    "from ScanResults as scan where scan.libraryVersion=:libver");
+            query.setParameterList("libver", libraryVersions);
+
+            final List<ScanResults> scanResultses = query.list();
+
+
+            query = sessionFactory.getCurrentSession().createQuery(
+                    "from Vulnerability as vuln where vuln.scanResults=:scanres");
+            query.setParameterList("scanres", scanResultses);
+
+
+            for (int i = 0; i < query.list().size(); i++) {
+                final Vulnerability vulnerability = (Vulnerability) query.list().get(i);
+                obj.put("vuln", vulnerability.getCwe());
+                obj.put("cvss", vulnerability.getCvss());
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        return obj.toString();
+
+
+    }
 }

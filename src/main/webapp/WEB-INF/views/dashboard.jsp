@@ -33,16 +33,6 @@
 
     </c:if>
 
-        <div class="well sidebar-nav right">
-            <ul class="nav nav-list   font-family: sans-serifc ">
-                <li class="nav-header">Application Standing</li>
-                <li><a href="#">AIS</a></li>
-                <li><a href="#">Integrator</a></li>
-                <li><a href="#">Passport</a></li>
-                <li><a href="#">Mailgate</a></li>
-
-            </ul>
-        </div><!--/.well -->
 
         <div class="content fixed-fixed ">
             <div class="row ">
@@ -71,7 +61,7 @@
                             </div>
 
                     </div>
-                    <div class="tab-pane active" id="graphTwo">
+                    <div class="tab-pane" id="graphTwo">
 
                         <div id="chart_divtwo" style="width: 100%;height: 100%; position: relative;"></div>
 

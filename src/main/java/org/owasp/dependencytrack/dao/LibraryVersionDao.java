@@ -53,6 +53,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of all LibraryVendors available in the application along with all child objects.
+     *
      * @return A List of Libraries (Vendor, Library,Version) in a hierarchy
      */
     @SuppressWarnings("unchecked")
@@ -79,6 +80,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of all LibraryVendors.
+     *
      * @return A List of all LibraryVendors
      */
     @SuppressWarnings("unchecked")
@@ -89,6 +91,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of all Libraries made by the specified LibraryVendor.
+     *
      * @param id The ID of the LibraryVendor
      * @return A List of Libraries
      */
@@ -102,6 +105,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of all LibraryVersions for the specified Library.
+     *
      * @param id The ID of the Library
      * @return A List of LibraryVersion objects
      */
@@ -115,6 +119,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a list of LibraryVersion objects that the specified ApplicationVersion has a dependency on.
+     *
      * @param version An ApplicationVersion object
      * @return A List of LibraryVersion objects
      */
@@ -134,6 +139,7 @@ public class LibraryVersionDao {
 
     /**
      * Adds a dependency between the ID of the specified ApplicationVersion and LibraryVersion.
+     *
      * @param appversionid The ID of the ApplicationVersion
      * @param libversionid The ID of the LibraryVersion
      */
@@ -159,6 +165,7 @@ public class LibraryVersionDao {
 
     /**
      * Deletes the dependency between the ID of the specified ApplicationVersion and LibraryVersion.
+     *
      * @param appversionid The ID of the ApplicationVersion
      * @param libversionid The ID of the LibraryVersion
      */
@@ -194,89 +201,88 @@ public class LibraryVersionDao {
 
     /**
      * Updates a Library object.
-     * @param vendorid The ID of the LibraryVendor
-     * @param licenseid The ID of the License
-     * @param libraryid The ID of the Library
+     *
+     * @param vendorid         The ID of the LibraryVendor
+     * @param licenseid        The ID of the License
+     * @param libraryid        The ID of the Library
      * @param libraryversionid The ID of the LibraryVersion
-     * @param libraryname The updated Library name
-     * @param libraryversion The updated version label
-     * @param vendor The updated vendor label
-     * @param license The updated license label
-     * @param language The updated programming language
-     * @param secuniaID The updated Secunia ID
+     * @param libraryname      The updated Library name
+     * @param libraryversion   The updated version label
+     * @param vendor           The updated vendor label
+     * @param license          The updated license label
+     * @param language         The updated programming language
+     * @param secuniaID        The updated Secunia ID
      */
     public void updateLibrary(int vendorid, int licenseid, int libraryid, int libraryversionid,
                               String libraryname, String libraryversion, String vendor,
-                              String license,  String language, Integer secuniaID) {
+                              String license, String language, Integer secuniaID) {
 
-            Query query = sessionFactory.getCurrentSession().createQuery(
-                    "update LibraryVendor set vendor=:vendor "
-                            + "where id=:vendorid");
+        Query query = sessionFactory.getCurrentSession().createQuery(
+                "update LibraryVendor set vendor=:vendor "
+                        + "where id=:vendorid");
 
-            query.setParameter("vendorid", vendorid);
-            query.setParameter("vendor", vendor);
-            query.executeUpdate();
+        query.setParameter("vendorid", vendorid);
+        query.setParameter("vendor", vendor);
+        query.executeUpdate();
 
+        query = sessionFactory.getCurrentSession().createQuery(
+                "from LibraryVendor "
+                        + "where id=:vendorid");
+        query.setParameter("vendorid", vendorid);
+
+        final LibraryVendor libraryVendor = (LibraryVendor) query.list().get(0);
+
+        if (license.isEmpty()) {
             query = sessionFactory.getCurrentSession().createQuery(
-                    "from LibraryVendor "
-                            + "where id=:vendorid");
-            query.setParameter("vendorid", vendorid);
-
-            final LibraryVendor libraryVendor = (LibraryVendor) query.list().get(0);
-
-            if(license.isEmpty())
-            {
-                query = sessionFactory.getCurrentSession().createQuery(
-                        "from License "
-                                + "where id=:id");
-                query.setParameter("id", licenseid);
-            }
-            else
-            {
+                    "from License "
+                            + "where id=:id");
+            query.setParameter("id", licenseid);
+        } else {
 
             query = sessionFactory.getCurrentSession().createQuery(
                     "from License "
                             + "where licensename=:name");
             query.setParameter("name", license);
-            }
-            final License licenses = (License) query.list().get(0);
+        }
+        final License licenses = (License) query.list().get(0);
 
-            query = sessionFactory.getCurrentSession().createQuery(
-                    "update Library set libraryname=:libraryname,"
-                            + "license=:licenses,"
-                            + "libraryVendor=:libraryVendor,"
-                            + "language=:language " + "where id=:libraryid");
+        query = sessionFactory.getCurrentSession().createQuery(
+                "update Library set libraryname=:libraryname,"
+                        + "license=:licenses,"
+                        + "libraryVendor=:libraryVendor,"
+                        + "language=:language " + "where id=:libraryid");
 
-            query.setParameter("libraryname", libraryname);
-            query.setParameter("licenses", licenses);
+        query.setParameter("libraryname", libraryname);
+        query.setParameter("licenses", licenses);
 
-            query.setParameter("libraryVendor", libraryVendor);
-            query.setParameter("language", language);
-            query.setParameter("libraryid", libraryid);
+        query.setParameter("libraryVendor", libraryVendor);
+        query.setParameter("language", language);
+        query.setParameter("libraryid", libraryid);
 
-            query.executeUpdate();
-
-
-            query = sessionFactory.getCurrentSession().createQuery(
-                    "from Library "
-                            + "where id=:libraryid");
-            query.setParameter("libraryid", libraryid);
-            final Library library = (Library) query.list().get(0);
+        query.executeUpdate();
 
 
-            query = sessionFactory.getCurrentSession().createQuery(
-                    "update LibraryVersion set libraryversion=:libraryversion," + "secunia=:secunia,"
-                            + "library=:library" + " where id=:libverid");
+        query = sessionFactory.getCurrentSession().createQuery(
+                "from Library "
+                        + "where id=:libraryid");
+        query.setParameter("libraryid", libraryid);
+        final Library library = (Library) query.list().get(0);
 
-            query.setParameter("libraryversion", libraryversion);
-            query.setParameter("library", library);
-            query.setParameter("secunia", secuniaID);
-            query.setParameter("libverid", libraryversionid);
-            query.executeUpdate();
+
+        query = sessionFactory.getCurrentSession().createQuery(
+                "update LibraryVersion set libraryversion=:libraryversion," + "secunia=:secunia,"
+                        + "library=:library" + " where id=:libverid");
+
+        query.setParameter("libraryversion", libraryversion);
+        query.setParameter("library", library);
+        query.setParameter("secunia", secuniaID);
+        query.setParameter("libverid", libraryversionid);
+        query.executeUpdate();
     }
 
     /**
      * Remove the Library with the specified ID.
+     *
      * @param id The ID of the Library to delete
      */
     @SuppressWarnings("unchecked")
@@ -327,6 +333,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of License objects with the specified ID.
+     *
      * @param id The ID of the License
      * @return A List of License objects
      */
@@ -341,6 +348,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of all LibraryVersions.
+     *
      * @return a List of all LibraryVersion objects
      */
     @SuppressWarnings("unchecked")
@@ -351,6 +359,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of Library objects.
+     *
      * @return a List of Library objects
      */
     @SuppressWarnings("unchecked")
@@ -361,6 +370,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of License objects.
+     *
      * @return a List of License objects
      */
     @SuppressWarnings("unchecked")
@@ -371,6 +381,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of LibraryVendor objects.
+     *
      * @return a List of LibraryVendor objects
      */
     @SuppressWarnings("unchecked")
@@ -384,6 +395,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of languages.
+     *
      * @return a List of languages
      */
     @SuppressWarnings("unchecked")
@@ -395,6 +407,7 @@ public class LibraryVersionDao {
 
     /**
      * Returns a List of LibraryVersion strings.
+     *
      * @return a List of Strings containing the version number
      */
     @SuppressWarnings("unchecked")
@@ -406,13 +419,14 @@ public class LibraryVersionDao {
 
     /**
      * Add a Library + LibraryVersion.
-     * @param libraryname The name of the Library
+     *
+     * @param libraryname    The name of the Library
      * @param libraryversion The version of the Library
-     * @param vendor The vendor of the Library
-     * @param license The license the Library is licensed under
-     * @param file The license file
-     * @param language The programming language the library was written in
-     * @param secuniaID The Secunia ID of the version of the Library
+     * @param vendor         The vendor of the Library
+     * @param license        The license the Library is licensed under
+     * @param file           The license file
+     * @param language       The programming language the library was written in
+     * @param secuniaID      The Secunia ID of the version of the Library
      */
     public void addLibraries(String libraryname, String libraryversion, String vendor,
                              String license, MultipartFile file, String language, Integer secuniaID) {
@@ -496,62 +510,55 @@ public class LibraryVersionDao {
     }
 
 
-   public void uploadLicense(int licenseid, MultipartFile file, String editlicensename)
-   {
-       try
-       {
-       InputStream licenseInputStream = null;
-       Blob blob;
-           final Query query;
+    public void uploadLicense(int licenseid, MultipartFile file, String editlicensename) {
+        try {
+            InputStream licenseInputStream = null;
+            Blob blob;
+            final Query query;
 
-       if (file.isEmpty())
-       {
-           query = sessionFactory.getCurrentSession().createQuery(
-                   "update License set licensename=:lname "
-                           + "where id=:licenseid");
+            if (file.isEmpty()) {
+                query = sessionFactory.getCurrentSession().createQuery(
+                        "update License set licensename=:lname "
+                                + "where id=:licenseid");
 
-           query.setParameter("licenseid", licenseid);
-           query.setParameter("lname", editlicensename);
+                query.setParameter("licenseid", licenseid);
+                query.setParameter("lname", editlicensename);
 
-           query.executeUpdate();
+                query.executeUpdate();
 
-       }
-           else
-       {
-       licenseInputStream = file.getInputStream();
-       blob = Hibernate.createBlob(licenseInputStream);
+            } else {
+                licenseInputStream = file.getInputStream();
+                blob = Hibernate.createBlob(licenseInputStream);
 
-        query = sessionFactory.getCurrentSession().createQuery(
-               "update License set licensename=:lname,"
-                       + "text=:blobfile," + "filename=:filename,"
-                       + "contenttype=:contenttype "
-                       + "where id=:licenseid");
+                query = sessionFactory.getCurrentSession().createQuery(
+                        "update License set licensename=:lname,"
+                                + "text=:blobfile," + "filename=:filename,"
+                                + "contenttype=:contenttype "
+                                + "where id=:licenseid");
 
-       query.setParameter("licenseid", licenseid);
-       query.setParameter("lname", editlicensename);
-       query.setParameter("blobfile", blob);
-       query.setParameter("filename", file.getOriginalFilename());
-       query.setParameter("contenttype", file.getContentType());
+                query.setParameter("licenseid", licenseid);
+                query.setParameter("lname", editlicensename);
+                query.setParameter("blobfile", blob);
+                query.setParameter("filename", file.getOriginalFilename());
+                query.setParameter("contenttype", file.getContentType());
 
-       query.executeUpdate();
-       }
-       }
+                query.executeUpdate();
+            }
+        } catch (Exception e) {
 
-       catch (Exception e)
-       {
-
-       }
-   }
+        }
+    }
 
     /**
      * Returns a List of all LibraryVersions. based on search term
+     *
      * @return a List of all LibraryVersion objects
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVersion> keywordSearchLibraries(String searchTerm) {
         final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion as libver where upper(libver.library.libraryname) " +
                 "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) LIKE upper(:searchTerm) order by libver.library.libraryname");
-        query.setParameter("searchTerm","%"+searchTerm+"%");
+        query.setParameter("searchTerm", "%" + searchTerm + "%");
         return query.list();
     }
 

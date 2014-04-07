@@ -13,8 +13,6 @@
                 <th><spring:message code="label.name"/></th>
         <c:if  test="${!check}">
                 <th><spring:message code="label.versions"/></th>
-                <th><spring:message code="label.Schedule"/></th>
-                <%--<th><spring:message code="label.Schedule.Value"/></th>--%>
             </c:if>
                 <th></th>
             </tr>
@@ -45,11 +43,6 @@
                     <c:if  test="${!check}">
 
                         <td style="vertical-align:top;">${fn:length(application.versions)}</td>
-                        <td style="vertical-align:top;">
-
-
-                            <input class="sliderbar" type="text" data-slider="true">
-                        </td>
                         <%--<td style="vertical-align:top;">
                             <span class="output">0</span>
 

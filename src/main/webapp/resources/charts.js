@@ -15,6 +15,10 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 
+function contextPath() {
+    return $.cookie("CONTEXTPATH");
+}
+
 google.load("visualization", "1", {packages:["corechart"]});
 google.setOnLoadCallback(drawChart);
 function drawChart() {
@@ -67,12 +71,14 @@ function drawChart() {
 
 
     // Instantiate and draw our chart, passing in some options.
+/*
     var chart = new google.visualization.LineChart(document.getElementById('chart_divone'));
     chart.draw(dataone, optionsone);
         chart = new google.visualization.LineChart(document.getElementById('chart_divtwo'));
     chart.draw(datatwo, optionstwo);
     chart = new google.visualization.BarChart(document.getElementById('chart_divthree'));
     chart.draw(datathree, optionsthree);
+*/
 
 
 
@@ -87,16 +93,39 @@ $(document).on("click", ".visualizeData", function () {
     var applicationid=$(this).data("applicationid");
 
 
- var uri = '/dtrack/chartdata/';
+ var uri = contextPath() + '/chartdata/'+versionid;
 
+
+    var something;
      $.ajax({
      url: uri,
      type: 'GET',
-     dataType: "json",
      success: function (data) // Variable data contains the data we get from serverside
      {
 
-     }
+         data = $.parseJSON(data);
+
+         var datathree = new google.visualization.DataTable();
+
+         datathree.addColumn('string', 'Vulnerability Type');
+         datathree.addColumn('number', 'Severity');
+         datathree.addRows(1);
+         datathree.setCell(0, 0, data.vuln);
+         datathree.setCell(0, 1, parseFloat(data.cvss));
+
+
+         var optionsthree = {'title':'Severity of vulnerability',
+             'width':600,
+             'height':300
+         };
+
+
+         var chart = new google.visualization.BarChart(document.getElementById('chart_divthree'));
+         chart.draw(datathree, optionsthree);
+     },
+         error : function(e) {
+             alert('Error: ' + e);
+         }
      });
 
 
@@ -126,9 +155,7 @@ $(document).on("click", ".visualizeData", function () {
     ]);
 
 
-
-
-    var datathree = new google.visualization.DataTable();
+    /*var datathree = new google.visualization.DataTable();
     datathree.addColumn('string', 'Vulnerability Type');
     datathree.addColumn('number', 'Severity');
     datathree.addRows([
@@ -137,7 +164,7 @@ $(document).on("click", ".visualizeData", function () {
         ['Vulv3', 6],
         ['Vulv4', 7],
 
-    ]);
+    ]);*/
 
 
     // Set chart options
@@ -159,7 +186,6 @@ $(document).on("click", ".visualizeData", function () {
     chart.draw(dataone, optionsone);
     chart = new google.visualization.LineChart(document.getElementById('chart_divtwo'));
     chart.draw(datatwo, optionstwo);
-    chart = new google.visualization.BarChart(document.getElementById('chart_divthree'));
-    chart.draw(datathree, optionsthree);
+
 
 });

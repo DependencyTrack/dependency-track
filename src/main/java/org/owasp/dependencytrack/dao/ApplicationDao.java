@@ -22,17 +22,31 @@ package org.owasp.dependencytrack.dao;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.owasp.dependencytrack.model.Application;
-import org.owasp.dependencytrack.model.ApplicationDependency;
-import org.owasp.dependencytrack.model.ApplicationVersion;
-import org.owasp.dependencytrack.model.LibraryVersion;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
+import org.owasp.dependencycheck.dependency.Confidence;
+import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.dependency.Identifier;
+import org.owasp.dependencycheck.reporting.ReportGenerator;
+import org.owasp.dependencycheck.utils.FileUtils;
+import org.owasp.dependencytrack.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Repository
 public class ApplicationDao {
@@ -45,6 +59,7 @@ public class ApplicationDao {
 
     /**
      * Returns a list of all applications.
+     *
      * @return A List of all applications
      */
     @SuppressWarnings("unchecked")
@@ -55,8 +70,9 @@ public class ApplicationDao {
 
     /**
      * Adds an ApplicationVersion to the specified Application.
+     *
      * @param application An Application
-     * @param version The ApplicationVersion to add
+     * @param version     The ApplicationVersion to add
      */
     public void addApplication(Application application, String version) {
         final Session session = sessionFactory.openSession();
@@ -74,7 +90,8 @@ public class ApplicationDao {
 
     /**
      * Updates the Application with the specified ID to the name specified.
-     * @param id The ID of the Application
+     *
+     * @param id   The ID of the Application
      * @param name The new name of the Application
      */
     public void updateApplication(int id, String name) {
@@ -88,6 +105,7 @@ public class ApplicationDao {
 
     /**
      * Deletes the Application with the specified ID.
+     *
      * @param id The ID of the Application to delete
      */
     @SuppressWarnings("unchecked")
@@ -127,6 +145,7 @@ public class ApplicationDao {
 
     /**
      * Returns a Set of Applications that have a dependency on the specified LibraryVersion ID.
+     *
      * @param libverid The ID of the LibraryVersion to search on
      * @return A Set of Applications
      */
@@ -150,34 +169,31 @@ public class ApplicationDao {
             ids.add(appdep.getApplicationVersion().getId());
         }
 
-        if(!ids.isEmpty())
-        {
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-        query.setParameterList("appverid", ids);
+        if (!ids.isEmpty()) {
+            query = sessionFactory.getCurrentSession().
+                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
+            query.setParameterList("appverid", ids);
 
-        System.out.println(query.list().get(0));
-        if(query.list().size()==0)
-        {
-            return null;
-        }
 
-        final List<ApplicationVersion> newappver = query.list();
-        final ArrayList<Application> newapp = new ArrayList<Application>();
+            if (query.list().size() == 0) {
+                return null;
+            }
 
-        for (ApplicationVersion version : newappver) {
-            newapp.add(version.getApplication());
-        }
-        return new HashSet<Application>(newapp);
-        }
-        else
-        {
+            final List<ApplicationVersion> newappver = query.list();
+            final ArrayList<Application> newapp = new ArrayList<Application>();
+
+            for (ApplicationVersion version : newappver) {
+                newapp.add(version.getApplication());
+            }
+            return new HashSet<Application>(newapp);
+        } else {
             return null;
         }
     }
 
     /**
      * Returns a List of ApplicationVersions that have a dependency on the specified LibraryVersion ID.
+     *
      * @param libverid The ID of the LibraryVersion to search on
      * @return A List of ApplicationVersion objects
      */
@@ -201,22 +217,20 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-         if (!ids.isEmpty())
-         {
-        query = sessionFactory.getCurrentSession().
-                createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
-        query.setParameterList("appverid", ids);
+        if (!ids.isEmpty()) {
+            query = sessionFactory.getCurrentSession().
+                    createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
+            query.setParameterList("appverid", ids);
 
-        return query.list();
-         }
-        else
-         {
-             return null;
-         }
+            return query.list();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Returns a Set of Applications that have a dependency on the specified Library ID.
+     *
      * @param libid The ID of the Library to search on
      * @return A Set of Application objects
      */
@@ -239,29 +253,27 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-        if(!ids.isEmpty())
-        {
+        if (!ids.isEmpty()) {
 
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-        query.setParameterList("appverid", ids);
+            query = sessionFactory.getCurrentSession().
+                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
+            query.setParameterList("appverid", ids);
 
-        final List<ApplicationVersion> newappver = query.list();
-        final ArrayList<Application> newapp = new ArrayList<Application>();
+            final List<ApplicationVersion> newappver = query.list();
+            final ArrayList<Application> newapp = new ArrayList<Application>();
 
-        for (ApplicationVersion version : newappver) {
-            newapp.add(version.getApplication());
-        }
-        return new HashSet<Application>(newapp);
-        }
-        else
-        {
+            for (ApplicationVersion version : newappver) {
+                newapp.add(version.getApplication());
+            }
+            return new HashSet<Application>(newapp);
+        } else {
             return null;
         }
     }
 
     /**
      * Returns a List of ApplicationVersions that have a dependency on the specified Library ID.
+     *
      * @param libid The ID of the Library to search on
      * @return a List of ApplicationVersion objects
      */
@@ -284,23 +296,21 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-        if(!ids.isEmpty())
-        {
+        if (!ids.isEmpty()) {
 
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-        query.setParameterList("appverid", ids);
+            query = sessionFactory.getCurrentSession().
+                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
+            query.setParameterList("appverid", ids);
 
-        return query.list();
-        }
-        else
-        {
+            return query.list();
+        } else {
             return null;
         }
     }
 
     /**
      * Returns a List of Application that have a library of this vendor
+     *
      * @param vendorID The ID of the Library to search on
      * @return a List of ApplicationVersion objects
      */
@@ -322,8 +332,7 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-        if(!ids.isEmpty())
-        {
+        if (!ids.isEmpty()) {
 
             query = sessionFactory.getCurrentSession().
                     createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
@@ -336,9 +345,7 @@ public class ApplicationDao {
                 newapp.add(version.getApplication());
             }
             return new HashSet<Application>(newapp);
-        }
-        else
-        {
+        } else {
             return null;
         }
 
@@ -346,6 +353,7 @@ public class ApplicationDao {
 
     /**
      * Returns a List of ApplicationVersions that have a dependency on the specified Library Vendor.
+     *
      * @param vendorID The ID of the Vendor to search on
      * @return a List of ApplicationVersion objects
      */
@@ -368,18 +376,165 @@ public class ApplicationDao {
         for (ApplicationDependency appdep : apdep) {
             ids.add(appdep.getApplicationVersion().getId());
         }
-        if(!ids.isEmpty())
-        {
+        if (!ids.isEmpty()) {
 
             query = sessionFactory.getCurrentSession().
                     createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
             query.setParameterList("appverid", ids);
 
             return query.list();
-        }
-        else
-        {
+        } else {
             return null;
         }
     }
+
+    /**
+     * Returns a scan results of all the dependencies in the database
+     * we generate reports which are stored in the home directory.
+     */
+    public void scanApplication(String libraryHierarchyBody) {
+        try {
+            List<Dependency> allDep = new ArrayList<Dependency>();
+            final JSONObject parse = (JSONObject) JSONValue.parse(libraryHierarchyBody);
+
+            final JSONArray vendors = (JSONArray) parse.get("vendors");
+
+
+            Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
+
+            for (Object ven : vendors) {
+                JSONObject vendor = (JSONObject) ven;
+                JSONArray libraries = (JSONArray) vendor.get("libraries");
+                for (Object lib : libraries) {
+                    JSONObject libs = (JSONObject) lib;
+
+
+                    JSONArray versions = (JSONArray) libs.get("versions");
+
+                    for (Object version : versions) {
+                        JSONObject ver = (JSONObject) version;
+                        dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", (String) vendor.get("vendor"), Confidence.HIGH);
+                        dependency.getVersionEvidence().addEvidence("dependency-track", "libraryLanguage", (String) ver.get("libver"), Confidence.HIGH);
+                        dependency.getProductEvidence().addEvidence("dependency-track", "libraryName", (String) libs.get("libname"), Confidence.HIGH);
+                        Identifier identifier = new Identifier("dependency-track", "libverid", String.valueOf((Long) ver.get("libverid")), "Description");
+                        identifier.setConfidence(Confidence.HIGH);
+                        dependency.getIdentifiers().add(identifier);
+                        allDep.add(dependency);
+                        dependency = new Dependency(new File(FileUtils.getBitBucket()));
+                    }
+                }
+            }
+            final DependencyCheckScanAgent scan = new DependencyCheckScanAgent();
+            scan.setDependencies(allDep);
+            scan.setReportFormat(ReportGenerator.Format.ALL);
+            scan.setReportOutputDirectory(System.getProperty("user.home"));
+            scan.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Azalyzes the reports generated from the scan and extracts relevant data and creates record
+     */
+    public void analyzeScanResults() {
+
+        try {
+            final FileInputStream file = new FileInputStream(new File(System.getProperty("user.home") + "\\dependency-check-report.xml"));
+
+            final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+
+            final DocumentBuilder builder = builderFactory.newDocumentBuilder();
+
+            final Document xmlDocument = builder.parse(file);
+
+            final NodeList nList = xmlDocument.getElementsByTagName("dependency");
+
+            final Session session = sessionFactory.openSession();
+            session.beginTransaction();
+
+
+            for (int i = 0; i < nList.getLength(); i++) {
+
+                final Node currentNode = nList.item(i);
+                if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element e = (Element) currentNode;
+
+                    final NodeList identfier = e.getElementsByTagName("identifier");
+                    String value = null;
+                    for (int j = 0; j < identfier.getLength(); j++) {
+                        final Element node = (Element) identfier.item(j);
+                        value = node.getAttribute("type");
+                        if (node.getAttribute("type").compareTo("dependency-track") == 0) {
+
+                            value = node.getElementsByTagName("url").item(0).getTextContent();
+
+
+                        }
+                    }
+                    final NodeList nodeList = e.getElementsByTagName("vulnerabilities");
+
+                    if (nodeList.getLength() > 0) {
+                        for (int j = 0; j < nodeList.getLength(); j++) {
+                            final Element e1 = (Element) nodeList.item(j);
+                            NodeList n = e1.getElementsByTagName("vulnerability");
+                            if (n != null) {
+                                for (int k = 0; k < n.getLength(); k++) {
+                                    final Element vuln = (Element) n.item(k);
+                                    final Query query = session.
+                                            createQuery("FROM LibraryVersion as libver where libver.id in (:libverid)");
+                                    query.setParameter("libverid", Integer.parseInt(value));
+
+                                    final LibraryVersion currentLibrary = (LibraryVersion) query.list().get(0);
+
+
+                                    final ScanResults results = new ScanResults();
+
+                                    final Date date = new Date();
+
+                                    results.setScanDate(date);
+                                    results.setUUID("1");
+                                    results.setLibraryVersion(currentLibrary);
+                                    session.save(results);
+
+
+                                    final Vulnerability vulnerability = new Vulnerability();
+
+                                    vulnerability.setScanResults(results);
+
+                                    vulnerability.setCve(vuln.getElementsByTagName("name").item(0).getTextContent());
+
+                                    vulnerability.setCvss(Float.parseFloat(vuln.getElementsByTagName("cvssScore").item(0).getTextContent()));
+
+                                    vulnerability.setCwe(vuln.getElementsByTagName("cwe").item(0).getTextContent());
+
+                                    vulnerability.setDescription(vuln.getElementsByTagName("description").item(0).getTextContent());
+
+                                    session.save(vulnerability);
+
+                                    session.getTransaction().commit();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            session.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
+
+
+

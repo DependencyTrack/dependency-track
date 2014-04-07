@@ -52,6 +52,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
      * Specify default license names and files
      */
     private static final LinkedHashMap<String, String> LICENSES;
+
     static {
         LICENSES = new LinkedHashMap<String, String>();
         LICENSES.put("Apache License 1.0", "licenses/Apache/LICENSE-1.0.txt");
@@ -84,13 +85,19 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
      * Specify default roles
      */
     private static enum ROLE {
-        /** The name (as stored in the database) of the user role */
+        /**
+         * The name (as stored in the database) of the user role
+         */
         USER,
 
-        /** The name (as stored in the database) of the moderator role */
+        /**
+         * The name (as stored in the database) of the moderator role
+         */
         MODERATOR,
 
-        /** The name (as stored in the database) of the admin role */
+        /**
+         * The name (as stored in the database) of the admin role
+         */
         ADMIN
     }
 
@@ -98,6 +105,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
      * Specify default Permission names
      */
     private static final LinkedHashMap<String, ROLE> PERMISSIONS = new LinkedHashMap<String, ROLE>();
+
     static {
         PERMISSIONS.put("applications", ROLE.USER);
         PERMISSIONS.put("searchApplication", ROLE.USER);
@@ -138,6 +146,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
     /**
      * Method is called when the application context is started or refreshed.
+     *
      * @param event A ContextRefreshedEvent
      */
     @Override
@@ -157,6 +166,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
     /**
      * Loads the default licenses into the database if no license data exists.
+     *
      * @throws IOException An exception if the license file cannot be found
      */
     private void loadDefaultLicenses() throws IOException {
@@ -171,7 +181,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("Adding default licenses to datastore.");
         }
-        for (Map.Entry<String, String> entry: LICENSES.entrySet()) {
+        for (Map.Entry<String, String> entry : LICENSES.entrySet()) {
             session.beginTransaction();
 
             final String licenseName = entry.getKey();
@@ -221,7 +231,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         }
 
         session.beginTransaction();
-        for (Map.Entry<String, ROLE> entry: PERMISSIONS.entrySet()) {
+        for (Map.Entry<String, ROLE> entry : PERMISSIONS.entrySet()) {
             final Permissions permission = new Permissions(entry.getKey());
             session.save(permission);
         }
@@ -254,7 +264,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         final List<Permissions> userPermissions = new ArrayList<Permissions>();
 
         // Iterate though all permissions and populate a temporary list of only the user permissions
-        for (Permissions permission: permissions) {
+        for (Permissions permission : permissions) {
             if (PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER) {
                 userPermissions.add(permission);
             }
@@ -263,31 +273,29 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         // Create a temporary list to hold only user permissions
         final List<Permissions> moderatorPermissions = new ArrayList<Permissions>();
 
-        for (Permissions permission: permissions) {
+        for (Permissions permission : permissions) {
             if ((PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER)
-                   || (PERMISSIONS.get(permission.getPermissionname()) == ROLE.MODERATOR)) {
+                    || (PERMISSIONS.get(permission.getPermissionname()) == ROLE.MODERATOR)) {
                 moderatorPermissions.add(permission);
             }
         }
 
         // Create a temporary list to hold only user permissions
         final List<Permissions> adminPermissions = new ArrayList<Permissions>();
-        for (Permissions permission: permissions) {
-                adminPermissions.add(permission);
+        for (Permissions permission : permissions) {
+            adminPermissions.add(permission);
         }
 
 
         session.beginTransaction();
 
-        for (ROLE name: ROLE.values()) {
+        for (ROLE name : ROLE.values()) {
             final Roles role = new Roles(name.name().toLowerCase());
             if (name == ROLE.USER) {
                 role.setPerm(new HashSet<Permissions>(userPermissions));
-            }
-            else if (name == ROLE.MODERATOR) {
+            } else if (name == ROLE.MODERATOR) {
                 role.setPerm(new HashSet<Permissions>(moderatorPermissions));
-             }
-            else if (name == ROLE.ADMIN) {
+            } else if (name == ROLE.ADMIN) {
                 role.setPerm(new HashSet<Permissions>(adminPermissions));
             }
             session.save(role);

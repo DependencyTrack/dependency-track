@@ -25,7 +25,6 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.subject.Subject;
-import org.json.JSONObject;
 import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
@@ -40,9 +39,11 @@ import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
@@ -51,8 +52,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +69,9 @@ public class ApplicationController {
      * Setup logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationController.class);
+
+    @Autowired
+    private Environment env;
 
     /**
      * The Dependency-Track ApplicationService.
@@ -102,6 +109,8 @@ public class ApplicationController {
     @Autowired
     private ServletContext servletContext;
 
+    private String libraryHierarchyData;
+
     /**
      * Initialization method gets called after controller is constructed.
      */
@@ -110,11 +119,13 @@ public class ApplicationController {
         LOGGER.info("OWASP Dependency-Track Initialized");
     }
 
+
     /**
      * Login action.
-     * @param map Map
+     *
+     * @param map      Map
      * @param username The username to login with
-     * @param passwd The password to login with
+     * @param passwd   The password to login with
      * @return A String
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
@@ -138,6 +149,7 @@ public class ApplicationController {
 
     /**
      * Login action.
+     *
      * @return a String
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
@@ -152,6 +164,7 @@ public class ApplicationController {
 
     /**
      * Logout action.
+     *
      * @return a String
      */
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
@@ -162,8 +175,9 @@ public class ApplicationController {
 
     /**
      * Logout action.
-     * @param username The username supplied during the registration of a user account
-     * @param password The password supplied during the registration of a user account
+     *
+     * @param username    The username supplied during the registration of a user account
+     * @param password    The password supplied during the registration of a user account
      * @param chkpassword The second password (retype) supplied during the registration of a user account
      * @return a String
      */
@@ -177,25 +191,29 @@ public class ApplicationController {
                 SecurityUtils.getSubject();
         if (password.equals(chkpassword) && currentUser.hasRole("admin")) {
             userService.registerUser(username, password, role);
-            return "redirect:/usermanagement"; }
-        else if (config.isSignupEnabled() && password.equals(chkpassword)) {
+            return "redirect:/usermanagement";
+        } else if (config.isSignupEnabled() && password.equals(chkpassword)) {
             userService.registerUser(username, password, role);
         }
         return "redirect:/login";
     }
+
     /**
      * Default page action.
+     *
      * @return a String
      */
     @RequiresPermissions("applications")
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public String application() {
+    public String application(HttpServletRequest request) {
+
 
         return "redirect:/applications";
     }
 
     /**
      * Lists all applications.
+     *
      * @param map A map of parameters
      * @return a String
      */
@@ -207,10 +225,9 @@ public class ApplicationController {
         map.put("applicationList", applicationService.listApplications());
         final Resource resource = new ClassPathResource("/application.properties");
         try {
-          final Properties props = PropertiesLoaderUtils.loadProperties(resource);
+            final Properties props = PropertiesLoaderUtils.loadProperties(resource);
             props.setProperty("schedule", "mytime");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
 
         }
         return "applicationsPage";
@@ -218,8 +235,9 @@ public class ApplicationController {
 
     /**
      * Search action.
-     * @param map a map of parameters
-     * @param libid the ID of the Library to search on
+     *
+     * @param map      a map of parameters
+     * @param libid    the ID of the Library to search on
      * @param libverid The ID of the LibraryVersion to search on
      * @return a String
      */
@@ -243,14 +261,14 @@ public class ApplicationController {
 
     /**
      * Search action.
-     * @param map a map of parameters
+     *
+     * @param map      a map of parameters
      * @param vendorId The ID of the Vendor to search on
      * @return a String
      */
     @RequiresPermissions("coarseSearchApplication")
     @RequestMapping(value = "/coarseSearchApplication", method = RequestMethod.POST)
-    public String coarseSearchApplication(Map<String, Object> map, @RequestParam("coarseSearchVendor") int vendorId)
-    {
+    public String coarseSearchApplication(Map<String, Object> map, @RequestParam("coarseSearchVendor") int vendorId) {
 
         map.put("applicationList", applicationService.coarseSearchApplications(vendorId));
         map.put("versionlist", applicationService.coarseSearchApplicationVersions(vendorId));
@@ -260,15 +278,15 @@ public class ApplicationController {
 
     /**
      * Search action.
-     * @param map a map of parameters
+     *
+     * @param map        a map of parameters
      * @param searchTerm is the search term
      * @return a String
      */
     @RequiresPermissions("keywordSearchLibraries")
     @RequestMapping(value = "/keywordSearchLibraries", method = RequestMethod.POST)
     public String keywordSearchLibraries(Map<String, Object> map,
-                                         @RequestParam("keywordSearchVendor") String searchTerm)
-    {
+                                         @RequestParam("keywordSearchVendor") String searchTerm) {
         map.put("libList", libraryVersionService.keywordSearchLibraries(searchTerm));
 
         return "librariesPage";
@@ -276,8 +294,9 @@ public class ApplicationController {
 
     /**
      * Add Application action. Adds an application and associated version number
+     *
      * @param application The Application to add
-     * @param version a String of the version number to add
+     * @param version     a String of the version number to add
      * @return a String
      */
     @RequiresPermissions("addApplication")
@@ -290,7 +309,8 @@ public class ApplicationController {
 
     /**
      * Updates an applications' name.
-     * @param id The ID of the application to update
+     *
+     * @param id   The ID of the application to update
      * @param name The updated name of the application
      * @return a String
      */
@@ -303,7 +323,8 @@ public class ApplicationController {
 
     /**
      * Updates an applications' version.
-     * @param id The ID of the ApplicationVersion
+     *
+     * @param id         The ID of the ApplicationVersion
      * @param appversion The version label
      * @return a String
      */
@@ -317,6 +338,7 @@ public class ApplicationController {
 
     /**
      * Deletes the application with the specified id.
+     *
      * @param id The ID of the Application to delete
      * @return a String
      */
@@ -329,6 +351,7 @@ public class ApplicationController {
 
     /**
      * Deletes the application Version with the specified id.
+     *
      * @param id The ID of the ApplicationVersion to delete
      * @return a String
      */
@@ -343,7 +366,8 @@ public class ApplicationController {
 
     /**
      * Adds a version to an application.
-     * @param id The ID of the Application
+     *
+     * @param id      The ID of the Application
      * @param version The version label
      * @return a String
      */
@@ -356,21 +380,24 @@ public class ApplicationController {
 
     /**
      * Returns a json list of the complete Library Hierarchy.
+     *
      * @param map a map of parameters
      * @return a String
      */
-    @RequiresPermissions("libraryHierarchy")
+    //  @RequiresPermissions("libraryHierarchy")
     @RequestMapping(value = "/libraryHierarchy", method = RequestMethod.GET)
     public String getLibraryHierarchy(Map<String, Object> map) {
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
         return "libraryHierarchy";
+
     }
 
     /**
      * Lists the data in the specified application version.
+     *
      * @param modelMap a Spring ModelMap
-     * @param map a map of parameters
-     * @param id the ID of the Application to list versions for
+     * @param map      a map of parameters
+     * @param id       the ID of the Application to list versions for
      * @return a String
      */
     @RequiresPermissions("applicationVersion")
@@ -386,8 +413,9 @@ public class ApplicationController {
 
     /**
      * Adds a ApplicationDependency between the specified ApplicationVersion and LibraryVersion.
+     *
      * @param appversionid The ID of the ApplicationVersion
-     * @param versionid The ID of the LibraryVersion
+     * @param versionid    The ID of the LibraryVersion
      * @return a String
      */
     @RequiresPermissions("addDependency")
@@ -400,8 +428,9 @@ public class ApplicationController {
 
     /**
      * Deletes the dependency with the specified ApplicationVersion ID and LibraryVersion ID.
+     *
      * @param appversionid The ID of the ApplicationVersion
-     * @param versionid The ID of the LibraryVersion
+     * @param versionid    The ID of the LibraryVersion
      * @return a String
      */
     @RequiresPermissions("deleteDependency")
@@ -414,7 +443,8 @@ public class ApplicationController {
 
     /**
      * Clone the Application including all ApplicationVersions.
-     * @param applicationid The ID of the Application to clone
+     *
+     * @param applicationid   The ID of the Application to clone
      * @param applicationname The name of the cloned Application
      * @return a String
      */
@@ -428,8 +458,9 @@ public class ApplicationController {
 
     /**
      * Clone the ApplicationVersion.
-     * @param applicationid The ID of the Application to clone
-     * @param newversion The version of the cloned ApplicationVersion
+     *
+     * @param applicationid      The ID of the Application to clone
+     * @param newversion         The version of the cloned ApplicationVersion
      * @param applicationversion The ApplicationVersion to clone
      * @return a String
      */
@@ -444,16 +475,17 @@ public class ApplicationController {
 
     /**
      * Updates a library regardless of application association.
-     * @param vendorid The ID of the LibraryVendor
-     * @param licenseid The ID of the License
-     * @param libraryid The ID of the Library
+     *
+     * @param vendorid         The ID of the LibraryVendor
+     * @param licenseid        The ID of the License
+     * @param libraryid        The ID of the Library
      * @param libraryversionid The ID of the LibraryVersion
-     * @param libraryname The name of the Library
-     * @param libraryversion The version label of the Library
-     * @param vendor The String representation of the Vendor
-     * @param license The license the Library is licensed under
-     * @param language The programming language the Library was written in
-     * @param secuniaID The Secunia ID of the LibraryVersion
+     * @param libraryname      The name of the Library
+     * @param libraryversion   The version label of the Library
+     * @param vendor           The String representation of the Vendor
+     * @param license          The license the Library is licensed under
+     * @param language         The programming language the Library was written in
+     * @param secuniaID        The Secunia ID of the LibraryVersion
      * @return a String
      */
     @RequiresPermissions("updatelibrary")
@@ -477,6 +509,7 @@ public class ApplicationController {
 
     /**
      * Remove the libraryVersion with the specified ID.
+     *
      * @param libraryversionid The LibraryVersion ID
      * @return a String
      */
@@ -489,6 +522,7 @@ public class ApplicationController {
 
     /**
      * Returns a list of all libraries regardless of application association.
+     *
      * @param map a map of parameters
      * @return a String
      */
@@ -507,13 +541,14 @@ public class ApplicationController {
 
     /**
      * Adds a library regardless of application association.
-     * @param libraryname The name of the Library
+     *
+     * @param libraryname    The name of the Library
      * @param libraryversion The version of the Library
-     * @param vendor The vendor of the Library
-     * @param license The license the Library is licensed under
-     * @param file The license file
-     * @param language The programming language the Library was written in
-     * @param secuniaID The Secunia ID of the LibraryVersion
+     * @param vendor         The vendor of the Library
+     * @param license        The license the Library is licensed under
+     * @param file           The license file
+     * @param language       The programming language the Library was written in
+     * @param secuniaID      The Secunia ID of the LibraryVersion
      * @return a String
      */
     @RequiresPermissions("addlibraries")
@@ -532,7 +567,8 @@ public class ApplicationController {
 
     /**
      * Download license action.
-     * @param response a Response object
+     *
+     * @param response  a Response object
      * @param licenseid the ID of the License to download
      */
     @RequiresPermissions("downloadlicense")
@@ -567,7 +603,8 @@ public class ApplicationController {
 
     /**
      * View license action.
-     * @param response a Response object
+     *
+     * @param response  a Response object
      * @param licenseid the ID of the License to download
      * @return a String
      */
@@ -608,6 +645,7 @@ public class ApplicationController {
 
     /**
      * Service to download the Dependency-Check datafile archive.
+     *
      * @param response an HttpServletResponse object
      */
     @RequiresPermissions("dcdata")
@@ -633,6 +671,7 @@ public class ApplicationController {
 
     /**
      * Service to download NIST CPE/CVE XML data files.
+     *
      * @param response an HttpServletResponse object
      * @param filename the xml file to download
      */
@@ -661,6 +700,7 @@ public class ApplicationController {
 
     /**
      * The about page.
+     *
      * @return a String
      */
     @RequiresPermissions("about")
@@ -671,16 +711,16 @@ public class ApplicationController {
 
     /**
      * Upload a License.
-     *@param licenseid the ID of the License to download
+     *
+     * @param licenseid the ID of the License to download
      */
     @RequiresPermissions("uploadlicense")
     @RequestMapping(value = "/uploadlicense", method = RequestMethod.POST)
     public String uploadLicense(@RequestParam("uploadlicenseid") Integer licenseid,
-                              @RequestParam("uploadlicensefile") MultipartFile file,
-                              @RequestParam("editlicensename") String editlicensename)
-    {
-                libraryVersionService.uploadLicense(licenseid, file, editlicensename);
-                return "redirect:/libraries";
+                                @RequestParam("uploadlicensefile") MultipartFile file,
+                                @RequestParam("editlicensename") String editlicensename) {
+        libraryVersionService.uploadLicense(licenseid, file, editlicensename);
+        return "redirect:/libraries";
     }
 
     /**
@@ -689,11 +729,44 @@ public class ApplicationController {
     @RequiresPermissions("usermanagement")
     @RequestMapping(value = "/usermanagement", method = RequestMethod.GET)
     public String userManagement(Map<String, Object> map) {
-    map.put("userList",userService.accountManagement());
-        map.put("roleList",userService.getRoleList());
-    return "userManagementPage";
+        map.put("userList", userService.accountManagement());
+        map.put("roleList", userService.getRoleList());
+        return "userManagementPage";
     }
 
+    /**
+     * Admin User Management change scan schedule
+     */
+    @RequiresPermissions("usermanagement")
+    @RequestMapping(value = "/changescanschedule/{numberOfDays}", method = RequestMethod.GET)
+    public String changeScanSchedule(@PathVariable("numberOfDays") String numberOfDays) {
+        try {
+            Properties prop = new Properties();
+            OutputStream output = null;
+
+
+            output = new FileOutputStream("application.properties");
+
+            // set the properties value
+
+            prop.setProperty("scanschedule", numberOfDays);
+
+            // save properties to project root folder
+            prop.store(output, null);
+            output.close();
+            InputStream input = new FileInputStream("application.properties");
+
+            // load a properties file
+            prop.load(input);
+
+            // get the property value and print it out
+            System.out.println(prop.getProperty("scanschedule"));
+            input.close();
+        } catch (IOException e) {
+
+        }
+        return "userManagementPage";
+    }
 
     /**
      * Admin User Management which validates a user
@@ -735,26 +808,75 @@ public class ApplicationController {
         map.put("applicationList", applicationService.listApplications());
         return "dashboardPage";
     }
-   /* @Scheduled(fixedDelay = 5000)
-    public void demoServiceMethod()
-    {
-        System.out.println("Method executed at every 5 seconds. Current time is :: "+ new Date());
-    }*/
+
+    @Scheduled(cron = "0 0 12 1/5 * ?")
+    public void scanScheduleWeelky(HttpServletRequest request) {
+        try {
+
+            final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
+            final URL url = new URL(libraryHierarchyUrl);
+            final URLConnection con = url.openConnection();
+            final InputStream in = con.getInputStream();
+            String encoding = con.getContentEncoding();
+            encoding = encoding == null ? "UTF-8" : encoding;
+            final String body = IOUtils.toString(in, encoding);
+            applicationService.scanApplication(body);
+            applicationService.analyzeScanResults();
+        } catch (Exception ioe) {
+            ioe.printStackTrace();
+        }
+
+    }
+
+
+    @Scheduled(cron = "0 0 12 1/15 * ? ")
+    public void scanScheduleDaily(HttpServletRequest request) {
+        try {
+
+            final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
+            final URL url = new URL(libraryHierarchyUrl);
+            final URLConnection con = url.openConnection();
+            final InputStream in = con.getInputStream();
+            String encoding = con.getContentEncoding();
+            encoding = encoding == null ? "UTF-8" : encoding;
+            final String body = IOUtils.toString(in, encoding);
+            applicationService.scanApplication(body);
+            applicationService.analyzeScanResults();
+        } catch (Exception ioe) {
+            ioe.printStackTrace();
+        }
+    }
+
+    @Scheduled(cron = "0 0 12 1/25 * ? ")
+    public void scanScheduleMonthly(HttpServletRequest request) {
+        try {
+
+            final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
+            final URL url = new URL(libraryHierarchyUrl);
+            final URLConnection con = url.openConnection();
+            final InputStream in = con.getInputStream();
+            String encoding = con.getContentEncoding();
+            encoding = encoding == null ? "UTF-8" : encoding;
+            final String body = IOUtils.toString(in, encoding);
+            applicationService.scanApplication(body);
+            applicationService.analyzeScanResults();
+        } catch (Exception ioe) {
+            ioe.printStackTrace();
+        }
+    }
 
     /**
      * Mapping to dashboard which gives vulnerability overview
      */
     @RequiresPermissions("dashboard")
-    @RequestMapping(value = "/chartdata", method = RequestMethod.GET)
-    public @ResponseBody String chartdata(Map<String, Object> map){
+    @RequestMapping(value = "/chartdata/{id}", method = RequestMethod.GET)
+    public
+    @ResponseBody
+    String chartdata(Map<String, Object> map, @PathVariable("id") Integer applicationVersionId) {
 
-        final String data = "my data";
-
-         map.put("Vulnerability1", 3);
-
-       final JSONObject   myString = new JSONObject(map);
+        final String jsondata = applicationVersionService.chartdata(applicationVersionId);
 
 
-        return myString.toString();
+        return jsondata;
     }
 }

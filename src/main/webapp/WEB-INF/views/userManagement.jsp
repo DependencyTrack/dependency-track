@@ -4,12 +4,41 @@
 
 
 <div id="userManagaementContainer">
+
+   <div class="row-fluid">
+      <div class="span12 well-small">
+            <table class="table">
+            <thead>
+            <tr>
+                <th><spring:message code="label.Schedule"/></th>
+
+                <th><spring:message code="lable.Slider"/></th>
+                <th><spring:message code="label.Schedule.Value"/></th>
+
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td><spring:message code="label.globalSchedule"/></td>
+            <td> <input class="slider" id ="slider" type="range" min="5" max="25" value="5" step="10"  /></td>
+            <td><input class="box" id = "box"  type="text" value="5" style="width:20px;"/></td>
+            </tr>
+            </tbody>
+             </table>
+          </div>
+   </div>
+
+    <div class="hero-unit">
+    <p> <spring:message code="label.globalSchedule"/></p>
+    </div>
+
     <c:if test="${!empty userList}">
+
         <table class="table table-hover">
             <thead>
             <tr>
                 <th><spring:message code="label.username"/></th>
-                <th><spring:message code="label.validUser"/></th>
+
                 <th><spring:message code="label.userRole"/></th>
                 <th><spring:message code="label.delete"/></th>
 
@@ -19,17 +48,7 @@
             <c:forEach items="${userList}" var="userList">
                 <tr>
                     <td>${userList.username}</td>
-                    <td>
-                        <c:choose>
-                            <c:when test="${userList.checkvalid}">
-                                <input type="checkbox" name="checkvalidity" class="checkvalidity" value="${userList.id}"
-                                               checked/>
-                            </c:when>
-                            <c:otherwise>
-                                <input type="checkbox" name="checkvalidity" class="checkvalidity" value="${userList.id}"/>
-                            </c:otherwise>
-                        </c:choose>
-                    </td>
+
                     <td>
                         <select id="rolenamenameid" data-userid='${userList.id}' name="rolename" class="rolename" autofocus="autofocus">
                         <c:forEach items="${roleList}" var="roleList">

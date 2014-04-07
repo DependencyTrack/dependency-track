@@ -42,29 +42,32 @@ public class ApplicationVersionService {
     }
 
 
-
     @Transactional
     public void addApplicationVersion(int appid, String appversion) {
         applicationVersionDao.addApplicationVersion(appid, appversion);
     }
 
     @Transactional
-    public void cloneApplication(Integer applicationid,String applicationname)
-    {
+    public void cloneApplication(Integer applicationid, String applicationname) {
         applicationVersionDao.cloneApplication(applicationid, applicationname);
     }
 
     @Transactional
-    public void cloneApplicationVersion(Integer applicationid,String newversion, String applicationversion)
-    {
+    public void cloneApplicationVersion(Integer applicationid, String newversion, String applicationversion) {
         applicationVersionDao.cloneApplicationVersion(applicationid, newversion, applicationversion);
     }
 
     @Transactional
-    public void updateApplicationVersion(int id, String appversion)
-    {
+    public void updateApplicationVersion(int id, String appversion) {
         applicationVersionDao.updateApplicationVersion(id, appversion);
 
     }
+
+    @Transactional
+    public String chartdata(int id) {
+        return applicationVersionDao.chartdata(id);
+
+    }
+
 
 }

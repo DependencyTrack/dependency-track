@@ -19,9 +19,13 @@
 
 package org.owasp.dependencytrack.tasks;
 
-import org.owasp.dependencycheck.data.CachedWebDataSource;
+/*import org.owasp.dependencycheck.data.CachedWebDataSource;
 import org.owasp.dependencycheck.data.UpdateException;
-import org.owasp.dependencycheck.data.UpdateService;
+import org.owasp.dependencycheck.data.UpdateService;*/
+
+import org.owasp.dependencycheck.data.update.CachedWebDataSource;
+import org.owasp.dependencycheck.data.update.UpdateService;
+import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.util.ZipUtil;

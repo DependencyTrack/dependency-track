@@ -48,22 +48,18 @@ public class UserDao {
     private SessionFactory sessionFactory;
 
 
-    public void registerUser(String username,String password,Integer role)
-    {
+    public void registerUser(String username, String password, Integer role) {
         RandomNumberGenerator rng = new SecureRandomNumberGenerator();
         Object salt = rng.nextBytes();
 
-        String hashedPasswordBase64 = new Sha256Hash(password,salt.toString()).toBase64();
+        String hashedPasswordBase64 = new Sha256Hash(password, salt.toString()).toBase64();
         Query query;
-        if(role==null)
-        {
-         query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
-        query.setParameter("role","user");
-        }
-        else
-        {
+        if (role == null) {
+            query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
+            query.setParameter("role", "user");
+        } else {
             query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.id  =:role");
-            query.setParameter("role",role.intValue());
+            query.setParameter("role", role.intValue());
         }
 
 
@@ -71,26 +67,23 @@ public class UserDao {
         users.setPassword(hashedPasswordBase64);
         users.setUsername(username);
         users.setCheckvalid(false);
-        users.setRoles((Roles)query.list().get(0));
+        users.setRoles((Roles) query.list().get(0));
         users.setPassword_salt(salt.toString());
         sessionFactory.getCurrentSession().save(users);
     }
 
-    public String hashpwd(String username, String password)
-    {
+    public String hashpwd(String username, String password) {
         Query query = sessionFactory.getCurrentSession().createQuery("FROM Users where username =:usrn");
-        query.setParameter("usrn",username);
-        if(query.list().isEmpty())
-        {
+        query.setParameter("usrn", username);
+        if (query.list().isEmpty()) {
             return null;
         }
         Users users = (Users) query.list().get(0);
-        String hashedPasswordBase64 = new Sha256Hash(password,users.getPassword_salt()).toBase64();
+        String hashedPasswordBase64 = new Sha256Hash(password, users.getPassword_salt()).toBase64();
         return hashedPasswordBase64;
     }
 
-    public List<Users> accountManagement()
-    {
+    public List<Users> accountManagement() {
         Query query = sessionFactory.getCurrentSession().createQuery("FROM Users ");
 
         List<Users> userlist = query.list();
@@ -98,39 +91,34 @@ public class UserDao {
         return userlist;
     }
 
-    public void validateuser(int userid)
-    {
+    public void validateuser(int userid) {
         Query query = sessionFactory.getCurrentSession().createQuery("select usr.checkvalid FROM Users as usr where usr.id= :userid");
-        query.setParameter("userid",userid);
+        query.setParameter("userid", userid);
 
         Boolean currentState = (Boolean) query.list().get(0);
 
-        if(currentState)
-        {
+        if (currentState) {
             query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.checkvalid  = :checkinvalid" +
                     " where usr.id = :userid");
             query.setParameter("checkinvalid", false);
-            query.setParameter("userid",userid );
+            query.setParameter("userid", userid);
             query.executeUpdate();
-}
-        else
-        {
+        } else {
             query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.checkvalid  = :checkvalid" +
                     " where usr.id = :userid");
             query.setParameter("checkvalid", true);
-            query.setParameter("userid",userid );
+            query.setParameter("userid", userid);
             query.executeUpdate();
         }
-        }
+    }
 
 
-    public void deleteUser(int userid)
-    {
+    public void deleteUser(int userid) {
         final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         Query query = sessionFactory.getCurrentSession().createQuery(" FROM Users as usr where usr.id= :userid");
-        query.setParameter("userid",userid);
+        query.setParameter("userid", userid);
 
         Users curUser = (Users) query.list().get(0);
 
@@ -139,8 +127,7 @@ public class UserDao {
         session.close();
     }
 
-    public List<Roles> getRoleList()
-    {
+    public List<Roles> getRoleList() {
         final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
@@ -148,21 +135,20 @@ public class UserDao {
 
         ArrayList<Roles> rolelist = (ArrayList<Roles>) query.list();
         session.close();
-        return  rolelist;
+        return rolelist;
     }
 
-    public void changeUserRole(int userid,int role)
-    {
+    public void changeUserRole(int userid, int role) {
         final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
         Query query = sessionFactory.getCurrentSession().createQuery("update Users as usr set usr.roles.id  = :role" +
                 " where usr.id = :userid");
         query.setParameter("role", role);
-        query.setParameter("userid",userid );
+        query.setParameter("userid", userid);
         query.executeUpdate();
 
         session.getTransaction().commit();
         session.close();
     }
- }
+}

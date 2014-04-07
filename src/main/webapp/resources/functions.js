@@ -291,6 +291,24 @@ $(document).on("change",".rolename",function() {
 
 });
 
+$(document).on("change",".slider",function() {
+
+    var numberOfDays=document.getElementById("slider").value;
+    document.getElementById("box").value=numberOfDays;
+    var uri = contextPath() + '/changescanschedule/'+numberOfDays;
+
+    $.ajax({
+        url: uri,
+        type: 'GET',
+        dataType: "text",
+        success: function (data) // Variable data contains the data we get from serverside
+        {
+
+        }
+    });
+});
+
+
 //slider
 $("[data-slider]")
     .each(function () {

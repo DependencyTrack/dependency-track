@@ -56,7 +56,7 @@ public class DependencyCheckDataUpdater {
         }
 
         //Cycles through the cached web data sources and calls update on all of them.
-        final UpdateService service = UpdateService.getInstance();
+        final UpdateService service = new UpdateService(this.getClass().getClassLoader());
         final Iterator<CachedWebDataSource> iterator = service.getDataSources();
         while (iterator.hasNext()) {
             final CachedWebDataSource source = iterator.next();

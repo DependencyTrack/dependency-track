@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.owasp</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
-    <description>OWASP Dependency-Track is a web application that allows organizations to document the use of third-party components across multiple applications and versions.</description>
+    <description>OWASP Dependency-Track is a web application that allows organizations to document the use of
+        third-party components across multiple applications and versions.
+    </description>
     <inceptionYear>2013</inceptionYear>
     <organization>
         <name>OWASP</name>
@@ -53,7 +56,7 @@
         <org.springframework-version>3.2.4.RELEASE</org.springframework-version>
         <org.apache.shiro-version>1.2.2</org.apache.shiro-version>
         <org.aspectj-version>1.6.10</org.aspectj-version>
-        <org.owasp.dependencycheck-version>1.1.4</org.owasp.dependencycheck-version>
+        <org.owasp.dependencycheck-version>1.2.1</org.owasp.dependencycheck-version>
         <org.slf4j-version>1.6.6</org.slf4j-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -61,64 +64,42 @@
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
     </properties>
 
-
     <dependencies>
-
-
+        <dependency>
+            <groupId>org.owasp</groupId>
+            <artifactId>dependency-check-core</artifactId>
+            <version>${org.owasp.dependencycheck-version}</version>
+        </dependency>
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
             <artifactId>json-simple</artifactId>
             <version>1.1</version>
         </dependency>
-        <!-- OWASP Dependency-Check -->
-        <dependency>
-            <groupId>org.owasp</groupId>
-            <artifactId>dependency-check-core</artifactId>
-            <version>${org.owasp.dependencycheck-version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.owasp</groupId>
-            <artifactId>dependency-check-core</artifactId>
-            <version>${org.owasp.dependencycheck-version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.5</version>
         </dependency>
-
-        <!-- security headers -->
-      <!--  <dependency>
-            <groupId>com.sourceclear.headlines</groupId>
-            <artifactId>complete</artifactId>
-            <version>0.1.4</version>
-        </dependency>-->
-
-        <!-- OWASP HTML Sanitizer -->
+        <!--  <dependency>
+              <groupId>com.sourceclear.headlines</groupId>
+              <artifactId>complete</artifactId>
+              <version>0.1.4</version>
+          </dependency>-->
         <dependency>
             <artifactId>owasp-java-html-sanitizer</artifactId>
             <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
             <version>r209</version>
         </dependency>
-
-
-        <!-- file upload jars start -->
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.3</version>
+            <version>1.3.1</version>
         </dependency>
-
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.4</version>
         </dependency>
-
 
         <!-- local session factory bean start -->
         <dependency>
@@ -134,7 +115,6 @@
             <artifactId>jsf-impl</artifactId>
             <version>2.1.3</version>
         </dependency>
-
         <!-- faces end -->
 
         <!-- Apache Shiro -->
@@ -165,7 +145,6 @@
             <artifactId>h2</artifactId>
             <version>1.3.171</version>
         </dependency>
-
 
         <!-- to fix basic data source start -->
         <dependency>
@@ -328,7 +307,6 @@
             <version>${org.springframework-version}</version>
         </dependency>
 
-
         <!-- AspectJ -->
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -340,8 +318,6 @@
             <artifactId>aspectjweaver</artifactId>
             <version>1.6.12</version>
         </dependency>
-
-
 
         <!-- Logging -->
         <dependency>
@@ -411,11 +387,10 @@
             <artifactId>jstl</artifactId>
             <version>1.2</version>
         </dependency>
-
         <dependency>
             <groupId>atg.taglib.json</groupId>
             <artifactId>json-taglib</artifactId>
-            <version>0.4.1 </version>
+            <version>0.4.1</version>
         </dependency>
 
         <!-- Test -->
@@ -434,17 +409,15 @@
     <build>
         <finalName>${warName}</finalName>
         <plugins>
-
-                        <plugin>
-                                <groupId>org.apache.tomcat.maven</groupId>
-                                <artifactId>tomcat7-maven-plugin</artifactId>
-                                <version>2.1</version>
-                                <configuration>
-                                        <port>8080</port>
-                                        <path>/dtrack</path>
-                                </configuration>
-                        </plugin>
-
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <port>8080</port>
+                    <path>/dtrack</path>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-eclipse-plugin</artifactId>
                 <version>2.9</version>
@@ -480,7 +453,7 @@
                         <configuration>
                             <target>
                                 <copy file="${project.build.directory}/classes/messages_en.properties"
-                                      tofile="${project.build.directory}/classes/messages.properties" />
+                                      tofile="${project.build.directory}/classes/messages.properties"/>
                             </target>
                         </configuration>
                         <goals>
@@ -514,11 +487,11 @@
                     <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
                 </configuration>
             </plugin>
-            <!-- Uncomment to execute a Dependency-Check analysis
+            <!-- Uncomment to execute a Dependency-Check analysis -->
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>1.0.1</version>
+                <version>${org.owasp.dependencycheck-version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -528,9 +501,10 @@
                 </executions>
                 <configuration>
                     <format>ALL</format>
+                    <logFile>dependency-check.log</logFile>
                 </configuration>
             </plugin>
-            -->
+            <!-- -->
         </plugins>
         <resources>
             <resource>

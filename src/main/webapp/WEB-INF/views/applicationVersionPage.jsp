@@ -2,7 +2,7 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
-<%@taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+<%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
 
 <spring:message code="label.dependency.add" var="addDependencyLabel"/>
 <spring:message code="label.clone" var="cloneLabel"/>

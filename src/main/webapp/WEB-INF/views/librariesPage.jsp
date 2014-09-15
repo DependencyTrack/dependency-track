@@ -1,5 +1,5 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
-<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+<%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
 <spring:message code="label.libraries" var="title"/>
 <spring:message code="label.library.add" var="addButtonLabel"/>
 

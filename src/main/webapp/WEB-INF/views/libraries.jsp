@@ -1,7 +1,7 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
-<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+<%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
 
 <spring:message code="permissions.uploadlicense" var="uploadlicense"/>
 <spring:message code="permissions.updatelibrary" var="updatelibrary"/>

@@ -517,8 +517,8 @@ public class LibraryVersionDao {
 
 
     public void uploadLicense(int licenseid, MultipartFile file, String editlicensename) {
+        InputStream licenseInputStream = null;
         try {
-            InputStream licenseInputStream = null;
             Blob blob;
             final Query query;
 
@@ -553,6 +553,8 @@ public class LibraryVersionDao {
         } catch (Exception e) {
             LOGGER.error("An error occurred while uploading a license");
             LOGGER.error(e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(licenseInputStream);
         }
     }
 

@@ -35,7 +35,7 @@ public class TokenRequestDataValueProcessor implements RequestDataValueProcessor
      * @return a Map of hidden fields
      */
     public Map<String, String> getExtraHiddenFields(HttpServletRequest request) {
-        final Map<String, String> hiddenFields = new HashMap<String, String>();
+        final Map<String, String> hiddenFields = new HashMap<>();
         hiddenFields.put(TokenManager.TOKEN_PARAM_NAME, TokenManager.getToken(request.getSession()));
         return hiddenFields;
     }

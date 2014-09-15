@@ -781,9 +781,9 @@ public class ApplicationController {
     @RequiresPermissions("usermanagement")
     @RequestMapping(value = "/changescanschedule/{numberOfDays}", method = RequestMethod.GET)
     public String changeScanSchedule(@PathVariable("numberOfDays") String numberOfDays) {
+        OutputStream output = null;
         try {
             final Properties prop = new Properties();
-            OutputStream output = null;
             output = new FileOutputStream("application.properties");
             // set the properties value
             prop.setProperty("scanschedule", numberOfDays);
@@ -793,7 +793,10 @@ public class ApplicationController {
         } catch (IOException e) {
             LOGGER.error("An error occurred while changing Dependency-Check scan schedule");
             LOGGER.error(e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(output);
         }
+
         return "userManagementPage";
     }
 

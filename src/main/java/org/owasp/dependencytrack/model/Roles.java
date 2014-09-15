@@ -65,7 +65,7 @@ public class Roles {
     @JoinTable(name = "ROLES_PERMISSIONS",
             joinColumns = { @JoinColumn(name = "ROLES_ID") },
             inverseJoinColumns = { @JoinColumn(name = "PERMISSIONS_ID") })
-    private Set<Permissions> perm= new HashSet<Permissions>();
+    private Set<Permissions> perm= new HashSet<>();
 
     /**
      * Default Constructor

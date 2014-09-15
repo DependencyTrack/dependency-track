@@ -87,5 +87,4 @@ public final class ApplicationVersion implements Cloneable {
         this.application = application;
     }
 
-
 }

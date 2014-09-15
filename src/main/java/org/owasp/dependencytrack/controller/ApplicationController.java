@@ -46,7 +46,12 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
@@ -54,7 +59,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
@@ -62,6 +72,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * The main Spring controller. If the webapp gets any larger, this should be broken up into separate controllers.
+ */
 @Controller
 public class ApplicationController {
 
@@ -70,6 +83,9 @@ public class ApplicationController {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationController.class);
 
+    /**
+     * Spring Environment
+     */
     @Autowired
     private Environment env;
 
@@ -109,6 +125,9 @@ public class ApplicationController {
     @Autowired
     private ServletContext servletContext;
 
+    /**
+     * A string representation of JSON library hierarchy
+     */
     private String libraryHierarchyData;
 
     /**
@@ -138,7 +157,7 @@ public class ApplicationController {
 
             LOGGER.info("Login successful: " + username);
             if (SecurityUtils.getSubject().isAuthenticated()) {
-                return "redirect:/applications";
+                return "redirect:/dashboard";
             }
         } catch (AuthenticationException e) {
             LOGGER.info("Login failure: " + username);
@@ -150,6 +169,7 @@ public class ApplicationController {
     /**
      * Login action.
      *
+     * @param response a HttpServletResponse object
      * @return a String
      */
     @RequestMapping(value = "/login", method = RequestMethod.GET)
@@ -157,7 +177,7 @@ public class ApplicationController {
         response.addCookie(new Cookie("CONTEXTPATH", servletContext.getContextPath()));
         final String s = "loginPage";
         if (SecurityUtils.getSubject().isAuthenticated()) {
-            return "redirect:/applications";
+            return "redirect:/dashboard";
         }
         return s;
     }
@@ -179,6 +199,7 @@ public class ApplicationController {
      * @param username    The username supplied during the registration of a user account
      * @param password    The password supplied during the registration of a user account
      * @param chkpassword The second password (retype) supplied during the registration of a user account
+     * @param role        The role of the user attempting to perform the action
      * @return a String
      */
 
@@ -201,6 +222,7 @@ public class ApplicationController {
     /**
      * Default page action.
      *
+     * @param request a HttpServletRequest object
      * @return a String
      */
     @RequiresPermissions("applications")
@@ -215,6 +237,7 @@ public class ApplicationController {
      * Lists all applications.
      *
      * @param map A map of parameters
+     * @param request a HttpServletRequest object
      * @return a String
      */
     @RequiresPermissions("applications")
@@ -228,23 +251,26 @@ public class ApplicationController {
             final Properties props = PropertiesLoaderUtils.loadProperties(resource);
             props.setProperty("schedule", "mytime");
         } catch (Exception e) {
-
+            LOGGER.error("An error occurred while loading properties while retrieving a list of applications");
+            LOGGER.error(e.getMessage());
         }
-     try
-     {
-        final String libraryHierarchyUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/libraryHierarchy";
-        final URL url = new URL(libraryHierarchyUrl);
-        final URLConnection con = url.openConnection();
-        final InputStream in = con.getInputStream();
-        String encoding = con.getContentEncoding();
-        encoding = encoding == null ? "UTF-8" : encoding;
-        final String body = IOUtils.toString(in, encoding);
-         libraryHierarchyData = body;
+        try {
+            final String libraryHierarchyUrl =
+                    request.getScheme() + "://" +
+                    request.getServerName() + ":" +
+                    request.getServerPort() +
+                    request.getContextPath() + "/libraryHierarchy";
+            final URL url = new URL(libraryHierarchyUrl);
+            final URLConnection con = url.openConnection();
+            final InputStream in = con.getInputStream();
+            String encoding = con.getContentEncoding();
+            encoding = encoding == null ? "UTF-8" : encoding;
+            libraryHierarchyData = IOUtils.toString(in, encoding);
 
-    } catch (Exception ioe) {
-        ioe.printStackTrace();
-    }
-
+        } catch (Exception e) {
+            LOGGER.error("An error occurred listing applications");
+            LOGGER.error(e.getMessage());
+        }
         return "applicationsPage";
     }
 
@@ -303,7 +329,6 @@ public class ApplicationController {
     public String keywordSearchLibraries(Map<String, Object> map,
                                          @RequestParam("keywordSearchVendor") String searchTerm) {
         map.put("libList", libraryVersionService.keywordSearchLibraries(searchTerm));
-
         return "librariesPage";
     }
 
@@ -375,7 +400,6 @@ public class ApplicationController {
     public String deleteApplicationVersion(@PathVariable("id") int id) {
 
         applicationVersionService.deleteApplicationVersion(id);
-
         return "redirect:/applications";
     }
 
@@ -591,7 +615,6 @@ public class ApplicationController {
     public void downloadLicense(HttpServletResponse response,
                                 @RequestParam("licenseid") Integer licenseid) {
 
-
         final List<License> licenses = libraryVersionService.listLicense(licenseid);
         final License newLicense = licenses.get(0);
 
@@ -604,11 +627,9 @@ public class ApplicationController {
             out = response.getOutputStream();
             IOUtils.copy(in, out);
             out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        } catch (IOException | SQLException e) {
+            LOGGER.error("An error occurred downloading a license");
+            LOGGER.error(e.getMessage());
         } finally {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(out);
@@ -641,18 +662,14 @@ public class ApplicationController {
                 response.setContentType(newLicense.getContenttype());
                 IOUtils.copy(in, out);
                 out.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (SQLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            } catch (IOException | SQLException e) {
+                LOGGER.error("An error occurred while viewing a license");
+                LOGGER.error(e.getMessage());
             } finally {
                 IOUtils.closeQuietly(in);
                 IOUtils.closeQuietly(out);
             }
-
         } else {
-
             return "emptyfile";
         }
         return "";
@@ -689,6 +706,7 @@ public class ApplicationController {
      *
      * @param response an HttpServletResponse object
      * @param filename the xml file to download
+     * @throws java.io.IOException bad robot
      */
     @RequestMapping(value = "/nist/{filename:.+}", method = RequestMethod.GET)
     public void getNistFile(HttpServletResponse response,
@@ -705,7 +723,7 @@ public class ApplicationController {
             IOUtils.copy(fis, out);
             out.flush();
         } catch (IOException ex) {
-            LOGGER.info("Error writing NIST datafile to output stream.");
+            LOGGER.error("Error writing NIST datafile to output stream.");
             throw new RuntimeException("IOError writing file to output stream");
         } finally {
             IOUtils.closeQuietly(out);
@@ -721,18 +739,14 @@ public class ApplicationController {
     @RequiresPermissions("about")
     @RequestMapping(value = "/about", method = RequestMethod.GET)
     public String about() {
+        /* todo: Nikhil, why is this here? It blocks the aboutPage.
         try {
-
-                applicationService.scanApplication(libraryHierarchyData);
-                //Sleep to make sure scan results are files are generated
-                /*Thread.sleep(10000);
-                applicationService.analyzeScanResults();
-*/
+            applicationService.scanApplication(libraryHierarchyData);
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while displaying the about page");
+            LOGGER.error(e.getMessage());
         }
-        catch (Exception e)
-        {
-             e.printStackTrace();
-        }
+        */
         return "aboutPage";
     }
 
@@ -768,22 +782,17 @@ public class ApplicationController {
     @RequestMapping(value = "/changescanschedule/{numberOfDays}", method = RequestMethod.GET)
     public String changeScanSchedule(@PathVariable("numberOfDays") String numberOfDays) {
         try {
-            Properties prop = new Properties();
+            final Properties prop = new Properties();
             OutputStream output = null;
-
-
             output = new FileOutputStream("application.properties");
-
             // set the properties value
-
             prop.setProperty("scanschedule", numberOfDays);
-
             // save properties to project root folder
             prop.store(output, null);
             output.close();
-
         } catch (IOException e) {
-
+            LOGGER.error("An error occurred while changing Dependency-Check scan schedule");
+            LOGGER.error(e.getMessage());
         }
         return "userManagementPage";
     }
@@ -831,82 +840,69 @@ public class ApplicationController {
 
     @Scheduled(cron = "0 0 12 1/5 * ?")
     public void scanScheduleWeelky() {
-
-            try
-            { final Properties prop = new Properties();
-                final InputStream input = new FileInputStream("application.properties");
-
-                // load a properties file
-                prop.load(input);
-
-                // get the property value and print it out
-                System.out.println();
-                if (Integer.parseInt(prop.getProperty("scanschedule")) == 5)
-                {
+        try {
+            final Properties prop = new Properties();
+            final InputStream input = new FileInputStream("application.properties");
+            // load a properties file
+            prop.load(input);
+            // get the property value and print it out
+            System.out.println();
+            if (Integer.parseInt(prop.getProperty("scanschedule")) == 5) {
                 applicationService.scanApplication(libraryHierarchyData);
-                    //Sleep to make sure scan results are files are generated
-                    Thread.sleep(100000);
+                //Sleep to make sure scan results are files are generated
+                Thread.sleep(100000);
                 applicationService.analyzeScanResults();
-                }
-                input.close();
             }
-            catch (Exception e)
-            {
-
-            }
-
+            input.close();
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while conducting a weekly Dependency-Check scan");
+            LOGGER.error(e.getMessage());
+        }
     }
 
 
     @Scheduled(cron = "0 0 12 1/15 * ? ")
     public void scanScheduleDaily() {
         try {
-
-              final Properties prop = new Properties();
-                final InputStream input = new FileInputStream("application.properties");
-
-                prop.load(input);
-
-                System.out.println();
-                if (Integer.parseInt(prop.getProperty("scanschedule")) == 15)
-                {
+            final Properties prop = new Properties();
+            final InputStream input = new FileInputStream("application.properties");
+            prop.load(input);
+            System.out.println();
+            if (Integer.parseInt(prop.getProperty("scanschedule")) == 15) {
                 applicationService.scanApplication(libraryHierarchyData);
-                    //Sleep to make sure scan results are files are generated
-                    Thread.sleep(100000);
+                //Sleep to make sure scan results are files are generated
+                Thread.sleep(100000);
                 applicationService.analyzeScanResults();
-                }
-                input.close();
             }
-            catch (Exception e)
-            {
-
-            }
-
+            input.close();
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while conducting a daily Dependency-Check scan");
+            LOGGER.error(e.getMessage());
+        }
     }
 
     @Scheduled(cron = "0 0 12 1/25 * ? ")
     public void scanScheduleMonthly() {
         try {
 
-                final Properties prop = new Properties();
-                final InputStream input = new FileInputStream("application.properties");
+            final Properties prop = new Properties();
+            final InputStream input = new FileInputStream("application.properties");
 
-                prop.load(input);
+            prop.load(input);
 
-                if (Integer.parseInt(prop.getProperty("scanschedule")) == 25)
-                {
+            if (Integer.parseInt(prop.getProperty("scanschedule")) == 25) {
                 applicationService.scanApplication(libraryHierarchyData);
-                    //Sleep to make sure scan results are files are generated
-                    Thread.sleep(100000);
+                //Sleep to make sure scan results are files are generated
+                Thread.sleep(100000);
                 applicationService.analyzeScanResults();
-                }
-                input.close();
             }
-            catch (Exception e)
-            {
-
-            }
+            input.close();
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while conducting a monthly Dependency-Check scan");
+            LOGGER.error(e.getMessage());
+        }
     }
+
     /**
      * Mapping to dashboard which gives vulnerability overview
      */
@@ -915,10 +911,6 @@ public class ApplicationController {
     public
     @ResponseBody
     String chartdata(Map<String, Object> map, @PathVariable("id") Integer applicationVersionId) {
-
-        final String jsondata = applicationVersionService.chartdata(applicationVersionId);
-
-
-        return jsondata;
+        return applicationVersionService.chartdata(applicationVersionId);
     }
 }

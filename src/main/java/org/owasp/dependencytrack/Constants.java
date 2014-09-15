@@ -52,4 +52,5 @@ public final class Constants {
      * Specify the NIST data directory used by Dependency-Check.
      */
     public static final String NIST_DIR = APP_DIR + File.separator + "nist";
+
 }

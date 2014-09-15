@@ -20,6 +20,9 @@
 package org.owasp.dependencytrack.dao;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.shiro.crypto.RandomNumberGenerator;
+import org.apache.shiro.crypto.SecureRandomNumberGenerator;
+import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -27,6 +30,8 @@ import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Permissions;
 import org.owasp.dependencytrack.model.Roles;
+import org.owasp.dependencytrack.model.User;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -37,7 +42,11 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @Component
@@ -46,7 +55,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     /**
      * Setup logger
      */
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DefaultObjectGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultObjectGenerator.class);
 
     /**
      * Specify default license names and files
@@ -54,7 +63,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     private static final LinkedHashMap<String, String> LICENSES;
 
     static {
-        LICENSES = new LinkedHashMap<String, String>();
+        LICENSES = new LinkedHashMap<>();
         LICENSES.put("Apache License 1.0", "licenses/Apache/LICENSE-1.0.txt");
         LICENSES.put("Apache License 1.1", "licenses/Apache/LICENSE-1.1.txt");
         LICENSES.put("Apache License 2.0", "licenses/Apache/LICENSE-2.0.txt");
@@ -104,7 +113,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     /**
      * Specify default Permission names
      */
-    private static final LinkedHashMap<String, ROLE> PERMISSIONS = new LinkedHashMap<String, ROLE>();
+    private static final LinkedHashMap<String, ROLE> PERMISSIONS = new LinkedHashMap<>();
 
     static {
         PERMISSIONS.put("applications", ROLE.USER);
@@ -157,6 +166,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             loadDefaultLicenses();
             loadDefaultPermissions();
             loadDefaultRoles();
+            loadDefaultUsers();
         } catch (IOException e) {
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(e.getMessage());
@@ -261,7 +271,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         final List<Permissions> permissions = query.list();
 
         // Create a temporary list to hold only user permissions
-        final List<Permissions> userPermissions = new ArrayList<Permissions>();
+        final List<Permissions> userPermissions = new ArrayList<>();
 
         // Iterate though all permissions and populate a temporary list of only the user permissions
         for (Permissions permission : permissions) {
@@ -271,7 +281,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         }
 
         // Create a temporary list to hold only user permissions
-        final List<Permissions> moderatorPermissions = new ArrayList<Permissions>();
+        final List<Permissions> moderatorPermissions = new ArrayList<>();
 
         for (Permissions permission : permissions) {
             if ((PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER)
@@ -281,7 +291,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         }
 
         // Create a temporary list to hold only user permissions
-        final List<Permissions> adminPermissions = new ArrayList<Permissions>();
+        final List<Permissions> adminPermissions = new ArrayList<>();
         for (Permissions permission : permissions) {
             adminPermissions.add(permission);
         }
@@ -292,15 +302,62 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         for (ROLE name : ROLE.values()) {
             final Roles role = new Roles(name.name().toLowerCase());
             if (name == ROLE.USER) {
-                role.setPerm(new HashSet<Permissions>(userPermissions));
+                role.setPerm(new HashSet<>(userPermissions));
             } else if (name == ROLE.MODERATOR) {
-                role.setPerm(new HashSet<Permissions>(moderatorPermissions));
+                role.setPerm(new HashSet<>(moderatorPermissions));
             } else if (name == ROLE.ADMIN) {
-                role.setPerm(new HashSet<Permissions>(adminPermissions));
+                role.setPerm(new HashSet<>(adminPermissions));
             }
             session.save(role);
         }
 
+        session.getTransaction().commit();
+        session.close();
+    }
+
+    /**
+     * Loads the default users into the database if no User data exists.
+     */
+    @SuppressWarnings("unchecked")
+    public void loadDefaultUsers() {
+        final Session session = sessionFactory.openSession();
+        final int count = ((Long) session.createQuery("select count(*) from User ").uniqueResult()).intValue();
+
+        // Check to see if data already exists in the table.
+        if (count > 0) {
+            return;
+        }
+
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Adding default users to datastore.");
+        }
+
+        session.beginTransaction();
+
+        final Query query = session.createQuery(" FROM Roles ");
+        final ArrayList<Roles> rolelist = (ArrayList<Roles>) query.list();
+        Roles adminRole = null;
+        for (Roles role: rolelist) {
+            if (role.getRole().equalsIgnoreCase(ROLE.ADMIN.name())) {
+                adminRole = role;
+            }
+        }
+        if (adminRole == null) {
+            return;
+        }
+        final RandomNumberGenerator rng = new SecureRandomNumberGenerator();
+        final Object salt = rng.nextBytes();
+        // todo: need to change this.
+        final String hashedPasswordBase64 = new Sha256Hash("admin", salt.toString(), 1).toBase64();
+
+        final User user = new User();
+        user.setPassword(hashedPasswordBase64);
+        user.setUsername("admin");
+        user.setCheckvalid(false);
+        user.setRoles(adminRole);
+        user.setPasswordSalt(salt.toString());
+
+        session.save(user);
         session.getTransaction().commit();
         session.close();
     }

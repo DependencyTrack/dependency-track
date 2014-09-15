@@ -23,22 +23,33 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.json.JSONObject;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.model.Application;
+import org.owasp.dependencytrack.model.ApplicationDependency;
+import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.ScanResults;
+import org.owasp.dependencytrack.model.Vulnerability;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 
 @Repository
 public class ApplicationVersionDao {
 
     /**
+     * Setup logger
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationVersionDao.class);
+
+    /**
      * The Hibernate SessionFactory
      */
     @Autowired
     private SessionFactory sessionFactory;
-
 
     /**
      * Returns an ApplicationVersion with the specified ID.
@@ -211,11 +222,15 @@ public class ApplicationVersionDao {
         query.executeUpdate();
     }
 
-    public String chartdata(int id) {
-        /*Get all the libraries with this application id
-         only get those libraries which are present in scan result
 
-        */
+    /**
+     * Get all the libraries with this application id.
+     * Only returns those libraries which are present in scan result.
+     * @param id The id of the ApplicationVersion
+     * @return a String
+     */
+    @SuppressWarnings("unchecked")
+    public String chartdata(int id) {
         final JSONObject obj = new JSONObject();
         try {
             Query query = sessionFactory.getCurrentSession().createQuery(
@@ -230,26 +245,19 @@ public class ApplicationVersionDao {
 
             final List<ScanResults> scanResultses = query.list();
 
-
             query = sessionFactory.getCurrentSession().createQuery(
                     "from Vulnerability as vuln where vuln.scanResults=:scanres");
             query.setParameterList("scanres", scanResultses);
-
 
             for (int i = 0; i < query.list().size(); i++) {
                 final Vulnerability vulnerability = (Vulnerability) query.list().get(i);
                 obj.put("vuln", vulnerability.getCwe());
                 obj.put("cvss", vulnerability.getCvss());
             }
-
-
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("An error occurred retrieving libraries and known vulnerabilities associated with them");
+            LOGGER.error(e.getMessage());
         }
-
-
         return obj.toString();
-
-
     }
 }

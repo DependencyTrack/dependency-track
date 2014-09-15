@@ -1,36 +1,36 @@
 /*
- * Copyright 2013 Axway
+ * This file is part of Dependency-Track.
  *
- * This file is part of OWASP Dependency-Track.
+ * Dependency-Track is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
  *
- * Dependency-Track is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * Dependency-Track is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * Dependency-Track is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
+ * You should have received a copy of the GNU General Public License along with
+ * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  *
- * You should have received a copy of the GNU General Public License along with Dependency-Track.
- * If not, see http://www.gnu.org/licenses/.
+ * Copyright (c) Axway. All Rights Reserved.
  */
 
 package org.owasp.dependencytrack.model;
 
-import org.hibernate.annotations.Type;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
 
-import javax.persistence.*;
-
-/**
- * Created with IntelliJ IDEA.
- * Users: nchitlurnavakiran
- * Date: 8/14/13
- * Time: 10:59 AM
- * To change this template use File | Settings | File Templates.
- */
 @Entity
 @Table(name = "USERS")
-public final class Users {
+public final class User {
 
     /**
      * The unique identifier of the persisted object.
@@ -43,7 +43,7 @@ public final class Users {
     /**
      * The name users use to logon.
      */
-    @Column(name = "USERNAME",unique=true)
+    @Column(name = "USERNAME", unique = true)
     private String username;
 
     /**
@@ -56,14 +56,13 @@ public final class Users {
      * The salt associated with each password.
      */
     @Column(name = "PASSWORD_SALT")
-    private String password_salt;
+    private String salt;
 
     /**
      * Admin validates a registered user and gives him access to the website
      */
     @Column(name = "CHECKVALID")
-    private boolean checkvalid ;
-
+    private boolean checkvalid;
 
     /**
      * The license the library is licensed under.
@@ -72,8 +71,6 @@ public final class Users {
     @JoinColumn(name = "ROLEID")
     @OrderBy
     private Roles roles;
-
-
 
     public Integer getId() {
         return id;
@@ -99,12 +96,12 @@ public final class Users {
         this.password = password;
     }
 
-    public String getPassword_salt() {
-        return password_salt;
+    public String getPasswordSalt() {
+        return salt;
     }
 
-    public void setPassword_salt(String password_salt) {
-        this.password_salt = password_salt;
+    public void setPasswordSalt(String salt) {
+        this.salt = salt;
     }
 
     public boolean isCheckvalid() {

@@ -91,13 +91,7 @@
         <property name="permissionsQuery"
                   value="SELECT p.PERMISSIONNAME FROM ROLES r, PERMISSIONS p, ROLES_PERMISSIONS rp
                          WHERE r.ID=rp.ROLES_ID AND p.ID=rp.PERMISSIONS_ID AND r.ROLE=?" />
-        <property name="permissionsLookupEnabled" value="true"></property>
+        <property name="permissionsLookupEnabled" value="true"/>
     </bean>
 
-    <!--
-    <bean id="matcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
-        <property name="hashIterations" value="1024"/>
-        <property name="storedCredentialsHexEncoded" value="false" />
-    </bean>
-    -->
 </beans>

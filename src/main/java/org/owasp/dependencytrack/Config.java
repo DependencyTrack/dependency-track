@@ -55,6 +55,11 @@ public final class Config {
     @Value("#{properties[signupEnabled]}")
     private String signupEnabled;
 
+    /**
+     * Determine the number of iterations when hashing a password
+     */
+    @Value("#{properties[hashIterations]}")
+    private int hashIterations;
 
     public String getShortname() {
         return shortname;
@@ -70,6 +75,10 @@ public final class Config {
 
     public String getBuildDate() {
         return buildDate;
+    }
+
+    public int getHashIterations() {
+        return hashIterations;
     }
 
     public boolean isSignupEnabled() {

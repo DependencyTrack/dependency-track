@@ -99,4 +99,5 @@ public final class LibraryVendor implements Cloneable {
         }
         libraries.add(library);
     }
+
 }

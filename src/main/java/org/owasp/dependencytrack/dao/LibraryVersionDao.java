@@ -30,6 +30,8 @@ import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVendor;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.License;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +48,11 @@ import java.util.List;
 public class LibraryVersionDao {
 
     /**
+     * Setup logger
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(LibraryVersionDao.class);
+
+    /**
      * The Hibernate SessionFactory
      */
     @Autowired
@@ -58,20 +65,20 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVendor> getLibraryHierarchy() {
-        final ArrayList<LibraryVendor> retlist = new ArrayList<LibraryVendor>();
+        final ArrayList<LibraryVendor> retlist = new ArrayList<>();
         final Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVendor order by vendor asc");
         for (LibraryVendor vendor : (List<LibraryVendor>) query.list()) {
             final Query query2 = sessionFactory.getCurrentSession().
                     createQuery("FROM Library where libraryVendor=:vendor order by libraryname asc");
             query2.setParameter("vendor", vendor);
-            LinkedHashSet<Library> libraries = new LinkedHashSet(query2.list());
+            final LinkedHashSet<Library> libraries = new LinkedHashSet(query2.list());
             vendor.setLibraries(libraries);
             for (Library library : (ArrayList<Library>) query2.list()) {
                 final Query query3 = sessionFactory.getCurrentSession().
                         createQuery("FROM LibraryVersion where library=:library order by libraryversion asc");
                 query3.setParameter("library", library);
                 final ArrayList<LibraryVersion> versions = (ArrayList<LibraryVersion>) query3.list();
-                library.setVersions(new HashSet<LibraryVersion>(versions));
+                library.setVersions(new HashSet<>(versions));
             }
             retlist.add(vendor);
         }
@@ -129,7 +136,7 @@ public class LibraryVersionDao {
                 createQuery("from ApplicationDependency where applicationVersion=:version");
         query.setParameter("version", version);
 
-        final List<LibraryVersion> libvers = new ArrayList<LibraryVersion>();
+        final List<LibraryVersion> libvers = new ArrayList<>();
         final List<ApplicationDependency> deps = query.list();
         for (ApplicationDependency dep : deps) {
             libvers.add(dep.getLibraryVersion());
@@ -388,7 +395,6 @@ public class LibraryVersionDao {
     public List<LibraryVendor> uniqueVendor() {
         final Query query = sessionFactory.getCurrentSession().
                 createQuery("select distinct lic from LibraryVendor as lic order by vendor");
-
         return query.list();
 
     }
@@ -466,7 +472,8 @@ public class LibraryVersionDao {
                 session.save(licenses);
 
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("An error occurred while adding a library with library version");
+                LOGGER.error(e.getMessage());
             } finally {
                 IOUtils.closeQuietly(licenseInputStream);
             }
@@ -504,7 +511,6 @@ public class LibraryVersionDao {
             libVersion.setSecunia(secuniaID);
             session.save(libVersion);
         }
-
         session.getTransaction().commit();
         session.close();
     }
@@ -545,7 +551,8 @@ public class LibraryVersionDao {
                 query.executeUpdate();
             }
         } catch (Exception e) {
-
+            LOGGER.error("An error occurred while uploading a license");
+            LOGGER.error(e.getMessage());
         }
     }
 

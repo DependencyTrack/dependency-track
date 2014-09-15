@@ -57,9 +57,9 @@ public class NistDataMirrorUpdater {
         try {
             doDownload(CVE_12_MODIFIED_URL);
             doDownload(CVE_20_MODIFIED_URL);
-            for (int i=START_YEAR; i<=END_YEAR; i++) {
-                String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
-                String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
+            for (int i = START_YEAR; i <= END_YEAR; i++) {
+                final String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
+                final String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
                 doDownload(cve12BaseUrl);
                 doDownload(cve20BaseUrl);
             }
@@ -78,8 +78,8 @@ public class NistDataMirrorUpdater {
         BufferedOutputStream bos = null;
 
         try {
-            URL url = new URL(cveUrl);
-            URLConnection urlConnection = url.openConnection();
+            final URL url = new URL(cveUrl);
+            final URLConnection urlConnection = url.openConnection();
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Downloading " + url.toExternalForm());
             }
@@ -89,17 +89,17 @@ public class NistDataMirrorUpdater {
 
             bis = new BufferedInputStream(urlConnection.getInputStream());
 
-            File dir = new File(Constants.NIST_DIR);
+            final File dir = new File(Constants.NIST_DIR);
             if (!dir.exists()) {
                 dir.mkdir();
             }
 
-            File file = new File(Constants.NIST_DIR + File.separator + filename);
+            final File file = new File(Constants.NIST_DIR + File.separator + filename);
             bos = new BufferedOutputStream(new FileOutputStream(file));
 
             int i;
             while ((i = bis.read()) != -1) {
-                bos.write( i );
+                bos.write(i);
             }
         } catch (IOException e) {
             if (LOGGER.isWarnEnabled()) {
@@ -112,21 +112,21 @@ public class NistDataMirrorUpdater {
     }
 
     /**
-     * Performs exact match validation to ensure the specified filename matches a known NIST filename
+     * Performs exact match validation to ensure the specified filename matches a known NIST filename.
      * @param filename the filename to check
      * @return a boolean value
      */
     public static boolean isValidNistFile(String filename) {
-        if (filename.equals(CVE_12_MODIFIED_URL.substring(CVE_12_MODIFIED_URL.lastIndexOf('/') + 1)) ||
-                filename.equals(CVE_20_MODIFIED_URL.substring(CVE_20_MODIFIED_URL.lastIndexOf('/') + 1))) {
+        if (filename.equals(CVE_12_MODIFIED_URL.substring(CVE_12_MODIFIED_URL.lastIndexOf('/') + 1))
+                || filename.equals(CVE_20_MODIFIED_URL.substring(CVE_20_MODIFIED_URL.lastIndexOf('/') + 1))) {
             return true;
         }
-        for (int i=START_YEAR; i<=END_YEAR; i++) {
-            String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
-            String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
+        for (int i = START_YEAR; i <= END_YEAR; i++) {
+            final String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
+            final String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
 
-            if (filename.equals(cve12BaseUrl.substring(cve12BaseUrl.lastIndexOf('/') + 1)) ||
-                    filename.equals(cve20BaseUrl.substring(cve20BaseUrl.lastIndexOf('/') + 1))) {
+            if (filename.equals(cve12BaseUrl.substring(cve12BaseUrl.lastIndexOf('/') + 1))
+                    || filename.equals(cve20BaseUrl.substring(cve20BaseUrl.lastIndexOf('/') + 1))) {
                 return true;
             }
         }

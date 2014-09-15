@@ -20,7 +20,11 @@
 package org.owasp.dependencytrack.service;
 
 import org.owasp.dependencytrack.dao.LibraryVersionDao;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.Library;
+import org.owasp.dependencytrack.model.LibraryVendor;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,12 +117,12 @@ public class LibraryVersionService {
     @Transactional
     public void addLibraries(String libraryname, String libraryversion, String vendor, String license, MultipartFile file, String language, Integer secuniaID) {
 
-        libraryVersionDao.addLibraries( libraryname,libraryversion,vendor,  license,  file,  language,  secuniaID);
+        libraryVersionDao.addLibraries(libraryname, libraryversion, vendor,  license,  file,  language,  secuniaID);
     }
 
     @Transactional
-    public void uploadLicense(int licenseid,MultipartFile file, String editlicensename) {
-        libraryVersionDao.uploadLicense(licenseid,file,editlicensename);
+    public void uploadLicense(int licenseid, MultipartFile file, String editlicensename) {
+        libraryVersionDao.uploadLicense(licenseid, file, editlicensename);
     }
 
     @Transactional

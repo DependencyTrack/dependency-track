@@ -25,22 +25,22 @@ import org.junit.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * JUnit test for the {@link Users} class.
+ * JUnit test for the {@link User} class.
  */
 public class UserTest {
 
     @Test
     @Transactional
     public void testObject() {
-        Users user = new Users();
+        User user = new User();
         user.setId(1);
         user.setUsername("testuser");
         user.setPassword("password");
-        user.setPassword_salt("salted-value");
+        user.setPasswordSalt("salted-value");
 
         assertEquals(new Integer(1), user.getId());
         assertEquals("testuser", user.getUsername());
         assertEquals("password", user.getPassword());
-        assertEquals("salted-value", user.getPassword_salt());
+        assertEquals("salted-value", user.getPasswordSalt());
     }
 }

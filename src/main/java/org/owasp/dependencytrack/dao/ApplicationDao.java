@@ -406,7 +406,7 @@ public class ApplicationDao {
                         dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", (String) vendor.get("vendor"), Confidence.HIGH);
                         dependency.getVersionEvidence().addEvidence("dependency-track", "libraryLanguage", (String) ver.get("libver"), Confidence.HIGH);
                         dependency.getProductEvidence().addEvidence("dependency-track", "libraryName", (String) libs.get("libname"), Confidence.HIGH);
-                        final Identifier identifier = new Identifier("dependency-track", "libverid", String.valueOf((Long) ver.get("libverid")), "Description");
+                        final Identifier identifier = new Identifier("dependency-track", "libverid", String.valueOf(ver.get("libverid")), "Description");
                         identifier.setConfidence(Confidence.HIGH);
                         dependency.getIdentifiers().add(identifier);
                         allDep.add(dependency);

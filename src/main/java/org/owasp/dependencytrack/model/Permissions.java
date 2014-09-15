@@ -51,7 +51,7 @@ public class Permissions {
      * The roles associated with this permission.
      */
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "perm")
-    private Set<Roles> maprole = new HashSet<Roles>();
+    private Set<Roles> maprole = new HashSet<>();
 
     /**
      * Default Constructor

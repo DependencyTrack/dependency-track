@@ -95,7 +95,7 @@ public final class LibraryVendor implements Cloneable {
      */
     public void addLibrary(Library library) {
         if (libraries == null) {
-            libraries = new HashSet<Library>();
+            libraries = new HashSet<>();
         }
         libraries.add(library);
     }

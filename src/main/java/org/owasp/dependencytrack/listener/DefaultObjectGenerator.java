@@ -17,7 +17,7 @@
  * Copyright (c) Axway. All Rights Reserved.
  */
 
-package org.owasp.dependencytrack.dao;
+package org.owasp.dependencytrack.listener;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.crypto.RandomNumberGenerator;
@@ -122,6 +122,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         PERMISSIONS.put("keywordSearchLibraries", ROLE.USER);
         PERMISSIONS.put("libraryHierarchy", ROLE.USER);
         PERMISSIONS.put("applicationVersion", ROLE.USER);
+        PERMISSIONS.put("vulnerabilities", ROLE.USER);
         PERMISSIONS.put("libraries", ROLE.USER);
         PERMISSIONS.put("downloadlicense", ROLE.USER);
         PERMISSIONS.put("viewlicense", ROLE.USER);

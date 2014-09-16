@@ -53,4 +53,9 @@ public final class Constants {
      */
     public static final String NIST_DIR = APP_DIR + File.separator + "nist";
 
+    /**
+     * Specify the directory where logs are stored.
+     */
+    public static final String LOG_DIR = APP_DIR + File.separator + "log";
+
 }

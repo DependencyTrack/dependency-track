@@ -4,6 +4,7 @@
 <%@ page import="org.owasp.html.HtmlPolicyBuilder" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="e" uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" %>
 
 <%!
     /*
@@ -16,6 +17,7 @@
         put("dashboard","dashboard.jsp");
         put("applications", "applications.jsp");
         put("applicationVersion", "applicationVersion.jsp");
+        put("vulnerabilities", "vulnerabilities.jsp");
         put("error", "error.jsp");
         put("libraries", "libraries.jsp");
         put("includeVisualization", "true");
@@ -43,7 +45,7 @@
 <div class="content-outer-container">
     <div class="content-inner-container">
         <div class="title-container">
-            <div class="title"><c:out value="${param.title}"/></div>
+            <div class="title"><e:forHtmlContent value="${param.title}"/></div>
             <div class="title-buttons">${htmlButtonPolicy.sanitize(param.buttons)}</div>
         </div>
         <div class="content">

@@ -1,5 +1,6 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 
 <div id="dashboardContainer">
 
@@ -14,15 +15,15 @@
                                 <div class="accordion-heading">
                                     <a class="accordion-toggle btn nav-header" data-toggle="collapse"
                                        data-parent="#questions"
-                                       href="#${applicationList.id}"> ${applicationList.name} </a>
+                                       href="#${applicationList.id}"><e:forHtmlContent value="${applicationList.name}"/></a>
                                 </div>
                                 <div id="${applicationList.id}" class="accordion-body collapse">
                                     <div class="accordion-inner">
                                         <c:forEach items="${applicationList.versions}" var="version">
                                             <a href="#" class="visualizeData" id="visualizeData"
                                                data-applicationid="${applicationList.id}"
-                                               data-versionid="${version.id}">Version <c:out
-                                                    value="${version.version}"/></a>
+                                               data-versionid="${version.id}">Version
+                                               <e:forHtmlContent value="${version.version}"/></a>
                                             <br>
                                         </c:forEach>
                                     </div>

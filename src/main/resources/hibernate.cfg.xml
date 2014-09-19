@@ -36,7 +36,5 @@
         <mapping class="org.owasp.dependencytrack.model.Permissions" />
         <mapping class="org.owasp.dependencytrack.model.ScanResults" />
         <mapping class="org.owasp.dependencytrack.model.Vulnerability" />
-
     </session-factory>
-         
 </hibernate-configuration>

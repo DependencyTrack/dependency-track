@@ -31,6 +31,7 @@ import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.Identifier;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
+import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
@@ -414,13 +415,19 @@ public class ApplicationDao {
                     }
                 }
             }
-            final DependencyCheckScanAgent scan = new DependencyCheckScanAgent();
-            scan.setDependencies(allDep);
-            scan.setReportFormat(ReportGenerator.Format.ALL);
-            scan.setReportOutputDirectory(System.getProperty("user.home"));
-            scan.execute();
+
+            final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
+            scanAgent.setConnectionString("jdbc:h2:file:%s;FILE_LOCK=SERIALIZED;AUTOCOMMIT=ON;");
+            scanAgent.setDataDirectory(Constants.DATA_DIR);
+            scanAgent.setAutoUpdate(true);
+
+            scanAgent.setDependencies(allDep);
+            scanAgent.setReportFormat(ReportGenerator.Format.ALL);
+            scanAgent.setReportOutputDirectory(System.getProperty("user.home"));
+            scanAgent.execute();
+
         } catch (Exception e) {
-            LOGGER.error("An error occurred while attempting to perform a Dependency-Check scan against an applicaiton");
+            LOGGER.error("An error occurred while attempting to perform a Dependency-Check scan against an application");
             LOGGER.error(e.getMessage());
         }
     }

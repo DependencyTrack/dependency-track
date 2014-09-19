@@ -3,10 +3,11 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title><c:out value="${properties.longname}: ${param.title}"/></title>
+    <title><e:forHtmlContent value="${properties.longname}: ${param.title}"/></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta name="copyright" content="Copyright Axway. All rights reserved."/>

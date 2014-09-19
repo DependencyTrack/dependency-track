@@ -31,10 +31,7 @@ import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.License;
-import org.owasp.dependencytrack.service.ApplicationService;
-import org.owasp.dependencytrack.service.ApplicationVersionService;
-import org.owasp.dependencytrack.service.LibraryVersionService;
-import org.owasp.dependencytrack.service.UserService;
+import org.owasp.dependencytrack.service.*;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +97,12 @@ public class ApplicationController {
      */
     @Autowired
     private ApplicationVersionService applicationVersionService;
+
+    /**
+     * The Dependency-Track VulnerabilityService.
+     */
+    @Autowired
+    private VulnerabilityService vulnerabilityService;
 
     /**
      * The Dependency-Track UserService.
@@ -673,6 +676,26 @@ public class ApplicationController {
             return "emptyfile";
         }
         return "";
+    }
+
+    /**
+     * Lists the vulnerability data in the specified application version.
+     *
+     * @param modelMap a Spring ModelMap
+     * @param map      a map of parameters
+     * @param id       the ID of the Application to list versions for
+     * @return a String
+     */
+    @RequiresPermissions("vulnerabilities")
+    @RequestMapping(value = "/vulnerabilities/{id}", method = RequestMethod.GET)
+    public String listVulnerabilityData(ModelMap modelMap, Map<String, Object> map, @PathVariable("id") int id) {
+        final ApplicationVersion version = applicationVersionService.getApplicationVersion(id);
+        modelMap.addAttribute("id", id);
+        map.put("applicationVersion", version);
+        map.put("dependencies", libraryVersionService.getDependencies(version));
+        map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
+        map.put("vulnerableComponents", vulnerabilityService.getVulnerableComponents(version));
+        return "vulnerabilitiesPage";
     }
 
     /**

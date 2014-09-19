@@ -3,6 +3,7 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 
 <div id="applicationContainer">
     <c:if test="${!empty applicationList}">
@@ -19,20 +20,20 @@
             <c:forEach items="${applicationList}" var="application">
                 <tr>
                     <td id="applicationCaret>${application.id}" data-toggle="collapse" data-target="#applicationDetails${application.id}" style="vertical-align:top;width:20px;height:20px;"><span class="caret"></span></td>
-                    <td style="vertical-align:top;"><a href="javascript:void(0);" data-toggle="collapse" data-target="#applicationDetails${application.id}"><c:out value="${application.name}"/></a>
+                    <td style="vertical-align:top;"><a href="javascript:void(0);" data-toggle="collapse" data-target="#applicationDetails${application.id}"><e:forHtmlContent value="${application.name}"/></a>
                         <div id="applicationDetails${application.id}" class="collapse">
                             <ul class="nav nav-list">
                                 <li class="nav-header"><spring:message code="label.versions"/></li>
                                 <c:if  test="${!check}">
                             <c:forEach items="${application.versions}" var="version">
-                                <li><a href="applicationVersion/${version.id}"><c:out value="${version.version}"/></a></li>
+                                <li><a href="applicationVersion/${version.id}"><e:forHtmlContent value="${version.version}"/></a></li>
                             </c:forEach>
                                 </c:if>
                                 <c:if  test="${check}">
                                 <c:if  test="${!empty versionlist}">
                                     <c:forEach items="${versionlist}" var="verv">
                                         <c:if  test="${application.id eq verv.application.id}">
-                                        <li><a href="applicationVersion/${verv.id}"><c:out value="${verv.version}"/></a></li>
+                                        <li><a href="applicationVersion/${verv.id}"><e:forHtmlContent value="${verv.version}"/></a></li>
                                         </c:if>
                                     </c:forEach>
                                 </c:if>

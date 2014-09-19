@@ -3,7 +3,7 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
-
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 
 <spring:message code="label.role.admin" var="admin"/>
 <spring:message code="permissions.deleteDependency" var="deleteDependency"/>
@@ -27,10 +27,10 @@
             <tbody>
             <c:forEach items="${dependencies}" var="libraryVersion">
             <tr>
-                <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryVendor.vendor}"/></td>
-                <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.libraryname}"/></td>
-                <td style="vertical-align:middle;"><c:out value="${libraryVersion.libraryversion}"/></td>
-                <td style="vertical-align:middle;"><c:out value="${libraryVersion.library.license.licensename}"/></td>
+                <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.libraryVendor.vendor}"/></td>
+                <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.libraryname}"/></td>
+                <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.libraryversion}"/></td>
+                <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.license.licensename}"/></td>
                 <shiro:hasPermission name="${deleteDependency}">
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>

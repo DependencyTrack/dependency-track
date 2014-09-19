@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -360,7 +361,7 @@ public class LibraryVersionDao {
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVersion> allLibrary() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion order by library.libraryname");
+        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion order by library.libraryVendor.vendor, library.libraryname");
         return query.list();
     }
 

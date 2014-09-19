@@ -2,13 +2,14 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring" %>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 <spring:message code="label.username" var="usernameLabel"/>
 <spring:message code="label.password" var="passwordLabel"/>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title><c:out value="${properties.longname}"/></title>
+    <title><e:forHtmlContent value="${properties.longname}"/></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta name="copyright" content="Copyright Axway. All rights reserved."/>
@@ -23,7 +24,7 @@
 <body>
 
 <div id="login-block">
-    <h3><c:out value="${properties.longname}"/></h3>
+    <h3><e:forHtmlContent value="${properties.longname}"/></h3>
     <div class="login-box clearfix">
         <div class="login-logo">
             <img src="<c:url value="/resources/images/OWASP-logo-100x100.png"/>" alt="OWASP Logo"/>

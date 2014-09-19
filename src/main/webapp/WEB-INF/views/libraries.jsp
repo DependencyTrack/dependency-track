@@ -2,6 +2,7 @@
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 
 <spring:message code="permissions.uploadlicense" var="uploadlicense"/>
 <spring:message code="permissions.updatelibrary" var="updatelibrary"/>
@@ -25,12 +26,12 @@
             <tbody>
             <c:forEach items="${libList}" var="libList">
                 <tr>
-                    <td><c:out value="${libList.library.libraryVendor.vendor}"/></td>
-                    <td><c:out value="${libList.library.libraryname}"/></td>
-                    <td><c:out value="${libList.libraryversion}"/></td>
-                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}" href="#licenseLibrariesModal">${libList.library.license.licensename}</a></td>
-                    <td><c:out value="${libList.library.language}"/></td>
-                    <td><c:out value="${libList.secunia}"/></td>
+                    <td><e:forHtmlContent value="${libList.library.libraryVendor.vendor}"/></td>
+                    <td><e:forHtmlContent value="${libList.library.libraryname}"/></td>
+                    <td><e:forHtmlContent value="${libList.libraryversion}"/></td>
+                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}" href="#licenseLibrariesModal"><e:forHtmlContent value="${libList.library.license.licensename}"/></a></td>
+                    <td><e:forHtmlContent value="${libList.library.language}"/></td>
+                    <td><e:forHtmlContent value="${libList.secunia}"/></td>
                     <shiro:hasPermission name="${updatelibrary}">
                     <td style="vertical-align:top;text-align:right;">
                         <div class="btn-group">
@@ -106,7 +107,7 @@
                         <select id="licenseids" name="license"  class="licenseidsclass">
                             <option value="">--</option>
                             <c:forEach items="${uniquelicList}" var="libList">
-                                <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
+                                <option value="${libList.licensename}"><e:forHtmlContent value="${libList.licensename}"/></option>
                             </c:forEach>
                         </select>
                             </c:if>
@@ -125,7 +126,7 @@
                         <select id="languageid" name="language"  class="languageidclass">
                             <option value="">--</option>
                             <c:forEach items="${uniqueLang}" var="libList">
-                                <option value="${libList}"><c:out value="${libList}"/></option>
+                                <option value="${libList}"><e:forHtmlContent value="${libList}"/></option>
                             </c:forEach>
                         </select>
                         <input id="language" name ="languagesel"  type="text" required="required" style="  position:relative; height: 20px; border: 0; left: -223px; width: 183px;" />
@@ -182,7 +183,7 @@
                                 <select id="licenseeditids" name="license">
                                     <option value="">--</option>
                                     <c:forEach items="${uniquelicList}" var="libList">
-                                        <option value="${libList.licensename}"><c:out value="${libList.licensename}"/></option>
+                                        <option value="${libList.licensename}"><e:forHtmlContent value="${libList.licensename}"/></option>
                                     </c:forEach>
                                 </select>
                             </div>

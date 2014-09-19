@@ -1,7 +1,7 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
-
+<%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 
 <div id="userManagaementContainer">
 
@@ -20,7 +20,7 @@
             <tbody>
             <tr>
             <td><spring:message code="label.globalSchedule"/></td>
-            <td> <input class="slider" id ="slider" type="range" min="5" max="25" value="5" step="10"  /></td>
+            <td><input class="slider" id ="slider" type="range" min="5" max="25" value="5" step="10"  /></td>
             <td><input class="box" id = "box"  type="text" value="5" style="width:20px;"/></td>
             </tr>
             </tbody>
@@ -54,10 +54,10 @@
                         <c:forEach items="${roleList}" var="roleList">
                             <c:choose>
                             <c:when test="${roleList.id == userList.roles.id}">
-                                <option value="${roleList.id}" selected="selected" >${roleList.role}</option>
+                                <option value="${roleList.id}" selected="selected" ><e:forHtmlContent value="${roleList.role}"/></option>
                             </c:when>
                             <c:otherwise>
-                                <option value="${roleList.id} ">${roleList.role}</option>
+                                <option value="${roleList.id} "><e:forHtmlContent value="${roleList.role}"/></option>
                             </c:otherwise>
                             </c:choose>
                         </c:forEach>
@@ -100,7 +100,7 @@
                 <td>
                 <select id="adminrolenamenameid" name="role" class="role" autofocus="autofocus">
                         <c:forEach items="${roleList}" var="roleList">
-                            <option value="${roleList.id} ">${roleList.role}</option>
+                            <option value="${roleList.id} "><e:forHtmlContent value="${roleList.role}"/></option>
                         </c:forEach>
                 </select>
                         </td>

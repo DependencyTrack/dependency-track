@@ -34,12 +34,12 @@ import java.util.List;
 public class Analysis {
 
     /**
-     * All dependencies as the result of an analysis
+     * All dependencies as the result of an analysis.
      */
     private final List<Dependency> dependencies = new ArrayList<>();
 
     /**
-     * Adds a new dependency to this collection
+     * Adds a new dependency to this collection.
      *
      * @param dependency the dependency to add
      */
@@ -48,7 +48,7 @@ public class Analysis {
     }
 
     /**
-     * Returns a read-only collection of all dependencies from the analysis
+     * Returns a read-only collection of all dependencies from the analysis.
      *
      * @return all dependencies from the analysis
      */

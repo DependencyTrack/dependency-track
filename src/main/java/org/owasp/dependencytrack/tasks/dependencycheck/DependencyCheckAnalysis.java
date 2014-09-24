@@ -32,7 +32,7 @@ import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.ScanResults;
+import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class DependencyCheckAnalysis {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyCheckAnalysis.class);
 
-    SessionFactory sessionFactory;
+    private SessionFactory sessionFactory;
 
     public DependencyCheckAnalysis(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -61,7 +61,7 @@ public class DependencyCheckAnalysis {
     public synchronized void execute() {
         if (performAnalysis()) {
             try {
-                Analysis analysis = analyzeResults();
+                final Analysis analysis = analyzeResults();
                 commitVulnerabilityData(analysis);
             } catch (SAXException | IOException e) {
                 LOGGER.error("An error occurred while analyzing Dependency-Check results: " + e.getMessage());
@@ -74,16 +74,16 @@ public class DependencyCheckAnalysis {
         sessionFactory.openSession();
 
         // Retrieve a list of all library versions defined in the system
-        Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
+        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
         @SuppressWarnings("unchecked")
-        List<LibraryVersion> libraries = query.list();
+        final List<LibraryVersion> libraries = query.list();
 
         // iterate through the libraries, create evidence and create the resulting dependency
-        List<Dependency> dependencies = new ArrayList<>();
+        final List<Dependency> dependencies = new ArrayList<>();
         for (LibraryVersion libraryVersion: libraries) {
-            Library library = libraryVersion.getLibrary();
+            final Library library = libraryVersion.getLibrary();
             final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
-            dependency.setMd5sum(UUID.randomUUID().toString().replace("-",""));
+            dependency.setMd5sum(UUID.randomUUID().toString().replace("-", ""));
             dependency.setSha1sum(UUID.randomUUID().toString().replace("-", ""));
             dependency.setLicense(library.getLicense().getLicensename());
             dependency.setDescription(String.valueOf(libraryVersion.getId()));
@@ -119,13 +119,13 @@ public class DependencyCheckAnalysis {
     }
 
     public synchronized Analysis analyzeResults() throws SAXException, IOException {
-        Digester digester = new Digester();
+        final Digester digester = new Digester();
         digester.setValidating(false);
         digester.setClassLoader(DependencyCheckAnalysis.class.getClassLoader());
 
         digester.addObjectCreate("analysis", Analysis.class);
 
-        String depXpath = "analysis/dependencies/dependency";
+        final String depXpath = "analysis/dependencies/dependency";
         digester.addObjectCreate(depXpath, Dependency.class);
         digester.addBeanPropertySetter(depXpath + "/fileName");
         digester.addBeanPropertySetter(depXpath + "/filePath");
@@ -134,14 +134,14 @@ public class DependencyCheckAnalysis {
         digester.addBeanPropertySetter(depXpath + "/description");
         digester.addBeanPropertySetter(depXpath + "/license");
 
-        String vulnXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability";
+        final String vulnXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability";
         digester.addObjectCreate(vulnXpath, org.owasp.dependencycheck.dependency.Vulnerability.class);
         digester.addBeanPropertySetter(vulnXpath + "/name");
         digester.addBeanPropertySetter(vulnXpath + "/cvssScore");
         digester.addBeanPropertySetter(vulnXpath + "/cwe");
         digester.addBeanPropertySetter(vulnXpath + "/description");
 
-        String refXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability/references/reference";
+        final String refXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability/references/reference";
         digester.addObjectCreate(refXpath, Reference.class);
         digester.addBeanPropertySetter(refXpath + "/source");
         digester.addBeanPropertySetter(refXpath + "/url");
@@ -151,7 +151,7 @@ public class DependencyCheckAnalysis {
         digester.addSetNext(vulnXpath, "addVulnerability");
         digester.addSetNext(depXpath, "addDependency");
 
-        Analysis module = (Analysis) digester.parse(new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml"));
+        final Analysis module = (Analysis) digester.parse(new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml"));
         if (module == null) {
             throw new SAXException("Input stream is not a Dependency-Check report file.");
         }
@@ -168,34 +168,48 @@ public class DependencyCheckAnalysis {
             }
 
             // The primary key for the library version is stored in the description field for reference
-            Session session = sessionFactory.openSession();
+            final Session session = sessionFactory.openSession();
             final Query query = session.createQuery("FROM LibraryVersion WHERE id=:id");
             query.setParameter("id", new Integer(dependency.getDescription()));
-            LibraryVersion libraryVersion = (LibraryVersion)query.list().get(0);
+            final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
             session.beginTransaction();
 
-            ScanResults scan = new ScanResults();
-            scan.setScanDate(new Date());
-            scan.setUUID(UUID.randomUUID().toString());
-            scan.setLibraryVersion(libraryVersion);
-
-            session.save(scan);
-
             // Iterate through native Dependency-Check Vulnerability objects and create Dependency-Track Vulnerability objects
             for (org.owasp.dependencycheck.dependency.Vulnerability dcVuln: dependency.getVulnerabilities()) {
-                Vulnerability vuln = new Vulnerability();
+                final Vulnerability vuln = getVulnerability(dcVuln.getName(), session);
                 vuln.setCwe(dcVuln.getCwe());
                 vuln.setCve(dcVuln.getName());
                 vuln.setCvss(dcVuln.getCvssScore());
                 vuln.setDescription(dcVuln.getDescription());
-                vuln.setScanResults(scan);
-                LOGGER.debug("Recording vulnerability: " + dcVuln.getName() + " against " + libraryVersion.getLibrary().getLibraryname() + " " + libraryVersion.getLibraryversion());
-                session.save(vuln);
+                if (vuln.getId() == null || vuln.getId() == 0) {
+                    LOGGER.debug("Recording vulnerability: " + dcVuln.getName() + " against " + libraryVersion.getLibrary().getLibraryname() + " " + libraryVersion.getLibraryversion());
+                    session.save(vuln);
+                } else {
+                    LOGGER.debug("Updating vulnerability: " + dcVuln.getName());
+                    session.update(vuln);
+                }
+
+                final ScanResult scan = new ScanResult();
+                scan.setScanDate(new Date());
+                scan.setLibraryVersion(libraryVersion);
+                scan.setVulnerability(vuln);
+                session.save(scan);
             }
             session.getTransaction().commit();
             session.close();
         }
+    }
+
+    private Vulnerability getVulnerability(String cve, Session session) {
+        final Query query = session.createQuery("from Vulnerability where cve=:cve order by id asc");
+        query.setParameter("cve", cve);
+        @SuppressWarnings("unchecked")
+        final List<Vulnerability> vulns = query.list();
+        if (vulns.size() > 0) {
+            return vulns.get(0);
+        }
+        return new Vulnerability();
     }
 
 }

@@ -144,6 +144,12 @@
             <artifactId>shiro-aspectj</artifactId>
             <version>${org.apache.shiro-version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-ehcache</artifactId>
+            <version>${org.apache.shiro-version}</version>
+        </dependency>
+
 
         <!-- h2 database -->
         <dependency>

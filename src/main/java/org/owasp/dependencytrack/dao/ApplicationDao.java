@@ -36,7 +36,7 @@ import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.ScanResults;
+import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -473,16 +473,15 @@ public class ApplicationDao {
                                     query.setParameter("libverid", Integer.parseInt(value));
 
                                     final LibraryVersion currentLibrary = (LibraryVersion) query.list().get(0);
-                                    final ScanResults results = new ScanResults();
+                                    final ScanResult results = new ScanResult();
                                     final Date date = new Date();
 
                                     results.setScanDate(date);
-                                    results.setUUID("1");
                                     results.setLibraryVersion(currentLibrary);
                                     session.save(results);
 
                                     final Vulnerability vulnerability = new Vulnerability();
-                                    vulnerability.setScanResults(results);
+                                    vulnerability.setScanResult(results);
                                     vulnerability.setCve(vuln.getElementsByTagName("name").item(0).getTextContent());
                                     vulnerability.setCvss(Float.parseFloat(vuln.getElementsByTagName("cvssScore").item(0).getTextContent()));
                                     vulnerability.setCwe(vuln.getElementsByTagName("cwe").item(0).getTextContent());

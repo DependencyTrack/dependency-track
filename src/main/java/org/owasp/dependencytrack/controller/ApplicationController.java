@@ -31,7 +31,11 @@ import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.License;
-import org.owasp.dependencytrack.service.*;
+import org.owasp.dependencytrack.service.ApplicationService;
+import org.owasp.dependencytrack.service.ApplicationVersionService;
+import org.owasp.dependencytrack.service.LibraryVersionService;
+import org.owasp.dependencytrack.service.UserService;
+import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,8 +235,6 @@ public class ApplicationController {
     @RequiresPermissions("applications")
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String application(HttpServletRequest request) {
-
-
         return "redirect:/applications";
     }
 
@@ -275,6 +277,20 @@ public class ApplicationController {
             LOGGER.error(e.getMessage());
         }
         return "applicationsPage";
+    }
+
+    /**
+     * Lists vulnerability summary information for the specified application
+     *
+     * @param map A map of parameters
+     * @param id The ID of the Application to retrieve vulnerability info for
+     * @return a String
+     */
+    @RequiresPermissions("applications")
+    @RequestMapping(value = "/vulnerabilitySummary/{id}", method = RequestMethod.GET)
+    public String vulnerabiltySummary(Map<String, Object> map, @PathVariable("id") int id) {
+        map.put("vulnerabilityInfo", vulnerabilityService.getVulnerabilitySummary(id));
+        return "vulnerabilitySummary";
     }
 
     /**
@@ -788,7 +804,7 @@ public class ApplicationController {
     }
 
     /**
-     * Admin User Management
+     * Admin User Management.
      */
     @RequiresPermissions("usermanagement")
     @RequestMapping(value = "/usermanagement", method = RequestMethod.GET)
@@ -799,7 +815,7 @@ public class ApplicationController {
     }
 
     /**
-     * Admin User Management change scan schedule
+     * Admin User Management change scan schedule.
      */
     @RequiresPermissions("usermanagement")
     @RequestMapping(value = "/changescanschedule/{numberOfDays}", method = RequestMethod.GET)

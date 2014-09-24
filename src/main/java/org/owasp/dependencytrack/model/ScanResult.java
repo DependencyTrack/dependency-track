@@ -21,21 +21,18 @@ package org.owasp.dependencytrack.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.util.Date;
-import java.util.Set;
 
 @Entity
-@Table(name = "SCANRESULTS")
-public class ScanResults {
+@Table(name = "SCANRESULT")
+public class ScanResult {
 
     /**
      * The unique identifier of the persisted object.
@@ -53,23 +50,18 @@ public class ScanResults {
     private Date scanDate;
 
     /**
-     * The UUID characters
-     */
-    @Column(name = "UUID")
-    private String UUID;
-
-    /**
-     * The vulnerabilities mapped to a scan
-     */
-    @OneToMany(mappedBy = "scanResults", fetch = FetchType.EAGER)
-    private Set<Vulnerability> vulnerabilities;
-
-    /**
      * The parent application version.
      */
     @ManyToOne
     @JoinColumn(name = "LIBRARYVERSIONID", nullable = false)
     private LibraryVersion libraryVersion;
+
+    /**
+     * The vulnerability recorded in this scan.
+     */
+    @ManyToOne
+    @JoinColumn(name = "VULNERABILITYID", nullable = false)
+    private Vulnerability vulnerability;
 
     public Integer getId() {
         return id;
@@ -87,14 +79,6 @@ public class ScanResults {
         this.scanDate = scanDate;
     }
 
-    public String getUUID() {
-        return UUID;
-    }
-
-    public void setUUID(String UUID) {
-        this.UUID = UUID;
-    }
-
     public LibraryVersion getLibraryVersion() {
         return libraryVersion;
     }
@@ -103,4 +87,11 @@ public class ScanResults {
         this.libraryVersion = libraryVersion;
     }
 
+    public Vulnerability getVulnerability() {
+        return vulnerability;
+    }
+
+    public void setVulnerability(Vulnerability vulnerability) {
+        this.vulnerability = vulnerability;
+    }
 }

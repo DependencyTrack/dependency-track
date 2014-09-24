@@ -29,7 +29,7 @@ public class VulnerableComponent {
 
     private LibraryVersion libraryVersion;
 
-    private ScanResults scanResults;
+    private ScanResult scanResult;
 
     private List<Vulnerability> vulnerabilities = new ArrayList<>();
 
@@ -41,12 +41,12 @@ public class VulnerableComponent {
         this.libraryVersion = libraryVersion;
     }
 
-    public ScanResults getScanResults() {
-        return scanResults;
+    public ScanResult getScanResult() {
+        return scanResult;
     }
 
-    public void setScanResults(ScanResults scanResults) {
-        this.scanResults = scanResults;
+    public void setScanResult(ScanCompResult scanResult) {
+        this.scanResult = scanResult;
     }
 
     public List<Vulnerability> getVulnerabilities() {

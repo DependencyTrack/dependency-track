@@ -43,9 +43,9 @@ public class FileSystemInitializer implements ApplicationListener<ContextRefresh
     }
 
     private void makeDirectory(File file) {
-        if (! file.exists()) {
+        if (!file.exists()) {
             System.out.println("Creating directory: " + file.getAbsolutePath());
-            if (! file.mkdir()) {
+            if (!file.mkdir()) {
                 System.out.println("An error occurred creating directory: " + file.getAbsolutePath());
             }
         }

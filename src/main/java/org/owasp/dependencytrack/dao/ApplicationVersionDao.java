@@ -27,7 +27,7 @@ import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.ScanResults;
+import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,14 +239,14 @@ public class ApplicationVersionDao {
             final List<LibraryVersion> libraryVersions = query.list();
 
             query = sessionFactory.getCurrentSession().createQuery(
-                    "from ScanResults as scan where scan.libraryVersion=:libver");
+                    "from ScanResult as scan where scan.libraryVersion=:libver");
             query.setParameterList("libver", libraryVersions);
 
-            final List<ScanResults> scanResultses = query.list();
+            final List<ScanResult> scanResults = query.list();
 
             query = sessionFactory.getCurrentSession().createQuery(
-                    "from Vulnerability as vuln where vuln.scanResults=:scanres");
-            query.setParameterList("scanres", scanResultses);
+                    "from Vulnerability as vuln where vuln.scanResult=:scanResult");
+            query.setParameterList("scanResult", scanResults);
 
             for (int i = 0; i < query.list().size(); i++) {
                 final Vulnerability vulnerability = (Vulnerability) query.list().get(i);

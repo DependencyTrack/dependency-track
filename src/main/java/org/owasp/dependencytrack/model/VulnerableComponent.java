@@ -45,7 +45,7 @@ public class VulnerableComponent {
         return scanResult;
     }
 
-    public void setScanResult(ScanCompResult scanResult) {
+    public void setScanResult(ScanResult scanResult) {
         this.scanResult = scanResult;
     }
 

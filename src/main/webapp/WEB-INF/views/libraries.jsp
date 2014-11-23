@@ -17,7 +17,6 @@
                 <th><spring:message code="label.version"/></th>
                 <th><spring:message code="label.license"/></th>
                 <th><spring:message code="label.language"/></th>
-                <th><spring:message code="label.secunia.id"/></th>
                 <shiro:hasPermission name="${updatelibrary}">
                 <th>&nbsp;</th>
                     </shiro:hasPermission>
@@ -31,7 +30,6 @@
                     <td><e:forHtmlContent value="${libList.libraryversion}"/></td>
                     <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}" href="#licenseLibrariesModal"><e:forHtmlContent value="${libList.library.license.licensename}"/></a></td>
                     <td><e:forHtmlContent value="${libList.library.language}"/></td>
-                    <td><e:forHtmlContent value="${libList.secunia}"/></td>
                     <shiro:hasPermission name="${updatelibrary}">
                     <td style="vertical-align:top;text-align:right;">
                         <div class="btn-group">
@@ -45,7 +43,6 @@
                                data-libraryversion ="${libList.libraryversion}"
                                data-licensename ="${libList.library.license.licensename}"
                                data-language ="${libList.library.language}"
-                               data-secunia ="${libList.secunia}"
                                class="open-EditLibrariesModal btn" href="#editLibrariesModal">Edit</a>
                         </div>
                     </td>
@@ -133,10 +130,6 @@
                         </div>
                     </td>
                 </tr>
-                <tr>
-                    <td><label for="secuniaID"><spring:message code="label.secunia.id"/></label></td>
-                    <td><input id="secuniaID" name="secuniaID" type="text" pattern="\d+" title="Numbers only" /></td>
-                </tr>
             </table>
         </div>
 
@@ -192,10 +185,6 @@
                     <tr>
                         <td><label for="languageedit"><spring:message code="label.language"/></label></td>
                         <td><input id="languageedit" name="language" type="text" value=""/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="secuniaIDedit"><spring:message code="label.secunia.id"/></label></td>
-                        <td><input id="secuniaIDedit" name="secuniaID" type="text" pattern="\d+" title="Numbers only" value=""/></td>
                     </tr>
                 </table>
                 <input type="hidden" id="editvendorid" name="editvendorid" value=""/>

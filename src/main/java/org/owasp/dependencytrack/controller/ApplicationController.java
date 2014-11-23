@@ -25,17 +25,14 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.subject.Subject;
+import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.License;
-import org.owasp.dependencytrack.service.ApplicationService;
-import org.owasp.dependencytrack.service.ApplicationVersionService;
-import org.owasp.dependencytrack.service.LibraryVersionService;
-import org.owasp.dependencytrack.service.UserService;
-import org.owasp.dependencytrack.service.VulnerabilityService;
+import org.owasp.dependencytrack.service.*;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +57,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Path;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -119,6 +117,12 @@ public class ApplicationController {
      */
     @Autowired
     private LibraryVersionService libraryVersionService;
+
+    /**
+     * The Dependency-Track ReportService.
+     */
+    @Autowired
+    private ReportService reportService;
 
     /**
      * Dependency-Track's centralized Configuration class
@@ -291,6 +295,18 @@ public class ApplicationController {
     public String vulnerabiltySummary(Map<String, Object> map, @PathVariable("id") int id) {
         map.put("vulnerabilityInfo", vulnerabilityService.getVulnerabilitySummary(id));
         return "vulnerabilitySummary";
+    }
+
+    @RequestMapping(value = "/dependencyCheckReport/{id}.xml", method = RequestMethod.GET, produces="application/xml")
+    @ResponseBody
+    public String dependencyCheckXmlReport(Map<String, Object> map, @PathVariable("id") int id) {
+        return reportService.generateDependencyCheckReport(id, ReportGenerator.Format.XML);
+    }
+
+    @RequestMapping(value = "/dependencyCheckReport/{id}.html", method = RequestMethod.GET, produces="text/html")
+    @ResponseBody
+    public String dependencyCheckHtmlReport(Map<String, Object> map, @PathVariable("id") int id) {
+        return reportService.generateDependencyCheckReport(id, ReportGenerator.Format.HTML);
     }
 
     /**
@@ -543,7 +559,6 @@ public class ApplicationController {
      * @param vendor           The String representation of the Vendor
      * @param license          The license the Library is licensed under
      * @param language         The programming language the Library was written in
-     * @param secuniaID        The Secunia ID of the LibraryVersion
      * @return a String
      */
     @RequiresPermissions("updatelibrary")
@@ -556,12 +571,10 @@ public class ApplicationController {
                                   @RequestParam("libraryversion") String libraryversion,
                                   @RequestParam("vendor") String vendor,
                                   @RequestParam("license") String license,
-                                  @RequestParam("language") String language,
-                                  @RequestParam(value = "secuniaID", required = false) Integer secuniaID) {
+                                  @RequestParam("language") String language) {
 
         libraryVersionService.updateLibrary(vendorid, licenseid, libraryid,
-                libraryversionid, libraryname, libraryversion, vendor, license,
-                language, secuniaID);
+                libraryversionid, libraryname, libraryversion, vendor, license, language);
         return "redirect:/libraries";
     }
 
@@ -606,7 +619,6 @@ public class ApplicationController {
      * @param license        The license the Library is licensed under
      * @param file           The license file
      * @param language       The programming language the Library was written in
-     * @param secuniaID      The Secunia ID of the LibraryVersion
      * @return a String
      */
     @RequiresPermissions("addlibraries")
@@ -616,10 +628,9 @@ public class ApplicationController {
                                @RequestParam("vendorsel") String vendor,
                                @RequestParam("licensesel") String license,
                                @RequestParam("Licensefile") MultipartFile file,
-                               @RequestParam("languagesel") String language,
-                               @RequestParam(value = "secuniaID", required = false) Integer secuniaID) {
+                               @RequestParam("languagesel") String language) {
 
-        libraryVersionService.addLibraries(libraryname, libraryversion, vendor, license, file, language, secuniaID);
+        libraryVersionService.addLibraries(libraryname, libraryversion, vendor, license, file, language);
         return "redirect:/libraries";
     }
 
@@ -710,6 +721,7 @@ public class ApplicationController {
         map.put("applicationVersion", version);
         map.put("dependencies", libraryVersionService.getDependencies(version));
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
+        map.put("vulnerableComponents", vulnerabilityService.getVulnerableComponents(version));
         map.put("vulnerableComponents", vulnerabilityService.getVulnerableComponents(version));
         return "vulnerabilitiesPage";
     }

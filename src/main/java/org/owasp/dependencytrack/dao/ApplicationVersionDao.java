@@ -251,7 +251,7 @@ public class ApplicationVersionDao {
             for (int i = 0; i < query.list().size(); i++) {
                 final Vulnerability vulnerability = (Vulnerability) query.list().get(i);
                 obj.put("vuln", vulnerability.getCwe());
-                obj.put("cvss", vulnerability.getCvss());
+                obj.put("cvss", vulnerability.getCvssScore());
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred retrieving libraries and known vulnerabilities associated with them");

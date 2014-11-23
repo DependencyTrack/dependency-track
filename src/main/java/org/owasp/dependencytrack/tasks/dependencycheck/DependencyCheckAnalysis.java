@@ -34,6 +34,7 @@ import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.util.DCObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -99,7 +100,7 @@ public class DependencyCheckAnalysis {
         scanAgent.setConnectionString("jdbc:h2:file:%s;FILE_LOCK=SERIALIZED;AUTOCOMMIT=ON;");
         scanAgent.setDataDirectory(Constants.DATA_DIR);
         scanAgent.setReportOutputDirectory(Constants.APP_DIR);
-        scanAgent.setReportFormat(ReportGenerator.Format.XML);
+        scanAgent.setReportFormat(ReportGenerator.Format.ALL);
         scanAgent.setAutoUpdate(true);
         scanAgent.setDependencies(dependencies);
 
@@ -134,6 +135,11 @@ public class DependencyCheckAnalysis {
         digester.addBeanPropertySetter(depXpath + "/description");
         digester.addBeanPropertySetter(depXpath + "/license");
 
+        final String identXpath = "analysis/dependencies/dependency/identifiers/identifier";
+        digester.addObjectCreate(identXpath, org.owasp.dependencycheck.dependency.Identifier.class);
+        digester.addBeanPropertySetter(identXpath + "/name", "value");
+        digester.addBeanPropertySetter(identXpath + "/url");
+
         final String vulnXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability";
         digester.addObjectCreate(vulnXpath, org.owasp.dependencycheck.dependency.Vulnerability.class);
         digester.addBeanPropertySetter(vulnXpath + "/name");
@@ -148,6 +154,7 @@ public class DependencyCheckAnalysis {
         digester.addBeanPropertySetter(refXpath + "/name");
 
         digester.addSetNext(refXpath, "addReference");
+        digester.addSetNext(identXpath, "addIdentifier");
         digester.addSetNext(vulnXpath, "addVulnerability");
         digester.addSetNext(depXpath, "addDependency");
 
@@ -178,10 +185,8 @@ public class DependencyCheckAnalysis {
             // Iterate through native Dependency-Check Vulnerability objects and create Dependency-Track Vulnerability objects
             for (org.owasp.dependencycheck.dependency.Vulnerability dcVuln: dependency.getVulnerabilities()) {
                 final Vulnerability vuln = getVulnerability(dcVuln.getName(), session);
-                vuln.setCwe(dcVuln.getCwe());
-                vuln.setCve(dcVuln.getName());
-                vuln.setCvss(dcVuln.getCvssScore());
-                vuln.setDescription(dcVuln.getDescription());
+                DCObjectMapper.toDTVulnerability(vuln, dependency, dcVuln);
+
                 if (vuln.getId() == null || vuln.getId() == 0) {
                     LOGGER.debug("Recording vulnerability: " + dcVuln.getName() + " against " + libraryVersion.getLibrary().getLibraryname() + " " + libraryVersion.getLibraryversion());
                     session.save(vuln);
@@ -201,9 +206,9 @@ public class DependencyCheckAnalysis {
         }
     }
 
-    private Vulnerability getVulnerability(String cve, Session session) {
-        final Query query = session.createQuery("from Vulnerability where cve=:cve order by id asc");
-        query.setParameter("cve", cve);
+    private Vulnerability getVulnerability(String name, Session session) {
+        final Query query = session.createQuery("from Vulnerability where name=:name order by id asc");
+        query.setParameter("name", name);
         @SuppressWarnings("unchecked")
         final List<Vulnerability> vulns = query.list();
         if (vulns.size() > 0) {

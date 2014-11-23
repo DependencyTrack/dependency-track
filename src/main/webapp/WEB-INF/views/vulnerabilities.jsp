@@ -15,7 +15,7 @@
             <thead>
             <tr>
                 <th><spring:message code="label.vulnerable.component"/></th>
-                <th width="100"><spring:message code="label.cvss"/></th>
+                <th width="100"><spring:message code="label.cvss.score"/></th>
                 <th width="100"><spring:message code="label.severity"/></th>
             </tr>
             </thead>
@@ -35,7 +35,7 @@
                             </tr>
                             <tr>
                                 <td><spring:message code="label.cve.id"/>: </td>
-                                <td><a href="http://web.nvd.nist.gov/view/vuln/detail?vulnId=<e:forHtmlAttribute value="${vulnerability.cve}"/>"><e:forHtmlContent value="${vulnerability.cve}"/></a></td>
+                                <td><a href="http://web.nvd.nist.gov/view/vuln/detail?vulnId=<e:forHtmlAttribute value="${vulnerability.name}"/>"><e:forHtmlContent value="${vulnerability.name}"/></a></td>
                             </tr>
                             <tr>
                                 <td><spring:message code="label.cwe.id"/>: </td>
@@ -47,7 +47,7 @@
                             </tr>
                         </table>
                     </td>
-                    <td style="vertical-align:top; padding-top: 8px; border-bottom:1px; border-color:#c0c0c0"><e:forHtmlContent value="${vulnerability.cvss}"/></td>
+                    <td style="vertical-align:top; padding-top: 8px; border-bottom:1px; border-color:#c0c0c0"><e:forHtmlContent value="${vulnerability.cvssScore}"/></td>
                     <td style="vertical-align:top; border-bottom:1px; border-color:#c0c0c0"><e:forHtmlContent value="${vulnerability.severity}"/></td>
                 </tr>
                 </c:forEach>

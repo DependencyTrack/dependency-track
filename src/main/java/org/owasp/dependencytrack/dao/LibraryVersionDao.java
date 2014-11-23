@@ -58,6 +58,13 @@ public class LibraryVersionDao {
     @Autowired
     private SessionFactory sessionFactory;
 
+    public LibraryVersionDao() {
+    }
+
+    public LibraryVersionDao(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
     /**
      * Returns a List of all LibraryVendors available in the application along with all child objects.
      *
@@ -218,11 +225,10 @@ public class LibraryVersionDao {
      * @param vendor           The updated vendor label
      * @param license          The updated license label
      * @param language         The updated programming language
-     * @param secuniaID        The updated Secunia ID
      */
     public void updateLibrary(int vendorid, int licenseid, int libraryid, int libraryversionid,
                               String libraryname, String libraryversion, String vendor,
-                              String license, String language, Integer secuniaID) {
+                              String license, String language) {
 
         Query query = sessionFactory.getCurrentSession().createQuery(
                 "update LibraryVendor set vendor=:vendor "
@@ -269,20 +275,16 @@ public class LibraryVersionDao {
         query.executeUpdate();
 
 
-        query = sessionFactory.getCurrentSession().createQuery(
-                "from Library "
-                        + "where id=:libraryid");
+        query = sessionFactory.getCurrentSession().createQuery("from Library where id=:libraryid");
         query.setParameter("libraryid", libraryid);
         final Library library = (Library) query.list().get(0);
 
 
-        query = sessionFactory.getCurrentSession().createQuery(
-                "update LibraryVersion set libraryversion=:libraryversion," + "secunia=:secunia,"
-                        + "library=:library" + " where id=:libverid");
+        query = sessionFactory.getCurrentSession().createQuery("update LibraryVersion set " +
+                "libraryversion=:libraryversion, library=:library where id=:libverid");
 
         query.setParameter("libraryversion", libraryversion);
         query.setParameter("library", library);
-        query.setParameter("secunia", secuniaID);
         query.setParameter("libverid", libraryversionid);
         query.executeUpdate();
     }
@@ -432,10 +434,9 @@ public class LibraryVersionDao {
      * @param license        The license the Library is licensed under
      * @param file           The license file
      * @param language       The programming language the library was written in
-     * @param secuniaID      The Secunia ID of the version of the Library
      */
     public void addLibraries(String libraryname, String libraryversion, String vendor,
-                             String license, MultipartFile file, String language, Integer secuniaID) {
+                             String license, MultipartFile file, String language) {
         LibraryVendor libraryVendor;
         License licenses;
         Library library;
@@ -508,7 +509,6 @@ public class LibraryVersionDao {
             final LibraryVersion libVersion = new LibraryVersion();
             libVersion.setLibrary(library);
             libVersion.setLibraryversion(libraryversion);
-            libVersion.setSecunia(secuniaID);
             session.save(libVersion);
         }
         session.getTransaction().commit();

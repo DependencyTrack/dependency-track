@@ -22,7 +22,6 @@
                         <json:object>
                             <json:property name="libverid" value="${version.id}"/>
                             <json:property name="libver" value="${version.libraryversion}"/>
-                            <json:property name="libversecuniaid" value="${version.secunia}"/>
                         </json:object>
                     </json:array>
 

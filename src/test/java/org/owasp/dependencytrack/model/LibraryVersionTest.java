@@ -43,13 +43,11 @@ public class LibraryVersionTest {
         v1.setId(100);
         v1.setLibraryversion("1.0");
         v1.setLibrary(library);
-        v1.setSecunia(1234);
 
         LibraryVersion v2 = new LibraryVersion();
         v2.setId(100);
         v2.setLibraryversion("2.0");
         v2.setLibrary(library);
-        v2.setSecunia(5678);
 
         HashSet<LibraryVersion> versions = new HashSet<LibraryVersion>(Arrays.asList(v1, v2));
         library.setVersions(versions);
@@ -59,7 +57,6 @@ public class LibraryVersionTest {
         assertNotNull(v1.getLibrary());
         assertEquals(new Integer(1), v1.getLibrary().getId());
         assertEquals("Sample Library", v1.getLibrary().getLibraryname());
-        assertEquals(new Integer(1234), v1.getSecunia());
 
         assertNotNull(library.getVersions());
         assertTrue(library.getVersions().size() == 2);

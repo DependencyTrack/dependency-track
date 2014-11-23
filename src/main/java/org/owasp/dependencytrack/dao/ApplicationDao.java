@@ -482,8 +482,8 @@ public class ApplicationDao {
 
                                     final Vulnerability vulnerability = new Vulnerability();
                                     vulnerability.setScanResult(results);
-                                    vulnerability.setCve(vuln.getElementsByTagName("name").item(0).getTextContent());
-                                    vulnerability.setCvss(Float.parseFloat(vuln.getElementsByTagName("cvssScore").item(0).getTextContent()));
+                                    vulnerability.setName(vuln.getElementsByTagName("name").item(0).getTextContent());
+                                    vulnerability.setCvssScore(Float.parseFloat(vuln.getElementsByTagName("cvssScore").item(0).getTextContent()));
                                     vulnerability.setCwe(vuln.getElementsByTagName("cwe").item(0).getTextContent());
                                     vulnerability.setDescription(vuln.getElementsByTagName("description").item(0).getTextContent());
                                     session.save(vulnerability);

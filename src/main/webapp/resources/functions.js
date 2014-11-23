@@ -101,7 +101,6 @@ $(document).on("click", ".open-EditLibrariesModal", function () {
     $(".modal-body #vendoredit").val($(this).data("vendor"));
     $(".modal-body #licenseedit").val($(this).data("licensename"));
     $(".modal-body #languageedit").val($(this).data("language"));
-    $(".modal-body #secuniaIDedit").val($(this).data("secunia"));
 });
 
 /*CLONE APPLICATION*/

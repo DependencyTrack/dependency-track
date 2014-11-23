@@ -56,12 +56,6 @@ public final class LibraryVersion implements Cloneable {
     private Library library;
 
     /**
-     * The Secunia ID (if available) of this library version.
-     */
-    @Column(name = "SECUNIA", nullable = true)
-    private Integer secunia;
-
-    /**
      * Clones this specific object (minus the objects id).
      * @return a New object
      */
@@ -69,7 +63,6 @@ public final class LibraryVersion implements Cloneable {
         final LibraryVersion obj = new LibraryVersion();
         obj.setLibrary(this.library);
         obj.setLibraryversion(this.libraryversion);
-        obj.setSecunia(this.secunia);
         return obj;
     }
 
@@ -95,14 +88,6 @@ public final class LibraryVersion implements Cloneable {
 
     public void setLibrary(Library library) {
         this.library = library;
-    }
-
-    public Integer getSecunia() {
-        return secunia;
-    }
-
-    public void setSecunia(Integer secunia) {
-        this.secunia = secunia;
     }
 
 }

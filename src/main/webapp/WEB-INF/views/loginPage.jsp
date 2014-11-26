@@ -21,7 +21,7 @@
     <script type="text/javascript" src="<c:url value="/resources/bootstrap/js/bootstrap.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/functions.js"/>"></script>
 </head>
-<body>
+<body class="login-page">
 
 <div id="login-block">
     <h3><e:forHtmlContent value="${properties.longname}"/></h3>

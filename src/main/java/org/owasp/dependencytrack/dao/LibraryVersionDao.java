@@ -24,15 +24,13 @@ import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.owasp.dependencytrack.model.ApplicationDependency;
-import org.owasp.dependencytrack.model.ApplicationVersion;
-import org.owasp.dependencytrack.model.Library;
-import org.owasp.dependencytrack.model.LibraryVendor;
-import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -45,12 +43,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 @Repository
-public class LibraryVersionDao {
+public class LibraryVersionDao implements ApplicationEventPublisherAware {
 
     /**
      * Setup logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(LibraryVersionDao.class);
+
+    /**
+     * Event publisher
+     */
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * The Hibernate SessionFactory
@@ -305,7 +308,7 @@ public class LibraryVersionDao {
 
         final int libid = ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
         querylib = sessionFactory.getCurrentSession().
-                createQuery("select lib.versions  from Library as lib " + "where lib.id=:libid");
+                createQuery("select lib.versions from Library as lib " + "where lib.id=:libid");
         querylib.setParameter("libid", libid);
 
         final int count = querylib.list().size();
@@ -315,6 +318,13 @@ public class LibraryVersionDao {
 
         query.setParameter("libraryVersion", version);
         List<ApplicationDependency> applicationDependency;
+
+        final Query scanQuery = sessionFactory.getCurrentSession().createQuery("from ScanResult s where libraryVersion=:libVerId");
+        scanQuery.setParameter("libVerId", version);
+        List<ScanResult> scanResults = scanQuery.list();
+        for (ScanResult scanResult : scanResults) {
+            sessionFactory.getCurrentSession().delete(scanResult);
+        }
 
         if (!query.list().isEmpty() && count == 1) {
 
@@ -328,7 +338,11 @@ public class LibraryVersionDao {
         } else if (version != null && count == 1) {
             sessionFactory.getCurrentSession().delete(version);
             final Library curlib = (Library) sessionFactory.getCurrentSession().load(Library.class, libid);
+            final LibraryVendor vendor = curlib.getLibraryVendor();
+            boolean deleteVendor = false;
+            if (vendor.getLibraries().size() == 1) { deleteVendor = true; }
             sessionFactory.getCurrentSession().delete(curlib);
+            if (deleteVendor) { sessionFactory.getCurrentSession().delete(vendor); }
         } else if (!query.list().isEmpty()) {
             applicationDependency = query.list();
             for (ApplicationDependency dependency : applicationDependency) {
@@ -512,7 +526,17 @@ public class LibraryVersionDao {
             session.save(libVersion);
         }
         session.getTransaction().commit();
+
+        query = session.createQuery("from LibraryVersion as libver where libver.library =:library " +
+                "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
+        query.setParameter("library", library);
+        query.setParameter("vendor", libraryVendor);
+        query.setParameter("libver", libraryversion);
+        List<LibraryVersion> libraryVersions = query.list();
+
         session.close();
+
+        this.eventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
     }
 
 
@@ -570,5 +594,11 @@ public class LibraryVersionDao {
         query.setParameter("searchTerm", "%" + searchTerm + "%");
         return query.list();
     }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        this.eventPublisher = applicationEventPublisher;
+    }
+
 
 }

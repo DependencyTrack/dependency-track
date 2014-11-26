@@ -90,6 +90,13 @@
         </property>
     </bean>
 
+    <bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster">
+        <property name="taskExecutor" >
+            <bean class="org.springframework.core.task.SimpleAsyncTaskExecutor">
+            </bean>
+        </property>
+    </bean>
+
     <!-- CSRF Prevention -->
     <bean name="requestDataValueProcessor" class="org.owasp.dependencytrack.controller.token.TokenRequestDataValueProcessor"/>
     <mvc:interceptors>

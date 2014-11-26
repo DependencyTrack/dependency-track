@@ -29,38 +29,61 @@ import org.owasp.dependencycheck.dependency.Reference;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
+import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.owasp.dependencytrack.util.DCObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-public class DependencyCheckAnalysis {
+@Service
+public class DependencyCheckAnalysis implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
 
     /**
      * Setup logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyCheckAnalysis.class);
 
+    @Autowired
     private SessionFactory sessionFactory;
+
+    public DependencyCheckAnalysis() {
+    }
 
     public DependencyCheckAnalysis(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
+    @Override
+    public void onApplicationEvent(DependencyCheckAnalysisRequestEvent event) {
+        List<LibraryVersion> libraryVersions = event.getLibraryVersions();
+        execute(libraryVersions);
+    }
+
     public synchronized void execute() {
-        if (performAnalysis()) {
+        // Retrieve a list of all library versions defined in the system
+        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
+        @SuppressWarnings("unchecked")
+        final List<LibraryVersion> libraryVersions = query.list();
+
+        performAnalysis(libraryVersions);
+    }
+
+    public synchronized void execute(List<LibraryVersion> libraryVersions) {
+        if (performAnalysis(libraryVersions)) {
             try {
                 final Analysis analysis = analyzeResults();
                 commitVulnerabilityData(analysis);
@@ -70,18 +93,13 @@ public class DependencyCheckAnalysis {
         }
     }
 
-    public synchronized boolean performAnalysis() {
+    private synchronized boolean performAnalysis(List<LibraryVersion> libraryVersions) {
         LOGGER.info("Executing Dependency-Check Task");
         sessionFactory.openSession();
 
-        // Retrieve a list of all library versions defined in the system
-        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
-        @SuppressWarnings("unchecked")
-        final List<LibraryVersion> libraries = query.list();
-
         // iterate through the libraries, create evidence and create the resulting dependency
         final List<Dependency> dependencies = new ArrayList<>();
-        for (LibraryVersion libraryVersion: libraries) {
+        for (LibraryVersion libraryVersion: libraryVersions) {
             final Library library = libraryVersion.getLibrary();
             final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
             dependency.setMd5sum(UUID.randomUUID().toString().replace("-", ""));
@@ -100,9 +118,11 @@ public class DependencyCheckAnalysis {
         scanAgent.setConnectionString("jdbc:h2:file:%s;FILE_LOCK=SERIALIZED;AUTOCOMMIT=ON;");
         scanAgent.setDataDirectory(Constants.DATA_DIR);
         scanAgent.setReportOutputDirectory(Constants.APP_DIR);
-        scanAgent.setReportFormat(ReportGenerator.Format.ALL);
+        scanAgent.setReportFormat(ReportGenerator.Format.XML);
         scanAgent.setAutoUpdate(true);
         scanAgent.setDependencies(dependencies);
+        scanAgent.setCentralAnalyzerEnabled(false);
+        scanAgent.setNexusAnalyzerEnabled(false);
 
         boolean success = false;
         try {
@@ -119,7 +139,7 @@ public class DependencyCheckAnalysis {
         return success;
     }
 
-    public synchronized Analysis analyzeResults() throws SAXException, IOException {
+    private synchronized Analysis analyzeResults() throws SAXException, IOException {
         final Digester digester = new Digester();
         digester.setValidating(false);
         digester.setClassLoader(DependencyCheckAnalysis.class.getClassLoader());
@@ -165,7 +185,7 @@ public class DependencyCheckAnalysis {
         return module;
     }
 
-    public void commitVulnerabilityData(Analysis analysis) {
+    private void commitVulnerabilityData(Analysis analysis) {
         LOGGER.info("Committing vulnerability analysis");
         for (Dependency dependency: analysis.getDependencies()) {
 

@@ -2,7 +2,7 @@
 <configuration scan="true">
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>/Users/steve/dependency-track/log/dependency-track.log</file>
+        <file>${user.home}/dependency-track/log/dependency-track.log</file>
         <encoder>
             <pattern>%date %level [%thread] [%file:%line] %msg%n</pattern>
         </encoder>

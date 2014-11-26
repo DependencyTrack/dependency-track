@@ -36,10 +36,10 @@ import java.util.Calendar;
 
 public class NistDataMirrorUpdater {
 
-    private static final String CVE_12_MODIFIED_URL = "http://nvd.nist.gov/download/nvdcve-modified.xml";
-    private static final String CVE_20_MODIFIED_URL = "http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-modified.xml";
-    private static final String CVE_12_BASE_URL = "http://nvd.nist.gov/download/nvdcve-%d.xml";
-    private static final String CVE_20_BASE_URL = "http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-%d.xml";
+    private static final String CVE_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
+    private static final String CVE_20_MODIFIED_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-Modified.xml.gz";
+    private static final String CVE_12_BASE_URL = "https://nvd.nist.gov/download/nvdcve-%d.xml.gz";
+    private static final String CVE_20_BASE_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-%d.xml.gz";
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
 

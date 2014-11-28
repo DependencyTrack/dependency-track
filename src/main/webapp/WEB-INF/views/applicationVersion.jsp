@@ -31,7 +31,7 @@
                 <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.libraryname}"/></td>
                 <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.libraryversion}"/></td>
                 <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.license.licensename}"/></td>
-                <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.vulnCount}"/></td>
+                <td style="vertical-align:middle;"><span class="badge <c:if test="${libraryVersion.vulnCount > 0}">badge-important</c:if>"><e:forHtmlContent value="${libraryVersion.vulnCount}"/></span></td>
                 <shiro:hasPermission name="${deleteDependency}">
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>

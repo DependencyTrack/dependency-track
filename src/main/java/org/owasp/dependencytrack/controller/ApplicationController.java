@@ -264,6 +264,7 @@ public class ApplicationController {
             LOGGER.error(e.getMessage());
         }
         try {
+            //todo: why is this like this? This block is terrible!
             final String libraryHierarchyUrl =
                     request.getScheme() + "://" +
                     request.getServerName() + ":" +

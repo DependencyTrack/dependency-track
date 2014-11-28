@@ -23,13 +23,13 @@
                     <td style="vertical-align:top;"><a href="javascript:void(0);" data-toggle="collapse" data-target="#applicationDetails${application.id}"><e:forHtmlContent value="${application.name}"/></a>
                         <div id="applicationDetails${application.id}" class="collapse">
 
-                            <table width="100%">
+                            <table>
 
                              <c:if  test="${!check}">
                                 <c:forEach items="${application.versions}" var="version">
                                     <tr>
-                                        <td><a href="applicationVersion/${version.id}"><e:forHtmlContent value="${version.version}"/></a></td>
                                         <td><span class="badge <c:if test="${version.vulnCount > 0}">badge-important</c:if>"><e:forHtmlContent value="${version.vulnCount}"/></span></td>
+                                        <td><a href="applicationVersion/${version.id}"><e:forHtmlContent value="${version.version}"/></a></td>
                                     </tr>
                                  </c:forEach>
                              </c:if>
@@ -39,8 +39,8 @@
                                     <c:forEach items="${versionlist}" var="verv">
                                         <c:if  test="${application.id eq verv.application.id}">
                                             <tr>
-                                                <td><a href="applicationVersion/${verv.id}"><e:forHtmlContent value="${verv.version}"/></a></td>
                                                 <td><span class="badge <c:if test="${version.vulnCount > 0}">badge-important</c:if>"><e:forHtmlContent value="${verv.vulnCount}"/></span></td>
+                                                <td><a href="applicationVersion/${verv.id}"><e:forHtmlContent value="${verv.version}"/></a></td>
                                             </tr>
                                         </c:if>
                                     </c:forEach>

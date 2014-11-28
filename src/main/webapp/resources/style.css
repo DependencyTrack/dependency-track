@@ -194,9 +194,9 @@ iframe[seamless] {
     -moz-background-clip: padding-box;
     -o-background-clip: padding-box;
     background-clip: padding-box;
-    -webkit-border-radius: 15px;
-    -moz-border-radius: 15px;
-    border-radius: 15px;
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 7px;
+    border-radius: 7px;
 }
 
 .login-logo {

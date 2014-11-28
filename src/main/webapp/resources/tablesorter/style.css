@@ -2,7 +2,7 @@ table.tablesorter {
 	text-align: left;
 }
 table.tablesorter thead tr th, table.tablesorter tfoot tr th {
-	background-color: #e6EEEE;
+	background-color: #f5f5f5;
 }
 table.tablesorter thead tr .header {
 	background-image: url(bg.gif);

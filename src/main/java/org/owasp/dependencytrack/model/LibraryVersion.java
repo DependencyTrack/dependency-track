@@ -28,6 +28,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import java.beans.Transient;
 
 @Entity
 @Table(name = "LIBRARYVERSION")
@@ -54,6 +55,8 @@ public final class LibraryVersion implements Cloneable {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "LIBRARYID", nullable = false)
     private Library library;
+
+    private Integer vulnCount = 0;
 
     /**
      * Clones this specific object (minus the objects id).
@@ -90,4 +93,12 @@ public final class LibraryVersion implements Cloneable {
         this.library = library;
     }
 
+    @Transient
+    public int getVulnCount() {
+        return vulnCount;
+    }
+
+    public void setVulnCount(int vulnCount) {
+        this.vulnCount = vulnCount;
+    }
 }

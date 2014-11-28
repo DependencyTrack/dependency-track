@@ -18,7 +18,7 @@
                 <th><spring:message code="label.library"/></th>
                 <th><spring:message code="label.version"/></th>
                 <th><spring:message code="label.license"/></th>
-
+                <th><spring:message code="label.cves"/></th>
                 <shiro:hasPermission name="${deleteDependency}">
                 <th></th>
                 </shiro:hasPermission>
@@ -31,6 +31,7 @@
                 <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.libraryname}"/></td>
                 <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.libraryversion}"/></td>
                 <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.library.license.licensename}"/></td>
+                <td style="vertical-align:middle;"><e:forHtmlContent value="${libraryVersion.vulnCount}"/></td>
                 <shiro:hasPermission name="${deleteDependency}">
                 <td style="width:100px;vertical-align:middle;text-align:right;">
                     <spring:message code="confirm.delete.dependency" var="confirmDeleteMessage"/>

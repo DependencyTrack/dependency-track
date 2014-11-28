@@ -26,6 +26,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Entity
 @Table(name = "APPLICATIONVERSION")
@@ -51,6 +52,8 @@ public final class ApplicationVersion implements Cloneable {
     @ManyToOne
     @JoinColumn(name = "APPID", nullable = false)
     private Application application;
+
+    private Integer vulnCount = 0;
 
     /**
      * Clones this specific object (minus the objects id).
@@ -87,4 +90,12 @@ public final class ApplicationVersion implements Cloneable {
         this.application = application;
     }
 
+    @Transient
+    public Integer getVulnCount() {
+        return vulnCount;
+    }
+
+    public void setVulnCount(Integer vulnCount) {
+        this.vulnCount = vulnCount;
+    }
 }

@@ -38,6 +38,7 @@ import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +83,14 @@ public class ApplicationDao {
     @SuppressWarnings("unchecked")
     public List<Application> listApplications() {
         final Query query = sessionFactory.getCurrentSession().createQuery("FROM Application");
+        List<Application> applications = query.list();
+        for (Application application: applications) {
+            for (ApplicationVersion applicationVersion: application.getVersions()) {
+                VulnerabilityDao vulnerabilityDao = new VulnerabilityDao(sessionFactory);
+                int vulnCount = vulnerabilityDao.getVulnerabilityCount(applicationVersion);
+                applicationVersion.setVulnCount(vulnCount);
+            }
+        }
         return query.list();
     }
 

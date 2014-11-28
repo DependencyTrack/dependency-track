@@ -7,6 +7,7 @@
 <spring:message code="label.dependency.add" var="addDependencyLabel"/>
 <spring:message code="label.clone" var="cloneLabel"/>
 <spring:message code="label.edit" var="editLabel"/>
+<spring:message code="label.vulnerabilities" var="vulnerabilitiesLabel"/>
 
 <spring:message code="label.role.admin" var="admin"/>
 <spring:message code="label.role.moderator" var="moderator"/>
@@ -20,6 +21,7 @@
              <a id="addDependencyModalButton" href="#addDependencyModal" role="button" class="btn" data-toggle="modal">${addDependencyLabel}</a>
              <a id="cloneVersionModalButton" href="#cloneVersionModal" role="button" class="open-CloneApplicationVersionModal btn" data-toggle="modal" data-id="${applicationVersion.application.id}" data-version="${applicationVersion.version}">${cloneLabel}</a>
              <a id="editDependencyModalButton" href="#editDependencyModal" class="open-EditDependencyModal btn" role="button" class="btn" data-id="${applicationVersion.id}" data-ver="${applicationVersion.version}" data-toggle="modal">${editLabel}</a>
+             <a id="vulnerabilitiesButton" href="../vulnerabilities/${applicationVersion.id}" class="btn">${vulnerabilitiesLabel}</a>
              </div>'/>
 
     <jsp:param name="content" value="applicationVersion"/>

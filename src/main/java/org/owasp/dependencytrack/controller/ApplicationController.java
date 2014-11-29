@@ -770,7 +770,10 @@ public class ApplicationController {
         OutputStream out = null;
         try {
             fis = new FileInputStream(Constants.NIST_DIR + File.separator + filename);
-            response.setHeader("Content-Type", "application/xml;");
+            if (filename.endsWith(".gz"))
+                response.setHeader("Content-Type", "application/x-gzip;");
+            else if (filename.endsWith(".xml"))
+                response.setHeader("Content-Type", "application/xml;");
             out = response.getOutputStream();
             IOUtils.copy(fis, out);
             out.flush();

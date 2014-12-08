@@ -56,7 +56,7 @@
         <org.springframework-version>3.2.11.RELEASE</org.springframework-version>
         <org.apache.shiro-version>1.2.3</org.apache.shiro-version>
         <org.aspectj-version>1.6.10</org.aspectj-version>
-        <org.owasp.dependencycheck-version>1.2.7-SNAPSHOT</org.owasp.dependencycheck-version>
+        <org.owasp.dependencycheck-version>1.2.7</org.owasp.dependencycheck-version>
         <org.slf4j-version>1.7.7</org.slf4j-version>
         <ch.qos.logback-version>1.1.2</ch.qos.logback-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

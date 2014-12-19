@@ -9,8 +9,10 @@
 
     <name>Dependency-Track</name>
     <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
-    <description>OWASP Dependency-Track is a web application that allows organizations to document the use of
-        third-party components across multiple applications and versions.
+    <description>
+        OWASP Dependency-Track is a web application that allows organizations to document the
+        use of third-party components across multiple applications and versions. Further, it
+        provides automatic visibility into the use of components with known vulnerabilities.
     </description>
     <inceptionYear>2013</inceptionYear>
     <organization>

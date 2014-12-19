@@ -9,21 +9,13 @@
     <c:if test="${!empty applicationList}">
 
         <table id="applicationTable" class="list">
-            <tr>
-                <th></th>
-                <th><spring:message code="label.name"/></th>
-            <c:if  test="${!check}">
-                <th><spring:message code="label.versions"/></th>
-            </c:if>
-                <th></th>
-            </tr>
             <c:forEach items="${applicationList}" var="application">
                 <tr>
                     <td id="applicationCaret>${application.id}" data-toggle="collapse" data-target="#applicationDetails${application.id}" style="vertical-align:top;width:20px;height:20px;"><span class="caret"></span></td>
                     <td style="vertical-align:top;"><a href="javascript:void(0);" data-toggle="collapse" data-target="#applicationDetails${application.id}"><e:forHtmlContent value="${application.name}"/></a>
                         <div id="applicationDetails${application.id}" class="collapse">
 
-                            <table>
+                            <table id="applicationTable-${application.id}" class="innerlist">
 
                              <c:if  test="${!check}">
                                 <c:forEach items="${application.versions}" var="version">

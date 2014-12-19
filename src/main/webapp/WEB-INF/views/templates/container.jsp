@@ -20,7 +20,6 @@
         put("vulnerabilities", "vulnerabilities.jsp");
         put("error", "error.jsp");
         put("libraries", "libraries.jsp");
-        put("includeVisualization", "true");
     }};
 
     private static final PolicyFactory htmlButtonPolicy = new HtmlPolicyBuilder()

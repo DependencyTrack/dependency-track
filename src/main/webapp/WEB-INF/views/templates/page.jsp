@@ -16,28 +16,14 @@
     <link rel="stylesheet" type="text/css" href="<c:url value="/resources/bootstrap/css/bootstrap.min.css"/>" media="screen"/>
     <link rel="stylesheet" type="text/css" href="<c:url value="/resources/style.css"/>"/>
     <link rel="stylesheet" type="text/css" href="<c:url value="/resources/tablesorter/style.css"/>"/>
-    <!-- Include jQuery -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <%--slider js--%>
-    <script src="resources/simple-slider.js"></script>
-
     <script type="text/javascript" src="<c:url value="/resources/jquery-1.10.2.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/jquery.cookie.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/jquery.chained.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/tablesorter/jquery.tablesorter.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/bootstrap/js/bootstrap.min.js"/>"></script>
+    <script type="text/javascript" src="<c:url value="/resources/chart.min.js"/>"></script>
+    <script type="text/javascript" src="<c:url value="/resources/dashboard.chart.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/functions.js"/>"></script>
-
-
-    <link href="resources/simple-slider.css" rel="stylesheet" type="text/css" />
-
-
-    <script type="text/javascript" src="<c:url value="/resources/charts.js"/>"></script>
-    <script type="text/javascript" src="<c:url value="/resources/coloumChart.js"/>"></script>
-
-
-
 </head>
 <body>
 

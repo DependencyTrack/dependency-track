@@ -56,6 +56,24 @@ public final class LibraryVersion implements Cloneable {
     @JoinColumn(name = "LIBRARYID", nullable = false)
     private Library library;
 
+    /**
+     * The String representation of the SHA-1 hash
+     */
+    @Column(name = "SHA1")
+    private String sha1;
+
+    /**
+     * The String representation of the MD5 hash
+     */
+    @Column(name = "MD5")
+    private String md5;
+
+    /**
+     * The String representation of a universally unique identifier
+     */
+    @Column(name = "UUID")
+    private String uuid;
+
     private Integer vulnCount = 0;
 
     /**
@@ -91,6 +109,34 @@ public final class LibraryVersion implements Cloneable {
 
     public void setLibrary(Library library) {
         this.library = library;
+    }
+
+    public String getSha1() {
+        return sha1;
+    }
+
+    public void setSha1(String sha1) {
+        this.sha1 = sha1;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getUndashedUuid() {
+        return uuid.replace("-", "");
     }
 
     @Transient

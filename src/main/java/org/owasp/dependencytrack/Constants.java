@@ -49,6 +49,16 @@ public final class Constants {
     public static final String DATA_ZIP = APP_DIR + File.separator + DATA_FILENAME;
 
     /**
+     * Specify the global suppression file.
+     */
+    public static final String SUPPRESSION_FILENAME = "suppressions.xml";
+
+    /**
+     * Specify the path and filename to the global suppression file.
+     */
+    public static final String SUPPRESSION_PATH_FILENAME = DATA_DIR + File.separator + SUPPRESSION_FILENAME;
+
+    /**
      * Specify the NIST data directory used by Dependency-Check.
      */
     public static final String NIST_DIR = APP_DIR + File.separator + "nist";

@@ -29,7 +29,6 @@ import org.owasp.dependencycheck.dependency.Reference;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
-import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVersion;
@@ -40,14 +39,15 @@ import org.owasp.dependencytrack.util.DCObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Service
 public class DependencyCheckAnalysis implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
@@ -102,8 +102,8 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         for (LibraryVersion libraryVersion: libraryVersions) {
             final Library library = libraryVersion.getLibrary();
             final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
-            dependency.setMd5sum(UUID.randomUUID().toString().replace("-", ""));
-            dependency.setSha1sum(UUID.randomUUID().toString().replace("-", ""));
+            dependency.setMd5sum(libraryVersion.getUndashedUuid());
+            dependency.setSha1sum(libraryVersion.getUndashedUuid());
             dependency.setLicense(library.getLicense().getLicensename());
             dependency.setDescription(String.valueOf(libraryVersion.getId()));
             dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", library.getLibraryVendor().getVendor(), Confidence.HIGHEST);
@@ -123,6 +123,12 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         scanAgent.setDependencies(dependencies);
         scanAgent.setCentralAnalyzerEnabled(false);
         scanAgent.setNexusAnalyzerEnabled(false);
+
+        // If a global suppression file exists, use it.
+        File suppressions = new File(Constants.SUPPRESSION_PATH_FILENAME);
+        if (suppressions.exists() && suppressions.isFile()) {
+            scanAgent.setSuppressionFile(Constants.SUPPRESSION_PATH_FILENAME);
+        }
 
         boolean success = false;
         try {

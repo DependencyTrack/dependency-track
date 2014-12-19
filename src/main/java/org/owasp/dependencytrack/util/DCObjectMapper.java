@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.List;
-import java.util.UUID;
 
 public class DCObjectMapper {
 
@@ -40,8 +39,8 @@ public class DCObjectMapper {
         final Library library = libraryVersion.getLibrary();
         final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
         dependency.setFileName(library.getLibraryVendor().getVendor() + " " + library.getLibraryname() + " " + libraryVersion.getLibraryversion());
-        dependency.setMd5sum(UUID.randomUUID().toString().replace("-", ""));
-        dependency.setSha1sum(UUID.randomUUID().toString().replace("-", ""));
+        dependency.setMd5sum((libraryVersion.getMd5() != null) ? libraryVersion.getMd5() : libraryVersion.getUndashedUuid());
+        dependency.setSha1sum((libraryVersion.getSha1() != null) ? libraryVersion.getSha1() : libraryVersion.getUndashedUuid());
         dependency.setLicense(library.getLicense().getLicensename());
         dependency.setDescription(String.valueOf(libraryVersion.getId()));
         dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", library.getLibraryVendor().getVendor(), Confidence.HIGHEST);

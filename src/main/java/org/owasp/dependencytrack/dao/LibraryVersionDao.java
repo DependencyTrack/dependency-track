@@ -34,10 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 @Repository
 public class LibraryVersionDao implements ApplicationEventPublisherAware {
@@ -530,6 +527,7 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
             final LibraryVersion libVersion = new LibraryVersion();
             libVersion.setLibrary(library);
             libVersion.setLibraryversion(libraryversion);
+            libVersion.setUuid(UUID.randomUUID().toString());
             session.save(libVersion);
         }
         session.getTransaction().commit();

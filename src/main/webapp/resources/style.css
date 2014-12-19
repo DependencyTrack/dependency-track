@@ -15,6 +15,7 @@ body {
 }
 
 html {
+    font-size: 100%;
     padding: 0;
     margin: 0;
 }
@@ -137,8 +138,12 @@ iframe[seamless] {
     border-top: 1px solid transparent;
 }
 
-.list tr:hover td {
-    background: #f5f5f5;
+#applicationTable td {
+    border-bottom: 1px solid #f5f5f5;
+}
+
+#applicationTable td .innerlist td {
+    border-bottom: 0;
 }
 
 .modal .modal-header h4 {

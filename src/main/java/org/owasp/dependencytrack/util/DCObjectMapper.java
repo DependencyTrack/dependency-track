@@ -32,8 +32,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.List;
 
-public class DCObjectMapper {
+public final class DCObjectMapper {
 
+    /**
+     * Private constructor.
+     */
+    private DCObjectMapper() { }
 
     public static Dependency toDCDependency(LibraryVersion libraryVersion, List<Vulnerability> vulnerabilities) {
         final Library library = libraryVersion.getLibrary();
@@ -59,7 +63,7 @@ public class DCObjectMapper {
     }
 
     public static org.owasp.dependencycheck.dependency.Vulnerability toDCVulnerability(Vulnerability vulnerability) {
-        org.owasp.dependencycheck.dependency.Vulnerability dcvuln = new org.owasp.dependencycheck.dependency.Vulnerability();
+        final org.owasp.dependencycheck.dependency.Vulnerability dcvuln = new org.owasp.dependencycheck.dependency.Vulnerability();
         dcvuln.setName(vulnerability.getName());
         dcvuln.setDescription(vulnerability.getDescription());
         dcvuln.setCvssScore(vulnerability.getCvssScore());

@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.controller;
 
 import org.apache.commons.io.IOUtils;
@@ -32,7 +31,12 @@ import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.License;
-import org.owasp.dependencytrack.service.*;
+import org.owasp.dependencytrack.service.ApplicationService;
+import org.owasp.dependencytrack.service.ApplicationVersionService;
+import org.owasp.dependencytrack.service.LibraryVersionService;
+import org.owasp.dependencytrack.service.ReportService;
+import org.owasp.dependencytrack.service.UserService;
+import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +61,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Path;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -266,10 +269,13 @@ public class ApplicationController {
         try {
             //todo: why is this like this? This block is terrible!
             final String libraryHierarchyUrl =
-                    request.getScheme() + "://" +
-                    request.getServerName() + ":" +
-                    request.getServerPort() +
-                    request.getContextPath() + "/libraryHierarchy";
+                    request.getScheme()
+                            + "://"
+                            + request.getServerName()
+                            + ":"
+                            + request.getServerPort()
+                            + request.getContextPath() + "/libraryHierarchy";
+
             final URL url = new URL(libraryHierarchyUrl);
             final URLConnection con = url.openConnection();
             final InputStream in = con.getInputStream();
@@ -298,13 +304,25 @@ public class ApplicationController {
         return "vulnerabilitySummary";
     }
 
-    @RequestMapping(value = "/dependencyCheckReport/{id}.xml", method = RequestMethod.GET, produces="application/xml")
+    /**
+     * Dynamically generates a native Dependency-Check XML report.
+     * @param map A map of parameters
+     * @param id The ID of the Applicaiton to create a report for
+     * @return A String representation of the XML report
+     */
+    @RequestMapping(value = "/dependencyCheckReport/{id}.xml", method = RequestMethod.GET, produces = "application/xml")
     @ResponseBody
     public String dependencyCheckXmlReport(Map<String, Object> map, @PathVariable("id") int id) {
         return reportService.generateDependencyCheckReport(id, ReportGenerator.Format.XML);
     }
 
-    @RequestMapping(value = "/dependencyCheckReport/{id}.html", method = RequestMethod.GET, produces="text/html")
+    /**
+     * Dynamically generates a native Dependency-Check HTML report.
+     * @param map A map of parameters
+     * @param id The ID of the Applicaiton to create a report for
+     * @return A String representation of the HTML report
+     */
+    @RequestMapping(value = "/dependencyCheckReport/{id}.html", method = RequestMethod.GET, produces = "text/html")
     @ResponseBody
     public String dependencyCheckHtmlReport(Map<String, Object> map, @PathVariable("id") int id) {
         return reportService.generateDependencyCheckReport(id, ReportGenerator.Format.HTML);
@@ -770,10 +788,11 @@ public class ApplicationController {
         OutputStream out = null;
         try {
             fis = new FileInputStream(Constants.NIST_DIR + File.separator + filename);
-            if (filename.endsWith(".gz"))
+            if (filename.endsWith(".gz")) {
                 response.setHeader("Content-Type", "application/x-gzip;");
-            else if (filename.endsWith(".xml"))
+            } else if (filename.endsWith(".xml")) {
                 response.setHeader("Content-Type", "application/xml;");
+            }
             out = response.getOutputStream();
             IOUtils.copy(fis, out);
             out.flush();
@@ -856,7 +875,7 @@ public class ApplicationController {
     }
 
     /**
-     * Admin User Management which validates a user
+     * Admin User Management which validates a user.
      */
     @RequiresPermissions("validateuser")
     @RequestMapping(value = "/validateuser/{id}", method = RequestMethod.GET)
@@ -866,7 +885,7 @@ public class ApplicationController {
     }
 
     /**
-     * Admin User Management which deletes a user
+     * Admin User Management which deletes a user.
      */
     @RequiresPermissions("deleteuser")
     @RequestMapping(value = "/deleteuser/{id}", method = RequestMethod.GET)
@@ -876,7 +895,7 @@ public class ApplicationController {
     }
 
     /**
-     * Admin User Management which deletes a user
+     * Admin User Management which deletes a user.
      */
     @RequiresPermissions("changeuserrole")
     @RequestMapping(value = "/changeuserrole/{id}/{role}", method = RequestMethod.GET)
@@ -886,7 +905,7 @@ public class ApplicationController {
     }
 
     /**
-     * Mapping to dashboard which gives vulnerability overview
+     * Mapping to dashboard which gives vulnerability overview.
      */
     @RequiresPermissions("dashboard")
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
@@ -962,13 +981,12 @@ public class ApplicationController {
     }
 
     /**
-     * Mapping to dashboard which gives vulnerability overview
+     * Mapping to dashboard which gives vulnerability overview.
      */
     @RequiresPermissions("dashboard")
     @RequestMapping(value = "/chartdata/{id}", method = RequestMethod.GET)
-    public
     @ResponseBody
-    String chartdata(Map<String, Object> map, @PathVariable("id") Integer applicationVersionId) {
+    public String chartdata(Map<String, Object> map, @PathVariable("id") Integer applicationVersionId) {
         return applicationVersionService.chartdata(applicationVersionId);
     }
 }

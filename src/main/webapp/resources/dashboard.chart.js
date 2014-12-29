@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 var data = {
     labels: ["January", "February", "March", "April", "May", "June", "July"],
     datasets: [

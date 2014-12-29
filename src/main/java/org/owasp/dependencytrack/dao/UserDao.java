@@ -90,14 +90,14 @@ public class UserDao {
         final Boolean currentState = (Boolean) query.list().get(0);
 
         if (currentState) {
-            query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.checkvalid  = :checkinvalid" +
-                    " where usr.id = :userid");
+            query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.checkvalid  = :checkinvalid"
+                    + " where usr.id = :userid");
             query.setParameter("checkinvalid", false);
             query.setParameter("userid", userid);
             query.executeUpdate();
         } else {
-            query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.checkvalid  = :checkvalid" +
-                    " where usr.id = :userid");
+            query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.checkvalid  = :checkvalid"
+                    + " where usr.id = :userid");
             query.setParameter("checkvalid", true);
             query.setParameter("userid", userid);
             query.executeUpdate();
@@ -134,8 +134,8 @@ public class UserDao {
         final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
-        final Query query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.roles.id  = :role" +
-                " where usr.id = :userid");
+        final Query query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.roles.id  = :role"
+                + " where usr.id = :userid");
         query.setParameter("role", role);
         query.setParameter("userid", userid);
         query.executeUpdate();

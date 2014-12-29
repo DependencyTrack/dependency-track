@@ -179,8 +179,8 @@ public class ApplicationVersionDao {
 
         final Application app = (Application) query.list().get(0);
 
-        query = session.createQuery("from ApplicationVersion AS appver where " +
-                "appver.application=:findapplication and appver.version=:curappver");
+        query = session.createQuery("from ApplicationVersion AS appver where "
+                + "appver.application=:findapplication and appver.version=:curappver");
 
         query.setParameter("findapplication", app);
         query.setParameter("curappver", curappver);
@@ -190,8 +190,8 @@ public class ApplicationVersionDao {
         newApplicationVersion.setVersion(newversion);
         session.save(newApplicationVersion);
 
-        query = session.createQuery("from ApplicationDependency AS appdep " +
-                "where appdep.applicationVersion=:findappverr");
+        query = session.createQuery("from ApplicationDependency AS appdep "
+                + "where appdep.applicationVersion=:findappverr");
         query.setParameter("findappverr", applicationVersion);
 
         final List<ApplicationDependency> applicationDependencies = query.list();

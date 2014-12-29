@@ -16,12 +16,21 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.dao;
 
 import org.apache.commons.io.IOUtils;
-import org.hibernate.*;
-import org.owasp.dependencytrack.model.*;
+import org.hibernate.Hibernate;
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.owasp.dependencytrack.model.ApplicationDependency;
+import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.Library;
+import org.owasp.dependencytrack.model.LibraryVendor;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +43,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class LibraryVersionDao implements ApplicationEventPublisherAware {
@@ -88,7 +101,7 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
                             createSQLQuery("SELECT DISTINCT VULNERABILITYID FROM SCANRESULT WHERE LIBRARYVERSIONID=:libraryVersion");
 
                     query4.setParameter("libraryVersion", libraryVersion.getId());
-                    int vulnCount = query4.list().size();
+                    final int vulnCount = query4.list().size();
                     libraryVersion.setVulnCount(vulnCount);
                 }
 
@@ -195,20 +208,20 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
         final Session session = sessionFactory.openSession();
         session.beginTransaction();
 
-        Query query = session.createQuery("from ApplicationVersion AS appver where " +
-                "appver.id=:appversionid");
+        Query query = session.createQuery("from ApplicationVersion AS appver where "
+                + "appver.id=:appversionid");
         query.setParameter("appversionid", appversionid);
 
         final ApplicationVersion applicationVersion = (ApplicationVersion) query.list().get(0);
 
-        query = session.createQuery("from LibraryVersion AS libver where " +
-                "libver.id=:libversionid");
+        query = session.createQuery("from LibraryVersion AS libver where "
+                + "libver.id=:libversionid");
         query.setParameter("libversionid", libversionid);
 
         final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
-        query = session.createQuery("from ApplicationDependency AS appdep where " +
-                "appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion");
+        query = session.createQuery("from ApplicationDependency AS appdep where "
+                + "appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion");
         query.setParameter("libraryVersion", libraryVersion);
         query.setParameter("applicationVersion", applicationVersion);
 
@@ -287,8 +300,8 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
         final Library library = (Library) query.list().get(0);
 
 
-        query = sessionFactory.getCurrentSession().createQuery("update LibraryVersion set " +
-                "libraryversion=:libraryversion, library=:library where id=:libverid");
+        query = sessionFactory.getCurrentSession().createQuery("update LibraryVersion set "
+                + "libraryversion=:libraryversion, library=:library where id=:libverid");
 
         query.setParameter("libraryversion", libraryversion);
         query.setParameter("library", library);
@@ -325,7 +338,7 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
 
         final Query scanQuery = sessionFactory.getCurrentSession().createQuery("from ScanResult s where libraryVersion=:libVerId");
         scanQuery.setParameter("libVerId", version);
-        List<ScanResult> scanResults = scanQuery.list();
+        final List<ScanResult> scanResults = scanQuery.list();
         for (ScanResult scanResult : scanResults) {
             sessionFactory.getCurrentSession().delete(scanResult);
         }
@@ -343,10 +356,17 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
             sessionFactory.getCurrentSession().delete(version);
             final Library curlib = (Library) sessionFactory.getCurrentSession().load(Library.class, libid);
             final LibraryVendor vendor = curlib.getLibraryVendor();
+
             boolean deleteVendor = false;
-            if (vendor.getLibraries().size() == 1) { deleteVendor = true; }
+            if (vendor.getLibraries().size() == 1) {
+                deleteVendor = true;
+            }
+
             sessionFactory.getCurrentSession().delete(curlib);
-            if (deleteVendor) { sessionFactory.getCurrentSession().delete(vendor); }
+            if (deleteVendor) {
+                sessionFactory.getCurrentSession().delete(vendor);
+            }
+
         } else if (!query.list().isEmpty()) {
             applicationDependency = query.list();
             for (ApplicationDependency dependency : applicationDependency) {
@@ -517,8 +537,8 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
             library = (Library) query.list().get(0);
         }
 
-        query = session.createQuery("from LibraryVersion as libver where libver.library =:library " +
-                "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
+        query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
+                + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
         query.setParameter("library", library);
         query.setParameter("vendor", libraryVendor);
         query.setParameter("libver", libraryversion);
@@ -532,12 +552,12 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
         }
         session.getTransaction().commit();
 
-        query = session.createQuery("from LibraryVersion as libver where libver.library =:library " +
-                "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
+        query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
+                + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
         query.setParameter("library", library);
         query.setParameter("vendor", libraryVendor);
         query.setParameter("libver", libraryversion);
-        List<LibraryVersion> libraryVersions = query.list();
+        final List<LibraryVersion> libraryVersions = query.list();
 
         session.close();
 
@@ -594,8 +614,10 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
      */
     @SuppressWarnings("unchecked")
     public List<LibraryVersion> keywordSearchLibraries(String searchTerm) {
-        final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion as libver where upper(libver.library.libraryname) " +
-                "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) LIKE upper(:searchTerm) order by libver.library.libraryname");
+        final Query query = sessionFactory.getCurrentSession().createQuery(
+                "from LibraryVersion as libver where upper(libver.library.libraryname) "
+                        + "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) "
+                        + "LIKE upper(:searchTerm) order by libver.library.libraryname");
         query.setParameter("searchTerm", "%" + searchTerm + "%");
         return query.list();
     }

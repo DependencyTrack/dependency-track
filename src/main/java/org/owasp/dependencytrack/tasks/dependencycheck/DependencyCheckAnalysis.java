@@ -179,6 +179,21 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         digester.addBeanPropertySetter(refXpath + "/url");
         digester.addBeanPropertySetter(refXpath + "/name");
 
+        final String suppressedVulnXpath = "analysis/dependencies/dependency/vulnerabilities/suppressedVulnerability";
+        digester.addObjectCreate(suppressedVulnXpath, org.owasp.dependencycheck.dependency.Vulnerability.class);
+        digester.addBeanPropertySetter(suppressedVulnXpath + "/name");
+        digester.addBeanPropertySetter(suppressedVulnXpath + "/cvssScore");
+        digester.addBeanPropertySetter(suppressedVulnXpath + "/cwe");
+        digester.addBeanPropertySetter(suppressedVulnXpath + "/description");
+
+        final String suppressedRefXpath = "analysis/dependencies/dependency/vulnerabilities/suppressedVulnerability/references/reference";
+        digester.addObjectCreate(suppressedRefXpath, Reference.class);
+        digester.addBeanPropertySetter(suppressedRefXpath + "/source");
+        digester.addBeanPropertySetter(suppressedRefXpath + "/url");
+        digester.addBeanPropertySetter(suppressedRefXpath + "/name");
+
+        digester.addSetNext(suppressedRefXpath, "addReference");
+        digester.addSetNext(suppressedVulnXpath, "addSuppressedVulnerability");
         digester.addSetNext(refXpath, "addReference");
         digester.addSetNext(identXpath, "addIdentifier");
         digester.addSetNext(vulnXpath, "addVulnerability");

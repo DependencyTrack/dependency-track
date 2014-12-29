@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is a non-persistent convenience class
+ * This is a non-persistent convenience class.
  */
 public class VulnerableComponent {
 

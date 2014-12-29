@@ -69,7 +69,7 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
 
     @Override
     public void onApplicationEvent(DependencyCheckAnalysisRequestEvent event) {
-        List<LibraryVersion> libraryVersions = event.getLibraryVersions();
+        final List<LibraryVersion> libraryVersions = event.getLibraryVersions();
         execute(libraryVersions);
     }
 
@@ -125,7 +125,7 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         scanAgent.setNexusAnalyzerEnabled(false);
 
         // If a global suppression file exists, use it.
-        File suppressions = new File(Constants.SUPPRESSION_PATH_FILENAME);
+        final File suppressions = new File(Constants.SUPPRESSION_PATH_FILENAME);
         if (suppressions.exists() && suppressions.isFile()) {
             scanAgent.setSuppressionFile(Constants.SUPPRESSION_PATH_FILENAME);
         }

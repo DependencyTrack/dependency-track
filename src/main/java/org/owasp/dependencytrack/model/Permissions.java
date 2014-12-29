@@ -54,12 +54,12 @@ public class Permissions {
     private Set<Roles> maprole = new HashSet<>();
 
     /**
-     * Default Constructor
+     * Default Constructor.
      */
     public Permissions() { }
 
     /**
-     * Constructor specifying the permission name
+     * Constructor specifying the permission name.
      * @param permissionname the name of the permission
      */
     public Permissions(String permissionname) {

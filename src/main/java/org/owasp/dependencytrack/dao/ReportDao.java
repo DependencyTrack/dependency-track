@@ -49,7 +49,7 @@ public class ReportDao {
     private SessionFactory sessionFactory;
 
     private void initializeProperties() {
-        DatabaseProperties prop = null;
+        final DatabaseProperties prop = null;
         CveDB cve = null;
         try {
             cve = new CveDB();
@@ -68,17 +68,16 @@ public class ReportDao {
         final ApplicationVersion applicationVersion = (ApplicationVersion) sessionFactory
                 .getCurrentSession().load(ApplicationVersion.class, applicationVersionId);
 
-        String appName = applicationVersion.getApplication().getName() + " " + applicationVersion.getVersion();
+        final String appName = applicationVersion.getApplication().getName() + " " + applicationVersion.getVersion();
 
-        LibraryVersionDao libraryVersionDao = new LibraryVersionDao(sessionFactory);
-        List<LibraryVersion> libraryVersionList = libraryVersionDao.getDependencies(applicationVersion);
-        List<org.owasp.dependencycheck.dependency.Dependency> dcDependencies = new ArrayList<>();
+        final LibraryVersionDao libraryVersionDao = new LibraryVersionDao(sessionFactory);
+        final List<LibraryVersion> libraryVersionList = libraryVersionDao.getDependencies(applicationVersion);
+        final List<org.owasp.dependencycheck.dependency.Dependency> dcDependencies = new ArrayList<>();
 
-        VulnerabilityDao vulnerabilityDao = new VulnerabilityDao(sessionFactory);
-        DCObjectMapper mapper = new DCObjectMapper();
+        final VulnerabilityDao vulnerabilityDao = new VulnerabilityDao(sessionFactory);
         for (LibraryVersion libraryVersion: libraryVersionList) {
-            List<Vulnerability> vulnerabilities = vulnerabilityDao.getVulnsForLibraryVersion(libraryVersion);
-            org.owasp.dependencycheck.dependency.Dependency dcDependency = mapper.toDCDependency(libraryVersion, vulnerabilities);
+            final List<Vulnerability> vulnerabilities = vulnerabilityDao.getVulnsForLibraryVersion(libraryVersion);
+            final org.owasp.dependencycheck.dependency.Dependency dcDependency = DCObjectMapper.toDCDependency(libraryVersion, vulnerabilities);
             dcDependencies.add(dcDependency);
         }
 
@@ -88,10 +87,10 @@ public class ReportDao {
         Settings.initialize();
         Settings.setBoolean(Settings.KEYS.AUTO_UPDATE, false);
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-            Engine engine = new Engine(this.getClass().getClassLoader());
-            ReportGenerator reportGenerator = new ReportGenerator(appName, dcDependencies, engine.getAnalyzers(), properties);
+            final Engine engine = new Engine(this.getClass().getClassLoader());
+            final ReportGenerator reportGenerator = new ReportGenerator(appName, dcDependencies, engine.getAnalyzers(), properties);
             reportGenerator.generateReports(baos, format);
             engine.cleanup();
             return baos.toString("UTF-8");

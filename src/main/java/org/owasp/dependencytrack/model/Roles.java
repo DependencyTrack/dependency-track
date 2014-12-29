@@ -68,12 +68,12 @@ public class Roles {
     private Set<Permissions> perm = new HashSet<>();
 
     /**
-     * Default Constructor
+     * Default Constructor.
      */
     public Roles() { }
 
     /**
-     * Constructor specifying the role name
+     * Constructor specifying the role name.
      * @param rolename the name of the role
      */
     public Roles(String rolename) {

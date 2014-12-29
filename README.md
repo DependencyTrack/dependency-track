@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/stevespringett/dependency-track.svg?branch=master)](https://travis-ci.org/stevespringett/dependency-track)
+
 Dependency-Track
 =========
 

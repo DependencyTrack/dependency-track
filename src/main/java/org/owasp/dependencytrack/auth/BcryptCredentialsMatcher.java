@@ -25,7 +25,8 @@ import org.apache.shiro.authc.credential.SimpleCredentialsMatcher;
 import org.mindrot.jbcrypt.BCrypt;
 
 /**
- * An Apache Shiro CredentialMatcher implementation that supports BCrypt.
+ * An Apache Shiro {@link org.apache.shiro.authc.credential.CredentialsMatcher CredentialsMatcher}
+ * implementation that supports BCrypt.
  */
 public class BcryptCredentialsMatcher extends SimpleCredentialsMatcher {
 

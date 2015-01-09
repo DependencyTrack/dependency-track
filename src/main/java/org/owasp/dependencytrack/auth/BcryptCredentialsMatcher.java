@@ -28,14 +28,14 @@ public class BcryptCredentialsMatcher extends SimpleCredentialsMatcher {
 
     @Override
     public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
-        UsernamePasswordToken upToken = (UsernamePasswordToken)token;
+        final UsernamePasswordToken upToken = (UsernamePasswordToken)token;
         String storedBcryptPassword;
         if (info.getCredentials() instanceof char[]) {
-            storedBcryptPassword = new String((char[]) info.getCredentials());
+            storedBcryptPassword = new String((char[])info.getCredentials());
         } else {
             storedBcryptPassword = info.getCredentials().toString();
         }
-        String assertedPlaintextPassword = new String(upToken.getPassword());
+        final String assertedPlaintextPassword = new String(upToken.getPassword());
         return BCrypt.checkpw(assertedPlaintextPassword, storedBcryptPassword);
     }
 

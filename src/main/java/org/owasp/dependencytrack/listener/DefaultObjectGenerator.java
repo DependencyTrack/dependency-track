@@ -20,13 +20,11 @@
 package org.owasp.dependencytrack.listener;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.shiro.crypto.RandomNumberGenerator;
-import org.apache.shiro.crypto.SecureRandomNumberGenerator;
-import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.mindrot.jbcrypt.BCrypt;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Permissions;
 import org.owasp.dependencytrack.model.Roles;
@@ -346,18 +344,14 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         if (adminRole == null) {
             return;
         }
-        final RandomNumberGenerator rng = new SecureRandomNumberGenerator();
-        final Object salt = rng.nextBytes();
-        // todo: need to change this.
-        final String hashedPasswordBase64 = new Sha256Hash("admin", salt.toString(), 1).toBase64();
+
+        String hashedPassword = BCrypt.hashpw("admin", BCrypt.gensalt(14));
 
         final User user = new User();
-        user.setPassword(hashedPasswordBase64);
+        user.setPassword(hashedPassword);
         user.setUsername("admin");
         user.setCheckvalid(false);
         user.setRoles(adminRole);
-        user.setPasswordSalt(salt.toString());
-
         session.save(user);
         session.getTransaction().commit();
         session.close();

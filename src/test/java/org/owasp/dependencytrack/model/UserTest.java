@@ -36,11 +36,9 @@ public class UserTest {
         user.setId(1);
         user.setUsername("testuser");
         user.setPassword("password");
-        user.setPasswordSalt("salted-value");
 
         assertEquals(new Integer(1), user.getId());
         assertEquals("testuser", user.getUsername());
         assertEquals("password", user.getPassword());
-        assertEquals("salted-value", user.getPasswordSalt());
     }
 }

@@ -58,14 +58,14 @@ public class LoginController extends AbstractController {
      *
      * @param map      Map
      * @param username The username to login with
-     * @param passwd   The password to login with
+     * @param password The password to login with
      * @return A String
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public String loginchk(Map<String, Object> map,
-                           @RequestParam("username") String username, @RequestParam("password") String passwd) {
-        final String pwd = userService.hashpwd(username, passwd);
-        final UsernamePasswordToken token = new UsernamePasswordToken(username, pwd);
+                           @RequestParam("username") String username, @RequestParam("password") String password) {
+
+        final UsernamePasswordToken token = new UsernamePasswordToken(username, password);
         try {
             SecurityUtils.getSubject().login(token);
 

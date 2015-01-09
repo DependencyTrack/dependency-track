@@ -41,6 +41,7 @@
                 <entry key="/vulnerabilities" value="user"/>
                 <entry key="/libraryHierarchy" value="anon"/>
                 <entry key="/searchApplication" value="user"/>
+                <entry key="/dashboard" value="user"/>
                 <entry key="/error" value="user"/>
                 <entry key="/about" value="user"/>
                 <entry key="/dcdata" value="anon"/>
@@ -84,6 +85,8 @@
         <property name="securityManager" ref="securityManager"/>
     </bean>
 
+    <bean id="credentialsMatcher" class="org.owasp.dependencytrack.auth.BcryptCredentialsMatcher"/>
+
     <!--
     <bean id="authRealm" class="org.apache.shiro.realm.activedirectory.ActiveDirectoryRealm">
         <property name="url" value="ldap://hostname:389"/>
@@ -92,8 +95,9 @@
     -->
 
     <bean id="authRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
         <property name="dataSource" ref="dataSource"/>
-        <property name="saltStyle" value="COLUMN"/>
+        <property name="saltStyle" value="NO_SALT"/>
         <property name="userRolesQuery"
          value="SELECT role FROM Roles r, Users u WHERE u.username=? and r.ID=u.ROLEID" />
         <property name="permissionsQuery"

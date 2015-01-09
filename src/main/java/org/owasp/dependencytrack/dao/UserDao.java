@@ -25,6 +25,8 @@ import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.mindrot.jbcrypt.BCrypt;
+import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.model.Roles;
 import org.owasp.dependencytrack.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,11 @@ public class UserDao {
     @Autowired
     private SessionFactory sessionFactory;
 
+    /**
+     * Dependency-Track's centralized Configuration class
+     */
+    @Autowired
+    private Config config;
 
     public void registerUser(String username, String password, Integer role) {
         final RandomNumberGenerator rng = new SecureRandomNumberGenerator();
@@ -63,18 +70,11 @@ public class UserDao {
         user.setUsername(username);
         user.setCheckvalid(false);
         user.setRoles((Roles) query.list().get(0));
-        user.setPasswordSalt(salt.toString());
         sessionFactory.getCurrentSession().save(user);
     }
 
-    public String hashpwd(String username, String password) {
-        final Query query = sessionFactory.getCurrentSession().createQuery("FROM User where username =:usrn");
-        query.setParameter("usrn", username);
-        if (query.list().isEmpty()) {
-            return null;
-        }
-        final User user = (User) query.list().get(0);
-        return new Sha256Hash(password, user.getPasswordSalt()).toBase64();
+    public String hashpwd(String password) {
+        return BCrypt.hashpw(password, BCrypt.gensalt(config.getBcryptRounds()));
     }
 
     @SuppressWarnings("unchecked")

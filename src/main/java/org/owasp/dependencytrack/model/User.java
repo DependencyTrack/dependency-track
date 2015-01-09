@@ -53,12 +53,6 @@ public final class User {
     private String password;
 
     /**
-     * The salt associated with each password.
-     */
-    @Column(name = "PASSWORD_SALT")
-    private String salt;
-
-    /**
      * Admin validates a registered user and gives him access to the website
      */
     @Column(name = "CHECKVALID")
@@ -94,14 +88,6 @@ public final class User {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getPasswordSalt() {
-        return salt;
-    }
-
-    public void setPasswordSalt(String salt) {
-        this.salt = salt;
     }
 
     public boolean isCheckvalid() {

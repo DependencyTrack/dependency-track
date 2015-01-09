@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -50,16 +49,16 @@ public final class Config {
     private String buildDate;
 
     /**
+     * The date in which the application was built
+     */
+    @Value("#{properties[bcryptRounds]}")
+    private Integer bcryptRounds;
+
+    /**
      * Determine is the signup link is enabled on the login page
      */
     @Value("#{properties[signupEnabled]}")
     private String signupEnabled;
-
-    /**
-     * Determine the number of iterations when hashing a password
-     */
-    @Value("#{properties[hashIterations]}")
-    private int hashIterations;
 
     public String getShortname() {
         return shortname;
@@ -77,12 +76,12 @@ public final class Config {
         return buildDate;
     }
 
-    public int getHashIterations() {
-        return hashIterations;
-    }
-
     public boolean isSignupEnabled() {
         return Boolean.parseBoolean(signupEnabled);
+    }
+
+    public Integer getBcryptRounds() {
+        return bcryptRounds;
     }
 
 }

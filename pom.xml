@@ -147,6 +147,13 @@
             <version>${org.apache.shiro-version}</version>
         </dependency>
 
+        <!-- BCrypt -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.3m</version>
+        </dependency>
+
 
         <!-- h2 database -->
         <dependency>

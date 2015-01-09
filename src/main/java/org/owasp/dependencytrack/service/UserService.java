@@ -40,8 +40,8 @@ public class UserService {
     }
 
     @Transactional
-    public String hashpwd(String username, String password) {
-       return userDao.hashpwd(username, password);
+    public String hashpwd(String password) {
+       return userDao.hashpwd(password);
     }
 
     @Transactional

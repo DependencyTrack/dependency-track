@@ -33,14 +33,41 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Calendar;
 
-
+/**
+ * Performs a complete download of all NIST CVE data and provides access
+ * to the sources via an internal mirror.
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 public class NistDataMirrorUpdater {
 
+    /**
+     * NIST CVE 1.2 Modified URL (GZip feed)
+     */
     private static final String CVE_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
+
+    /**
+     * NIST CVE 2.0 Modified URL (GZip feed)
+     */
     private static final String CVE_20_MODIFIED_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-Modified.xml.gz";
+
+    /**
+     * NIST CVE 1.2 Base URL (GZip feed)
+     */
     private static final String CVE_12_BASE_URL = "https://nvd.nist.gov/download/nvdcve-%d.xml.gz";
+
+    /**
+     * NIST CVE 2.0 Base URL (GZip feed)
+     */
     private static final String CVE_20_BASE_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-%d.xml.gz";
+
+    /**
+     * The year to begin mirroring from. NIST CVE data begins in 2002.
+     */
     private static final int START_YEAR = 2002;
+
+    /**
+     * The year to end mirror of. Defaults to current year.
+     */
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
 
     /**
@@ -71,7 +98,7 @@ public class NistDataMirrorUpdater {
     /**
      * Perform a download of NIST data and save it to the nist data directory
      * @param cveUrl The url to download
-     * @throws IOException
+     * @throws IOException if method encounters a problem downloading or saving the files
      */
     private void doDownload(String cveUrl) throws IOException {
         BufferedInputStream bis = null;

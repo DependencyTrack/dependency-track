@@ -25,6 +25,14 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
+/**
+ * A manager for the CSRF token for a given session. The {@link #getToken(HttpSession)} should used to
+ * obtain the token value for the current session (and this should be the only way to obtain the token value).
+ *
+ * @author Eyal Lupu (original author)
+ * @author Steve Springett (steve.springett@owasp.org)
+ * https://github.com/eyal-lupu/eyallupu-blog/blob/master/SpringMVC-3.1-CSRF/src/main/java/com/eyallupu/blog/springmvc/controller/csrf/CSRFTokenManager.java
+ */
 final class TokenManager {
 
     /**

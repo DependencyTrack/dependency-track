@@ -38,6 +38,8 @@ import java.io.OutputStream;
 
 /**
  * Controller logic for all download-related requests.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 @Controller
 public class DownloadController extends AbstractController {

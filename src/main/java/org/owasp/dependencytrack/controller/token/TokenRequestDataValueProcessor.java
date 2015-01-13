@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.controller.token;
 
 import org.springframework.web.servlet.support.RequestDataValueProcessor;
@@ -25,7 +24,15 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * A <code>RequestDataValueProcessor</code> that pushes a hidden field with a CSRF token into forms.
+ * This process implements the {@link #getExtraHiddenFields(HttpServletRequest)} method to push the
+ * CSRF token obtained from {@link TokenRequestDataValueProcessor}. To register this processor to automatically process all
+ * Spring based forms register it as a Spring bean named 'requestDataValueProcessor' as shown below:
+ * @author Eyal Lupu (original author)
+ * @author Steve Springett (steve.springett@owasp.org)
+ * https://github.com/eyal-lupu/eyallupu-blog/blob/master/SpringMVC-3.1-CSRF/src/main/java/com/eyallupu/blog/springmvc/controller/csrf/CSRFRequestDataValueProcessor.java
+ */
 public class TokenRequestDataValueProcessor implements RequestDataValueProcessor {
 
     /**

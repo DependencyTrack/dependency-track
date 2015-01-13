@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.util;
 
 import org.owasp.dependencycheck.dependency.Confidence;
@@ -32,6 +31,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.List;
 
+/**
+ * Utility class that maps Dependency-Check to and from Dependency-Track objects.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 public final class DCObjectMapper {
 
     /**
@@ -39,6 +43,13 @@ public final class DCObjectMapper {
      */
     private DCObjectMapper() { }
 
+    /**
+     * Converts a Dependency-Track dependency (LibraryVersion + Vulnerabilities) into a
+     * Dependency-Check Dependency object
+     * @param libraryVersion a Dependency-Track LibraryVersion object
+     * @param vulnerabilities a list of Dependency-Track Vulnerability objects
+     * @return a Dependency-Check Dependency object
+     */
     public static Dependency toDCDependency(LibraryVersion libraryVersion, List<Vulnerability> vulnerabilities) {
         final Library library = libraryVersion.getLibrary();
         final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
@@ -62,6 +73,11 @@ public final class DCObjectMapper {
         return dependency;
     }
 
+    /**
+     * Converts a Dependency-Track Vulnerability object to a Dependency-Check Vulnerability object.
+     * @param vulnerability a Dependency-Track Vulnerability object
+     * @return a Dependency-Check Vulnerability object
+     */
     public static org.owasp.dependencycheck.dependency.Vulnerability toDCVulnerability(Vulnerability vulnerability) {
         final org.owasp.dependencycheck.dependency.Vulnerability dcvuln = new org.owasp.dependencycheck.dependency.Vulnerability();
         dcvuln.setName(vulnerability.getName());
@@ -79,6 +95,13 @@ public final class DCObjectMapper {
         return dcvuln;
     }
 
+    /**
+     * Converts a Dependency-Check Vulnerability object to a Dependency-Track Vulnerability object.
+     * @param dtvuln a Dependency-Track Vulnerability object
+     * @param dependency a Dependency-Check Dependency object
+     * @param vulnerability a Dependency-Check Vulnerability object
+     * @return a Dependency-Track Vulnerability object
+     */
     public static Vulnerability toDTVulnerability(Vulnerability dtvuln,
                                                   org.owasp.dependencycheck.dependency.Dependency dependency,
                                                   org.owasp.dependencycheck.dependency.Vulnerability vulnerability) {

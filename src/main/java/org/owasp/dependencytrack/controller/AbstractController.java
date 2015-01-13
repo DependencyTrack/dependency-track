@@ -26,6 +26,8 @@ import javax.servlet.ServletContext;
 
 /**
  * Base controller that all other controllers inherent from.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 public abstract class AbstractController {
 

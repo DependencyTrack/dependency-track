@@ -37,6 +37,8 @@ import java.util.Properties;
 
 /**
  * Controller logic for all user management related requests.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 @Controller
 public class UserManagementController extends AbstractController {

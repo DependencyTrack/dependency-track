@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.controller.token;
 
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -24,6 +23,19 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * A Spring MVC <code>HandlerInterceptor</code> which is responsible to enforce CSRF token validity on incoming posts requests. The interceptor
+ * should be registered with Spring MVC servlet using the following syntax:
+ * <pre>
+ *   &lt;mvc:interceptors&gt;
+ *        &lt;bean class="com.eyallupu.blog.springmvc.controller.csrf.CSRFHandlerInterceptor"/&gt;
+ *   &lt;/mvc:interceptors&gt;
+ *   </pre>
+ * @author Eyal Lupu (original author)
+ * @author Steve Springett (steve.springett@owasp.org)
+ * @see TokenRequestDataValueProcessor
+ * https://github.com/eyal-lupu/eyallupu-blog/blob/master/SpringMVC-3.1-CSRF/src/main/java/com/eyallupu/blog/springmvc/controller/csrf/CSRFHandlerInterceptor.java
+ */
 public class TokenHandlerInterceptor extends HandlerInterceptorAdapter {
 
     /**

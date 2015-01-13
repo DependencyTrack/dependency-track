@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.tasks.dependencycheck;
 
 import org.owasp.dependencycheck.dependency.Dependency;

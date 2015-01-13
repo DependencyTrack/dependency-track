@@ -30,6 +30,8 @@ import org.apache.commons.io.IOUtils;
 
 /**
  * Zip utilities.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 public final class ZipUtil {
 

@@ -49,6 +49,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Performs a Dependency-Check analysis.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 @Service
 public class DependencyCheckAnalysis implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
 
@@ -57,12 +62,22 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyCheckAnalysis.class);
 
+    /**
+     * The Hibernate SessionFactory
+     */
     @Autowired
     private SessionFactory sessionFactory;
 
+    /**
+     * Default constructor.
+     */
     public DependencyCheckAnalysis() {
     }
 
+    /**
+     * Constructor used when sessionFactory cannot be autowired.
+     * @param sessionFactory a Hibernate SessionFactory
+     */
     public DependencyCheckAnalysis(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
@@ -73,6 +88,9 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         execute(libraryVersions);
     }
 
+    /**
+     * Performs a scan against all libraries in the database.
+     */
     public synchronized void execute() {
         // Retrieve a list of all library versions defined in the system
         final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
@@ -82,6 +100,10 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         performAnalysis(libraryVersions);
     }
 
+    /**
+     * Performs a scan against the specified list of libraries.
+     * @param libraryVersions a list of LibraryVersion object to perform a scan against
+     */
     public synchronized void execute(List<LibraryVersion> libraryVersions) {
         if (performAnalysis(libraryVersions)) {
             try {
@@ -93,6 +115,11 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         }
     }
 
+    /**
+     * Performs a Dependency-Check analysis against the specified list of libraries.
+     * @param libraryVersions a list of LibraryVersion object to perform a scan against
+     * @return true if scan was successful, false if scan failed for some reason
+     */
     private synchronized boolean performAnalysis(List<LibraryVersion> libraryVersions) {
         LOGGER.info("Executing Dependency-Check Task");
         sessionFactory.openSession();
@@ -145,6 +172,12 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         return success;
     }
 
+    /**
+     * Analyzes the result (dependency-check-report.xml) from a Dependency-Check scan.
+     * @return an Analysis object containing metadata and scan results
+     * @throws SAXException if it's not able to parse the XML report
+     * @throws IOException if it's not able to open the XML report
+     */
     private synchronized Analysis analyzeResults() throws SAXException, IOException {
         final Digester digester = new Digester();
         digester.setValidating(false);
@@ -206,6 +239,11 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         return module;
     }
 
+    /**
+     * Given an Analysis object (a result from a Dependency-Check scan), this method
+     * will commit the results of the scan to the database.
+     * @param analysis a Dependency-Check scan result
+     */
     private void commitVulnerabilityData(Analysis analysis) {
         LOGGER.info("Committing vulnerability analysis");
         for (Dependency dependency: analysis.getDependencies()) {
@@ -229,7 +267,9 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
                 DCObjectMapper.toDTVulnerability(vuln, dependency, dcVuln);
 
                 if (vuln.getId() == null || vuln.getId() == 0) {
-                    LOGGER.debug("Recording vulnerability: " + dcVuln.getName() + " against " + libraryVersion.getLibrary().getLibraryname() + " " + libraryVersion.getLibraryversion());
+                    LOGGER.debug("Recording vulnerability: " + dcVuln.getName() + " against "
+                            + libraryVersion.getLibrary().getLibraryname() + " "
+                            + libraryVersion.getLibraryversion());
                     session.save(vuln);
                 } else {
                     LOGGER.debug("Updating vulnerability: " + dcVuln.getName());
@@ -247,6 +287,12 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         }
     }
 
+    /**
+     * Queries the database for a given CVE
+     * @param name the name of the vulnerability (typically a CVE identifier)
+     * @param session a Hibernate Session
+     * @return a Vulnerability object
+     */
     private Vulnerability getVulnerability(String name, Session session) {
         final Query query = session.createQuery("from Vulnerability where name=:name order by id asc");
         query.setParameter("name", name);

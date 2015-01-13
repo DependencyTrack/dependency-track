@@ -37,6 +37,8 @@ import java.util.Map;
 
 /**
  * Controller logic for all Login-related requests.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 @Controller
 public class LoginController extends AbstractController {

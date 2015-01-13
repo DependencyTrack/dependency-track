@@ -35,6 +35,8 @@ import java.util.Map;
 
 /**
  * Controller logic for all Dashboard-related requests.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 @Controller
 public class DashboardController extends AbstractController {

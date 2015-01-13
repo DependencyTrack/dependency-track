@@ -27,6 +27,8 @@ import org.mindrot.jbcrypt.BCrypt;
 /**
  * An Apache Shiro {@link org.apache.shiro.authc.credential.CredentialsMatcher CredentialsMatcher}
  * implementation that supports BCrypt.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 public class BcryptCredentialsMatcher extends SimpleCredentialsMatcher {
 

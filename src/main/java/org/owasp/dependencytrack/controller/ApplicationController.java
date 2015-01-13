@@ -50,6 +50,8 @@ import java.util.Properties;
 
 /**
  * Controller logic for all Application-related requests.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 @Controller
 public class ApplicationController extends AbstractController {
@@ -432,6 +434,9 @@ public class ApplicationController extends AbstractController {
      * Upload a License.
      *
      * @param licenseid the ID of the License to download
+     * @param file the license file to upload
+     * @param editlicensename an updated license name
+     * @return a String
      */
     @RequiresPermissions("uploadlicense")
     @RequestMapping(value = "/uploadlicense", method = RequestMethod.POST)
@@ -441,5 +446,4 @@ public class ApplicationController extends AbstractController {
         libraryVersionService.uploadLicense(licenseid, file, editlicensename);
         return "redirect:/libraries";
     }
-
 }

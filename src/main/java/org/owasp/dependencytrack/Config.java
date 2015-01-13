@@ -21,6 +21,11 @@ package org.owasp.dependencytrack;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * A Configuration class that maps Java methods to keys in application.properties.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 @Component
 public final class Config {
 

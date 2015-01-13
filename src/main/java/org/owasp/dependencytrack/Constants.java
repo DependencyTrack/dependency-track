@@ -16,11 +16,15 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack;
 
 import java.io.File;
 
+/**
+ * A class containing constants used throughout the application.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 public final class Constants {
 
     /**

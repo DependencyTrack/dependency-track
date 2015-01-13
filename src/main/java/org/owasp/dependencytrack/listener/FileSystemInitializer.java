@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.listener;
 
 import org.owasp.dependencytrack.Constants;
@@ -26,6 +25,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 
+/**
+ * Spring component that initializes the directory structure used by DependencyTrack.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 @Component
 public class FileSystemInitializer implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -42,6 +46,10 @@ public class FileSystemInitializer implements ApplicationListener<ContextRefresh
         makeDirectory(new File(Constants.LOG_DIR));
     }
 
+    /**
+     * Creates a diretory.
+     * @param file a File object representing the directory to create
+     */
     private void makeDirectory(File file) {
         if (!file.exists()) {
             System.out.println("Creating directory: " + file.getAbsolutePath());

@@ -43,6 +43,8 @@ import java.util.Map;
 
 /**
  * Controller logic for all Library-related requests.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
  */
 @Controller
 public class LibraryController extends AbstractController {

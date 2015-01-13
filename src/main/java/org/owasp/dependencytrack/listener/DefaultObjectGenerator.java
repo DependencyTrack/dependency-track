@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.listener;
 
 import org.apache.commons.io.IOUtils;
@@ -47,6 +46,11 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Spring component that initializes all data objects necessary for a new install.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 @Component
 public class DefaultObjectGenerator implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -345,7 +349,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
             return;
         }
 
-        String hashedPassword = BCrypt.hashpw("admin", BCrypt.gensalt(14));
+        final String hashedPassword = BCrypt.hashpw("admin", BCrypt.gensalt(14));
 
         final User user = new User();
         user.setPassword(hashedPassword);

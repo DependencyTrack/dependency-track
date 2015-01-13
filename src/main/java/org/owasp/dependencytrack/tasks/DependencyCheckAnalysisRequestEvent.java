@@ -16,7 +16,6 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-
 package org.owasp.dependencytrack.tasks;
 
 import org.owasp.dependencytrack.model.LibraryVersion;
@@ -24,15 +23,30 @@ import org.springframework.context.ApplicationEvent;
 
 import java.util.List;
 
+/**
+ * An event object for performing a Dependency-Check analysis.
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 public class DependencyCheckAnalysisRequestEvent extends ApplicationEvent {
 
+    /**
+     * A list of library versions to scan.
+     */
     private List<LibraryVersion> libraryVersions;
 
+    /**
+     * Constructs a new DependencyCheckAnalysisRequestEvent.
+     * @param libraryVersions a list of library versions to scan
+     */
     public DependencyCheckAnalysisRequestEvent(List<LibraryVersion> libraryVersions) {
         super(libraryVersions);
         this.libraryVersions = libraryVersions;
     }
 
+    /**
+     * Returns a list of library versions that should be scanned.
+     * @return a list of library versions
+     */
     public List<LibraryVersion> getLibraryVersions() {
         return libraryVersions;
     }

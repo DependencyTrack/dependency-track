@@ -22,10 +22,8 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
-import org.owasp.dependencytrack.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -48,12 +46,6 @@ public class LoginController extends AbstractController {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
 
-    /**
-     * The Dependency-Track UserService.
-     */
-    @Autowired
-    private UserService userService;
-
 
     /**
      * Login action.
@@ -64,8 +56,8 @@ public class LoginController extends AbstractController {
      * @return A String
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public String loginchk(Map<String, Object> map,
-                           @RequestParam("username") String username, @RequestParam("password") String password) {
+    public String loginCheck(Map<String, Object> map, @RequestParam("username") String username,
+                           @RequestParam("password") String password) {
 
         final UsernamePasswordToken token = new UsernamePasswordToken(username, password);
         try {
@@ -105,33 +97,9 @@ public class LoginController extends AbstractController {
      */
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
     public String logout() {
-        SecurityUtils.getSubject().logout();
-        return "redirect:/login";
-    }
-
-    /**
-     * Logout action.
-     *
-     * @param username    The username supplied during the registration of a user account
-     * @param password    The password supplied during the registration of a user account
-     * @param chkpassword The second password (retype) supplied during the registration of a user account
-     * @param role        The role of the user attempting to perform the action
-     * @return a String
-     */
-
-    @RequestMapping(value = "/registerUser", method = RequestMethod.POST)
-    public String registerUser(@RequestParam("username") String username,
-                               @RequestParam("password") String password,
-                               @RequestParam("chkpassword") String chkpassword,
-                               @RequestParam("role") Integer role) {
-        final Subject currentUser =
-                SecurityUtils.getSubject();
-        if (password.equals(chkpassword) && currentUser.hasRole("admin")) {
-            userService.registerUser(username, password, role);
-            return "redirect:/usermanagement";
-        } else if (getConfig().isSignupEnabled() && password.equals(chkpassword)) {
-            userService.registerUser(username, password, role);
-        }
+        final Subject subject = SecurityUtils.getSubject();
+        LOGGER.info("Logout: " + subject.getPrincipal());
+        subject.logout();
         return "redirect:/login";
     }
 }

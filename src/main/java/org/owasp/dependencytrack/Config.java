@@ -59,12 +59,6 @@ public final class Config {
     @Value("#{properties[bcryptRounds]}")
     private Integer bcryptRounds;
 
-    /**
-     * Determine is the signup link is enabled on the login page
-     */
-    @Value("#{properties[signupEnabled]}")
-    private String signupEnabled;
-
     public String getShortname() {
         return shortname;
     }
@@ -79,10 +73,6 @@ public final class Config {
 
     public String getBuildDate() {
         return buildDate;
-    }
-
-    public boolean isSignupEnabled() {
-        return Boolean.parseBoolean(signupEnabled);
     }
 
     public Integer getBcryptRounds() {

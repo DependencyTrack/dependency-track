@@ -32,19 +32,34 @@
 <div class="navbar navbar-static-top">
     <div class="navbar-inner">
         <ul class="nav">
+            <spring:message code="permissions.dashboard" var="dashboard"/>
+            <shiro:hasPermission name="${dashboard}">
             <li class="<c:if test="${param.content!='dashboard'}">in</c:if>active">
                 <a href="<c:url value="/dashboard"/>"><spring:message code="label.dashboard"/></a>
             </li>
+            </shiro:hasPermission>
 
+            <spring:message code="permissions.applications" var="applications"/>
+            <shiro:hasPermission name="${applications}">
             <li class="<c:if test="${param.content!='applications'}">in</c:if>active">
                 <a href="<c:url value="/applications"/>"><spring:message code="label.applications"/></a>
             </li>
+            </shiro:hasPermission>
+
+            <spring:message code="permissions.libraries" var="libraries"/>
+            <shiro:hasPermission name="${libraries}">
             <li class="<c:if test="${param.content!='libraries'}">in</c:if>active">
                 <a href="<c:url value="/libraries"/>"><spring:message code="label.libraries"/></a>
             </li>
+            </shiro:hasPermission>
+
+            <spring:message code="permissions.searchApplication" var="searchApplication"/>
+            <shiro:hasPermission name="${searchApplication}">
             <li>
                 <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
             </li>
+            </shiro:hasPermission>
+
             <spring:message code="permissions.usermanagement" var="usermanagement"/>
             <shiro:hasPermission name="${usermanagement}">
             <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
@@ -53,10 +68,13 @@
             </shiro:hasPermission>
         </ul>
         <ul class="nav pull-right">
+            <spring:message code="permissions.about" var="about"/>
+            <shiro:hasPermission name="${about}">
             <li class="<c:if test="${param.content!='about'}">in</c:if>active">
                 <a href="<c:url value="/about"/>"><spring:message code="label.about"/></a>
             </li>
             <li class="divider-vertical"></li>
+            </shiro:hasPermission>
             <li class="inactive"><a href="<c:url value="/logout"/>"><spring:message code="label.logout"/></a></li>
         </ul>
     </div>

@@ -241,7 +241,7 @@ $(document).on("change",".checkvalidity",function() {
 
     var id = $(this).val();
 
-    var uri = contextPath() + '/validateuser/'+id;
+    var uri = contextPath() + '/usermanagement/validateuser/'+id;
 
     $.ajax({
         url: uri,
@@ -257,7 +257,7 @@ $(document).on("change",".checkvalidity",function() {
 
 $(document).on("click",".deleteUser",function() {
     var id = $(this).data('userid');
-    var uri = contextPath() + '/deleteuser/'+id;
+    var uri = contextPath() + '/usermanagement/deleteuser/'+id;
 
     $.ajax({
         url: uri,
@@ -276,7 +276,7 @@ $(document).on("change",".rolename",function() {
     var id = $(this).data('userid');
     var role = $(this).val();
 
-    var uri = contextPath() + '/changeuserrole/'+id+'/'+role;
+    var uri = contextPath() + '/usermanagement/changeuserrole/'+id+'/'+role;
 
     $.ajax({
         url: uri,
@@ -288,23 +288,6 @@ $(document).on("change",".rolename",function() {
         }
     });
 
-});
-
-$(document).on("change",".slider",function() {
-
-    var numberOfDays=document.getElementById("slider").value;
-    document.getElementById("box").value=numberOfDays;
-    var uri = contextPath() + '/changescanschedule/'+numberOfDays;
-
-    $.ajax({
-        url: uri,
-        type: 'GET',
-        dataType: "text",
-        success: function (data) // Variable data contains the data we get from serverside
-        {
-
-        }
-    });
 });
 
 

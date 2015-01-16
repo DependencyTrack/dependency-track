@@ -11,17 +11,14 @@
             <thead>
             <tr>
                 <th><spring:message code="label.username"/></th>
-
                 <th><spring:message code="label.userRole"/></th>
                 <th><spring:message code="label.delete"/></th>
-
             </tr>
             </thead>
             <tbody>
             <c:forEach items="${userList}" var="userList">
                 <tr>
                     <td>${userList.username}</td>
-
                     <td>
                         <select id="rolenamenameid" data-userid='${userList.id}' name="rolename" class="rolename" autofocus="autofocus">
                         <c:forEach items="${roleList}" var="roleList">
@@ -53,7 +50,7 @@
         <h4 id="registerUserModalLabel"><spring:message code="login.create.account"/></h4>
     </div>
 
-    <c:url value="/registerUser" var="registerUserUrl"/>
+    <c:url value="/usermanagement/registerUser" var="registerUserUrl"/>
     <form:form id="registerUserForm" style="margin-bottom:0" action="${registerUserUrl}" method="post" autocomplete="off">
         <div class="modal-body">
             <table>

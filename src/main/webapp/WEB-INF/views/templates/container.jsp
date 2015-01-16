@@ -20,6 +20,7 @@
         put("vulnerabilities", "vulnerabilities.jsp");
         put("error", "error.jsp");
         put("libraries", "libraries.jsp");
+        put("403", "403.jsp");
     }};
 
     private static final PolicyFactory htmlButtonPolicy = new HtmlPolicyBuilder()

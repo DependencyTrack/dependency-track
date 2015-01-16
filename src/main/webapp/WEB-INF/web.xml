@@ -64,8 +64,15 @@
     </error-page>
 
     <error-page>
+        <exception-type>org.apache.shiro.authz.UnauthorizedException</exception-type>
+        <location>/WEB-INF/views/403page.jsp</location>
+    </error-page>
+
+    <!--
+    <error-page>
         <exception-type>java.lang.Exception</exception-type>
         <location>/WEB-INF/views/errorpage.jsp</location>
     </error-page>
+    -->
 
 </web-app>

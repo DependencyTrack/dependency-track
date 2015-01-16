@@ -95,6 +95,7 @@ public class UserManagementController extends AbstractController {
     /**
      * Adds a new user to the system
      * @param username the username of the user
+     * @param isLdap is the username local or an ldap user
      * @param password the users password
      * @param chkpassword a confirmation of the users password
      * @param role the role id for the user
@@ -102,11 +103,14 @@ public class UserManagementController extends AbstractController {
     @RequiresPermissions("usermanagement")
     @RequestMapping(value = "/usermanagement/registerUser", method = RequestMethod.POST)
     public String registerUser(@RequestParam("username") String username,
-                               @RequestParam("password") String password,
-                               @RequestParam("chkpassword") String chkpassword,
+                               @RequestParam(required = false, value = "isldap") String isLdap,
+                               @RequestParam(required = false, value = "password") String password,
+                               @RequestParam(required = false, value = "chkpassword") String chkpassword,
                                @RequestParam("role") Integer role) {
-        if (password.equals(chkpassword)) {
-            userService.registerUser(username, password, role);
+        if (isLdap == null && password != null && chkpassword != null && password.equals(chkpassword)) {
+            userService.registerUser(username, false, password, role);
+        } else if (isLdap != null){
+            userService.registerUser(username, true, null, role);
         }
         return "redirect:/usermanagement";
     }

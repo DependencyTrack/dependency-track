@@ -56,7 +56,11 @@
             <table>
                 <tr>
                     <td><label for="username"><spring:message code="label.username"/></label></td>
-                    <td><input id="username" name="username" type="text" autofocus="autofocus" pattern=".{5,}" title="5 characters minimum" required="required"/></td>
+                    <td><input id="username" name="username" type="text" autofocus="autofocus" pattern=".{4,}" title="4 characters minimum" required="required"/></td>
+                </tr>
+                <tr>
+                    <td><label for="username"><spring:message code="label.isLdap"/></label></td>
+                    <td><input id="isldap" name="isldap" type="checkbox" onclick="togglePasswordFields(this);"/></td>
                 </tr>
                 <tr>
                     <td><label for="password"><spring:message code="label.password"/></label></td>

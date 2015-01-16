@@ -290,17 +290,14 @@ $(document).on("change",".rolename",function() {
 
 });
 
-
-//slider
-$("[data-slider]")
-    .each(function () {
-        var input = $(this);
-        $("<span>")
-            .addClass("output")
-            .insertAfter($(this));
-    })
-    .bind("slider:ready slider:changed", function (event, data) {
-        $(this)
-            .nextAll(".output:first")
-            .html(data.value.toFixed(3));
-    });
+function togglePasswordFields(checkbox) {
+    if (checkbox.checked) {
+        document.getElementById('password').value='';
+        document.getElementById('password').disabled=true;
+        document.getElementById('chkpassword').value='';
+        document.getElementById('chkpassword').disabled=true;
+    } else {
+        document.getElementById('password').disabled=false;
+        document.getElementById('chkpassword').disabled=false;
+    }
+}

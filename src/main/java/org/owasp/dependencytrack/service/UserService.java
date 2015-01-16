@@ -35,8 +35,8 @@ public class UserService {
     private UserDao userDao;
 
     @Transactional
-    public void registerUser(String username, String password, Integer role) {
-        userDao.registerUser(username, password, role);
+    public void registerUser(String username, boolean isLdap, String password, Integer role) {
+        userDao.registerUser(username, isLdap, password, role);
     }
 
     @Transactional

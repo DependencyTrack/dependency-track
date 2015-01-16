@@ -50,11 +50,7 @@ public class UserDao {
     @Autowired
     private Config config;
 
-    public void registerUser(String username, String password, Integer role) {
-        final RandomNumberGenerator rng = new SecureRandomNumberGenerator();
-        final Object salt = rng.nextBytes();
-        // todo: need to change this.
-        final String hashedPasswordBase64 = new Sha256Hash(password, salt.toString()).toBase64();
+    public void registerUser(String username, boolean isLdap, String password, Integer role) {
         Query query;
         if (role == null) {
             query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
@@ -66,7 +62,12 @@ public class UserDao {
 
 
         final User user = new User();
-        user.setPassword(hashedPasswordBase64);
+        if (isLdap) {
+            user.setIsLdap(true);
+        } else {
+            user.setPassword(hashpwd(password));
+            user.setIsLdap(false);
+        }
         user.setUsername(username);
         user.setCheckvalid(false);
         user.setRoles((Roles) query.list().get(0));

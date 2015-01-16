@@ -352,6 +352,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         final String hashedPassword = BCrypt.hashpw("admin", BCrypt.gensalt(14));
 
         final User user = new User();
+        user.setIsLdap(false);
         user.setPassword(hashedPassword);
         user.setUsername("admin");
         user.setCheckvalid(false);

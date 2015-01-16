@@ -59,6 +59,12 @@ public final class User {
     private boolean checkvalid;
 
     /**
+     * Specifies if the username is a pointer to an external LDAP entity
+     */
+    @Column(name = "ISLDAP")
+    private boolean isldap;
+
+    /**
      * The license the library is licensed under.
      */
     @ManyToOne
@@ -96,6 +102,14 @@ public final class User {
 
     public void setCheckvalid(boolean checkvalid) {
         this.checkvalid = checkvalid;
+    }
+
+    public boolean isLdap() {
+        return isldap;
+    }
+
+    public void setIsLdap(boolean isldap) {
+        this.isldap = isldap;
     }
 
     public Roles getRoles() {

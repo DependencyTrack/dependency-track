@@ -1,6 +1,7 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
 <%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 
 <div id="userManagaementContainer">
@@ -12,6 +13,7 @@
             <tr>
                 <th><spring:message code="label.username"/></th>
                 <th><spring:message code="label.userRole"/></th>
+                <th><spring:message code="label.isLdap"/></th>
                 <th><spring:message code="label.delete"/></th>
             </tr>
             </thead>
@@ -34,7 +36,12 @@
                         </select>
                     </td>
                     <td>
-                      <img  class="deleteUser" data-userid='${userList.id}' src="${pageContext.request.contextPath}/resources/images/deleteIcon.ico" alt="Delete" height="20" width="20">
+                        <input type="checkbox" <c:if test="${userList.isLdap()}">checked="checked"</c:if> disabled="disabled"/>
+                    </td>
+                    <td>
+                        <c:if test="${userList.username != pageContext.request.userPrincipal.name}">
+                        <img  class="deleteUser" data-userid='${userList.id}' src="${pageContext.request.contextPath}/resources/images/deleteIcon.ico" alt="Delete" height="20" width="20">
+                        </c:if>
                     </td>
                 </tr>
             </c:forEach>

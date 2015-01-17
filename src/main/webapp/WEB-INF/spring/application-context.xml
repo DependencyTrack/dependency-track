@@ -81,7 +81,7 @@
     <aop:aspectj-autoproxy proxy-target-class="true"/>
     <context:annotation-config/>
     <context:component-scan base-package="org.owasp.dependencytrack"/>
-
+    <!--
     <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
         <property name="exceptionMappings">
             <props>
@@ -89,7 +89,7 @@
             </props>
         </property>
     </bean>
-
+    -->
     <bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster">
         <property name="taskExecutor" >
             <bean class="org.springframework.core.task.SimpleAsyncTaskExecutor">

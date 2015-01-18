@@ -30,10 +30,7 @@ import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.Constants;
-import org.owasp.dependencytrack.model.Library;
-import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.ScanResult;
-import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.model.*;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.owasp.dependencytrack.util.DCObjectMapper;
 import org.slf4j.Logger;
@@ -131,7 +128,10 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
             final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
             dependency.setMd5sum(libraryVersion.getUndashedUuid());
             dependency.setSha1sum(libraryVersion.getUndashedUuid());
-            dependency.setLicense(library.getLicense().getLicensename());
+            final License license = library.getLicense();
+            if (license != null) {
+                dependency.setLicense(library.getLicense().getLicensename());
+            }
             dependency.setDescription(String.valueOf(libraryVersion.getId()));
             dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", library.getLibraryVendor().getVendor(), Confidence.HIGHEST);
             dependency.getProductEvidence().addEvidence("dependency-track", "name", library.getLibraryname(), Confidence.HIGHEST);

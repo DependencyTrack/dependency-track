@@ -24,6 +24,7 @@ import org.owasp.dependencycheck.dependency.Identifier;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Vulnerability;
 
 import java.io.File;
@@ -56,7 +57,10 @@ public final class DCObjectMapper {
         dependency.setFileName(library.getLibraryVendor().getVendor() + " " + library.getLibraryname() + " " + libraryVersion.getLibraryversion());
         dependency.setMd5sum((libraryVersion.getMd5() != null) ? libraryVersion.getMd5() : libraryVersion.getUndashedUuid());
         dependency.setSha1sum((libraryVersion.getSha1() != null) ? libraryVersion.getSha1() : libraryVersion.getUndashedUuid());
-        dependency.setLicense(library.getLicense().getLicensename());
+        final License license = library.getLicense();
+        if (license != null) {
+            dependency.setLicense(library.getLicense().getLicensename());
+        }
         dependency.setDescription(String.valueOf(libraryVersion.getId()));
         dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", library.getLibraryVendor().getVendor(), Confidence.HIGHEST);
         dependency.getProductEvidence().addEvidence("dependency-track", "name", library.getLibraryname(), Confidence.HIGHEST);

@@ -45,49 +45,9 @@
                 <input type="password" name="password" placeholder="${passwordLabel}" required="required" autocomplete="off"/>
                 <button type="submit" class="btn btn-primary btn-login"><spring:message code="login.button"/></button>
             </form:form>
-            <c:if test="${properties.signupEnabled}">
-            <div class="login-links">
-                <a data-toggle="modal" href="#registerUserModal"><spring:message code="login.account.question"/> <strong><spring:message code="login.signup"/></strong></a>
-            </div>
-            </c:if>
         </div>
     </div>
 </div>
-
-
-<c:if test="${properties.signupEnabled}">
-<div id="registerUserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="registerUserModalLabel" aria-hidden="true"
-     data-backdrop="static" data-keyboard="false">
-    <div class="modal-header">
-        <h4 id="registerUserModalLabel"><spring:message code="login.create.account"/></h4>
-    </div>
-
-    <c:url value="/registerUser" var="registerUserUrl"/>
-    <form:form id="registerUserForm" style="margin-bottom:0" action="${registerUserUrl}" method="post" autocomplete="off">
-        <div class="modal-body">
-            <table>
-                <tr>
-                    <td><label for="username"><spring:message code="label.username"/></label></td>
-                    <td><input id="username" name="username" type="text" autofocus="autofocus" pattern=".{5,}" title="5 characters minimum" required="required"/></td>
-                </tr>
-                <tr>
-                    <td><label for="password"><spring:message code="label.password"/></label></td>
-                    <td><input id="password" name="password" type="password" pattern=".{8,}" title="8 characters minimum" required="required"/></td>
-                </tr>
-                <tr>
-                    <td><label for="chkpassword"><spring:message code="label.password.confirm"/></label></td>
-                    <td><input id="chkpassword" name="chkpassword" type="password" pattern=".{8,}" title="8 characters minimum" required="required"/></td>
-                </tr>
-            </table>
-        </div>
-        <div class="modal-footer">
-            <input id="roleval" name="role" type="hidden" value=""/>
-            <button class="btn " data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
-            <button class="modalSubmit btn btn-primary"><spring:message code="label.register"/></button>
-        </div>
-    </form:form>
-</div>
-</c:if>
 
 </body>
 </html>

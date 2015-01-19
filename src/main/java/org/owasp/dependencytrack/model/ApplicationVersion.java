@@ -53,7 +53,13 @@ public final class ApplicationVersion implements Cloneable {
     @JoinColumn(name = "APPID", nullable = false)
     private Application application;
 
-    private Integer vulnCount = 0;
+    /**
+     * The number of vulnerabilities associated with this ApplicationVersion.
+     * This status is updated periodically by the system and is primarily used
+     * used to reduce unnecessary SQL queries to calculate this statistic.
+     */
+    @Column(name = "VULNCOUNT")
+    private Integer vulnCount;
 
     /**
      * Clones this specific object (minus the objects id).
@@ -90,7 +96,6 @@ public final class ApplicationVersion implements Cloneable {
         this.application = application;
     }
 
-    @Transient
     public Integer getVulnCount() {
         return vulnCount;
     }

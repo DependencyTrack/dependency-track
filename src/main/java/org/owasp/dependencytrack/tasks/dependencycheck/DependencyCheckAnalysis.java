@@ -19,9 +19,13 @@
 package org.owasp.dependencytrack.tasks.dependencycheck;
 
 import org.apache.commons.digester.Digester;
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.classic.Session;
+import org.hibernate.criterion.Expression;
+import org.hibernate.criterion.ProjectionList;
+import org.hibernate.criterion.Projections;
 import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -30,6 +34,7 @@ import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.Constants;
+import org.owasp.dependencytrack.dao.VulnerabilityDao;
 import org.owasp.dependencytrack.model.*;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.owasp.dependencytrack.util.DCObjectMapper;
@@ -94,7 +99,7 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         @SuppressWarnings("unchecked")
         final List<LibraryVersion> libraryVersions = query.list();
 
-        performAnalysis(libraryVersions);
+        execute(libraryVersions);
     }
 
     /**
@@ -285,6 +290,60 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
             session.getTransaction().commit();
             session.close();
         }
+        updateVulnerabilityStatistics();
+    }
+
+    /**
+     * Updates the vulnerability count for ApplicationVersion and LibraryVersion objects
+     */
+    private void updateVulnerabilityStatistics() {
+        final Session session = sessionFactory.openSession();
+        // First, query for all LibraryVersions with ScanResults and update the LibraryVersion stats
+        final Query libVerQuery = session.createQuery("FROM LibraryVersion ");
+        final List<LibraryVersion> libraryVersions = libVerQuery.list();
+        for (LibraryVersion libraryVersion : libraryVersions) {
+            int vulnCount = 0;
+            final Criteria criteria = session.createCriteria(ScanResult.class);
+            criteria.add(Expression.eq("libraryVersion", libraryVersion));
+            final ProjectionList projList = Projections.projectionList();
+            projList.add(Projections.property("libraryVersion"));
+            projList.add(Projections.property("vulnerability"));
+            criteria.setProjection(Projections.distinct(projList));
+            final List<Object[]> results = criteria.list();
+
+            for (Object[] result : results) {
+                for (Object object : result) {
+                    if (object instanceof Vulnerability) {
+                        vulnCount++;
+                    }
+                }
+            }
+            session.beginTransaction();
+            libraryVersion.setVulnCount(vulnCount);
+            session.save(libraryVersion);
+            session.getTransaction().commit();
+        }
+
+        // Second, update all ApplicationVersions with the stats obtained in the previous step
+        final Query appQuery = session.createQuery("FROM ApplicationVersion");
+        final List<ApplicationVersion> applicationVersions = appQuery.list();
+        for (ApplicationVersion applicationVersion : applicationVersions) {
+            final Query query = session.createQuery("from ApplicationDependency where applicationVersion=:version");
+            query.setParameter("version", applicationVersion);
+            int vulnCount = 0;
+            // Retrieve all of the library versions from the specified application version
+            final List<LibraryVersion> libvers = new ArrayList<>();
+            final List<ApplicationDependency> dependencies = query.list();
+            for (ApplicationDependency dependency : dependencies) {
+                final LibraryVersion libraryVersion = dependency.getLibraryVersion();
+                vulnCount += libraryVersion.getVulnCount();
+            }
+            session.beginTransaction();
+            applicationVersion.setVulnCount(vulnCount);
+            session.save(applicationVersion);
+            session.getTransaction().commit();
+        }
+        session.close();
     }
 
     /**

@@ -74,7 +74,13 @@ public final class LibraryVersion implements Cloneable {
     @Column(name = "UUID")
     private String uuid;
 
-    private Integer vulnCount = 0;
+    /**
+     * The number of vulnerabilities associated with this ApplicationVersion.
+     * This status is updated periodically by the system and is primarily used
+     * used to reduce unnecessary SQL queries to calculate this statistic.
+     */
+    @Column(name = "VULNCOUNT")
+    private Integer vulnCount;
 
     /**
      * Clones this specific object (minus the objects id).
@@ -139,7 +145,6 @@ public final class LibraryVersion implements Cloneable {
         return uuid.replace("-", "");
     }
 
-    @Transient
     public int getVulnCount() {
         return vulnCount;
     }

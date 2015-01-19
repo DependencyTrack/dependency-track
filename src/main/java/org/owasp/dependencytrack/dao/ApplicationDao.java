@@ -81,14 +81,6 @@ public class ApplicationDao {
     @SuppressWarnings("unchecked")
     public List<Application> listApplications() {
         final Query query = sessionFactory.getCurrentSession().createQuery("FROM Application");
-        final List<Application> applications = query.list();
-        for (Application application: applications) {
-            for (ApplicationVersion applicationVersion: application.getVersions()) {
-                final VulnerabilityDao vulnerabilityDao = new VulnerabilityDao(sessionFactory);
-                final int vulnCount = vulnerabilityDao.getVulnerabilityCount(applicationVersion);
-                applicationVersion.setVulnCount(vulnCount);
-            }
-        }
         return query.list();
     }
 

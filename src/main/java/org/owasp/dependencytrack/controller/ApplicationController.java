@@ -415,7 +415,6 @@ public class ApplicationController extends AbstractController {
         map.put("dependencies", libraryVersionService.getDependencies(version));
         map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
         map.put("vulnerableComponents", vulnerabilityService.getVulnerableComponents(version));
-        map.put("vulnerableComponents", vulnerabilityService.getVulnerableComponents(version));
         return "vulnerabilitiesPage";
     }
 

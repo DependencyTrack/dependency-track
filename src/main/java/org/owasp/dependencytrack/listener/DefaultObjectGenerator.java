@@ -188,6 +188,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
         if (count > 0) {
+            session.close();
             return;
         }
 
@@ -236,6 +237,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         // Check to see if data already exists in the table.
         if (count > 0) {
+            session.close();
             return;
         }
 
@@ -262,6 +264,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         // Check to see if data already exists in the table.
         if (count > 0) {
+            session.close();
             return;
         }
 
@@ -328,6 +331,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         // Check to see if data already exists in the table.
         if (count > 0) {
+            session.close();
             return;
         }
 

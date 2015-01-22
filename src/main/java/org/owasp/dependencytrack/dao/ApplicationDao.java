@@ -21,40 +21,16 @@ package org.owasp.dependencytrack.dao;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
-import org.owasp.dependencycheck.dependency.Confidence;
-import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.dependency.Identifier;
-import org.owasp.dependencycheck.reporting.ReportGenerator;
-import org.owasp.dependencycheck.utils.FileUtils;
-import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.model.ScanResult;
-import org.owasp.dependencytrack.model.Vulnerability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -379,124 +355,6 @@ public class ApplicationDao {
             return query.list();
         } else {
             return null;
-        }
-    }
-
-    /**
-     * Returns a scan results of all the dependencies in the database
-     * we generate reports which are stored in the home directory.
-     * @param libraryHierarchyBody a String representation of the JSON library hierarchy
-     */
-    public void scanApplication(String libraryHierarchyBody) {
-        try {
-            final List<Dependency> allDep = new ArrayList<>();
-            final JSONObject parse = (JSONObject) JSONValue.parse(libraryHierarchyBody);
-            final JSONArray vendors = (JSONArray) parse.get("vendors");
-
-            Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
-
-            for (Object ven : vendors) {
-                final JSONObject vendor = (JSONObject) ven;
-                final JSONArray libraries = (JSONArray) vendor.get("libraries");
-                for (Object lib : libraries) {
-                    final JSONObject libs = (JSONObject) lib;
-                    final JSONArray versions = (JSONArray) libs.get("versions");
-                    for (Object version : versions) {
-                        final JSONObject ver = (JSONObject) version;
-                        dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", (String) vendor.get("vendor"), Confidence.HIGH);
-                        dependency.getVersionEvidence().addEvidence("dependency-track", "libraryLanguage", (String) ver.get("libver"), Confidence.HIGH);
-                        dependency.getProductEvidence().addEvidence("dependency-track", "libraryName", (String) libs.get("libname"), Confidence.HIGH);
-                        final Identifier identifier = new Identifier("dependency-track", "libverid", String.valueOf(ver.get("libverid")), "Description");
-                        identifier.setConfidence(Confidence.HIGH);
-                        dependency.getIdentifiers().add(identifier);
-                        allDep.add(dependency);
-                        dependency = new Dependency(new File(FileUtils.getBitBucket()));
-                    }
-                }
-            }
-
-            final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
-            scanAgent.setConnectionString("jdbc:h2:file:%s;FILE_LOCK=SERIALIZED;AUTOCOMMIT=ON;");
-            scanAgent.setDataDirectory(Constants.DATA_DIR);
-            scanAgent.setAutoUpdate(true);
-
-            scanAgent.setDependencies(allDep);
-            scanAgent.setReportFormat(ReportGenerator.Format.ALL);
-            scanAgent.setReportOutputDirectory(System.getProperty("user.home"));
-            scanAgent.execute();
-
-        } catch (Exception e) {
-            LOGGER.error("An error occurred while attempting to perform a Dependency-Check scan against an application");
-            LOGGER.error(e.getMessage());
-        }
-    }
-
-    /**
-     * Azalyzes the reports generated from the scan and extracts relevant data and creates record.
-     */
-    public void analyzeScanResults() {
-        try {
-            final FileInputStream file = new FileInputStream(
-                    new File(System.getProperty("user.home") + "\\dependency-check-report.xml"));
-            final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-            final DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            final Document xmlDocument = builder.parse(file);
-            final NodeList nList = xmlDocument.getElementsByTagName("dependency");
-            final Session session = sessionFactory.openSession();
-            session.beginTransaction();
-
-            for (int i = 0; i < nList.getLength(); i++) {
-                final Node currentNode = nList.item(i);
-                if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
-                    final Element e = (Element) currentNode;
-                    final NodeList identfier = e.getElementsByTagName("identifier");
-                    String value = null;
-                    for (int j = 0; j < identfier.getLength(); j++) {
-                        final Element node = (Element) identfier.item(j);
-                        value = node.getAttribute("type");
-                        if (node.getAttribute("type").compareTo("dependency-track") == 0) {
-                            value = node.getElementsByTagName("url").item(0).getTextContent();
-                        }
-                    }
-                    final NodeList nodeList = e.getElementsByTagName("vulnerabilities");
-
-                    if (nodeList.getLength() > 0) {
-                        for (int j = 0; j < nodeList.getLength(); j++) {
-                            final Element e1 = (Element) nodeList.item(j);
-                            final NodeList n = e1.getElementsByTagName("vulnerability");
-                            if (n != null) {
-                                for (int k = 0; k < n.getLength(); k++) {
-                                    final Element vuln = (Element) n.item(k);
-                                    final Query query = session.
-                                            createQuery("FROM LibraryVersion as libver where libver.id in (:libverid)");
-                                    query.setParameter("libverid", Integer.parseInt(value));
-
-                                    final LibraryVersion currentLibrary = (LibraryVersion) query.list().get(0);
-                                    final ScanResult results = new ScanResult();
-                                    final Date date = new Date();
-
-                                    results.setScanDate(date);
-                                    results.setLibraryVersion(currentLibrary);
-                                    session.save(results);
-
-                                    final Vulnerability vulnerability = new Vulnerability();
-                                    vulnerability.setScanResult(results);
-                                    vulnerability.setName(vuln.getElementsByTagName("name").item(0).getTextContent());
-                                    vulnerability.setCvssScore(Float.parseFloat(vuln.getElementsByTagName("cvssScore").item(0).getTextContent()));
-                                    vulnerability.setCwe(vuln.getElementsByTagName("cwe").item(0).getTextContent());
-                                    vulnerability.setDescription(vuln.getElementsByTagName("description").item(0).getTextContent());
-                                    session.save(vulnerability);
-                                    session.getTransaction().commit();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            session.close();
-        } catch (SAXException | IOException | ParserConfigurationException e) {
-            LOGGER.error("An error occurred analyzing scan results");
-            LOGGER.error(e.getMessage());
         }
     }
 }

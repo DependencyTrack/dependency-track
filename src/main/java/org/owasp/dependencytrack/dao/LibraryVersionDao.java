@@ -622,7 +622,6 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
         return query.list();
     }
 
-    @Override
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
         this.eventPublisher = applicationEventPublisher;
     }

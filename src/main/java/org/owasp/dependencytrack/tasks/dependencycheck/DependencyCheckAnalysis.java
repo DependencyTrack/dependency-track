@@ -18,26 +18,27 @@
  */
 package org.owasp.dependencytrack.tasks.dependencycheck;
 
-import org.apache.commons.digester.Digester;
-import org.hibernate.Criteria;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.staxmate.SMInputFactory;
+import org.codehaus.staxmate.in.SMHierarchicCursor;
+import org.codehaus.staxmate.in.SMInputCursor;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.classic.Session;
-import org.hibernate.criterion.Expression;
-import org.hibernate.criterion.ProjectionList;
-import org.hibernate.criterion.Projections;
 import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.dependency.Reference;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.Constants;
-import org.owasp.dependencytrack.dao.VulnerabilityDao;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.model.Library;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.ScanResult;
+import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
-import org.owasp.dependencytrack.util.DCObjectMapper;
+import org.owasp.dependencytrack.util.XmlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,11 +46,15 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 
 /**
  * Performs a Dependency-Check analysis.
@@ -84,16 +89,23 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         this.sessionFactory = sessionFactory;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void onApplicationEvent(DependencyCheckAnalysisRequestEvent event) {
         final List<LibraryVersion> libraryVersions = event.getLibraryVersions();
-        execute(libraryVersions);
+        if (libraryVersions == null || libraryVersions.size() == 0) {
+            execute();
+        } else {
+            execute(libraryVersions);
+        }
     }
 
     /**
      * Performs a scan against all libraries in the database.
      */
     public synchronized void execute() {
+        sessionFactory.openSession();
         // Retrieve a list of all library versions defined in the system
         final Query query = sessionFactory.getCurrentSession().createQuery("from LibraryVersion");
         @SuppressWarnings("unchecked")
@@ -107,13 +119,18 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
      * @param libraryVersions a list of LibraryVersion object to perform a scan against
      */
     public synchronized void execute(List<LibraryVersion> libraryVersions) {
+        if (sessionFactory.isClosed()) {
+            sessionFactory.openSession();
+        }
         if (performAnalysis(libraryVersions)) {
             try {
-                final Analysis analysis = analyzeResults();
-                commitVulnerabilityData(analysis);
+                analyzeResults();
             } catch (SAXException | IOException e) {
                 LOGGER.error("An error occurred while analyzing Dependency-Check results: " + e.getMessage());
             }
+        }
+        if (!sessionFactory.isClosed()) {
+            sessionFactory.close();
         }
     }
 
@@ -124,7 +141,6 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
      */
     private synchronized boolean performAnalysis(List<LibraryVersion> libraryVersions) {
         LOGGER.info("Executing Dependency-Check Task");
-        sessionFactory.openSession();
 
         // iterate through the libraries, create evidence and create the resulting dependency
         final List<Dependency> dependencies = new ArrayList<>();
@@ -150,7 +166,7 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         scanAgent.setConnectionString("jdbc:h2:file:%s;FILE_LOCK=SERIALIZED;AUTOCOMMIT=ON;");
         scanAgent.setDataDirectory(Constants.DATA_DIR);
         scanAgent.setReportOutputDirectory(Constants.APP_DIR);
-        scanAgent.setReportFormat(ReportGenerator.Format.XML);
+        scanAgent.setReportFormat(ReportGenerator.Format.ALL);
         scanAgent.setAutoUpdate(true);
         scanAgent.setDependencies(dependencies);
         scanAgent.setCentralAnalyzerEnabled(false);
@@ -170,190 +186,139 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
             LOGGER.error("An error occurred executing Dependency-Check scan agent: " + e.getMessage());
         }
 
-        if (!sessionFactory.isClosed()) {
-            sessionFactory.close();
-        }
         LOGGER.info("Dependency-Check analysis complete");
         return success;
     }
 
     /**
      * Analyzes the result (dependency-check-report.xml) from a Dependency-Check scan.
-     * @return an Analysis object containing metadata and scan results
      * @throws SAXException if it's not able to parse the XML report
      * @throws IOException if it's not able to open the XML report
      */
-    private synchronized Analysis analyzeResults() throws SAXException, IOException {
-        final Digester digester = new Digester();
-        digester.setValidating(false);
-        digester.setClassLoader(DependencyCheckAnalysis.class.getClassLoader());
-
-        digester.addObjectCreate("analysis", Analysis.class);
-
-        final String depXpath = "analysis/dependencies/dependency";
-        digester.addObjectCreate(depXpath, Dependency.class);
-        digester.addBeanPropertySetter(depXpath + "/fileName");
-        digester.addBeanPropertySetter(depXpath + "/filePath");
-        digester.addBeanPropertySetter(depXpath + "/md5", "md5sum");
-        digester.addBeanPropertySetter(depXpath + "/sha1", "sha1sum");
-        digester.addBeanPropertySetter(depXpath + "/description");
-        digester.addBeanPropertySetter(depXpath + "/license");
-
-        final String identXpath = "analysis/dependencies/dependency/identifiers/identifier";
-        digester.addObjectCreate(identXpath, org.owasp.dependencycheck.dependency.Identifier.class);
-        digester.addBeanPropertySetter(identXpath + "/name", "value");
-        digester.addBeanPropertySetter(identXpath + "/url");
-
-        final String vulnXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability";
-        digester.addObjectCreate(vulnXpath, org.owasp.dependencycheck.dependency.Vulnerability.class);
-        digester.addBeanPropertySetter(vulnXpath + "/name");
-        digester.addBeanPropertySetter(vulnXpath + "/cvssScore");
-        digester.addBeanPropertySetter(vulnXpath + "/cwe");
-        digester.addBeanPropertySetter(vulnXpath + "/description");
-
-        final String refXpath = "analysis/dependencies/dependency/vulnerabilities/vulnerability/references/reference";
-        digester.addObjectCreate(refXpath, Reference.class);
-        digester.addBeanPropertySetter(refXpath + "/source");
-        digester.addBeanPropertySetter(refXpath + "/url");
-        digester.addBeanPropertySetter(refXpath + "/name");
-
-        final String suppressedVulnXpath = "analysis/dependencies/dependency/vulnerabilities/suppressedVulnerability";
-        digester.addObjectCreate(suppressedVulnXpath, org.owasp.dependencycheck.dependency.Vulnerability.class);
-        digester.addBeanPropertySetter(suppressedVulnXpath + "/name");
-        digester.addBeanPropertySetter(suppressedVulnXpath + "/cvssScore");
-        digester.addBeanPropertySetter(suppressedVulnXpath + "/cwe");
-        digester.addBeanPropertySetter(suppressedVulnXpath + "/description");
-
-        final String suppressedRefXpath = "analysis/dependencies/dependency/vulnerabilities/suppressedVulnerability/references/reference";
-        digester.addObjectCreate(suppressedRefXpath, Reference.class);
-        digester.addBeanPropertySetter(suppressedRefXpath + "/source");
-        digester.addBeanPropertySetter(suppressedRefXpath + "/url");
-        digester.addBeanPropertySetter(suppressedRefXpath + "/name");
-
-        digester.addSetNext(suppressedRefXpath, "addReference");
-        digester.addSetNext(suppressedVulnXpath, "addSuppressedVulnerability");
-        digester.addSetNext(refXpath, "addReference");
-        digester.addSetNext(identXpath, "addIdentifier");
-        digester.addSetNext(vulnXpath, "addVulnerability");
-        digester.addSetNext(depXpath, "addDependency");
-
-        final Analysis module = (Analysis) digester.parse(new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml"));
-        if (module == null) {
-            throw new SAXException("Input stream is not a Dependency-Check report file.");
+    private synchronized void analyzeResults() throws SAXException, IOException {
+        final SMInputFactory inputFactory = XmlUtil.newStaxParser();
+        try {
+            final SMHierarchicCursor rootC = inputFactory.rootElementCursor(
+                    new FileInputStream(
+                            new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml")));
+            rootC.advance(); // <analysis>
+            final SMInputCursor cursor = rootC.childCursor();
+            while (cursor.getNext() != null) {
+                final String nodeName = cursor.getLocalName();
+                if ("dependencies".equals(nodeName)) {
+                    processDependencies(cursor);
+                }
+            }
+        } catch (XMLStreamException e) {
+            throw new IllegalStateException("XML is not valid", e);
         }
-        return module;
     }
+
+    /**
+     * Processes a node of dependency tags.
+     * @param depC a SMInputCursor cursor
+     * @throws XMLStreamException if exception is thrown
+     */
+    private void processDependencies(SMInputCursor depC) throws XMLStreamException {
+        final SMInputCursor cursor = depC.childElementCursor("dependency");
+        while (cursor.getNext() != null) {
+            processDependency(cursor);
+        }
+    }
+
+    /**
+     * Processes a single dependency node.
+     * @param depC a SMInputCursor cursor
+     * @throws XMLStreamException if exception is thrown
+     */
+    private void processDependency(SMInputCursor depC) throws XMLStreamException {
+        int libraryVersionId = -1;
+        final SMInputCursor childCursor = depC.childCursor();
+        while (childCursor.getNext() != null) {
+            final String nodeName = childCursor.getLocalName();
+            if ("description".equals(nodeName)) {
+                libraryVersionId = Integer.valueOf(StringUtils.trim(childCursor.collectDescendantText(false)));
+            } else if ("vulnerabilities".equals(nodeName)) {
+                processVulnerabilities(childCursor, libraryVersionId);
+            }
+
+        }
+    }
+
+    /**
+     * Processes a node vulnerability tags.
+     * @param vulnC a SMInputCursor cursor
+     * @param libraryVersionId the library version identifier associated with this collection of vulnerabilities
+     * @throws XMLStreamException if exception is thrown
+     */
+    private void processVulnerabilities(SMInputCursor vulnC, int libraryVersionId) throws XMLStreamException {
+        final SMInputCursor cursor = vulnC.childElementCursor("vulnerability");
+        while (cursor.getNext() != null) {
+            processVulnerability(cursor, libraryVersionId);
+        }
+    }
+
+    /**
+     * Processes a single dependency node.
+     * @param vulnC a SMInputCursor cursor
+     * @param libraryVersionId the library version identifier associated with this vulnerability
+     * @throws XMLStreamException if exception is thrown
+     */
+    private void processVulnerability(SMInputCursor vulnC, int libraryVersionId) throws XMLStreamException {
+        String name = null, cvssScore = null, cwe = null, description = null;
+        final SMInputCursor childCursor = vulnC.childCursor();
+        while (childCursor.getNext() != null) {
+            final String nodeName = childCursor.getLocalName();
+            if ("name".equals(nodeName)) {
+                name = StringUtils.trim(childCursor.collectDescendantText(false));
+            } else if ("cvssScore".equals(nodeName)) {
+                cvssScore = StringUtils.trim(childCursor.collectDescendantText(false));
+            } else if ("cwe".equals(nodeName)) {
+                cwe = StringUtils.trim(childCursor.collectDescendantText(false));
+            } else if ("description".equals(nodeName)) {
+                description = StringUtils.trim(childCursor.collectDescendantText(false));
+            }
+        }
+        final Vulnerability vulnerability = getVulnerability(name);
+        vulnerability.setName(name);
+        vulnerability.setCvssScore(new BigDecimal(cvssScore));
+        vulnerability.setCwe(cwe);
+        vulnerability.setDescription(description);
+        commitVulnerabilityData(vulnerability, libraryVersionId);
+    }
+
 
     /**
      * Given an Analysis object (a result from a Dependency-Check scan), this method
      * will commit the results of the scan to the database.
-     * @param analysis a Dependency-Check scan result
+     * @param vulnerability the newly created vulnerability to commit
+     * @param libraryVersionId the unique identifier of the library version associated with the vulnerability
      */
-    private void commitVulnerabilityData(Analysis analysis) {
-        LOGGER.info("Committing vulnerability analysis");
-        for (Dependency dependency: analysis.getDependencies()) {
+    private void commitVulnerabilityData(Vulnerability vulnerability, int libraryVersionId) {
+        final Session session = sessionFactory.getCurrentSession();
+        final Query query = session.createQuery("FROM LibraryVersion WHERE id=:id");
+        query.setParameter("id", libraryVersionId);
+        final LibraryVersion libraryVersion = (LibraryVersion) query.uniqueResult();
 
-            if (dependency.getVulnerabilities().size() == 0) {
-                // No vulnerabilities found for this dependency - moving along...
-                break;
-            }
-
-            // The primary key for the library version is stored in the description field for reference
-            final Session session = sessionFactory.openSession();
-            final Query query = session.createQuery("FROM LibraryVersion WHERE id=:id");
-            query.setParameter("id", new Integer(dependency.getDescription()));
-            final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
-
-            session.beginTransaction();
-
-            // Iterate through native Dependency-Check Vulnerability objects and create Dependency-Track Vulnerability objects
-            for (org.owasp.dependencycheck.dependency.Vulnerability dcVuln: dependency.getVulnerabilities()) {
-                final Vulnerability vuln = getVulnerability(dcVuln.getName(), session);
-                DCObjectMapper.toDTVulnerability(vuln, dependency, dcVuln);
-
-                if (vuln.getId() == null || vuln.getId() == 0) {
-                    LOGGER.debug("Recording vulnerability: " + dcVuln.getName() + " against "
-                            + libraryVersion.getLibrary().getLibraryname() + " "
-                            + libraryVersion.getLibraryversion());
-                    session.save(vuln);
-                } else {
-                    LOGGER.debug("Updating vulnerability: " + dcVuln.getName());
-                    session.update(vuln);
-                }
-
-                final ScanResult scan = new ScanResult();
-                scan.setScanDate(new Date());
-                scan.setLibraryVersion(libraryVersion);
-                scan.setVulnerability(vuln);
-                session.save(scan);
-            }
-            session.getTransaction().commit();
-            session.close();
-        }
-        updateVulnerabilityStatistics();
-    }
-
-    /**
-     * Updates the vulnerability count for ApplicationVersion and LibraryVersion objects
-     */
-    private void updateVulnerabilityStatistics() {
-        final Session session = sessionFactory.openSession();
-        // First, query for all LibraryVersions with ScanResults and update the LibraryVersion stats
-        final Query libVerQuery = session.createQuery("FROM LibraryVersion ");
-        final List<LibraryVersion> libraryVersions = libVerQuery.list();
-        for (LibraryVersion libraryVersion : libraryVersions) {
-            int vulnCount = 0;
-            final Criteria criteria = session.createCriteria(ScanResult.class);
-            criteria.add(Expression.eq("libraryVersion", libraryVersion));
-            final ProjectionList projList = Projections.projectionList();
-            projList.add(Projections.property("libraryVersion"));
-            projList.add(Projections.property("vulnerability"));
-            criteria.setProjection(Projections.distinct(projList));
-            final List<Object[]> results = criteria.list();
-
-            for (Object[] result : results) {
-                for (Object object : result) {
-                    if (object instanceof Vulnerability) {
-                        vulnCount++;
-                    }
-                }
-            }
-            session.beginTransaction();
-            libraryVersion.setVulnCount(vulnCount);
-            session.save(libraryVersion);
-            session.getTransaction().commit();
+        if (libraryVersion == null) {
+            return;
         }
 
-        // Second, update all ApplicationVersions with the stats obtained in the previous step
-        final Query appQuery = session.createQuery("FROM ApplicationVersion");
-        final List<ApplicationVersion> applicationVersions = appQuery.list();
-        for (ApplicationVersion applicationVersion : applicationVersions) {
-            final Query query = session.createQuery("from ApplicationDependency where applicationVersion=:version");
-            query.setParameter("version", applicationVersion);
-            int vulnCount = 0;
-            // Retrieve all of the library versions from the specified application version
-            final List<LibraryVersion> libvers = new ArrayList<>();
-            final List<ApplicationDependency> dependencies = query.list();
-            for (ApplicationDependency dependency : dependencies) {
-                final LibraryVersion libraryVersion = dependency.getLibraryVersion();
-                vulnCount += libraryVersion.getVulnCount();
-            }
-            session.beginTransaction();
-            applicationVersion.setVulnCount(vulnCount);
-            session.save(applicationVersion);
-            session.getTransaction().commit();
-        }
-        session.close();
+        session.save(vulnerability);
+        final ScanResult scan = new ScanResult();
+        scan.setScanDate(new Date());
+        scan.setLibraryVersion(libraryVersion);
+        scan.setVulnerability(vulnerability);
+        session.save(scan);
     }
 
     /**
      * Queries the database for a given CVE
      * @param name the name of the vulnerability (typically a CVE identifier)
-     * @param session a Hibernate Session
      * @return a Vulnerability object
      */
-    private Vulnerability getVulnerability(String name, Session session) {
-        final Query query = session.createQuery("from Vulnerability where name=:name order by id asc");
+    private Vulnerability getVulnerability(String name) {
+        final Query query = sessionFactory.getCurrentSession().createQuery("from Vulnerability where name=:name order by id asc");
         query.setParameter("name", name);
         @SuppressWarnings("unchecked")
         final List<Vulnerability> vulns = query.list();

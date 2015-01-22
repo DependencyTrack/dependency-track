@@ -19,6 +19,7 @@
 package org.owasp.dependencytrack.controller;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
@@ -427,6 +428,16 @@ public class ApplicationController extends AbstractController {
     @RequestMapping(value = "/about", method = RequestMethod.GET)
     public String about() {
         return "aboutPage";
+    }
+
+    /**
+     * Performs an immediate scan against all library versions.
+     */
+    @RequiresRoles("admin")
+    @RequestMapping(value = "/about/scan", method = RequestMethod.GET)
+    public String scanNow() {
+        vulnerabilityService.initiateFullDependencyCheckScan();
+        return "redirect:/about";
     }
 
     /**

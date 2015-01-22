@@ -86,13 +86,4 @@ public class ApplicationService {
         return applicationDao.coarseSearchApplicationVersions(libid);
     }
 
-    @Transactional
-    public void scanApplication(String libraryHierarchyBody) {
-        applicationDao.scanApplication(libraryHierarchyBody);
-    }
-
-    @Transactional
-    public void analyzeScanResults() {
-        applicationDao.analyzeScanResults();
-    }
 }

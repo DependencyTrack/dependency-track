@@ -20,7 +20,6 @@ package org.owasp.dependencytrack.util;
 
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.dependency.Identifier;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.model.Library;
 import org.owasp.dependencytrack.model.LibraryVersion;
@@ -46,7 +45,7 @@ public final class DCObjectMapper {
 
     /**
      * Converts a Dependency-Track dependency (LibraryVersion + Vulnerabilities) into a
-     * Dependency-Check Dependency object
+     * Dependency-Check Dependency object.
      * @param libraryVersion a Dependency-Track LibraryVersion object
      * @param vulnerabilities a list of Dependency-Track Vulnerability objects
      * @return a Dependency-Check Dependency object
@@ -86,47 +85,10 @@ public final class DCObjectMapper {
         final org.owasp.dependencycheck.dependency.Vulnerability dcvuln = new org.owasp.dependencycheck.dependency.Vulnerability();
         dcvuln.setName(vulnerability.getName());
         dcvuln.setDescription(vulnerability.getDescription());
-        dcvuln.setCvssScore(vulnerability.getCvssScore());
+        dcvuln.setCvssScore(vulnerability.getCvssScore().floatValue());
         dcvuln.setCwe(vulnerability.getCwe());
         dcvuln.setMatchedCPE(vulnerability.getMatchedCPE(), vulnerability.getMatchedAllPreviousCPE());
-        //todo: add this in when DC XML supports it
-        //dcvuln.setCvssAccessComplexity(vulnerability.getCvssAccessComplexity());
-        //dcvuln.setCvssAccessVector(vulnerability.getCvssAccessVector());
-        //dcvuln.setCvssAuthentication(vulnerability.getCvssAuthentication());
-        //dcvuln.setCvssAvailabilityImpact(vulnerability.getCvssAvailabilityImpact());
-        //dcvuln.setCvssConfidentialityImpact(vulnerability.getCvssConfidentialityImpact());
-        //dcvuln.setCvssIntegrityImpact(vulnerability.getCvssIntegrityImpact());
         return dcvuln;
-    }
-
-    /**
-     * Converts a Dependency-Check Vulnerability object to a Dependency-Track Vulnerability object.
-     * @param dtvuln a Dependency-Track Vulnerability object
-     * @param dependency a Dependency-Check Dependency object
-     * @param vulnerability a Dependency-Check Vulnerability object
-     * @return a Dependency-Track Vulnerability object
-     */
-    public static Vulnerability toDTVulnerability(Vulnerability dtvuln,
-                                                  org.owasp.dependencycheck.dependency.Dependency dependency,
-                                                  org.owasp.dependencycheck.dependency.Vulnerability vulnerability) {
-        dtvuln.setName(vulnerability.getName());
-        dtvuln.setDescription(vulnerability.getDescription());
-        dtvuln.setCvssScore(vulnerability.getCvssScore());
-
-        for (Identifier identifier: dependency.getIdentifiers()) {
-            dtvuln.setMatchedCPE(identifier.getValue().replace("(", "").replace(")", ""));
-            break;
-        }
-
-        dtvuln.setCwe(vulnerability.getCwe());
-        //todo: add this in when DC XML supports it
-        //dtvuln.setCvssAccessComplexity(vulnerability.getCvssAccessComplexity());
-        //dtvuln.setCvssAccessVector(vulnerability.getCvssAccessVector());
-        //dtvuln.setCvssAuthentication(vulnerability.getCvssAuthentication());
-        //dtvuln.setCvssAvailabilityImpact(vulnerability.getCvssAvailabilityImpact());
-        //dtvuln.setCvssConfidentialityImpact(vulnerability.getCvssConfidentialityImpact());
-        //dtvuln.setCvssIntegrityImpact(vulnerability.getCvssIntegrityImpact());
-        return dtvuln;
     }
 
 }

@@ -95,16 +95,6 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
                         createQuery("FROM LibraryVersion where library=:library order by libraryversion asc");
                 query3.setParameter("library", library);
                 final ArrayList<LibraryVersion> versions = (ArrayList<LibraryVersion>) query3.list();
-
-                for (LibraryVersion libraryVersion: versions) {
-                    final SQLQuery query4 = sessionFactory.getCurrentSession().
-                            createSQLQuery("SELECT DISTINCT VULNERABILITYID FROM SCANRESULT WHERE LIBRARYVERSIONID=:libraryVersion");
-
-                    query4.setParameter("libraryVersion", libraryVersion.getId());
-                    final int vulnCount = query4.list().size();
-                    libraryVersion.setVulnCount(vulnCount);
-                }
-
                 library.setVersions(new HashSet<>(versions));
             }
             retlist.add(vendor);

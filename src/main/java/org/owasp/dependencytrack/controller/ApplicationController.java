@@ -100,19 +100,6 @@ public class ApplicationController extends AbstractController {
         LOGGER.info("OWASP Dependency-Track Initialized");
     }
 
-
-    /**
-     * Default page action.
-     *
-     * @param request a HttpServletRequest object
-     * @return a String
-     */
-    @RequiresPermissions("applications")
-    @RequestMapping(value = "/", method = RequestMethod.GET)
-    public String application(HttpServletRequest request) {
-        return "redirect:/applications";
-    }
-
     /**
      * Lists all applications.
      *
@@ -124,16 +111,7 @@ public class ApplicationController extends AbstractController {
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
     public String application(Map<String, Object> map, HttpServletRequest request) {
         map.put("check", false);
-        map.put("application", new Application());
         map.put("applicationList", applicationService.listApplications());
-        final Resource resource = new ClassPathResource("/application.properties");
-        try {
-            final Properties props = PropertiesLoaderUtils.loadProperties(resource);
-            props.setProperty("schedule", "mytime");
-        } catch (Exception e) {
-            LOGGER.error("An error occurred while loading properties while retrieving a list of applications");
-            LOGGER.error(e.getMessage());
-        }
         return "applicationsPage";
     }
 

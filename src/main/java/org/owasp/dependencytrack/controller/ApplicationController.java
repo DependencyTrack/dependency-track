@@ -31,9 +31,6 @@ import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -47,7 +44,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Controller logic for all Application-related requests.
@@ -410,6 +406,7 @@ public class ApplicationController extends AbstractController {
 
     /**
      * Performs an immediate scan against all library versions.
+     * @return a String
      */
     @RequiresRoles("admin")
     @RequestMapping(value = "/about/scan", method = RequestMethod.GET)

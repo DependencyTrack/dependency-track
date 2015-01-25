@@ -62,17 +62,13 @@ public class UserDao {
         if (isLdap) {
             user.setIsLdap(true);
         } else {
-            user.setPassword(hashpwd(password));
+            user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt(config.getBcryptRounds())));
             user.setIsLdap(false);
         }
         user.setUsername(username);
         user.setCheckvalid(false);
         user.setRoles((Roles) query.list().get(0));
         sessionFactory.getCurrentSession().save(user);
-    }
-
-    public String hashpwd(String password) {
-        return BCrypt.hashpw(password, BCrypt.gensalt(config.getBcryptRounds()));
     }
 
     @SuppressWarnings("unchecked")

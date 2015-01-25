@@ -221,42 +221,4 @@ public class ApplicationVersionDao {
         query.executeUpdate();
     }
 
-
-    /**
-     * Get all the libraries with this application id.
-     * Only returns those libraries which are present in scan result.
-     * @param id The id of the ApplicationVersion
-     * @return a String
-     */
-    @SuppressWarnings("unchecked")
-    public String chartdata(int id) {
-        final JSONObject obj = new JSONObject();
-        try {
-            Query query = sessionFactory.getCurrentSession().createQuery(
-                    "select appdep.libraryVersion from ApplicationDependency as appdep where appdep.applicationVersion.id=:id");
-            query.setParameter("id", id);
-
-            final List<LibraryVersion> libraryVersions = query.list();
-
-            query = sessionFactory.getCurrentSession().createQuery(
-                    "from ScanResult as scan where scan.libraryVersion=:libver");
-            query.setParameterList("libver", libraryVersions);
-
-            final List<ScanResult> scanResults = query.list();
-
-            query = sessionFactory.getCurrentSession().createQuery(
-                    "from Vulnerability as vuln where vuln.scanResult=:scanResult");
-            query.setParameterList("scanResult", scanResults);
-
-            for (int i = 0; i < query.list().size(); i++) {
-                final Vulnerability vulnerability = (Vulnerability) query.list().get(i);
-                obj.put("vuln", vulnerability.getCwe());
-                obj.put("cvss", vulnerability.getCvssScore());
-            }
-        } catch (Exception e) {
-            LOGGER.error("An error occurred retrieving libraries and known vulnerabilities associated with them");
-            LOGGER.error(e.getMessage());
-        }
-        return obj.toString();
-    }
 }

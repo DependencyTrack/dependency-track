@@ -62,10 +62,4 @@ public class ApplicationVersionService {
 
     }
 
-    @Transactional
-    public String chartdata(int id) {
-        return applicationVersionDao.chartdata(id);
-
-    }
-
 }

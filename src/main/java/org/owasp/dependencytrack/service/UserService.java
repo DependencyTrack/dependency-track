@@ -40,11 +40,6 @@ public class UserService {
     }
 
     @Transactional
-    public String hashpwd(String password) {
-       return userDao.hashpwd(password);
-    }
-
-    @Transactional
     public List<User> accountManagement() {
         return userDao.accountManagement();
     }

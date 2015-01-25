@@ -20,16 +20,15 @@ package org.owasp.dependencytrack.controller;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.owasp.dependencytrack.model.Application;
+import org.owasp.dependencytrack.model.VulnerabilityTrend;
 import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
+import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -47,26 +46,22 @@ public class DashboardController extends AbstractController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardController.class);
 
     /**
-     * The Dependency-Track ApplicationService.
+     * The Dependency-Track VulnerabilityService.
      */
     @Autowired
-    private ApplicationService applicationService;
+    private VulnerabilityService vulnerabilityService;
 
     /**
-     * The Dependency-Track ApplicationVersionService.
+     * Returns a json reponse of vulnerability trends.
+     *
+     * @param map a map of parameters
+     * @return a String
      */
-    @Autowired
-    private ApplicationVersionService applicationVersionService;
-
-
-    /**
-     * Mapping to dashboard which gives vulnerability overview.
-     */
-    @RequiresPermissions("dashboard")
-    @RequestMapping(value = "/chartdata/{id}", method = RequestMethod.GET)
-    @ResponseBody
-    public String chartdata(Map<String, Object> map, @PathVariable("id") Integer applicationVersionId) {
-        return applicationVersionService.chartdata(applicationVersionId);
+    //  @RequiresPermissions("libraryHierarchy")
+    @RequestMapping(value = "/vulnerabilityTrend", method = RequestMethod.GET)
+    public String getLibraryHierarchy(Map<String, Object> map) {
+        final VulnerabilityTrend trend = vulnerabilityService.getVulnerabilityTrend(VulnerabilityTrend.Timespan.MONTH, -1);
+        return "dashboardPage";
     }
 
     /**
@@ -75,8 +70,6 @@ public class DashboardController extends AbstractController {
     @RequiresPermissions("dashboard")
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
     public String dashboard(Map<String, Object> map) {
-        map.put("application", new Application());
-        map.put("applicationList", applicationService.listApplications());
         return "dashboardPage";
     }
 

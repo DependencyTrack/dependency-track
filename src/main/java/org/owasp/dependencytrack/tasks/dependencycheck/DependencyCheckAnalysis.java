@@ -304,6 +304,17 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
             return;
         }
 
+        // Check if it's an existing vulnerability
+        if (vulnerability.getId() != null) {
+            final Query scanQuery = session.createQuery("from ScanResult s where s.vulnerability=:vulnerability and s.scanDate=:scanDate and s.libraryVersion=:libraryVersion");
+            scanQuery.setParameter("vulnerability", vulnerability);
+            scanQuery.setParameter("scanDate", new Date());
+            scanQuery.setParameter("libraryVersion", libraryVersion);
+            if (scanQuery.list().size() > 0) {
+                return; // Don't add the same entry more than once
+            }
+        }
+
         session.save(vulnerability);
         final ScanResult scan = new ScanResult();
         scan.setScanDate(new Date());

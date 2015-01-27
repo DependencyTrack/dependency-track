@@ -80,7 +80,7 @@ public class LoginController extends AbstractController {
      * @param response a HttpServletResponse object
      * @return a String
      */
-    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.HEAD})
     public String login(HttpServletResponse response) {
         response.addCookie(new Cookie("CONTEXTPATH", getServletContext().getContextPath()));
         final String s = "loginPage";

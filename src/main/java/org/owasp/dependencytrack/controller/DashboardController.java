@@ -19,17 +19,20 @@
 package org.owasp.dependencytrack.controller;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.owasp.dependencytrack.model.Application;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.owasp.dependencytrack.model.VulnerabilitySummary;
 import org.owasp.dependencytrack.model.VulnerabilityTrend;
-import org.owasp.dependencytrack.service.ApplicationService;
-import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -53,19 +56,33 @@ public class DashboardController extends AbstractController {
 
     /**
      * Returns a json reponse of vulnerability trends.
-     *
      * @param map a map of parameters
      * @return a String
      */
-    //  @RequiresPermissions("libraryHierarchy")
-    @RequestMapping(value = "/vulnerabilityTrend", method = RequestMethod.GET)
-    public String getLibraryHierarchy(Map<String, Object> map) {
+    @RequiresPermissions("vulnerabilities")
+    @RequestMapping(value = "/vulnerabilityTrend", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
+    @SuppressWarnings("unchecked")
+    public String vulnerabilityTrend(Map<String, Object> map) {
         final VulnerabilityTrend trend = vulnerabilityService.getVulnerabilityTrend(VulnerabilityTrend.Timespan.MONTH, -1);
-        return "dashboardPage";
+        final JSONArray jsonArray = new JSONArray();
+        for (Map.Entry<Date, VulnerabilitySummary> entry : trend.getTrend().entrySet()) {
+            final VulnerabilitySummary vs = entry.getValue();
+            final JSONObject jsonObject = new JSONObject();
+            jsonObject.put("date", entry.getKey());
+            jsonObject.put("high", vs.getHigh());
+            jsonObject.put("medium", vs.getMedium());
+            jsonObject.put("low", vs.getLow());
+            jsonObject.put("total", vs.getHigh() + vs.getMedium() + vs.getLow());
+            jsonArray.add(jsonObject);
+        }
+        return jsonArray.toJSONString();
     }
 
     /**
      * Mapping to dashboard which gives vulnerability overview.
+     * @param map a map of parameters
+     * @return a String
      */
     @RequiresPermissions("dashboard")
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)

@@ -69,7 +69,7 @@ public class DashboardController extends AbstractController {
         for (Map.Entry<Date, VulnerabilitySummary> entry : trend.getTrend().entrySet()) {
             final VulnerabilitySummary vs = entry.getValue();
             final JSONObject jsonObject = new JSONObject();
-            jsonObject.put("date", entry.getKey());
+            jsonObject.put("date", entry.getKey().toString());
             jsonObject.put("high", vs.getHigh());
             jsonObject.put("medium", vs.getMedium());
             jsonObject.put("low", vs.getLow());

@@ -290,6 +290,12 @@ $(document).on("change",".rolename",function() {
 
 });
 
+$(document).on("click", ".trendButton", function () {
+    var days = $(this).data("id");
+    remove_dashboard_chart();
+    vulnerability_trend_query(days);
+});
+
 function togglePasswordFields(checkbox) {
     if (checkbox.checked) {
         document.getElementById('password').value='';

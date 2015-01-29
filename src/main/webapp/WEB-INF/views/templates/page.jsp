@@ -22,7 +22,6 @@
     <script type="text/javascript" src="<c:url value="/resources/tablesorter/jquery.tablesorter.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/bootstrap/js/bootstrap.min.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/chart.min.js"/>"></script>
-    <script type="text/javascript" src="<c:url value="/resources/dashboard.chart.js"/>"></script>
     <script type="text/javascript" src="<c:url value="/resources/functions.js"/>"></script>
 </head>
 <body>

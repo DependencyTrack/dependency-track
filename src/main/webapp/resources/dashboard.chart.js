@@ -41,7 +41,7 @@ var vulnerability_trend_data = function () {
                 labels: data.mapProperty('date'),
                 datasets: [
                     {
-                        label: "High Severity",
+                        label: "High",
                         fillColor: "rgba(255,51,51,0.2)",
                         strokeColor: "rgba(255,51,51,1)",
                         pointColor: "rgba(255,51,51,1)",
@@ -51,7 +51,7 @@ var vulnerability_trend_data = function () {
                         data: data.mapProperty('high')
                     },
                     {
-                        label: "Medium Severity",
+                        label: "Medium",
                         fillColor: "rgba(255,204,51,0.2)",
                         strokeColor: "rgba(255,204,51,1)",
                         pointColor: "rgba(255,204,51,1)",
@@ -61,7 +61,7 @@ var vulnerability_trend_data = function () {
                         data: data.mapProperty('medium')
                     },
                     {
-                        label: "Low Severity",
+                        label: "Low",
                         fillColor: "rgba(51,153,255,0.2)",
                         strokeColor: "rgba(51,153,255,1)",
                         pointColor: "rgba(51,153,255,1)",

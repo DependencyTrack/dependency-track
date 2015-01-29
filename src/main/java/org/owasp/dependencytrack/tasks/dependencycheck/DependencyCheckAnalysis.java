@@ -52,6 +52,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -233,28 +234,69 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
      */
     private void processDependency(SMInputCursor depC) throws XMLStreamException {
         int libraryVersionId = -1;
+        List<String[]> matchedCpes = Collections.emptyList();
         final SMInputCursor childCursor = depC.childCursor();
         while (childCursor.getNext() != null) {
             final String nodeName = childCursor.getLocalName();
             if ("description".equals(nodeName)) {
                 libraryVersionId = Integer.valueOf(StringUtils.trim(childCursor.collectDescendantText(false)));
+            } else if ("identifiers".equals(nodeName)) {
+                matchedCpes = processIdentifiers(childCursor);
             } else if ("vulnerabilities".equals(nodeName)) {
-                processVulnerabilities(childCursor, libraryVersionId);
+                processVulnerabilities(childCursor, libraryVersionId, matchedCpes);
             }
-
         }
+    }
+
+    /**
+     * Processes a node of identifier tags.
+     * @param identsC a SMInputCursor cursor
+     * @throws XMLStreamException if exception is thrown
+     */
+    private List<String[]> processIdentifiers(SMInputCursor identsC) throws XMLStreamException {
+        final ArrayList<String[]> identifiers = new ArrayList<>();
+        final SMInputCursor cursor = identsC.childElementCursor("identifier");
+        while (cursor.getNext() != null) {
+            final String[] identifier = processIdentifier(cursor);
+            identifiers.add(identifier);
+        }
+        return identifiers;
+    }
+
+    /**
+     * Processes a single identifier node.
+     * @param identC a SMInputCursor cursor
+     * @throws XMLStreamException if exception is thrown
+     */
+    private String[] processIdentifier(SMInputCursor identC) throws XMLStreamException {
+        final String[] values = new String[2];
+        final SMInputCursor childCursor = identC.childCursor();
+        while (childCursor.getNext() != null) {
+            final String nodeName = childCursor.getLocalName();
+            if ("name".equals(nodeName)) {
+                String value = StringUtils.trim(childCursor.collectDescendantText(false));
+                if (value != null && value.startsWith("(") && value.endsWith(")")) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                values[0] = value;
+            } else if ("url".equals(nodeName)) {
+                values[1] = StringUtils.trim(childCursor.collectDescendantText(false));
+            }
+        }
+        return values;
     }
 
     /**
      * Processes a node vulnerability tags.
      * @param vulnC a SMInputCursor cursor
      * @param libraryVersionId the library version identifier associated with this collection of vulnerabilities
+     * @param matchedCpes a list of CPEs that the dependency was matched against
      * @throws XMLStreamException if exception is thrown
      */
-    private void processVulnerabilities(SMInputCursor vulnC, int libraryVersionId) throws XMLStreamException {
+    private void processVulnerabilities(SMInputCursor vulnC, int libraryVersionId, List<String[]> matchedCpes) throws XMLStreamException {
         final SMInputCursor cursor = vulnC.childElementCursor("vulnerability");
         while (cursor.getNext() != null) {
-            processVulnerability(cursor, libraryVersionId);
+            processVulnerability(cursor, libraryVersionId, matchedCpes);
         }
     }
 
@@ -262,9 +304,10 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
      * Processes a single dependency node.
      * @param vulnC a SMInputCursor cursor
      * @param libraryVersionId the library version identifier associated with this vulnerability
+     * @param matchedCpes a list of CPEs that the dependency was matched against
      * @throws XMLStreamException if exception is thrown
      */
-    private void processVulnerability(SMInputCursor vulnC, int libraryVersionId) throws XMLStreamException {
+    private void processVulnerability(SMInputCursor vulnC, int libraryVersionId, List<String[]> matchedCpes) throws XMLStreamException {
         String name = null, cvssScore = null, cwe = null, description = null;
         final SMInputCursor childCursor = vulnC.childCursor();
         while (childCursor.getNext() != null) {
@@ -284,6 +327,9 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         vulnerability.setCvssScore(new BigDecimal(cvssScore));
         vulnerability.setCwe(cwe);
         vulnerability.setDescription(description);
+        if (matchedCpes.size() > 0) {
+            vulnerability.setMatchedCPE(matchedCpes.get(0)[0]);
+        }
         commitVulnerabilityData(vulnerability, libraryVersionId);
     }
 

@@ -16,51 +16,85 @@
  *
  * Copyright (c) Axway. All Rights Reserved.
  */
-var data = {
-    labels: ["January", "February", "March", "April", "May", "June", "July"],
-    datasets: [
-        {
-            label: "My First dataset",
-            fillColor: "rgba(220,220,220,0.2)",
-            strokeColor: "rgba(220,220,220,1)",
-            pointColor: "rgba(220,220,220,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(220,220,220,1)",
-            data: [65, 59, 80, 81, 56, 55, 40]
-        },
-        {
-            label: "My Second dataset",
-            fillColor: "rgba(151,187,205,0.2)",
-            strokeColor: "rgba(151,187,205,1)",
-            pointColor: "rgba(151,187,205,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(151,187,205,1)",
-            data: [28, 48, 40, 19, 86, 27, 90]
+
+var dashboard_chart_options = {
+    multiTooltipTemplate: "<%= value %> (<%= datasetLabel %>)"
+}
+
+function dashboard_chart() {
+    var can = jQuery('#dashboard_chart');
+    var ctx = can.get(0).getContext("2d");
+    var container = can.parent().parent(); // get width from proper parent
+
+    var $container = jQuery(container);
+
+    can.attr('width', $container.width()); //max width
+    can.attr('height', $container.height()); //max height
+
+    var chart = new Chart(ctx).Line(vulnerability_trend_data, dashboard_chart_options);
+}
+
+var vulnerability_trend_data = function () {
+    jQuery.get( contextPath() + "/vulnerabilityTrend",
+        function( data ) {
+            vulnerability_trend_data = {
+                labels: data.mapProperty('date'),
+                datasets: [
+                    {
+                        label: "High Severity",
+                        fillColor: "rgba(255,51,51,0.2)",
+                        strokeColor: "rgba(255,51,51,1)",
+                        pointColor: "rgba(255,51,51,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(255,51,51,1)",
+                        data: data.mapProperty('high')
+                    },
+                    {
+                        label: "Medium Severity",
+                        fillColor: "rgba(255,204,51,0.2)",
+                        strokeColor: "rgba(255,204,51,1)",
+                        pointColor: "rgba(255,204,51,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(255,204,51,1)",
+                        data: data.mapProperty('medium')
+                    },
+                    {
+                        label: "Low Severity",
+                        fillColor: "rgba(51,153,255,0.2)",
+                        strokeColor: "rgba(51,153,255,1)",
+                        pointColor: "rgba(51,153,255,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(51,153,255,1)",
+                        data: data.mapProperty('low')
+                    },
+                    {
+                        label: "Total",
+                        fillColor: "rgba(220,220,220,0.2)",
+                        strokeColor: "rgba(220,220,220,1)",
+                        pointColor: "rgba(220,220,220,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        data: data.mapProperty('total')
+                    }
+                ]
+            };
+            dashboard_chart();
         }
-    ]
+    );
 };
 
-function renderDashboardChart() {
-    var chart = new Chart(document.getElementById("dashboard-canvas").getContext("2d")).Line(data);
-}
+jQuery(document).ready(function($) {
+    jQuery(window).resize(dashboard_chart);
+    vulnerability_trend_data();
+});
 
-function resizeCanvas() {
-    $('canvas').remove();
-
-    var container = document.getElementById("dashboard-canvas-container");
-    var canvas = document.createElement("canvas");
-    canvas.id = "dashboard-canvas";
-    canvas.width = container.offsetWidth;
-    canvas.height = 400;
-    container.appendChild(canvas);
-    renderDashboardChart();
-}
-
-function initAndRenderDashboardChart() {
-    $(window).resize(function(){
-        resizeCanvas();
+Array.prototype.mapProperty = function(property) {
+    return this.map(function (obj) {
+        return obj[property];
     });
-    resizeCanvas();
-}
+};
+

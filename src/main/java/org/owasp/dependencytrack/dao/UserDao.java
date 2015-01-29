@@ -73,7 +73,7 @@ public class UserDao {
 
     @SuppressWarnings("unchecked")
     public List<User> accountManagement() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("FROM User ");
+        final Query query = sessionFactory.getCurrentSession().createQuery("FROM User order by username");
         return query.list();
     }
 

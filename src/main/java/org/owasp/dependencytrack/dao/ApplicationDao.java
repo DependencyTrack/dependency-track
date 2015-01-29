@@ -56,7 +56,7 @@ public class ApplicationDao {
      */
     @SuppressWarnings("unchecked")
     public List<Application> listApplications() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("FROM Application");
+        final Query query = sessionFactory.getCurrentSession().createQuery("FROM Application order by name asc");
         return query.list();
     }
 

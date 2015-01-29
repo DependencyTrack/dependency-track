@@ -17,26 +17,47 @@
  * Copyright (c) Axway. All Rights Reserved.
  */
 
+var vulnerability_trend_data = {};
+
 var dashboard_chart_options = {
     multiTooltipTemplate: "<%= value %> (<%= datasetLabel %>)"
-}
+};
 
 function dashboard_chart() {
     var can = jQuery('#dashboard_chart');
-    var ctx = can.get(0).getContext("2d");
     var container = can.parent().parent(); // get width from proper parent
-
     var $container = jQuery(container);
 
     can.attr('width', $container.width()); //max width
     can.attr('height', $container.height()); //max height
 
+    render_dashboard_chart();
+}
+
+function render_dashboard_chart() {
+    var can = jQuery('#dashboard_chart');
+    var ctx = can.get(0).getContext("2d");
     var chart = new Chart(ctx).Line(vulnerability_trend_data, dashboard_chart_options);
 }
 
-var vulnerability_trend_data = function () {
-    jQuery.get( contextPath() + "/vulnerabilityTrend",
-        function( data ) {
+function remove_dashboard_chart() {
+    $('canvas').remove();
+    var container = document.getElementById("dashboard_canvas_container");
+    var canvas = document.createElement("canvas");
+    canvas.id = "dashboard_chart";
+    canvas.width = container.offsetWidth;
+    canvas.height = 400;
+    container.appendChild(canvas);
+}
+
+function resize_dashboard_chart() {
+    remove_dashboard_chart();
+    render_dashboard_chart();
+}
+
+function vulnerability_trend_query(days) {
+    jQuery.get(contextPath() + "/vulnerabilityTrend/" + days,
+        function (data) {
             vulnerability_trend_data = {
                 labels: data.mapProperty('date'),
                 datasets: [
@@ -85,11 +106,11 @@ var vulnerability_trend_data = function () {
             dashboard_chart();
         }
     );
-};
+}
 
 jQuery(document).ready(function($) {
-    jQuery(window).resize(dashboard_chart);
-    vulnerability_trend_data();
+    jQuery(window).resize(resize_dashboard_chart);
+    vulnerability_trend_query(365);
 });
 
 Array.prototype.mapProperty = function(property) {

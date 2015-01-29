@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -56,15 +57,16 @@ public class DashboardController extends AbstractController {
 
     /**
      * Returns a json reponse of vulnerability trends.
-     * @param map a map of parameters
+     * @param days the number of days back to get statistics for
      * @return a String
      */
     @RequiresPermissions("vulnerabilities")
-    @RequestMapping(value = "/vulnerabilityTrend", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/vulnerabilityTrend/{days}", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     @SuppressWarnings("unchecked")
-    public String vulnerabilityTrend(Map<String, Object> map) {
-        final VulnerabilityTrend trend = vulnerabilityService.getVulnerabilityTrend(VulnerabilityTrend.Timespan.MONTH, -1);
+    public String vulnerabilityTrend(@PathVariable("days") Integer days) {
+        final VulnerabilityTrend.Timespan timespan = VulnerabilityTrend.Timespan.getTimespan(days);
+        final VulnerabilityTrend trend = vulnerabilityService.getVulnerabilityTrend(timespan, -1);
         final JSONArray jsonArray = new JSONArray();
         for (Map.Entry<Date, VulnerabilitySummary> entry : trend.getTrend().entrySet()) {
             final VulnerabilitySummary vs = entry.getValue();

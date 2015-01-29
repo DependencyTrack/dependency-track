@@ -437,7 +437,7 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
     @SuppressWarnings("unchecked")
     public List<String> uniqueLang() {
         final Query query = sessionFactory.getCurrentSession().
-                createQuery("select distinct lib.language from Library as lib");
+                createQuery("select distinct lib.language from Library as lib order by lib.language");
         return query.list();
     }
 
@@ -449,7 +449,7 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
     @SuppressWarnings("unchecked")
     public List<String> uniqueVer() {
         final Query query = sessionFactory.getCurrentSession().
-                createQuery("select distinct libver.libraryversion from LibraryVersion as libver");
+                createQuery("select distinct libver.libraryversion from LibraryVersion as libver order by libver.libraryversion");
         return query.list();
     }
 

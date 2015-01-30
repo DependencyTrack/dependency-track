@@ -110,6 +110,7 @@ function vulnerability_trend_query(days) {
 
 jQuery(document).ready(function($) {
     jQuery(window).resize(resize_dashboard_chart);
+    $("#trendYearButton").button('toggle');
     vulnerability_trend_query(365);
 });
 

@@ -9,11 +9,11 @@
 <jsp:include page="/WEB-INF/views/templates/page.jsp">
     <jsp:param name="title" value="${title}"/>
     <jsp:param name="buttons" value='
-        <div class="btn-group">
-        <a id="trendYearButton" role="button" class="trendButton btn" data-id="365">${yearLabel}</a>
-        <a id="trendQuarterButton" role="button" class="trendButton btn" data-id="90">${quarterLabel}</a>
-        <a id="trendMonthButton" role="button" class="trendButton btn" data-id="30">${monthLabel}</a>
-        <a id="trendWeekButton" role="button" class="trendButton btn" data-id="7">${weekLabel}</a>
+        <div class="btn-group" data-toggle="buttons-radio">
+            <button type="button" class="trendButton btn btn-small" data-id="365" id="trendYearButton">${yearLabel}</button>
+            <button type="button" class="trendButton btn btn-small" data-id="90" id="trendQuarterButton">${quarterLabel}</button>
+            <button type="button" class="trendButton btn btn-small" data-id="30" id="trendMonthButton">${monthLabel}</button>
+            <button type="button" class="trendButton btn btn-small" data-id="7" id="trendWeekButton">${weekLabel}</button>
         </div>
     '/>
     <jsp:param name="content" value="dashboard"/>

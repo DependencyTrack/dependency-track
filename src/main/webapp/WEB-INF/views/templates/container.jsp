@@ -33,8 +33,15 @@
         .allowAttributes("data-id").onElements("a")
         .allowAttributes("data-ver").onElements("a")
         .allowAttributes("data-version").onElements("a")
+        .allowElements("button")
+        .allowAttributes("type").onElements("button")
+        .allowAttributes("id").onElements("button")
+        .allowAttributes("class").onElements("button")
+        .allowAttributes("data-toggle").onElements("button")
+        .allowAttributes("data-id").onElements("button")
         .allowElements("div")
         .allowAttributes("class").onElements("div")
+        .allowAttributes("data-toggle").onElements("div")
         .toFactory();
 %>
 <%

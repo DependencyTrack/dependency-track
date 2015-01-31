@@ -18,8 +18,11 @@
  */
 package org.owasp.dependencytrack;
 
+import org.owasp.dependencytrack.model.Roles;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A Configuration class that maps Java methods to keys in application.properties.
@@ -54,10 +57,41 @@ public final class Config {
     private String buildDate;
 
     /**
-     * The date in which the application was built
+     * The number of Bcrypt rounds to use when hashing passwords
      */
     @Value("#{properties[bcryptRounds]}")
     private Integer bcryptRounds;
+
+    /**
+     * The default role to use for authenticated user without role mappings
+     */
+    @Value("#{properties[defaultUserRole]}")
+    private String defaultUserRole;
+
+    /**
+     * Holds a reference to the singleton instance
+     */
+    private static final AtomicReference<Config> INSTANCE = new AtomicReference<>();
+
+    /**
+     * Spring bean initialization should only call this constructor. By definition, this
+     * component is a singleton.
+     */
+    public Config() {
+        final Config previous = INSTANCE.getAndSet(this);
+        if (previous != null) {
+            throw new IllegalStateException("Second singleton " + this + " created after " + previous);
+        }
+    }
+
+    /**
+     * If manual (non autowired) access to this class is required, this will
+     * return the singleton instance.
+     * @return a Config object
+     */
+    public static Config getInstance() {
+        return INSTANCE.get();
+    }
 
     public String getShortname() {
         return shortname;
@@ -77,6 +111,10 @@ public final class Config {
 
     public Integer getBcryptRounds() {
         return bcryptRounds;
+    }
+
+    public Roles.ROLE getDefaultRole() {
+        return Roles.ROLE.getRole(defaultUserRole);
     }
 
 }

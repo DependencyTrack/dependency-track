@@ -93,62 +93,42 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
     }
 
     /**
-     * Specify default roles
-     */
-    private static enum ROLE {
-        /**
-         * The name (as stored in the database) of the user role
-         */
-        USER,
-
-        /**
-         * The name (as stored in the database) of the moderator role
-         */
-        MODERATOR,
-
-        /**
-         * The name (as stored in the database) of the admin role
-         */
-        ADMIN
-    }
-
-    /**
      * Specify default Permission names
      */
-    private static final LinkedHashMap<String, ROLE> PERMISSIONS = new LinkedHashMap<>();
+    private static final LinkedHashMap<String, Roles.ROLE> PERMISSIONS = new LinkedHashMap<>();
 
     static {
-        PERMISSIONS.put("applications", ROLE.USER);
-        PERMISSIONS.put("searchApplication", ROLE.USER);
-        PERMISSIONS.put("coarseSearchApplication", ROLE.USER);
-        PERMISSIONS.put("keywordSearchLibraries", ROLE.USER);
-        PERMISSIONS.put("libraryHierarchy", ROLE.USER);
-        PERMISSIONS.put("applicationVersion", ROLE.USER);
-        PERMISSIONS.put("vulnerabilities", ROLE.USER);
-        PERMISSIONS.put("libraries", ROLE.USER);
-        PERMISSIONS.put("downloadlicense", ROLE.USER);
-        PERMISSIONS.put("viewlicense", ROLE.USER);
-        PERMISSIONS.put("dcdata", ROLE.USER);
-        PERMISSIONS.put("about", ROLE.USER);
-        PERMISSIONS.put("dashboard", ROLE.USER);
-        PERMISSIONS.put("addApplication", ROLE.MODERATOR);
-        PERMISSIONS.put("updateApplication", ROLE.MODERATOR);
-        PERMISSIONS.put("updateApplicationVersion", ROLE.MODERATOR);
-        PERMISSIONS.put("deleteApplication", ROLE.MODERATOR);
-        PERMISSIONS.put("deleteApplicationVersion", ROLE.MODERATOR);
-        PERMISSIONS.put("addApplicationVersion", ROLE.MODERATOR);
-        PERMISSIONS.put("addDependency", ROLE.MODERATOR);
-        PERMISSIONS.put("deleteDependency", ROLE.MODERATOR);
-        PERMISSIONS.put("cloneApplication", ROLE.MODERATOR);
-        PERMISSIONS.put("cloneApplicationVersion", ROLE.MODERATOR);
-        PERMISSIONS.put("updatelibrary", ROLE.MODERATOR);
-        PERMISSIONS.put("removelibrary", ROLE.MODERATOR);
-        PERMISSIONS.put("addlibraries", ROLE.MODERATOR);
-        PERMISSIONS.put("uploadlicense", ROLE.MODERATOR);
-        PERMISSIONS.put("usermanagement", ROLE.ADMIN);
-        PERMISSIONS.put("validateuser", ROLE.ADMIN);
-        PERMISSIONS.put("deleteuser", ROLE.ADMIN);
-        PERMISSIONS.put("changeuserrole", ROLE.ADMIN);
+        PERMISSIONS.put("applications", Roles.ROLE.USER);
+        PERMISSIONS.put("searchApplication", Roles.ROLE.USER);
+        PERMISSIONS.put("coarseSearchApplication", Roles.ROLE.USER);
+        PERMISSIONS.put("keywordSearchLibraries", Roles.ROLE.USER);
+        PERMISSIONS.put("libraryHierarchy", Roles.ROLE.USER);
+        PERMISSIONS.put("applicationVersion", Roles.ROLE.USER);
+        PERMISSIONS.put("vulnerabilities", Roles.ROLE.USER);
+        PERMISSIONS.put("libraries", Roles.ROLE.USER);
+        PERMISSIONS.put("downloadlicense", Roles.ROLE.USER);
+        PERMISSIONS.put("viewlicense", Roles.ROLE.USER);
+        PERMISSIONS.put("dcdata", Roles.ROLE.USER);
+        PERMISSIONS.put("about", Roles.ROLE.USER);
+        PERMISSIONS.put("dashboard", Roles.ROLE.USER);
+        PERMISSIONS.put("addApplication", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("updateApplication", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("updateApplicationVersion", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("deleteApplication", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("deleteApplicationVersion", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("addApplicationVersion", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("addDependency", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("deleteDependency", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("cloneApplication", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("cloneApplicationVersion", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("updatelibrary", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("removelibrary", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("addlibraries", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("uploadlicense", Roles.ROLE.MODERATOR);
+        PERMISSIONS.put("usermanagement", Roles.ROLE.ADMIN);
+        PERMISSIONS.put("validateuser", Roles.ROLE.ADMIN);
+        PERMISSIONS.put("deleteuser", Roles.ROLE.ADMIN);
+        PERMISSIONS.put("changeuserrole", Roles.ROLE.ADMIN);
     }
 
     /**
@@ -246,7 +226,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         }
 
         session.beginTransaction();
-        for (Map.Entry<String, ROLE> entry : PERMISSIONS.entrySet()) {
+        for (Map.Entry<String, Roles.ROLE> entry : PERMISSIONS.entrySet()) {
             final Permissions permission = new Permissions(entry.getKey());
             session.save(permission);
         }
@@ -281,7 +261,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         // Iterate though all permissions and populate a temporary list of only the user permissions
         for (Permissions permission : permissions) {
-            if (PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER) {
+            if (PERMISSIONS.get(permission.getPermissionname()) == Roles.ROLE.USER) {
                 userPermissions.add(permission);
             }
         }
@@ -290,8 +270,8 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         final List<Permissions> moderatorPermissions = new ArrayList<>();
 
         for (Permissions permission : permissions) {
-            if ((PERMISSIONS.get(permission.getPermissionname()) == ROLE.USER)
-                    || (PERMISSIONS.get(permission.getPermissionname()) == ROLE.MODERATOR)) {
+            if ((PERMISSIONS.get(permission.getPermissionname()) == Roles.ROLE.USER)
+                    || (PERMISSIONS.get(permission.getPermissionname()) == Roles.ROLE.MODERATOR)) {
                 moderatorPermissions.add(permission);
             }
         }
@@ -305,13 +285,13 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
 
         session.beginTransaction();
 
-        for (ROLE name : ROLE.values()) {
+        for (Roles.ROLE name : Roles.ROLE.values()) {
             final Roles role = new Roles(name.name().toLowerCase());
-            if (name == ROLE.USER) {
+            if (name == Roles.ROLE.USER) {
                 role.setPerm(new HashSet<>(userPermissions));
-            } else if (name == ROLE.MODERATOR) {
+            } else if (name == Roles.ROLE.MODERATOR) {
                 role.setPerm(new HashSet<>(moderatorPermissions));
-            } else if (name == ROLE.ADMIN) {
+            } else if (name == Roles.ROLE.ADMIN) {
                 role.setPerm(new HashSet<>(adminPermissions));
             }
             session.save(role);
@@ -345,7 +325,7 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
         final ArrayList<Roles> rolelist = (ArrayList<Roles>) query.list();
         Roles adminRole = null;
         for (Roles role: rolelist) {
-            if (role.getRole().equalsIgnoreCase(ROLE.ADMIN.name())) {
+            if (role.getRole().equalsIgnoreCase(Roles.ROLE.ADMIN.name())) {
                 adminRole = role;
             }
         }

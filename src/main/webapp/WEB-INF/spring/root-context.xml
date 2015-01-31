@@ -103,7 +103,7 @@
     -->
 
     <bean id="credentialsMatcher" class="org.owasp.dependencytrack.auth.BcryptCredentialsMatcher"/>
-    <bean id="jdbcRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
+    <bean id="jdbcRealm" class="org.owasp.dependencytrack.auth.JdbcConfigurableDefaultRoleRealm">
         <property name="credentialsMatcher" ref="credentialsMatcher"/>
         <property name="dataSource" ref="dataSource"/>
         <property name="saltStyle" value="NO_SALT"/>

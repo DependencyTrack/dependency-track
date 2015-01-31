@@ -38,6 +38,42 @@ import java.util.Set;
 public class Roles {
 
     /**
+     * Specify default roles
+     */
+    public static enum ROLE {
+        /**
+         * The name (as stored in the database) of the user role
+         */
+        NONE,
+
+        /**
+         * The name (as stored in the database) of the user role
+         */
+        USER,
+
+        /**
+         * The name (as stored in the database) of the moderator role
+         */
+        MODERATOR,
+
+        /**
+         * The name (as stored in the database) of the admin role
+         */
+        ADMIN;
+
+        private ROLE() { }
+
+        public static ROLE getRole(String roleName) {
+            for (ROLE role: ROLE.values()) {
+                if (roleName != null && role.name().equalsIgnoreCase(roleName)) {
+                    return role;
+                }
+            }
+            return ROLE.NONE;
+        }
+    }
+
+    /**
      * The unique identifier of the persisted object.
      */
     @Id

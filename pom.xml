@@ -66,6 +66,10 @@
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
         <skip.unit.tests>false</skip.unit.tests>
+        <sonar.language>java</sonar.language>
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.jacoco.reportPath>${project.build.directory}/jacoco-ut.exec</sonar.jacoco.reportPath>
     </properties>
 
     <dependencies>
@@ -481,8 +485,8 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
-                            <propertyName>surefireArgLine</propertyName>
+                            <destFile>${sonar.jacoco.reportPath}</destFile>
+                            <propertyName>jacoco.agent.arg</propertyName>
                         </configuration>
                     </execution>
                     <execution>
@@ -492,7 +496,7 @@
                             <goal>report</goal>
                         </goals>
                         <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
+                            <dataFile>${sonar.jacoco.reportPath}</dataFile>
                             <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
                         </configuration>
                     </execution>
@@ -503,7 +507,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.18.1</version>
                 <configuration>
-                    <argLine>${surefireArgLine}</argLine>
+                    <argLine>${jacoco.agent.arg}</argLine>
                     <skipTests>${skip.unit.tests}</skipTests>
                     <excludes>
                         <exclude>**/IT*.java</exclude>

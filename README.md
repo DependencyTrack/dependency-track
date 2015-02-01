@@ -15,7 +15,9 @@ and provide visibility into the use of vulnerable components.
 
 Development of Dependency-Track is sponsored in part by [Axway]
 
-More information can be found on the [wiki].
+Installation, configuration and how-to's can be found on the [GitHub Wiki].
+
+General project information can be found on the [OWASP Wiki].
 
 
 Usage
@@ -44,8 +46,8 @@ license. See the [LICENSE.txt] [GPLv3] file for the full license.
 Dependency-Track makes use of several other open source libraries. Please see
 the [NOTICES.txt] [notices] file for more information.
 
-
-  [wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
+  [GitHub Wiki]: https://github.com/stevespringett/dependency-track/wiki
+  [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
   [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
   [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt

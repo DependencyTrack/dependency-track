@@ -52,8 +52,15 @@ public class LicenseTest {
         assertEquals("GPLv3", license.getLicensename());
         assertEquals("license.txt", license.getFilename());
         assertEquals("text/plain", license.getContenttype());
-
         assertTrue(license.getText().length() == 12);
         assertTrue(license.getUrl().length() == 28);
+
+        License cloned = (License)license.clone();
+        assertEquals(null, cloned.getId());
+        assertEquals("GPLv3", cloned.getLicensename());
+        assertEquals("license.txt", cloned.getFilename());
+        assertEquals("text/plain", cloned.getContenttype());
+        assertTrue(cloned.getText().length() == 12);
+        assertTrue(cloned.getUrl().length() == 28);
     }
 }

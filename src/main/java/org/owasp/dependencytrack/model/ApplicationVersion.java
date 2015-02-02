@@ -69,6 +69,7 @@ public final class ApplicationVersion implements Cloneable {
         final ApplicationVersion obj = new ApplicationVersion();
         obj.setApplication(this.application);
         obj.setVersion(this.version);
+        obj.setVulnCount(this.vulnCount);
         return obj;
     }
 

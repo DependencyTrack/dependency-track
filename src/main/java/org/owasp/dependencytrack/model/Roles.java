@@ -128,6 +128,7 @@ public class Roles {
         this.role = role;
     }
 
+    //todo why is this shortened? Change it to User - also do Permissions
     public Set<User> getUsr() {
         return usr;
     }

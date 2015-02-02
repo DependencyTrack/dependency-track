@@ -40,5 +40,9 @@ public class ApplicationTest {
         assertNull(application.getVersions());
         assertEquals(new Integer(1), application.getId());
         assertEquals("Test Application", application.getName());
+
+        Application cloned = (Application)application.clone();
+        assertEquals(null, cloned.getId());
+        assertEquals("Test Application", cloned.getName());
     }
 }

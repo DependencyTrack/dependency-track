@@ -56,7 +56,7 @@ public final class User {
      * Admin validates a registered user and gives him access to the website
      */
     @Column(name = "CHECKVALID")
-    private boolean checkvalid;
+    private boolean checkvalid;  //todo delete this field
 
     /**
      * Specifies if the username is a pointer to an external LDAP entity

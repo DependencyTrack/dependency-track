@@ -70,16 +70,27 @@ public class LibraryTest {
         assertEquals(new Integer(99999), library.getId());
         assertEquals("Java", library.getLanguage());
         assertEquals("Sample Library", library.getLibraryname());
-
         assertNotNull(library.getLibraryVendor());
         assertEquals(new Integer(1), library.getLibraryVendor().getId());
         assertEquals("OWASP", library.getLibraryVendor().getVendor());
-
         assertNotNull(library.getLicense());
         assertEquals(new Integer(10), library.getLicense().getId());
         assertEquals("GPLv3", library.getLicense().getLicensename());
-
         assertNotNull(library.getVersions());
         assertTrue(library.getVersions().size() == 2);
+
+        Library cloned = (Library)library.clone();
+        assertEquals(null, cloned.getId());
+        assertEquals("Java", cloned.getLanguage());
+        assertEquals("Sample Library", cloned.getLibraryname());
+        assertNotNull(cloned.getLibraryVendor());
+        assertEquals(new Integer(1), cloned.getLibraryVendor().getId());
+        assertEquals("OWASP", cloned.getLibraryVendor().getVendor());
+        assertNotNull(cloned.getLicense());
+        assertEquals(new Integer(10), cloned.getLicense().getId());
+        assertEquals("GPLv3", cloned.getLicense().getLicensename());
+        //todo: investigate this
+        //assertNotNull(cloned.getVersions());
+        //assertTrue(cloned.getVersions().size() == 2);
     }
 }

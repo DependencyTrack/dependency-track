@@ -41,10 +41,19 @@ public class ApplicationVersionTest {
         v1.setId(101);
         v1.setVersion("1.0");
         v1.setApplication(application);
+        v1.setVulnCount(100);
 
         assertEquals(new Integer(101), v1.getId());
         assertEquals("1.0", v1.getVersion());
         assertNotNull(v1.getApplication());
         assertEquals(new Integer(1), v1.getApplication().getId());
+        assertEquals(new Integer(100), v1.getVulnCount());
+
+        ApplicationVersion v2 = (ApplicationVersion)v1.clone();
+        assertEquals(null, v2.getId());
+        assertEquals("1.0", v2.getVersion());
+        assertNotNull(v2.getApplication());
+        assertEquals(new Integer(1), v2.getApplication().getId());
+        assertEquals(new Integer(100), v2.getVulnCount());
     }
 }

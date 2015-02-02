@@ -29,6 +29,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import java.beans.Transient;
+import java.util.UUID;
 
 @Entity
 @Table(name = "LIBRARYVERSION")
@@ -90,6 +91,10 @@ public final class LibraryVersion implements Cloneable {
         final LibraryVersion obj = new LibraryVersion();
         obj.setLibrary(this.library);
         obj.setLibraryversion(this.libraryversion);
+        obj.setMd5(this.md5);
+        obj.setSha1(this.sha1);
+        obj.setUuid(UUID.randomUUID().toString());
+        obj.setVulnCount(0);
         return obj;
     }
 
@@ -145,11 +150,11 @@ public final class LibraryVersion implements Cloneable {
         return uuid.replace("-", "");
     }
 
-    public int getVulnCount() {
+    public Integer getVulnCount() {
         return vulnCount;
     }
 
-    public void setVulnCount(int vulnCount) {
+    public void setVulnCount(Integer vulnCount) {
         this.vulnCount = vulnCount;
     }
 }

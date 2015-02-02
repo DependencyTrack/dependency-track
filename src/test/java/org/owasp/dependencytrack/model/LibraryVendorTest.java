@@ -54,5 +54,12 @@ public class LibraryVendorTest {
         assertEquals("OWASP", vendor.getVendor());
         assertNotNull(vendor.getLibraries());
         assertTrue(vendor.getLibraries().size() == 2);
+
+        LibraryVendor cloned = (LibraryVendor)vendor.clone();
+        assertEquals(null, cloned.getId());
+        assertEquals("OWASP", cloned.getVendor());
+        //todo: investigate this
+        //assertNotNull(cloned.getLibraries());
+        //assertTrue(cloned.getLibraries().size() == 2);
     }
 }

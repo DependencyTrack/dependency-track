@@ -65,5 +65,20 @@ public class ApplicationDependencyTest {
 
         assertEquals(new Integer(10000), dependency.getLibraryVersion().getId());
         assertEquals("4.0", dependency.getLibraryVersion().getLibraryversion());
+
+
+
+        ApplicationDependency cloned = (ApplicationDependency)dependency.clone();
+
+        assertEquals(null, cloned.getId());
+        assertNotNull(cloned.getLibraryVersion());
+        assertNotNull(cloned.getApplicationVersion());
+
+        assertEquals(new Integer(100), cloned.getApplicationVersion().getId());
+        assertEquals("1.0", cloned.getApplicationVersion().getVersion());
+
+        assertEquals(new Integer(10000), cloned.getLibraryVersion().getId());
+        assertEquals("4.0", cloned.getLibraryVersion().getLibraryversion());
+
     }
 }

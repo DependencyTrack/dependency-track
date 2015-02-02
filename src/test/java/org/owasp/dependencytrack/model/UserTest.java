@@ -32,13 +32,19 @@ public class UserTest {
     @Test
     @Transactional
     public void testObject() {
+        Roles role = new Roles("admin");
+
         User user = new User();
         user.setId(1);
         user.setUsername("testuser");
         user.setPassword("password");
+        user.setIsLdap(true);
+        user.setRoles(role);
 
         assertEquals(new Integer(1), user.getId());
         assertEquals("testuser", user.getUsername());
         assertEquals("password", user.getPassword());
+        assertEquals(true, user.isLdap());
+        assertEquals("admin", role.getRole());
     }
 }

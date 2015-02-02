@@ -43,21 +43,46 @@ public class LibraryVersionTest {
         v1.setId(100);
         v1.setLibraryversion("1.0");
         v1.setLibrary(library);
+        v1.setMd5("1234");
+        v1.setSha1("5678");
+        v1.setUuid("82d679e9-f876-4879-9784-0c9864098b4a");
+        v1.setVulnCount(100);
 
         LibraryVersion v2 = new LibraryVersion();
         v2.setId(100);
         v2.setLibraryversion("2.0");
         v2.setLibrary(library);
+        v2.setMd5("4321");
+        v2.setSha1("8765");
+        v2.setUuid("a2759a18-ca45-4220-9355-a2c3db2fcd95");
+        v2.setVulnCount(101);
 
         HashSet<LibraryVersion> versions = new HashSet<LibraryVersion>(Arrays.asList(v1, v2));
         library.setVersions(versions);
 
         assertEquals(new Integer(100), v1.getId());
         assertEquals("1.0", v1.getLibraryversion());
+        assertEquals("1234", v1.getMd5());
+        assertEquals("5678", v1.getSha1());
+        assertEquals("82d679e9-f876-4879-9784-0c9864098b4a", v1.getUuid());
+        assertEquals(new Integer(100), v1.getVulnCount());
         assertNotNull(v1.getLibrary());
         assertEquals(new Integer(1), v1.getLibrary().getId());
         assertEquals("Sample Library", v1.getLibrary().getLibraryname());
+        assertNotNull(library.getVersions());
+        assertTrue(library.getVersions().size() == 2);
 
+        LibraryVersion cloned = (LibraryVersion)v1.clone();
+        assertEquals(null, cloned.getId());
+        assertEquals("1.0", cloned.getLibraryversion());
+        assertEquals("1234", cloned.getMd5());
+        assertEquals("5678", cloned.getSha1());
+        assertNotNull(cloned.getUuid());
+        assertFalse("82d679e9-f876-4879-9784-0c9864098b4a".equals(cloned.getUuid()));
+        assertEquals(new Integer(0), cloned.getVulnCount());
+        assertNotNull(v1.getLibrary());
+        assertEquals(new Integer(1), cloned.getLibrary().getId());
+        assertEquals("Sample Library", cloned.getLibrary().getLibraryname());
         assertNotNull(library.getVersions());
         assertTrue(library.getVersions().size() == 2);
     }

@@ -97,7 +97,7 @@
 
     <!--
     <bean id="ldapRealm" class="org.owasp.dependencytrack.auth.ActiveDirectoryAuthenticationRealm">
-        <property name="url" value="ldap://hostnamet:389"/>
+        <property name="url" value="ldap://hostname:389"/>
         <property name="principalSuffix" value="@example.com"/>
     </bean>
     -->

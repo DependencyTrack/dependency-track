@@ -41,7 +41,7 @@ public class JdbcConfigurableDefaultRoleRealm extends JdbcRealm {
         final Set<String> roleNames = super.getRoleNamesForUser(conn, username);
 
         final Roles.ROLE defaultRole = Config.getInstance().getDefaultRole();
-        if (roleNames.size() == 0 && defaultRole != Roles.ROLE.NONE) {
+        if (roleNames.size() == 0 && defaultRole != null) {
             roleNames.add(defaultRole.name().toLowerCase());
         }
 

@@ -44,11 +44,6 @@ public class Roles {
         /**
          * The name (as stored in the database) of the user role
          */
-        NONE,
-
-        /**
-         * The name (as stored in the database) of the user role
-         */
         USER,
 
         /**
@@ -69,7 +64,7 @@ public class Roles {
                     return role;
                 }
             }
-            return ROLE.NONE;
+            return null;
         }
     }
 

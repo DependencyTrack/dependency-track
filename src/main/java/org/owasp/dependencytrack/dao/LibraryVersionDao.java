@@ -21,7 +21,6 @@ package org.owasp.dependencytrack.dao;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
-import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.ApplicationDependency;

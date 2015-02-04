@@ -18,6 +18,7 @@
  */
 package org.owasp.dependencytrack.tasks.dependencycheck;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.staxmate.SMInputFactory;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
@@ -198,10 +199,10 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
      */
     private synchronized void analyzeResults() throws SAXException, IOException {
         final SMInputFactory inputFactory = XmlUtil.newStaxParser();
+        FileInputStream fis = null;
         try {
-            final SMHierarchicCursor rootC = inputFactory.rootElementCursor(
-                    new FileInputStream(
-                            new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml")));
+            fis = new FileInputStream(new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml"));
+            final SMHierarchicCursor rootC = inputFactory.rootElementCursor(fis);
             rootC.advance(); // <analysis>
             final SMInputCursor cursor = rootC.childCursor();
             while (cursor.getNext() != null) {
@@ -212,6 +213,8 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
             }
         } catch (XMLStreamException e) {
             throw new IllegalStateException("XML is not valid", e);
+        } finally {
+            IOUtils.closeQuietly(fis);
         }
     }
 

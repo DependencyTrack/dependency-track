@@ -1,6 +1,8 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
+
+<img src="<c:url value='/resources/images/dependency-track-logo.png'/>" alt="Dependency-Track Logo" style="margin-bottom:20px;"/>
 <p>
     <e:forHtmlContent value="${properties.shortname}"/> is a web application that allows organizations to document the use of third-party components
     across multiple applications and versions.

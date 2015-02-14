@@ -18,6 +18,8 @@
  */
 package org.owasp.dependencytrack;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.File;
 
 /**
@@ -35,7 +37,7 @@ public final class Constants {
     /**
      * Specify the Dependency-Track application directory.
      */
-    public static final String APP_DIR = System.getProperty("user.home") + File.separator + "dependency-track";
+    public static final String APP_DIR = getAppHome();
 
     /**
      * Specify the data directory used by Dependency-Check.
@@ -72,4 +74,15 @@ public final class Constants {
      */
     public static final String LOG_DIR = APP_DIR + File.separator + "log";
 
+    /**
+     * Returns the application home directory. This is a configurable option.
+     * @return the application home directory
+     */
+    private static String getAppHome() {
+        final String appHome = Config.getInstance().getAppHome();
+        if (StringUtils.isNotBlank(appHome)) {
+            return appHome;
+        }
+        return System.getProperty("user.home") + File.separator + "dependency-track";
+    }
 }

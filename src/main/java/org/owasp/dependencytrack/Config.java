@@ -69,6 +69,12 @@ public final class Config {
     private String defaultUserRole;
 
     /**
+     * The optional application home directory to use
+     */
+    @Value("#{properties[appHome]}")
+    private String appHome;
+
+    /**
      * Holds a reference to the singleton instance
      */
     private static final AtomicReference<Config> INSTANCE = new AtomicReference<>();
@@ -117,4 +123,7 @@ public final class Config {
         return Roles.ROLE.getRole(defaultUserRole);
     }
 
+    public String getAppHome() {
+        return appHome;
+    }
 }

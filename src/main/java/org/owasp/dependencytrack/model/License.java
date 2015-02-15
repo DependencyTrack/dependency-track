@@ -78,12 +78,6 @@ public final class License implements Cloneable {
     private String contenttype;
 
     /**
-     * A Set of libraries that use this license.
-     */
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "license")
-    private Set<Library> libraries;
-
-    /**
      * Clones this specific object (minus the objects id).
      * @return a New object
      */

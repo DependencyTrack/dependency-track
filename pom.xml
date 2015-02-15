@@ -522,7 +522,7 @@
                 <executions>
                     <execution>
                         <id>src-dependencies</id>
-                        <phase>package</phase>
+                        <phase>site</phase>
                         <goals>
                             <goal>unpack-dependencies</goal>
                         </goals>

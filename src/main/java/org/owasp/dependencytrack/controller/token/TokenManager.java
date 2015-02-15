@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
@@ -96,7 +97,7 @@ final class TokenManager {
             final byte[] randomDigest = sha.digest(
                     Integer.toString(random.nextInt()).getBytes(Charset.forName("UTF-8")));
             token = getHex(randomDigest);
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException e) {
             // For some reason, an exception was thrown and we still need to return a random token.
             final SecureRandom random = new SecureRandom();
             final byte[] bytes = new byte[256];

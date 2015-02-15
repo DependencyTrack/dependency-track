@@ -19,6 +19,8 @@
 package org.owasp.dependencytrack.listener;
 
 import org.owasp.dependencytrack.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,11 @@ import java.io.File;
  */
 @Component
 public class FileSystemInitializer implements ApplicationListener<ContextRefreshedEvent> {
+
+    /**
+     * Setup logger
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemInitializer.class);
 
     /**
      * Method is called when the application context is started or refreshed.
@@ -52,9 +59,9 @@ public class FileSystemInitializer implements ApplicationListener<ContextRefresh
      */
     private void makeDirectory(File file) {
         if (!file.exists()) {
-            System.out.println("Creating directory: " + file.getAbsolutePath());
+            LOGGER.info("Creating directory: " + file.getAbsolutePath());
             if (!file.mkdir()) {
-                System.out.println("An error occurred creating directory: " + file.getAbsolutePath());
+                LOGGER.error("An error occurred creating directory: " + file.getAbsolutePath());
             }
         }
     }

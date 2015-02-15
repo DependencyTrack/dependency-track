@@ -30,6 +30,8 @@ import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.util.DCObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -37,9 +39,22 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class will dynamically generate native Dependency-Check reports.
+ *
+ * @author Steve Springett (steve.springett@owasp.org)
+ */
 @Repository
 public class ReportDao {
 
+    /**
+     * Setup logger
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReportDao.class);
+
+    /**
+     * Dependency-Check database properties
+     */
     private static DatabaseProperties properties = null;
 
     /**
@@ -48,15 +63,20 @@ public class ReportDao {
     @Autowired
     private SessionFactory sessionFactory;
 
-    private void initializeProperties() {
-        final DatabaseProperties prop = null;
+    /**
+     * Initializes Dependency-Check database properties one time
+     */
+    private synchronized void initializeProperties() {
+        if (properties != null) {
+            return;
+        }
         CveDB cve = null;
         try {
             cve = new CveDB();
             cve.open();
             properties = cve.getDatabaseProperties();
         } catch (DatabaseException ex) {
-            //LOGGER.log(Level.FINE, "Unable to retrieve DB Properties", ex);
+            LOGGER.error("Unable to retrieve DB Properties", ex);
         } finally {
             if (cve != null) {
                 cve.close();
@@ -64,6 +84,13 @@ public class ReportDao {
         }
     }
 
+    /**
+     * Dynamically generate a native Dependency-Check report for the specified Application Version.
+     * The report is not persisted to a file, rather returned as a String.
+     * @param applicationVersionId the Application Version ID to report on
+     * @param format the format of the report (i.e. ALL, XML, HTML)
+     * @return a String representation of a Dependency-Check report
+     */
     public String generateDependencyCheckReport(int applicationVersionId, ReportGenerator.Format format) {
         final ApplicationVersion applicationVersion = (ApplicationVersion) sessionFactory
                 .getCurrentSession().load(ApplicationVersion.class, applicationVersionId);
@@ -82,7 +109,7 @@ public class ReportDao {
         }
 
         if (properties == null) {
-            //initializeProperties();
+            initializeProperties();
         }
         Settings.initialize();
         Settings.setBoolean(Settings.KEYS.AUTO_UPDATE, false);
@@ -95,8 +122,7 @@ public class ReportDao {
             engine.cleanup();
             return baos.toString("UTF-8");
         } catch (Exception e) {
-            // todo: log this
-            e.printStackTrace();
+            LOGGER.error("An error occurred generating a Dependency-Check report: " + e.getMessage());
         }
         return null;
     }

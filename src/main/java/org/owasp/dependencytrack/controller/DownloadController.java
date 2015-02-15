@@ -86,7 +86,8 @@ public class DownloadController extends AbstractController {
     @RequestMapping(value = "/nist/{filename:.+}", method = RequestMethod.GET)
     public void getNistFile(HttpServletResponse response,
                             @PathVariable("filename") String filename) throws IOException {
-        if (!NistDataMirrorUpdater.isValidNistFile(filename)) {
+        final File canonicalizedFile = new File(filename).getCanonicalFile();
+        if (!NistDataMirrorUpdater.isValidNistFile(canonicalizedFile.getName())) {
             response.sendError(404);
         }
         InputStream fis = null;

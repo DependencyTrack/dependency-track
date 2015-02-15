@@ -588,7 +588,7 @@ public class LibraryVersionDao implements ApplicationEventPublisherAware {
 
                 query.executeUpdate();
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             LOGGER.error("An error occurred while uploading a license");
             LOGGER.error(e.getMessage());
         } finally {

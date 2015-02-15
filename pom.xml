@@ -534,14 +534,14 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Uncomment to execute a Dependency-Check analysis -->
-            <!--
+            <!-- Execute a Dependency-Check analysis -->
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
                 <version>${org.owasp.dependencycheck-version}</version>
                 <executions>
                     <execution>
+                        <phase>site</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -552,7 +552,6 @@
                     <logFile>dependency-check.log</logFile>
                 </configuration>
             </plugin>
-            -->
         </plugins>
         <resources>
             <resource>

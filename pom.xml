@@ -522,7 +522,7 @@
                 <executions>
                     <execution>
                         <id>src-dependencies</id>
-                        <phase>site</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>unpack-dependencies</goal>
                         </goals>
@@ -541,7 +541,7 @@
                 <version>${org.owasp.dependencycheck-version}</version>
                 <executions>
                     <execution>
-                        <phase>site</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>

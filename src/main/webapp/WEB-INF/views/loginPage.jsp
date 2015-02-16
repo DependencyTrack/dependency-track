@@ -34,7 +34,8 @@
     <a href="http://www.google.com/chrome/">Chrome</a>,
     <a href="https://www.mozilla.org/firefox">FireFox</a>, or
     <a href="https://www.apple.com/safari/">Safari</a>.<br/>
-    Refer to <a href="https://github.com/stevespringett/dependency-track/issues/15">defect #15</a>.</div>
+    Refer to <a href="https://github.com/stevespringett/dependency-track/issues/15">defect #15</a>.
+</div>
 <% } %>
 
 <% if (!isMSIE){ %>

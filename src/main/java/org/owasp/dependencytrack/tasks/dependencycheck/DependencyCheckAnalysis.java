@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.xml.sax.SAXException;
 
 import javax.xml.stream.XMLStreamException;
@@ -64,6 +65,7 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Service
+@Transactional
 public class DependencyCheckAnalysis implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
 
     /**

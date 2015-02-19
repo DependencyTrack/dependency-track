@@ -4,7 +4,7 @@
     <groupId>org.owasp</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
@@ -44,7 +44,7 @@
         <connection>scm:git:git@github.com:stevespringett/dependency-track.git</connection>
         <url>https://github.com/stevespringett/dependency-track.git</url>
         <developerConnection>scm:git:git@github.com:stevespringett/dependency-track.git</developerConnection>
-      <tag>dependency-track-1.0.0</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>

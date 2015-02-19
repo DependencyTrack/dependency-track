@@ -47,6 +47,13 @@
         <developerConnection>scm:git:git@github.com:stevespringett/dependency-track.git</developerConnection>
     </scm>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray</id>
+            <url>https://api.bintray.com/maven/stevespringett/owasp/dependency-track</url>
+        </repository>
+    </distributionManagement>
+
     <issueManagement>
         <system>github</system>
         <url>https://github.com/stevespringett/dependency-track/issues</url>
@@ -512,6 +519,16 @@
                     <excludes>
                         <exclude>**/IT*.java</exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.1</version>
+                <configuration>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
             <!-- Maven Dependency Plugin used to download source dependencies for static analysis -->

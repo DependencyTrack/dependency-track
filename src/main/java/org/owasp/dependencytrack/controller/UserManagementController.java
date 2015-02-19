@@ -18,7 +18,9 @@
  */
 package org.owasp.dependencytrack.controller;
 
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.subject.Subject;
 import org.owasp.dependencytrack.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +92,36 @@ public class UserManagementController extends AbstractController {
     public String changeUserRole(@PathVariable("id") Integer userid, @PathVariable("role") Integer role) {
         userService.changeUserRole(userid, role);
         return "userManagementPage";
+    }
+
+    /**
+     * Changes the current users password
+     * @param currentPassword the users existing password
+     * @param newPassword the users new password
+     * @param confirm the confirmation of the new password
+     */
+    @RequestMapping(value = "/changepassword", method = RequestMethod.POST)
+    public String registerUser(@RequestParam("currentpassword") String currentPassword,
+                               @RequestParam("newpassword") String newPassword,
+                               @RequestParam("confirm") String confirm) {
+
+        final Subject subject = SecurityUtils.getSubject();
+        final String username = (String) SecurityUtils.getSubject().getPrincipal();
+        if (!userService.confirmUserPassword(username, currentPassword)) {
+            LOGGER.info("Subject password change failure: " + username);
+            subject.logout();
+            return "redirect:/login";
+        }
+
+        if (newPassword != null && confirm != null && newPassword.equals(confirm)) {
+            final boolean changed = userService.changePassword(username, newPassword);
+            if (changed) {
+                LOGGER.info("Subject changed password: " + username);
+                subject.logout();
+                return "redirect:/login";
+            }
+        }
+        return "redirect:/dashboard";
     }
 
     /**

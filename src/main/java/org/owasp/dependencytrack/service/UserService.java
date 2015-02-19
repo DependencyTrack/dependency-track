@@ -64,4 +64,18 @@ public class UserService {
         userDao.changeUserRole(userid, role);
     }
 
+    @Transactional
+    public boolean confirmUserPassword(String username, String password) {
+        return userDao.confirmUserPassword(username, password);
+    }
+
+    @Transactional
+    public boolean changePassword(String username, String password) {
+        return userDao.changePassword(username, password);
+    }
+
+    @Transactional
+    public boolean isLdapUser(String username) {
+        return userDao.isLdapUser(username);
+    }
 }

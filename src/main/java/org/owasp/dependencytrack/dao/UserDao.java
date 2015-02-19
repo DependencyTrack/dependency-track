@@ -137,4 +137,36 @@ public class UserDao {
         session.getTransaction().commit();
         session.close();
     }
+
+    public boolean confirmUserPassword(String username, String password) {
+        final Session session = sessionFactory.openSession();
+        final Query query = session.createQuery("FROM User as usr where usr.username = :username and usr.isldap = :isldap");
+        query.setParameter("username", username);
+        query.setParameter("isldap", false);
+        final User user = (User) query.uniqueResult();
+        return user != null && BCrypt.checkpw(password, user.getPassword());
+    }
+
+    public boolean changePassword(String username, String password) {
+        final Session session = sessionFactory.openSession();
+        session.beginTransaction();
+        final Query query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.password = :password"
+                + " where usr.username = :username and usr.isldap = :isldap");
+        final String hashedPw = BCrypt.hashpw(password, BCrypt.gensalt(config.getBcryptRounds()));
+        query.setParameter("password", hashedPw);
+        query.setParameter("username", username);
+        query.setParameter("isldap", false);
+        final int updates = query.executeUpdate();
+        session.getTransaction().commit();
+        session.close();
+        return updates == 1;
+    }
+
+    public boolean isLdapUser(String username) {
+        final Session session = sessionFactory.openSession();
+        final Query query = session.createQuery("FROM User as usr where usr.username = :username");
+        query.setParameter("username", username);
+        final User user = (User) query.uniqueResult();
+        return user != null && user.isLdap();
+    }
 }

@@ -1,6 +1,5 @@
 <%@taglib uri="http://www.springframework.org/tags" prefix="spring"%>
-<spring:message code="label.userManagementTitle" var="title"/>
-<spring:message code="label.userManagementTitle" var="title"/>
+<spring:message code="label.user.management" var="title"/>
 <spring:message code="label.userManagementTitle.addUser" var="addUserButtonLabel"/>
 <jsp:include page="/WEB-INF/views/templates/page.jsp">
     <jsp:param name="title" value="${title}"/>

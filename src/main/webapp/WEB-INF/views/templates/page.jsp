@@ -63,6 +63,13 @@
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-cog"></i> <spring:message code="label.settings"/> <b class="caret"></b></a>
                 <ul class="dropdown-menu">
+
+                    <c:if test="${sessionScope.isLdap == false}">
+                    <li>
+                        <a data-toggle="modal" class="open-ChangePasswordModal" href="#changePasswordModal"><spring:message code="label.changePassword"/></a>
+                    </li>
+                    </c:if>
+
                     <spring:message code="permissions.usermanagement" var="usermanagement"/>
                     <shiro:hasPermission name="${usermanagement}">
                         <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
@@ -180,6 +187,36 @@
 
         </div>
     </div>
+</div>
+
+<div id="changePasswordModal" class="modal hide fade" tabindex="-1" role="dialog"
+     aria-labelledby="changePasswordModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-header">
+        <h4 id="changePasswordModalLabel"><spring:message code="label.changePassword"/></h4>
+    </div>
+    <c:url value="/changepassword" var="changePasswordUrl"/>
+    <form:form id="registerUserForm" style="margin-bottom:0" action="${changePasswordUrl}" method="post" autocomplete="off">
+    <div class="modal-body">
+        <table>
+            <tr>
+                <td><label for="currentpassword"><spring:message code="label.password.current"/></label></td>
+                <td><input type="password" id="currentpassword" name="currentpassword" required="true" autocomplete="off"></td>
+            </tr>
+            <tr>
+                <td><label for="newpassword"><spring:message code="label.password.new"/></label></td>
+                <td><input type="password" id="newpassword" name="newpassword" required="true" autocomplete="off"></td>
+            </tr>
+            <tr>
+                <td><label for="confirm"><spring:message code="label.password.confirm"/></label></td>
+                <td><input type="password" id="confirm" name="confirm" required="true" autocomplete="off"></td>
+            </tr>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true"><spring:message code="label.close"/></button>
+        <button class="modalSubmit btn btn-primary" type="submit"><spring:message code="label.saveChanges"/></button>
+    </div>
+    </form:form>
 </div>
 
 </body>

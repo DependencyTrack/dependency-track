@@ -14,7 +14,7 @@
                 <th><spring:message code="label.username"/></th>
                 <th><spring:message code="label.userRole"/></th>
                 <th><spring:message code="label.isLdap"/></th>
-                <th><spring:message code="label.delete"/></th>
+                <th>&nbsp;</th>
             </tr>
             </thead>
             <tbody>
@@ -40,7 +40,7 @@
                     </td>
                     <td>
                         <c:if test="${userList.username != pageContext.request.userPrincipal.name}">
-                        <img  class="deleteUser" data-userid='${userList.id}' src="${pageContext.request.contextPath}/resources/images/deleteIcon.ico" alt="Delete" height="20" width="20">
+                        <button class="deleteUser" data-userid='${userList.id}'><i class="icon-trash"></i> <spring:message code="label.delete"/></button>
                         </c:if>
                     </td>
                 </tr>

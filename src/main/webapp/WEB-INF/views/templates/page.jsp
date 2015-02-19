@@ -58,23 +58,28 @@
                 <a data-toggle="modal" class="open-SearchApplicationModal" href="#searchApplicationModal"><spring:message code="label.search"/></a>
             </li>
             </shiro:hasPermission>
-
-            <spring:message code="permissions.usermanagement" var="usermanagement"/>
-            <shiro:hasPermission name="${usermanagement}">
-            <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
-                <a href="<c:url value="/usermanagement"/>"><spring:message code="label.userManagement"/></a>
-            </li>
-            </shiro:hasPermission>
         </ul>
         <ul class="nav pull-right">
-            <spring:message code="permissions.about" var="about"/>
-            <shiro:hasPermission name="${about}">
-            <li class="<c:if test="${param.content!='about'}">in</c:if>active">
-                <a href="<c:url value="/about"/>"><spring:message code="label.about"/></a>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-cog"></i> <spring:message code="label.settings"/> <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    <spring:message code="permissions.usermanagement" var="usermanagement"/>
+                    <shiro:hasPermission name="${usermanagement}">
+                        <li class="<c:if test="${param.content!='usermanagement'}">in</c:if>active">
+                            <a href="<c:url value="/usermanagement"/>"><spring:message code="label.user.management"/></a>
+                        </li>
+                    </shiro:hasPermission>
+
+                    <spring:message code="permissions.about" var="about"/>
+                    <shiro:hasPermission name="${about}">
+                        <li class="<c:if test="${param.content!='about'}">in</c:if>active">
+                            <a href="<c:url value="/about"/>"><spring:message code="label.about"/></a>
+                        </li>
+                    </shiro:hasPermission>
+                </ul>
             </li>
             <li class="divider-vertical"></li>
-            </shiro:hasPermission>
-            <li class="inactive"><a href="<c:url value="/logout"/>"><spring:message code="label.logout"/></a></li>
+            <li class="inactive"><a href="<c:url value="/logout"/>"><i class="icon-off"></i> <spring:message code="label.logout"/></a></li>
         </ul>
     </div>
 </div>

@@ -108,10 +108,10 @@ public class ReportDao {
             dcDependencies.add(dcDependency);
         }
 
+        Settings.initialize();
         if (properties == null) {
             initializeProperties();
         }
-        Settings.initialize();
         Settings.setBoolean(Settings.KEYS.AUTO_UPDATE, false);
         try {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -123,6 +123,8 @@ public class ReportDao {
             return baos.toString("UTF-8");
         } catch (Exception e) {
             LOGGER.error("An error occurred generating a Dependency-Check report: " + e.getMessage());
+        } finally {
+            Settings.setBoolean(Settings.KEYS.AUTO_UPDATE, true);
         }
         return null;
     }

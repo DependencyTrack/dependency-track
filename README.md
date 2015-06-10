@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stevespringett/dependency-track.svg?branch=master)](https://travis-ci.org/stevespringett/dependency-track)
+[![Build Status](https://travis-ci.org/stevespringett/dependency-track.svg?branch=master)](https://travis-ci.org/stevespringett/dependency-track) [ ![Download](https://api.bintray.com/packages/stevespringett/owasp/dependency-track/images/download.svg) ](https://bintray.com/stevespringett/owasp/dependency-track/_latestVersion)
 
 Dependency-Track
 =========

@@ -62,7 +62,7 @@ public class DataUpgradeCorrections implements ApplicationListener<ContextRefres
         try {
             correctGeneratedSha1Length();
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(e.getMessage());
             }
@@ -73,11 +73,9 @@ public class DataUpgradeCorrections implements ApplicationListener<ContextRefres
      * MD5 and SHA1 hashes are dynamically computed by generating a UUID and stripping
      * the dashes. This works fine for MD5 which requires 32 characters, but fails for
      * SHA1 hashes which require 40 characters. This method identifies any 32 character
-     * MD5 hashes in the database and updates matching records with eight leading zeros.
-     *
-     * @throws IOException An exception if the license file cannot be found
+     * SHA1 hashes in the database and updates matching records with eight leading zeros.
      */
-    private void correctGeneratedSha1Length() throws IOException {
+    private void correctGeneratedSha1Length() {
         final Session session = sessionFactory.openSession();
 
         final Query query = session.createQuery("FROM LibraryVersion");

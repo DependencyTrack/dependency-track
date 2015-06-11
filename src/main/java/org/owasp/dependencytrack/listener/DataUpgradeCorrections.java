@@ -84,7 +84,7 @@ public class DataUpgradeCorrections implements ApplicationListener<ContextRefres
         final List<LibraryVersion> libraryVersions = query.list();
         session.getTransaction().begin();
         for (LibraryVersion libraryVersion: libraryVersions) {
-            if (libraryVersion.getMd5() != null && libraryVersion.getSha1() != null && 38 == libraryVersion.getSha1().length()) {
+            if (libraryVersion.getMd5() != null && libraryVersion.getSha1() != null && 32 == libraryVersion.getSha1().length()) {
                 LOGGER.info("Identified incorrectly generated SHA1 hash: " + libraryVersion.getSha1());
                 libraryVersion.setSha1("00000000" + libraryVersion.getMd5());
                 session.save(libraryVersion);

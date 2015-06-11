@@ -151,8 +151,19 @@ public class DependencyCheckAnalysis implements ApplicationListener<DependencyCh
         for (LibraryVersion libraryVersion: libraryVersions) {
             final Library library = libraryVersion.getLibrary();
             final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
-            dependency.setMd5sum(libraryVersion.getUndashedUuid());
-            dependency.setSha1sum(libraryVersion.getUndashedUuid());
+
+            if (StringUtils.isNotBlank(libraryVersion.getMd5())) {
+                dependency.setMd5sum(libraryVersion.getMd5());
+            } else {
+                dependency.setMd5sum(libraryVersion.getUuidAsMd5Hash());
+            }
+
+            if (StringUtils.isNotBlank(libraryVersion.getSha1())) {
+                dependency.setSha1sum(libraryVersion.getSha1());
+            } else {
+                dependency.setSha1sum(libraryVersion.getUuidAsSha1Hash());
+            }
+
             final License license = library.getLicense();
             if (license != null) {
                 dependency.setLicense(library.getLicense().getLicensename());

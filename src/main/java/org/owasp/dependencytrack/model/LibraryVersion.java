@@ -146,8 +146,12 @@ public final class LibraryVersion implements Cloneable {
         this.uuid = uuid;
     }
 
-    public String getUndashedUuid() {
+    public String getUuidAsMd5Hash() {
         return uuid.replace("-", "");
+    }
+
+    public String getUuidAsSha1Hash() {
+        return "00000000".concat(uuid.replace("-", ""));
     }
 
     public Integer getVulnCount() {

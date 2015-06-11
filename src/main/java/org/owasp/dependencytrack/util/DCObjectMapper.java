@@ -54,8 +54,8 @@ public final class DCObjectMapper {
         final Library library = libraryVersion.getLibrary();
         final Dependency dependency = new Dependency(new File(FileUtils.getBitBucket()));
         dependency.setFileName(library.getLibraryVendor().getVendor() + " " + library.getLibraryname() + " " + libraryVersion.getLibraryversion());
-        dependency.setMd5sum((libraryVersion.getMd5() != null) ? libraryVersion.getMd5() : libraryVersion.getUndashedUuid());
-        dependency.setSha1sum((libraryVersion.getSha1() != null) ? libraryVersion.getSha1() : libraryVersion.getUndashedUuid());
+        dependency.setMd5sum((libraryVersion.getMd5() != null) ? libraryVersion.getMd5() : libraryVersion.getUuidAsMd5Hash());
+        dependency.setSha1sum((libraryVersion.getSha1() != null) ? libraryVersion.getSha1() : libraryVersion.getUuidAsSha1Hash());
         final License license = library.getLicense();
         if (license != null) {
             dependency.setLicense(library.getLicense().getLicensename());

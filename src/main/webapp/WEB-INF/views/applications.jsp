@@ -63,7 +63,7 @@
                             <a data-toggle="modal" data-id="${application.id}" class="open-AddApplicationVersionModal btn" href="#addApplicationVersionModal"><spring:message code="label.version.add"/></a>
                             </shiro:hasPermission>
                             <shiro:hasPermission name="${updateApplication}">
-                            <a data-toggle="modal" data-id="${application.id}" data-name="${application.name}" class="open-EditApplicationModal btn" href="#editApplicationModal"><spring:message code="label.edit"/></a>
+                            <a data-toggle="modal" data-id="${application.id}" data-name="${e:forHtmlAttribute(application.name)}" class="open-EditApplicationModal btn" href="#editApplicationModal"><spring:message code="label.edit"/></a>
                             </shiro:hasPermission>
                         </div>
 

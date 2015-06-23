@@ -28,7 +28,7 @@
                     <td><e:forHtmlContent value="${libList.library.libraryVendor.vendor}"/></td>
                     <td><e:forHtmlContent value="${libList.library.libraryname}"/></td>
                     <td><e:forHtmlContent value="${libList.libraryversion}"/></td>
-                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${libList.library.license.licensename}" data-licensfileename ="${libList.library.license.filename}" href="#licenseLibrariesModal"><e:forHtmlContent value="${libList.library.license.licensename}"/></a></td>
+                    <td><a data-toggle="modal" class="open-LicenseLibrariesModal" data-licensefiletype ="${libList.library.license.contenttype}" data-licenseid ="${libList.library.license.id}" data-licensename ="${e:forHtmlAttribute(libList.library.license.licensename)}" data-licensfileename ="${libList.library.license.filename}" href="#licenseLibrariesModal"><e:forHtmlContent value="${libList.library.license.licensename}"/></a></td>
                     <td><e:forHtmlContent value="${libList.library.language}"/></td>
                     <shiro:hasPermission name="${updatelibrary}">
                     <td style="vertical-align:top;text-align:right;">
@@ -38,11 +38,11 @@
                                data-vendorid ="${libList.library.libraryVendor.id}"
                                data-licenseid ="${libList.library.license.id}"
                                data-libraryversionid ="${libList.id}"
-                               data-vendor ="${libList.library.libraryVendor.vendor}"
-                               data-libraryname ="${libList.library.libraryname}"
-                               data-libraryversion ="${libList.libraryversion}"
-                               data-licensename ="${libList.library.license.licensename}"
-                               data-language ="${libList.library.language}"
+                               data-vendor ="${e:forHtmlAttribute(libList.library.libraryVendor.vendor)}"
+                               data-libraryname ="${e:forHtmlAttribute(libList.library.libraryname)}"
+                               data-libraryversion ="${e:forHtmlAttribute(libList.libraryversion)}"
+                               data-licensename ="${e:forHtmlAttribute(libList.library.license.licensename)}"
+                               data-language ="${e:forHtmlAttribute(libList.library.language)}"
                                class="open-EditLibrariesModal btn" href="#editLibrariesModal">Edit</a>
                         </div>
                     </td>
@@ -104,7 +104,7 @@
                         <select id="licenseids" name="license"  class="licenseidsclass">
                             <option value="">--</option>
                             <c:forEach items="${uniquelicList}" var="libList">
-                                <option value="${libList.licensename}"><e:forHtmlContent value="${libList.licensename}"/></option>
+                                <option value="${e:forHtmlAttribute(libList.licensename)}"><e:forHtmlContent value="${libList.licensename}"/></option>
                             </c:forEach>
                         </select>
                             </c:if>
@@ -123,7 +123,7 @@
                         <select id="languageid" name="language"  class="languageidclass">
                             <option value="">--</option>
                             <c:forEach items="${uniqueLang}" var="libList">
-                                <option value="${libList}"><e:forHtmlContent value="${libList}"/></option>
+                                <option value="${e:forHtmlAttribute(libList)}"><e:forHtmlContent value="${libList}"/></option>
                             </c:forEach>
                         </select>
                         <input id="language" name ="languagesel"  type="text" required="required" style="  position:relative; height: 20px; border: 0; left: -223px; width: 183px;" />
@@ -176,7 +176,7 @@
                                 <select id="licenseeditids" name="license">
                                     <option value="">--</option>
                                     <c:forEach items="${uniquelicList}" var="libList">
-                                        <option value="${libList.licensename}"><e:forHtmlContent value="${libList.licensename}"/></option>
+                                        <option value=<e:forHtmlAttribute value="${libList.licensename}"/>><e:forHtmlContent value="${libList.licensename}"/></option>
                                     </c:forEach>
                                 </select>
                             </div>

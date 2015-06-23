@@ -176,7 +176,7 @@
                                 <select id="licenseeditids" name="license">
                                     <option value="">--</option>
                                     <c:forEach items="${uniquelicList}" var="libList">
-                                        <option value=<e:forHtmlAttribute value="${libList.licensename}"/>><e:forHtmlContent value="${libList.licensename}"/></option>
+                                        <option value="${e:forHtmlAttribute(libList.licensename)}"><e:forHtmlContent value="${libList.licensename}"/></option>
                                     </c:forEach>
                                 </select>
                             </div>

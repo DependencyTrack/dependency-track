@@ -83,7 +83,7 @@ public class DownloadController extends AbstractController {
      * @param filename the xml file to download
      * @throws java.io.IOException bad robot
      */
-    @RequestMapping(value = "/nist/{filename:.+}", method = RequestMethod.GET)
+    @RequestMapping(value = "/nist/{filename:.+}", method = {RequestMethod.GET, RequestMethod.HEAD})
     public void getNistFile(HttpServletResponse response,
                             @PathVariable("filename") String filename) throws IOException {
         final File canonicalizedFile = new File(filename).getCanonicalFile();

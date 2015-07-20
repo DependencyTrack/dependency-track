@@ -93,12 +93,14 @@ public class DownloadController extends AbstractController {
         InputStream fis = null;
         OutputStream out = null;
         try {
-            fis = new FileInputStream(Constants.NIST_DIR + File.separator + filename);
+            File file = new File(Constants.NIST_DIR + File.separator + filename);
+            fis = new FileInputStream(file);
             if (filename.endsWith(".gz")) {
                 response.setHeader("Content-Type", "application/x-gzip;");
             } else if (filename.endsWith(".xml")) {
                 response.setHeader("Content-Type", "application/xml;");
             }
+            response.addDateHeader("Last-Modified", file.lastModified());
             out = response.getOutputStream();
             IOUtils.copy(fis, out);
             out.flush();

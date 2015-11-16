@@ -19,32 +19,25 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "APPLICATION")
+@Table(name ="application")
 public final class Application implements Cloneable {
 
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID")
+    @Column(name ="id")
     @GeneratedValue
     private Integer id;
 
     /**
      * The name of the application.
      */
-    @Column(name = "NAME")
+    @Column(name ="name")
     @OrderBy
     private String name;
 

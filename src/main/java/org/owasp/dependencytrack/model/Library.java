@@ -19,34 +19,25 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "LIBRARY")
+@Table(name = "library")
 public final class Library implements Cloneable {
 
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue
     private Integer id;
 
     /**
      * The name of the library (i.e. Commons-Lang).
      */
-    @Column(name = "LIBRARYNAME")
+    @Column(name = "libraryname")
     @OrderBy
     private String libraryname;
 
@@ -54,7 +45,7 @@ public final class Library implements Cloneable {
      * The license the library is licensed under.
      */
     @ManyToOne
-    @JoinColumn(name = "LICENSEID")
+    @JoinColumn(name = "licenseid")
     @OrderBy
     private License license;
 
@@ -62,14 +53,14 @@ public final class Library implements Cloneable {
      * The vendor of the library (i.e. Apache).
      */
     @ManyToOne
-    @JoinColumn(name = "LIBRARYVENDORID")
+    @JoinColumn(name = "libraryvendorid")
     @OrderBy
     private LibraryVendor libraryVendor;
 
     /**
      * The programming language the library was written in (i.e. Java).
      */
-    @Column(name = "LANG")
+    @Column(name = "lang")
     private String language;
 
     /**

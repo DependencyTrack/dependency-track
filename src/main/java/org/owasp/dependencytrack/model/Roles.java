@@ -19,22 +19,12 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "ROLES")
+@Table(name = "roles")
 public class Roles {
 
     /**
@@ -72,14 +62,14 @@ public class Roles {
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID", unique = true)
+    @Column(name = "id", unique = true)
     @GeneratedValue
     private Integer id;
 
     /**
      * The role that is associated with a users.
      */
-    @Column(name = "ROLE", unique = true)
+    @Column(name = "role", unique = true)
     private String role;
 
 

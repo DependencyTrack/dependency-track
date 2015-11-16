@@ -19,32 +19,26 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 
 @Entity
-@Table(name = "PERMISSIONS")
+@Table(name = "permissions")
 public class Permissions {
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID", unique = true)
+    @Column(name = "id", unique = true)
     @GeneratedValue
     private Integer id;
 
     /**
      * The role that is associated with a users.
      */
-    @Column(name = "PERMISSIONNAME", unique = true)
+    @Column(name = "permissionname", unique = true)
     private String permissionname;
 
     /**

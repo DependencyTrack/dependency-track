@@ -19,56 +19,49 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
-@Table(name = "USERS")
+@Table(name = "users")
 public final class User {
 
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue
     private Integer id;
 
     /**
      * The name users use to logon.
      */
-    @Column(name = "USERNAME", unique = true)
+    @Column(name = "username", unique = true)
     private String username;
 
     /**
      * The password associated with the username.
      */
-    @Column(name = "PASSWORD")
+    @Column(name = "password")
     private String password;
 
     /**
      * Admin validates a registered user and gives him access to the website
      */
-    @Column(name = "CHECKVALID")
+    @Column(name = "checkvalid")
     private boolean checkvalid;  //todo delete this field
 
     /**
      * Specifies if the username is a pointer to an external LDAP entity
      */
-    @Column(name = "ISLDAP")
+    @Column(name = "isldap")
     private boolean isldap;
 
     /**
      * The license the library is licensed under.
      */
     @ManyToOne
-    @JoinColumn(name = "ROLEID")
+    @JoinColumn(name = "roleid")
     @OrderBy
     private Roles roles;
 

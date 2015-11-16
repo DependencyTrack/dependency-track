@@ -19,34 +19,25 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
-import java.beans.Transient;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "LIBRARYVERSION")
+@Table(name = "libraryversion")
 public final class LibraryVersion implements Cloneable {
 
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue
     private Integer id;
 
     /**
      * The String representation of the version of the library (i.e. 1.3.0).
      */
-    @Column(name = "LIBRARYVERSION")
+    @Column(name = "libraryversion")
     @OrderBy
     private String libraryversion;
 
@@ -54,7 +45,7 @@ public final class LibraryVersion implements Cloneable {
      * The parent Library object for this version.
      */
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "LIBRARYID", nullable = false)
+    @JoinColumn(name = "libraryid", nullable = false)
     private Library library;
 
     /**
@@ -72,7 +63,7 @@ public final class LibraryVersion implements Cloneable {
     /**
      * The String representation of a universally unique identifier
      */
-    @Column(name = "UUID")
+    @Column(name = "uuid")
     private String uuid;
 
     /**
@@ -80,7 +71,7 @@ public final class LibraryVersion implements Cloneable {
      * This status is updated periodically by the system and is primarily used
      * used to reduce unnecessary SQL queries to calculate this statistic.
      */
-    @Column(name = "VULNCOUNT")
+    @Column(name = "vulncount")
     private Integer vulnCount;
 
     /**

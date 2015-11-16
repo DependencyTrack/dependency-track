@@ -19,62 +19,53 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.sql.Blob;
 import java.sql.Clob;
-import java.util.Set;
 
 @Entity
-@Table(name = "LICENSES")
+@Table(name = "licenses")
 public final class License implements Cloneable {
 
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID")
+    @Column(name = "id")
     @GeneratedValue
     private Integer id;
 
     /**
      * The String representation of the license name (i.e. GPL v3).
      */
-    @Column(name = "LICENSENAME")
+    @Column(name = "licensename")
     @OrderBy
     private String licensename;
 
     /**
      * The contents of the license.
      */
-    @Column(name = "TEXT")
+    @Column(name = "text")
     @Lob
     private Blob text;
 
     /**
      * The URL the license can be referenced from.
      */
-    @Column(name = "URL")
+    @Column(name = "url")
     @Lob
     private Clob url;
 
     /**
      * The filename of the license contents that were uploaded.
      */
-    @Column(name = "FILENAME")
+    @Column(name = "filename")
     private String filename;
 
     /**
      * The content-type of the filename containing the license contents.
      */
-    @Column(name = "CONTENTTYPE")
+    @Column(name = "contenttype")
     private String contenttype;
 
     /**

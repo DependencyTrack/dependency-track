@@ -20,14 +20,12 @@ package org.owasp.dependencytrack.dao;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -36,18 +34,13 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public class ApplicationDao {
+public class ApplicationDao extends DAOBase {
 
     /**
      * Setup logger
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationDao.class);
-
-    /**
-     * The Hibernate SessionFactory
-     */
-    @Autowired
-    private SessionFactory sessionFactory;
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(ApplicationDao.class);
 
     /**
      * Returns a list of all applications.
@@ -56,8 +49,12 @@ public class ApplicationDao {
      */
     @SuppressWarnings("unchecked")
     public List<Application> listApplications() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("FROM Application order by name asc");
-        return query.list();
+        return dbRun(new WithSessionRunnable<List<Application>>() {
+            @Override
+            public List<Application> runWithSession(Session session) {
+                return session.createCriteria(Application.class).list();
+            }
+        });
     }
 
     /**
@@ -66,18 +63,27 @@ public class ApplicationDao {
      * @param application An Application
      * @param version     The ApplicationVersion to add
      */
-    public void addApplication(Application application, String version) {
-        final Session session = sessionFactory.openSession();
-        session.beginTransaction();
-        session.save(application);
+    public void addApplication(final Application application,
+                               final String version) {
 
-        final ApplicationVersion applicationVersion = new ApplicationVersion();
-        applicationVersion.setVersion(version);
-        applicationVersion.setApplication(application);
+        dbRun(new WithSessionRunnable<Integer>() {
 
-        session.save(applicationVersion);
-        session.getTransaction().commit();
-        session.close();
+            @Override
+            public Integer runWithSession(Session session) {
+                session.beginTransaction();
+                session.save(application);
+
+                final ApplicationVersion applicationVersion = new ApplicationVersion();
+                applicationVersion.setVersion(version);
+                applicationVersion.setApplication(application);
+
+                session.save(applicationVersion);
+                session.getTransaction().commit();
+                session.close();
+                return null;
+            }
+
+        });
     }
 
     /**
@@ -86,13 +92,21 @@ public class ApplicationDao {
      * @param id   The ID of the Application
      * @param name The new name of the Application
      */
-    public void updateApplication(int id, String name) {
-        final Query query = sessionFactory.getCurrentSession().createQuery(
-                "update Application set name=:name " + "where id=:id");
+    public void updateApplication(final int id, final String name) {
+        dbRun(new WithSessionRunnable<Integer>() {
 
-        query.setParameter("name", name);
-        query.setParameter("id", id);
-        query.executeUpdate();
+            @Override
+            public Integer runWithSession(Session session) {
+                final Query query = session
+                        .createQuery("update Application set name=:name "
+                                + "where id=:id");
+
+                query.setParameter("name", name);
+                query.setParameter("id", id);
+                query.executeUpdate();
+                return null;
+            }
+        });
     }
 
     /**
@@ -101,183 +115,223 @@ public class ApplicationDao {
      * @param id The ID of the Application to delete
      */
     @SuppressWarnings("unchecked")
-    public void deleteApplication(int id) {
-        final Session session = sessionFactory.openSession();
-        session.beginTransaction();
-        final Application curapp = (Application) session.load(Application.class, id);
+    public void deleteApplication(final int id) {
+        dbRun(new WithSessionRunnable<Integer>() {
 
-        Query query = session.createQuery(
-                "from ApplicationVersion " + "where application=:curapp");
-        query.setParameter("curapp", curapp);
+            @Override
+            public Integer runWithSession(Session session) {
+                session.beginTransaction();
+                final Application curapp = (Application) session.load(
+                        Application.class, id);
 
-        final List<ApplicationVersion> applicationVersions = query.list();
+                Query query = session.createQuery("from ApplicationVersion "
+                        + "where application=:curapp");
+                query.setParameter("curapp", curapp);
 
-        for (ApplicationVersion curver : applicationVersions) {
-            query = session.createQuery(
-                    "from ApplicationDependency " + "where applicationVersion=:curver");
-            query.setParameter("curver", curver);
-            List<ApplicationDependency> applicationDependency;
-            if (!query.list().isEmpty()) {
-                applicationDependency = query.list();
-                for (ApplicationDependency dependency : applicationDependency) {
-                    session.delete(dependency);
+                final List<ApplicationVersion> applicationVersions = query
+                        .list();
+
+                for (ApplicationVersion curver : applicationVersions) {
+                    query = session.createQuery("from ApplicationDependency "
+                            + "where applicationVersion=:curver");
+                    query.setParameter("curver", curver);
+                    List<ApplicationDependency> applicationDependency;
+                    if (!query.list().isEmpty()) {
+                        applicationDependency = query.list();
+                        for (ApplicationDependency dependency : applicationDependency) {
+                            session.delete(dependency);
+                        }
+                    }
+                    session.delete(curver);
                 }
+                session.delete(curapp);
+                session.getTransaction().commit();
+                return null;
             }
-            session.delete(curver);
-        }
-        session.delete(curapp);
-        session.getTransaction().commit();
-        session.close();
+        });
+
     }
 
     /**
-     * Returns a Set of Applications that have a dependency on the specified LibraryVersion ID.
+     * Returns a Set of Applications that have a dependency on the specified
+     * LibraryVersion ID.
      *
      * @param libverid The ID of the LibraryVersion to search on
      * @return A Set of Applications
      */
     @SuppressWarnings("unchecked")
-    public Set<Application> searchApplications(int libverid) {
-        Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
-        query.setParameter("libverid", libverid);
-        final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationDependency where libraryVersion=:libver");
-        query.setParameter("libver", libraryVersion);
+    public Set<Application> searchApplications(final int libverid) {
+        return dbRun(new WithSessionRunnable<Set<Application>>() {
 
-        final List<ApplicationDependency> apdep = query.list();
-        final List<Integer> ids = new ArrayList<>();
+            @Override
+            public Set<Application> runWithSession(Session session) {
+                Query query = session.createQuery(
+                        "FROM LibraryVersion where id=:libverid");
+                query.setParameter("libverid", libverid);
+                final LibraryVersion libraryVersion = (LibraryVersion) query.list()
+                        .get(0);
+                query = session.createQuery(
+                        "FROM ApplicationDependency where libraryVersion=:libver");
+                query.setParameter("libver", libraryVersion);
 
-        for (ApplicationDependency appdep : apdep) {
-            ids.add(appdep.getApplicationVersion().getId());
-        }
+                final List<ApplicationDependency> apdep = query.list();
+                final List<Integer> ids = new ArrayList<>();
 
-        if (!ids.isEmpty()) {
-            query = sessionFactory.getCurrentSession().
-                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-            query.setParameterList("appverid", ids);
+                for (ApplicationDependency appdep : apdep) {
+                    ids.add(appdep.getApplicationVersion().getId());
+                }
 
-            if (query.list().size() == 0) {
+                if (!ids.isEmpty()) {
+                    query = session
+                            .createQuery(
+                                    "FROM ApplicationVersion as appver where appver.id in (:appverid)");
+                    query.setParameterList("appverid", ids);
+
+                    if (query.list().size() == 0) {
+                        return null;
+                    }
+
+                    final List<ApplicationVersion> newappver = query.list();
+                    final ArrayList<Application> newapp = new ArrayList<>();
+
+                    for (ApplicationVersion version : newappver) {
+                        newapp.add(version.getApplication());
+                    }
+                    return new HashSet<>(newapp);
+                }
                 return null;
             }
-
-            final List<ApplicationVersion> newappver = query.list();
-            final ArrayList<Application> newapp = new ArrayList<>();
-
-            for (ApplicationVersion version : newappver) {
-                newapp.add(version.getApplication());
-            }
-            return new HashSet<>(newapp);
-        } else {
-            return null;
-        }
+        });
     }
 
     /**
-     * Returns a List of ApplicationVersions that have a dependency on the specified LibraryVersion ID.
+     * Returns a List of ApplicationVersions that have a dependency on the
+     * specified LibraryVersion ID.
      *
      * @param libverid The ID of the LibraryVersion to search on
      * @return A List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
-    public List<ApplicationVersion> searchApplicationsVersion(int libverid) {
+    public List<ApplicationVersion> searchApplicationsVersion(final int libverid) {
+        return dbRun(new WithSessionRunnable<List<ApplicationVersion>>() {
+            @Override
+            public List<ApplicationVersion> runWithSession(Session session) {
+                Query query = session.createQuery(
+                        "FROM LibraryVersion where id=:libverid");
+                query.setParameter("libverid", libverid);
+                final LibraryVersion libraryVersion = (LibraryVersion) query.list()
+                        .get(0);
+                query = session.createQuery(
+                        "FROM ApplicationDependency where libraryVersion=:libver");
+                query.setParameter("libver", libraryVersion);
 
-        Query query = sessionFactory.getCurrentSession().createQuery("FROM LibraryVersion where id=:libverid");
-        query.setParameter("libverid", libverid);
-        final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationDependency where libraryVersion=:libver");
-        query.setParameter("libver", libraryVersion);
+                final List<ApplicationDependency> apdep = query.list();
+                final List<Integer> ids = new ArrayList<>();
 
-        final List<ApplicationDependency> apdep = query.list();
-        final List<Integer> ids = new ArrayList<>();
+                for (ApplicationDependency appdep : apdep) {
+                    ids.add(appdep.getApplicationVersion().getId());
+                }
+                if (!ids.isEmpty()) {
+                    query = session
+                            .createQuery(
+                                    " FROM ApplicationVersion as appver where appver.id in (:appverid)");
+                    query.setParameterList("appverid", ids);
 
-        for (ApplicationDependency appdep : apdep) {
-            ids.add(appdep.getApplicationVersion().getId());
-        }
-        if (!ids.isEmpty()) {
-            query = sessionFactory.getCurrentSession().
-                    createQuery(" FROM ApplicationVersion as appver where appver.id in (:appverid)");
-            query.setParameterList("appverid", ids);
+                    return query.list();
+                }
 
-            return query.list();
-        } else {
-            return null;
-        }
+                return null;
+            }
+        });
+
     }
 
     /**
-     * Returns a Set of Applications that have a dependency on the specified Library ID.
+     * Returns a Set of Applications that have a dependency on the specified
+     * Library ID.
      *
      * @param libid The ID of the Library to search on
      * @return A Set of Application objects
      */
     @SuppressWarnings("unchecked")
-    public Set<Application> searchAllApplications(int libid) {
+    public Set<Application> searchAllApplications(final int libid) {
 
-        Query query = sessionFactory.getCurrentSession().
-                createQuery("select lib.versions FROM Library as lib where lib.id=:libid");
-        query.setParameter("libid", libid);
-        final List<LibraryVersion> libver = query.list();
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
-        query.setParameterList("libver", libver);
+        return dbRun(new WithSessionRunnable<Set<Application>>() {
+            @Override
+            public Set<Application> runWithSession(Session session) {
+                Query query = session.createQuery(
+                        "select lib.versions FROM Library as lib where lib.id=:libid");
+                query.setParameter("libid", libid);
+                final List<LibraryVersion> libver = query.list();
+                query = session
+                        .createQuery(
+                                "FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
+                query.setParameterList("libver", libver);
 
-        final List<ApplicationDependency> apdep = query.list();
-        final List<Integer> ids = new ArrayList<>();
+                final List<ApplicationDependency> apdep = query.list();
+                final List<Integer> ids = new ArrayList<>();
 
-        for (ApplicationDependency appdep : apdep) {
-            ids.add(appdep.getApplicationVersion().getId());
-        }
-        if (!ids.isEmpty()) {
+                for (ApplicationDependency appdep : apdep) {
+                    ids.add(appdep.getApplicationVersion().getId());
+                }
+                if (!ids.isEmpty()) {
 
-            query = sessionFactory.getCurrentSession().
-                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-            query.setParameterList("appverid", ids);
+                    query = session
+                            .createQuery(
+                                    "FROM ApplicationVersion as appver where appver.id in (:appverid)");
+                    query.setParameterList("appverid", ids);
 
-            final List<ApplicationVersion> newappver = query.list();
-            final ArrayList<Application> newapp = new ArrayList<>();
+                    final List<ApplicationVersion> newappver = query.list();
+                    final ArrayList<Application> newapp = new ArrayList<>();
 
-            for (ApplicationVersion version : newappver) {
-                newapp.add(version.getApplication());
+                    for (ApplicationVersion version : newappver) {
+                        newapp.add(version.getApplication());
+                    }
+                    return new HashSet<>(newapp);
+                }
+                return null;
             }
-            return new HashSet<>(newapp);
-        } else {
-            return null;
-        }
+        });
     }
 
     /**
-     * Returns a List of ApplicationVersions that have a dependency on the specified Library ID.
+     * Returns a List of ApplicationVersions that have a dependency on the
+     * specified Library ID.
      *
      * @param libid The ID of the Library to search on
      * @return a List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
-    public List<ApplicationVersion> searchAllApplicationsVersions(int libid) {
+    public List<ApplicationVersion> searchAllApplicationsVersions(final int libid) {
 
-        Query query = sessionFactory.getCurrentSession().
-                createQuery("select lib.versions FROM Library as lib where lib.id=:libid");
-        query.setParameter("libid", libid);
-        final List<LibraryVersion> libver = query.list();
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
-        query.setParameterList("libver", libver);
+        return dbRun(new WithSessionRunnable<List<ApplicationVersion> >() {
+            @Override
+            public List<ApplicationVersion> runWithSession(Session session) {
+                Query query = session.createQuery(
+                        "select lib.versions FROM Library as lib where lib.id=:libid");
+                query.setParameter("libid", libid);
+                final List<LibraryVersion> libver = query.list();
+                query = session
+                        .createQuery(
+                                "FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
+                query.setParameterList("libver", libver);
 
-        final List<ApplicationDependency> apdep = query.list();
-        final List<Integer> ids = new ArrayList<>();
+                final List<ApplicationDependency> apdep = query.list();
+                final List<Integer> ids = new ArrayList<>();
 
-        for (ApplicationDependency appdep : apdep) {
-            ids.add(appdep.getApplicationVersion().getId());
-        }
-        if (!ids.isEmpty()) {
-            query = sessionFactory.getCurrentSession().
-                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-            query.setParameterList("appverid", ids);
-            return query.list();
-        } else {
-            return null;
-        }
+                for (ApplicationDependency appdep : apdep) {
+                    ids.add(appdep.getApplicationVersion().getId());
+                }
+                if (!ids.isEmpty()) {
+                    query = session
+                            .createQuery(
+                                    "FROM ApplicationVersion as appver where appver.id in (:appverid)");
+                    query.setParameterList("appverid", ids);
+                    return query.list();
+                }
+                return null;
+            }
+        });
     }
 
     /**
@@ -287,74 +341,94 @@ public class ApplicationDao {
      * @return a List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
-    public Set<Application> coarseSearchApplications(int vendorID) {
-        Query query = sessionFactory.getCurrentSession().
-                createQuery("select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
-        query.setParameter("vendorID", vendorID);
+    public Set<Application> coarseSearchApplications(final int vendorID) {
+        return dbRun(new WithSessionRunnable<Set<Application> >() {
+            @Override
+            public Set<Application> runWithSession(Session session) {
+                Query query = session
+                        .createQuery(
+                                "select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
+                query.setParameter("vendorID", vendorID);
 
-        final List<LibraryVersion> libver = query.list();
+                final List<LibraryVersion> libver = query.list();
 
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
-        query.setParameterList("libver", libver);
+                query = session
+                        .createQuery(
+                                "FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
+                query.setParameterList("libver", libver);
 
-        final List<ApplicationDependency> apdep = query.list();
-        final List<Integer> ids = new ArrayList<>();
+                final List<ApplicationDependency> apdep = query.list();
+                final List<Integer> ids = new ArrayList<>();
 
-        for (ApplicationDependency appdep : apdep) {
-            ids.add(appdep.getApplicationVersion().getId());
-        }
-        if (!ids.isEmpty()) {
+                for (ApplicationDependency appdep : apdep) {
+                    ids.add(appdep.getApplicationVersion().getId());
+                }
+                if (!ids.isEmpty()) {
 
-            query = sessionFactory.getCurrentSession().
-                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-            query.setParameterList("appverid", ids);
+                    query = session
+                            .createQuery(
+                                    "FROM ApplicationVersion as appver where appver.id in (:appverid)");
+                    query.setParameterList("appverid", ids);
 
-            final List<ApplicationVersion> newappver = query.list();
-            final ArrayList<Application> newapp = new ArrayList<>();
+                    final List<ApplicationVersion> newappver = query.list();
+                    final ArrayList<Application> newapp = new ArrayList<>();
 
-            for (ApplicationVersion version : newappver) {
-                newapp.add(version.getApplication());
+                    for (ApplicationVersion version : newappver) {
+                        newapp.add(version.getApplication());
+                    }
+                    return new HashSet<>(newapp);
+                }
+                return null;
+
+
             }
-            return new HashSet<>(newapp);
-        } else {
-            return null;
-        }
+        });
 
     }
 
     /**
-     * Returns a List of ApplicationVersions that have a dependency on the specified Library Vendor.
+     * Returns a List of ApplicationVersions that have a dependency on the
+     * specified Library Vendor.
      *
      * @param vendorID The ID of the Vendor to search on
      * @return a List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
-    public List<ApplicationVersion> coarseSearchApplicationVersions(int vendorID) {
+    public List<ApplicationVersion> coarseSearchApplicationVersions(final int vendorID) {
 
-        Query query = sessionFactory.getCurrentSession().
-                createQuery("select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
-        query.setParameter("vendorID", vendorID);
+        return dbRun(new WithSessionRunnable<List<ApplicationVersion>>() {
+            @Override
+            public List<ApplicationVersion> runWithSession(Session session) {
+                Query query = session
+                        .createQuery(
+                                "select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
+                query.setParameter("vendorID", vendorID);
 
-        final List<LibraryVersion> libver = query.list();
+                final List<LibraryVersion> libver = query.list();
 
-        query = sessionFactory.getCurrentSession().
-                createQuery("FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
-        query.setParameterList("libver", libver);
+                query = session
+                        .createQuery(
+                                "FROM ApplicationDependency as appdep where appdep.libraryVersion in (:libver)");
+                query.setParameterList("libver", libver);
 
-        final List<ApplicationDependency> apdep = query.list();
-        final List<Integer> ids = new ArrayList<>();
+                final List<ApplicationDependency> apdep = query.list();
+                final List<Integer> ids = new ArrayList<>();
 
-        for (ApplicationDependency appdep : apdep) {
-            ids.add(appdep.getApplicationVersion().getId());
-        }
-        if (!ids.isEmpty()) {
-            query = sessionFactory.getCurrentSession().
-                    createQuery("FROM ApplicationVersion as appver where appver.id in (:appverid)");
-            query.setParameterList("appverid", ids);
-            return query.list();
-        } else {
-            return null;
-        }
+                for (ApplicationDependency appdep : apdep) {
+                    ids.add(appdep.getApplicationVersion().getId());
+                }
+                if (!ids.isEmpty()) {
+                    query = sessionFactory
+                            .getCurrentSession()
+                            .createQuery(
+                                    "FROM ApplicationVersion as appver where appver.id in (:appverid)");
+                    query.setParameterList("appverid", ids);
+                    return query.list();
+                }
+                return null;
+
+
+            }
+        });
     }
 }

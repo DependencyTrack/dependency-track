@@ -22,7 +22,9 @@ public class RunWithSession<T>
 			try{
 				return runnable.runWithSession(session);
 			}finally{
-				session.close();
+				if(session.isOpen()){
+					session.close();
+				}
 			}
 		}
 		return null;

@@ -19,7 +19,6 @@
 
 package org.owasp.dependencytrack.dao;
 
-import org.hibernate.SessionFactory;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
@@ -45,7 +44,7 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Repository
-public class ReportDao {
+public class ReportDao extends DAOBase{
 
     /**
      * Setup logger
@@ -57,11 +56,12 @@ public class ReportDao {
      */
     private static DatabaseProperties properties = null;
 
-    /**
-     * The Hibernate SessionFactory
-     */
     @Autowired
-    private SessionFactory sessionFactory;
+    private LibraryVersionDao libraryVersionDao;
+
+    @Autowired
+    private VulnerabilityDao vulnerabilityDao;
+
 
     /**
      * Initializes Dependency-Check database properties one time
@@ -97,11 +97,10 @@ public class ReportDao {
 
         final String appName = applicationVersion.getApplication().getName() + " " + applicationVersion.getVersion();
 
-        final LibraryVersionDao libraryVersionDao = new LibraryVersionDao(sessionFactory);
         final List<LibraryVersion> libraryVersionList = libraryVersionDao.getDependencies(applicationVersion);
         final List<org.owasp.dependencycheck.dependency.Dependency> dcDependencies = new ArrayList<>();
 
-        final VulnerabilityDao vulnerabilityDao = new VulnerabilityDao(sessionFactory);
+        vulnerabilityDao = new VulnerabilityDao(sessionFactory);
         for (LibraryVersion libraryVersion: libraryVersionList) {
             final List<Vulnerability> vulnerabilities = vulnerabilityDao.getVulnsForLibraryVersion(libraryVersion);
             final org.owasp.dependencycheck.dependency.Dependency dcDependency = DCObjectMapper.toDCDependency(libraryVersion, vulnerabilities);

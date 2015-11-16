@@ -23,10 +23,10 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.mindrot.jbcrypt.BCrypt;
-import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.model.Roles;
 import org.owasp.dependencytrack.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -42,10 +42,10 @@ public class UserDao {
     private SessionFactory sessionFactory;
 
     /**
-     * Dependency-Track's centralized Configuration class
+     * The number of Bcrypt rounds to use when hashing passwords
      */
-    @Autowired
-    private Config config;
+    @Value("#{properties[bcryptRounds]}")
+    private Integer bcryptRounds;
 
     public void registerUser(String username, boolean isLdap, String password, Integer role) {
         Query query;
@@ -62,7 +62,7 @@ public class UserDao {
         if (isLdap) {
             user.setIsLdap(true);
         } else {
-            user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt(config.getBcryptRounds())));
+            user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt(bcryptRounds)));
             user.setIsLdap(false);
         }
         user.setUsername(username);
@@ -152,7 +152,7 @@ public class UserDao {
         session.beginTransaction();
         final Query query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.password = :password"
                 + " where usr.username = :username and usr.isldap = :isldap");
-        final String hashedPw = BCrypt.hashpw(password, BCrypt.gensalt(config.getBcryptRounds()));
+        final String hashedPw = BCrypt.hashpw(password, BCrypt.gensalt(bcryptRounds));
         query.setParameter("password", hashedPw);
         query.setParameter("username", username);
         query.setParameter("isldap", false);

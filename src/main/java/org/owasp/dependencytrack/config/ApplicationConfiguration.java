@@ -5,6 +5,7 @@ import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.owasp.dependencytrack.tasks.VulnerabilityScanTask;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
+import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -56,6 +57,14 @@ public class ApplicationConfiguration {
         SimpleApplicationEventMulticaster simpleApplicationEventMulticaster = new SimpleApplicationEventMulticaster();
         simpleApplicationEventMulticaster.setTaskExecutor(new SimpleAsyncTaskExecutor());
         return simpleApplicationEventMulticaster;
+    }
+
+    @Bean
+    PropertyPlaceholderConfigurer propertyPlaceholderConfigurer(){
+        PropertyPlaceholderConfigurer propertyPlaceholderConfigurer = new PropertyPlaceholderConfigurer();
+        propertyPlaceholderConfigurer.setSearchSystemEnvironment(true);
+        propertyPlaceholderConfigurer.setLocations(new ClassPathResource("application.properties"));
+        return propertyPlaceholderConfigurer;
     }
 
 

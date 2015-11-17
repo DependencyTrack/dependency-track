@@ -65,21 +65,11 @@ public final class Constants {
     public static final String SUPPRESSION_PATH_FILENAME = DATA_DIR + File.separator + SUPPRESSION_FILENAME;
 
     /**
-     * Specify the NIST data directory used by Dependency-Check.
-     */
-    public static final String NIST_DIR = APP_DIR + File.separator + "nist";
-
-    /**
-     * Specify the directory where logs are stored.
-     */
-    public static final String LOG_DIR = APP_DIR + File.separator + "log";
-
-    /**
      * Returns the application home directory. This is a configurable option.
      * @return the application home directory
      */
     private static String getAppHome() {
-        final String appHome = Config.getInstance().getAppHome();
+        final String appHome = "";
         if (StringUtils.isNotBlank(appHome)) {
             return appHome;
         }

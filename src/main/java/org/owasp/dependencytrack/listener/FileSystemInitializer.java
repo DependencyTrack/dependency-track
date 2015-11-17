@@ -18,9 +18,9 @@
  */
 package org.owasp.dependencytrack.listener;
 
-import org.owasp.dependencytrack.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
@@ -35,6 +35,18 @@ import java.io.File;
 @Component
 public class FileSystemInitializer implements ApplicationListener<ContextRefreshedEvent> {
 
+    @Value("${app.log.dir}")
+    private String logPath;
+
+    @Value("${app.dir")
+    private String appDir;
+
+    @Value("${app.data.dir")
+    private String dataDir;
+
+    @Value("${app.nist.dir")
+    private String nistDir;
+
     /**
      * Setup logger
      */
@@ -47,10 +59,10 @@ public class FileSystemInitializer implements ApplicationListener<ContextRefresh
      */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        makeDirectory(new File(Constants.APP_DIR));
-        makeDirectory(new File(Constants.DATA_DIR));
-        makeDirectory(new File(Constants.NIST_DIR));
-        makeDirectory(new File(Constants.LOG_DIR));
+        makeDirectory(new File(appDir));
+        makeDirectory(new File(dataDir));
+        makeDirectory(new File(nistDir));
+        makeDirectory(new File(logPath));
     }
 
     /**
@@ -60,7 +72,7 @@ public class FileSystemInitializer implements ApplicationListener<ContextRefresh
     private void makeDirectory(File file) {
         if (!file.exists()) {
             LOGGER.info("Creating directory: " + file.getAbsolutePath());
-            if (!file.mkdir()) {
+            if (!file.mkdirs()) {
                 LOGGER.error("An error occurred creating directory: " + file.getAbsolutePath());
             }
         }

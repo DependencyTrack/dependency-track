@@ -3,6 +3,7 @@ package org.owasp.dependencytrack.config;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.owasp.dependencytrack.tasks.VulnerabilityScanTask;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +31,12 @@ public class ApplicationConfiguration {
         return new VulnerabilityScanTask();
     }
 
+    @Value("${app.nist.dir}")
+    private String nistDir;
+
     @Bean
     public NistDataMirrorUpdater nistDataMirrorUpdater() {
-        return new NistDataMirrorUpdater();
+        return new NistDataMirrorUpdater(nistDir);
     }
 
     @Bean(name = "properties")
@@ -53,4 +57,6 @@ public class ApplicationConfiguration {
         simpleApplicationEventMulticaster.setTaskExecutor(new SimpleAsyncTaskExecutor());
         return simpleApplicationEventMulticaster;
     }
+
+
 }

@@ -43,7 +43,9 @@
     <bean id="dependencyCheckScheduledScanner" class="org.owasp.dependencytrack.tasks.VulnerabilityScanTask" />
 
     <!-- NIST data updater scheduler -->
-    <bean id="nistDataMirrorUpdater" class="org.owasp.dependencytrack.tasks.NistDataMirrorUpdater" />
+    <bean id="nistDataMirrorUpdater" class="org.owasp.dependencytrack.tasks.NistDataMirrorUpdater" >
+        <constructor-arg value="${app.nist.dir}"/>
+            </bean>
 
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
         up static resources in the ${webappRoot}/resources directory -->

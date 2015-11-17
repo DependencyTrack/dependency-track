@@ -19,9 +19,15 @@
   -->
 
 <beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
        xmlns:p="http://www.springframework.org/schema/p"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+              http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       	      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <context:property-placeholder location="classpath:application.properties"/>
 
     <!-- Root Context: defines shared resources visible to all other web components -->
     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
@@ -52,18 +58,17 @@
     </bean>
 
     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
-                destroy-method="close" p:driverClassName="org.h2.Driver"
-                p:url="jdbc:h2:~/dependency-track/database;MVCC=TRUE;AUTO_SERVER=TRUE" p:username="sa" p:password="" />
+          destroy-method="close" p:driverClassName="${jdbc.driverClassName}"
+          p:url="${jdbc.url}" p:username="${jdbc.username}" p:password="${jdbc.password}"/>
 
-    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
-        <property name="configLocation" value="classpath:hibernate.cfg.xml"/>
-        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration"/>
+        <property name="packagesToScan" value="org.owasp.dependencytrack.model"/>
         <property name="hibernateProperties">
             <props>
-                <prop key="hibernate.dialect">org.hibernate.dialect.H2Dialect</prop>
-                <prop key="hibernate.show_sql">false</prop>
-                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
             </props>
         </property>
     </bean>
@@ -72,7 +77,7 @@
     <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
         <property name="realms">
             <list>
-                <ref local="jdbcRealm"/>
+                <ref bean="jdbcRealm"/>
                 <!--
                 <ref local="ldapRealm"/>
                 -->
@@ -85,14 +90,21 @@
     </bean>
 
     <bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
-        <property name="cacheManager" ref="ehCacheManager" />
+        <property name="cacheManager" ref="ehCacheManager"/>
     </bean>
 
-    <bean id="ehCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" />
+    <bean id="ehCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean"/>
 
-    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor"/>
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor"/>
     <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
         <property name="securityManager" ref="securityManager"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager" mode='proxy' proxy-target-class='true' />
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
     <!--
@@ -110,10 +122,10 @@
         <property name="authenticationQuery"
                   value="select password from users where username = ? and isldap = false"/>
         <property name="userRolesQuery"
-                  value="SELECT role FROM roles r, users u WHERE u.username=? and r.ID=u.roleid" />
+                  value="SELECT role FROM roles r, users u WHERE u.username=? and r.ID=u.roleid"/>
         <property name="permissionsQuery"
                   value="SELECT p.permissionname FROM roles r, permissions p, roles_permissions rp
-                         WHERE r.id=rp.roles_id AND p.id=rp.permissions_id AND r.role=?" />
+                         WHERE r.id=rp.roles_id AND p.id=rp.permissions_id AND r.role=?"/>
         <property name="permissionsLookupEnabled" value="true"/>
     </bean>
 

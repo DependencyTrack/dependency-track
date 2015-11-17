@@ -30,6 +30,10 @@ import java.util.List;
 public class DependencyCheckAnalysisRequestEvent extends ApplicationEvent {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2670998415277531364L;
+	/**
      * A list of library versions to scan.
      */
     private List<LibraryVersion> libraryVersions;

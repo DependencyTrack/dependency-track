@@ -560,7 +560,8 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                     InputStream licenseInputStream = null;
                     try {
                         licenseInputStream = file.getInputStream();
-                final Blob blob = Hibernate.createBlob(licenseInputStream);
+                        String licenceFileContent = new String(IOUtils.toCharArray(licenseInputStream));
+                        final Blob blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
 
                         licenses.setFilename(file.getOriginalFilename());
                         licenses.setContenttype(file.getContentType());
@@ -648,7 +649,8 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
 
                     } else {
                         licenseInputStream = file.getInputStream();
-                        blob = Hibernate.createBlob(licenseInputStream);
+                        String licenceFileContent = new String(IOUtils.toCharArray(licenseInputStream));
+                        blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
                         query = session.createQuery(
                                 "update License set licensename=:lname,"
                                         + "text=:blobfile," + "filename=:filename,"

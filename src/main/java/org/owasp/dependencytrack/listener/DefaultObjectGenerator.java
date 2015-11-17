@@ -39,11 +39,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -194,7 +190,10 @@ public class DefaultObjectGenerator implements ApplicationListener<ContextRefres
                 license.setContenttype(contentType);
 
                 inputStream = resource.getInputStream();
-                final Blob blob = Hibernate.createBlob(inputStream);
+
+                        String licenceFileContent = new String(IOUtils.toCharArray(inputStream));
+                        final Blob blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
+
                 license.setText(blob);
                 session.save(license);
                 if (LOGGER.isInfoEnabled()) {

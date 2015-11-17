@@ -33,6 +33,8 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
+    <context:property-placeholder location="classpath:application.properties"/>
+
     <!-- Enables the Spring MVC @Controller programming model -->
     <mvc:annotation-driven/>
 

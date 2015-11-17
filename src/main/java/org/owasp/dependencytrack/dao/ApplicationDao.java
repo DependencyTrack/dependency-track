@@ -24,9 +24,12 @@ import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
+import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public class ApplicationDao extends DAOBase {
+public class ApplicationDao extends DBSessionTaskRunner {
 
     /**
      * Setup logger
@@ -48,10 +51,11 @@ public class ApplicationDao extends DAOBase {
      * @return A List of all applications
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<Application> listApplications() {
-        return dbRun(new WithSessionRunnable<List<Application>>() {
+        return dbRun(new DBSessionTaskReturning<List<Application>>() {
             @Override
-            public List<Application> runWithSession(Session session) {
+            public List<Application> run(Session session) {
                 return session.createCriteria(Application.class).list();
             }
         });
@@ -63,14 +67,14 @@ public class ApplicationDao extends DAOBase {
      * @param application An Application
      * @param version     The ApplicationVersion to add
      */
+    @Transactional
     public void addApplication(final Application application,
                                final String version) {
 
-        dbRun(new WithSessionRunnable<Integer>() {
+        dbRun(new DBSessionTaskReturning<Integer>() {
 
             @Override
-            public Integer runWithSession(Session session) {
-                session.beginTransaction();
+            public Integer run(Session session) {
                 session.save(application);
 
                 final ApplicationVersion applicationVersion = new ApplicationVersion();
@@ -78,8 +82,6 @@ public class ApplicationDao extends DAOBase {
                 applicationVersion.setApplication(application);
 
                 session.save(applicationVersion);
-                session.getTransaction().commit();
-                session.close();
                 return null;
             }
 
@@ -92,11 +94,12 @@ public class ApplicationDao extends DAOBase {
      * @param id   The ID of the Application
      * @param name The new name of the Application
      */
+    @Transactional
     public void updateApplication(final int id, final String name) {
-        dbRun(new WithSessionRunnable<Integer>() {
+        dbRun(new DBSessionTaskReturning<Integer>() {
 
             @Override
-            public Integer runWithSession(Session session) {
+            public Integer run(Session session) {
                 final Query query = session
                         .createQuery("update Application set name=:name "
                                 + "where id=:id");
@@ -115,12 +118,12 @@ public class ApplicationDao extends DAOBase {
      * @param id The ID of the Application to delete
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public void deleteApplication(final int id) {
-        dbRun(new WithSessionRunnable<Integer>() {
+        dbRun(new DBSessionTaskReturning<Integer>() {
 
             @Override
-            public Integer runWithSession(Session session) {
-                session.beginTransaction();
+            public Integer run(Session session) {
                 final Application curapp = (Application) session.load(
                         Application.class, id);
 
@@ -145,7 +148,6 @@ public class ApplicationDao extends DAOBase {
                     session.delete(curver);
                 }
                 session.delete(curapp);
-                session.getTransaction().commit();
                 return null;
             }
         });
@@ -160,11 +162,12 @@ public class ApplicationDao extends DAOBase {
      * @return A Set of Applications
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public Set<Application> searchApplications(final int libverid) {
-        return dbRun(new WithSessionRunnable<Set<Application>>() {
+        return dbRun(new DBSessionTaskReturning<Set<Application>>() {
 
             @Override
-            public Set<Application> runWithSession(Session session) {
+            public Set<Application> run(Session session) {
                 Query query = session.createQuery(
                         "FROM LibraryVersion where id=:libverid");
                 query.setParameter("libverid", libverid);
@@ -212,10 +215,11 @@ public class ApplicationDao extends DAOBase {
      * @return A List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<ApplicationVersion> searchApplicationsVersion(final int libverid) {
-        return dbRun(new WithSessionRunnable<List<ApplicationVersion>>() {
+        return dbRun(new DBSessionTaskReturning<List<ApplicationVersion>>() {
             @Override
-            public List<ApplicationVersion> runWithSession(Session session) {
+            public List<ApplicationVersion> run(Session session) {
                 Query query = session.createQuery(
                         "FROM LibraryVersion where id=:libverid");
                 query.setParameter("libverid", libverid);
@@ -254,11 +258,12 @@ public class ApplicationDao extends DAOBase {
      * @return A Set of Application objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public Set<Application> searchAllApplications(final int libid) {
 
-        return dbRun(new WithSessionRunnable<Set<Application>>() {
+        return dbRun(new DBSessionTaskReturning<Set<Application>>() {
             @Override
-            public Set<Application> runWithSession(Session session) {
+            public Set<Application> run(Session session) {
                 Query query = session.createQuery(
                         "select lib.versions FROM Library as lib where lib.id=:libid");
                 query.setParameter("libid", libid);
@@ -302,11 +307,12 @@ public class ApplicationDao extends DAOBase {
      * @return a List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<ApplicationVersion> searchAllApplicationsVersions(final int libid) {
 
-        return dbRun(new WithSessionRunnable<List<ApplicationVersion> >() {
+        return dbRun(new DBSessionTaskReturning<List<ApplicationVersion> >() {
             @Override
-            public List<ApplicationVersion> runWithSession(Session session) {
+            public List<ApplicationVersion> run(Session session) {
                 Query query = session.createQuery(
                         "select lib.versions FROM Library as lib where lib.id=:libid");
                 query.setParameter("libid", libid);
@@ -341,10 +347,11 @@ public class ApplicationDao extends DAOBase {
      * @return a List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public Set<Application> coarseSearchApplications(final int vendorID) {
-        return dbRun(new WithSessionRunnable<Set<Application> >() {
+        return dbRun(new DBSessionTaskReturning<Set<Application> >() {
             @Override
-            public Set<Application> runWithSession(Session session) {
+            public Set<Application> run(Session session) {
                 Query query = session
                         .createQuery(
                                 "select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
@@ -394,11 +401,12 @@ public class ApplicationDao extends DAOBase {
      * @return a List of ApplicationVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<ApplicationVersion> coarseSearchApplicationVersions(final int vendorID) {
 
-        return dbRun(new WithSessionRunnable<List<ApplicationVersion>>() {
+        return dbRun(new DBSessionTaskReturning<List<ApplicationVersion>>() {
             @Override
-            public List<ApplicationVersion> runWithSession(Session session) {
+            public List<ApplicationVersion> run(Session session) {
                 Query query = session
                         .createQuery(
                                 "select lib.versions FROM Library as lib where lib.libraryVendor.id=:vendorID");
@@ -418,8 +426,7 @@ public class ApplicationDao extends DAOBase {
                     ids.add(appdep.getApplicationVersion().getId());
                 }
                 if (!ids.isEmpty()) {
-                    query = sessionFactory
-                            .getCurrentSession()
+                    query = session
                             .createQuery(
                                     "FROM ApplicationVersion as appver where appver.id in (:appverid)");
                     query.setParameterList("appverid", ids);

@@ -21,25 +21,21 @@ package org.owasp.dependencytrack.dao;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.mindrot.jbcrypt.BCrypt;
 import org.owasp.dependencytrack.model.Roles;
 import org.owasp.dependencytrack.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.owasp.dependencytrack.util.session.DBSessionTask;
+import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
+import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class UserDao {
-
-    /**
-     * The Hibernate SessionFactory
-     */
-    @Autowired
-    private SessionFactory sessionFactory;
+public class UserDao extends DBSessionTaskRunner {
 
     /**
      * The number of Bcrypt rounds to use when hashing passwords
@@ -47,126 +43,161 @@ public class UserDao {
     @Value("#{properties[bcryptRounds]}")
     private Integer bcryptRounds;
 
-    public void registerUser(String username, boolean isLdap, String password, Integer role) {
-        Query query;
-        if (role == null) {
-            query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.role  =:role");
-            query.setParameter("role", "user");
-        } else {
-            query = sessionFactory.getCurrentSession().createQuery("FROM Roles as r where r.id  =:role");
-            query.setParameter("role", role);
-        }
+    @Transactional
+    public void registerUser(final String username, final boolean isLdap, final String password, final Integer role) {
 
+        dbRun(new DBSessionTask() {
+            @Override
+            public void run(Session session) {
+                Query query;
+                if (role == null) {
+                    query = session.createQuery("FROM Roles as r where r.role  =:role");
+                    query.setParameter("role", "user");
+                } else {
+                    query = session.createQuery("FROM Roles as r where r.id  =:role");
+                    query.setParameter("role", role);
+                }
 
-        final User user = new User();
-        if (isLdap) {
-            user.setIsLdap(true);
-        } else {
-            user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt(bcryptRounds)));
-            user.setIsLdap(false);
-        }
-        user.setUsername(username);
-        user.setCheckvalid(false);
-        user.setRoles((Roles) query.list().get(0));
-        sessionFactory.getCurrentSession().save(user);
+                final User user = new User();
+                if (isLdap) {
+                    user.setIsLdap(true);
+                } else {
+                    user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt(bcryptRounds)));
+                    user.setIsLdap(false);
+                }
+                user.setUsername(username);
+                user.setCheckvalid(false);
+                user.setRoles((Roles) query.list().get(0));
+                session.save(user);
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<User> accountManagement() {
-        final Query query = sessionFactory.getCurrentSession().createQuery("FROM User order by username");
-        return query.list();
+        return dbRun(new DBSessionTaskReturning<List<User>>() {
+            @Override
+            public List<User> run(Session session) {
+                return session.createQuery("FROM User order by username").list();
+            }
+        });
     }
 
-    public void validateuser(int userid) {
-        Query query = sessionFactory.getCurrentSession().createQuery("select usr.checkvalid FROM User as usr where usr.id= :userid");
-        query.setParameter("userid", userid);
+    @Transactional
+    public void validateuser(final int userid) {
+        dbRun(new DBSessionTask() {
+            @Override
+            public void run(Session session) {
+                Query query = session.createQuery("select usr.checkvalid FROM User as usr where usr.id= :userid");
+                query.setParameter("userid", userid);
 
-        final Boolean currentState = (Boolean) query.list().get(0);
+                final Boolean currentState = (Boolean) query.list().get(0);
 
-        if (currentState) {
-            query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.checkvalid  = :checkinvalid"
-                    + " where usr.id = :userid");
-            query.setParameter("checkinvalid", false);
-            query.setParameter("userid", userid);
-            query.executeUpdate();
-        } else {
-            query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.checkvalid  = :checkvalid"
-                    + " where usr.id = :userid");
-            query.setParameter("checkvalid", true);
-            query.setParameter("userid", userid);
-            query.executeUpdate();
-        }
+                if (currentState) {
+                    query = session.createQuery("update User as usr set usr.checkvalid  = :checkinvalid"
+                            + " where usr.id = :userid");
+                    query.setParameter("checkinvalid", false);
+                    query.setParameter("userid", userid);
+                    query.executeUpdate();
+                } else {
+                    query = session.createQuery("update User as usr set usr.checkvalid  = :checkvalid"
+                            + " where usr.id = :userid");
+                    query.setParameter("checkvalid", true);
+                    query.setParameter("userid", userid);
+                    query.executeUpdate();
+                }
+            }
+        });
     }
 
-    public void deleteUser(int userid) {
-        final Session session = sessionFactory.openSession();
-        session.beginTransaction();
+    @Transactional
+    public void deleteUser(final int userid) {
+        dbRun(new DBSessionTask() {
+            @Override
+            public void run(Session session) {
+                final Query query = session.createQuery(" FROM User as usr where usr.id= :userid");
+                query.setParameter("userid", userid);
 
-        final Query query = sessionFactory.getCurrentSession().createQuery(" FROM User as usr where usr.id= :userid");
-        query.setParameter("userid", userid);
+                final User curUser = (User) query.list().get(0);
 
-        final User curUser = (User) query.list().get(0);
-
-        session.delete(curUser);
-        session.getTransaction().commit();
-        session.close();
+                session.delete(curUser);
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<Roles> getRoleList() {
-        final Session session = sessionFactory.openSession();
-        session.beginTransaction();
 
-        final Query query = sessionFactory.getCurrentSession().createQuery(" FROM Roles  ");
-
-        final ArrayList<Roles> rolelist = (ArrayList<Roles>) query.list();
-        session.close();
-        return rolelist;
+        return dbRun(new DBSessionTaskReturning<List<Roles>>() {
+            @Override
+            public List<Roles> run(Session session) {
+                return (ArrayList<Roles>) session.createQuery(" FROM Roles  ").list();
+            }
+        });
     }
 
-    public void changeUserRole(int userid, int role) {
-        final Session session = sessionFactory.openSession();
-        session.beginTransaction();
+    @Transactional
+    public void changeUserRole(final int userid, final int role) {
+        dbRun(new DBSessionTask() {
+            @Override
+            public void run(Session session) {
+                final Query query = session.createQuery("update User as usr set usr.roles.id  = :role"
+                        + " where usr.id = :userid");
+                query.setParameter("role", role);
+                query.setParameter("userid", userid);
+                query.executeUpdate();
+            }
+        });
 
-        final Query query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.roles.id  = :role"
-                + " where usr.id = :userid");
-        query.setParameter("role", role);
-        query.setParameter("userid", userid);
-        query.executeUpdate();
-
-        session.getTransaction().commit();
-        session.close();
     }
 
-    public boolean confirmUserPassword(String username, String password) {
-        final Session session = sessionFactory.openSession();
-        final Query query = session.createQuery("FROM User as usr where usr.username = :username and usr.isldap = :isldap");
-        query.setParameter("username", username);
-        query.setParameter("isldap", false);
-        final User user = (User) query.uniqueResult();
+    @Transactional
+    public boolean confirmUserPassword(final String username, String password) {
+        final User user = dbRun(new DBSessionTaskReturning<User>() {
+            @Override
+            public User run(Session session) {
+                final Query query = session.createQuery("FROM User as usr where usr.username = :username and usr.isldap = :isldap");
+                query.setParameter("username", username);
+                query.setParameter("isldap", false);
+
+                return (User) query.uniqueResult();
+            }
+        });
         return user != null && BCrypt.checkpw(password, user.getPassword());
     }
 
-    public boolean changePassword(String username, String password) {
-        final Session session = sessionFactory.openSession();
-        session.beginTransaction();
-        final Query query = sessionFactory.getCurrentSession().createQuery("update User as usr set usr.password = :password"
-                + " where usr.username = :username and usr.isldap = :isldap");
-        final String hashedPw = BCrypt.hashpw(password, BCrypt.gensalt(bcryptRounds));
-        query.setParameter("password", hashedPw);
-        query.setParameter("username", username);
-        query.setParameter("isldap", false);
-        final int updates = query.executeUpdate();
-        session.getTransaction().commit();
-        session.close();
-        return updates == 1;
+    @Transactional
+    public boolean changePassword(final String username, final String password) {
+        return dbRun(new DBSessionTaskReturning<Boolean>() {
+            @Override
+            public Boolean run(Session session) {
+                final Query query = session.createQuery("update User as usr set usr.password = :password"
+                        + " where usr.username = :username and usr.isldap = :isldap");
+                final String hashedPw = BCrypt.hashpw(password, BCrypt.gensalt(bcryptRounds));
+                query.setParameter("password", hashedPw);
+                query.setParameter("username", username);
+                query.setParameter("isldap", false);
+                final int updates = query.executeUpdate();
+                return updates == 1;
+            }
+        });
     }
 
-    public boolean isLdapUser(String username) {
-        final Session session = sessionFactory.openSession();
-        final Query query = session.createQuery("FROM User as usr where usr.username = :username");
-        query.setParameter("username", username);
-        final User user = (User) query.uniqueResult();
+    @Transactional
+    public boolean isLdapUser(final String username) {
+
+        final User user = dbRun(new DBSessionTaskReturning<User>() {
+            @Override
+            public User run(Session session) {
+                final Query query = session.createQuery("FROM User as usr where usr.username = :username");
+                query.setParameter("username", username);
+
+                return (User) query.uniqueResult();
+            }
+        });
+
         return user != null && user.isLdap();
     }
 }

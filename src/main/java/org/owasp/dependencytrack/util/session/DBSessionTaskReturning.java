@@ -4,5 +4,5 @@ import org.hibernate.Session;
 
 public interface DBSessionTaskReturning<T>
 {
-	T runWithSession(Session session);
+	T run(Session session);
 }

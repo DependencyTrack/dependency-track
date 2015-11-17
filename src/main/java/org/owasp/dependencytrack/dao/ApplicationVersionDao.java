@@ -24,6 +24,9 @@ import org.hibernate.Session;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.util.session.DBSessionTask;
+import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
+import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -31,7 +34,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public class ApplicationVersionDao extends DAOBase{
+public class ApplicationVersionDao extends DBSessionTaskRunner {
 
     /**
      * Setup logger
@@ -47,9 +50,9 @@ public class ApplicationVersionDao extends DAOBase{
     @SuppressWarnings("unchecked")
     public ApplicationVersion getApplicationVersion(final int id) {
 
-        return dbRun(new WithSessionRunnable<ApplicationVersion>() {
+        return dbRun(new DBSessionTaskReturning<ApplicationVersion>() {
             @Override
-            public ApplicationVersion runWithSession(Session session) {
+            public ApplicationVersion run(Session session) {
                 final Query query = session.createQuery("from ApplicationVersion where id=:id");
                 query.setParameter("id", id);
 
@@ -69,9 +72,9 @@ public class ApplicationVersionDao extends DAOBase{
      */
     @SuppressWarnings("unchecked")
     public void deleteApplicationVersion(final Integer id) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 final ApplicationVersion applicationVersion = (ApplicationVersion) session
                         .load(ApplicationVersion.class, id);
                 final Query query = session.
@@ -88,7 +91,6 @@ public class ApplicationVersionDao extends DAOBase{
                 if (null != applicationVersion) {
                     session.delete(applicationVersion);
                 }
-                return null;
             }
         });
     }
@@ -100,19 +102,16 @@ public class ApplicationVersionDao extends DAOBase{
      * @param appversion The string representation of the version
      */
     public void addApplicationVersion(final int appid, final String appversion) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 final Application application = (Application) session.load(Application.class, appid);
                 if (null != application) {
-                    session.beginTransaction();
                     final ApplicationVersion version = new ApplicationVersion();
                     version.setVersion(appversion);
                     version.setApplication(application);
                     session.save(version);
-                    session.getTransaction().commit();
                 }
-                return null;
             }
         });
     }
@@ -125,9 +124,9 @@ public class ApplicationVersionDao extends DAOBase{
      */
     @SuppressWarnings("unchecked")
     public void cloneApplication(final int applicationid, final String applicationname) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 Query query = session.createQuery("from Application where id=:id");
                 query.setParameter("id", applicationid);
 
@@ -138,8 +137,6 @@ public class ApplicationVersionDao extends DAOBase{
                 query.setParameter("findapplication", findapplication);
 
                 final List<ApplicationVersion> applicationVersions = query.list();
-
-                session.beginTransaction();
 
                 final Application application = new Application();
                 application.setName(applicationname);
@@ -162,8 +159,6 @@ public class ApplicationVersionDao extends DAOBase{
                         }
                     }
                 }
-                session.getTransaction().commit();
-                return null;
             }
         });
     }
@@ -177,10 +172,9 @@ public class ApplicationVersionDao extends DAOBase{
      */
     @SuppressWarnings("unchecked")
     public void cloneApplicationVersion(final int applicationid, final String newversion, final String curappver) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
-                session.beginTransaction();
+            public void run(Session session) {
 
                 Query query = session.createQuery("from Application AS apps where apps.id=:findapplication");
                 query.setParameter("findapplication", applicationid);
@@ -210,8 +204,6 @@ public class ApplicationVersionDao extends DAOBase{
                     session.save(newDependencies);
                 }
 
-                session.getTransaction().commit();
-                return null;
             }
         });
     }
@@ -223,16 +215,15 @@ public class ApplicationVersionDao extends DAOBase{
      * @param appversion The new version label to use
      */
     public void updateApplicationVersion(final int id, final String appversion) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 final Query query = session.createQuery(
                         "update ApplicationVersion set version=:ver " + "where id=:appverid");
 
                 query.setParameter("ver", appversion);
                 query.setParameter("appverid", id);
                 query.executeUpdate();
-                return null;
             }
         });
     }

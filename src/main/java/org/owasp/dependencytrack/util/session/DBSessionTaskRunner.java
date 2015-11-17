@@ -1,9 +1,9 @@
-package org.owasp.dependencytrack.dao;
+package org.owasp.dependencytrack.util.session;
 
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class DAOBase
+public class DBSessionTaskRunner
 {
 
 	/**
@@ -12,8 +12,12 @@ public class DAOBase
 	@Autowired
 	protected SessionFactory sessionFactory;
 
-	protected <T> T dbRun(WithSessionRunnable<T> runner){
+	protected <T> T dbRun(DBSessionTaskReturning<T> runner){
 		return RunWithSession.run(sessionFactory,runner);
+	}
+
+	protected void dbRun(DBSessionTask runner){
+		RunWithSession.run(sessionFactory,runner);
 	}
 
 }

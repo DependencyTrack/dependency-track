@@ -24,11 +24,15 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.owasp.dependencytrack.model.*;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
+import org.owasp.dependencytrack.util.session.DBSessionTask;
+import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
+import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -38,7 +42,7 @@ import java.util.*;
 
 @Repository
 @SuppressWarnings("unchecked")
-public class LibraryVersionDao extends DAOBase implements ApplicationEventPublisherAware {
+public class LibraryVersionDao extends DBSessionTaskRunner implements ApplicationEventPublisherAware {
 
     /**
      * Setup logger
@@ -59,11 +63,12 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return A List of Libraries (Vendor, Library,Version) in a hierarchy
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVendor> getLibraryHierarchy() {
-        return dbRun(new WithSessionRunnable<List<LibraryVendor>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVendor>>() {
             @Override
 
-            public List<LibraryVendor> runWithSession(Session session) {
+            public List<LibraryVendor> run(Session session) {
                 final ArrayList<LibraryVendor> retlist = new ArrayList<>();
                 final Query query = session.createQuery("FROM LibraryVendor order by vendor asc");
                 for (LibraryVendor vendor : (List<LibraryVendor>) query.list()) {
@@ -92,10 +97,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return A List of all LibraryVendors
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVendor> getVendors() {
-        return dbRun(new WithSessionRunnable<List<LibraryVendor>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVendor>>() {
             @Override
-            public List<LibraryVendor> runWithSession(Session session) {
+            public List<LibraryVendor> run(Session session) {
                 final Query query = session.createQuery("FROM Library order by libraryname asc");
                 return query.list();
             }
@@ -109,10 +115,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return A List of Libraries
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<Library> getLibraries(final int id) {
-        return dbRun(new WithSessionRunnable<List<Library>>() {
+        return dbRun(new DBSessionTaskReturning<List<Library>>() {
             @Override
-            public List<Library> runWithSession(Session session) {
+            public List<Library> run(Session session) {
                 final Query query = session.
                         createQuery("FROM Library WHERE libraryVendor=:id order by libraryname asc");
                 query.setParameter("id", id);
@@ -129,10 +136,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return A List of LibraryVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVersion> getVersions(final int id) {
-        return dbRun(new WithSessionRunnable<List<LibraryVersion>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
             @Override
-            public List<LibraryVersion> runWithSession(Session session) {
+            public List<LibraryVersion> run(Session session) {
                 final Query query = session.
                         createQuery("FROM LibraryVersion WHERE library=:id order by libraryversion asc");
                 query.setParameter("id", id);
@@ -149,10 +157,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return A List of LibraryVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVersion> getDependencies(final ApplicationVersion version) {
-        return dbRun(new WithSessionRunnable<List<LibraryVersion>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
             @Override
-            public List<LibraryVersion> runWithSession(Session session) {
+            public List<LibraryVersion> run(Session session) {
                 final Query query = session.
                         createQuery("from ApplicationDependency where applicationVersion=:version");
                 query.setParameter("version", version);
@@ -175,23 +184,26 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @param libversionid The ID of the LibraryVersion
      */
     @SuppressWarnings("unchecked")
-    public void addDependency(int appversionid, int libversionid) {
-        final Session session = sessionFactory.openSession();
+    @Transactional
+    public void addDependency(final int appversionid, final int libversionid) {
 
-        final ApplicationVersion applicationVersion =
-                (ApplicationVersion) session.load(ApplicationVersion.class, appversionid);
-        final LibraryVersion libraryVersion =
-                (LibraryVersion) session.load(LibraryVersion.class, libversionid);
+        dbRun(new DBSessionTask() {
+            @Override
+            public void run(Session session) {
 
-        session.beginTransaction();
+                final ApplicationVersion applicationVersion =
+                        (ApplicationVersion) session.load(ApplicationVersion.class, appversionid);
+                final LibraryVersion libraryVersion =
+                        (LibraryVersion) session.load(LibraryVersion.class, libversionid);
 
-        final ApplicationDependency dependency = new ApplicationDependency();
-        dependency.setApplicationVersion(applicationVersion);
-        dependency.setLibraryVersion(libraryVersion);
 
-        session.save(dependency);
-        session.getTransaction().commit();
-        session.close();
+                final ApplicationDependency dependency = new ApplicationDependency();
+                dependency.setApplicationVersion(applicationVersion);
+                dependency.setLibraryVersion(libraryVersion);
+
+                session.save(dependency);
+            }
+        });
     }
 
     /**
@@ -201,12 +213,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @param libversionid The ID of the LibraryVersion
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public void deleteDependency(final int appversionid, final int libversionid) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
-                session.beginTransaction();
-
+            public void run(Session session) {
                 Query query = session.createQuery("from ApplicationVersion AS appver where "
                         + "appver.id=:appversionid");
                 query.setParameter("appversionid", appversionid);
@@ -227,10 +238,6 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                 final ApplicationDependency applicationDependency = (ApplicationDependency) query.list().get(0);
 
                 session.delete(applicationDependency);
-
-                session.getTransaction().commit();
-
-                return null;
             }
         });
     }
@@ -248,13 +255,14 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @param license          The updated license label
      * @param language         The updated programming language
      */
+    @Transactional
     public void updateLibrary(final int vendorid, final int licenseid, final int libraryid, final int libraryversionid,
                               final String libraryname, final String libraryversion, final String vendor,
                               final String license, final String language) {
 
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 Query query = session.createQuery(
                         "update LibraryVendor set vendor=:vendor "
                                 + "where id=:vendorid");
@@ -313,7 +321,6 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                 query.setParameter("libverid", libraryversionid);
                 query.executeUpdate();
 
-                return null;
             }
         });
     }
@@ -324,10 +331,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @param id The ID of the Library to delete
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public void removeLibrary(final int id) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 Query querylib = session.createQuery(
                         "from LibraryVersion " + "where id=:libraryVersion");
                 querylib.setParameter("libraryVersion", id);
@@ -388,8 +396,6 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                 } else if (version != null) {
                     session.delete(version);
                 }
-
-                return null;
             }
         });
     }
@@ -401,10 +407,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return A List of License objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<License> listLicense(final Integer id) {
-        return dbRun(new WithSessionRunnable<List<License>>() {
+        return dbRun(new DBSessionTaskReturning<List<License>>() {
             @Override
-            public List<License> runWithSession(Session session) {
+            public List<License> run(Session session) {
                 final Query query = session.
                         createQuery("from License " + "where id=:licid");
 
@@ -420,10 +427,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of all LibraryVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVersion> allLibrary() {
-        return dbRun(new WithSessionRunnable<List<LibraryVersion>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
             @Override
-            public List<LibraryVersion> runWithSession(Session session) {
+            public List<LibraryVersion> run(Session session) {
                 final Query query = session.createQuery("from LibraryVersion order by library.libraryVendor.vendor, library.libraryname");
                 return query.list();
             }
@@ -436,10 +444,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of Library objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<Library> uniqueLibrary() {
-        return dbRun(new WithSessionRunnable<List<Library>>() {
+        return dbRun(new DBSessionTaskReturning<List<Library>>() {
             @Override
-            public List<Library> runWithSession(Session session) {
+            public List<Library> run(Session session) {
                 final Query query = session.createQuery("select distinct lib from Library as lib order by libraryname");
                 return query.list();
             }
@@ -452,10 +461,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of License objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<License> uniqueLicense() {
-        return dbRun(new WithSessionRunnable<List<License>>() {
+        return dbRun(new DBSessionTaskReturning<List<License>>() {
             @Override
-            public List<License> runWithSession(Session session) {
+            public List<License> run(Session session) {
                 final Query query = session.createQuery("select distinct lic from License as lic order by licensename");
                 return query.list();
             }
@@ -470,10 +480,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of LibraryVendor objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVendor> uniqueVendor() {
-        return dbRun(new WithSessionRunnable<List<LibraryVendor>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVendor>>() {
             @Override
-            public List<LibraryVendor> runWithSession(Session session) {
+            public List<LibraryVendor> run(Session session) {
                 final Query query = session.
                         createQuery("select distinct lic from LibraryVendor as lic order by vendor");
                 return query.list();
@@ -488,10 +499,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of languages
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<String> uniqueLang() {
-        return dbRun(new WithSessionRunnable<List<String>>() {
+        return dbRun(new DBSessionTaskReturning<List<String>>() {
             @Override
-            public List<String> runWithSession(Session session) {
+            public List<String> run(Session session) {
                 final Query query = session.
                         createQuery("select distinct lib.language from Library as lib order by lib.language");
                 return query.list();
@@ -506,10 +518,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of Strings containing the version number
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<String> uniqueVer() {
-        return dbRun(new WithSessionRunnable<List<String>>() {
+        return dbRun(new DBSessionTaskReturning<List<String>>() {
             @Override
-            public List<String> runWithSession(Session session) {
+            public List<String> run(Session session) {
                 final Query query = session.
                         createQuery("select distinct libver.libraryversion from LibraryVersion as libver order by libver.libraryversion");
                 return query.list();
@@ -529,15 +542,15 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @param language       The programming language the library was written in
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public void addLibraries(final String libraryname, final String libraryversion, final String vendor,
                              final String license, final MultipartFile file, final String language) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 LibraryVendor libraryVendor;
                 License licenses;
                 Library library;
-                session.beginTransaction();
 
                 Query query = session.createQuery("from LibraryVendor where upper(vendor) =upper(:vendor) ");
                 query.setParameter("vendor", vendor);
@@ -609,7 +622,6 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                     libVersion.setUuid(UUID.randomUUID().toString());
                     session.save(libVersion);
                 }
-                session.getTransaction().commit();
 
                 query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
                         + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
@@ -618,20 +630,17 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                 query.setParameter("libver", libraryversion);
                 final List<LibraryVersion> libraryVersions = query.list();
 
-                session.close();
-
                 eventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
 
-                return null;
             }
         });
     }
 
-
+    @Transactional
     public void uploadLicense(final int licenseid, final MultipartFile file, final String editlicensename) {
-        dbRun(new WithSessionRunnable<Object>() {
+        dbRun(new DBSessionTask() {
             @Override
-            public Object runWithSession(Session session) {
+            public void run(Session session) {
                 InputStream licenseInputStream = null;
                 try {
                     Blob blob;
@@ -671,7 +680,6 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
                 } finally {
                     IOUtils.closeQuietly(licenseInputStream);
                 }
-                return null;
 
             }
         });
@@ -683,10 +691,11 @@ public class LibraryVersionDao extends DAOBase implements ApplicationEventPublis
      * @return a List of all LibraryVersion objects
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public List<LibraryVersion> keywordSearchLibraries(final String searchTerm) {
-        return dbRun(new WithSessionRunnable<List<LibraryVersion>>() {
+        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
             @Override
-            public List<LibraryVersion> runWithSession(Session session) {
+            public List<LibraryVersion> run(Session session) {
                 final Query query = session.createQuery(
                         "from LibraryVersion as libver where upper(libver.library.libraryname) "
                                 + "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) "

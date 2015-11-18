@@ -3,9 +3,9 @@ package org.owasp.dependencytrack.config;
 import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.owasp.dependencytrack.tasks.VulnerabilityScanTask;
+import org.owasp.dependencytrack.tasks.dependencycheck.DependencyCheckAnalysis;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -21,7 +21,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * Created by jason on 16/11/15.
  */
 @Configuration
-@Import({DatabaseConfguration.class})
+@Import({DatabaseConfguration.class,PropertyConfiguration.class})
 @EnableAspectJAutoProxy
 @EnableAsync
 public class ApplicationConfiguration {
@@ -30,6 +30,11 @@ public class ApplicationConfiguration {
     @Bean
     public VulnerabilityScanTask vulnerabilityScanTask(SessionFactory sessionFactory){
         return new VulnerabilityScanTask();
+    }
+
+    @Bean
+    public DependencyCheckAnalysis dependencyCheckAnalysis(){
+        return new DependencyCheckAnalysis();
     }
 
     @Value("${app.nist.dir}")
@@ -59,13 +64,7 @@ public class ApplicationConfiguration {
         return simpleApplicationEventMulticaster;
     }
 
-    @Bean
-    PropertyPlaceholderConfigurer propertyPlaceholderConfigurer(){
-        PropertyPlaceholderConfigurer propertyPlaceholderConfigurer = new PropertyPlaceholderConfigurer();
-        propertyPlaceholderConfigurer.setSearchSystemEnvironment(true);
-        propertyPlaceholderConfigurer.setLocations(new ClassPathResource("application.properties"));
-        return propertyPlaceholderConfigurer;
-    }
+
 
 
 }

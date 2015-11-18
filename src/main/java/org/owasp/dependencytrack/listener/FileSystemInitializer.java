@@ -38,13 +38,13 @@ public class FileSystemInitializer implements ApplicationListener<ContextRefresh
     @Value("${app.log.dir}")
     private String logPath;
 
-    @Value("${app.dir")
+    @Value("${app.dir}")
     private String appDir;
 
-    @Value("${app.data.dir")
+    @Value("${app.data.dir}")
     private String dataDir;
 
-    @Value("${app.nist.dir")
+    @Value("${app.nist.dir}")
     private String nistDir;
 
     /**

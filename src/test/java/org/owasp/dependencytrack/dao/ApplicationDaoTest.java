@@ -1,6 +1,5 @@
 package org.owasp.dependencytrack.dao;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.owasp.dependencytrack.config.ApplicationConfiguration;
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -32,54 +32,17 @@ public class ApplicationDaoTest {
 
     @Test
     @Transactional
-    public void testListApplications() throws Exception {
+    public void testApplicationDaoMethods() throws Exception {
         assertThat(applicationDao, not(nullValue()));
         List<Application> applications = applicationDao.listApplications();
-        assertThat(applications, not(CoreMatchers.<List<Application>>nullValue()));
+        assertThat(applications, not(nullValue()));
+        int size = applications.size();
+        Application application = new Application();
+        application.setName("Boris");
+        applicationDao.addApplication(application,"newversion");
+        applications = applicationDao.listApplications();
+        assertThat(applications.size(),is(size+1));
     }
 
-//    @Test
-//    public void testAddApplication() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testUpdateApplication() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testDeleteApplication() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testSearchApplications() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testSearchApplicationsVersion() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testSearchAllApplications() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testSearchAllApplicationsVersions() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testCoarseSearchApplications() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testCoarseSearchApplicationVersions() throws Exception {
-//
-//    }
+
 }

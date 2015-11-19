@@ -20,7 +20,6 @@ package org.owasp.dependencytrack.controller;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,12 @@ public class DownloadController extends AbstractController {
     @Value("${app.nist.dir}")
     private String nistDir;
 
+    @Value("${app.data.path}")
+    private String appDataPath;
+
+    @Value("${app.data.file}")
+    private String appDataFile;
+
     /**
      * Service to download the Dependency-Check datafile archive.
      *
@@ -60,8 +65,8 @@ public class DownloadController extends AbstractController {
         InputStream fis = null;
         OutputStream out = null;
         try {
-            fis = new FileInputStream(Constants.DATA_ZIP);
-            response.setHeader("Content-Disposition", "inline;filename=\"" + Constants.DATA_FILENAME + "\"");
+            fis = new FileInputStream(appDataPath);
+            response.setHeader("Content-Disposition", "inline;filename=\"" + appDataFile + "\"");
             response.setHeader("Content-Type", "application/octet-stream;");
             out = response.getOutputStream();
             IOUtils.copy(fis, out);

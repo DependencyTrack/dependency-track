@@ -32,7 +32,6 @@ import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
-import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.model.*;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.owasp.dependencytrack.util.XmlUtil;
@@ -42,6 +41,8 @@ import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.owasp.dependencytrack.util.session.RunWithSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,18 +73,19 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyCheckAnalysis.class);
 
-    /**
-     * Default constructor.
-     */
-    public DependencyCheckAnalysis() {
-    }
+    @Autowired
+    private SessionFactory sessionFactory;
 
-    /**
-     * Constructor used when sessionFactory cannot be autowired.
-     * @param sessionFactory a Hibernate SessionFactory
-     */
-    public DependencyCheckAnalysis(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    @Value("${app.data.dir}")
+    private String appDataDir;
+
+    @Value("${app.dir}")
+    private String appDir;
+
+    @Value("${app.suppression.path}")
+    private String appSuppressionPath;
+
+    public DependencyCheckAnalysis() {
     }
 
     /**
@@ -171,8 +173,8 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
 
         final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
         scanAgent.setConnectionString("jdbc:h2:file:%s;FILE_LOCK=SERIALIZED;AUTOCOMMIT=ON;");
-        scanAgent.setDataDirectory(Constants.DATA_DIR);
-        scanAgent.setReportOutputDirectory(Constants.APP_DIR);
+        scanAgent.setDataDirectory(appDataDir);
+        scanAgent.setReportOutputDirectory(appDir);
         scanAgent.setReportFormat(ReportGenerator.Format.ALL);
         scanAgent.setAutoUpdate(true);
         scanAgent.setDependencies(dependencies);
@@ -180,9 +182,9 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
         scanAgent.setNexusAnalyzerEnabled(false);
 
         // If a global suppression file exists, use it.
-        final File suppressions = new File(Constants.SUPPRESSION_PATH_FILENAME);
+        final File suppressions = new File(appSuppressionPath);
         if (suppressions.exists() && suppressions.isFile()) {
-            scanAgent.setSuppressionFile(Constants.SUPPRESSION_PATH_FILENAME);
+            scanAgent.setSuppressionFile(suppressions.getAbsolutePath());
         }
 
         boolean success = false;
@@ -206,7 +208,7 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
         final SMInputFactory inputFactory = XmlUtil.newStaxParser();
         FileInputStream fis = null;
         try {
-            fis = new FileInputStream(new File(Constants.APP_DIR + File.separator + "dependency-check-report.xml"));
+            fis = new FileInputStream(new File(appDir + File.separator + "dependency-check-report.xml"));
             final SMHierarchicCursor rootC = inputFactory.rootElementCursor(fis);
             rootC.advance(); // <analysis>
             final SMInputCursor cursor = rootC.childCursor();

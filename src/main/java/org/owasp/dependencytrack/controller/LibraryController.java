@@ -18,10 +18,18 @@
  */
 package org.owasp.dependencytrack.controller;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.owasp.dependencytrack.model.Application;
-import org.owasp.dependencytrack.model.Library;
+import org.owasp.dependencytrack.model.LibraryVendor;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.service.LibraryVersionService;
@@ -29,17 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Controller logic for all Library-related requests.
@@ -227,9 +226,9 @@ public class LibraryController extends AbstractController {
      */
     //  @RequiresPermissions("libraryHierarchy")
     @RequestMapping(value = "/libraryHierarchy", method = RequestMethod.GET)
-    public String getLibraryHierarchy(Map<String, Object> map) {
-        map.put("libraryVendors", libraryVersionService.getLibraryHierarchy());
-        return "libraryHierarchy";
+    @ResponseBody
+    public List<LibraryVendor> getLibraryHierarchy(Map<String, Object> map) {
+        return libraryVersionService.getLibraryHierarchy();
 
     }
 

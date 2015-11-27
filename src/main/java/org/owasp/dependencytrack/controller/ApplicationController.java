@@ -18,11 +18,14 @@
  */
 package org.owasp.dependencytrack.controller;
 
+import static com.google.common.collect.Collections2.transform;
+
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.VulnerabilitySummary;
 import org.owasp.dependencytrack.service.ApplicationService;
 import org.owasp.dependencytrack.service.ApplicationVersionService;
 import org.owasp.dependencytrack.service.LibraryVersionService;
@@ -43,9 +46,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Function;
 
 /**
  * Controller logic for all Application-related requests.
@@ -101,7 +112,7 @@ public class ApplicationController extends AbstractController {
     /**
      * Lists all applications.
      *
-     * @param map A map of parameters
+     * @param map     A map of parameters
      * @param request a HttpServletRequest object
      * @return a String
      */
@@ -117,20 +128,50 @@ public class ApplicationController extends AbstractController {
      * Lists vulnerability summary information for the specified application.
      *
      * @param map A map of parameters
-     * @param id The ID of the Application to retrieve vulnerability info for
+     * @param id  The ID of the Application to retrieve vulnerability info for
      * @return a String
      */
     @RequiresPermissions("applications")
     @RequestMapping(value = "/vulnerabilitySummary/{id}", method = RequestMethod.GET)
-    public String vulnerabiltySummary(Map<String, Object> map, @PathVariable("id") int id) {
-        map.put("vulnerabilityInfo", vulnerabilityService.getVulnerabilitySummary(id));
-        return "vulnerabilitySummary";
+    @ResponseBody
+    public List<VulnerabilitySummaryDTO> vulnerabiltySummary(Map<String, Object> map, @PathVariable("id") int id) {
+
+        ArrayList arrayList = new ArrayList();
+        arrayList.addAll(transform(vulnerabilityService.getVulnerabilitySummary(id), new Function<VulnerabilitySummary, VulnerabilitySummaryDTO>() {
+            @Nullable
+            @Override
+            public VulnerabilitySummaryDTO apply(VulnerabilitySummary input) {
+                return new VulnerabilitySummaryDTO(input);
+            }
+        }));
+        return arrayList;
+    }
+
+    public static class VulnerabilitySummaryDTO {
+        @JsonProperty("application-version-id")
+        public long applicationVersionId;
+        public int vulnerableComponents;
+        public int high;
+        public int medium;
+        public int low;
+
+        public VulnerabilitySummaryDTO() {
+        }
+
+        public VulnerabilitySummaryDTO(VulnerabilitySummary input) {
+            applicationVersionId = input.getApplicationVersion().getId();
+            vulnerableComponents = input.getVulnerableComponents();
+            high = input.getHigh();
+            medium = input.getMedium();
+            low = input.getLow();
+        }
     }
 
     /**
      * Dynamically generates a native Dependency-Check XML report.
+     *
      * @param map A map of parameters
-     * @param id The ID of the Applicaiton to create a report for
+     * @param id  The ID of the Applicaiton to create a report for
      * @return A String representation of the XML report
      */
     @RequestMapping(value = "/dependencyCheckReport/{id}.xml", method = RequestMethod.GET, produces = "application/xml")
@@ -141,8 +182,9 @@ public class ApplicationController extends AbstractController {
 
     /**
      * Dynamically generates a native Dependency-Check HTML report.
+     *
      * @param map A map of parameters
-     * @param id The ID of the Applicaiton to create a report for
+     * @param id  The ID of the Applicaiton to create a report for
      * @return A String representation of the HTML report
      */
     @RequestMapping(value = "/dependencyCheckReport/{id}.html", method = RequestMethod.GET, produces = "text/html")
@@ -408,6 +450,7 @@ public class ApplicationController extends AbstractController {
 
     /**
      * Performs an immediate scan against all library versions.
+     *
      * @return a String
      */
     @RequiresRoles("admin")
@@ -420,8 +463,8 @@ public class ApplicationController extends AbstractController {
     /**
      * Upload a License.
      *
-     * @param licenseid the ID of the License to download
-     * @param file the license file to upload
+     * @param licenseid       the ID of the License to download
+     * @param file            the license file to upload
      * @param editlicensename an updated license name
      * @return a String
      */
@@ -436,6 +479,7 @@ public class ApplicationController extends AbstractController {
 
     /**
      * Limits what fields can be automatically bound.
+     *
      * @param binder a WebDataBinder object
      */
     @InitBinder

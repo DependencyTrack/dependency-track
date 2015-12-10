@@ -27,6 +27,17 @@ Usage
 
 Finally, deploy the resulting WAR to your web application server (Tomcat, Jetty, etc)
 
+or
+
+You can deploy using the embedded Tomcat container using the Maven Spring Boot Plugin
+
+mvn springboot:run
+
+
+or directly as a runnable jar
+
+java -XX:MaxPermSize=128M -jar dependency-track.jar
+
 
 Mailing List
 -

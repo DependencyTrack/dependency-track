@@ -31,12 +31,12 @@ or
 
 You can deploy using the embedded Tomcat container using the Maven Spring Boot Plugin
 
-mvn springboot:run
+mvn spring-boot:run
 
 
 or directly as a runnable jar
 
-java -XX:MaxPermSize=128M -jar dependency-track.jar
+java -jar dtrack.war
 
 
 Mailing List

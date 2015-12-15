@@ -1,6 +1,6 @@
 package org.owasp.dependencytrack.config;
 
-import org.hibernate.SessionFactory;
+import org.owasp.dependencytrack.service.VulnerabilityServiceImpl;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.owasp.dependencytrack.tasks.VulnerabilityScanTask;
 import org.owasp.dependencytrack.tasks.dependencycheck.DependencyCheckAnalysis;
@@ -14,27 +14,24 @@ import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.orm.hibernate4.HibernateTransactionManager;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * Created by jason on 16/11/15.
  */
 @Configuration
-@Import({DatabaseConfguration.class,PropertyConfiguration.class})
+@Import({DatabaseConfiguration.class,PropertyConfiguration.class})
 @EnableAspectJAutoProxy
 @EnableAsync
 public class ApplicationConfiguration {
 
     //    <!-- Dependency-Check scan agent scheduler -->
     @Bean
-    public VulnerabilityScanTask vulnerabilityScanTask(SessionFactory sessionFactory){
-        return new VulnerabilityScanTask();
-    }
-
-    @Bean
-    public DependencyCheckAnalysis dependencyCheckAnalysis(){
-        return new DependencyCheckAnalysis();
+    public VulnerabilityScanTask vulnerabilityScanTask(DependencyCheckAnalysis dependencyCheckAnalysis, VulnerabilityServiceImpl vulnerabilityService){
+        VulnerabilityScanTask vulnerabilityScanTask = new VulnerabilityScanTask();
+        vulnerabilityScanTask.setDependencyCheckAnalysis(dependencyCheckAnalysis);
+        vulnerabilityScanTask.setVulerabilityService(vulnerabilityService);
+        return vulnerabilityScanTask;
     }
 
     @Value("${app.nist.dir}")
@@ -52,10 +49,6 @@ public class ApplicationConfiguration {
         return bean;
     }
 
-    @Bean
-    public HibernateTransactionManager hibernateTransactionManager(SessionFactory sessionFactory){
-        return new HibernateTransactionManager( sessionFactory );
-    }
 
     @Bean
     public ApplicationEventMulticaster applicationEventMulticaster() {

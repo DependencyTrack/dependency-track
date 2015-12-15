@@ -25,7 +25,6 @@ import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -41,7 +40,6 @@ import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.owasp.dependencytrack.util.session.RunWithSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
@@ -65,16 +63,12 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Service
-@Transactional
 public class DependencyCheckAnalysis extends DBSessionTaskRunner implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
 
     /**
      * Setup logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyCheckAnalysis.class);
-
-    @Autowired
-    private SessionFactory sessionFactory;
 
     @Value("${app.data.dir}")
     private String appDataDir;

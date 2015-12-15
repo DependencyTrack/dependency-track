@@ -13,8 +13,13 @@ public class RunWithSession
 	}
 
 	public static<T> T  run(SessionFactory sessionFactory, DBSessionTaskReturning<T> runnable){
-		Session session = sessionFactory.getCurrentSession();
-		boolean wasClosed = !session.isOpen();
+		Session session = null;
+		try{
+			session = sessionFactory.getCurrentSession();
+		}catch (Exception e){
+
+		}
+		boolean wasClosed = session==null || !session.isOpen();
 		if (wasClosed){
 			session = sessionFactory.openSession();
 		}
@@ -31,20 +36,30 @@ public class RunWithSession
 	}
 
 	public static void run(SessionFactory sessionFactory, DBSessionTask runnable) {
-		Session session = sessionFactory.getCurrentSession();
-		boolean wasClosed = !session.isOpen();
-		if (wasClosed) {
+		Session session = null;
+		try {
+			session = sessionFactory.getCurrentSession();
+		}catch (Throwable t){
+
+		}
+
+		boolean manageSession = (session==null) || !session.isOpen();
+		if (manageSession) {
 			session = sessionFactory.openSession();
 		}
 		if (session != null) {
 			try {
 				runnable.run(session);
-			} finally {
-				if (wasClosed && session.isOpen()) {
-					session.close();
-					if (wasClosed && session.isOpen()) {
+			}catch(Throwable t){
+				t.printStackTrace();
+			}
+			finally {
+				if( session != null && session.isOpen() ){
+					session.flush();
+					if ( manageSession ) {
 						session.close();
 					}
+
 				}
 			}
 		}

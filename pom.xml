@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.owasp</groupId>
 	<artifactId>dependency-track</artifactId>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 	<version>1.0.1-SNAPSHOT</version>
 
 	<parent>

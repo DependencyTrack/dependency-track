@@ -18,45 +18,31 @@
  */
 package org.owasp.dependencytrack.controller;
 
-import static com.google.common.collect.Collections2.transform;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Function;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.VulnerabilitySummary;
-import org.owasp.dependencytrack.service.ApplicationService;
-import org.owasp.dependencytrack.service.ApplicationVersionService;
-import org.owasp.dependencytrack.service.LibraryVersionService;
-import org.owasp.dependencytrack.service.ReportService;
-import org.owasp.dependencytrack.service.VulnerabilityService;
+import org.owasp.dependencytrack.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Function;
+import static com.google.common.collect.Collections2.transform;
 
 /**
  * Controller logic for all Application-related requests.
@@ -113,12 +99,11 @@ public class ApplicationController extends AbstractController {
      * Lists all applications.
      *
      * @param map     A map of parameters
-     * @param request a HttpServletRequest object
      * @return a String
      */
     @RequiresPermissions("applications")
     @RequestMapping(value = "/applications", method = RequestMethod.GET)
-    public String application(Map<String, Object> map, HttpServletRequest request) {
+    public String application(Map<String, Object> map) {
         map.put("check", false);
         map.put("applicationList", applicationService.listApplications());
         return "applicationsPage";
@@ -171,7 +156,7 @@ public class ApplicationController extends AbstractController {
      * Dynamically generates a native Dependency-Check XML report.
      *
      * @param map A map of parameters
-     * @param id  The ID of the Applicaiton to create a report for
+     * @param id  The ID of the Application to create a report for
      * @return A String representation of the XML report
      */
     @RequestMapping(value = "/dependencyCheckReport/{id}.xml", method = RequestMethod.GET, produces = "application/xml")
@@ -184,7 +169,7 @@ public class ApplicationController extends AbstractController {
      * Dynamically generates a native Dependency-Check HTML report.
      *
      * @param map A map of parameters
-     * @param id  The ID of the Applicaiton to create a report for
+     * @param id  The ID of the Application to create a report for
      * @return A String representation of the HTML report
      */
     @RequestMapping(value = "/dependencyCheckReport/{id}.html", method = RequestMethod.GET, produces = "text/html")

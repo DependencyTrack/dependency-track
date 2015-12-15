@@ -22,15 +22,15 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.mindrot.jbcrypt.BCrypt;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Permissions;
 import org.owasp.dependencytrack.model.Roles;
-import org.owasp.dependencytrack.model.User;
+import org.owasp.dependencytrack.service.UserService;
 import org.owasp.dependencytrack.util.session.DBSessionTask;
 import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.ClassPathResource;
@@ -41,7 +41,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -130,9 +133,7 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
     }
 
     /**
-     * Method is called when the application context is started or refreshed.
-     *
-     * @param event A ContextRefreshedEvent
+     * Method is called when the application context is started or refreshed. @param event A ContextRefreshedEvent
      */
     @Override
     @Transactional
@@ -143,17 +144,14 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
             loadDefaultRoles();
             loadDefaultUsers();
         } catch (IOException e) {
-            if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn(e.getMessage());
-            }
+            if (LOGGER.isWarnEnabled()) LOGGER.warn(e.getMessage());
         }
     }
 
     /**
-     * Loads the default licenses into the database if no license data exists.
-     *
-     * @throws IOException An exception if the license file cannot be found
+     * Loads the default licenses into the database if no license data exists. @throws IOException An exception if the license file cannot be found
      */
+    @Transactional
     private void loadDefaultLicenses() throws IOException {
         dbRun(new DBSessionTask() {
             @Override
@@ -208,11 +206,12 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
     /**
      * Loads the default permissions into the database if no permission data exists.
      */
+    @Transactional
     private void loadDefaultPermissions() {
         dbRun(new DBSessionTask() {
             @Override
             public void run(Session session) {
-                final int count = ((Long) session.createQuery("select count(*) from Permissions ").uniqueResult()).intValue();
+                final int count = ((Long) session.createQuery("select count(*) from Permissions").uniqueResult()).intValue();
 
                 // Check to see if data already exists in the table.
                 if (count > 0) {
@@ -223,7 +222,6 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
                     LOGGER.info("Adding default permissions to datastore.");
                 }
 
-                session.beginTransaction();
                 for (Map.Entry<String, Roles.ROLE> entry : PERMISSIONS.entrySet()) {
                     final Permissions permission = new Permissions(entry.getKey());
                     session.save(permission);
@@ -236,108 +234,73 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
      * Loads the default Roles into the database if no Role data exists.
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public void loadDefaultRoles() {
 
         dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
+                  @Override
+                  public void run(Session session) {
+                      final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
 
-                // Check to see if data already exists in the table.
-                if (count > 0) {
-                    return;
-                }
+                      // Check to see if data already exists in the table.
+                      if (count > 0) {
+                          return;
+                      }
 
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Adding default roles to datastore.");
-                }
+                      if (LOGGER.isInfoEnabled()) {
+                          LOGGER.info("Adding default roles to datastore.");
+                      }
 
-                // Retrieve a list of all persisted permissions
-                final Query query = session.createQuery("FROM Permissions");
-                final List<Permissions> permissions = query.list();
+                      // Retrieve a list of all persisted permissions
+                      final Query query = session.createQuery("FROM Permissions");
+                      final List<Permissions> permissions = query.list();
 
-                // Create a temporary list to hold only user permissions
-                final List<Permissions> userPermissions = new ArrayList<>();
+                      Map<Roles.ROLE,Roles> rolesMap = new HashMap<>();
 
-                // Iterate though all permissions and populate a temporary list of only the user permissions
-                for (Permissions permission : permissions) {
-                    if (PERMISSIONS.get(permission.getPermissionname()) == Roles.ROLE.USER) {
-                        userPermissions.add(permission);
-                    }
-                }
+                      for (Roles.ROLE eachRole : Roles.ROLE.values()) {
+                          Roles role = new Roles(eachRole.name().toLowerCase());
+                          rolesMap.put(eachRole,role);
+                      }
 
-                // Create a temporary list to hold only user permissions
-                final List<Permissions> moderatorPermissions = new ArrayList<>();
+                      Roles userRole = rolesMap.get(Roles.ROLE.USER);
+                      Roles moderatorRole = rolesMap.get(Roles.ROLE.MODERATOR);
+                      Roles adminRole = rolesMap.get(Roles.ROLE.ADMIN);
 
-                for (Permissions permission : permissions) {
-                    if ((PERMISSIONS.get(permission.getPermissionname()) == Roles.ROLE.USER)
-                            || (PERMISSIONS.get(permission.getPermissionname()) == Roles.ROLE.MODERATOR)) {
-                        moderatorPermissions.add(permission);
-                    }
-                }
+                      for (Permissions permission : permissions) {
+                          adminRole.addPermission(permission);
 
-                // Create a temporary list to hold only user permissions
-                final List<Permissions> adminPermissions = new ArrayList<>();
-                for (Permissions permission : permissions) {
-                    adminPermissions.add(permission);
-                }
+                          if (getRole(permission) == Roles.ROLE.USER) {
+                              userRole.addPermission(permission);
+                              moderatorRole.addPermission(permission);
+                          }
 
-                for (Roles.ROLE name : Roles.ROLE.values()) {
-                    final Roles role = new Roles(name.name().toLowerCase());
-                    if (name == Roles.ROLE.USER) {
-                        role.setPerm(new HashSet<>(userPermissions));
-                    } else if (name == Roles.ROLE.MODERATOR) {
-                        role.setPerm(new HashSet<>(moderatorPermissions));
-                    } else if (name == Roles.ROLE.ADMIN) {
-                        role.setPerm(new HashSet<>(adminPermissions));
-                    }
-                    session.save(role);
-                }
-            }
-        });
+                          if (getRole(permission) == Roles.ROLE.MODERATOR) {
+                              moderatorRole.addPermission(permission);
+                          }
+                      }
+
+                      for (Roles eachRole : rolesMap.values()) {
+                          session.save(eachRole);
+                      }
+
+                  }
+              }
+        );
     }
+
+    private Roles.ROLE getRole(Permissions permission) {
+        return PERMISSIONS.get(permission.getPermissionname());
+    }
+
+    @Autowired
+    UserService userService;
 
     /**
      * Loads the default users into the database if no User data exists.
      */
     @SuppressWarnings("unchecked")
+    @Transactional
     public void loadDefaultUsers() {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                final int count = ((Long) session.createQuery("select count(*) from User ").uniqueResult()).intValue();
-
-                // Check to see if data already exists in the table.
-                if (count > 0) {
-                    return;
-                }
-
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Adding default users to datastore.");
-                }
-
-                final Query query = session.createQuery(" FROM Roles ");
-                final ArrayList<Roles> rolelist = (ArrayList<Roles>) query.list();
-                Roles adminRole = null;
-                for (Roles role: rolelist) {
-                    if (role.getRole().equalsIgnoreCase(Roles.ROLE.ADMIN.name())) {
-                        adminRole = role;
-                    }
-                }
-                if (adminRole == null) {
-                    return;
-                }
-
-                final String hashedPassword = BCrypt.hashpw("admin", BCrypt.gensalt(14));
-
-                final User user = new User();
-                user.setIsLdap(false);
-                user.setPassword(hashedPassword);
-                user.setUsername("admin");
-                user.setCheckvalid(false);
-                user.setRoles(adminRole);
-                session.save(user);
-            }
-        });
+        userService.registerUser("admin",false,"admin",Roles.ROLE.ADMIN);
     }
 }

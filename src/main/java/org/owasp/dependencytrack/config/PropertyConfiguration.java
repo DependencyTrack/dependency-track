@@ -12,7 +12,7 @@ import org.springframework.core.io.ClassPathResource;
 public class PropertyConfiguration {
 
     @Bean
-    PropertyPlaceholderConfigurer propertyPlaceholderConfigurer(){
+    public static PropertyPlaceholderConfigurer propertyPlaceholderConfigurer(){
         PropertyPlaceholderConfigurer propertyPlaceholderConfigurer = new PropertyPlaceholderConfigurer();
         propertyPlaceholderConfigurer.setSearchSystemEnvironment(true);
         propertyPlaceholderConfigurer.setLocations(new ClassPathResource("application.properties"));

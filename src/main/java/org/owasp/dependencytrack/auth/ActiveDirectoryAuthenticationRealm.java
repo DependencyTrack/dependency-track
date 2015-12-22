@@ -13,8 +13,6 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
- *
- * Copyright (c) Axway. All Rights Reserved.
  */
 package org.owasp.dependencytrack.auth;
 

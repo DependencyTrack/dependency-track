@@ -23,9 +23,10 @@ import org.junit.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.core.IsCollectionContaining.hasItems;
+import static org.junit.Assert.*;
 
 /**
  * JUnit test for the {@link Permissions} class.
@@ -64,22 +65,23 @@ public class RolesTest {
 
         Roles r1 = new Roles("Role 1");
         r1.setId(1);
-        r1.setPerm(perms);
-        r1.setUsr(users);
+        r1.addPermissions(perms);
+        r1.addUsers(users);
 
         Roles r2 = new Roles();
         r2.setRole("Role 2");
         r2.setId(1);
-        r2.setPerm(perms);
-        r2.setUsr(users);
+        r2.addPermissions(perms);
+        r2.addUsers(users);
 
         assertEquals(new Integer(1), r1.getId());
         assertEquals("Role 1", r1.getRole());
         assertEquals("Role 2", r2.getRole());
-        assertEquals(2, r1.getPerm().size());
-        assertEquals(2, r1.getUsr().size());
-        assertEquals("dosomething", r1.getPerm().iterator().next().getPermissionname());
-        assertEquals("Fred", r1.getUsr().iterator().next().getUsername());
+        Set<Permissions> r1permissions = r1.getPermissions();
+        assertEquals(2, r1permissions.size());
+        assertEquals(2, r1.getUsers().size());
+        assertThat(r1permissions,hasItems(p1,p2));
+        assertThat(r1.getUsers(),hasItems(u1,u2));
     }
 
 }

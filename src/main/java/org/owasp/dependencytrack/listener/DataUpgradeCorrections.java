@@ -20,13 +20,15 @@ package org.owasp.dependencytrack.listener;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.util.session.DBSessionTask;
+import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Component
-public class DataUpgradeCorrections implements ApplicationListener<ContextRefreshedEvent> {
+public class DataUpgradeCorrections extends DBSessionTaskRunner implements ApplicationListener<ContextRefreshedEvent> {
 
     /**
      * Setup logger
@@ -45,18 +47,13 @@ public class DataUpgradeCorrections implements ApplicationListener<ContextRefres
     private static final Logger LOGGER = LoggerFactory.getLogger(DataUpgradeCorrections.class);
 
     /**
-     * The Hibernate SessionFactory
-     */
-    private SessionFactory sessionFactory;
-
-    /**
      * Method is called when the application context is started or refreshed.
      *
      * @param event A ContextRefreshedEvent
      */
     @Override
+    @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        this.sessionFactory = (SessionFactory) event.getApplicationContext().getBean("sessionFactory");
 
         try {
             correctGeneratedSha1Length();
@@ -74,22 +71,25 @@ public class DataUpgradeCorrections implements ApplicationListener<ContextRefres
      * SHA1 hashes which require 40 characters. This method identifies any 32 character
      * SHA1 hashes in the database and updates matching records with eight leading zeros.
      */
-    private void correctGeneratedSha1Length() {
-        final Session session = sessionFactory.openSession();
+    @SuppressWarnings("unchecked")
+	private void correctGeneratedSha1Length() {
 
-        final Query query = session.createQuery("FROM LibraryVersion");
-        final List<LibraryVersion> libraryVersions = query.list();
-        session.getTransaction().begin();
-        for (LibraryVersion libraryVersion: libraryVersions) {
-            if (libraryVersion.getMd5() != null && libraryVersion.getSha1() != null && 32 == libraryVersion.getSha1().length()) {
-                LOGGER.info("Identified incorrectly generated SHA1 hash: " + libraryVersion.getSha1());
-                libraryVersion.setSha1("00000000" + libraryVersion.getMd5());
-                session.save(libraryVersion);
-                LOGGER.info("Corrected: " + libraryVersion.getSha1());
+        dbRun(new DBSessionTask() {
+            @Override
+            public void run(Session session) {
+                final Query query = session.createQuery("FROM LibraryVersion");
+                final List<LibraryVersion> libraryVersions = query.list();
+                session.getTransaction().begin();
+                for (LibraryVersion libraryVersion: libraryVersions) {
+                    if (libraryVersion.getMd5() != null && libraryVersion.getSha1() != null && 32 == libraryVersion.getSha1().length()) {
+                        LOGGER.info("Identified incorrectly generated SHA1 hash: " + libraryVersion.getSha1());
+                        libraryVersion.setSha1("00000000" + libraryVersion.getMd5());
+                        session.save(libraryVersion);
+                        LOGGER.info("Corrected: " + libraryVersion.getSha1());
+                    }
+                }
             }
-        }
-        session.getTransaction().commit();
-        session.close();
+        });
     }
 
 }

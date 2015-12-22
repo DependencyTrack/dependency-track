@@ -22,7 +22,6 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:task="http://www.springframework.org/schema/task"
-       xmlns:tx="http://www.springframework.org/schema/tx"
        xmlns:util="http://www.springframework.org/schema/util"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:aop="http://www.springframework.org/schema/aop"
@@ -30,9 +29,10 @@
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
        http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
-	   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
 
     <!-- Enables the Spring MVC @Controller programming model -->
     <mvc:annotation-driven/>
@@ -44,7 +44,9 @@
     <bean id="dependencyCheckScheduledScanner" class="org.owasp.dependencytrack.tasks.VulnerabilityScanTask" />
 
     <!-- NIST data updater scheduler -->
-    <bean id="nistDataMirrorUpdater" class="org.owasp.dependencytrack.tasks.NistDataMirrorUpdater" />
+    <bean id="nistDataMirrorUpdater" class="org.owasp.dependencytrack.tasks.NistDataMirrorUpdater" >
+        <constructor-arg value="${app.nist.dir}"/>
+            </bean>
 
     <!-- Handles HTTP GET requests for /resources/** by efficiently serving
         up static resources in the ${webappRoot}/resources directory -->
@@ -71,11 +73,6 @@
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <!-- one of the properties available; the maximum file size in bytes -->
         <property name="maxUploadSize" value="10000000"/>
-    </bean>
-
-    <tx:annotation-driven/>
-    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
-        <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
     <aop:aspectj-autoproxy proxy-target-class="true"/>

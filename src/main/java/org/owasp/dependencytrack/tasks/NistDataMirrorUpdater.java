@@ -19,16 +19,11 @@
 package org.owasp.dependencytrack.tasks;
 
 import org.apache.commons.io.IOUtils;
-import org.owasp.dependencytrack.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Calendar;
@@ -75,6 +70,12 @@ public class NistDataMirrorUpdater {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(NistDataMirrorUpdater.class);
 
+    private String nistDir;
+
+    public NistDataMirrorUpdater(String nistDir) {
+        this.nistDir = nistDir;
+    }
+
 
     /**
      * Updates the NIST data directory.
@@ -116,12 +117,12 @@ public class NistDataMirrorUpdater {
 
             bis = new BufferedInputStream(urlConnection.getInputStream());
 
-            final File dir = new File(Constants.NIST_DIR);
+            final File dir = new File(nistDir);
             if (!dir.exists()) {
                 dir.mkdir();
             }
 
-            final File file = new File(Constants.NIST_DIR + File.separator + filename);
+            final File file = new File(nistDir + File.separator + filename);
             bos = new BufferedOutputStream(new FileOutputStream(file));
 
             int i;

@@ -20,21 +20,17 @@ package org.owasp.dependencytrack.controller;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.owasp.dependencytrack.Constants;
 import org.owasp.dependencytrack.tasks.NistDataMirrorUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * Controller logic for all download-related requests.
@@ -49,6 +45,14 @@ public class DownloadController extends AbstractController {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadController.class);
 
+    @Value("${app.nist.dir}")
+    private String nistDir;
+
+    @Value("${app.data.path}")
+    private String appDataPath;
+
+    @Value("${app.data.file}")
+    private String appDataFile;
 
     /**
      * Service to download the Dependency-Check datafile archive.
@@ -61,8 +65,8 @@ public class DownloadController extends AbstractController {
         InputStream fis = null;
         OutputStream out = null;
         try {
-            fis = new FileInputStream(Constants.DATA_ZIP);
-            response.setHeader("Content-Disposition", "inline;filename=\"" + Constants.DATA_FILENAME + "\"");
+            fis = new FileInputStream(appDataPath);
+            response.setHeader("Content-Disposition", "inline;filename=\"" + appDataFile + "\"");
             response.setHeader("Content-Type", "application/octet-stream;");
             out = response.getOutputStream();
             IOUtils.copy(fis, out);
@@ -93,7 +97,7 @@ public class DownloadController extends AbstractController {
         InputStream fis = null;
         OutputStream out = null;
         try {
-            fis = new FileInputStream(Constants.NIST_DIR + File.separator + filename);
+            fis = new FileInputStream(nistDir + File.separator + filename);
             if (filename.endsWith(".gz")) {
                 response.setHeader("Content-Type", "application/x-gzip;");
             } else if (filename.endsWith(".xml")) {

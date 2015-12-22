@@ -15,8 +15,6 @@ This product includes software developed by The Eclipse Foundation (http://www.e
 
 This product includes software developed by QOS.ch (http://www.slf4j.org/).
 
-This product includes software developed by Art Technology Group, Inc (http://json-taglib.sourceforge.net/).
-
 This product includes software developed by Jquery.com (http://jquery.com/).
 
 This product includes software developed by Twitter, Inc (http://twitter.github.io/bootstrap/).

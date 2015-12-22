@@ -19,26 +19,18 @@
 
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "SCANRESULT")
+@Table(name = "scanresult")
 public class ScanResult {
 
     /**
      * The unique identifier of the persisted object.
      */
     @Id
-    @Column(name = "ID", unique = true)
+    @Column(name = "id", unique = true)
     @GeneratedValue
     private Integer id;
 
@@ -46,21 +38,21 @@ public class ScanResult {
      * The date of the scan
      */
     @Temporal(TemporalType.DATE)
-    @Column(name = "SCANDATE")
+    @Column(name = "scandate")
     private Date scanDate;
 
     /**
      * The parent application version.
      */
     @ManyToOne
-    @JoinColumn(name = "LIBRARYVERSIONID", nullable = false)
+    @JoinColumn(name = "libraryversionid", nullable = false)
     private LibraryVersion libraryVersion;
 
     /**
      * The vulnerability recorded in this scan.
      */
     @ManyToOne
-    @JoinColumn(name = "VULNERABILITYID", nullable = false)
+    @JoinColumn(name = "vulnerabilityid", nullable = false)
     private Vulnerability vulnerability;
 
     public Integer getId() {

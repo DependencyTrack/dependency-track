@@ -19,15 +19,13 @@
 
 package org.owasp.dependencytrack.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.hibernate.Hibernate;
+import org.hibernate.engine.jdbc.BlobProxy;
+import org.hibernate.engine.jdbc.ClobProxy;
 import org.junit.Test;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * JUnit test for the {@link License} class.
@@ -43,10 +41,8 @@ public class LicenseTest {
         license.setFilename("license.txt");
         license.setContenttype("text/plain");
 
-        InputStream textStream = new ByteArrayInputStream("License Test".getBytes("UTF-8"));
-
-        license.setText(Hibernate.createBlob(textStream));
-        license.setUrl(Hibernate.createClob("http://localhost/license.txt"));
+        license.setText(BlobProxy.generateProxy("License Test".getBytes("UTF-8")));
+        license.setUrl(ClobProxy.generateProxy("http://localhost/license.txt") );
 
         assertEquals(new Integer(1), license.getId());
         assertEquals("GPLv3", license.getLicensename());

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
 
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${user.home}/dependency-track/log/dependency-track.log</file>
-        <encoder>
-            <pattern>%date %level [%thread] [%file:%line] %msg%n</pattern>
-        </encoder>
-    </appender>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <!--<appender name="FILE" class="ch.qos.logback.core.FileAppender">-->
+        <!--<file>${user.home}/dependency-track/log/dependency-track.log</file>-->
+        <!--<encoder>-->
+            <!--<pattern>%date %level [%thread] [%file:%line] %msg%n</pattern>-->
+        <!--</encoder>-->
+    <!--</appender>-->
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -15,7 +16,7 @@
     </appender>
 
     <logger name="org.owasp.dependencytrack" level="INFO" additivity="false">
-        <appender-ref ref="FILE" />
+        <appender-ref ref="STDOUT" />
     </logger>
 
     <root level="DEBUG">

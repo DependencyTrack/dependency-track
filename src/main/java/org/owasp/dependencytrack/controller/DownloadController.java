@@ -85,7 +85,7 @@ public class DownloadController extends AbstractController {
      * @param filename the xml file to download
      * @throws java.io.IOException bad robot
      */
-    @RequestMapping(value = "/nist/{filename:.+}", method = RequestMethod.GET)
+    @RequestMapping(value = "/nist/{filename:.+}", method = {RequestMethod.GET, RequestMethod.HEAD})
     public void getNistFile(HttpServletResponse response,
                             @PathVariable("filename") String filename) throws IOException {
         final File canonicalizedFile = new File(filename).getCanonicalFile();
@@ -95,12 +95,14 @@ public class DownloadController extends AbstractController {
         InputStream fis = null;
         OutputStream out = null;
         try {
-            fis = new FileInputStream(nistDir + File.separator + filename);
+            File file = new File(nistDir + File.separator + filename);
+            fis = new FileInputStream(file);
             if (filename.endsWith(".gz")) {
                 response.setHeader("Content-Type", "application/x-gzip;");
             } else if (filename.endsWith(".xml")) {
                 response.setHeader("Content-Type", "application/xml;");
             }
+            response.addDateHeader("Last-Modified", file.lastModified());
             out = response.getOutputStream();
             IOUtils.copy(fis, out);
             out.flush();

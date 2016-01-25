@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.listener;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.owasp.dependencytrack.config.DatabaseConfiguration;
@@ -35,8 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -54,7 +58,21 @@ public class DefaultObjectGeneratorTest {
     @Autowired
     DefaultObjectGenerator defaultObjectGenerator;
 
+    @Before
+    public void waitForInit(){
+        try {
+            DefaultObjectGenerator.initialised.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        assertThat("Default object has run",DefaultObjectGenerator.initialised.getCount(),is(0L));
+    }
 
+
+    @Test
+    public void configOK(){
+        assertThat(defaultObjectGenerator, is(notNullValue()));
+    }
 
     @Test
     @Transactional

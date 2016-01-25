@@ -27,8 +27,8 @@ import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
 import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,17 +40,18 @@ import java.util.*;
 
 @Repository("libraryVersionDao")
 @SuppressWarnings("unchecked")
-public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements ApplicationEventPublisherAware, LibraryVersionDao {
+public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements LibraryVersionDao {
+
+    /**
+     * Event publisher
+     */
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Setup logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(LibraryVersionDaoImpl.class);
-
-    /**
-     * Event publisher
-     */
-    private ApplicationEventPublisher eventPublisher;
 
     public LibraryVersionDaoImpl() {
     }
@@ -645,7 +646,7 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Applic
                 query.setParameter("libver", libraryversion);
                 final List<LibraryVersion> libraryVersions = query.list();
 
-                eventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
+                applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
 
             }
         });
@@ -724,10 +725,8 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Applic
         });
     }
 
-    @Override
+
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-        this.eventPublisher = applicationEventPublisher;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
-
-
 }

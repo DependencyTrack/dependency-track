@@ -17,21 +17,35 @@
 package org.owasp.dependencytrack.tasks;
 
 import org.apache.commons.io.IOUtils;
+import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.context.ApplicationListener;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Performs a complete download of all NIST CVE data and provides access
  * to the sources via an internal mirror.
+ *
  * @author Steve Springett (steve.springett@owasp.org)
  */
-public class NistDataMirrorUpdater {
+public class NistDataMirrorUpdater implements ApplicationListener<NistDataMirrorUpdateRequestedEvent> {
+
+    private static Pattern validFileNamePattern = Pattern.compile("nvdcve(-\\d\\.\\d)?(-Modified)?(-\\d{4})?\\.xml\\.gz");
+
+    /**
+     * The last time a download successfully occurred
+     */
+    LocalDateTime lastDownload = null;
 
     /**
      * NIST CVE 1.2 Modified URL (GZip feed)
@@ -46,12 +60,12 @@ public class NistDataMirrorUpdater {
     /**
      * NIST CVE 1.2 Base URL (GZip feed)
      */
-    private static final String CVE_12_BASE_URL = "https://nvd.nist.gov/download/nvdcve-%d.xml.gz";
+    private static final String CVE_12_BASE_URL = "https://nvd.nist.gov/download/nvdcve-{year}.xml.gz";
 
     /**
      * NIST CVE 2.0 Base URL (GZip feed)
      */
-    private static final String CVE_20_BASE_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-%d.xml.gz";
+    private static final String CVE_20_BASE_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-{year}.xml.gz";
 
     /**
      * The year to begin mirroring from. NIST CVE data begins in 2002.
@@ -61,7 +75,7 @@ public class NistDataMirrorUpdater {
     /**
      * The year to end mirror of. Defaults to current year.
      */
-    private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
+    private static int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
 
     /**
      * Setup logger
@@ -69,25 +83,77 @@ public class NistDataMirrorUpdater {
     private static final Logger LOGGER = LoggerFactory.getLogger(NistDataMirrorUpdater.class);
 
     private String nistDir;
+    private Set<URL> downloadURLS;
 
     public NistDataMirrorUpdater(String nistDir) {
         this.nistDir = nistDir;
     }
 
+    @PostConstruct
+    public void initUpdater() {
+        initialiseUrls();
+        final File dir = new File(nistDir);
+        if (!dir.exists()) {
+            dir.mkdir();
+        } else {
+            lastDownload = getLatestDownloadDate();
+        }
+    }
+
+    private LocalDateTime getLatestDownloadDate() {
+        LocalDateTime latest = null;
+        for (URL url : downloadURLS) {
+            File localFile = getLocalFileFor(url);
+            if (!localFile.exists() || localFile.length()==0 ){
+                return null; // if any files don't exist we need to reload em all.
+            }
+            latest = new LocalDateTime(localFile.lastModified());
+        }
+        return latest;
+    }
+
+    private File getLocalFileFor(URL url) {
+        return new File(getFilenameFromURL(url));
+    }
+
+    private void initialiseUrls() {
+        downloadURLS = new LinkedHashSet<>();
+        try {
+            downloadURLS.add(new URL(CVE_12_MODIFIED_URL));
+            downloadURLS.add(new URL(CVE_20_MODIFIED_URL));
+
+            for (int year = START_YEAR; year <= END_YEAR; year++) {
+                downloadURLS.add(new URL(fillInYearValue(CVE_12_BASE_URL, year)));
+                downloadURLS.add(new URL(fillInYearValue(CVE_20_BASE_URL, year)));
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Updates the NIST data directory.
+     * @param endYear
+     * @param now
      */
-    @Scheduled(fixedRate = 86400000) // every 24 hours
-    public void doUpdates() {
+    public void doUpdates(int endYear, LocalDateTime now) {
         try {
-            doDownload(CVE_12_MODIFIED_URL);
-            doDownload(CVE_20_MODIFIED_URL);
-            for (int i = START_YEAR; i <= END_YEAR; i++) {
-                final String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
-                final String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
-                doDownload(cve12BaseUrl);
-                doDownload(cve20BaseUrl);
+            int previousEndYear = END_YEAR;
+            boolean newYearAdded = false;
+
+            END_YEAR = endYear;
+            if(END_YEAR!=previousEndYear){
+                newYearAdded=true;
+                downloadURLS.add(new URL(fillInYearValue(CVE_12_BASE_URL, END_YEAR)));
+                downloadURLS.add(new URL(fillInYearValue(CVE_20_BASE_URL, END_YEAR)));
+            }
+
+            if((newYearAdded)
+                    ||(lastDownload==null)
+                    ||(now.compareTo(lastDownload.plusHours(2)) > 1)){
+                for (URL url : downloadURLS) {
+                    doDownload(url);
+                }
             }
         } catch (IOException e) {
             LOGGER.warn("An error occurred during the NIST data mirror update process: " + e.getMessage());
@@ -96,15 +162,16 @@ public class NistDataMirrorUpdater {
 
     /**
      * Perform a download of NIST data and save it to the nist data directory
+     *
      * @param cveUrl The url to download
      * @throws IOException if method encounters a problem downloading or saving the files
      */
-    private void doDownload(String cveUrl) throws IOException {
+    private void doDownload(URL cveUrl) throws IOException {
         BufferedInputStream bis = null;
         BufferedOutputStream bos = null;
 
         try {
-            final URL url = new URL(cveUrl);
+            final URL url = cveUrl;
             final URLConnection urlConnection = url.openConnection();
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Downloading " + url.toExternalForm());
@@ -115,12 +182,7 @@ public class NistDataMirrorUpdater {
 
             bis = new BufferedInputStream(urlConnection.getInputStream());
 
-            final File dir = new File(nistDir);
-            if (!dir.exists()) {
-                dir.mkdir();
-            }
-
-            final File file = new File(nistDir + File.separator + filename);
+            final File file = getLocalFile(filename);
             bos = new BufferedOutputStream(new FileOutputStream(file));
 
             int i;
@@ -137,25 +199,37 @@ public class NistDataMirrorUpdater {
         }
     }
 
+    private File getLocalFile(String filename) {
+        return new File(nistDir + File.separator + filename);
+    }
+
     /**
      * Performs exact match validation to ensure the specified filename matches a known NIST filename.
+     *
      * @param filename the filename to check
      * @return a boolean value
      */
     public static boolean isValidNistFile(String filename) {
-        if (filename.equals(CVE_12_MODIFIED_URL.substring(CVE_12_MODIFIED_URL.lastIndexOf('/') + 1))
-                || filename.equals(CVE_20_MODIFIED_URL.substring(CVE_20_MODIFIED_URL.lastIndexOf('/') + 1))) {
-            return true;
-        }
-        for (int i = START_YEAR; i <= END_YEAR; i++) {
-            final String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
-            final String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
 
-            if (filename.equals(cve12BaseUrl.substring(cve12BaseUrl.lastIndexOf('/') + 1))
-                    || filename.equals(cve20BaseUrl.substring(cve20BaseUrl.lastIndexOf('/') + 1))) {
-                return true;
-            }
-        }
-        return false;
+        return validFileNamePattern.matcher(filename).matches();
+    }
+
+    public static String fillInYearValue(String pattern, int year) {
+        return pattern.replace("{year}", String.valueOf(year));
+    }
+
+    public static String getFilenameFromURL(URL url) {
+        return getFilenameFromURL(url.getPath());
+    }
+
+    public static String getFilenameFromURL(String url) {
+        int index = url.lastIndexOf('/');
+        index = index != -1 ? index + 1 : 0;
+        return url.substring(index);
+    }
+
+    @Override
+    public void onApplicationEvent(NistDataMirrorUpdateRequestedEvent event) {
+        doUpdates(Calendar.getInstance().get(Calendar.YEAR), LocalDateTime.now());
     }
 }

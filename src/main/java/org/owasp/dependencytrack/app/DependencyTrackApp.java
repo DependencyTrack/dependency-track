@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.app;
 
 import org.owasp.dependencytrack.config.DatabaseConfiguration;
+import org.owasp.dependencytrack.config.EventConfiguration;
 import org.owasp.dependencytrack.config.PropertyConfiguration;
 import org.owasp.dependencytrack.config.SecurityConfiguration;
 import org.owasp.dependencytrack.controller.AllControllers;
@@ -52,7 +53,8 @@ import org.springframework.context.annotation.Import;
         AllListeners.class,
         AllServices.class,
         AllTasks.class,
-        AllControllers.class})
+        AllControllers.class,
+        EventConfiguration.class})
 @EntityScan(basePackageClasses = Application.class)
 public class DependencyTrackApp {
 

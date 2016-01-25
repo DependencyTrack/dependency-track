@@ -16,6 +16,9 @@
  */
 package org.owasp.dependencytrack.tasks;
 
+import org.owasp.dependencytrack.tasks.dependencycheck.DependencyCheckAnalysis;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -24,4 +27,21 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AllTasks {
 
+    @Value("${app.nist.dir}")
+    private String nistDir;
+
+    @Bean
+    public NistDataMirrorUpdater nistDataMirrorUpdater() {
+        return new NistDataMirrorUpdater(nistDir);
+    }
+
+    @Bean
+    public DependencyCheckAnalysis dependencyCheckAnalysis(){
+        return new DependencyCheckAnalysis();
+    }
+
+    @Bean
+    public ScheduledTasks scheduledTasks(){
+        return new ScheduledTasks();
+    }
 }

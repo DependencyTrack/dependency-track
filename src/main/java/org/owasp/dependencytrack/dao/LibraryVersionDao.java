@@ -17,7 +17,6 @@
 package org.owasp.dependencytrack.dao;
 
 import org.owasp.dependencytrack.model.*;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -104,5 +103,4 @@ public interface LibraryVersionDao {
     @Transactional
     List<LibraryVersion> keywordSearchLibraries(String searchTerm);
 
-    void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher);
 }

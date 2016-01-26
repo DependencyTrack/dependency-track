@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
@@ -52,6 +53,8 @@ import java.util.Map;
  */
 @Component
 public class DefaultObjectGenerator extends DBSessionTaskRunner implements ApplicationListener<ContextRefreshedEvent> {
+
+    public static CountDownLatch initialised = new CountDownLatch(1);
 
     /**
      * Setup logger
@@ -130,6 +133,10 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
         PERMISSIONS.put("changeuserrole", Roles.ROLE.ADMIN);
     }
 
+    public DefaultObjectGenerator() {
+
+    }
+
     /**
      * Method is called when the application context is started or refreshed. @param event A ContextRefreshedEvent
      */
@@ -144,6 +151,8 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
         } catch (IOException e) {
             if (LOGGER.isWarnEnabled()) LOGGER.warn(e.getMessage());
         }
+        finally {
+            initialised.countDown();        }
     }
 
     /**

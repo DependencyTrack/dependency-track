@@ -18,6 +18,7 @@ package org.owasp.dependencytrack.dao;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.Projection;
 import org.owasp.dependencytrack.model.Application;
 import org.owasp.dependencytrack.model.ApplicationDependency;
 import org.owasp.dependencytrack.model.ApplicationVersion;
@@ -55,7 +56,7 @@ public class ApplicationDaoImpl extends DBSessionTaskRunner implements Applicati
         return dbRun(new DBSessionTaskReturning<List<Application>>() {
             @Override
             public List<Application> run(Session session) {
-                return session.createCriteria(Application.class).list();
+                return session.createQuery("FROM Application order by name asc").list();
             }
         });
     }

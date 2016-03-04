@@ -34,7 +34,7 @@ import static org.junit.Assert.assertThat;
  * Created by Jason Wraxall on 7/12/15.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {DatabaseConfiguration.class, AllRepositories.class, HibernateJpaAutoConfiguration.class})
+@ContextConfiguration(classes = {JunitDatabaseConfiguration.class, AllRepositories.class, HibernateJpaAutoConfiguration.class})
 public class DatabaseConfigurationTest {
 
     @Autowired

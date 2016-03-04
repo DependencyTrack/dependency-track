@@ -44,6 +44,9 @@ public class DatabaseConfiguration
     @Value("${spring.datasource.url}")
     private String url;
 
+    @Value("${spring.datasource.maxActive}")
+    private Integer maxActive;
+
     @Bean
     public DataSource dataSource(){
         BasicDataSource basicDataSource = new BasicDataSource();
@@ -51,6 +54,7 @@ public class DatabaseConfiguration
         basicDataSource.setUsername(username);
         basicDataSource.setPassword(password);
         basicDataSource.setUrl(url);
+        basicDataSource.setMaxActive(maxActive);
         return basicDataSource;
     }
 

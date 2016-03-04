@@ -19,7 +19,7 @@ package org.owasp.dependencytrack.listener;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.owasp.dependencytrack.config.DatabaseConfiguration;
+import org.owasp.dependencytrack.config.JunitDatabaseConfiguration;
 import org.owasp.dependencytrack.dao.AllDaos;
 import org.owasp.dependencytrack.model.AllEntities;
 import org.owasp.dependencytrack.model.Roles;
@@ -48,7 +48,7 @@ import static org.junit.Assert.assertThat;
  * Created by Jason Wraxall on 7/12/15.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {DatabaseConfiguration.class,AllEntities.class,AllServices.class,AllListeners.class, HibernateJpaAutoConfiguration.class, AllRepositories.class,AllDaos.class})
+@ContextConfiguration(classes = {JunitDatabaseConfiguration.class,AllEntities.class,AllServices.class,AllListeners.class, HibernateJpaAutoConfiguration.class, AllRepositories.class,AllDaos.class})
 @Rollback
 public class DefaultObjectGeneratorTest {
 

@@ -23,26 +23,25 @@ import org.junit.runner.RunWith;
 import org.owasp.dependencytrack.config.JunitDatabaseConfiguration;
 import org.owasp.dependencytrack.model.AllEntities;
 import org.owasp.dependencytrack.model.Application;
+import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.repository.AllRepositories;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {JunitDatabaseConfiguration.class,AllEntities.class,HibernateJpaAutoConfiguration.class, AllRepositories.class,AllDaos.class})
 @Rollback
-public class ApplicationDaoTest {
+public class ApplicationVersionDaoTest {
 
     @Autowired
     ApplicationDao applicationDao;
@@ -69,34 +68,42 @@ public class ApplicationDaoTest {
     }
 
     @Test
-    public void addApplicationTest() {
+    public void getApplicationVersionTest() {
+        Application application = applicationDao.listApplications().get(0);
+        ApplicationVersion version = application.getVersions().iterator().next();
+        assertEquals("1.0.0", version.getVersion());
+        assertEquals("Application A", version.getApplication().getName());
+    }
+
+    @Test
+    public void addApplicationVersionTest() {
+        // add a new version to the application
         applicationVersionDao.addApplicationVersion(application.getId(), "1.1.0");
 
-        List<Application> applications = applicationDao.listApplications();
-        // check to see if we still have 1 application but 2 versions
-        assertThat(applications.size(), is(1));
-        assertThat(applications.get(0).getVersions().size(), is(2));
-    }
+        Application application = applicationDao.listApplications().get(0);
+        assertEquals(2, application.getVersions().size());
 
-    @Test
-    public void updateApplicationTest() {
-        applicationDao.updateApplication(application.getId(), "Application B");
-
-        List<Application> applications = applicationDao.listApplications();
-        Application app = applications.get(0);
-        assertEquals("Application B", app.getName());
-    }
-
-    @Test
-    public void deleteApplicationTest() {
-        List<Application> applications = applicationDao.listApplications();
-        assertTrue(applications.size() > 0);
-        for (Application application: applications) {
-            applicationDao.deleteApplication(application.getId());
+        for (ApplicationVersion version : application.getVersions()) {
+            assertTrue(version.getVersion().equals("1.0.0") || version.getVersion().equals("1.1.0"));
         }
-        applications = applicationDao.listApplications();
-        assertTrue(applications.size() == 0);
     }
 
+    @Test
+    public void deleteApplicationVersionTest() {
+        Application application = applicationDao.listApplications().get(0);
+        Set<ApplicationVersion> versions = application.getVersions();
+
+        assertEquals(1, versions.size());
+
+        for (ApplicationVersion version: versions) {
+            applicationVersionDao.deleteApplicationVersion(version.getId());
+        }
+
+        ApplicationVersion version = applicationVersionDao.getApplicationVersion(3);
+        assertTrue(version.getVersion() == null);
+
+        application = applicationDao.listApplications().get(0);
+        assertEquals(0, application.getVersions().size());
+    }
 
 }

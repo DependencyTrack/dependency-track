@@ -42,11 +42,11 @@ public class BaseDao {
         try {
             return sessionFactory.getCurrentSession();
         } catch (HibernateException e) {
-            LOGGER.error("Unable to obtain the current hibernate session");
+            LOGGER.info("Unable to obtain the current hibernate session");
         }
         // This should only be invoked during unit tests.
         // todo: figure out a different way to get unit tests working without manually opening a session like this. Ugly!
-        LOGGER.error("Attempting to open a new hibernate session");
+        LOGGER.info("Attempting to open a new hibernate session");
         return sessionFactory.openSession();
     }
 

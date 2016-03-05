@@ -19,7 +19,10 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <root level="DEBUG">
+    <logger name="org.springframework" level="OFF"/>
+    <logger name="org.apache.catalina.startup.DigesterFactory" level="OFF"/>
+
+    <root level="WARN">
         <appender-ref ref="FILE" />
     </root>
 

@@ -122,7 +122,7 @@
             <artifactId>joda-time</artifactId>
         </dependency>
 
-        <!-- Override the Tomcat version what Spring Boot includes - as they are slow to update vulnerable versions -->
+        <!-- Override the Tomcat version that Spring Boot includes - as they are slow to update vulnerable versions -->
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>

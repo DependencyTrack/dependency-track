@@ -25,7 +25,7 @@ before_install:
   - export PATH=${MVN_HOME}/bin/:${PATH}
   - mvn --version
 
-script: mvn clean package
+script: mvn clean org.apache.maven.plugins:maven-dependency-plugin:tree package org.owasp:dependency-check-maven:check
 
 after_script:
 

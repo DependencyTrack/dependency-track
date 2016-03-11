@@ -45,4 +45,32 @@
         <sha1>d81aff979d603edd90dcd8db2abc1f4ce6479e3e</sha1>
         <cpe>cpe:/a:oracle:glassfish:1.2</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: tomcat-embed-core-8.0.32.jar
+   ]]></notes>
+        <sha1>734ead0c803525cc9c7f283438101734ca9aac01</sha1>
+        <cve>CVE-2013-2185</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: tomcat-embed-core-8.0.32.jar
+   ]]></notes>
+        <sha1>734ead0c803525cc9c7f283438101734ca9aac01</sha1>
+        <cve>CVE-2009-2696</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: tomcat-embed-core-8.0.32.jar
+   ]]></notes>
+        <sha1>734ead0c803525cc9c7f283438101734ca9aac01</sha1>
+        <cve>CVE-2007-5461</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: tomcat-embed-core-8.0.32.jar
+   ]]></notes>
+        <sha1>734ead0c803525cc9c7f283438101734ca9aac01</sha1>
+        <cve>CVE-2002-0493</cve>
+    </suppress>
 </suppressions>

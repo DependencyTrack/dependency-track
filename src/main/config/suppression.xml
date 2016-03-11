@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This file is part of Dependency-Track.
+  ~
+  ~ Dependency-Track is free software: you can redistribute it and/or modify it
+  ~ under the terms of the GNU General Public License as published by the Free
+  ~ Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ Dependency-Track is distributed in the hope that it will be useful, but
+  ~ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  ~ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+  ~ details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with
+  ~ Dependency-Track. If not, see http://www.gnu.org/licenses/.
+  -->
+
+<suppressions xmlns="https://www.owasp.org/index.php/OWASP_Dependency_Check_Suppression">
+    <suppress>
+        <notes><![CDATA[
+      file name: mailapi-1.5.5.jar
+      ]]></notes>
+        <sha1>f522ffc62f4c3335a5cdd3f69108e94c19ffaf87</sha1>
+        <cve>CVE-2007-6059</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: javax.el-api-3.0.0.jar
+   ]]></notes>
+        <sha1>60a59edc89f93d57541da31ee1c83428ab1cdcb3</sha1>
+        <cpe>cpe:/a:oracle:glassfish:3.0.0</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: javax.el-3.0.0.jar
+   ]]></notes>
+        <sha1>dd532526e7c8de48e40419e6af1183658a973379</sha1>
+        <cpe>cpe:/a:oracle:glassfish:3.0.0</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: javax.transaction-api-1.2.jar
+   ]]></notes>
+        <sha1>d81aff979d603edd90dcd8db2abc1f4ce6479e3e</sha1>
+        <cpe>cpe:/a:oracle:glassfish:1.2</cpe>
+    </suppress>
+</suppressions>

@@ -695,6 +695,8 @@
                 <configuration>
                     <format>ALL</format>
                     <logFile>dependency-check.log</logFile>
+                    <failBuildOnCVSS>0</failBuildOnCVSS>
+                    <suppressionFile>src/main/config/suppression.xml</suppressionFile>
                 </configuration>
             </plugin>
         </plugins>

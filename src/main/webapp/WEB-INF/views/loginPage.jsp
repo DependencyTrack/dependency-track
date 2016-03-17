@@ -6,11 +6,12 @@
 <%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
 <spring:message code="label.username" var="usernameLabel"/>
 <spring:message code="label.password" var="passwordLabel"/>
+<spring:eval var="longname" expression="@environment.getProperty('longname')" />
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title><e:forHtmlContent value="${properties.longname}"/></title>
+    <title><e:forHtmlContent value="${longname}"/></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta name="copyright" content="Copyright Axway. All rights reserved."/>
@@ -40,7 +41,7 @@
 
 <% if (!isMSIE){ %>
 <div id="login-block">
-    <h3><e:forHtmlContent value="${properties.longname}"/></h3>
+    <h3><e:forHtmlContent value="${longname}"/></h3>
     <div class="login-box clearfix">
         <div class="login-logo">
             <img src="<c:url value="/resources/images/OWASP-logo-100x100.png"/>" alt="OWASP Logo"/>

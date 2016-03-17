@@ -4,10 +4,11 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@taglib uri="http://shiro.apache.org/tags" prefix="shiro"%>
 <%@taglib uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" prefix="e"%>
+<spring:eval var="longname" expression="@environment.getProperty('longname')" />
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title><e:forHtmlContent value="${properties.longname}: ${param.title}"/></title>
+    <title><e:forHtmlContent value="${longname}: ${param.title}"/></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <meta name="copyright" content="Copyright Axway. All rights reserved."/>

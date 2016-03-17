@@ -500,6 +500,25 @@
                     <jvmArguments>-XX:MaxPermSize=128M</jvmArguments>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <filters>
+                        <filter>src/main/resources/application.properties</filter>
+                    </filters>
+                    <webResources>
+                        <resource>
+                            <directory>src/main/resources</directory>
+                            <filtering>true</filtering>
+                            <includes>
+                                <include>**/*.properties</include>
+                            </includes>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
             <!--
             Jason - what are you trying to accomplish here ?
             <plugin>

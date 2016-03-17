@@ -34,7 +34,7 @@ public class JunitDatabaseConfiguration {
         basicDataSource.setDriverClassName("org.h2.Driver");
         basicDataSource.setUsername("sa");
         basicDataSource.setPassword("");
-        basicDataSource.setUrl("jdbc:h2:target/database/database;MVCC=TRUE");
+        basicDataSource.setUrl("jdbc:h2:mem:dtrack");
         basicDataSource.setMaxActive(100);
         return basicDataSource;
     }

@@ -27,14 +27,11 @@ import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.model.LibraryVersion;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.util.DCObjectMapper;
-import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
-import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -46,8 +43,8 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Repository("reportDao")
-@DependsOn({"libraryVersionDao","vulnerabilityDao"})
-public class ReportDaoImpl extends DBSessionTaskRunner implements ReportDao {
+@DependsOn({"libraryVersionDao", "vulnerabilityDao"})
+public class ReportDaoImpl extends BaseDao implements ReportDao {
 
     /**
      * Setup logger
@@ -94,22 +91,15 @@ public class ReportDaoImpl extends DBSessionTaskRunner implements ReportDao {
      * @param format the format of the report (i.e. ALL, XML, HTML)
      * @return a String representation of a Dependency-Check report
      */
-    @Override
-    @Transactional
     public String generateDependencyCheckReport(final int applicationVersionId, ReportGenerator.Format format) {
-        final ApplicationVersion applicationVersion = dbRun(new DBSessionTaskReturning<ApplicationVersion>() {
-            @Override
-            public ApplicationVersion run(Session session) {
-                return (ApplicationVersion) session.load(ApplicationVersion.class, applicationVersionId);
-            }
-        });
+        Session session = getSession();
 
+        final ApplicationVersion applicationVersion = (ApplicationVersion) session.load(ApplicationVersion.class, applicationVersionId);
         final String appName = applicationVersion.getApplication().getName() + " " + applicationVersion.getVersion();
-
         final List<LibraryVersion> libraryVersionList = libraryVersionDao.getDependencies(applicationVersion);
         final List<org.owasp.dependencycheck.dependency.Dependency> dcDependencies = new ArrayList<>();
 
-        vulnerabilityDao = new VulnerabilityDaoImpl(sessionFactory);
+        vulnerabilityDao = new VulnerabilityDaoImpl();
         for (LibraryVersion libraryVersion: libraryVersionList) {
             final List<Vulnerability> vulnerabilities = vulnerabilityDao.getVulnsForLibraryVersion(libraryVersion);
             final org.owasp.dependencycheck.dependency.Dependency dcDependency = DCObjectMapper.toDCDependency(libraryVersion, vulnerabilities);

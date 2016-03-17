@@ -16,7 +16,15 @@
  */
 package org.owasp.dependencytrack.model;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -69,7 +77,7 @@ public final class LibraryVersion implements Cloneable {
      * used to reduce unnecessary SQL queries to calculate this statistic.
      */
     @Column(name = "vulncount")
-    private Integer vulnCount;
+    private Integer vulnCount = 0;
 
     /**
      * Clones this specific object (minus the objects id).

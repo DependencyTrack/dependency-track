@@ -18,15 +18,13 @@ package org.owasp.dependencytrack.listener;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.owasp.dependencytrack.dao.BaseDao;
 import org.owasp.dependencytrack.model.LibraryVersion;
-import org.owasp.dependencytrack.util.session.DBSessionTask;
-import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -37,7 +35,7 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Component
-public class DataUpgradeCorrections extends DBSessionTaskRunner implements ApplicationListener<ContextRefreshedEvent> {
+public class DataUpgradeCorrections extends BaseDao implements ApplicationListener<ContextRefreshedEvent> {
 
     /**
      * Setup logger
@@ -49,17 +47,15 @@ public class DataUpgradeCorrections extends DBSessionTaskRunner implements Appli
      *
      * @param event A ContextRefreshedEvent
      */
-    @Override
-    @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event) {
-
         try {
             correctGeneratedSha1Length();
-
         } catch (Exception e) {
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(e.getMessage());
             }
+        } finally {
+            cleanup(); // Closes all open sessions
         }
     }
 
@@ -71,23 +67,19 @@ public class DataUpgradeCorrections extends DBSessionTaskRunner implements Appli
      */
     @SuppressWarnings("unchecked")
 	private void correctGeneratedSha1Length() {
-
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                final Query query = session.createQuery("FROM LibraryVersion");
-                final List<LibraryVersion> libraryVersions = query.list();
-                session.getTransaction().begin();
-                for (LibraryVersion libraryVersion: libraryVersions) {
-                    if (libraryVersion.getMd5() != null && libraryVersion.getSha1() != null && 32 == libraryVersion.getSha1().length()) {
-                        LOGGER.info("Identified incorrectly generated SHA1 hash: " + libraryVersion.getSha1());
-                        libraryVersion.setSha1("00000000" + libraryVersion.getMd5());
-                        session.save(libraryVersion);
-                        LOGGER.info("Corrected: " + libraryVersion.getSha1());
-                    }
-                }
+        Session session = getSession();
+        final Query query = session.createQuery("FROM LibraryVersion");
+        final List<LibraryVersion> libraryVersions = query.list();
+        session.getTransaction().begin();
+        for (LibraryVersion libraryVersion: libraryVersions) {
+            if (libraryVersion.getMd5() != null && libraryVersion.getSha1() != null && 32 == libraryVersion.getSha1().length()) {
+                LOGGER.info("Identified incorrectly generated SHA1 hash: " + libraryVersion.getSha1());
+                libraryVersion.setSha1("00000000" + libraryVersion.getMd5());
+                session.save(libraryVersion);
+                LOGGER.info("Corrected: " + libraryVersion.getSha1());
             }
-        });
+        }
+        session.getTransaction().commit();
     }
 
 }

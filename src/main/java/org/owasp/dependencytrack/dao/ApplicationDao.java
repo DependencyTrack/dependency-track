@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * Created by Jason Wraxall on 1/12/15.
  */
-public interface ApplicationDao {
+public interface ApplicationDao extends IBaseDao {
 
     @SuppressWarnings("unchecked")
     List<Application> listApplications();

@@ -20,12 +20,11 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.owasp.dependencytrack.dao.BaseDao;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Permissions;
 import org.owasp.dependencytrack.model.Roles;
 import org.owasp.dependencytrack.service.UserService;
-import org.owasp.dependencytrack.util.session.DBSessionTask;
-import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +50,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Component
-public class DefaultObjectGenerator extends DBSessionTaskRunner implements ApplicationListener<ContextRefreshedEvent> {
+public class DefaultObjectGenerator extends BaseDao implements ApplicationListener<ContextRefreshedEvent> {
 
     public static CountDownLatch initialised = new CountDownLatch(1);
 
@@ -65,6 +63,11 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
      * Specify default license names and files
      */
     private static final LinkedHashMap<String, String> LICENSES;
+
+    @Autowired
+    UserService userService;
+
+    private Session session;
 
     static {
         LICENSES = new LinkedHashMap<>();
@@ -140,9 +143,8 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
     /**
      * Method is called when the application context is started or refreshed. @param event A ContextRefreshedEvent
      */
-    @Override
-    @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        this.session = super.getSession();
         try {
             loadDefaultLicenses();
             loadDefaultPermissions();
@@ -152,162 +154,130 @@ public class DefaultObjectGenerator extends DBSessionTaskRunner implements Appli
             if (LOGGER.isWarnEnabled()) LOGGER.warn(e.getMessage());
         }
         finally {
-            initialised.countDown();        }
+            initialised.countDown();
+        }
     }
 
     /**
      * Loads the default licenses into the database if no license data exists. @throws IOException An exception if the license file cannot be found
      */
-    @Transactional
     private void loadDefaultLicenses() throws IOException {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                final int count = ((Long) session.createQuery("select count(*) from License").uniqueResult()).intValue();
+        final int count = ((Long) session.createQuery("select count(*) from License").uniqueResult()).intValue();
+        // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
+        if (count > 0) {
+            return;
+        }
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Adding default licenses to datastore.");
+        }
+        session.beginTransaction();
+        for (Map.Entry<String, String> entry : LICENSES.entrySet()) {
+            final String licenseName = entry.getKey();
+            final String licenseFile = entry.getValue();
+            final String contentType = (licenseFile.endsWith(".html")) ? "text/html" : "text/plain";
+            final License license = new License();
+            license.setLicensename(licenseName);
+            InputStream inputStream = null;
+            Resource resource;
+            try {
+                resource = new ClassPathResource(licenseFile);
+                license.setFilename(resource.getFilename());
+                license.setContenttype(contentType);
 
-                // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
-                if (count > 0) {
-                    return;
-                }
+                inputStream = resource.getInputStream();
 
+                String licenceFileContent = new String(IOUtils.toCharArray(inputStream));
+                final Blob blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
+
+                license.setText(blob);
+                session.save(license);
                 if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Adding default licenses to datastore.");
+                    LOGGER.info("Added: " + licenseName);
                 }
-                for (Map.Entry<String, String> entry : LICENSES.entrySet()) {
-
-                    final String licenseName = entry.getKey();
-                    final String licenseFile = entry.getValue();
-
-                    final String contentType = (licenseFile.endsWith(".html")) ? "text/html" : "text/plain";
-
-                    final License license = new License();
-                    license.setLicensename(licenseName);
-
-                    InputStream inputStream = null;
-                    Resource resource;
-                    try {
-                        resource = new ClassPathResource(licenseFile);
-                        license.setFilename(resource.getFilename());
-                        license.setContenttype(contentType);
-
-                        inputStream = resource.getInputStream();
-
-                        String licenceFileContent = new String(IOUtils.toCharArray(inputStream));
-                        final Blob blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
-
-                        license.setText(blob);
-                        session.save(license);
-                        if (LOGGER.isInfoEnabled()) {
-                            LOGGER.info("Added: " + licenseName);
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        IOUtils.closeQuietly(inputStream);
-                    }
-                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                IOUtils.closeQuietly(inputStream);
             }
-        });
+        }
+        session.getTransaction().commit();
     }
 
     /**
      * Loads the default permissions into the database if no permission data exists.
      */
-    @Transactional
     private void loadDefaultPermissions() {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                final int count = ((Long) session.createQuery("select count(*) from Permissions").uniqueResult()).intValue();
-
-                // Check to see if data already exists in the table.
-                if (count > 0) {
-                    return;
-                }
-
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Adding default permissions to datastore.");
-                }
-
-                for (Map.Entry<String, Roles.ROLE> entry : PERMISSIONS.entrySet()) {
-                    final Permissions permission = new Permissions(entry.getKey());
-                    session.save(permission);
-                }
-            }
-        });
+        final int count = ((Long) session.createQuery("select count(*) from Permissions").uniqueResult()).intValue();
+        // Check to see if data already exists in the table.
+        if (count > 0) {
+            return;
+        }
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Adding default permissions to datastore.");
+        }
+        session.beginTransaction();
+        for (Map.Entry<String, Roles.ROLE> entry : PERMISSIONS.entrySet()) {
+            final Permissions permission = new Permissions(entry.getKey());
+            session.save(permission);
+        }
+        session.getTransaction().commit();
     }
 
     /**
      * Loads the default Roles into the database if no Role data exists.
      */
     @SuppressWarnings("unchecked")
-    @Transactional
     public void loadDefaultRoles() {
+        final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
+        // Check to see if data already exists in the table.
+        if (count > 0) {
+            return;
+        }
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Adding default roles to datastore.");
+        }
+        // Retrieve a list of all persisted permissions
+        final Query query = session.createQuery("FROM Permissions");
+        final List<Permissions> permissions = query.list();
 
-        dbRun(new DBSessionTask() {
-                  @Override
-                  public void run(Session session) {
-                      final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
+        Map<Roles.ROLE,Roles> rolesMap = new HashMap<>();
 
-                      // Check to see if data already exists in the table.
-                      if (count > 0) {
-                          return;
-                      }
+        for (Roles.ROLE eachRole : Roles.ROLE.values()) {
+            Roles role = new Roles(eachRole.name().toLowerCase());
+            rolesMap.put(eachRole,role);
+        }
 
-                      if (LOGGER.isInfoEnabled()) {
-                          LOGGER.info("Adding default roles to datastore.");
-                      }
+        Roles userRole = rolesMap.get(Roles.ROLE.USER);
+        Roles moderatorRole = rolesMap.get(Roles.ROLE.MODERATOR);
+        Roles adminRole = rolesMap.get(Roles.ROLE.ADMIN);
 
-                      // Retrieve a list of all persisted permissions
-                      final Query query = session.createQuery("FROM Permissions");
-                      final List<Permissions> permissions = query.list();
-
-                      Map<Roles.ROLE,Roles> rolesMap = new HashMap<>();
-
-                      for (Roles.ROLE eachRole : Roles.ROLE.values()) {
-                          Roles role = new Roles(eachRole.name().toLowerCase());
-                          rolesMap.put(eachRole,role);
-                      }
-
-                      Roles userRole = rolesMap.get(Roles.ROLE.USER);
-                      Roles moderatorRole = rolesMap.get(Roles.ROLE.MODERATOR);
-                      Roles adminRole = rolesMap.get(Roles.ROLE.ADMIN);
-
-                      for (Permissions permission : permissions) {
-                          adminRole.addPermission(permission);
-
-                          if (getRole(permission) == Roles.ROLE.USER) {
-                              userRole.addPermission(permission);
-                              moderatorRole.addPermission(permission);
-                          }
-
-                          if (getRole(permission) == Roles.ROLE.MODERATOR) {
-                              moderatorRole.addPermission(permission);
-                          }
-                      }
-
-                      for (Roles eachRole : rolesMap.values()) {
-                          session.save(eachRole);
-                      }
-
-                  }
-              }
-        );
+        session.beginTransaction();
+        for (Permissions permission : permissions) {
+            adminRole.addPermission(permission);
+            if (getRole(permission) == Roles.ROLE.USER) {
+                userRole.addPermission(permission);
+                moderatorRole.addPermission(permission);
+            }
+            if (getRole(permission) == Roles.ROLE.MODERATOR) {
+                moderatorRole.addPermission(permission);
+            }
+        }
+        for (Roles eachRole : rolesMap.values()) {
+            session.save(eachRole);
+        }
+        session.getTransaction().commit();
     }
 
     private Roles.ROLE getRole(Permissions permission) {
         return PERMISSIONS.get(permission.getPermissionname());
     }
 
-    @Autowired
-    UserService userService;
-
     /**
      * Loads the default users into the database if no User data exists.
      */
     @SuppressWarnings("unchecked")
-    @Transactional
     public void loadDefaultUsers() {
-        userService.registerUser("admin",false,"admin",Roles.ROLE.ADMIN);
+        userService.registerUser("admin", false, "admin", Roles.ROLE.ADMIN);
     }
+
 }

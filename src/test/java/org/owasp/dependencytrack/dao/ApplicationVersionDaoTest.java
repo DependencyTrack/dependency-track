@@ -16,7 +16,6 @@
  */
 package org.owasp.dependencytrack.dao;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,11 +26,10 @@ import org.owasp.dependencytrack.model.ApplicationVersion;
 import org.owasp.dependencytrack.repository.AllRepositories;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.test.annotation.Rollback;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -40,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {JunitDatabaseConfiguration.class,AllEntities.class,HibernateJpaAutoConfiguration.class, AllRepositories.class,AllDaos.class})
-@Rollback
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ApplicationVersionDaoTest {
 
     @Autowired
@@ -56,15 +54,6 @@ public class ApplicationVersionDaoTest {
         application = new Application();
         application.setName("Application A");
         applicationDao.addApplication(application, "1.0.0");
-    }
-
-    @After
-    public void after() {
-        List<Application> applications = applicationDao.listApplications();
-        for (Application application: applications) {
-            applicationDao.deleteApplication(application.getId());
-        }
-        application = null;
     }
 
     @Test

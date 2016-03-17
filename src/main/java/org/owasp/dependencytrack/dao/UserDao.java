@@ -26,6 +26,7 @@ import java.util.List;
  * Created by Jason Wraxall on 1/12/15.
  */
 public interface UserDao {
+
     @Transactional
     void registerUser(String username, boolean isLdap, String password, Integer role);
 

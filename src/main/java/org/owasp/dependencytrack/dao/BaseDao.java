@@ -14,10 +14,8 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-
 package org.owasp.dependencytrack.dao;
 
-import org.hibernate.ConnectionReleaseMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -25,7 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class BaseDao {
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class BaseDao implements IBaseDao {
 
     /**
      * Setup logger
@@ -38,16 +39,38 @@ public class BaseDao {
     @Autowired
     private SessionFactory sessionFactory;
 
+    private List<Session> manuallyOpenedSessions = new ArrayList<>();
+
+    public BaseDao() {
+    }
+
+    public BaseDao(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
     public Session getSession() {
         try {
             return sessionFactory.getCurrentSession();
         } catch (HibernateException e) {
-            LOGGER.info("Unable to obtain the current hibernate session");
+            LOGGER.debug("Unable to obtain the current hibernate session");
         }
         // This should only be invoked during unit tests.
         // todo: figure out a different way to get unit tests working without manually opening a session like this. Ugly!
-        LOGGER.info("Attempting to open a new hibernate session");
-        return sessionFactory.openSession();
+        LOGGER.debug("Attempting to open a new hibernate session");
+        Session session = sessionFactory.openSession();
+        manuallyOpenedSessions.add(session);
+        return session;
+    }
+
+    public void cleanup() {
+        for (Session session: manuallyOpenedSessions) {
+            if(session != null && session.isOpen()) {
+                LOGGER.debug("Closing hibernate session");
+                session.flush();
+                session.close();
+            }
+        }
+        manuallyOpenedSessions = new ArrayList<>();
     }
 
 }

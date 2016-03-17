@@ -20,27 +20,32 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.model.ApplicationDependency;
+import org.owasp.dependencytrack.model.ApplicationVersion;
+import org.owasp.dependencytrack.model.Library;
+import org.owasp.dependencytrack.model.LibraryVendor;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.ScanResult;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
-import org.owasp.dependencytrack.util.session.DBSessionTask;
-import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
-import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.UUID;
 
 @Repository("libraryVersionDao")
 @SuppressWarnings("unchecked")
-public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements LibraryVersionDao {
+public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao {
 
     /**
      * Event publisher
@@ -53,42 +58,32 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(LibraryVersionDaoImpl.class);
 
-    public LibraryVersionDaoImpl() {
-    }
-
     /**
      * Returns a List of all LibraryVendors available in the application along with all child objects.
      *
      * @return A List of Libraries (Vendor, Library,Version) in a hierarchy
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<LibraryVendor> getLibraryHierarchy() {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVendor>>() {
-            @Override
-
-            public List<LibraryVendor> run(Session session) {
-                final ArrayList<LibraryVendor> retlist = new ArrayList<>();
-                final Query query = session.createQuery("FROM LibraryVendor order by vendor asc");
-                for (LibraryVendor vendor : (List<LibraryVendor>) query.list()) {
-                    final Query query2 = session.
-                            createQuery("FROM Library where libraryVendor=:vendor order by libraryname asc");
-                    query2.setParameter("vendor", vendor);
-                    final LinkedHashSet<Library> libraries = new LinkedHashSet<>(query2.list());
-                    vendor.setLibraries(libraries);
-                    for (Library library : (ArrayList<Library>) query2.list()) {
-                        final Query query3 = session.
-                                createQuery("FROM LibraryVersion where library=:library order by libraryversion asc");
-                        query3.setParameter("library", library);
-                        final ArrayList<LibraryVersion> versions = (ArrayList<LibraryVersion>) query3.list();
-                        library.setVersions(new HashSet<>(versions));
-                    }
-                    retlist.add(vendor);
-                }
-                return retlist;
+        final Session session = getSession();
+        final ArrayList<LibraryVendor> retlist = new ArrayList<>();
+        final Query query = session.createQuery("FROM LibraryVendor order by vendor asc");
+        for (LibraryVendor vendor : (List<LibraryVendor>) query.list()) {
+            final Query query2 = session.
+                    createQuery("FROM Library where libraryVendor=:vendor order by libraryname asc");
+            query2.setParameter("vendor", vendor);
+            final LinkedHashSet<Library> libraries = new LinkedHashSet<>(query2.list());
+            vendor.setLibraries(libraries);
+            for (Library library : (ArrayList<Library>) query2.list()) {
+                final Query query3 = session.
+                        createQuery("FROM LibraryVersion where library=:library order by libraryversion asc");
+                query3.setParameter("library", library);
+                final ArrayList<LibraryVersion> versions = (ArrayList<LibraryVersion>) query3.list();
+                library.setVersions(new LinkedHashSet<>(versions));
             }
-        });
+            retlist.add(vendor);
+        }
+        return retlist;
     }
 
     /**
@@ -96,61 +91,38 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return A List of all LibraryVendors
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<LibraryVendor> getVendors() {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVendor>>() {
-            @Override
-            public List<LibraryVendor> run(Session session) {
-                final Query query = session.createQuery("FROM Library order by libraryname asc");
-                return query.list();
-            }
-        });
+        final Query query = getSession().createQuery("FROM LibraryVendor order by vendor asc");
+        return query.list();
     }
 
     /**
      * Returns a List of all Libraries made by the specified LibraryVendor.
      *
-     * @param id The ID of the LibraryVendor
+     * @param vendor The Vendor of the Library
      * @return A List of Libraries
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
-    public List<Library> getLibraries(final int id) {
-        return dbRun(new DBSessionTaskReturning<List<Library>>() {
-            @Override
-            public List<Library> run(Session session) {
-                final Query query = session.
-                        createQuery("FROM Library WHERE libraryVendor=:id order by libraryname asc");
-                query.setParameter("id", id);
-                return query.list();
-
-            }
-        });
+    public List<Library> getLibraries(LibraryVendor vendor) {
+        final Query query = getSession().
+                createQuery("FROM Library WHERE libraryVendor=:vendor order by libraryname asc");
+        query.setParameter("vendor", vendor);
+        return query.list();
     }
 
     /**
      * Returns a List of all LibraryVersions for the specified Library.
      *
-     * @param id The ID of the Library
+     * @param library The Library to obtain versions of
      * @return A List of LibraryVersion objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
-    public List<LibraryVersion> getVersions(final int id) {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
-            @Override
-            public List<LibraryVersion> run(Session session) {
-                final Query query = session.
-                        createQuery("FROM LibraryVersion WHERE library=:id order by libraryversion asc");
-                query.setParameter("id", id);
-                return query.list();
-
-            }
-        });
+    public List<LibraryVersion> getVersions(Library library) {
+        final Query query = getSession().
+                createQuery("FROM LibraryVersion WHERE library=:library order by libraryversion asc");
+        query.setParameter("library", library);
+        return query.list();
     }
 
     /**
@@ -159,26 +131,17 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      * @param version An ApplicationVersion object
      * @return A List of LibraryVersion objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<LibraryVersion> getDependencies(final ApplicationVersion version) {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
-            @Override
-            public List<LibraryVersion> run(Session session) {
-                final Query query = session.
-                        createQuery("from ApplicationDependency where applicationVersion=:version");
-                query.setParameter("version", version);
-
-                final List<LibraryVersion> libvers = new ArrayList<>();
-                final List<ApplicationDependency> deps = query.list();
-                for (ApplicationDependency dep : deps) {
-                    libvers.add(dep.getLibraryVersion());
-                }
-                return libvers;
-
-            }
-        });
+        final Query query = getSession().
+                createQuery("from ApplicationDependency where applicationVersion=:version");
+        query.setParameter("version", version);
+        final List<LibraryVersion> libvers = new ArrayList<>();
+        final List<ApplicationDependency> deps = query.list();
+        for (ApplicationDependency dep : deps) {
+            libvers.add(dep.getLibraryVersion());
+        }
+        return libvers;
     }
 
     /**
@@ -187,28 +150,17 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      * @param appversionid The ID of the ApplicationVersion
      * @param libversionid The ID of the LibraryVersion
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public void addDependency(final int appversionid, final int libversionid) {
-
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-
-                final ApplicationVersion applicationVersion =
-                        (ApplicationVersion) session.load(ApplicationVersion.class, appversionid);
-                final LibraryVersion libraryVersion =
-                        (LibraryVersion) session.load(LibraryVersion.class, libversionid);
-
-
-                final ApplicationDependency dependency = new ApplicationDependency();
-                dependency.setApplicationVersion(applicationVersion);
-                dependency.setLibraryVersion(libraryVersion);
-
-                session.save(dependency);
-            }
-        });
+        final Session session = getSession();
+        final ApplicationVersion applicationVersion =
+                (ApplicationVersion) session.load(ApplicationVersion.class, appversionid);
+        final LibraryVersion libraryVersion =
+                (LibraryVersion) session.load(LibraryVersion.class, libversionid);
+        final ApplicationDependency dependency = new ApplicationDependency();
+        dependency.setApplicationVersion(applicationVersion);
+        dependency.setLibraryVersion(libraryVersion);
+        session.save(dependency);
     }
 
     /**
@@ -217,35 +169,28 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      * @param appversionid The ID of the ApplicationVersion
      * @param libversionid The ID of the LibraryVersion
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public void deleteDependency(final int appversionid, final int libversionid) {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                Query query = session.createQuery("from ApplicationVersion AS appver where "
-                        + "appver.id=:appversionid");
-                query.setParameter("appversionid", appversionid);
+        final Session session = getSession();
+        session.beginTransaction();
+        Query query = session.createQuery("from ApplicationVersion AS appver where appver.id=:appversionid");
+        query.setParameter("appversionid", appversionid);
 
-                final ApplicationVersion applicationVersion = (ApplicationVersion) query.list().get(0);
+        final ApplicationVersion applicationVersion = (ApplicationVersion) query.list().get(0);
 
-                query = session.createQuery("from LibraryVersion AS libver where "
-                        + "libver.id=:libversionid");
-                query.setParameter("libversionid", libversionid);
+        query = session.createQuery("from LibraryVersion AS libver where libver.id=:libversionid");
+        query.setParameter("libversionid", libversionid);
 
-                final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
+        final LibraryVersion libraryVersion = (LibraryVersion) query.list().get(0);
 
-                query = session.createQuery("from ApplicationDependency AS appdep where "
-                        + "appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion");
-                query.setParameter("libraryVersion", libraryVersion);
-                query.setParameter("applicationVersion", applicationVersion);
+        query = session.createQuery("from ApplicationDependency AS appdep where appdep.libraryVersion=:libraryVersion and appdep.applicationVersion=:applicationVersion");
+        query.setParameter("libraryVersion", libraryVersion);
+        query.setParameter("applicationVersion", applicationVersion);
 
-                final ApplicationDependency applicationDependency = (ApplicationDependency) query.list().get(0);
+        final ApplicationDependency applicationDependency = (ApplicationDependency) query.list().get(0);
 
-                session.delete(applicationDependency);
-            }
-        });
+        session.delete(applicationDependency);
+        session.getTransaction().commit();
     }
 
     /**
@@ -261,75 +206,56 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      * @param license          The updated license label
      * @param language         The updated programming language
      */
-    @Override
-    @Transactional
     public void updateLibrary(final int vendorid, final int licenseid, final int libraryid, final int libraryversionid,
                               final String libraryname, final String libraryversion, final String vendor,
                               final String license, final String language) {
 
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                Query query = session.createQuery(
-                        "update LibraryVendor set vendor=:vendor "
-                                + "where id=:vendorid");
+        final Session session = getSession();
+        Query query = session.createQuery("update LibraryVendor set vendor=:vendor where id=:vendorid");
 
-                query.setParameter("vendorid", vendorid);
-                query.setParameter("vendor", vendor);
-                query.executeUpdate();
+        query.setParameter("vendorid", vendorid);
+        query.setParameter("vendor", vendor);
+        query.executeUpdate();
 
-                query = session.createQuery(
-                        "from LibraryVendor "
-                                + "where id=:vendorid");
-                query.setParameter("vendorid", vendorid);
+        query = session.createQuery("from LibraryVendor where id=:vendorid");
+        query.setParameter("vendorid", vendorid);
 
-                final LibraryVendor libraryVendor = (LibraryVendor) query.list().get(0);
+        final LibraryVendor libraryVendor = (LibraryVendor) query.list().get(0);
 
-                if (license.isEmpty()) {
-                    query = session.createQuery(
-                            "from License "
-                                    + "where id=:id");
-                    query.setParameter("id", licenseid);
-                } else {
+        if (license == null || license.isEmpty()) {
+            query = session.createQuery("from License where id=:id");
+            query.setParameter("id", licenseid);
+        } else {
+            query = session.createQuery("from License where licensename=:name");
+            query.setParameter("name", license);
+        }
+        final License licenses = (License) query.list().get(0);
 
-                    query = session.createQuery(
-                            "from License "
-                                    + "where licensename=:name");
-                    query.setParameter("name", license);
-                }
-                final License licenses = (License) query.list().get(0);
+        query = session.createQuery(
+                "update Library set libraryname=:libraryname,"
+                        + "license=:licenses,"
+                        + "libraryVendor=:libraryVendor,"
+                        + "language=:language " + "where id=:libraryid");
 
-                query = session.createQuery(
-                        "update Library set libraryname=:libraryname,"
-                                + "license=:licenses,"
-                                + "libraryVendor=:libraryVendor,"
-                                + "language=:language " + "where id=:libraryid");
+        query.setParameter("libraryname", libraryname);
+        query.setParameter("licenses", licenses);
 
-                query.setParameter("libraryname", libraryname);
-                query.setParameter("licenses", licenses);
+        query.setParameter("libraryVendor", libraryVendor);
+        query.setParameter("language", language);
+        query.setParameter("libraryid", libraryid);
 
-                query.setParameter("libraryVendor", libraryVendor);
-                query.setParameter("language", language);
-                query.setParameter("libraryid", libraryid);
+        query.executeUpdate();
 
-                query.executeUpdate();
+        query = session.createQuery("from Library where id=:libraryid");
+        query.setParameter("libraryid", libraryid);
+        final Library library = (Library) query.list().get(0);
 
+        query = session.createQuery("update LibraryVersion set libraryversion=:libraryversion, library=:library where id=:libverid");
 
-                query = session.createQuery("from Library where id=:libraryid");
-                query.setParameter("libraryid", libraryid);
-                final Library library = (Library) query.list().get(0);
-
-
-                query = session.createQuery("update LibraryVersion set "
-                        + "libraryversion=:libraryversion, library=:library where id=:libverid");
-
-                query.setParameter("libraryversion", libraryversion);
-                query.setParameter("library", library);
-                query.setParameter("libverid", libraryversionid);
-                query.executeUpdate();
-
-            }
-        });
+        query.setParameter("libraryversion", libraryversion);
+        query.setParameter("library", library);
+        query.setParameter("libverid", libraryversionid);
+        query.executeUpdate();
     }
 
     /**
@@ -337,75 +263,68 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @param id The ID of the Library to delete
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public void removeLibrary(final int id) {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                Query querylib = session.createQuery(
-                        "from LibraryVersion " + "where id=:libraryVersion");
-                querylib.setParameter("libraryVersion", id);
+        Session session = getSession();
+        session.beginTransaction();
+        Query querylib = session.createQuery("from LibraryVersion " + "where id=:libraryVersion");
+        querylib.setParameter("libraryVersion", id);
 
-                final LibraryVersion version = (LibraryVersion) querylib.list().get(0);
+        final LibraryVersion version = (LibraryVersion) querylib.list().get(0);
 
 
-                final int libid = ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
-                querylib = session.
-                        createQuery("select lib.versions from Library as lib " + "where lib.id=:libid");
-                querylib.setParameter("libid", libid);
+        final int libid = ((LibraryVersion) querylib.list().get(0)).getLibrary().getId();
+        querylib = session.createQuery("select lib.versions from Library as lib " + "where lib.id=:libid");
+        querylib.setParameter("libid", libid);
 
-                final int count = querylib.list().size();
+        final int count = querylib.list().size();
 
-                final Query query = session.
-                        createQuery("from ApplicationDependency " + "where libraryVersion=:libraryVersion");
+        final Query query = session.createQuery("from ApplicationDependency " + "where libraryVersion=:libraryVersion");
 
-                query.setParameter("libraryVersion", version);
-                List<ApplicationDependency> applicationDependency;
+        query.setParameter("libraryVersion", version);
+        List<ApplicationDependency> applicationDependency;
 
-                final Query scanQuery = session.createQuery("from ScanResult s where libraryVersion=:libVerId");
-                scanQuery.setParameter("libVerId", version);
-                final List<ScanResult> scanResults = scanQuery.list();
-                for (ScanResult scanResult : scanResults) {
-                    session.delete(scanResult);
-                }
+        final Query scanQuery = session.createQuery("from ScanResult s where libraryVersion=:libVerId");
+        scanQuery.setParameter("libVerId", version);
+        final List<ScanResult> scanResults = scanQuery.list();
+        for (ScanResult scanResult : scanResults) {
+            session.delete(scanResult);
+        }
 
-                if (!query.list().isEmpty() && count == 1) {
+        if (!query.list().isEmpty() && count == 1) {
 
-                    applicationDependency = query.list();
-                    for (ApplicationDependency dependency : applicationDependency) {
-                        session.delete(dependency);
-                    }
-                    session.delete(version);
-                    final Library curlib = (Library) session.load(Library.class, libid);
-                    session.delete(curlib);
-                } else if (version != null && count == 1) {
-                    session.delete(version);
-                    final Library curlib = (Library) session.load(Library.class, libid);
-                    final LibraryVendor vendor = curlib.getLibraryVendor();
-
-                    boolean deleteVendor = false;
-                    if (vendor.getLibraries().size() == 1) {
-                        deleteVendor = true;
-                    }
-
-                    session.delete(curlib);
-                    if (deleteVendor) {
-                        session.delete(vendor);
-                    }
-
-                } else if (!query.list().isEmpty()) {
-                    applicationDependency = query.list();
-                    for (ApplicationDependency dependency : applicationDependency) {
-                        session.delete(dependency);
-                    }
-                    session.delete(version);
-                } else if (version != null) {
-                    session.delete(version);
-                }
+            applicationDependency = query.list();
+            for (ApplicationDependency dependency : applicationDependency) {
+                session.delete(dependency);
             }
-        });
+            session.delete(version);
+            final Library curlib = (Library) session.load(Library.class, libid);
+            session.delete(curlib);
+        } else if (version != null && count == 1) {
+            session.delete(version);
+            final Library curlib = (Library) session.load(Library.class, libid);
+            final LibraryVendor vendor = curlib.getLibraryVendor();
+
+            boolean deleteVendor = false;
+            if (vendor.getLibraries().size() == 1) {
+                deleteVendor = true;
+            }
+
+            session.delete(curlib);
+            if (deleteVendor) {
+                session.delete(vendor);
+            }
+
+        } else if (!query.list().isEmpty()) {
+            applicationDependency = query.list();
+            for (ApplicationDependency dependency : applicationDependency) {
+                session.delete(dependency);
+            }
+            session.delete(version);
+        } else if (version != null) {
+            session.delete(version);
+        }
+        session.getTransaction().commit();
     }
 
     /**
@@ -414,20 +333,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      * @param id The ID of the License
      * @return A List of License objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<License> listLicense(final Integer id) {
-        return dbRun(new DBSessionTaskReturning<List<License>>() {
-            @Override
-            public List<License> run(Session session) {
-                final Query query = session.
-                        createQuery("from License " + "where id=:licid");
-
-                query.setParameter("licid", id);
-                return query.list();
-            }
-        });
+        final Query query = getSession().createQuery("from License where id=:licid");
+        query.setParameter("licid", id);
+        return query.list();
     }
 
     /**
@@ -435,17 +345,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of all LibraryVersion objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<LibraryVersion> allLibrary() {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
-            @Override
-            public List<LibraryVersion> run(Session session) {
-                final Query query = session.createQuery("from LibraryVersion order by library.libraryVendor.vendor, library.libraryname");
-                return query.list();
-            }
-        });
+        final Query query = getSession().
+                createQuery("from LibraryVersion order by library.libraryVendor.vendor, library.libraryname");
+        return query.list();
     }
 
     /**
@@ -453,17 +357,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of Library objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<Library> uniqueLibrary() {
-        return dbRun(new DBSessionTaskReturning<List<Library>>() {
-            @Override
-            public List<Library> run(Session session) {
-                final Query query = session.createQuery("select distinct lib from Library as lib order by libraryname");
-                return query.list();
-            }
-        });
+        final Query query = getSession().
+                createQuery("select distinct lib from Library as lib order by libraryname");
+        return query.list();
     }
 
     /**
@@ -471,19 +369,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of License objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<License> uniqueLicense() {
-        return dbRun(new DBSessionTaskReturning<List<License>>() {
-            @Override
-            public List<License> run(Session session) {
-                final Query query = session.createQuery("select distinct lic from License as lic order by licensename");
-                return query.list();
-            }
-
-            ;
-        });
+        final Query query = getSession().
+                createQuery("select distinct lic from License as lic order by licensename");
+        return query.list();
     }
 
     /**
@@ -491,19 +381,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of LibraryVendor objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<LibraryVendor> uniqueVendor() {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVendor>>() {
-            @Override
-            public List<LibraryVendor> run(Session session) {
-                final Query query = session.
-                        createQuery("select distinct lic from LibraryVendor as lic order by vendor");
-                return query.list();
-            }
-        });
-
+        final Query query = getSession().
+                createQuery("select distinct lic from LibraryVendor as lic order by vendor");
+        return query.list();
     }
 
     /**
@@ -511,19 +393,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of languages
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<String> uniqueLang() {
-        return dbRun(new DBSessionTaskReturning<List<String>>() {
-            @Override
-            public List<String> run(Session session) {
-                final Query query = session.
-                        createQuery("select distinct lib.language from Library as lib order by lib.language");
-                return query.list();
-
-            }
-        });
+        final Query query = getSession().
+                createQuery("select distinct lib.language from Library as lib order by lib.language");
+        return query.list();
     }
 
     /**
@@ -531,19 +405,11 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of Strings containing the version number
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<String> uniqueVer() {
-        return dbRun(new DBSessionTaskReturning<List<String>>() {
-            @Override
-            public List<String> run(Session session) {
-                final Query query = session.
-                        createQuery("select distinct libver.libraryversion from LibraryVersion as libver order by libver.libraryversion");
-                return query.list();
-
-            }
-        });
+        final Query query = getSession().
+                createQuery("select distinct libver.libraryversion from LibraryVersion as libver order by libver.libraryversion");
+        return query.list();
     }
 
     /**
@@ -556,150 +422,132 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      * @param file           The license file
      * @param language       The programming language the library was written in
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public void addLibraries(final String libraryname, final String libraryversion, final String vendor,
                              final String license, final MultipartFile file, final String language) {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                LibraryVendor libraryVendor;
-                License licenses;
-                Library library;
+        final Session session = getSession();
+        session.beginTransaction();
+        LibraryVendor libraryVendor;
+        License licenses;
+        Library library;
 
-                Query query = session.createQuery("from LibraryVendor where upper(vendor) =upper(:vendor) ");
-                query.setParameter("vendor", vendor);
+        Query query = session.createQuery("from LibraryVendor where upper(vendor) =upper(:vendor) ");
+        query.setParameter("vendor", vendor);
 
-                if (query.list().isEmpty()) {
-                    libraryVendor = new LibraryVendor();
-                    libraryVendor.setVendor(vendor);
-                    session.save(libraryVendor);
-                } else {
-                    libraryVendor = (LibraryVendor) query.list().get(0);
-                }
+        if (query.list().isEmpty()) {
+            libraryVendor = new LibraryVendor();
+            libraryVendor.setVendor(vendor);
+            session.save(libraryVendor);
+        } else {
+            libraryVendor = (LibraryVendor) query.list().get(0);
+        }
 
-                query = session.createQuery("from License where upper(licensename) =upper(:license) ");
-                query.setParameter("license", license);
+        query = session.createQuery("from License where upper(licensename) =upper(:license) ");
+        query.setParameter("license", license);
 
 
-                if (query.list().isEmpty()) {
-                    licenses = new License();
+        if (query.list().isEmpty()) {
+            licenses = new License();
 
-                    InputStream licenseInputStream = null;
-                    try {
-                        licenseInputStream = file.getInputStream();
-                        String licenceFileContent = new String(IOUtils.toCharArray(licenseInputStream));
-                        final Blob blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
+            InputStream licenseInputStream = null;
+            try {
+                licenseInputStream = file.getInputStream();
+                String licenceFileContent = new String(IOUtils.toCharArray(licenseInputStream));
+                final Blob blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
 
-                        licenses.setFilename(file.getOriginalFilename());
-                        licenses.setContenttype(file.getContentType());
-                        licenses.setLicensename(license);
-                        licenses.setText(blob);
-                        session.save(licenses);
+                licenses.setFilename(file.getOriginalFilename());
+                licenses.setContenttype(file.getContentType());
+                licenses.setLicensename(license);
+                licenses.setText(blob);
+                session.save(licenses);
 
-                    } catch (IOException e) {
-                        LOGGER.error("An error occurred while adding a library with library version");
-                        LOGGER.error(e.getMessage());
-                    } finally {
-                        IOUtils.closeQuietly(licenseInputStream);
-                    }
-
-                } else {
-                    licenses = (License) query.list().get(0);
-                }
-
-                query = session.createQuery("from Library as lib where upper(lib.libraryname) =upper(:libraryname) and lib.libraryVendor=:vendor ");
-                query.setParameter("libraryname", libraryname);
-                query.setParameter("vendor", libraryVendor);
-
-                if (query.list().isEmpty()) {
-                    library = new Library();
-                    library.setLibraryname(libraryname);
-                    library.setLibraryVendor(libraryVendor);
-                    library.setLicense(licenses);
-
-                    library.setLanguage(language);
-                    session.save(library);
-                } else {
-                    library = (Library) query.list().get(0);
-                }
-
-                query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
-                        + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
-                query.setParameter("library", library);
-                query.setParameter("vendor", libraryVendor);
-                query.setParameter("libver", libraryversion);
-
-                if (query.list().isEmpty()) {
-                    final LibraryVersion libVersion = new LibraryVersion();
-                    libVersion.setLibrary(library);
-                    libVersion.setLibraryversion(libraryversion);
-                    libVersion.setUuid(UUID.randomUUID().toString());
-                    session.save(libVersion);
-                }
-
-                query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
-                        + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
-                query.setParameter("library", library);
-                query.setParameter("vendor", libraryVendor);
-                query.setParameter("libver", libraryversion);
-                final List<LibraryVersion> libraryVersions = query.list();
-
-                applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
-
+            } catch (IOException e) {
+                LOGGER.error("An error occurred while adding a library with library version");
+                LOGGER.error(e.getMessage());
+            } finally {
+                IOUtils.closeQuietly(licenseInputStream);
             }
-        });
+
+        } else {
+            licenses = (License) query.list().get(0);
+        }
+
+        query = session.createQuery("from Library as lib where upper(lib.libraryname) =upper(:libraryname) and lib.libraryVendor=:vendor ");
+        query.setParameter("libraryname", libraryname);
+        query.setParameter("vendor", libraryVendor);
+
+        if (query.list().isEmpty()) {
+            library = new Library();
+            library.setLibraryname(libraryname);
+            library.setLibraryVendor(libraryVendor);
+            library.setLicense(licenses);
+
+            library.setLanguage(language);
+            session.save(library);
+        } else {
+            library = (Library) query.list().get(0);
+        }
+
+        query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
+                + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
+        query.setParameter("library", library);
+        query.setParameter("vendor", libraryVendor);
+        query.setParameter("libver", libraryversion);
+
+        if (query.list().isEmpty()) {
+            final LibraryVersion libVersion = new LibraryVersion();
+            libVersion.setLibrary(library);
+            libVersion.setLibraryversion(libraryversion);
+            libVersion.setUuid(UUID.randomUUID().toString());
+            session.save(libVersion);
+        }
+        session.getTransaction().commit();
+
+        query = session.createQuery("from LibraryVersion as libver where libver.library =:library "
+                + "and libver.library.libraryVendor=:vendor and libver.libraryversion =:libver ");
+        query.setParameter("library", library);
+        query.setParameter("vendor", libraryVendor);
+        query.setParameter("libver", libraryversion);
+        final List<LibraryVersion> libraryVersions = query.list();
+
+        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
     }
 
-    @Override
-    @Transactional
     public void uploadLicense(final int licenseid, final MultipartFile file, final String editlicensename) {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                InputStream licenseInputStream = null;
-                try {
-                    Blob blob;
-                    final Query query;
+        Session session = getSession();
+        InputStream licenseInputStream = null;
+        try {
+            Blob blob;
+            final Query query;
 
-                    if (file.isEmpty()) {
-                        query = session.createQuery(
-                                "update License set licensename=:lname "
-                                        + "where id=:licenseid");
+            if (file.isEmpty()) {
+                query = session.createQuery("update License set licensename=:lname where id=:licenseid");
+                query.setParameter("licenseid", licenseid);
+                query.setParameter("lname", editlicensename);
+                query.executeUpdate();
+            } else {
+                licenseInputStream = file.getInputStream();
+                String licenceFileContent = new String(IOUtils.toCharArray(licenseInputStream));
+                blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
+                query = session.createQuery(
+                        "update License set licensename=:lname,"
+                                + "text=:blobfile," + "filename=:filename,"
+                                + "contenttype=:contenttype "
+                                + "where id=:licenseid");
 
-                        query.setParameter("licenseid", licenseid);
-                        query.setParameter("lname", editlicensename);
-
-                        query.executeUpdate();
-
-                    } else {
-                        licenseInputStream = file.getInputStream();
-                        String licenceFileContent = new String(IOUtils.toCharArray(licenseInputStream));
-                        blob = Hibernate.getLobCreator(session).createBlob(licenceFileContent.getBytes());
-                        query = session.createQuery(
-                                "update License set licensename=:lname,"
-                                        + "text=:blobfile," + "filename=:filename,"
-                                        + "contenttype=:contenttype "
-                                        + "where id=:licenseid");
-
-                        query.setParameter("licenseid", licenseid);
-                        query.setParameter("lname", editlicensename);
-                        query.setParameter("blobfile", blob);
-                        query.setParameter("filename", file.getOriginalFilename());
-                        query.setParameter("contenttype", file.getContentType());
-
-                        query.executeUpdate();
-                    }
-                } catch (IOException e) {
-                    LOGGER.error("An error occurred while uploading a license");
-                    LOGGER.error(e.getMessage());
-                } finally {
-                    IOUtils.closeQuietly(licenseInputStream);
-                }
-
+                query.setParameter("licenseid", licenseid);
+                query.setParameter("lname", editlicensename);
+                query.setParameter("blobfile", blob);
+                query.setParameter("filename", file.getOriginalFilename());
+                query.setParameter("contenttype", file.getContentType());
+                query.executeUpdate();
             }
-        });
+        } catch (IOException e) {
+            LOGGER.error("An error occurred while uploading a license");
+            LOGGER.error(e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(licenseInputStream);
+        }
     }
 
     /**
@@ -707,24 +555,15 @@ public class LibraryVersionDaoImpl extends DBSessionTaskRunner implements Librar
      *
      * @return a List of all LibraryVersion objects
      */
-    @Override
     @SuppressWarnings("unchecked")
-    @Transactional
     public List<LibraryVersion> keywordSearchLibraries(final String searchTerm) {
-        return dbRun(new DBSessionTaskReturning<List<LibraryVersion>>() {
-            @Override
-            public List<LibraryVersion> run(Session session) {
-                final Query query = session.createQuery(
-                        "from LibraryVersion as libver where upper(libver.library.libraryname) "
-                                + "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) "
-                                + "LIKE upper(:searchTerm) order by libver.library.libraryname");
-                query.setParameter("searchTerm", "%" + searchTerm + "%");
-                return query.list();
-
-            }
-        });
+        final Query query = getSession().createQuery(
+                "from LibraryVersion as libver where upper(libver.library.libraryname) "
+                        + "LIKE upper(:searchTerm) or upper(libver.library.libraryVendor.vendor) "
+                        + "LIKE upper(:searchTerm) order by libver.library.libraryname");
+        query.setParameter("searchTerm", "%" + searchTerm + "%");
+        return query.list();
     }
-
 
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
         this.applicationEventPublisher = applicationEventPublisher;

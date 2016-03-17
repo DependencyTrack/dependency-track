@@ -16,15 +16,12 @@
  */
 package org.owasp.dependencytrack.dao;
 
-import org.owasp.dependencycheck.reporting.ReportGenerator;
-import org.springframework.transaction.annotation.Transactional;
+import org.hibernate.Session;
 
-/**
- * Created by Jason Wraxall on 1/12/15.
- */
-public interface ReportDao {
+public interface IBaseDao {
 
-    @Transactional
-    String generateDependencyCheckReport(int applicationVersionId, ReportGenerator.Format format);
+    Session getSession();
+
+    void cleanup();
 
 }

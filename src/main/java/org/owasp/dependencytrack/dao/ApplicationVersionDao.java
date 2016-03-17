@@ -18,7 +18,7 @@ package org.owasp.dependencytrack.dao;
 
 import org.owasp.dependencytrack.model.ApplicationVersion;
 
-public interface ApplicationVersionDao {
+public interface ApplicationVersionDao extends IBaseDao {
 
     ApplicationVersion getApplicationVersion(final int id);
 

@@ -29,10 +29,9 @@ import org.owasp.dependencytrack.service.AllServices;
 import org.owasp.dependencytrack.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.test.annotation.Rollback;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +48,7 @@ import static org.junit.Assert.assertThat;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {JunitDatabaseConfiguration.class,AllEntities.class,AllServices.class,AllListeners.class, HibernateJpaAutoConfiguration.class, AllRepositories.class,AllDaos.class})
-@Rollback
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class DefaultObjectGeneratorTest {
 
     @Autowired
@@ -65,27 +64,24 @@ public class DefaultObjectGeneratorTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        assertThat("Default object has run",DefaultObjectGenerator.initialised.getCount(),is(0L));
+        assertThat("Default object has run", DefaultObjectGenerator.initialised.getCount(), is(0L));
     }
 
-
     @Test
-    public void configOK(){
+    public void configOK() {
         assertThat(defaultObjectGenerator, is(notNullValue()));
     }
 
     @Test
-    @Transactional
     public void testLoadDefaultRoles() throws Exception {
         List<Roles> roleList = userService.getRoleList();
         assertThat(roleList, not(Collections.<Roles>emptyList()));
     }
 
     @Test
-    @Transactional
     public void testLoadDefaultUsers() throws Exception {
         assertThat(userService, not(nullValue()));
         List<User> users = userService.accountManagement();
-        assertThat(users,not(Collections.<User>emptyList()));
+        assertThat(users, not(Collections.<User>emptyList()));
     }
 }

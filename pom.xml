@@ -497,7 +497,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <classifier>spring-boot</classifier>
                     <jvmArguments>-XX:MaxPermSize=128M</jvmArguments>
                 </configuration>
             </plugin>

@@ -224,7 +224,7 @@ public class DefaultObjectGenerator extends BaseDao implements ApplicationListen
      * Loads the default Roles into the database if no Role data exists.
      */
     @SuppressWarnings("unchecked")
-    public void loadDefaultRoles() {
+    private void loadDefaultRoles() {
         if (getCount(session, Roles.class) > 0) {
             return;
         }
@@ -271,7 +271,7 @@ public class DefaultObjectGenerator extends BaseDao implements ApplicationListen
      * Loads the default users into the database if no User data exists.
      */
     @SuppressWarnings("unchecked")
-    public void loadDefaultUsers() {
+    private void loadDefaultUsers() {
         if (getCount(session, User.class) > 0) {
             return;
         }

@@ -62,6 +62,10 @@ public abstract class BaseDao implements IBaseDao {
         return session;
     }
 
+    public int getCount(Session session, Class clazz) {
+        return ((Long) session.createQuery("select count(*) from " + clazz.getSimpleName()).uniqueResult()).intValue();
+    }
+
     public void cleanup() {
         for (Session session: manuallyOpenedSessions) {
             if(session != null && session.isOpen()) {

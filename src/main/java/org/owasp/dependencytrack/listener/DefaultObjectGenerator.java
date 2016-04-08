@@ -53,7 +53,7 @@ import java.util.concurrent.CountDownLatch;
 @Component
 public class DefaultObjectGenerator extends BaseDao implements ApplicationListener<ContextRefreshedEvent> {
 
-    public static CountDownLatch initialised = new CountDownLatch(1);
+    static CountDownLatch initialised = new CountDownLatch(1);
 
     /**
      * Setup logger

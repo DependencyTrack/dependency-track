@@ -256,6 +256,10 @@ public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao 
         query.setParameter("library", library);
         query.setParameter("libverid", libraryversionid);
         query.executeUpdate();
+
+        query = session.createQuery("from LibraryVersion where id=:libverid");
+        query.setParameter("libverid", libraryversionid);
+        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(query.list()));
     }
 
     /**

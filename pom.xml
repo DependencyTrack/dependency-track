@@ -272,7 +272,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.3.172</version>
+            <version>1.3.176</version>
         </dependency>
 
         <!-- to fix basic data source start -->

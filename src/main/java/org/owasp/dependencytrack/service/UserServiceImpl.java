@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
 
         for (Roles eachRole : getRoleList()) {
             if (eachRole.getRole().equalsIgnoreCase(role.name())) {
-                registerUser(username,isLdap,password,role.ordinal());
+                registerUser(username,isLdap,password,eachRole.getId());
                 return;
             }
         }

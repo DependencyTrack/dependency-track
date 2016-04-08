@@ -24,6 +24,7 @@ import org.owasp.dependencytrack.dao.BaseDao;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Permissions;
 import org.owasp.dependencytrack.model.Roles;
+import org.owasp.dependencytrack.model.User;
 import org.owasp.dependencytrack.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,9 +163,7 @@ public class DefaultObjectGenerator extends BaseDao implements ApplicationListen
      * Loads the default licenses into the database if no license data exists. @throws IOException An exception if the license file cannot be found
      */
     private void loadDefaultLicenses() throws IOException {
-        final int count = ((Long) session.createQuery("select count(*) from License").uniqueResult()).intValue();
-        // Check to see if data already exists in the table. If not, proceed to add default LICENSES.
-        if (count > 0) {
+        if (getCount(session, License.class) > 0) {
             return;
         }
         if (LOGGER.isInfoEnabled()) {
@@ -207,9 +206,7 @@ public class DefaultObjectGenerator extends BaseDao implements ApplicationListen
      * Loads the default permissions into the database if no permission data exists.
      */
     private void loadDefaultPermissions() {
-        final int count = ((Long) session.createQuery("select count(*) from Permissions").uniqueResult()).intValue();
-        // Check to see if data already exists in the table.
-        if (count > 0) {
+        if (getCount(session, Permissions.class) > 0) {
             return;
         }
         if (LOGGER.isInfoEnabled()) {
@@ -228,9 +225,7 @@ public class DefaultObjectGenerator extends BaseDao implements ApplicationListen
      */
     @SuppressWarnings("unchecked")
     public void loadDefaultRoles() {
-        final int count = ((Long) session.createQuery("select count(*) from Roles ").uniqueResult()).intValue();
-        // Check to see if data already exists in the table.
-        if (count > 0) {
+        if (getCount(session, Roles.class) > 0) {
             return;
         }
         if (LOGGER.isInfoEnabled()) {
@@ -277,6 +272,9 @@ public class DefaultObjectGenerator extends BaseDao implements ApplicationListen
      */
     @SuppressWarnings("unchecked")
     public void loadDefaultUsers() {
+        if (getCount(session, User.class) > 0) {
+            return;
+        }
         userService.registerUser("admin", false, "admin", Roles.ROLE.ADMIN);
     }
 

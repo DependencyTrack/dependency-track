@@ -88,6 +88,7 @@ public class ApplicationVersionDaoImpl extends BaseDao implements ApplicationVer
      */
     public void addApplicationVersion(final int appid, final String appversion) {
         final Session session = getSession();
+        session.getTransaction().begin();
         final Application application = (Application) session.load(Application.class, appid);
         if (null != application) {
             final ApplicationVersion version = new ApplicationVersion();
@@ -95,7 +96,7 @@ public class ApplicationVersionDaoImpl extends BaseDao implements ApplicationVer
             version.setApplication(application);
             session.save(version);
         }
-        session.close();
+        session.getTransaction().commit();
     }
 
     /**

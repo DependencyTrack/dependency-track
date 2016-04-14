@@ -29,15 +29,18 @@ import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.FileUtils;
-import org.owasp.dependencytrack.model.*;
+import org.owasp.dependencytrack.dao.BaseDao;
+import org.owasp.dependencytrack.model.Library;
+import org.owasp.dependencytrack.model.LibraryVersion;
+import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.ScanResult;
+import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.service.VulnerabilityService;
 import org.owasp.dependencytrack.tasks.DependencyCheckAnalysisRequestEvent;
 import org.owasp.dependencytrack.util.XmlUtil;
-import org.owasp.dependencytrack.util.session.DBSessionTask;
-import org.owasp.dependencytrack.util.session.DBSessionTaskReturning;
-import org.owasp.dependencytrack.util.session.DBSessionTaskRunner;
-import org.owasp.dependencytrack.util.session.RunWithSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
@@ -53,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -61,7 +65,7 @@ import java.util.List;
  * @author Steve Springett (steve.springett@owasp.org)
  */
 @Service
-public class DependencyCheckAnalysis extends DBSessionTaskRunner implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
+public class DependencyCheckAnalysis extends BaseDao implements ApplicationListener<DependencyCheckAnalysisRequestEvent> {
 
     /**
      * Setup logger
@@ -77,6 +81,13 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
     @Value("${app.suppression.path}")
     private String appSuppressionPath;
 
+    @Autowired
+    private VulnerabilityService vulnerabilityService;
+
+    private Session session;
+
+    private AtomicBoolean inProgress = new AtomicBoolean(false);
+
     public DependencyCheckAnalysis() {
     }
 
@@ -84,11 +95,23 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
      * {@inheritDoc}
      */
     public void onApplicationEvent(DependencyCheckAnalysisRequestEvent event) {
-        final List<LibraryVersion> libraryVersions = event.getLibraryVersions();
-        if (libraryVersions == null || libraryVersions.size() == 0) {
-            execute();
-        } else {
-            execute(libraryVersions);
+        if(!inProgress.get()) {
+            try {
+                inProgress.set(true);
+                LOGGER.info("Starting Dependency-Check analysis");
+                this.session = getSession();
+                final List<LibraryVersion> libraryVersions = event.getLibraryVersions();
+                if (libraryVersions == null || libraryVersions.size() == 0) {
+                    execute();
+                } else {
+                    execute(libraryVersions);
+                }
+                vulnerabilityService.updateLibraryVersionVulnerabilityCount();
+                vulnerabilityService.updateApplicationVersionVulnerabilityCount();
+                cleanup();
+            } finally {
+                inProgress.set(false);
+            }
         }
     }
 
@@ -97,17 +120,12 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
      */
     @Transactional
     public synchronized void execute() {
-        dbRun(new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                // Retrieve a list of all library versions defined in the system
-                final Query query = session.createQuery("from LibraryVersion");
-                @SuppressWarnings("unchecked")
-                final List<LibraryVersion> libraryVersions = query.list();
+        // Retrieve a list of all library versions defined in the system
+        final Query query = session.createQuery("from LibraryVersion");
+        @SuppressWarnings("unchecked")
+        final List<LibraryVersion> libraryVersions = query.list();
 
-                execute(libraryVersions);
-            }
-        });
+        execute(libraryVersions);
     }
 
     /**
@@ -344,37 +362,31 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
      */
     @Transactional
     private void commitVulnerabilityData(final Vulnerability vulnerability, final int libraryVersionId) {
-        RunWithSession.run(sessionFactory, new DBSessionTask() {
-            @Override
-            public void run(Session session) {
-                final Query query = session.createQuery("FROM LibraryVersion WHERE id=:id");
-                query.setParameter("id", libraryVersionId);
-                final LibraryVersion libraryVersion = (LibraryVersion) query.uniqueResult();
+        final Query query = session.createQuery("FROM LibraryVersion WHERE id=:id");
+        query.setParameter("id", libraryVersionId);
+        final LibraryVersion libraryVersion = (LibraryVersion) query.uniqueResult();
 
-                if (libraryVersion == null) {
-                    return;
-                }
+        if (libraryVersion == null) {
+            return;
+        }
 
-                // Check if it's an existing vulnerability
-                if (vulnerability.getId() != null) {
-                    final Query scanQuery = session.createQuery("from ScanResult s where s.vulnerability=:vulnerability and s.scanDate=:scanDate and s.libraryVersion=:libraryVersion");
-                    scanQuery.setParameter("vulnerability", vulnerability);
-                    scanQuery.setParameter("scanDate", new Date());
-                    scanQuery.setParameter("libraryVersion", libraryVersion);
-                    if (scanQuery.list().size() > 0) {
-                        return; // Don't add the same entry more than once
-                    }
-                }
-
-                session.save(vulnerability);
-                final ScanResult scan = new ScanResult();
-                scan.setScanDate(new Date());
-                scan.setLibraryVersion(libraryVersion);
-                scan.setVulnerability(vulnerability);
-                session.save(scan);
-                return;
+        // Check if it's an existing vulnerability
+        if (vulnerability.getId() != null) {
+            final Query scanQuery = session.createQuery("from ScanResult s where s.vulnerability=:vulnerability and s.scanDate=:scanDate and s.libraryVersion=:libraryVersion");
+            scanQuery.setParameter("vulnerability", vulnerability);
+            scanQuery.setParameter("scanDate", new Date());
+            scanQuery.setParameter("libraryVersion", libraryVersion);
+            if (scanQuery.list().size() > 0) {
+                return; // Don't add the same entry more than once
             }
-        });
+        }
+
+        session.save(vulnerability);
+        final ScanResult scan = new ScanResult();
+        scan.setScanDate(new Date());
+        scan.setLibraryVersion(libraryVersion);
+        scan.setVulnerability(vulnerability);
+        session.save(scan);
     }
 
     /**
@@ -383,19 +395,14 @@ public class DependencyCheckAnalysis extends DBSessionTaskRunner implements Appl
      * @return a Vulnerability object
      */
     private Vulnerability getVulnerability(final String name) {
-        return RunWithSession.run(sessionFactory, new DBSessionTaskReturning<Vulnerability>() {
-            @Override
-            public Vulnerability run(Session session) {
-                final Query query = session.createQuery("from Vulnerability where name=:name order by id asc");
-                query.setParameter("name", name);
-                @SuppressWarnings("unchecked")
-                final List<Vulnerability> vulns = query.list();
-                if (vulns.size() > 0) {
-                    return vulns.get(0);
-                }
-                return new Vulnerability();
-            }
-        });
+        final Query query = session.createQuery("from Vulnerability where name=:name order by id asc");
+        query.setParameter("name", name);
+        @SuppressWarnings("unchecked")
+        final List<Vulnerability> vulns = query.list();
+        if (vulns.size() > 0) {
+            return vulns.get(0);
+        }
+        return new Vulnerability();
     }
 
 }

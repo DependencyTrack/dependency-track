@@ -16,9 +16,6 @@
  */
 package org.owasp.dependencytrack.config;
 
-import org.owasp.dependencytrack.service.VulnerabilityServiceImpl;
-import org.owasp.dependencytrack.tasks.VulnerabilityScanTask;
-import org.owasp.dependencytrack.tasks.dependencycheck.DependencyCheckAnalysis;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,19 +28,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * Created by jason on 16/11/15.
  */
 @Configuration
-@Import({DatabaseConfiguration.class,PropertyConfiguration.class,EventConfiguration.class})
+@Import({DatabaseConfiguration.class, PropertyConfiguration.class, EventConfiguration.class})
 @EnableAspectJAutoProxy
 @EnableAsync
 public class ApplicationConfiguration {
-
-    //    <!-- Dependency-Check scan agent scheduler -->
-    @Bean
-    public VulnerabilityScanTask vulnerabilityScanTask(DependencyCheckAnalysis dependencyCheckAnalysis, VulnerabilityServiceImpl vulnerabilityService){
-        VulnerabilityScanTask vulnerabilityScanTask = new VulnerabilityScanTask();
-        vulnerabilityScanTask.setDependencyCheckAnalysis(dependencyCheckAnalysis);
-        vulnerabilityScanTask.setVulerabilityService(vulnerabilityService);
-        return vulnerabilityScanTask;
-    }
 
     @Bean(name = "properties")
     public PropertiesFactoryBean properties() {

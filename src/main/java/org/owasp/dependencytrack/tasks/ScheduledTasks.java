@@ -37,12 +37,11 @@ public class ScheduledTasks  implements ApplicationEventPublisherAware, Applicat
     @Scheduled( cron = "0 0 2 * * *") // every day at 2am
     public void doRegularTasks(){
         applicationEventPublisher.publishEvent(new NistDataMirrorUpdateRequestedEvent(this));
-        applicationEventPublisher.publishEvent(new VulnerabilityScanRequestedEvent(this));
+        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(this));
     }
 
     @Override
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-
         this.applicationEventPublisher = applicationEventPublisher;
     }
 

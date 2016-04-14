@@ -259,7 +259,7 @@ public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao 
 
         query = session.createQuery("from LibraryVersion where id=:libverid");
         query.setParameter("libverid", libraryversionid);
-        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(query.list()));
+        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(this, query.list()));
     }
 
     /**
@@ -514,7 +514,7 @@ public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao 
         query.setParameter("libver", libraryversion);
         final List<LibraryVersion> libraryVersions = query.list();
 
-        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(libraryVersions));
+        applicationEventPublisher.publishEvent(new DependencyCheckAnalysisRequestEvent(this, libraryVersions));
     }
 
     public void uploadLicense(final int licenseid, final MultipartFile file, final String editlicensename) {

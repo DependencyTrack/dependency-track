@@ -40,9 +40,6 @@
     <!-- Enables Spring Task annotations -->
     <task:annotation-driven/>
 
-    <!-- Dependency-Check scan agent scheduler -->
-    <bean id="dependencyCheckScheduledScanner" class="org.owasp.dependencytrack.tasks.VulnerabilityScanTask" />
-
     <!-- NIST data updater scheduler -->
     <bean id="nistDataMirrorUpdater" class="org.owasp.dependencytrack.tasks.NistDataMirrorUpdater" >
         <constructor-arg value="${app.nist.dir}"/>

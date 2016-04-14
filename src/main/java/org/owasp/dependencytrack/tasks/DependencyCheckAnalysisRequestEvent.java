@@ -38,11 +38,20 @@ public class DependencyCheckAnalysisRequestEvent extends ApplicationEvent {
 
     /**
      * Constructs a new DependencyCheckAnalysisRequestEvent.
+     * @param source the source object making the call
      * @param libraryVersions a list of library versions to scan
      */
-    public DependencyCheckAnalysisRequestEvent(List<LibraryVersion> libraryVersions) {
-        super(libraryVersions);
+    public DependencyCheckAnalysisRequestEvent(Object source, List<LibraryVersion> libraryVersions) {
+        super(source);
         this.libraryVersions = libraryVersions;
+    }
+
+    /**
+     * Constructs a new DependencyCheckAnalysisRequestEvent.
+     * @param source the source object making the call
+     */
+    public DependencyCheckAnalysisRequestEvent(Object source) {
+        super(source);
     }
 
     /**

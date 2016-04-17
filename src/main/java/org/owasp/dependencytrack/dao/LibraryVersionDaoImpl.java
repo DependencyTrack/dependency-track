@@ -364,7 +364,7 @@ public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao 
     @SuppressWarnings("unchecked")
     public List<Library> uniqueLibrary() {
         final Query query = getSession().
-                createQuery("select distinct lib from Library as lib order by libraryname");
+                createQuery("select distinct l.libraryname from Library as l order by l.libraryname");
         return query.list();
     }
 
@@ -376,7 +376,7 @@ public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao 
     @SuppressWarnings("unchecked")
     public List<License> uniqueLicense() {
         final Query query = getSession().
-                createQuery("select distinct lic from License as lic order by licensename");
+                createQuery("select distinct l.licensename from License as l order by l.licensename");
         return query.list();
     }
 
@@ -388,7 +388,7 @@ public class LibraryVersionDaoImpl extends BaseDao implements LibraryVersionDao 
     @SuppressWarnings("unchecked")
     public List<LibraryVendor> uniqueVendor() {
         final Query query = getSession().
-                createQuery("select distinct lic from LibraryVendor as lic order by vendor");
+                createQuery("select distinct v.vendor from LibraryVendor as v order by v.vendor");
         return query.list();
     }
 

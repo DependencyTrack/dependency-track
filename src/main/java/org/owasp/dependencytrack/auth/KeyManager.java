@@ -92,8 +92,7 @@ public class KeyManager {
     private File getKeyPath(String keyType) {
         return new File(
                 System.getProperty("user.home") + File.separator +
-                        ".hakbot" + File.separator +
-                        "origin-controller" + File.separator +
+                        ".dependency-track" + File.separator +
                         "keys" + File.separator +
                         keyType + ".key");
     }

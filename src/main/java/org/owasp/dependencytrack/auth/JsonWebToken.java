@@ -50,7 +50,7 @@ public class JsonWebToken {
         Date today = new Date();
         JwtBuilder jwtBuilder = Jwts.builder();
         jwtBuilder.setSubject(principal.getName());
-        jwtBuilder.setIssuer("Hakbot");
+        jwtBuilder.setIssuer("Dependency-Track");
         jwtBuilder.setIssuedAt(today);
         jwtBuilder.setExpiration(addDays(today, 7));
         return jwtBuilder.signWith(SignatureAlgorithm.HS256, key).compact();

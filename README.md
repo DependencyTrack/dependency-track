@@ -1,8 +1,16 @@
-[![Build Status](https://travis-ci.org/stevespringett/dependency-track.svg?branch=master)](https://travis-ci.org/stevespringett/dependency-track) [ ![Download](https://api.bintray.com/packages/stevespringett/owasp/dependency-track/images/download.svg) ](https://bintray.com/stevespringett/owasp/dependency-track/_latestVersion)
+[ ![Download](https://api.bintray.com/packages/stevespringett/owasp/dependency-track/images/download.svg) ](https://bintray.com/stevespringett/owasp/dependency-track/_latestVersion)
 
 Dependency-Track
 =========
 
+Version 2.0 Development Branch (SpringBoot)
+--
+This branch was an attempt to modernize Dependency-Track by updating many of the core components including Hibernate and Spring. It also introduced SpringBoot. I'd like to thank all of the contributors who submited enhancements, defects, and ideas for this version. Unforntuantly, the amount of effort necessary to correct all the defects and continue to add new features, far exceeds the limitations of the current design and my capability to devote the time necessary to make it happen.
+
+There's a lot of ideas for future direction of the project and this branch is holding those goals back. Therefore, I do not intend to release the code in this branch. It will remain here, archived, for anyone to pick up and experiment with. But it will not be supported. All new development is focused on v3.0 and beyond.
+
+Introduction
+--
 OWASP Dependency-Track is a Java web application that allows organizations to
 document the use of third-party components across multiple applications and
 versions. Further, it provides automatic visibility into the use of components

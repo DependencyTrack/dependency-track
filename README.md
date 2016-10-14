@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/stevespringett/dependency-track.svg?branch=3.0-dev)](https://travis-ci.org/stevespringett/dependency-track) 
+[![Coverity Status](https://scan.coverity.com/projects/1495/badge.svg)](https://scan.coverity.com/projects/stevespringett-dependency-track) 
+[ ![Download](https://api.bintray.com/packages/stevespringett/owasp/dependency-track/images/download.svg) ](https://bintray.com/stevespringett/owasp/dependency-track/_latestVersion)
+
 Dependency-Track
 =========
 

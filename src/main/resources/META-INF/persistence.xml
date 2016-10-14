@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ This file is part of Dependency-Track.
+  ~
+  ~ Dependency-Track is free software: you can redistribute it and/or modify it
+  ~ under the terms of the GNU General Public License as published by the Free
+  ~ Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ Dependency-Track is distributed in the hope that it will be useful, but
+  ~ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  ~ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+  ~ details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with
+  ~ Dependency-Track. If not, see http://www.gnu.org/licenses/.
+  -->
+
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd" version="1.0">
+
+    <persistence-unit name="Dependency-Track">
+        <class>org.owasp.dependencytrack.model.ApiKey</class>
+        <class>org.owasp.dependencytrack.model.LdapUser</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+
+        <properties>
+            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:tcp://localhost/~/.dependency-track/db"/>
+            <property name="javax.jdo.option.ConnectionDriverName" value="org.h2.Driver"/>
+            <property name="javax.jdo.option.ConnectionUserName" value="sa"/>
+            <property name="javax.jdo.option.ConnectionPassword" value=""/>
+            <property name="javax.jdo.option.Mapping" value="h2"/>
+            <property name="datanucleus.connectionPoolingType" value="DBCP"/>
+            <property name="datanucleus.schema.autoCreateSchema" value="true"/>
+            <property name="datanucleus.schema.autoCreateTables" value="true"/>
+            <property name="datanucleus.schema.autoCreateColumns" value="true"/>
+            <property name="datanucleus.schema.autoCreateConstraints" value="true"/>
+            <property name="datanucleus.query.jdoql.allowAll" value="true"/>
+            <property name="datanucleus.NontransactionalRead" value="true"/>
+            <property name="datanucleus.NontransactionalWrite" value="true"/>
+            <property name="datanucleus.nontx.atomic" value="true"/>
+        </properties>
+
+    </persistence-unit>
+
+</persistence>

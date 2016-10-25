@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack;
 
+import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.logging.Logger;
 import java.io.IOException;
 import java.util.Properties;
@@ -29,6 +30,7 @@ public final class Config {
     private static final String propFile = "application.properties";
     private static Config instance;
     private static Properties properties;
+    private static Settings settings;
 
 
     /**
@@ -41,6 +43,9 @@ public final class Config {
         }
         if (properties == null) {
             instance.init();
+        }
+        if (settings == null) {
+            Settings.initialize();
         }
         return instance;
     }

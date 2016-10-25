@@ -16,17 +16,20 @@
  */
 package org.owasp.dependencytrack.model;
 
+import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.ConfigItem;
 import java.io.Serializable;
 
 public class About implements Serializable {
 
-    private static final long serialVersionUID = -4017608525127778644L;
+    private static final long serialVersionUID = -7573425245706188307L;
 
     private static final String application = Config.getInstance().getProperty(ConfigItem.APPLICATION_NAME);
     private static final String version = Config.getInstance().getProperty(ConfigItem.APPLICATION_VERSION);
     private static final String timestamp = Config.getInstance().getProperty(ConfigItem.APPLICATION_TIMESTAMP);
+    private static final String dcApplication = Settings.getString(Settings.KEYS.APPLICATION_NAME);
+    private static final String dcVersion = Settings.getString(Settings.KEYS.APPLICATION_VERSION);
 
 
     public String getApplication() {
@@ -39,6 +42,21 @@ public class About implements Serializable {
 
     public String getTimestamp() {
         return timestamp;
+    }
+
+    public DependencyCheck getDependencyCheck() {
+        return new DependencyCheck();
+    }
+
+    private static class DependencyCheck {
+
+        public String getApplication() {
+            return dcApplication;
+        }
+
+        public String getVersion() {
+            return dcVersion;
+        }
     }
 
 }

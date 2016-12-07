@@ -26,7 +26,7 @@ import java.io.File;
 public class DependencyCheckParserTest {
 
     @Test
-    public void test() throws Exception {
+    public void parseTest() throws Exception {
         File file = new File("src/test/resources/dependency-check-report.xml");
         Analysis analysis = new DependencyCheckParser().parse(file);
 

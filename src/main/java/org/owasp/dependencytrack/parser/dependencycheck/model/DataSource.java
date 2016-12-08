@@ -32,7 +32,7 @@ public class DataSource {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.trimToNull(name);
+        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
     }
 
     public String getTimestamp() {
@@ -41,6 +41,6 @@ public class DataSource {
 
     @XmlElement(name = "timestamp")
     public void setTimestamp(String timestamp) {
-        this.timestamp = StringUtils.trimToNull(timestamp);
+        this.timestamp = StringUtils.normalizeSpace(StringUtils.trimToNull(timestamp));
     }
 }

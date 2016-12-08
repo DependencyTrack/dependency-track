@@ -77,7 +77,7 @@ public class Dependency {
 
     @XmlElement(name = "description")
     public void setDescription(String description) {
-        this.description = StringUtils.trimToNull(description);
+        this.description = StringUtils.normalizeSpace(StringUtils.trimToNull(description));
     }
 
     public String getLicense() {

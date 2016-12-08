@@ -34,7 +34,7 @@ public class ScanInfo {
 
     @XmlElement(name = "engineVersion")
     public void setEngineVersion(String engineVersion) {
-        this.engineVersion = StringUtils.trimToNull(engineVersion);
+        this.engineVersion = StringUtils.normalizeSpace(StringUtils.trimToNull(engineVersion));
     }
 
     public List<DataSource> getDataSources() {

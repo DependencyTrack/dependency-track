@@ -33,7 +33,7 @@ public class ProjectInfo {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.trimToNull(name);
+        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
     }
 
     public String getReportDate() {
@@ -42,7 +42,7 @@ public class ProjectInfo {
 
     @XmlElement(name = "reportDate")
     public void setReportDate(String reportDate) {
-        this.reportDate = StringUtils.trimToNull(reportDate);
+        this.reportDate = StringUtils.normalizeSpace(StringUtils.trimToNull(reportDate));
     }
 
     public String getCredits() {
@@ -51,6 +51,6 @@ public class ProjectInfo {
 
     @XmlElement(name = "credits")
     public void setCredits(String credits) {
-        this.credits = StringUtils.trimToNull(credits);
+        this.credits = StringUtils.normalizeSpace(StringUtils.trimToNull(credits));
     }
 }

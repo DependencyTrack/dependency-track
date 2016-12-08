@@ -36,7 +36,7 @@ public class Evidence {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = StringUtils.trimToNull(type);
+        this.type = StringUtils.normalizeSpace(StringUtils.trimToNull(type));
     }
 
     public String getConfidence() {
@@ -45,7 +45,7 @@ public class Evidence {
 
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = StringUtils.trimToNull(confidence);
+        this.confidence = StringUtils.normalizeSpace(StringUtils.trimToNull(confidence));
     }
 
     public String getSource() {
@@ -54,7 +54,7 @@ public class Evidence {
 
     @XmlElement(name = "source")
     public void setSource(String source) {
-        this.source = StringUtils.trimToNull(source);
+        this.source = StringUtils.normalizeSpace(StringUtils.trimToNull(source));
     }
 
     public String getName() {
@@ -63,7 +63,7 @@ public class Evidence {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.trimToNull(name);
+        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
     }
 
     public String getValue() {
@@ -72,6 +72,6 @@ public class Evidence {
 
     @XmlElement(name = "value")
     public void setValue(String value) {
-        this.value = StringUtils.trimToNull(value);
+        this.value = StringUtils.normalizeSpace(StringUtils.trimToNull(value));
     }
 }

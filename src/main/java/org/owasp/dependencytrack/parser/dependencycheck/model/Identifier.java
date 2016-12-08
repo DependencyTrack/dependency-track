@@ -35,7 +35,7 @@ public class Identifier {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = StringUtils.trimToNull(type);
+        this.type = StringUtils.normalizeSpace(StringUtils.trimToNull(type));
     }
 
     public String getConfidence() {
@@ -44,7 +44,7 @@ public class Identifier {
 
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = StringUtils.trimToNull(confidence);
+        this.confidence = StringUtils.normalizeSpace(StringUtils.trimToNull(confidence));
     }
 
     public String getName() {
@@ -53,7 +53,7 @@ public class Identifier {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.trimToNull(name);
+        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
     }
 
     public String getUrl() {
@@ -62,6 +62,6 @@ public class Identifier {
 
     @XmlElement(name = "url")
     public void setUrl(String url) {
-        this.url = StringUtils.trimToNull(url);
+        this.url = StringUtils.normalizeSpace(StringUtils.trimToNull(url));
     }
 }

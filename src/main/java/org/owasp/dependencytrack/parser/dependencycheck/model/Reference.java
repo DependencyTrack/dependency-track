@@ -33,7 +33,7 @@ public class Reference {
 
     @XmlElement(name = "source")
     public void setSource(String source) {
-        this.source = StringUtils.trimToNull(source);
+        this.source = StringUtils.normalizeSpace(StringUtils.trimToNull(source));
     }
 
     public String getName() {
@@ -42,7 +42,7 @@ public class Reference {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.trimToNull(name);
+        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
     }
 
     public String getUrl() {
@@ -51,6 +51,6 @@ public class Reference {
 
     @XmlElement(name = "url")
     public void setUrl(String value) {
-        this.url = StringUtils.trimToNull(value);
+        this.url = StringUtils.normalizeSpace(StringUtils.trimToNull(value));
     }
 }

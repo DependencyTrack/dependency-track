@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
+import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -35,7 +36,7 @@ public class Evidence {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = type;
+        this.type = StringUtils.trimToNull(type);
     }
 
     public String getConfidence() {
@@ -44,7 +45,7 @@ public class Evidence {
 
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = confidence;
+        this.confidence = StringUtils.trimToNull(confidence);
     }
 
     public String getSource() {
@@ -53,7 +54,7 @@ public class Evidence {
 
     @XmlElement(name = "source")
     public void setSource(String source) {
-        this.source = source;
+        this.source = StringUtils.trimToNull(source);
     }
 
     public String getName() {
@@ -62,7 +63,7 @@ public class Evidence {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.trimToNull(name);
     }
 
     public String getValue() {
@@ -71,6 +72,6 @@ public class Evidence {
 
     @XmlElement(name = "value")
     public void setValue(String value) {
-        this.value = value;
+        this.value = StringUtils.trimToNull(value);
     }
 }

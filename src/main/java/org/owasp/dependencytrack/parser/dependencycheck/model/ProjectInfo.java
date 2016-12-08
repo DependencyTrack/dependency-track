@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
+import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -32,7 +33,7 @@ public class ProjectInfo {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.trimToNull(name);
     }
 
     public String getReportDate() {
@@ -41,7 +42,7 @@ public class ProjectInfo {
 
     @XmlElement(name = "reportDate")
     public void setReportDate(String reportDate) {
-        this.reportDate = reportDate;
+        this.reportDate = StringUtils.trimToNull(reportDate);
     }
 
     public String getCredits() {
@@ -50,6 +51,6 @@ public class ProjectInfo {
 
     @XmlElement(name = "credits")
     public void setCredits(String credits) {
-        this.credits = credits;
+        this.credits = StringUtils.trimToNull(credits);
     }
 }

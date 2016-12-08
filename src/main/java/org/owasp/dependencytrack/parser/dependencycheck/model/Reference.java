@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
+import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -32,7 +33,7 @@ public class Reference {
 
     @XmlElement(name = "source")
     public void setSource(String source) {
-        this.source = source;
+        this.source = StringUtils.trimToNull(source);
     }
 
     public String getName() {
@@ -41,7 +42,7 @@ public class Reference {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.trimToNull(name);
     }
 
     public String getUrl() {
@@ -50,6 +51,6 @@ public class Reference {
 
     @XmlElement(name = "url")
     public void setUrl(String value) {
-        this.url = value;
+        this.url = StringUtils.trimToNull(value);
     }
 }

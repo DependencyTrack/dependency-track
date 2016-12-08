@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
+import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -31,7 +32,7 @@ public class DataSource {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.trimToNull(name);
     }
 
     public String getTimestamp() {
@@ -40,6 +41,6 @@ public class DataSource {
 
     @XmlElement(name = "timestamp")
     public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp = StringUtils.trimToNull(timestamp);
     }
 }

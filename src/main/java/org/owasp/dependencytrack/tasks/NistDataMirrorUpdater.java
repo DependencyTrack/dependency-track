@@ -19,6 +19,8 @@
 package org.owasp.dependencytrack.tasks;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Calendar;
@@ -103,10 +107,17 @@ public class NistDataMirrorUpdater {
     private void doDownload(String cveUrl) throws IOException {
         BufferedInputStream bis = null;
         BufferedOutputStream bos = null;
+        Proxy proxy = Proxy.NO_PROXY;
+
+        final String proxyAddr = Config.getInstance().getHttpProxyAddr();
+        if (StringUtils.isNotBlank(proxyAddr)) {
+            final Integer proxyPort = Config.getInstance().getHttpProxyPort();
+            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyAddr, proxyPort));
+        }
 
         try {
             final URL url = new URL(cveUrl);
-            final URLConnection urlConnection = url.openConnection();
+            final URLConnection urlConnection = url.openConnection(proxy);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Downloading " + url.toExternalForm());
             }

@@ -63,6 +63,15 @@ public final class Config {
     private Integer bcryptRounds;
 
     /**
+     * HTTP proxy to use when connecting to NVD
+     */
+    @Value("#{properties[httpProxyAddr]}")
+    private String httpProxyAddr;
+
+    @Value("#{properties[httpProxyPort]}")
+    private Integer httpProxyPort;
+
+    /**
      * The default role to use for authenticated user without role mappings
      */
     @Value("#{properties[defaultUserRole]}")
@@ -117,6 +126,14 @@ public final class Config {
 
     public Integer getBcryptRounds() {
         return bcryptRounds;
+    }
+
+    public String getHttpProxyAddr() {
+        return httpProxyAddr;
+    }
+
+    public Integer getHttpProxyPort() {
+        return httpProxyPort;
     }
 
     public Roles.ROLE getDefaultRole() {

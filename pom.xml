@@ -68,6 +68,7 @@
     </properties>
 
     <dependencies>
+        <!-- OWASP Dependency-Check -->
         <dependency>
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-core</artifactId>
@@ -78,6 +79,7 @@
             <artifactId>dependency-check-utils</artifactId>
             <version>${dependency-check.plugin.version}</version>
         </dependency>
+        <!-- Misc helper libraries -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -103,6 +105,7 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.2</version>
         </dependency>
+        <!-- Server architecture -->
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>

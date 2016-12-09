@@ -263,7 +263,7 @@
                 <version>${maven-datanucleus-plugin-version}</version>
                 <configuration>
                     <api>JDO</api>
-                    <persistenceUnitName>Dependency-Track</persistenceUnitName>
+                    <persistenceUnitName>DependencyTrack</persistenceUnitName>
                     <verbose>true</verbose>
                 </configuration>
                 <executions>

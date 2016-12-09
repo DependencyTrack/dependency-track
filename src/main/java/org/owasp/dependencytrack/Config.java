@@ -41,7 +41,9 @@ public final class Config {
         ENFORCE_AUTHENTICATION("enforce.authentication"),
         ENFORCE_AUTHORIZATION("enforce.authorization"),
         LDAP_SERVER_URL("ldap.server.url"),
-        LDAP_DOMAIN("ldap.domain");
+        LDAP_DOMAIN("ldap.domain"),
+        HTTP_PROXY_ADDRESS("http.proxy.address"),
+        HTTP_PROXY_PORT("http.proxy.port");
 
         String propertyName;
         private Key(String item) {

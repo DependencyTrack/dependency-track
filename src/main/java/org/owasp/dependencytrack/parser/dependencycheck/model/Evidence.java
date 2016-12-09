@@ -16,13 +16,14 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
-import org.apache.commons.lang3.StringUtils;
+import org.owasp.dependencycheck.dependency.Confidence;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "evidence")
-public class Evidence {
+public class Evidence extends BaseObject {
 
     private String type;
     private String confidence;
@@ -36,16 +37,20 @@ public class Evidence {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = StringUtils.normalizeSpace(StringUtils.trimToNull(type));
+        this.type = cleanAndTrim(type);
     }
 
     public String getConfidence() {
         return confidence;
     }
 
+    public Confidence getConfidenceType() {
+        return getConfidenceFromString(confidence);
+    }
+
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = StringUtils.normalizeSpace(StringUtils.trimToNull(confidence));
+        this.confidence = cleanAndTrim(confidence);
     }
 
     public String getSource() {
@@ -54,7 +59,7 @@ public class Evidence {
 
     @XmlElement(name = "source")
     public void setSource(String source) {
-        this.source = StringUtils.normalizeSpace(StringUtils.trimToNull(source));
+        this.source = cleanAndTrim(source);
     }
 
     public String getName() {
@@ -63,7 +68,7 @@ public class Evidence {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
+        this.name = cleanAndTrim(name);
     }
 
     public String getValue() {
@@ -72,6 +77,6 @@ public class Evidence {
 
     @XmlElement(name = "value")
     public void setValue(String value) {
-        this.value = StringUtils.normalizeSpace(StringUtils.trimToNull(value));
+        this.value = cleanAndTrim(value);
     }
 }

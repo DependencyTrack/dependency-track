@@ -16,12 +16,11 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
-import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "dataSource")
-public class DataSource {
+public class DataSource extends BaseObject {
 
     private String name;
     private String timestamp;
@@ -32,7 +31,7 @@ public class DataSource {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
+        this.name = cleanAndTrim(name);
     }
 
     public String getTimestamp() {
@@ -41,6 +40,6 @@ public class DataSource {
 
     @XmlElement(name = "timestamp")
     public void setTimestamp(String timestamp) {
-        this.timestamp = StringUtils.normalizeSpace(StringUtils.trimToNull(timestamp));
+        this.timestamp = cleanAndTrim(timestamp);
     }
 }

@@ -16,13 +16,12 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
-import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "identifier")
-public class Identifier {
+public class Identifier extends BaseObject {
 
     private String type;
     private String confidence;
@@ -35,7 +34,7 @@ public class Identifier {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = StringUtils.normalizeSpace(StringUtils.trimToNull(type));
+        this.type = cleanAndTrim(type);
     }
 
     public String getConfidence() {
@@ -44,7 +43,7 @@ public class Identifier {
 
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = StringUtils.normalizeSpace(StringUtils.trimToNull(confidence));
+        this.confidence = cleanAndTrim(confidence);
     }
 
     public String getName() {
@@ -53,7 +52,7 @@ public class Identifier {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
+        this.name = cleanAndTrim(name);
     }
 
     public String getUrl() {
@@ -62,6 +61,6 @@ public class Identifier {
 
     @XmlElement(name = "url")
     public void setUrl(String url) {
-        this.url = StringUtils.normalizeSpace(StringUtils.trimToNull(url));
+        this.url = cleanAndTrim(url);
     }
 }

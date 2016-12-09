@@ -16,13 +16,12 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
-import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 @XmlRootElement(name = "scanInfo")
-public class ScanInfo {
+public class ScanInfo extends BaseObject {
 
     private String engineVersion;
     private List<DataSource> dataSources;
@@ -34,7 +33,7 @@ public class ScanInfo {
 
     @XmlElement(name = "engineVersion")
     public void setEngineVersion(String engineVersion) {
-        this.engineVersion = StringUtils.normalizeSpace(StringUtils.trimToNull(engineVersion));
+        this.engineVersion = cleanAndTrim(engineVersion);
     }
 
     public List<DataSource> getDataSources() {

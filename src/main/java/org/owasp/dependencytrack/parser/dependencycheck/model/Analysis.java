@@ -22,7 +22,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 @XmlRootElement(name = "analysis")
-public class Analysis {
+public class Analysis extends BaseObject {
 
     private ScanInfo scanInfo;
     private ProjectInfo projectInfo;

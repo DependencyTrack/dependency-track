@@ -16,14 +16,13 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
-import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 @XmlRootElement(name = "dependency")
-public class Dependency {
+public class Dependency extends BaseObject {
 
     private String fileName;
     private String filePath;
@@ -41,7 +40,7 @@ public class Dependency {
 
     @XmlElement(name = "fileName")
     public void setFileName(String fileName) {
-        this.fileName = StringUtils.trimToNull(fileName);
+        this.fileName = trim(fileName);
     }
 
     public String getFilePath() {
@@ -50,7 +49,7 @@ public class Dependency {
 
     @XmlElement(name = "filePath")
     public void setFilePath(String filePath) {
-        this.filePath = StringUtils.trimToNull(filePath);
+        this.filePath = trim(filePath);
     }
 
     public String getMd5() {
@@ -59,7 +58,7 @@ public class Dependency {
 
     @XmlElement(name = "md5")
     public void setMd5(String md5) {
-        this.md5 = StringUtils.trimToNull(md5);
+        this.md5 = trim(md5);
     }
 
     public String getSha1() {
@@ -68,7 +67,7 @@ public class Dependency {
 
     @XmlElement(name = "sha1")
     public void setSha1(String sha1) {
-        this.sha1 = StringUtils.trimToNull(sha1);
+        this.sha1 = trim(sha1);
     }
 
     public String getDescription() {
@@ -77,7 +76,7 @@ public class Dependency {
 
     @XmlElement(name = "description")
     public void setDescription(String description) {
-        this.description = StringUtils.normalizeSpace(StringUtils.trimToNull(description));
+        this.description = cleanAndTrim(description);
     }
 
     public String getLicense() {
@@ -86,7 +85,7 @@ public class Dependency {
 
     @XmlElement(name = "license")
     public void setLicense(String license) {
-        this.license = StringUtils.trimToNull(license);
+        this.license = trim(license);
     }
 
     public List<Evidence> getEvidenceCollected() {

@@ -16,12 +16,11 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
-import org.apache.commons.lang3.StringUtils;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "projectInfo")
-public class ProjectInfo {
+public class ProjectInfo extends BaseObject {
 
     private String name;
     private String reportDate;
@@ -33,7 +32,7 @@ public class ProjectInfo {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = StringUtils.normalizeSpace(StringUtils.trimToNull(name));
+        this.name = cleanAndTrim(name);
     }
 
     public String getReportDate() {
@@ -42,7 +41,7 @@ public class ProjectInfo {
 
     @XmlElement(name = "reportDate")
     public void setReportDate(String reportDate) {
-        this.reportDate = StringUtils.normalizeSpace(StringUtils.trimToNull(reportDate));
+        this.reportDate = cleanAndTrim(reportDate);
     }
 
     public String getCredits() {
@@ -51,6 +50,6 @@ public class ProjectInfo {
 
     @XmlElement(name = "credits")
     public void setCredits(String credits) {
-        this.credits = StringUtils.normalizeSpace(StringUtils.trimToNull(credits));
+        this.credits = cleanAndTrim(credits);
     }
 }

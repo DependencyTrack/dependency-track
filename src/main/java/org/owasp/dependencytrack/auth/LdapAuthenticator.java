@@ -17,7 +17,6 @@
 package org.owasp.dependencytrack.auth;
 
 import org.owasp.dependencytrack.Config;
-import org.owasp.dependencytrack.ConfigItem;
 import org.apache.commons.lang3.StringUtils;
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -27,8 +26,8 @@ import java.util.Hashtable;
 
 public class LdapAuthenticator {
 
-    private static final String ldapUrl = Config.getInstance().getProperty(ConfigItem.LDAP_SERVER_URL);
-    private static final String domainName = Config.getInstance().getProperty(ConfigItem.LDAP_DOMAIN);
+    private static final String ldapUrl = Config.getInstance().getProperty(Config.Key.LDAP_SERVER_URL);
+    private static final String domainName = Config.getInstance().getProperty(Config.Key.LDAP_DOMAIN);
 
     public LdapContext getConnection(String username, String password) throws NamingException {
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {

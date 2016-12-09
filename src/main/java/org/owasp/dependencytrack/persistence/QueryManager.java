@@ -17,7 +17,6 @@
 package org.owasp.dependencytrack.persistence;
 
 import org.owasp.dependencytrack.Config;
-import org.owasp.dependencytrack.ConfigItem;
 import org.owasp.dependencytrack.model.ApiKey;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Evidence;
@@ -32,7 +31,7 @@ import java.util.UUID;
 
 public class QueryManager {
 
-    private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(ConfigItem.ENFORCE_AUTHORIZATION);
+    private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.Key.ENFORCE_AUTHORIZATION);
 
     public enum OrderDirection {
         ASC, DESC

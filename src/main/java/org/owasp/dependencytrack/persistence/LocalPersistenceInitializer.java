@@ -17,7 +17,6 @@
 package org.owasp.dependencytrack.persistence;
 
 import org.owasp.dependencytrack.Config;
-import org.owasp.dependencytrack.ConfigItem;
 import org.owasp.dependencytrack.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.h2.tools.Server;
@@ -39,8 +38,8 @@ public class LocalPersistenceInitializer implements ServletContextListener {
     }
 
     private void startDbServer() {
-        String mode = Config.getInstance().getProperty(ConfigItem.DATABASE_MODE);
-        int port = Config.getInstance().getPropertyAsInt(ConfigItem.DATABASE_PORT);
+        String mode = Config.getInstance().getProperty(Config.Key.DATABASE_MODE);
+        int port = Config.getInstance().getPropertyAsInt(Config.Key.DATABASE_PORT);
 
         if (StringUtils.isEmpty(mode) || !(mode.equals("server") || mode.equals("embedded"))) {
             logger.error("Database mode not specified. Expected values are 'server' or 'embedded'");

@@ -51,12 +51,12 @@ public final class DependencyTrackServlet extends ServletContainer {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-        logger.info("Starting " + Config.getInstance().getProperty(ConfigItem.APPLICATION_NAME));
+        logger.info("Starting " + Config.getInstance().getProperty(Config.Key.APPLICATION_NAME));
         super.init(config);
 
         Info info = new Info()
-                .title(Config.getInstance().getProperty(ConfigItem.APPLICATION_NAME) + " API")
-                .version(Config.getInstance().getProperty(ConfigItem.APPLICATION_VERSION))
+                .title(Config.getInstance().getProperty(Config.Key.APPLICATION_NAME) + " API")
+                .version(Config.getInstance().getProperty(Config.Key.APPLICATION_VERSION))
                 .description("Open-source component and vulnerability management platform")
                 .license(new License()
                         .name("GPL v3.0")
@@ -100,7 +100,7 @@ public final class DependencyTrackServlet extends ServletContainer {
      */
     @Override
     public void destroy() {
-        logger.info("Stopping " + Config.getInstance().getProperty(ConfigItem.APPLICATION_NAME));
+        logger.info("Stopping " + Config.getInstance().getProperty(Config.Key.APPLICATION_NAME));
         super.destroy();
     }
 

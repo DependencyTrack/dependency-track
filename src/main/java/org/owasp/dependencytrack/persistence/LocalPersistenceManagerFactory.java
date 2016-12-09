@@ -30,7 +30,8 @@ public class LocalPersistenceManagerFactory implements ServletContextListener {
     private static final Properties jdoOverrides;
     static {
         jdoOverrides = new Properties();
-        jdoOverrides.put("javax.jdo.option.ConnectionURL", "jdbc:h2:mem:dependency-track");
+        jdoOverrides.put("javax.jdo.option.ConnectionURL", "jdbc:h2:mem:dependencytrack");
+        //jdoOverrides.put("javax.jdo.option.ConnectionURL", "jdbc:h2:~/.dependency-track/db");
         jdoOverrides.put("javax.jdo.option.ConnectionDriverName", "org.h2.Driver");
         jdoOverrides.put("javax.jdo.option.ConnectionUserName", "sa");
         jdoOverrides.put("javax.jdo.option.ConnectionPassword", "");
@@ -43,13 +44,12 @@ public class LocalPersistenceManagerFactory implements ServletContextListener {
         jdoOverrides.put("datanucleus.query.jdoql.allowAll", "true");
         jdoOverrides.put("datanucleus.NontransactionalRead", "true");
         jdoOverrides.put("datanucleus.NontransactionalWrite", "true");
-        jdoOverrides.put("datanucleus.nontx.atomic", "true");
     }
 
     private static PersistenceManagerFactory pmf;
 
     public void contextInitialized(ServletContextEvent event) {
-        pmf = JDOHelper.getPersistenceManagerFactory("Dependency-Track");
+        pmf = JDOHelper.getPersistenceManagerFactory("DependencyTrack");
     }
 
     public void contextDestroyed(ServletContextEvent event) {
@@ -58,7 +58,7 @@ public class LocalPersistenceManagerFactory implements ServletContextListener {
 
     public static PersistenceManager createPersistenceManager() {
         if (Config.isUnitTestsEnabled()) {
-            pmf = JDOHelper.getPersistenceManagerFactory(jdoOverrides, "Dependency-Track");
+            pmf = JDOHelper.getPersistenceManagerFactory(jdoOverrides, "DependencyTrack");
         }
         if (pmf == null) {
             throw new IllegalStateException("Context is not initialized yet.");

@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -24,22 +25,27 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
-import java.security.Principal;
 
 @PersistenceCapable
-public class ApiKey implements Serializable, Principal {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Project implements Serializable {
 
-    private static final long serialVersionUID = -5499494061005260427L;
+    private static final long serialVersionUID = -7592438796591673355L;
 
     @PrimaryKey
-    @Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
+    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
     @Persistent
-    @Unique(name="APIKEY_IDX")
-    @Column(name="APIKEY", jdbcType="VARCHAR", length=32, allowsNull="false")
-    private String key;
+    @Unique(name="PROJECT_NAME_IDX")
+    @Column(name="NAME", jdbcType="VARCHAR", length=128, allowsNull="false")
+    private String name;
+
+    @Persistent
+    @Unique(name="PROJECT_UUID_IDX")
+    @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    private String uuid;
 
     public long getId() {
         return id;
@@ -49,22 +55,19 @@ public class ApiKey implements Serializable, Principal {
         this.id = id;
     }
 
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    /**
-     * Do not use - only here to satisfy Principal implementation requirement
-     * @deprecated use {@link LdapUser#getUsername()}
-     */
-    @Deprecated
-    @JsonIgnore
     public String getName() {
-        return getKey();
+        return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 }

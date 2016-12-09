@@ -31,10 +31,10 @@ import java.security.Principal;
 @JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL)
 public class LdapUser implements Serializable, Principal {
 
-    private static final long serialVersionUID = -4071674443468706162L;
+    private static final long serialVersionUID = 2403556979761564359L;
 
     @PrimaryKey
-    @Persistent(valueStrategy=IdGeneratorStrategy.INCREMENT)
+    @Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 

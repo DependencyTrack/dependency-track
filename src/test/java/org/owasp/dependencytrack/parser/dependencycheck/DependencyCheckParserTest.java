@@ -18,12 +18,25 @@ package org.owasp.dependencytrack.parser.dependencycheck;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.owasp.dependencytrack.BaseTest;
+import org.owasp.dependencytrack.Config;
+import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
-
+import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
+import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-public class DependencyCheckParserTest {
+public class DependencyCheckParserTest extends BaseTest {
+
+    public DependencyCheckParserTest() {
+        Config.enableUnitTests();
+    }
 
     @Test
     public void parseTest() throws Exception {
@@ -84,5 +97,42 @@ public class DependencyCheckParserTest {
             }
         }
         Assert.assertEquals(2, foundCount);
+    }
+
+    @Test
+    public void objectModelingTest() throws Exception {
+        File file = new File("src/test/resources/dependency-check-report.xml");
+        Analysis analysis = new DependencyCheckParser().parse(file);
+
+        QueryManager qm = new QueryManager();
+        Project project = qm.createProject(analysis.getProjectInfo().getName());
+        Scan scan = qm.createScan(project, new Date(), new Date());
+
+        Assert.assertEquals(analysis.getProjectInfo().getName(), project.getName());
+        Assert.assertEquals(project, scan.getProject());
+
+        List<Component> components = new ArrayList<>();
+        for (Dependency dependency: analysis.getDependencies()) {
+            Component component = qm.createComponent(
+                    dependency.getFileName(),
+                    dependency.getFileName(),
+                    dependency.getMd5(),
+                    dependency.getSha1(),
+                    dependency.getDescription(),
+                    dependency.getLicense(),
+                    null
+            );
+            Assert.assertNotNull(component);
+            Assert.assertEquals(dependency.getFileName(), component.getFilename());
+            components.add(component);
+            qm.bind(scan, component);
+
+            for (Evidence evidence: dependency.getEvidenceCollected()) {
+                qm.createEvidence(component, evidence.getType(), evidence.getConfidenceScore(evidence.getConfidenceType()), evidence.getSource(), evidence.getName(), evidence.getValue());
+            }
+        }
+        Assert.assertEquals(1034, components.size());
+
+        qm.close();
     }
 }

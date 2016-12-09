@@ -20,9 +20,14 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd" version="1.0">
 
-    <persistence-unit name="Dependency-Track">
+    <persistence-unit name="DependencyTrack">
         <class>org.owasp.dependencytrack.model.ApiKey</class>
+        <class>org.owasp.dependencytrack.model.Component</class>
+        <class>org.owasp.dependencytrack.model.Evidence</class>
         <class>org.owasp.dependencytrack.model.LdapUser</class>
+        <class>org.owasp.dependencytrack.model.Project</class>
+        <class>org.owasp.dependencytrack.model.Scan</class>
+
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
@@ -39,7 +44,7 @@
             <property name="datanucleus.query.jdoql.allowAll" value="true"/>
             <property name="datanucleus.NontransactionalRead" value="true"/>
             <property name="datanucleus.NontransactionalWrite" value="true"/>
-            <property name="datanucleus.nontx.atomic" value="true"/>
+            <!-- <property name="datanucleus.nontx.atomic" value="true"/> -->
         </properties>
 
     </persistence-unit>

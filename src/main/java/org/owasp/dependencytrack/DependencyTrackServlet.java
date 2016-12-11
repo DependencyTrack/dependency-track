@@ -47,7 +47,7 @@ public final class DependencyTrackServlet extends ServletContainer {
     /**
      * Overrides the servlet init method and loads sets the InputStream necessary
      * to load application.properties.
-     * @throws ServletException
+     * @throws ServletException a general error that occurs during initialization
      */
     @Override
     public void init(ServletConfig config) throws ServletException {

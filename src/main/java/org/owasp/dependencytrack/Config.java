@@ -33,17 +33,18 @@ public final class Config {
     private static Settings settings;
 
     public enum Key {
-        APPLICATION_NAME("application.name"),
-        APPLICATION_VERSION("application.version"),
-        APPLICATION_TIMESTAMP("application.timestamp"),
-        DATABASE_MODE("database.mode"),
-        DATABASE_PORT("database.port"),
-        ENFORCE_AUTHENTICATION("enforce.authentication"),
-        ENFORCE_AUTHORIZATION("enforce.authorization"),
-        LDAP_SERVER_URL("ldap.server.url"),
-        LDAP_DOMAIN("ldap.domain"),
-        HTTP_PROXY_ADDRESS("http.proxy.address"),
-        HTTP_PROXY_PORT("http.proxy.port");
+        APPLICATION_NAME         ("application.name"),
+        APPLICATION_VERSION      ("application.version"),
+        APPLICATION_TIMESTAMP    ("application.timestamp"),
+        SERVER_EVENT_THREADS     ("server.event.threads"),
+        DATABASE_MODE            ("database.mode"),
+        DATABASE_PORT            ("database.port"),
+        ENFORCE_AUTHENTICATION   ("enforce.authentication"),
+        ENFORCE_AUTHORIZATION    ("enforce.authorization"),
+        LDAP_SERVER_URL          ("ldap.server.url"),
+        LDAP_DOMAIN              ("ldap.domain"),
+        HTTP_PROXY_ADDRESS       ("http.proxy.address"),
+        HTTP_PROXY_PORT          ("http.proxy.port");
 
         String propertyName;
         private Key(String item) {

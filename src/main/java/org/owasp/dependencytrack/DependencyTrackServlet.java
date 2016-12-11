@@ -91,8 +91,6 @@ public final class DependencyTrackServlet extends ServletContainer {
                 logger.error(e.getMessage());
             }
         }
-
-        // todo: Start dependency-check tasks here
     }
 
     /**

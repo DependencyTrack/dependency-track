@@ -16,22 +16,18 @@
  */
 package org.owasp.dependencytrack.event;
 
-import org.owasp.dependencytrack.event.framework.EventService;
-import org.owasp.dependencytrack.event.subscribers.ScanModeler;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import org.owasp.dependencytrack.event.framework.Event;
+import java.io.File;
 
-public class EventSubsystemInitializer implements ServletContextListener {
+public class ScanUploadEvent implements Event {
 
-    // Starts the EventService
-    private static final EventService eventService = EventService.getInstance();
+    private File file;
 
-    public void contextInitialized(ServletContextEvent event) {
-        eventService.subscribe(ScanUploadEvent.class, ScanModeler.class);
+    public ScanUploadEvent(File file) {
+        this.file = file;
     }
 
-    public void contextDestroyed(ServletContextEvent event) {
-        eventService.unsubscribe(ScanModeler.class);
-        eventService.shutdown();
+    public File getFile() {
+        return file;
     }
 }

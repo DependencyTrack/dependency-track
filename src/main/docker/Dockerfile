@@ -1,4 +1,4 @@
-FROM tomcat:8.0-jre8
+FROM tomcat:8.0-jre8-alpine
 MAINTAINER Steve Springett, https://github.com/stevespringett
 
 # Remove Tomcat default deployed webapps

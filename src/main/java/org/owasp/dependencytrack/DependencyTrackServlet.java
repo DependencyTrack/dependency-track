@@ -50,9 +50,9 @@ public final class DependencyTrackServlet extends ServletContainer {
      * @throws ServletException a general error that occurs during initialization
      */
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig servletConfig) throws ServletException {
         logger.info("Starting " + Config.getInstance().getProperty(Config.Key.APPLICATION_NAME));
-        super.init(config);
+        super.init(servletConfig);
 
         Info info = new Info()
                 .title(Config.getInstance().getProperty(Config.Key.APPLICATION_NAME) + " API")
@@ -62,9 +62,12 @@ public final class DependencyTrackServlet extends ServletContainer {
                         .name("GPL v3.0")
                         .url("http://www.gnu.org/licenses/gpl-3.0.txt"));
 
-        Swagger swagger = new Swagger().info(info);
-        swagger.securityDefinition("X-Api-Key", new ApiKeyAuthDefinition("X-Api-Key", In.HEADER));
-        new SwaggerContextService().withServletConfig(config).updateSwagger(swagger);
+        Swagger swagger = new Swagger()
+                .info(info)
+                .basePath(servletConfig.getServletContext().getContextPath() + "/api")
+                .securityDefinition("X-Api-Key", new ApiKeyAuthDefinition("X-Api-Key", In.HEADER));
+
+        new SwaggerContextService().initConfig(swagger).initScanner();
 
         KeyManager keyManager = KeyManager.getInstance();
         if (!keyManager.keyPairExists()) {

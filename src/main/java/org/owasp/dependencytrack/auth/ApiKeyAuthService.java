@@ -35,12 +35,13 @@ public class ApiKeyAuthService implements AuthService {
     }
 
     public Principal authenticate() throws AuthenticationException {
-        QueryManager qm = new QueryManager();
-        ApiKey apiKey =  qm.getApiKey(assertedApiKey);
-        if (apiKey == null) {
-            throw new AuthenticationException();
-        } else {
-            return apiKey;
+        try (QueryManager qm = new QueryManager()) {
+            ApiKey apiKey = qm.getApiKey(assertedApiKey);
+            if (apiKey == null) {
+                throw new AuthenticationException();
+            } else {
+                return apiKey;
+            }
         }
     }
 

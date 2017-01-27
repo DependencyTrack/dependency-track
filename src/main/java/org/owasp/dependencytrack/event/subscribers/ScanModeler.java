@@ -39,10 +39,10 @@ public class ScanModeler implements Subscriber {
         if (event instanceof ScanUploadEvent) {
 
             File file = ((ScanUploadEvent)event).getFile();
+            QueryManager qm = null;
             try {
                 Analysis analysis = new DependencyCheckParser().parse(file);
-
-                QueryManager qm = new QueryManager();
+                qm = new QueryManager();
                 Project project = qm.createProject(analysis.getProjectInfo().getName());
                 Scan scan = qm.createScan(project, new Date(), new Date());
 
@@ -65,10 +65,12 @@ public class ScanModeler implements Subscriber {
                                 .getSource(), evidence.getName(), evidence.getValue());
                     }
                 }
-
-                qm.close();
             } catch (ParseException e) {
 
+            } finally {
+                if (qm != null) {
+                    qm.close();
+                }
             }
         }
     }

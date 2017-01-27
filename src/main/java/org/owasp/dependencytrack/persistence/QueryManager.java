@@ -29,7 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-public class QueryManager {
+public class QueryManager implements AutoCloseable {
 
     private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.Key.ENFORCE_AUTHORIZATION);
 

@@ -18,20 +18,28 @@ package org.owasp.dependencytrack.event;
 
 import org.owasp.dependencytrack.event.framework.EventService;
 import org.owasp.dependencytrack.event.subscribers.ScanModeler;
+import org.owasp.dependencytrack.tasks.LdapSyncTask;
+import org.owasp.dependencytrack.tasks.TaskScheduler;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 public class EventSubsystemInitializer implements ServletContextListener {
 
     // Starts the EventService
-    private static final EventService eventService = EventService.getInstance();
+    private static final EventService EVENT_SERVICE = EventService.getInstance();
 
     public void contextInitialized(ServletContextEvent event) {
-        eventService.subscribe(ScanUploadEvent.class, ScanModeler.class);
+        TaskScheduler.getInstance();
+
+        EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanModeler.class);
+        EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
     }
 
     public void contextDestroyed(ServletContextEvent event) {
-        eventService.unsubscribe(ScanModeler.class);
-        eventService.shutdown();
+        TaskScheduler.getInstance().shutdown();
+
+        EVENT_SERVICE.unsubscribe(ScanModeler.class);
+        EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
+        EVENT_SERVICE.shutdown();
     }
 }

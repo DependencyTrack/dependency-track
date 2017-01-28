@@ -17,21 +17,26 @@
 package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Element;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Join;
+import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.security.Principal;
+import java.util.List;
 
 @PersistenceCapable
-@JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LdapUser implements Serializable, Principal {
 
-    private static final long serialVersionUID = 2403556979761564359L;
+    private static final long serialVersionUID = 261924579887470488L;
 
     @PrimaryKey
     @Persistent(valueStrategy=IdGeneratorStrategy.NATIVE)
@@ -47,6 +52,12 @@ public class LdapUser implements Serializable, Principal {
     @Unique(name="DN_IDX")
     @Column(name="DN", jdbcType="VARCHAR", length=255, allowsNull="false")
     private String dn;
+
+    @Persistent(table="LDAPUSERS_TEAMS", defaultFetchGroup="true")
+    @Join(column="LDAPUSER_ID")
+    @Element(column="TEAM_ID")
+    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="name ASC"))
+    private List<Team> teams;
 
     public long getId() {
         return id;
@@ -70,6 +81,14 @@ public class LdapUser implements Serializable, Principal {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public List<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(List<Team> teams) {
+        this.teams = teams;
     }
 
     /**

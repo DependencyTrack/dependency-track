@@ -31,13 +31,11 @@ public class AuthenticationFeature implements DynamicFeature {
 
     @Override
     public void configure(ResourceInfo resourceInfo, FeatureContext context) {
-        if (!ENFORCE_AUTHENTICATION) {
-            return;
-        }
-        Method method = resourceInfo.getResourceMethod();
-        if (!method.isAnnotationPresent(AuthenticationNotRequired.class)) {
-            AuthenticationFilter authenticationFilter = new AuthenticationFilter();
-            context.register(authenticationFilter);
+        if (ENFORCE_AUTHENTICATION) {
+            Method method = resourceInfo.getResourceMethod();
+            if (!method.isAnnotationPresent(AuthenticationNotRequired.class)) {
+                context.register(AuthenticationFilter.class);
+            }
         }
     }
 

@@ -26,6 +26,7 @@
         <class>org.owasp.dependencytrack.model.Evidence</class>
         <class>org.owasp.dependencytrack.model.LdapUser</class>
         <class>org.owasp.dependencytrack.model.Project</class>
+        <class>org.owasp.dependencytrack.model.ProjectProperty</class>
         <class>org.owasp.dependencytrack.model.Scan</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>

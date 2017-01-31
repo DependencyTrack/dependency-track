@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-package org.owasp.dependencytrack.event.subscribers;
+package org.owasp.dependencytrack.tasks;
 
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.event.framework.Event;

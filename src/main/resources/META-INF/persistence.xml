@@ -27,6 +27,8 @@
         <class>org.owasp.dependencytrack.model.LdapUser</class>
         <class>org.owasp.dependencytrack.model.Project</class>
         <class>org.owasp.dependencytrack.model.ProjectProperty</class>
+        <class>org.owasp.dependencytrack.model.ProjectVersion</class>
+        <class>org.owasp.dependencytrack.model.ProjectVersionProperty</class>
         <class>org.owasp.dependencytrack.model.Scan</class>
         <class>org.owasp.dependencytrack.model.Team</class>
 
@@ -43,6 +45,7 @@
             <property name="datanucleus.schema.autoCreateTables" value="true"/>
             <property name="datanucleus.schema.autoCreateColumns" value="true"/>
             <property name="datanucleus.schema.autoCreateConstraints" value="true"/>
+            <property name="datanucleus.generateSchema.database.mode" value="create"/>
             <property name="datanucleus.query.jdoql.allowAll" value="true"/>
             <property name="datanucleus.NontransactionalRead" value="true"/>
             <property name="datanucleus.NontransactionalWrite" value="true"/>

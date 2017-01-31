@@ -19,9 +19,7 @@ package org.owasp.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -31,31 +29,30 @@ import java.util.List;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Project implements Serializable {
+public class ProjectVersion implements Serializable {
 
-    private static final long serialVersionUID = -7592438796591673355L;
+    private static final long serialVersionUID = 6559534934400263812L;
 
     @PrimaryKey
     @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
-    @Persistent
-    @Unique(name="PROJECT_NAME_IDX")
-    @Column(name="NAME", jdbcType="VARCHAR", length=128, allowsNull="false")
-    private String name;
+    @Persistent(defaultFetchGroup="true")
+    @Column(name="PROJECT_ID", allowsNull="false")
+    private Project project;
 
     @Persistent
-    @Unique(name="PROJECT_UUID_IDX")
+    @Column(name="VERSION", jdbcType="VARCHAR", length=128, allowsNull="false")
+    private String version;
+
+    @Persistent(mappedBy="projectVersion")
+    private List<ProjectVersionProperty> properties;
+
+    @Persistent
+    @Unique(name="PROJECTVERSION_UUID_IDX")
     @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
     private String uuid;
-
-    @Persistent(mappedBy="project")
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="version ASC"))
-    private List<ProjectVersion> projectVersions;
-
-    @Persistent(mappedBy="project")
-    private List<ProjectProperty> properties;
 
     public long getId() {
         return id;
@@ -65,27 +62,27 @@ public class Project implements Serializable {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public Project getProject() {
+        return project;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setProject(Project project) {
+        this.project = project;
     }
 
-    public List<ProjectVersion> getProjectVersions() {
-        return projectVersions;
+    public String getVersion() {
+        return version;
     }
 
-    public void setProjectVersions(List<ProjectVersion> projectVersions) {
-        this.projectVersions = projectVersions;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
-    public List<ProjectProperty> getProperties() {
+    public List<ProjectVersionProperty> getProperties() {
         return properties;
     }
 
-    public void setProperties(List<ProjectProperty> properties) {
+    public void setProperties(List<ProjectVersionProperty> properties) {
         this.properties = properties;
     }
 

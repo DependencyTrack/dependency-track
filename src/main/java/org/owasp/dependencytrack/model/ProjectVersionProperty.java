@@ -25,11 +25,11 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import java.io.Serializable;
 
-@PersistenceCapable(table = "PROJECT_PROPERTY")
+@PersistenceCapable(table = "PROJECTVERSION_PROPERTY")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectProperty implements Serializable {
+public class ProjectVersionProperty implements Serializable {
 
-    private static final long serialVersionUID = -821103184547741489L;
+    private static final long serialVersionUID = 1810807746224798445L;
 
     @PrimaryKey
     @Persistent(valueStrategy= IdGeneratorStrategy.INCREMENT)
@@ -37,8 +37,8 @@ public class ProjectProperty implements Serializable {
     private long id;
 
     @Persistent(defaultFetchGroup="true")
-    @Column(name="PROJECT_ID", allowsNull="false")
-    private Project project;
+    @Column(name="PROJECTVERSION_ID", allowsNull="false")
+    private ProjectVersion projectVersion;
 
     @Persistent
     @Column(name="KEY", jdbcType="VARCHAR", length=255, allowsNull="false")
@@ -56,12 +56,12 @@ public class ProjectProperty implements Serializable {
         this.id = id;
     }
 
-    public Project getProject() {
-        return project;
+    public ProjectVersion getProjectVersion() {
+        return projectVersion;
     }
 
-    public void setProject(Project project) {
-        this.project = project;
+    public void setProjectVersion(ProjectVersion projectVersion) {
+        this.projectVersion = projectVersion;
     }
 
     public String getKey() {

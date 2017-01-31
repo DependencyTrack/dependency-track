@@ -60,7 +60,7 @@ public class ProjectProperty implements Serializable {
         return project;
     }
 
-    public void setProjectId(Project project) {
+    public void setProject(Project project) {
         this.project = project;
     }
 

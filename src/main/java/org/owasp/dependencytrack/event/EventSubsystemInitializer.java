@@ -17,7 +17,8 @@
 package org.owasp.dependencytrack.event;
 
 import org.owasp.dependencytrack.event.framework.EventService;
-import org.owasp.dependencytrack.event.subscribers.ScanModeler;
+import org.owasp.dependencytrack.tasks.NistMirrorTask;
+import org.owasp.dependencytrack.tasks.ScanModeler;
 import org.owasp.dependencytrack.tasks.LdapSyncTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
 import javax.servlet.ServletContextEvent;
@@ -29,10 +30,11 @@ public class EventSubsystemInitializer implements ServletContextListener {
     private static final EventService EVENT_SERVICE = EventService.getInstance();
 
     public void contextInitialized(ServletContextEvent event) {
-        TaskScheduler.getInstance();
-
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanModeler.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
+        EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
+
+        TaskScheduler.getInstance();
     }
 
     public void contextDestroyed(ServletContextEvent event) {
@@ -40,6 +42,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
 
         EVENT_SERVICE.unsubscribe(ScanModeler.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
+        EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE.shutdown();
     }
 }

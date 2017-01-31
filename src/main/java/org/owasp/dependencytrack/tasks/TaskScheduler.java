@@ -17,6 +17,8 @@
 package org.owasp.dependencytrack.tasks;
 
 import org.owasp.dependencytrack.event.LdapSyncEvent;
+import org.owasp.dependencytrack.event.NistMirrorEvent;
+import org.owasp.dependencytrack.event.framework.Event;
 import org.owasp.dependencytrack.event.framework.EventService;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +34,12 @@ public class TaskScheduler {
     private List<Timer> timers = new ArrayList<>();
 
     private TaskScheduler() {
-        // Creates a new task that executes every 6 hours (21600000) after an initial 1 minute (60000) delay
-        Timer ldapTimer = new Timer();
-        ldapTimer.schedule(new ScheduledLdapSyncTask(), 60000, 21600000);
-        timers.add(ldapTimer);
+
+        // Creates a new event that executes every 6 hours (21600000) after an initial 10 second (10000) delay
+        scheduleEvent(new LdapSyncEvent(), 10000, 21600000);
+
+        // Creates a new event that executes every 24 hours (86400000) after an initial 1 minute (60000) delay
+        scheduleEvent(new NistMirrorEvent(), 60000, 86400000);
     }
 
     /**
@@ -46,9 +50,22 @@ public class TaskScheduler {
         return instance;
     }
 
-    private class ScheduledLdapSyncTask extends TimerTask {
+    private void scheduleEvent(Event event, long delay, long period) {
+        Timer timer = new Timer();
+        timer.schedule(new ScheduleEvent().event(event), delay, period);
+        timers.add(timer);
+    }
+
+    private class ScheduleEvent extends TimerTask {
+        private Event event;
+
+        public ScheduleEvent event(Event event) {
+            this.event = event;
+            return this;
+        }
+
         public synchronized void run() {
-            EventService.getInstance().publish(new LdapSyncEvent());
+            EventService.getInstance().publish(event);
         }
     }
 
@@ -57,4 +74,5 @@ public class TaskScheduler {
             timer.cancel();
         }
     }
+
 }

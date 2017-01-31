@@ -14,10 +14,13 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-package org.owasp.dependencytrack.nist;
+package org.owasp.dependencytrack.tasks;
 
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.Config;
+import org.owasp.dependencytrack.event.NistMirrorEvent;
+import org.owasp.dependencytrack.event.framework.Event;
+import org.owasp.dependencytrack.event.framework.Subscriber;
 import org.owasp.dependencytrack.logging.Logger;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -35,7 +38,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
-public class NistDataMirror {
+public class NistMirrorTask implements Subscriber {
 
     private static final String CVE_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
     private static final String CVE_20_MODIFIED_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-Modified.xml.gz";
@@ -44,14 +47,25 @@ public class NistDataMirror {
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private File outputDir;
-    private static boolean downloadFailed = false;
 
-    private static final Logger logger = Logger.getLogger(NistDataMirror.class);
+    private static final Logger logger = Logger.getLogger(NistMirrorTask.class);
 
-    public boolean doUpdates(File outputDirectory) {
-        setOutputDir(outputDirectory.getAbsolutePath());
-        getAllFiles();
-        return !downloadFailed;
+
+    public void inform(Event e) {
+        if (e instanceof NistMirrorEvent) {
+            logger.info("Starting NIST mirroring task");
+            File mirrorPath = getMirrorPath();
+            setOutputDir(mirrorPath.getAbsolutePath());
+            getAllFiles();
+            logger.info("NIST mirroring complete");
+        }
+    }
+
+    private File getMirrorPath() {
+        return new File(
+                System.getProperty("user.home") + File.separator +
+                        ".dependency-track" + File.separator +
+                        "nist");
     }
 
     private void getAllFiles() {
@@ -129,7 +143,6 @@ public class NistDataMirror {
             success = true;
         } catch (IOException e) {
             logger.error("Download failed : " + e.getLocalizedMessage());
-            downloadFailed = true;
         } finally {
             close(bis);
             close(bos);

@@ -27,7 +27,7 @@ import java.io.Serializable;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ObjectProperty implements Serializable {
+public class ProjectProperty implements Serializable {
 
     private static final long serialVersionUID = -821103184547741489L;
 
@@ -36,15 +36,9 @@ public class ObjectProperty implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent
-    @Column(name="PROJECT_ID")
-    @JsonIgnore
-    private long projectId;
-
-    @Persistent
-    @Column(name="PROJECTVERSION_ID")
-    @JsonIgnore
-    private long projectVersionId;
+    @Persistent(defaultFetchGroup="true")
+    @Column(name="PROJECT_ID", allowsNull="false")
+    private Project project;
 
     @Persistent
     @Column(name="KEY", jdbcType="VARCHAR", length=255, allowsNull="false")
@@ -62,12 +56,12 @@ public class ObjectProperty implements Serializable {
         this.id = id;
     }
 
-    public long getProjectId() {
-        return projectId;
+    public Project getProject() {
+        return project;
     }
 
-    public void setProjectId(long projectId) {
-        this.projectId = projectId;
+    public void setProjectId(Project project) {
+        this.project = project;
     }
 
     public String getKey() {

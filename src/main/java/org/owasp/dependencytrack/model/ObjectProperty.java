@@ -27,7 +27,7 @@ import java.io.Serializable;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectProperty implements Serializable {
+public class ObjectProperty implements Serializable {
 
     private static final long serialVersionUID = -821103184547741489L;
 
@@ -37,9 +37,14 @@ public class ProjectProperty implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name="PROJECT_ID", allowsNull="false")
+    @Column(name="PROJECT_ID")
     @JsonIgnore
     private long projectId;
+
+    @Persistent
+    @Column(name="PROJECTVERSION_ID")
+    @JsonIgnore
+    private long projectVersionId;
 
     @Persistent
     @Column(name="KEY", jdbcType="VARCHAR", length=255, allowsNull="false")

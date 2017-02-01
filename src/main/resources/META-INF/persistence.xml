@@ -25,12 +25,14 @@
         <class>org.owasp.dependencytrack.model.Component</class>
         <class>org.owasp.dependencytrack.model.Evidence</class>
         <class>org.owasp.dependencytrack.model.LdapUser</class>
+        <class>org.owasp.dependencytrack.model.License</class>
         <class>org.owasp.dependencytrack.model.Project</class>
         <class>org.owasp.dependencytrack.model.ProjectProperty</class>
         <class>org.owasp.dependencytrack.model.ProjectVersion</class>
         <class>org.owasp.dependencytrack.model.ProjectVersionProperty</class>
         <class>org.owasp.dependencytrack.model.Scan</class>
         <class>org.owasp.dependencytrack.model.Team</class>
+        <class>org.owasp.dependencytrack.model.Vulnerability</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 

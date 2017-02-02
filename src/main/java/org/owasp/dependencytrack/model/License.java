@@ -18,6 +18,7 @@ package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -37,10 +38,11 @@ public class License implements Serializable {
     private long id;
 
     /**
-     * The String representation of the license name (i.e. GPL v3).
+     * The String representation of the license name (i.e. Apache License 2.0).
      */
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
+    @JsonProperty(value="name")
     private String name;
 
     /**
@@ -48,28 +50,56 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "TEXT", jdbcType="CLOB")
+    @JsonProperty(value="licenseText")
     private String text;
 
     /**
-     * The URL the license can be referenced from.
+     * The standard license template typically used for the creation of the license text.
      */
     @Persistent
-    @Column(name = "URL", length = 255)
-    private String url;
+    @Column(name = "TEMPLATE", jdbcType="CLOB")
+    @JsonProperty(value="standardLicenseTemplate")
+    private String template;
 
     /**
-     * The filename of the license contents that were uploaded.
+     * The standard license header typically added to the top of source code.
      */
     @Persistent
-    @Column(name = "FILENAME", length = 255)
-    private String filename;
+    @Column(name = "HEADER", jdbcType="CLOB")
+    @JsonProperty(value="standardLicenseHeader")
+    private String header;
 
     /**
-     * The content-type of the filename containing the license contents.
+     * A comment about the license. Typically includes release date, etc.
      */
     @Persistent
-    @Column(name = "CONTENTTYPE", length = 50)
-    private String contentType;
+    @Column(name = "COMMENT", jdbcType="CLOB")
+    @JsonProperty(value="licenseComments")
+    private String comment;
+
+    /**
+     * The SPDX defined licenseId (i.e. Apache-2.0).
+     */
+    @Persistent
+    @Column(name = "LICENSEID")
+    @JsonProperty(value="licenseId")
+    private String licenseId;
+
+    /**
+     * Identifies if the license is approved by the OSI.
+     */
+    @Persistent
+    @Column(name = "ISOSIAPPROVED")
+    @JsonProperty(value="isOsiApproved")
+    private String isOsiApproved;
+
+    /**
+     * Identifies if the licenseId has been deprecated by SPDX
+     */
+    @Persistent
+    @Column(name = "ISDEPRECATED")
+    @JsonProperty(value="isDeprecatedLicenseId")
+    private String isDeprecatedLicenseId;
 
 
     public long getId() {
@@ -96,27 +126,43 @@ public class License implements Serializable {
         this.text = text;
     }
 
-    public String getUrl() {
-        return url;
+    public String getTemplate() {
+        return template;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setTemplate(String template) {
+        this.template = template;
     }
 
-    public String getFilename() {
-        return filename;
+    public String getHeader() {
+        return header;
     }
 
-    public void setFilename(String filename) {
-        this.filename = filename;
+    public void setHeader(String header) {
+        this.header = header;
     }
 
-    public String getContentType() {
-        return contentType;
+    public String getComment() {
+        return comment;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public String getLicenseId() {
+        return licenseId;
+    }
+
+    public void setLicenseId(String licenseId) {
+        this.licenseId = licenseId;
+    }
+
+    public String getIsOsiApproved() {
+        return isOsiApproved;
+    }
+
+    public void setIsOsiApproved(String isOsiApproved) {
+        this.isOsiApproved = isOsiApproved;
     }
 }

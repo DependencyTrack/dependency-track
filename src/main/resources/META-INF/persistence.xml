@@ -37,7 +37,7 @@
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
-            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:tcp://localhost/~/.dependency-track/db;MVCC=TRUE"/>
+            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:~/.dependency-track/db;MVCC=TRUE"/>
             <property name="javax.jdo.option.ConnectionDriverName" value="org.h2.Driver"/>
             <property name="javax.jdo.option.ConnectionUserName" value="sa"/>
             <property name="javax.jdo.option.ConnectionPassword" value=""/>

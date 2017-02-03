@@ -17,8 +17,11 @@
 package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.owasp.dependencytrack.parser.common.TrimmedStringDeserializer;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -28,6 +31,7 @@ import java.io.Serializable;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class License implements Serializable {
 
     private static final long serialVersionUID = -1707920279688859358L;
@@ -42,7 +46,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
-    @JsonProperty(value="name")
+    @JsonProperty(value = "name")
     private String name;
 
     /**
@@ -50,7 +54,8 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "TEXT", jdbcType="CLOB")
-    @JsonProperty(value="licenseText")
+    @JsonProperty(value = "licenseText")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String text;
 
     /**
@@ -58,7 +63,8 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "TEMPLATE", jdbcType="CLOB")
-    @JsonProperty(value="standardLicenseTemplate")
+    @JsonProperty(value = "standardLicenseTemplate")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String template;
 
     /**
@@ -66,7 +72,8 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "HEADER", jdbcType="CLOB")
-    @JsonProperty(value="standardLicenseHeader")
+    @JsonProperty(value = "standardLicenseHeader")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String header;
 
     /**
@@ -74,7 +81,8 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "COMMENT", jdbcType="CLOB")
-    @JsonProperty(value="licenseComments")
+    @JsonProperty(value = "licenseComments")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String comment;
 
     /**
@@ -82,7 +90,8 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "LICENSEID")
-    @JsonProperty(value="licenseId")
+    @JsonProperty(value = "licenseId")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String licenseId;
 
     /**
@@ -90,7 +99,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "ISOSIAPPROVED")
-    @JsonProperty(value="isOsiApproved")
+    @JsonProperty(value = "isOsiApproved")
     private String isOsiApproved;
 
     /**
@@ -98,7 +107,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "ISDEPRECATED")
-    @JsonProperty(value="isDeprecatedLicenseId")
+    @JsonProperty(value = "isDeprecatedLicenseId")
     private String isDeprecatedLicenseId;
 
 
@@ -164,5 +173,13 @@ public class License implements Serializable {
 
     public void setIsOsiApproved(String isOsiApproved) {
         this.isOsiApproved = isOsiApproved;
+    }
+
+    public String getIsDeprecatedLicenseId() {
+        return isDeprecatedLicenseId;
+    }
+
+    public void setIsDeprecatedLicenseId(String isDeprecatedLicenseId) {
+        this.isDeprecatedLicenseId = isDeprecatedLicenseId;
     }
 }

@@ -102,7 +102,7 @@ public class License implements Serializable {
     @Persistent
     @Column(name = "ISOSIAPPROVED")
     @JsonProperty(value = "isOsiApproved")
-    private boolean isOsiApproved;
+    private boolean osiApproved;
 
     /**
      * Identifies if the licenseId has been deprecated by SPDX
@@ -110,7 +110,7 @@ public class License implements Serializable {
     @Persistent
     @Column(name = "ISDEPRECATED")
     @JsonProperty(value = "isDeprecatedLicenseId")
-    private boolean isDeprecatedLicenseId;
+    private boolean deprecatedLicenseId;
 
 
     public long getId() {
@@ -170,18 +170,18 @@ public class License implements Serializable {
     }
 
     public boolean isOsiApproved() {
-        return isOsiApproved;
+        return osiApproved;
     }
 
     public void setOsiApproved(boolean osiApproved) {
-        isOsiApproved = osiApproved;
+        this.osiApproved = osiApproved;
     }
 
     public boolean isDeprecatedLicenseId() {
-        return isDeprecatedLicenseId;
+        return deprecatedLicenseId;
     }
 
     public void setDeprecatedLicenseId(boolean deprecatedLicenseId) {
-        isDeprecatedLicenseId = deprecatedLicenseId;
+        this.deprecatedLicenseId = deprecatedLicenseId;
     }
 }

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -42,20 +43,39 @@ public class Component implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name="NAME", jdbcType="VARCHAR", length=128, allowsNull="false")
+    @Column(name="GROUP", jdbcType="VARCHAR")
+    @Index(name="COMPONENT_GROUP_IDX")
+    private String group;
+
+    @Persistent
+    @Column(name="NAME", jdbcType="VARCHAR", allowsNull="false")
+    @Index(name="COMPONENT_NAME_IDX")
     private String name;
 
     @Persistent
-    @Column(name="FILENAME", jdbcType="VARCHAR", length=128, allowsNull="false")
+    @Column(name="VERSION", jdbcType="VARCHAR")
+    private String version;
+
+    @Persistent
+    @Column(name="CLASSIFIER", jdbcType="VARCHAR")
+    @Index(name="COMPONENT_CLASSIFIER_IDX")
+    private String classifier;
+
+    @Persistent
+    @Column(name="FILENAME", jdbcType="VARCHAR")
     private String filename;
 
     @Persistent
-    @Unique(name="COMPONENT_MD5_IDX")
+    @Column(name="EXTENSION", jdbcType="VARCHAR")
+    private String extension;
+
+    @Persistent
+    @Index(name="COMPONENT_MD5_IDX")
     @Column(name="MD5", jdbcType="VARCHAR", length=32)
     private String md5;
 
     @Persistent
-    @Unique(name="COMPONENT_SHA1_IDX")
+    @Index(name="COMPONENT_SHA1_IDX")
     @Column(name="SHA1", jdbcType="VARCHAR", length=40)
     private String sha1;
 
@@ -64,8 +84,12 @@ public class Component implements Serializable {
     private String description;
 
     @Persistent
-    @Column(name="LICENSE", jdbcType="VARCHAR", length=256)
+    @Column(name="LICENSE", jdbcType="VARCHAR")
     private String license;
+
+    @Persistent
+    @Column(name="LICENSE_ID")
+    private License resolvedLicense;
 
     @Persistent
     @Column(name="PARENT_COMPONENT_ID")
@@ -94,6 +118,14 @@ public class Component implements Serializable {
         this.id = id;
     }
 
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
     public String getName() {
         return name;
     }
@@ -102,12 +134,36 @@ public class Component implements Serializable {
         this.name = name;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getClassifier() {
+        return classifier;
+    }
+
+    public void setClassifier(String classifier) {
+        this.classifier = classifier;
+    }
+
     public String getFilename() {
         return filename;
     }
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(String extension) {
+        this.extension = extension;
     }
 
     public String getMd5() {
@@ -140,6 +196,14 @@ public class Component implements Serializable {
 
     public void setLicense(String license) {
         this.license = license;
+    }
+
+    public License getResolvedLicense() {
+        return resolvedLicense;
+    }
+
+    public void setResolvedLicense(License resolvedLicense) {
+        this.resolvedLicense = resolvedLicense;
     }
 
     public Component getParent() {

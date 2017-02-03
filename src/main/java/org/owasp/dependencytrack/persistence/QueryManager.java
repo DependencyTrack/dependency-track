@@ -23,6 +23,7 @@ import org.owasp.dependencytrack.model.ApiKey;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.LdapUser;
+import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.model.Team;
@@ -39,10 +40,6 @@ import java.util.UUID;
 public class QueryManager implements AutoCloseable {
 
     private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.Key.ENFORCE_AUTHORIZATION);
-
-    public enum OrderDirection {
-        ASC, DESC
-    }
 
     private PersistenceManager pm = LocalPersistenceManagerFactory.createPersistenceManager();
 
@@ -83,7 +80,7 @@ public class QueryManager implements AutoCloseable {
     @SuppressWarnings("unchecked")
     public List<LdapUser> getLdapUsers() {
         Query query = pm.newQuery(LdapUser.class);
-        query.setOrdering("username " + OrderDirection.ASC.name());
+        query.setOrdering("username asc");
         return (List<LdapUser>)query.execute();
     }
 
@@ -125,7 +122,7 @@ public class QueryManager implements AutoCloseable {
     public List<Team> getTeams() {
         pm.getFetchPlan().addGroup(Team.FetchGroup.ALL.getName());
         Query query = pm.newQuery(Team.class);
-        query.setOrdering("name " + OrderDirection.ASC.name());
+        query.setOrdering("name asc");
         return (List<Team>)query.execute();
     }
 
@@ -226,6 +223,36 @@ public class QueryManager implements AutoCloseable {
         pm.makePersistent(evidence);
         pm.currentTransaction().commit();
         return pm.getObjectById(Evidence.class, evidence.getId());
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<License> getLicenses() {
+        Query query = pm.newQuery(License.class);
+        query.setOrdering("name asc");
+        return (List<License>)query.execute();
+    }
+
+    @SuppressWarnings("unchecked")
+    public License getLicense(String licenseId) {
+        Query query = pm.newQuery(License.class, "licenseId == :licenseId");
+        List<License> result = (List<License>)query.execute(licenseId);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    public License createLicense(License transientLicense) {
+        pm.currentTransaction().begin();
+        License license = new License();
+        license.setComment(transientLicense.getComment());
+        license.setDeprecatedLicenseId(transientLicense.isDeprecatedLicenseId());
+        license.setHeader(transientLicense.getHeader());
+        license.setOsiApproved(transientLicense.isOsiApproved());
+        license.setLicenseId(transientLicense.getLicenseId());
+        license.setName(transientLicense.getName());
+        license.setTemplate(transientLicense.getTemplate());
+        license.setText(transientLicense.getText());
+        pm.makePersistent(license);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(License.class, license.getId());
     }
 
     public void bind(Scan scan, Component component) {

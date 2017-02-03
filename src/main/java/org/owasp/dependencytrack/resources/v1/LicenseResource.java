@@ -45,7 +45,7 @@ public class LicenseResource extends BaseResource {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success")
     })
-    public Response getTeams() {
+    public Response getLicenses() {
         try (QueryManager qm = new QueryManager()) {
             List<License> licenses = qm.getLicenses();
             return Response.ok(licenses).build();

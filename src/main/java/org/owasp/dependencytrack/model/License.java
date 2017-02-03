@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.owasp.dependencytrack.parser.common.TrimmedStringDeserializer;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -90,6 +91,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "LICENSEID")
+    @Index(name="LICENSE_LICENSEID_IDX")
     @JsonProperty(value = "licenseId")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String licenseId;

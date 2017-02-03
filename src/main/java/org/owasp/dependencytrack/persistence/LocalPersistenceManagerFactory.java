@@ -50,6 +50,10 @@ public class LocalPersistenceManagerFactory implements ServletContextListener {
 
     public void contextInitialized(ServletContextEvent event) {
         pmf = JDOHelper.getPersistenceManagerFactory("DependencyTrack");
+
+        // Create default objects if necessary
+        DefaultObjectGenerator dog = new DefaultObjectGenerator();
+        dog.initialize();
     }
 
     public void contextDestroyed(ServletContextEvent event) {

@@ -46,6 +46,11 @@ public class LdapSyncTask implements Subscriber {
     private static final String attributeMail = Config.getInstance().getProperty(Config.Key.LDAP_ATTRIBUTE_MAIL);
 
     public void inform(Event e) {
+
+        if (StringUtils.isBlank(ldapUrl)) {
+            return;
+        }
+
         if (e instanceof LdapSyncEvent) {
             logger.info("Starting LDAP synchronization task");
             LdapSyncEvent event = (LdapSyncEvent) e;

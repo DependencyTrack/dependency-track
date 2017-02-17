@@ -33,7 +33,7 @@ Post: [owasp_dependency_track_project@lists.owasp.org] [post]
 Copyright & License
 -
 
-Dependency-Track is Copyright (c) Axway. All Rights Reserved.
+Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the GPLv3
 license. See the [LICENSE.txt] [GPLv3] file for the full license.
@@ -48,4 +48,3 @@ the [NOTICES.txt] [notices] file for more information.
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt
   [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine
-  [axway]: http://www.axway.com

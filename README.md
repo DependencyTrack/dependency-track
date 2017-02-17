@@ -21,6 +21,7 @@ components with known vulnerabilities. Dependency-Track aims to document the
 usage of all components, the vendors, libraires, versions and licenses used
 and provide visibility into the use of vulnerable components.
 
+Dependency-Track is built on top of [Alpine].
 
 Mailing List
 -
@@ -46,4 +47,5 @@ the [NOTICES.txt] [notices] file for more information.
   [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt
   [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt
+  [Alpine]: https://github.com/stevespringett/Alpine
   [axway]: http://www.axway.com

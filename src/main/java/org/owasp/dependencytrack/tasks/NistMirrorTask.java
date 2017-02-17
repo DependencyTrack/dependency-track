@@ -110,9 +110,9 @@ public class NistMirrorTask implements Subscriber {
         boolean success = false;
 
         Proxy proxy = Proxy.NO_PROXY;
-        final String proxyAddr = Config.getInstance().getProperty(Config.Key.HTTP_PROXY_ADDRESS);
+        final String proxyAddr = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS);
         if (StringUtils.isNotBlank(proxyAddr)) {
-            final Integer proxyPort = Config.getInstance().getPropertyAsInt(Config.Key.HTTP_PROXY_PORT);
+            final Integer proxyPort = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
             proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyAddr, proxyPort));
         }
 

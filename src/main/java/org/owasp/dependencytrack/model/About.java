@@ -30,9 +30,9 @@ public class About implements Serializable {
         Settings.initialize();
     }
 
-    private static final String application = Config.getInstance().getProperty(Config.Key.APPLICATION_NAME);
-    private static final String version = Config.getInstance().getProperty(Config.Key.APPLICATION_VERSION);
-    private static final String timestamp = Config.getInstance().getProperty(Config.Key.APPLICATION_TIMESTAMP);
+    private static final String application = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_NAME);
+    private static final String version = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_VERSION);
+    private static final String timestamp = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_TIMESTAMP);
     private static final String dcApplication = Settings.getString(Settings.KEYS.APPLICATION_NAME);
     private static final String dcVersion = Settings.getString(Settings.KEYS.APPLICATION_VERSION);
 

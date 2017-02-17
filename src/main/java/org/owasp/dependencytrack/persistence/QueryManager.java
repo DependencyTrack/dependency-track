@@ -30,7 +30,7 @@ import java.util.UUID;
 
 public class QueryManager extends AlpineQueryManager {
 
-    private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.Key.ENFORCE_AUTHORIZATION);
+    private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
 
     public Project createProject(String name) {
         Project project = new Project();

@@ -16,21 +16,28 @@
  */
 package org.owasp.dependencytrack.persistence;
 
-import org.owasp.dependencytrack.logging.Logger;
+import alpine.auth.PasswordService;
+import alpine.logging.Logger;
+import alpine.model.ManagedUser;
+import alpine.model.Team;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-public class DefaultObjectGenerator {
+public class DefaultObjectGenerator implements ServletContextListener {
 
     private static final Logger logger = Logger.getLogger(DefaultObjectGenerator.class);
 
-    DefaultObjectGenerator() {}
-
-    public void initialize() {
+    public void contextInitialized(ServletContextEvent event) {
         loadDefaultLicenses();
+        loadDefaultPersonas();
+    }
+
+    public void contextDestroyed(ServletContextEvent event) {
     }
 
     /**
@@ -55,6 +62,21 @@ public class DefaultObjectGenerator {
                 logger.error("An error occurred during the parsing SPDX license definitions.");
                 logger.error(e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Loads the default users and teams
+     */
+    private void loadDefaultPersonas() {
+        try (QueryManager qm = new QueryManager()) {
+            if (qm.getManagedUsers().size() > 0 && qm.getTeams().size() > 0) {
+                return;
+            }
+            logger.info("Adding default users and teams to datastore.");
+            ManagedUser admin = qm.createManagedUser("admin", new String(PasswordService.createHash("admin".toCharArray())));
+            Team defaultTeam = qm.createTeam("Default Team", true);
+            qm.addUserToTeam(admin, defaultTeam);
         }
     }
 

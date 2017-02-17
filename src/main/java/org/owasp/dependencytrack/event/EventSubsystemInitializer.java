@@ -16,10 +16,12 @@
  */
 package org.owasp.dependencytrack.event;
 
-import org.owasp.dependencytrack.event.framework.EventService;
+import alpine.event.LdapSyncEvent;
+import alpine.event.framework.EventService;
+import alpine.tasks.LdapSyncTask;
+import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.tasks.NistMirrorTask;
 import org.owasp.dependencytrack.tasks.ScanModeler;
-import org.owasp.dependencytrack.tasks.LdapSyncTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -28,6 +30,11 @@ public class EventSubsystemInitializer implements ServletContextListener {
 
     // Starts the EventService
     private static final EventService EVENT_SERVICE = EventService.getInstance();
+
+    // Initialize Dependency-Check settings singleton before processing any event
+    static {
+        Settings.initialize();
+    }
 
     public void contextInitialized(ServletContextEvent event) {
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanModeler.class);

@@ -16,22 +16,14 @@
  */
 package org.owasp.dependencytrack.tasks;
 
-import org.owasp.dependencytrack.event.LdapSyncEvent;
+import alpine.event.LdapSyncEvent;
+import alpine.tasks.AlpineTaskScheduler;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
-import org.owasp.dependencytrack.event.framework.Event;
-import org.owasp.dependencytrack.event.framework.EventService;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class TaskScheduler {
+public class TaskScheduler extends AlpineTaskScheduler {
 
     // Holds an instance of TaskScheduler
     private static final TaskScheduler instance = new TaskScheduler();
-
-    // Holds a list of all timers created during construction
-    private List<Timer> timers = new ArrayList<>();
 
     private TaskScheduler() {
 
@@ -48,31 +40,6 @@ public class TaskScheduler {
      */
     public static TaskScheduler getInstance() {
         return instance;
-    }
-
-    private void scheduleEvent(Event event, long delay, long period) {
-        Timer timer = new Timer();
-        timer.schedule(new ScheduleEvent().event(event), delay, period);
-        timers.add(timer);
-    }
-
-    private class ScheduleEvent extends TimerTask {
-        private Event event;
-
-        public ScheduleEvent event(Event event) {
-            this.event = event;
-            return this;
-        }
-
-        public synchronized void run() {
-            EventService.getInstance().publish(event);
-        }
-    }
-
-    public void shutdown() {
-        for (Timer timer: timers) {
-            timer.cancel();
-        }
     }
 
 }

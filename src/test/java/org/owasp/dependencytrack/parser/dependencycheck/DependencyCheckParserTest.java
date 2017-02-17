@@ -16,10 +16,10 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck;
 
+import alpine.Config;
 import org.junit.Assert;
 import org.junit.Test;
 import org.owasp.dependencytrack.BaseTest;
-import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Scan;

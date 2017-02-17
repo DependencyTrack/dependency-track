@@ -16,15 +16,16 @@
  */
 package org.owasp.dependencytrack.resources.v1;
 
+import alpine.auth.Permission;
+import alpine.auth.PermissionRequired;
+import alpine.model.ApiKey;
+import alpine.model.Team;
+import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.owasp.dependencytrack.auth.Permission;
-import org.owasp.dependencytrack.auth.PermissionRequired;
-import org.owasp.dependencytrack.model.ApiKey;
-import org.owasp.dependencytrack.model.Team;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -40,7 +41,7 @@ import java.util.List;
 
 @Path("/v1/team")
 @Api(value = "team")
-public class TeamResource extends BaseResource {
+public class TeamResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

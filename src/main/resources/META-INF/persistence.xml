@@ -20,24 +20,21 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd" version="1.0">
 
-    <persistence-unit name="DependencyTrack">
-        <class>org.owasp.dependencytrack.model.ApiKey</class>
+    <persistence-unit name="Alpine">
         <class>org.owasp.dependencytrack.model.Component</class>
         <class>org.owasp.dependencytrack.model.Evidence</class>
-        <class>org.owasp.dependencytrack.model.LdapUser</class>
         <class>org.owasp.dependencytrack.model.License</class>
         <class>org.owasp.dependencytrack.model.Project</class>
         <class>org.owasp.dependencytrack.model.ProjectProperty</class>
         <class>org.owasp.dependencytrack.model.ProjectVersion</class>
         <class>org.owasp.dependencytrack.model.ProjectVersionProperty</class>
         <class>org.owasp.dependencytrack.model.Scan</class>
-        <class>org.owasp.dependencytrack.model.Team</class>
         <class>org.owasp.dependencytrack.model.Vulnerability</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
-            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:~/.dependency-track/db;MVCC=TRUE"/>
+            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:tcp://localhost/~/.dependency-track/db;MVCC=TRUE"/>
             <property name="javax.jdo.option.ConnectionDriverName" value="org.h2.Driver"/>
             <property name="javax.jdo.option.ConnectionUserName" value="sa"/>
             <property name="javax.jdo.option.ConnectionPassword" value=""/>

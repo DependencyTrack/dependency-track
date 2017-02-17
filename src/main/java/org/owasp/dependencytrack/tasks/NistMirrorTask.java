@@ -16,12 +16,12 @@
  */
 package org.owasp.dependencytrack.tasks;
 
+import alpine.Config;
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
+import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
-import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
-import org.owasp.dependencytrack.event.framework.Event;
-import org.owasp.dependencytrack.event.framework.Subscriber;
-import org.owasp.dependencytrack.logging.Logger;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;

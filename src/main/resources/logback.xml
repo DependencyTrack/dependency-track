@@ -4,22 +4,32 @@
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>${user.home}/.dependency-track/dependency-track.log</file>
         <encoder>
-            <pattern>%date %level [%logger{5}] %msg%n</pattern>
+            <pattern>%date [%marker] %level [%logger{0}] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %level [%logger{5}] %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %level [%logger{0}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SECURITY_CONSOLE" class="ch.qos.logback.core.FileAppender">
+        <file>${user.home}/.dependency-track/dependency-track-audit.log</file>
+        <filter class="org.owasp.security.logging.filter.SecurityMarkerFilter"/>
+        <encoder>
+            <pattern>%date [%marker] %level - %msg%n</pattern>
         </encoder>
     </appender>
 
     <logger name="org.owasp" level="INFO" additivity="false">
         <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
     <root level="DEBUG">
         <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
     </root>
 
 </configuration>

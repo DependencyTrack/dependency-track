@@ -16,7 +16,7 @@
  */
 package org.owasp.dependencytrack.event;
 
-import org.owasp.dependencytrack.event.framework.Event;
+import alpine.event.framework.Event;
 import java.io.File;
 
 public class ScanUploadEvent implements Event {

@@ -16,7 +16,7 @@
  */
 package org.owasp.dependencytrack.resources;
 
-import org.owasp.dependencytrack.auth.AuthenticationNotRequired;
+import alpine.auth.AuthenticationNotRequired;
 import org.owasp.dependencytrack.model.About;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

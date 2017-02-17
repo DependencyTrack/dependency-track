@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.resources.v1;
 
+import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -33,7 +34,7 @@ import java.util.List;
 
 @Path("/v1/license")
 @Api(value = "license")
-public class LicenseResource extends BaseResource {
+public class LicenseResource extends AlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

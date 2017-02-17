@@ -16,10 +16,10 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.Config;
 import org.junit.Assert;
 import org.junit.Test;
 import org.owasp.dependencytrack.BaseTest;
-import org.owasp.dependencytrack.Config;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.util.Date;
 import java.util.UUID;

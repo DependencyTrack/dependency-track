@@ -21,32 +21,35 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
 
-<listener>
-    <listener-class>org.owasp.dependencytrack.persistence.LocalPersistenceInitializer</listener-class>
-</listener>
-<listener>
-    <listener-class>org.owasp.dependencytrack.persistence.LocalPersistenceManagerFactory</listener-class>
-</listener>
-<listener>
-    <listener-class>org.owasp.dependencytrack.event.EventSubsystemInitializer</listener-class>
-</listener>
+    <listener>
+        <listener-class>alpine.persistence.PersistenceInitializer</listener-class>
+    </listener>
+    <listener>
+        <listener-class>alpine.persistence.PersistenceManagerFactory</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.owasp.dependencytrack.event.EventSubsystemInitializer</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.owasp.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
+    </listener>
 
-<servlet>
-    <servlet-name>DependencyTrack</servlet-name>
-    <servlet-class>org.owasp.dependencytrack.DependencyTrackServlet</servlet-class>
-    <init-param>
-        <param-name>jersey.config.server.provider.packages</param-name>
-        <param-value>io.swagger.jaxrs.listing,org.owasp.dependencytrack.resources,org.owasp.dependencytrack.filters</param-value>
-    </init-param>
-    <init-param>
-        <param-name>jersey.config.server.provider.classnames</param-name>
-        <param-value>org.glassfish.jersey.media.multipart.MultiPartFeature</param-value>
-    </init-param>
-    <load-on-startup>1</load-on-startup>
-</servlet>
-<servlet-mapping>
-    <servlet-name>DependencyTrack</servlet-name>
-    <url-pattern>/api/*</url-pattern>
-</servlet-mapping>
+    <servlet>
+        <servlet-name>DependencyTrack</servlet-name>
+        <servlet-class>alpine.AlpineServlet</servlet-class>
+        <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name>
+            <param-value>io.swagger.jaxrs.listing,alpine.filters,org.owasp.dependencytrack.resources,org.owasp.dependencytrack.filters</param-value>
+        </init-param>
+        <init-param>
+            <param-name>jersey.config.server.provider.classnames</param-name>
+            <param-value>org.glassfish.jersey.media.multipart.MultiPartFeature</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DependencyTrack</servlet-name>
+        <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
 
 </web-app>

@@ -16,9 +16,9 @@
  */
 package org.owasp.dependencytrack;
 
+import alpine.persistence.PersistenceManagerFactory;
 import org.junit.After;
 import org.junit.Before;
-import org.owasp.dependencytrack.persistence.LocalPersistenceManagerFactory;
 import javax.jdo.PersistenceManager;
 import javax.jdo.datastore.JDOConnection;
 import java.sql.Connection;
@@ -30,7 +30,7 @@ public abstract class BaseTest {
     @After
     @SuppressWarnings("unchecked")
     public void dbReset() throws Exception {
-        PersistenceManager pm = LocalPersistenceManagerFactory.createPersistenceManager();
+        PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager();
         JDOConnection jdoConnection = pm.getDataStoreConnection();
         Connection conn = null;
         Statement stmt = null;

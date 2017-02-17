@@ -16,14 +16,19 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.Config;
 import org.owasp.dependencycheck.utils.Settings;
-import org.owasp.dependencytrack.Config;
-
+import javax.inject.Singleton;
 import java.io.Serializable;
 
+@Singleton
 public class About implements Serializable {
 
     private static final long serialVersionUID = -7573425245706188307L;
+
+    static {
+        Settings.initialize();
+    }
 
     private static final String application = Config.getInstance().getProperty(Config.Key.APPLICATION_NAME);
     private static final String version = Config.getInstance().getProperty(Config.Key.APPLICATION_VERSION);

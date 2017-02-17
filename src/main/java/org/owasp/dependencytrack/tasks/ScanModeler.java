@@ -16,9 +16,9 @@
  */
 package org.owasp.dependencytrack.tasks;
 
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
-import org.owasp.dependencytrack.event.framework.Event;
-import org.owasp.dependencytrack.event.framework.Subscriber;
 import org.owasp.dependencytrack.exception.ParseException;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Project;

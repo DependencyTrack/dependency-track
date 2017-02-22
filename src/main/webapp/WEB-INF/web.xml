@@ -34,6 +34,36 @@
         <listener-class>org.owasp.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
     </listener>
 
+    <filter>
+        <filter-name>ClickjackingFilter</filter-name>
+        <filter-class>alpine.filters.ClickjackingFilter</filter-class>
+        <init-param>
+            <param-name>mode</param-name>
+            <param-value>DENY</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>ClickjackingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>CspFilter</filter-name>
+        <filter-class>alpine.filters.ContentSecurityPolicyFilter</filter-class>
+        <init-param>
+            <param-name>script-src</param-name>
+            <param-value>'self' 'unsafe-inline'</param-value>
+        </init-param>
+        <init-param>
+            <param-name>style-src</param-name>
+            <param-value>'self' 'unsafe-inline'</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CspFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
     <servlet>
         <servlet-name>DependencyTrack</servlet-name>
         <servlet-class>alpine.AlpineServlet</servlet-class>

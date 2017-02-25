@@ -39,9 +39,12 @@ public class ScanModeler implements Subscriber {
         if (event instanceof ScanUploadEvent) {
 
             File file = ((ScanUploadEvent)event).getFile();
+            byte[] scanData = ((ScanUploadEvent)event).getScan();
             QueryManager qm = null;
             try {
-                Analysis analysis = new DependencyCheckParser().parse(file);
+                Analysis analysis = (file != null) ?
+                        new DependencyCheckParser().parse(file) :
+                        new DependencyCheckParser().parse(scanData);
                 qm = new QueryManager();
                 Project project = qm.createProject(analysis.getProjectInfo().getName());
                 Scan scan = qm.createScan(project, new Date(), new Date());

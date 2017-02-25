@@ -22,9 +22,18 @@ import java.io.File;
 public class ScanUploadEvent implements Event {
 
     private File file;
+    private byte[] scan;
+
+    public ScanUploadEvent(byte[] scan) {
+        this.scan = scan;
+    }
 
     public ScanUploadEvent(File file) {
         this.file = file;
+    }
+
+    public byte[] getScan() {
+        return scan;
     }
 
     public File getFile() {

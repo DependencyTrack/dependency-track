@@ -25,11 +25,20 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.stream.StreamSource;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 
 public class DependencyCheckParser {
 
     public Analysis parse(File file) throws ParseException {
+        return parse(new StreamSource(file.getAbsolutePath()));
+    }
+
+    public Analysis parse(byte[] scanData) throws ParseException {
+        return parse(new StreamSource(new ByteArrayInputStream(scanData)));
+    }
+
+    private Analysis parse(StreamSource streamSource) throws ParseException {
         try {
             // Parse the native threat model
             JAXBContext jaxbContext = JAXBContext.newInstance(Analysis.class);
@@ -40,7 +49,7 @@ public class DependencyCheckParser {
             xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
             xif.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, false);
             xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-            XMLStreamReader xsr = xif.createXMLStreamReader(new StreamSource(file.getAbsolutePath()));
+            XMLStreamReader xsr = xif.createXMLStreamReader(streamSource);
 
             return (Analysis)unmarshaller.unmarshal(xsr);
 

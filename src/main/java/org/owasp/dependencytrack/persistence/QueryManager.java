@@ -22,6 +22,9 @@ import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.ProjectProperty;
+import org.owasp.dependencytrack.model.ProjectVersion;
+import org.owasp.dependencytrack.model.ProjectVersionProperty;
 import org.owasp.dependencytrack.model.Scan;
 import javax.jdo.Query;
 import java.util.Date;
@@ -40,6 +43,39 @@ public class QueryManager extends AlpineQueryManager {
         pm.makePersistent(project);
         pm.currentTransaction().commit();
         return pm.getObjectById(Project.class, project.getId());
+    }
+
+    public ProjectProperty createProjectProperty(Project project, String key, String value) {
+        ProjectProperty property = new ProjectProperty();
+        property.setProject(project);
+        property.setKey(key);
+        property.setValue(value);
+        pm.currentTransaction().begin();
+        pm.makePersistent(property);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(ProjectProperty.class, property.getId());
+    }
+
+    public ProjectVersion createProjectVersion(Project project, String version) {
+        ProjectVersion projectVersion = new ProjectVersion();
+        projectVersion.setProject(project);
+        projectVersion.setVersion(version);
+        projectVersion.setUuid(UUID.randomUUID().toString());
+        pm.currentTransaction().begin();
+        pm.makePersistent(projectVersion);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(ProjectVersion.class, projectVersion.getId());
+    }
+
+    public ProjectVersionProperty createProjectVersionProperty(ProjectVersion projectVersion, String key, String value) {
+        ProjectVersionProperty property = new ProjectVersionProperty();
+        property.setProjectVersion(projectVersion);
+        property.setKey(key);
+        property.setValue(value);
+        pm.currentTransaction().begin();
+        pm.makePersistent(property);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(ProjectVersionProperty.class, property.getId());
     }
 
     public Scan createScan(Project project, Date executed, Date imported) {

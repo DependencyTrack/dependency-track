@@ -16,7 +16,6 @@
  */
 package org.owasp.dependencytrack.resources.v1;
 
-import alpine.auth.Permission;
 import alpine.auth.PermissionRequired;
 import alpine.model.ApiKey;
 import alpine.model.Team;
@@ -26,7 +25,9 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -103,7 +104,15 @@ public class TeamResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.MANAGE_TEAMS)
+    //public Response createTeam(String jsonRequest) {
     public Response createTeam(Team jsonTeam) {
+        //Team team = MapperUtil.readAsObjectOf(Team.class, jsonRequest);
+        Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonTeam, "uuid"),
+                validator.validateProperty(jsonTeam, "name")
+        );
+
         try (QueryManager qm = new QueryManager()) {
             Team team = qm.createTeam(jsonTeam.getName(), true);
             return Response.status(Response.Status.CREATED).entity(team).build();

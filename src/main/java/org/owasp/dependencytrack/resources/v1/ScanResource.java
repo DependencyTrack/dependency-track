@@ -23,7 +23,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.datanucleus.util.Base64;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.model.ProjectVersion;
@@ -36,6 +35,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Base64;
 
 @Path("/v1/scan")
 @Api(value = "scan")
@@ -63,7 +63,7 @@ public class ScanResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             ProjectVersion projectVersion = qm.getObjectByUuid(ProjectVersion.class, request.getProjectVersion());
             if (projectVersion != null) {
-                byte[] decodedScan = Base64.decode(request.getScan());
+                byte[] decodedScan = Base64.getDecoder().decode(request.getScan());
                 EventService.getInstance().publish(new ScanUploadEvent(decodedScan));
                 return Response.ok().build();
             } else {

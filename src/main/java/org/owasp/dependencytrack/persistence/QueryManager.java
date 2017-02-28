@@ -35,12 +35,27 @@ public class QueryManager extends AlpineQueryManager {
 
     private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
 
+    @SuppressWarnings("unchecked")
+    public List<Project> getProjects() {
+        Query query = pm.newQuery(Project.class);
+        query.setOrdering("name asc");
+        return (List<Project>)query.execute();
+    }
+
     public Project createProject(String name) {
         Project project = new Project();
         project.setName(name);
         project.setUuid(UUID.randomUUID().toString());
         pm.currentTransaction().begin();
         pm.makePersistent(project);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(Project.class, project.getId());
+    }
+
+    public Project updateProject(Project transientProject) {
+        Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+        pm.currentTransaction().begin();
+        project.setName(transientProject.getName());
         pm.currentTransaction().commit();
         return pm.getObjectById(Project.class, project.getId());
     }
@@ -65,6 +80,14 @@ public class QueryManager extends AlpineQueryManager {
         pm.makePersistent(projectVersion);
         pm.currentTransaction().commit();
         return pm.getObjectById(ProjectVersion.class, projectVersion.getId());
+    }
+
+    public ProjectVersion updateProjectVersion(ProjectVersion transientVersion) {
+        ProjectVersion version = getObjectByUuid(ProjectVersion.class, transientVersion.getUuid());
+        pm.currentTransaction().begin();
+        version.setVersion(transientVersion.getVersion());
+        pm.currentTransaction().commit();
+        return pm.getObjectById(ProjectVersion.class, version.getId());
     }
 
     public ProjectVersionProperty createProjectVersionProperty(ProjectVersion projectVersion, String key, String value) {

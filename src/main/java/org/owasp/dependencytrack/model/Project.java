@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
@@ -30,10 +32,22 @@ import java.io.Serializable;
 import java.util.List;
 
 @PersistenceCapable
+@FetchGroups({
+        @FetchGroup(name="ALL", members={
+                @Persistent(name="name"),
+                @Persistent(name="uuid"),
+                @Persistent(name="projectVersions"),
+                @Persistent(name="properties")
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project implements Serializable {
 
     private static final long serialVersionUID = -7592438796591673355L;
+
+    public enum FetchGroup {
+        ALL
+    }
 
     @PrimaryKey
     @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)

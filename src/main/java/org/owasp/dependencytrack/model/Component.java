@@ -103,7 +103,7 @@ public class Component implements Serializable {
 
     @Persistent
     @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
-    List<Scan> scans;
+    private List<Scan> scans;
 
     @Persistent
     @Unique(name="COMPONENT_UUID_IDX")

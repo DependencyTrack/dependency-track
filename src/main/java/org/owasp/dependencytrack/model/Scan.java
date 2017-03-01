@@ -59,7 +59,7 @@ public class Scan implements Serializable {
     @Join(column="SCAN_ID")
     @Element(column="COMPONENT_ID")
     @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
-    List<Component> components;
+    private List<Component> components;
 
     @Persistent
     @Unique(name="SCAN_UUID_IDX")

@@ -143,6 +143,7 @@ public class ProjectResource extends AlpineResource {
     }
 
     @DELETE
+    @Path("/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -155,9 +156,11 @@ public class ProjectResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
-    public Response deleteProject(Project jsonProject) {
+    public Response deleteProject(
+            @ApiParam(value = "The UUID of the project to delete", required = true)
+            @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid(), Project.FetchGroup.ALL.name());
+            Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
                 qm.delete(project.getProjectVersions());
                 qm.delete(project.getProperties());

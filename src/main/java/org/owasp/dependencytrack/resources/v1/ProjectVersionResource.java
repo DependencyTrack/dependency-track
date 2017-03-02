@@ -16,7 +16,6 @@
  */
 package org.owasp.dependencytrack.resources.v1;
 
-
 import alpine.auth.PermissionRequired;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -46,7 +45,7 @@ import java.util.List;
 public class ProjectVersionResource extends AlpineResource {
 
     @GET
-    @Path("/{uuid}")
+    @Path("/{uuid}/versions")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all project versions for the specified project",
@@ -147,12 +146,12 @@ public class ProjectVersionResource extends AlpineResource {
     }
 
     @POST
-    @Path("/version/{uuid}")
+    @Path("/version")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a project version",
-            notes = "Requires 'manage project' permission.",
+            notes = "Requires 'manage project' permission",
             response = ProjectVersion.class
     )
     @ApiResponses(value = {
@@ -188,9 +187,11 @@ public class ProjectVersionResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The UUID of the project version could not be found")
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
-    public Response deleteProjectVersion(ProjectVersion jsonVersion) {
+    public Response deleteProjectVersion(
+            @ApiParam(value = "The UUID of the project version to delete", required = true)
+            @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            ProjectVersion version = qm.getObjectByUuid(ProjectVersion.class, jsonVersion.getUuid(), Project.FetchGroup.ALL.name());
+            ProjectVersion version = qm.getObjectByUuid(ProjectVersion.class, uuid, Project.FetchGroup.ALL.name());
             if (version != null) {
                 qm.delete(version.getProperties());
                 qm.delete(version);

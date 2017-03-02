@@ -162,7 +162,7 @@ public class TeamResource extends AlpineResource {
     @PermissionRequired(Permission.MANAGE_TEAMS)
     public Response deleteTeam(Team jsonTeam) {
         try (QueryManager qm = new QueryManager()) {
-            Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.getName());
+            Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
             if (team != null) {
                 qm.delete(team.getApiKeys());
                 qm.delete(team);

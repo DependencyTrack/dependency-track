@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectVersion;
@@ -41,7 +42,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/project")
-@Api(value = "projectversion")
+@Api(value = "projectversion", authorizations = @Authorization(value="X-Api-Key"))
 public class ProjectVersionResource extends AlpineResource {
 
     @GET
@@ -85,7 +86,7 @@ public class ProjectVersionResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project version could not be found")
     })
     @PermissionRequired(Permission.PROJECT_VIEW)
-    public Response getProject(
+    public Response getProjectVersion(
             @ApiParam(value = "The UUID of the project version to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {

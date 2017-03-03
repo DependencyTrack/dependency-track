@@ -28,6 +28,7 @@ import alpine.resources.AlpineResource;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.IdentifiableObject;
@@ -51,7 +52,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Path("/v1/user")
-@Api(value = "user")
+@Api(value = "user", authorizations = @Authorization(value="X-Api-Key"))
 public class UserResource extends AlpineResource {
 
     private static final Logger logger = Logger.getLogger(UserResource.class);

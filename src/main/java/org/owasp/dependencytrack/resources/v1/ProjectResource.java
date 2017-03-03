@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -41,7 +42,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/project")
-@Api(value = "project")
+@Api(value = "project", authorizations = @Authorization(value="X-Api-Key"))
 public class ProjectResource extends AlpineResource {
 
     @GET

@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.GET;
@@ -33,7 +34,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/license")
-@Api(value = "license")
+@Api(value = "license", authorizations = @Authorization(value="X-Api-Key"))
 public class LicenseResource extends AlpineResource {
 
     @GET

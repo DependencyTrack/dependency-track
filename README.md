@@ -5,6 +5,9 @@
 Dependency-Track
 =========
 
+
+<img src="https://stevespringett.github.io/dependency-track/images/dt.svg" width="300" align="right">
+
 This is the development branch of v3.0, the next generation of Dependency-Track, 
 written from the ground-up, using an API-first design, modern technologies, and
 without many of the limitations of the previous versions. Version 3 is not 

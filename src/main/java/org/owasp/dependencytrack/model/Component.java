@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
@@ -27,6 +28,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -72,11 +74,13 @@ public class Component implements Serializable {
     @Persistent
     @Index(name="COMPONENT_MD5_IDX")
     @Column(name="MD5", jdbcType="VARCHAR", length=32)
+    @Pattern(regexp = RegexSequence.Definition.HASH_MD5, message = "The MD5 hash must be a valid 32 character HEX number")
     private String md5;
 
     @Persistent
     @Index(name="COMPONENT_SHA1_IDX")
     @Column(name="SHA1", jdbcType="VARCHAR", length=40)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA1, message = "The SHA1 hash must be a valid 40 character HEX number")
     private String sha1;
 
     @Persistent
@@ -103,6 +107,7 @@ public class Component implements Serializable {
 
     @Persistent
     @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
+    @JsonIgnore
     private List<Scan> scans;
 
     @Persistent

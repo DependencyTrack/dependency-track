@@ -113,6 +113,20 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Scan.class, scan.getId());
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Component> getComponents() {
+        Query query = pm.newQuery(Component.class);
+        query.setOrdering("name asc");
+        return (List<Component>)query.execute();
+    }
+
+    @SuppressWarnings("unchecked")
+    public Component getComponentByHash(String hash) {
+        Query query = pm.newQuery(Component.class, "md5 == :hash || sha1 == :hash");
+        List<Component> result = (List<Component>)query.execute(hash);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
     public Component createComponent(String name, String filename, String md5, String sha1,
                                      String description, String license, Component parent) {
         Component component = new Component();

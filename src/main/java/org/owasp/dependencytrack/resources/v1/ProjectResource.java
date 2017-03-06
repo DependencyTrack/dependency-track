@@ -53,7 +53,6 @@ public class ProjectResource extends AlpineResource {
             responseContainer = "List"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.PROJECT_VIEW)
@@ -72,7 +71,6 @@ public class ProjectResource extends AlpineResource {
             response = Project.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
@@ -96,10 +94,10 @@ public class ProjectResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new project",
             notes = "Requires 'manage project' permission.",
-            response = Project.class
+            response = Project.class,
+            code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
@@ -125,7 +123,6 @@ public class ProjectResource extends AlpineResource {
             response = Project.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })
@@ -149,10 +146,10 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a project",
-            notes = "Requires 'manage project' permission."
+            notes = "Requires 'manage project' permission.",
+            code = 204
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })

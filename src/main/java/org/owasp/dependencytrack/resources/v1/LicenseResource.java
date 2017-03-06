@@ -45,7 +45,7 @@ public class LicenseResource extends AlpineResource {
             responseContainer = "List"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success")
+            @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getLicenses() {
         try (QueryManager qm = new QueryManager()) {
@@ -62,7 +62,7 @@ public class LicenseResource extends AlpineResource {
             response = License.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The license could not be found")
     })
     public Response getLicense(

@@ -66,7 +66,6 @@ public class UserResource extends AlpineResource {
             response = String.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @AuthenticationNotRequired
@@ -96,7 +95,6 @@ public class UserResource extends AlpineResource {
             responseContainer = "List"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.MANAGE_USERS)
@@ -115,7 +113,7 @@ public class UserResource extends AlpineResource {
             response = LdapUser.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getSelf() {
         try (QueryManager qm = new QueryManager()) {
@@ -130,10 +128,10 @@ public class UserResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new user that references an existing LDAP object.",
             notes = "Requires 'manage users' permission.",
-            response = LdapUser.class
+            response = LdapUser.class,
+            code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 400, message = "Username cannot be null or blank."),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 409, message = "A user with the same username already exists. Cannot create new user")
@@ -159,10 +157,10 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a user.",
-            notes = "Requires 'manage users' permission."
+            notes = "Requires 'manage users' permission.",
+            code = 204
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user could not be found")
     })
@@ -189,7 +187,6 @@ public class UserResource extends AlpineResource {
             response = LdapUser.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 304, message = "The user is already a member of the specified team"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user or team could not be found")
@@ -229,7 +226,6 @@ public class UserResource extends AlpineResource {
             response = LdapUser.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 304, message = "The user was not a member of the specified team"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user or team could not be found")

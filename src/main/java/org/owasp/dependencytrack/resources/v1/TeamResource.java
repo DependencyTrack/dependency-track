@@ -54,7 +54,6 @@ public class TeamResource extends AlpineResource {
             responseContainer = "List"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.MANAGE_TEAMS)
@@ -74,7 +73,6 @@ public class TeamResource extends AlpineResource {
             response = Team.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user could not be found")
     })
@@ -98,10 +96,10 @@ public class TeamResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new team along with an associated API key",
             notes = "Requires 'manage teams' permission.",
-            response = Team.class
+            response = Team.class,
+            code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.MANAGE_TEAMS)
@@ -129,7 +127,6 @@ public class TeamResource extends AlpineResource {
             response = Team.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the team could not be found")
     })
@@ -153,10 +150,10 @@ public class TeamResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a team",
-            notes = "Requires 'manage teams' permission."
+            notes = "Requires 'manage teams' permission.",
+            code = 204
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the team could not be found")
     })
@@ -180,10 +177,10 @@ public class TeamResource extends AlpineResource {
     @ApiOperation(
             value = "Generates an API key and returns its value",
             notes = "Requires 'manage api keys' permission.",
-            response = ApiKey.class
+            response = ApiKey.class,
+            code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the team could not be found")
     })
@@ -211,7 +208,6 @@ public class TeamResource extends AlpineResource {
             response = ApiKey.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The API key could not be found")
     })
@@ -234,10 +230,10 @@ public class TeamResource extends AlpineResource {
     @Path("/key/{apikey}")
     @ApiOperation(
             value = "Deletes the specified API key",
-            notes = "Requires 'manage api keys' permission."
+            notes = "Requires 'manage api keys' permission.",
+            code = 204
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The API key could not be found")
     })

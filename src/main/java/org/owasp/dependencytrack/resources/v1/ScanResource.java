@@ -50,7 +50,6 @@ public class ScanResource extends AlpineResource {
             notes = "Expects one or more dependency-check-report.xml schema version 1.3 or higher, and a valid project version UUID"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The projectVersion could not be found")
     })

@@ -54,7 +54,6 @@ public class ProjectVersionResource extends AlpineResource {
             responseContainer = "List"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
@@ -81,7 +80,6 @@ public class ProjectVersionResource extends AlpineResource {
             response = ProjectVersion.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project version could not be found")
     })
@@ -106,10 +104,10 @@ public class ProjectVersionResource extends AlpineResource {
     @ApiOperation(
             value = "Creates a new project version",
             notes = "Requires 'manage project' permission.",
-            response = ProjectVersion.class
+            response = ProjectVersion.class,
+            code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found"),
             @ApiResponse(code = 409, message = "A project with the same version already exists")
@@ -156,7 +154,6 @@ public class ProjectVersionResource extends AlpineResource {
             response = ProjectVersion.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the project version could not be found")
     })
@@ -180,10 +177,10 @@ public class ProjectVersionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a project version",
-            notes = "Requires 'manage project' permission."
+            notes = "Requires 'manage project' permission.",
+            code = 204
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "Success"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the project version could not be found")
     })

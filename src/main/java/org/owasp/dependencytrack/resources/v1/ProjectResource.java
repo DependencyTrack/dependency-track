@@ -57,7 +57,7 @@ public class ProjectResource extends AlpineResource {
     })
     @PermissionRequired(Permission.PROJECT_VIEW)
     public Response getProjects() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             List<Project> projects = qm.getProjects();
             return Response.ok(projects).build();
         }

@@ -18,6 +18,7 @@ package org.owasp.dependencytrack.persistence;
 
 import alpine.Config;
 import alpine.persistence.AlpineQueryManager;
+import alpine.resources.AlpineRequest;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.License;
@@ -35,11 +36,23 @@ public class QueryManager extends AlpineQueryManager {
 
     private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
 
+    /**
+     * Default constructor
+     */
+    public QueryManager() { }
+
+    /**
+     * Constructs a new QueryManager
+     */
+    public QueryManager(final AlpineRequest request) {
+        super(request);
+    }
+
     @SuppressWarnings("unchecked")
     public List<Project> getProjects() {
         Query query = pm.newQuery(Project.class);
         query.setOrdering("name asc");
-        return (List<Project>)query.execute();
+        return (List<Project>)execute(query);
     }
 
     public Project createProject(String name) {
@@ -117,7 +130,7 @@ public class QueryManager extends AlpineQueryManager {
     public List<Component> getComponents() {
         Query query = pm.newQuery(Component.class);
         query.setOrdering("name asc");
-        return (List<Component>)query.execute();
+        return (List<Component>)execute(query);
     }
 
     @SuppressWarnings("unchecked")
@@ -164,7 +177,7 @@ public class QueryManager extends AlpineQueryManager {
     public List<License> getLicenses() {
         Query query = pm.newQuery(License.class);
         query.setOrdering("name asc");
-        return (List<License>)query.execute();
+        return (List<License>)execute(query);
     }
 
     @SuppressWarnings("unchecked")

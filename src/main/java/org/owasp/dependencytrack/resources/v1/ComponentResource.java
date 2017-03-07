@@ -29,6 +29,8 @@ import io.swagger.annotations.Authorization;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.persistence.QueryManager;
+
+import javax.management.Query;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,7 +55,7 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permission.COMPONENT_VIEW)
     public Response getAllComponents() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             List<Component> components = qm.getComponents();
             return Response.ok(components).build();
         }

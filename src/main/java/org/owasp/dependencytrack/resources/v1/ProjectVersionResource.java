@@ -61,7 +61,7 @@ public class ProjectVersionResource extends AlpineResource {
     public Response getProjectVersions(
             @ApiParam(value = "The UUID of the project to retrieve project versions for", required = true)
             @PathParam("uuid") String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
                 List<ProjectVersion> versions = project.getProjectVersions();

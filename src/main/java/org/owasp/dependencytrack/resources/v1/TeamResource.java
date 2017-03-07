@@ -58,7 +58,7 @@ public class TeamResource extends AlpineResource {
     })
     @PermissionRequired(Permission.MANAGE_TEAMS)
     public Response getTeams() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             List<Team> teams = qm.getTeams();
             return Response.ok(teams).build();
         }

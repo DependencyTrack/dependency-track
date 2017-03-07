@@ -48,7 +48,7 @@ public class LicenseResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getLicenses() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             List<License> licenses = qm.getLicenses();
             return Response.ok(licenses).build();
         }

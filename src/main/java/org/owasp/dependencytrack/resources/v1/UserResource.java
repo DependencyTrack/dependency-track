@@ -99,7 +99,7 @@ public class UserResource extends AlpineResource {
     })
     @PermissionRequired(Permission.MANAGE_USERS)
     public Response getUsers() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             List<LdapUser> users = qm.getLdapUsers();
             return Response.ok(users).build();
         }

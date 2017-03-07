@@ -29,8 +29,6 @@ import io.swagger.annotations.Authorization;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.persistence.QueryManager;
-
-import javax.management.Query;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;

@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectVersion;
@@ -51,7 +52,8 @@ public class ProjectVersionResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all project versions for the specified project",
             response = ProjectVersion.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of versions of this project")
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -65,7 +67,8 @@ public class ProjectVersionResource extends AlpineResource {
             Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
                 List<ProjectVersion> versions = project.getProjectVersions();
-                return Response.ok(versions).build();
+                long totalCount = versions.size(); // todo: change this to retrieve projectVersions from querymanager rather than object
+                return Response.ok(versions).header(TOTAL_COUNT_HEADER, totalCount).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }

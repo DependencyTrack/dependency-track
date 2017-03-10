@@ -26,6 +26,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -46,7 +47,8 @@ public class ComponentResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all components",
             response = Component.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of components")
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -54,8 +56,9 @@ public class ComponentResource extends AlpineResource {
     @PermissionRequired(Permission.COMPONENT_VIEW)
     public Response getAllComponents() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            long totalCount = qm.getCount(Component.class);
             List<Component> components = qm.getComponents();
-            return Response.ok(components).build();
+            return Response.ok(components).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
 

@@ -23,12 +23,14 @@ import alpine.auth.KeyManager;
 import alpine.auth.PermissionRequired;
 import alpine.logging.Logger;
 import alpine.model.LdapUser;
+import alpine.model.ManagedUser;
 import alpine.model.Team;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.IdentifiableObject;
@@ -87,21 +89,46 @@ public class UserResource extends AlpineResource {
     }
 
     @GET
+    @Path("managed")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns a list of all users",
+            value = "Returns a list of all managed users",
             notes = "Requires 'manage users' permission.",
             response = LdapUser.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of managed users")
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.MANAGE_USERS)
-    public Response getUsers() {
+    public Response getManagedUsers() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            long totalCount = qm.getCount(ManagedUser.class);
+            List<ManagedUser> users = qm.getManagedUsers();
+            return Response.ok(users).header(TOTAL_COUNT_HEADER, totalCount).build();
+        }
+    }
+
+    @GET
+    @Path("ldap")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all LDAP users",
+            notes = "Requires 'manage users' permission.",
+            response = LdapUser.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of LDAP users")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permission.MANAGE_USERS)
+    public Response getLdapUsers() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            long totalCount = qm.getCount(LdapUser.class);
             List<LdapUser> users = qm.getLdapUsers();
-            return Response.ok(users).build();
+            return Response.ok(users).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
 

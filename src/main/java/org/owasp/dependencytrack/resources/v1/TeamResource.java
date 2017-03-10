@@ -26,6 +26,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
@@ -51,7 +52,8 @@ public class TeamResource extends AlpineResource {
             value = "Returns a list of all teams",
             notes = "Requires 'manage teams' permission.",
             response = Team.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of teams")
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -59,8 +61,9 @@ public class TeamResource extends AlpineResource {
     @PermissionRequired(Permission.MANAGE_TEAMS)
     public Response getTeams() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            long totalCount = qm.getCount(Team.class);
             List<Team> teams = qm.getTeams();
-            return Response.ok(teams).build();
+            return Response.ok(teams).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
 

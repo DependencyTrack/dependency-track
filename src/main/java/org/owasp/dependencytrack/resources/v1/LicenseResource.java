@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.GET;
@@ -42,15 +43,17 @@ public class LicenseResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all licenses",
             response = License.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of licenses")
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getLicenses() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            long totalLicenses = qm.getCount(License.class);
             List<License> licenses = qm.getLicenses();
-            return Response.ok(licenses).build();
+            return Response.ok(licenses).header(TOTAL_COUNT_HEADER, totalLicenses).build();
         }
     }
 

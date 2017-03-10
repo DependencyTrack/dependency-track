@@ -25,6 +25,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -50,7 +51,8 @@ public class ProjectResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all projects",
             response = Project.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -58,8 +60,9 @@ public class ProjectResource extends AlpineResource {
     @PermissionRequired(Permission.PROJECT_VIEW)
     public Response getProjects() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            long totalCount = qm.getCount(Project.class);
             List<Project> projects = qm.getProjects();
-            return Response.ok(projects).build();
+            return Response.ok(projects).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
 

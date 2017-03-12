@@ -31,7 +31,7 @@ public class DataSource extends BaseObject {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = cleanAndTrim(name);
+        this.name = normalize(name);
     }
 
     public String getTimestamp() {
@@ -40,6 +40,6 @@ public class DataSource extends BaseObject {
 
     @XmlElement(name = "timestamp")
     public void setTimestamp(String timestamp) {
-        this.timestamp = cleanAndTrim(timestamp);
+        this.timestamp = normalize(timestamp);
     }
 }

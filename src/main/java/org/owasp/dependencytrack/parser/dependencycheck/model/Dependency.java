@@ -40,7 +40,7 @@ public class Dependency extends BaseObject {
 
     @XmlElement(name = "fileName")
     public void setFileName(String fileName) {
-        this.fileName = trim(fileName);
+        this.fileName = normalize(fileName);
     }
 
     public String getFilePath() {
@@ -49,7 +49,7 @@ public class Dependency extends BaseObject {
 
     @XmlElement(name = "filePath")
     public void setFilePath(String filePath) {
-        this.filePath = trim(filePath);
+        this.filePath = normalize(filePath);
     }
 
     public String getMd5() {
@@ -58,7 +58,7 @@ public class Dependency extends BaseObject {
 
     @XmlElement(name = "md5")
     public void setMd5(String md5) {
-        this.md5 = trim(md5);
+        this.md5 = normalize(md5);
     }
 
     public String getSha1() {
@@ -67,7 +67,7 @@ public class Dependency extends BaseObject {
 
     @XmlElement(name = "sha1")
     public void setSha1(String sha1) {
-        this.sha1 = trim(sha1);
+        this.sha1 = normalize(sha1);
     }
 
     public String getDescription() {
@@ -76,7 +76,7 @@ public class Dependency extends BaseObject {
 
     @XmlElement(name = "description")
     public void setDescription(String description) {
-        this.description = cleanAndTrim(description);
+        this.description = normalize(description);
     }
 
     public String getLicense() {
@@ -85,7 +85,7 @@ public class Dependency extends BaseObject {
 
     @XmlElement(name = "license")
     public void setLicense(String license) {
-        this.license = trim(license);
+        this.license = normalize(license);
     }
 
     public List<Evidence> getEvidenceCollected() {

@@ -37,7 +37,7 @@ public class Evidence extends BaseObject {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = cleanAndTrim(type);
+        this.type = normalize(type);
     }
 
     public String getConfidence() {
@@ -50,7 +50,7 @@ public class Evidence extends BaseObject {
 
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = cleanAndTrim(confidence);
+        this.confidence = normalize(confidence);
     }
 
     public String getSource() {
@@ -59,7 +59,7 @@ public class Evidence extends BaseObject {
 
     @XmlElement(name = "source")
     public void setSource(String source) {
-        this.source = cleanAndTrim(source);
+        this.source = normalize(source);
     }
 
     public String getName() {
@@ -68,7 +68,7 @@ public class Evidence extends BaseObject {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = cleanAndTrim(name);
+        this.name = normalize(name);
     }
 
     public String getValue() {
@@ -77,6 +77,6 @@ public class Evidence extends BaseObject {
 
     @XmlElement(name = "value")
     public void setValue(String value) {
-        this.value = cleanAndTrim(value);
+        this.value = normalize(value);
     }
 }

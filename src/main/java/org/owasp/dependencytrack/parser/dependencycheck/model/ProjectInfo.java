@@ -32,7 +32,7 @@ public class ProjectInfo extends BaseObject {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = cleanAndTrim(name);
+        this.name = normalize(name);
     }
 
     public String getReportDate() {
@@ -41,7 +41,7 @@ public class ProjectInfo extends BaseObject {
 
     @XmlElement(name = "reportDate")
     public void setReportDate(String reportDate) {
-        this.reportDate = cleanAndTrim(reportDate);
+        this.reportDate = normalize(reportDate);
     }
 
     public String getCredits() {
@@ -50,6 +50,6 @@ public class ProjectInfo extends BaseObject {
 
     @XmlElement(name = "credits")
     public void setCredits(String credits) {
-        this.credits = cleanAndTrim(credits);
+        this.credits = normalize(credits);
     }
 }

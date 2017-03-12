@@ -34,7 +34,7 @@ public class Identifier extends BaseObject {
 
     @XmlAttribute(name = "type")
     public void setType(String type) {
-        this.type = cleanAndTrim(type);
+        this.type = normalize(type);
     }
 
     public String getConfidence() {
@@ -43,7 +43,7 @@ public class Identifier extends BaseObject {
 
     @XmlAttribute(name = "confidence")
     public void setConfidence(String confidence) {
-        this.confidence = cleanAndTrim(confidence);
+        this.confidence = normalize(confidence);
     }
 
     public String getName() {
@@ -52,7 +52,7 @@ public class Identifier extends BaseObject {
 
     @XmlElement(name = "name")
     public void setName(String name) {
-        this.name = cleanAndTrim(name);
+        this.name = normalize(name);
     }
 
     public String getUrl() {
@@ -61,6 +61,6 @@ public class Identifier extends BaseObject {
 
     @XmlElement(name = "url")
     public void setUrl(String url) {
-        this.url = cleanAndTrim(url);
+        this.url = normalize(url);
     }
 }

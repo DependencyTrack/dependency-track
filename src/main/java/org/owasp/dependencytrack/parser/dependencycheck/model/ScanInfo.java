@@ -33,7 +33,7 @@ public class ScanInfo extends BaseObject {
 
     @XmlElement(name = "engineVersion")
     public void setEngineVersion(String engineVersion) {
-        this.engineVersion = cleanAndTrim(engineVersion);
+        this.engineVersion = normalize(engineVersion);
     }
 
     public List<DataSource> getDataSources() {

@@ -21,16 +21,16 @@ import org.owasp.dependencycheck.dependency.Confidence;
 
 public abstract class BaseObject {
 
-    String cleanAndTrim(String string) {
-        return StringUtils.normalizeSpace(StringUtils.trimToNull(string));
-    }
-
-    String trim(String string) {
-        return StringUtils.trimToNull(string);
+    String normalize(String string) {
+        return StringUtils.normalizeSpace(StringUtils.trimToNull(string))
+                .replaceAll("\\t", " ") // change tab to space
+                .replaceAll("\\n", " ") // change newline to space
+                .replaceAll("[\\x00-\\x1F\\x7F]", "") // Remove all control characters
+                .replaceAll("  ", " "); // two spaces with one
     }
 
     Confidence getConfidenceFromString(String confidence) {
-        switch (cleanAndTrim(confidence)) {
+        switch (normalize(confidence)) {
             case "HIGHEST":
                 return Confidence.HIGHEST;
             case "HIGH":

@@ -28,7 +28,9 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -47,28 +49,41 @@ public class Component implements Serializable {
     @Persistent
     @Column(name="GROUP", jdbcType="VARCHAR")
     @Index(name="COMPONENT_GROUP_IDX")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
     private String group;
 
     @Persistent
     @Column(name="NAME", jdbcType="VARCHAR", allowsNull="false")
     @Index(name="COMPONENT_NAME_IDX")
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
     @Column(name="VERSION", jdbcType="VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
     @Persistent
     @Column(name="CLASSIFIER", jdbcType="VARCHAR")
     @Index(name="COMPONENT_CLASSIFIER_IDX")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The classifier may only contain printable characters")
     private String classifier;
 
     @Persistent
     @Column(name="FILENAME", jdbcType="VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.FS_DIRECTORY_NAME, message = "The specified filename is not valid and cannot be used as a filename")
     private String filename;
 
     @Persistent
     @Column(name="EXTENSION", jdbcType="VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.FS_FILE_NAME, message = "The specified filename extension is not valid and cannot be used as a extension")
     private String extension;
 
     @Persistent
@@ -85,10 +100,14 @@ public class Component implements Serializable {
 
     @Persistent
     @Column(name="DESCRIPTION", jdbcType="VARCHAR", length=1024)
+    @Size(max = 1024)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
 
     @Persistent
     @Column(name="LICENSE", jdbcType="VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
 
     @Persistent
@@ -113,6 +132,8 @@ public class Component implements Serializable {
     @Persistent
     @Unique(name="COMPONENT_UUID_IDX")
     @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @NotNull
+    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;
 
     public long getId() {

@@ -35,19 +35,20 @@ import java.util.List;
 
 public class ScanModeler implements Subscriber {
 
-    public void inform(Event event) {
-        if (event instanceof ScanUploadEvent) {
+    public void inform(Event e) {
+        if (e instanceof ScanUploadEvent) {
+            ScanUploadEvent event = (ScanUploadEvent)e;
 
-            File file = ((ScanUploadEvent)event).getFile();
-            byte[] scanData = ((ScanUploadEvent)event).getScan();
+            File file = event.getFile();
+            byte[] scanData = event.getScan();
             QueryManager qm = null;
             try {
                 Analysis analysis = (file != null) ?
                         new DependencyCheckParser().parse(file) :
                         new DependencyCheckParser().parse(scanData);
                 qm = new QueryManager();
-                Project project = qm.createProject(analysis.getProjectInfo().getName());
-                Scan scan = qm.createScan(project, new Date(), new Date());
+                Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                Scan scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), new Date());
 
                 List<Component> components = new ArrayList<>();
                 for (Dependency dependency : analysis.getDependencies()) {
@@ -68,7 +69,7 @@ public class ScanModeler implements Subscriber {
                                 .getSource(), evidence.getName(), evidence.getValue());
                     }
                 }
-            } catch (ParseException e) {
+            } catch (ParseException ex) {
 
             } finally {
                 if (qm != null) {

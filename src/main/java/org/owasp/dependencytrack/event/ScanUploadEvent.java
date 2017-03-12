@@ -21,15 +21,22 @@ import java.io.File;
 
 public class ScanUploadEvent implements Event {
 
+    private String projectUuid;
     private File file;
     private byte[] scan;
 
-    public ScanUploadEvent(byte[] scan) {
+    public ScanUploadEvent(final String projectUuid, final byte[] scan) {
+        this.projectUuid = projectUuid;
         this.scan = scan;
     }
 
-    public ScanUploadEvent(File file) {
+    public ScanUploadEvent(final String projectUuid, final File file) {
+        this.projectUuid = projectUuid;
         this.file = file;
+    }
+
+    public String getProjectUuid() {
+        return projectUuid;
     }
 
     public byte[] getScan() {

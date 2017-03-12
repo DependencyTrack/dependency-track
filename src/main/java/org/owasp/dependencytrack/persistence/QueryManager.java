@@ -24,8 +24,6 @@ import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectProperty;
-import org.owasp.dependencytrack.model.ProjectVersion;
-import org.owasp.dependencytrack.model.ProjectVersionProperty;
 import org.owasp.dependencytrack.model.Scan;
 import javax.jdo.Query;
 import java.util.Date;
@@ -55,10 +53,15 @@ public class QueryManager extends AlpineQueryManager {
         return (List<Project>)execute(query);
     }
 
-    public Project createProject(String name) {
+    public Project createProject(String name, String description, String version, Project parent) {
         Project project = new Project();
         project.setName(name);
+        project.setDescription(description);
+        project.setVersion(version);
         project.setUuid(UUID.randomUUID().toString());
+        if (parent != null) {
+            project.setParent(parent);
+        }
         pm.currentTransaction().begin();
         pm.makePersistent(project);
         pm.currentTransaction().commit();
@@ -69,8 +72,21 @@ public class QueryManager extends AlpineQueryManager {
         Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         pm.currentTransaction().begin();
         project.setName(transientProject.getName());
+        project.setVersion(transientProject.getVersion());
         pm.currentTransaction().commit();
         return pm.getObjectById(Project.class, project.getId());
+    }
+
+    public void recursivelyDeleteProject(Project project) {
+        if (project.getChildren() != null) {
+            for (Project child: project.getChildren()) {
+                recursivelyDeleteProject(child);
+            }
+        }
+        delete(project.getProperties());
+        delete(getScans(project));
+        delete(project.getChildren());
+        delete(project);
     }
 
     public ProjectProperty createProjectProperty(Project project, String key, String value) {
@@ -84,36 +100,6 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(ProjectProperty.class, property.getId());
     }
 
-    public ProjectVersion createProjectVersion(Project project, String version) {
-        ProjectVersion projectVersion = new ProjectVersion();
-        projectVersion.setProject(project);
-        projectVersion.setVersion(version);
-        projectVersion.setUuid(UUID.randomUUID().toString());
-        pm.currentTransaction().begin();
-        pm.makePersistent(projectVersion);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(ProjectVersion.class, projectVersion.getId());
-    }
-
-    public ProjectVersion updateProjectVersion(ProjectVersion transientVersion) {
-        ProjectVersion version = getObjectByUuid(ProjectVersion.class, transientVersion.getUuid());
-        pm.currentTransaction().begin();
-        version.setVersion(transientVersion.getVersion());
-        pm.currentTransaction().commit();
-        return pm.getObjectById(ProjectVersion.class, version.getId());
-    }
-
-    public ProjectVersionProperty createProjectVersionProperty(ProjectVersion projectVersion, String key, String value) {
-        ProjectVersionProperty property = new ProjectVersionProperty();
-        property.setProjectVersion(projectVersion);
-        property.setKey(key);
-        property.setValue(value);
-        pm.currentTransaction().begin();
-        pm.makePersistent(property);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(ProjectVersionProperty.class, property.getId());
-    }
-
     public Scan createScan(Project project, Date executed, Date imported) {
         Scan scan = new Scan();
         scan.setExecuted(executed);
@@ -124,6 +110,12 @@ public class QueryManager extends AlpineQueryManager {
         pm.makePersistent(scan);
         pm.currentTransaction().commit();
         return pm.getObjectById(Scan.class, scan.getId());
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Scan> getScans(Project project) {
+        Query query = pm.newQuery(Scan.class, "project == :project");
+        return (List<Scan>)query.execute(project);
     }
 
     @SuppressWarnings("unchecked")

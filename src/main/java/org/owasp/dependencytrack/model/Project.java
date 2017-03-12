@@ -16,27 +16,32 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 @PersistenceCapable
 @FetchGroups({
         @FetchGroup(name="ALL", members={
                 @Persistent(name="name"),
+                @Persistent(name="version"),
                 @Persistent(name="uuid"),
-                @Persistent(name="projectVersions"),
+                @Persistent(name="parent"),
+                @Persistent(name="children"),
                 @Persistent(name="properties")
         })
 })
@@ -56,17 +61,35 @@ public class Project implements Serializable {
 
     @Persistent
     @Unique(name="PROJECT_NAME_IDX")
-    @Column(name="NAME", jdbcType="VARCHAR", length=128, allowsNull="false")
+    @Column(name="NAME", jdbcType="VARCHAR", allowsNull="false")
+    @NotNull
+    @Size(min =1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
+
+    @Persistent
+    @Column(name="DESCRIPTION", jdbcType="VARCHAR")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
+    private String description;
+
+    @Persistent
+    @Column(name="VERSION", jdbcType="VARCHAR")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
+    private String version;
 
     @Persistent
     @Unique(name="PROJECT_UUID_IDX")
     @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @NotNull
+    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;
 
-    @Persistent(mappedBy="project")
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="version ASC"))
-    private List<ProjectVersion> projectVersions;
+    @Persistent
+    @Column(name="PARENT_PROJECT_ID")
+    private Project parent;
+
+    @Persistent(mappedBy="parent")
+    private Collection<Project> children;
 
     @Persistent(mappedBy="project")
     private List<ProjectProperty> properties;
@@ -87,12 +110,44 @@ public class Project implements Serializable {
         this.name = name;
     }
 
-    public List<ProjectVersion> getProjectVersions() {
-        return projectVersions;
+    public String getDescription() {
+        return description;
     }
 
-    public void setProjectVersions(List<ProjectVersion> projectVersions) {
-        this.projectVersions = projectVersions;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public Project getParent() {
+        return parent;
+    }
+
+    public void setParent(Project parent) {
+        this.parent = parent;
+    }
+
+    public Collection<Project> getChildren() {
+        return children;
+    }
+
+    public void setChildren(Collection<Project> children) {
+        this.children = children;
     }
 
     public List<ProjectProperty> getProperties() {
@@ -103,11 +158,4 @@ public class Project implements Serializable {
         this.properties = properties;
     }
 
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
 }

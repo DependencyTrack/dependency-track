@@ -24,22 +24,22 @@ import javax.validation.constraints.Pattern;
 public final class ScanSubmitRequest {
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The projectVersion must be a valid 36 character UUID")
-    private final String projectVersion;
+    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
+    private final String project;
 
     @NotNull
     @Pattern(regexp = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", message = "Scan must be Base64 encoded")
     private final String scan;
 
     @JsonCreator
-    public ScanSubmitRequest(@JsonProperty(value = "projectVersion", required = true) String projectVersion,
+    public ScanSubmitRequest(@JsonProperty(value = "project", required = true) String project,
                              @JsonProperty(value = "scan", required = true) String scan) {
-        this.projectVersion = projectVersion;
+        this.project = project;
         this.scan = scan;
     }
 
-    public String getProjectVersion() {
-        return projectVersion;
+    public String getProject() {
+        return project;
     }
 
     public String getScan() {

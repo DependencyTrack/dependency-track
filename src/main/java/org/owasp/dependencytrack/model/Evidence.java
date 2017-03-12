@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
@@ -24,6 +25,9 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 @PersistenceCapable
@@ -42,7 +46,9 @@ public class Evidence implements Serializable {
     private Component component;
 
     @Persistent
-    @Column(name="TYPE", jdbcType="VARCHAR", length=128)
+    @Column(name="TYPE", jdbcType="VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The type may only contain printable characters")
     private String type;
 
     @Persistent
@@ -50,20 +56,31 @@ public class Evidence implements Serializable {
     private int confidence;
 
     @Persistent
-    @Column(name="SOURCE", jdbcType="VARCHAR", length=128, allowsNull="false")
+    @Column(name="SOURCE", jdbcType="VARCHAR", allowsNull="false")
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The source may only contain printable characters")
     private String source;
 
     @Persistent
     @Column(name="NAME", jdbcType="VARCHAR", length=128, allowsNull="false")
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
     @Column(name="VALUE", jdbcType="VARCHAR", length=4096)
+    @Size(max = 4096)
+    // NOTE: Evidence may contain control characters and unicode replacement characters.
+    // Nearly impossible to perform positive input validation on this field.
     private String value;
 
     @Persistent
     @Unique(name="EVIDENCE_UUID_IDX")
     @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @NotNull
+    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;
 
     public long getId() {

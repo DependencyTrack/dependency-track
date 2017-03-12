@@ -18,7 +18,6 @@ package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
 import alpine.resources.AlpineResource;
-import alpine.util.MapperUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -26,6 +25,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -96,7 +96,7 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a new project",
-            notes = "Requires 'manage project' permission.",
+            notes = "Requires 'manage project' permission. If a parent project exists, the UUID of the parent project is required ",
             response = Project.class,
             code = 201
     )
@@ -104,15 +104,24 @@ public class ProjectResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
-    public Response createProject(String jsonRequest) {
-        Project jsonProject = MapperUtil.readAsObjectOf(Project.class, jsonRequest);
+    public Response createProject(Project jsonProject) {
         Validator validator = super.getValidator();
         failOnValidationError(
-                validator.validateProperty(jsonProject, "name")
+                validator.validateProperty(jsonProject, "name"),
+                validator.validateProperty(jsonProject, "description"),
+                validator.validateProperty(jsonProject, "version")
         );
 
         try (QueryManager qm = new QueryManager()) {
-            Project project = qm.createProject(jsonProject.getName());
+            Project parent = null;
+            if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
+                parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+            }
+            Project project = qm.createProject(
+                    jsonProject.getName(),
+                    StringUtils.trimToNull(jsonProject.getDescription()),
+                    StringUtils.trimToNull(jsonProject.getVersion()),
+                    parent);
             return Response.status(Response.Status.CREATED).entity(project).build();
         }
     }
@@ -121,7 +130,7 @@ public class ProjectResource extends AlpineResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Updates a projects fields",
+            value = "Updates a project",
             notes = "Requires 'manage project' permission.",
             response = Project.class
     )
@@ -131,10 +140,18 @@ public class ProjectResource extends AlpineResource {
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response updateProject(Project jsonProject) {
+        Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonProject, "name"),
+                validator.validateProperty(jsonProject, "description"),
+                validator.validateProperty(jsonProject, "version")
+        );
+
         try (QueryManager qm = new QueryManager()) {
             Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid());
             if (project != null) {
                 project.setName(jsonProject.getName());
+                project.setDescription(jsonProject.getDescription());
                 project = qm.updateProject(jsonProject);
                 return Response.ok(project).build();
             } else {
@@ -163,9 +180,7 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
-                qm.delete(project.getProjectVersions());
-                qm.delete(project.getProperties());
-                qm.delete(project);
+                qm.recursivelyDeleteProject(project);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();

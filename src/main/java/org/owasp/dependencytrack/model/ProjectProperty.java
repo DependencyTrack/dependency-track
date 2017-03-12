@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
@@ -23,6 +24,9 @@ import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 @PersistenceCapable(table = "PROJECT_PROPERTY")
@@ -41,11 +45,17 @@ public class ProjectProperty implements Serializable {
     private Project project;
 
     @Persistent
-    @Column(name="KEY", jdbcType="VARCHAR", length=255, allowsNull="false")
+    @Column(name="KEY", allowsNull="false")
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The key may only contain printable characters")
     private String key;
 
     @Persistent
-    @Column(name="VALUE", jdbcType="VARCHAR", length=255, allowsNull="false")
+    @Column(name="VALUE", allowsNull="false")
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The value may only contain printable characters")
     private String value;
 
     public long getId() {

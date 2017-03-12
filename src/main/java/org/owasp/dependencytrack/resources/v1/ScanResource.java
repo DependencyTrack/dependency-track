@@ -26,7 +26,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
-import org.owasp.dependencytrack.model.ProjectVersion;
+import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.resources.v1.vo.ScanSubmitRequest;
 import javax.validation.Validator;
@@ -47,27 +47,27 @@ public class ScanResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload Dependency-Check Result",
-            notes = "Expects one or more dependency-check-report.xml schema version 1.3 or higher, and a valid project version UUID"
+            notes = "Expects one or more dependency-check-report.xml schema version 1.3 or higher, and a valid project UUID"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The projectVersion could not be found")
+            @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permission.SCAN_UPLOAD)
     public Response uploadScan(ScanSubmitRequest request) {
         Validator validator = getValidator();
         failOnValidationError(
-                validator.validateProperty(request, "projectVersion"),
+                validator.validateProperty(request, "project"),
                 validator.validateProperty(request, "scan")
         );
         try (QueryManager qm = new QueryManager()) {
-            ProjectVersion projectVersion = qm.getObjectByUuid(ProjectVersion.class, request.getProjectVersion());
-            if (projectVersion != null) {
+            Project project = qm.getObjectByUuid(Project.class, request.getProject());
+            if (project != null) {
                 byte[] decodedScan = Base64.getDecoder().decode(request.getScan());
-                EventService.getInstance().publish(new ScanUploadEvent(decodedScan));
+                EventService.getInstance().publish(new ScanUploadEvent(project.getUuid(), decodedScan));
                 return Response.ok().build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The projectVersion could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
         }
     }

@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.model;
 
 import alpine.json.TrimmedStringDeserializer;
+import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +29,9 @@ import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 @PersistenceCapable
@@ -48,6 +52,9 @@ public class License implements Serializable {
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
     @JsonProperty(value = "name")
+    @NotNull
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     /**
@@ -94,6 +101,8 @@ public class License implements Serializable {
     @Index(name="LICENSE_LICENSEID_IDX")
     @JsonProperty(value = "licenseId")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.STRING_IDENTIFIER, message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")
     private String licenseId;
 
     /**

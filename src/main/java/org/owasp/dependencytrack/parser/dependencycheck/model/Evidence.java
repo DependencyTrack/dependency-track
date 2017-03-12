@@ -17,7 +17,6 @@
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
 import org.owasp.dependencycheck.dependency.Confidence;
-
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

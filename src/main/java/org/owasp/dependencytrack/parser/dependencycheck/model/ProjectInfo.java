@@ -18,12 +18,14 @@ package org.owasp.dependencytrack.parser.dependencycheck.model;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.Date;
 
 @XmlRootElement(name = "projectInfo")
 public class ProjectInfo extends BaseObject {
 
     private String name;
-    private String reportDate;
+    private Date reportDate;
     private String credits;
 
     public String getName() {
@@ -35,13 +37,14 @@ public class ProjectInfo extends BaseObject {
         this.name = normalize(name);
     }
 
-    public String getReportDate() {
+    public Date getReportDate() {
         return reportDate;
     }
 
     @XmlElement(name = "reportDate")
-    public void setReportDate(String reportDate) {
-        this.reportDate = normalize(reportDate);
+    @XmlJavaTypeAdapter(DateAdapter.class)
+    public void setReportDate(Date reportDate) {
+        this.reportDate = reportDate;
     }
 
     public String getCredits() {

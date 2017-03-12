@@ -28,9 +28,11 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class DependencyCheckParserTest extends BaseTest {
 
@@ -40,13 +42,16 @@ public class DependencyCheckParserTest extends BaseTest {
 
     @Test
     public void parseTest() throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT-7:00"));
+
         File file = new File("src/test/resources/dependency-check-report.xml");
         Analysis analysis = new DependencyCheckParser().parse(file);
 
         Assert.assertEquals("1.4.4", analysis.getScanInfo().getEngineVersion());
         Assert.assertEquals(17, analysis.getScanInfo().getDataSources().size());
         Assert.assertEquals("My Example Application", analysis.getProjectInfo().getName());
-        Assert.assertEquals("2016-12-06T20:08:02.748-0700", analysis.getProjectInfo().getReportDate());
+        Assert.assertEquals("2016-12-06T20:08:02.748-0700", sdf.format(analysis.getProjectInfo().getReportDate()));
         Assert.assertEquals("This report contains data retrieved from the National Vulnerability Database: http://nvd.nist.gov", analysis.getProjectInfo().getCredits());
         Assert.assertEquals(1034, analysis.getDependencies().size());
 
@@ -105,7 +110,7 @@ public class DependencyCheckParserTest extends BaseTest {
         Analysis analysis = new DependencyCheckParser().parse(file);
 
         QueryManager qm = new QueryManager();
-        Project project = qm.createProject(analysis.getProjectInfo().getName());
+        Project project = qm.createProject(analysis.getProjectInfo().getName(), "My Description", "1.0.0", null);
         Scan scan = qm.createScan(project, new Date(), new Date());
 
         Assert.assertEquals(analysis.getProjectInfo().getName(), project.getName());

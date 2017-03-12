@@ -22,11 +22,7 @@ import org.owasp.dependencycheck.dependency.Confidence;
 public abstract class BaseObject {
 
     String normalize(String string) {
-        return StringUtils.normalizeSpace(StringUtils.trimToNull(string))
-                .replaceAll("\\t", " ") // change tab to space
-                .replaceAll("\\n", " ") // change newline to space
-                .replaceAll("[\\x00-\\x1F\\x7F]", "") // Remove all control characters
-                .replaceAll("  ", " "); // two spaces with one
+        return StringUtils.normalizeSpace(StringUtils.trimToNull(string));
     }
 
     Confidence getConfidenceFromString(String confidence) {

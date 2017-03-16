@@ -18,8 +18,8 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
-import org.owasp.dependencytrack.exception.ParseException;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Scan;
@@ -30,12 +30,13 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class ScanModeler implements Subscriber {
+
+    private static final Logger LOGGER = Logger.getLogger(ScanModeler.class);
 
     public void inform(Event e) {
         if (e instanceof ScanUploadEvent) {
@@ -86,7 +87,8 @@ public class ScanModeler implements Subscriber {
                     }
                 }
             } catch (Exception ex) {
-                System.out.println(ex.getMessage());
+                LOGGER.error("Error while processing scan result");
+                LOGGER.error(ex.getMessage());
             } finally {
                 if (qm != null) {
                     qm.close();

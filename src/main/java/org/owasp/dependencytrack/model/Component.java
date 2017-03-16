@@ -20,9 +20,11 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
+import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -128,6 +130,12 @@ public class Component implements Serializable {
     @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
     @JsonIgnore
     private List<Scan> scans;
+
+    @Persistent(table="COMPONENTS_VULNERABILITIES")
+    @Join(column="COMPONENT_ID")
+    @Element(column="VULNERABILITY_ID")
+    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
+    private List<Vulnerability> vulnerabilities;
 
     @Persistent
     @Unique(name="COMPONENT_UUID_IDX")
@@ -262,6 +270,14 @@ public class Component implements Serializable {
 
     public void setScans(List<Scan> scans) {
         this.scans = scans;
+    }
+
+    public List<Vulnerability> getVulnerabilities() {
+        return vulnerabilities;
+    }
+
+    public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
+        this.vulnerabilities = vulnerabilities;
     }
 
     public String getUuid() {

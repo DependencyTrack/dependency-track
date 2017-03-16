@@ -29,6 +29,8 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -61,6 +63,20 @@ public class ScanModeler implements Subscriber {
                             dependency.getLicense(),
                             null
                     );
+
+                    if (dependency.getVulnerabilities() != null && dependency.getVulnerabilities().getVulnerabilities() != null) {
+                        for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
+                            //first - check if vuln already exists...
+                            org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByName(dcvuln.getName());
+                            if (dtvuln == null) {
+                                // Vuln doesn't exist - create it
+                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), dcvuln.getCwe(), new BigDecimal(dcvuln.getCvssScore()), null, null);
+                                qm.bind(component, dtvuln);
+                            }
+
+                        }
+                    }
+
                     components.add(component);
                     qm.bind(scan, component);
 
@@ -69,8 +85,8 @@ public class ScanModeler implements Subscriber {
                                 .getSource(), evidence.getName(), evidence.getValue());
                     }
                 }
-            } catch (ParseException ex) {
-
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
             } finally {
                 if (qm != null) {
                     qm.close();

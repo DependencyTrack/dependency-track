@@ -35,6 +35,13 @@ public class DefaultObjectGenerator implements ServletContextListener {
     public void contextInitialized(ServletContextEvent event) {
         loadDefaultLicenses();
         loadDefaultPersonas();
+
+        try {
+            new CweImporter().processCweDefinitions();
+        } catch (Exception e) {
+            logger.error("Error adding CWEs to database");
+            logger.error(e.getMessage());
+        }
     }
 
     public void contextDestroyed(ServletContextEvent event) {

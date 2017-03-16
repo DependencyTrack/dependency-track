@@ -20,12 +20,15 @@ import alpine.Config;
 import alpine.persistence.AlpineQueryManager;
 import alpine.resources.AlpineRequest;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectProperty;
 import org.owasp.dependencytrack.model.Scan;
+import org.owasp.dependencytrack.model.Vulnerability;
 import javax.jdo.Query;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -195,10 +198,62 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(License.class, license.getId());
     }
 
+    public Vulnerability createVulnerability(String name, String desc, String cwe,
+                                             BigDecimal cvss, String matchedCpe, String matchAlPreviousCpe) {
+        pm.currentTransaction().begin();
+        Vulnerability vuln = new Vulnerability();
+        vuln.setName(name);
+        vuln.setDescription(desc);
+        vuln.setCwe(cwe);
+        vuln.setCvssScore(cvss);
+        vuln.setMatchedCPE(matchedCpe);
+        vuln.setMatchedAllPreviousCPE(matchAlPreviousCpe);
+        vuln.setUuid(UUID.randomUUID().toString());
+        pm.makePersistent(vuln);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(Vulnerability.class, vuln.getId());
+    }
+
+    @SuppressWarnings("unchecked")
+    public Vulnerability getVulnerabilityByName(String name) {
+        Query query = pm.newQuery(Vulnerability.class, "name == :name");
+        List<Vulnerability> result = (List<Vulnerability>)query.execute(name);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    public Cwe createCweIfNotExist(long id, String name) {
+        Cwe cwe = getObjectById(Cwe.class, id);
+        if (cwe != null) {
+            return cwe;
+        }
+        cwe = new Cwe();
+        cwe.setId(id);
+        cwe.setName(name);
+        pm.currentTransaction().begin();
+        pm.makePersistent(cwe);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(Cwe.class, cwe.getId());
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Cwe> getCwes() {
+        Query query = pm.newQuery(Cwe.class);
+        query.setOrdering("id asc");
+        return (List<Cwe>)execute(query);
+    }
+
     public void bind(Scan scan, Component component) {
         pm.currentTransaction().begin();
         scan.getComponents().add(component);
         component.getScans().add(scan);
         pm.currentTransaction().commit();
     }
+
+    public void bind(Component component, Vulnerability vulnerability) {
+        pm.currentTransaction().begin();
+        vulnerability.getComponents().add(component);
+        component.getVulnerabilities().add(vulnerability);
+        pm.currentTransaction().commit();
+    }
+
 }

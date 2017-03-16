@@ -17,7 +17,6 @@
 package org.owasp.dependencytrack.model;
 
 import alpine.validation.RegexSequence;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.PersistenceCapable;
@@ -35,7 +34,6 @@ public class Cwe implements Serializable {
 
     @PrimaryKey
     @Persistent
-    @JsonIgnore
     private long id;
 
     @Persistent

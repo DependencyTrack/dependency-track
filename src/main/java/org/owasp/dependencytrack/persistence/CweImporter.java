@@ -38,7 +38,6 @@ import java.util.TreeMap;
 public class CweImporter {
 
     private static final Logger logger = Logger.getLogger(CweImporter.class);
-    private static final String INDENT = "    ";
     private static final Map<Integer, String> CWE_Mappings = new TreeMap<>();
 
     public void processCweDefinitions() throws Exception {

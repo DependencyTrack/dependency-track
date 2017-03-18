@@ -33,7 +33,7 @@ import java.util.TreeMap;
 
 /**
  * This class parses CWEs and adds them to the database (if necessary).
- * cwec_v2.9.xml obtained from https://cwe.mitre.org/data/xml/cwec_v2.9.xml
+ * cwec_v2.10.xml obtained from https://cwe.mitre.org/data/xml/cwec_v2.10.xml
  */
 public class CweImporter {
 
@@ -53,7 +53,7 @@ public class CweImporter {
             factory.setExpandEntityReferences(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
 
-            InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.9.xml");
+            InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.10.xml");
             Document doc = builder.parse(is);
             XPathFactory xPathfactory = XPathFactory.newInstance();
             XPath xpath = xPathfactory.newXPath();

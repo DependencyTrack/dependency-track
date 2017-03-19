@@ -20,9 +20,13 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Element;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Join;
+import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -42,7 +46,8 @@ import java.util.List;
                 @Persistent(name="uuid"),
                 @Persistent(name="parent"),
                 @Persistent(name="children"),
-                @Persistent(name="properties")
+                @Persistent(name="properties"),
+                @Persistent(name="tags")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -93,6 +98,12 @@ public class Project implements Serializable {
 
     @Persistent(mappedBy="project")
     private List<ProjectProperty> properties;
+
+    @Persistent(table="PROJECTS_TAGS", defaultFetchGroup = "true")
+    @Join(column="PROJECT_ID")
+    @Element(column="TAG_ID")
+    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="name ASC"))
+    private List<Tag> tags;
 
     public long getId() {
         return id;
@@ -156,6 +167,14 @@ public class Project implements Serializable {
 
     public void setProperties(List<ProjectProperty> properties) {
         this.properties = properties;
+    }
+
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<Tag> tags) {
+        this.tags = tags;
     }
 
 }

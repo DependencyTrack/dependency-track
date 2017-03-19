@@ -146,14 +146,6 @@ function logout() {
     location.reload();
 }
 
-function getAppName() {
-    return about.application;
-}
-
-function getAppVersion() {
-    return about.version;
-}
-
 /**
  * Populates the system modal with general app info
  */

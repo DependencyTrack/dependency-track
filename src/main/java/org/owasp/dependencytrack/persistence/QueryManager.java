@@ -198,7 +198,7 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(License.class, license.getId());
     }
 
-    public Vulnerability createVulnerability(String name, String desc, String cwe,
+    public Vulnerability createVulnerability(String name, String desc, Cwe cwe,
                                              BigDecimal cvss, String matchedCpe, String matchAlPreviousCpe) {
         pm.currentTransaction().begin();
         Vulnerability vuln = new Vulnerability();
@@ -221,18 +221,25 @@ public class QueryManager extends AlpineQueryManager {
         return result.size() == 0 ? null : result.get(0);
     }
 
-    public Cwe createCweIfNotExist(long id, String name) {
-        Cwe cwe = getObjectById(Cwe.class, id);
+    public Cwe createCweIfNotExist(int id, String name) {
+        Cwe cwe = getCweById(id);
         if (cwe != null) {
             return cwe;
         }
         cwe = new Cwe();
-        cwe.setId(id);
+        cwe.setCweId(id);
         cwe.setName(name);
         pm.currentTransaction().begin();
         pm.makePersistent(cwe);
         pm.currentTransaction().commit();
         return pm.getObjectById(Cwe.class, cwe.getId());
+    }
+
+    @SuppressWarnings("unchecked")
+    public Cwe getCweById(int cweId) {
+        Query query = pm.newQuery(Cwe.class, "cweId == :cweId");
+        List<Cwe> result = (List<Cwe>)query.execute(cweId);
+        return result.size() == 0 ? null : result.get(0);
     }
 
     @SuppressWarnings("unchecked")

@@ -21,6 +21,7 @@ import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.parser.dependencycheck.DependencyCheckParser;
@@ -69,9 +70,14 @@ public class ScanModeler implements Subscriber {
                         for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
                             //first - check if vuln already exists...
                             org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByName(dcvuln.getName());
-                            if (dtvuln == null) {
-                                // Vuln doesn't exist - create it
-                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), dcvuln.getCwe(), new BigDecimal(dcvuln.getCvssScore()), null, null);
+                            if (dtvuln == null) { // Vuln doesn't exist - create it
+                                Cwe cwe = null;
+                                // Lookup CWE (if exists in report)
+                                if (dcvuln.getCwe() != null) {
+                                    int cweId = Integer.parseInt(dcvuln.getCwe().substring(4, 7).trim());
+                                    cwe = qm.getCweById(cweId);
+                                }
+                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), cwe, new BigDecimal(dcvuln.getCvssScore()), null, null);
                                 qm.bind(component, dtvuln);
                             }
 

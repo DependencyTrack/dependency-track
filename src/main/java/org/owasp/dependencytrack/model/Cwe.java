@@ -17,11 +17,15 @@
 package org.owasp.dependencytrack.model;
 
 import alpine.validation.RegexSequence;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -33,12 +37,19 @@ public class Cwe implements Serializable {
     private static final long serialVersionUID = -2370075071951574877L;
 
     @PrimaryKey
-    @Persistent
+    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
+    @JsonIgnore
     private long id;
 
     @Persistent
-    @Column(name = "NAME", jdbcType = "VARCHAR")
+    @Unique(name="CWE_CWEID_IDX")
+    @Column(name="CWEID", allowsNull="false")
+    private int cweId;
+
+    @Persistent
+    @Column(name = "NAME", jdbcType = "VARCHAR", allowsNull = "false")
     @Size(max = 255)
+    @NotNull
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
@@ -48,6 +59,14 @@ public class Cwe implements Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public int getCweId() {
+        return cweId;
+    }
+
+    public void setCweId(int cweId) {
+        this.cweId = cweId;
     }
 
     public String getName() {

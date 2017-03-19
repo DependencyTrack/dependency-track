@@ -37,6 +37,13 @@ function contextPath() {
 }
 
 /**
+ * Called after we have verified that a user is authenticated (if authentication is enabled)
+ */
+function initialize() {
+    callVersionResource();
+}
+
+/**
  * Retrieves user info (if available)
  */
 function callUserSelfResource() {
@@ -47,7 +54,7 @@ function callUserSelfResource() {
         success: function (data) {
             //todo: check permissions - populate admin and other navigational things accordingly
 
-            callVersionResource();
+            initialize();
         }
     });
 }

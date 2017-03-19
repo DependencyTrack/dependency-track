@@ -18,8 +18,8 @@
 /**
  * Constants
  */
-var CONTENT_TYPE_JSON = 'application/json';
-var CONTENT_TYPE_TEXT = 'text/plain';
+var CONTENT_TYPE_JSON = "application/json";
+var CONTENT_TYPE_TEXT = "text/plain";
 var DATA_TYPE = "json";
 var METHOD_GET = "GET";
 var METHOD_POST = "POST";
@@ -35,20 +35,6 @@ var URL_USER_SELF = "/v1/user/self";
 function contextPath() {
     return $('meta[name=api-path]').attr("content");
 }
-
-/**
- * Executed when the DOM is ready for JavaScript to be executed.
- */
-$(document).ready(function () {
-    /* Prevents focus loss on login modal */
-    /* This has the unforntunate effect of flashing the modal visible even if it shouldn't be
-    $('#modal-login').modal({
-        backdrop: 'static',
-        keyboard: false
-    });
-    */
-    callUserSelfResource();
-});
 
 /**
  * Retrieves user info (if available)
@@ -88,19 +74,19 @@ $.ajaxSetup({
     beforeSend: function(xhr) {
         var jwt = $.sessionStorage.get("token");
         if (jwt != null) {
-            xhr.setRequestHeader('Authorization', 'Bearer ' + jwt);
+            xhr.setRequestHeader("Authorization", "Bearer " + jwt);
         }
     },
     statusCode: {
         200: function() {
-            $('#navbar-container').css('display', 'block');
-            $('#main').css('display', 'block');
-            $('#modal-login').modal('hide');
+            $('#navbar-container').css("display", "block");
+            $('#main').css("display", "block");
+            $('#modal-login').modal("hide");
         },
         401: function() {
-            $('#navbar-container').css('display', 'none');
-            $('#main').css('display', 'none');
-            $('#modal-login').modal('show');
+            $('#navbar-container').css("display", "none");
+            $('#main').css("display", "none");
+            $('#modal-login').modal("show");
             $("#username").focus();
         }
     }
@@ -131,9 +117,9 @@ function submitLogin() {
         },
         statusCode: {
             200: function(){
-                $('#navbar-container').css('display', 'block');
-                $('#main').css('display', 'block');
-                $('#modal-login').modal('hide');
+                $('#navbar-container').css("display", "block");
+                $('#main').css("display", "block");
+                $('#modal-login').modal("hide");
                 initialize();
             },
             401: function(){
@@ -171,3 +157,17 @@ function populateAboutModal(data) {
     $('#dcAppName').html(data.dependencyCheck.application);
     $('#dcAppVersion').html(data.dependencyCheck.version);
 }
+
+/**
+ * Executed when the DOM is ready for JavaScript to be executed.
+ */
+$(document).ready(function () {
+    /* Prevents focus loss on login modal */
+    /* This has the unforntunate effect of flashing the modal visible even if it shouldn't be
+     $('#modal-login').modal({
+     backdrop: 'static',
+     keyboard: false
+     });
+     */
+    callUserSelfResource();
+});

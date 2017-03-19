@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.resources.v1;
 
+import alpine.Config;
 import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.Authenticator;
 import alpine.auth.JsonWebToken;
@@ -143,10 +144,20 @@ public class UserResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     public Response getSelf() {
-        try (QueryManager qm = new QueryManager()) {
-            LdapUser user = qm.getLdapUser(getPrincipal().getName());
-            return Response.ok(user).build();
+        if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            try (QueryManager qm = new QueryManager()) {
+                if (super.isLdapUser()) {
+                    LdapUser user = qm.getLdapUser(getPrincipal().getName());
+                    return Response.ok(user).build();
+                } else if (super.isManagedUser()) {
+                    ManagedUser user = qm.getManagedUser(getPrincipal().getName());
+                    return Response.ok(user).build();
+                }
+                return Response.status(401).build();
+            }
         }
+        // Authentication is not enabled, but we need to return a positive response without any principal data.
+        return Response.ok().build();
     }
 
     @PUT

@@ -168,5 +168,6 @@ $(document).ready(function () {
      keyboard: false
      });
      */
+    $('[data-toggle="tooltip"]').tooltip();
     callUserSelfResource();
 });

@@ -43,6 +43,14 @@
         <name>OWASP</name>
     </organization>
 
+    <licenses>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <developers>
         <developer>
             <name>Steve Springett</name>

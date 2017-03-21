@@ -215,8 +215,8 @@ $(document).ready(function () {
 
 
     /**
-     * Function that adds the 'active' class to one of the buttons
-     * in the sidebar based in the current url and the href of each button.
+     * Function that adds the 'active' class to one of the buttons in
+     * the sidebar based in the current url and the href of each button.
      */
     (function() {
         let nav = document.getElementById('sidebar'),

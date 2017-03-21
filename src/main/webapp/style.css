@@ -3,6 +3,11 @@ body {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.250em;
 }
+* {
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+    border-radius: 0 !important;
+}
 .sub-header {
     padding-bottom: 10px;
     border-bottom: 1px solid #eee;
@@ -14,7 +19,7 @@ body {
 .navbar-fixed-top {
     border: 0;
 }
-#navbar-container, #main {
+#navbar-container, #main, #sidebar {
     display: none;
 }
 .main {
@@ -307,7 +312,7 @@ h4 {
 /* Sidebar Navigation */
 #sidebar {
     top: 50px;
-    display: block;
+    display: none;
     float: left;
     background: #2E363F;
     z-index:1;

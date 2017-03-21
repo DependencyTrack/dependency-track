@@ -18,20 +18,20 @@
 /**
  * Constants
  */
-var CONTENT_TYPE_JSON = "application/json";
-var CONTENT_TYPE_TEXT = "text/plain";
-var DATA_TYPE = "json";
-var METHOD_GET = "GET";
-var METHOD_POST = "POST";
-var METHOD_PUT = "PUT";
-var METHOD_DELETE = "DELETE";
-var URL_ABOUT = "/version";
-var URL_LOGIN = "/v1/user/login";
-var URL_TEAM = "/v1/team";
-var URL_USER = "/v1/user";
-var URL_USER_LDAP = "/v1/user/ldap";
-var URL_USER_MANAGED = "/v1/user/managed";
-var URL_USER_SELF = "/v1/user/self";
+const CONTENT_TYPE_JSON = "application/json";
+const CONTENT_TYPE_TEXT = "text/plain";
+const DATA_TYPE = "json";
+const METHOD_GET = "GET";
+const METHOD_POST = "POST";
+const METHOD_PUT = "PUT";
+const METHOD_DELETE = "DELETE";
+const URL_ABOUT = "/version";
+const URL_LOGIN = "/v1/user/login";
+const URL_TEAM = "/v1/team";
+const URL_USER = "/v1/user";
+const URL_USER_LDAP = "/v1/user/ldap";
+const URL_USER_MANAGED = "/v1/user/managed";
+const URL_USER_SELF = "/v1/user/self";
 
 
 function contextPath() {
@@ -81,7 +81,7 @@ function callVersionResource() {
  */
 $.ajaxSetup({
     beforeSend: function(xhr) {
-        var jwt = $.sessionStorage.get("token");
+        let jwt = $.sessionStorage.get("token");
         if (jwt != null) {
             xhr.setRequestHeader("Authorization", "Bearer " + jwt);
         }
@@ -89,11 +89,13 @@ $.ajaxSetup({
     statusCode: {
         200: function() {
             $('#navbar-container').css("display", "block");
+            $('#sidebar').css("display", "block");
             $('#main').css("display", "block");
             $('#modal-login').modal("hide");
         },
         401: function() {
             $('#navbar-container').css("display", "none");
+            $('#sidebar').css("display", "none");
             $('#main').css("display", "none");
             $('#modal-login').modal("show");
             $("#username").focus();
@@ -115,8 +117,8 @@ $("#login-form").submit(function(event) {
  * in html5 sessionStorage.
  */
 function submitLogin() {
-    var username = $("#username").val();
-    var password = $("#password").val();
+    let username = $("#username").val();
+    let password = $("#password").val();
     $.ajax({
         type: METHOD_POST,
         url: contextPath() + URL_LOGIN,
@@ -127,6 +129,7 @@ function submitLogin() {
         statusCode: {
             200: function(){
                 $('#navbar-container').css("display", "block");
+                $('#sidebar').css("display", "block");
                 $('#main').css("display", "block");
                 $('#modal-login').modal("hide");
                 initialize();
@@ -168,14 +171,14 @@ function populateAboutModal(data) {
  * https://davidwalsh.name/javascript-debounce-function
  */
 function debounce(func, wait, immediate) {
-    var timeout;
+    let timeout;
     return function() {
-        var context = this, args = arguments;
-        var later = function() {
+        let context = this, args = arguments;
+        let later = function() {
             timeout = null;
             if (!immediate) func.apply(context, args);
         };
-        var callNow = immediate && !timeout;
+        let callNow = immediate && !timeout;
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
         if (callNow) func.apply(context, args);

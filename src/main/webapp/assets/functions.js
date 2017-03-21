@@ -186,6 +186,15 @@ function debounce(func, wait, immediate) {
 }
 
 /**
+ * Useful for parsing HREF's
+ */
+function getLocation(href) {
+    let location = document.createElement("a");
+    location.href = href;
+    return location;
+}
+
+/**
  * Executed when the DOM is ready for JavaScript to be executed.
  */
 $(document).ready(function () {
@@ -198,4 +207,23 @@ $(document).ready(function () {
      */
     $('[data-toggle="tooltip"]').tooltip();
     callUserSelfResource();
+
+
+
+    /**
+     * Function that adds the 'active' class to one of the buttons
+     * in the sidebar based in the current url and the href of each button.
+     */
+    (function() {
+        let nav = document.getElementById('sidebar'),
+            anchor = nav.getElementsByTagName('a'),
+            current = window.location.pathname;
+        for (let i = 0; i < anchor.length; i++) {
+            let pathname = getLocation(anchor[i].href).pathname;
+            if(pathname == current) {
+                anchor[i].parentElement.className = "active";
+            }
+        }
+    })();
+
 });

@@ -35,7 +35,7 @@ const URL_USER_SELF = "/v1/user/self";
 
 
 function contextPath() {
-    return $('meta[name=api-path]').attr("content");
+    return $("meta[name=api-path]").attr("content");
 }
 
 /**
@@ -70,7 +70,7 @@ function callVersionResource() {
         success: function (data) {
             populateAboutModal(data);
             if (!$.sessionStorage.isSet("token")) {
-                $('#nav-logout').css('display', "none");
+                $("#nav-logout").css("display", "none");
             }
         }
     });
@@ -88,16 +88,16 @@ $.ajaxSetup({
     },
     statusCode: {
         200: function() {
-            $('#navbar-container').css("display", "block");
-            $('#sidebar').css("display", "block");
-            $('#main').css("display", "block");
-            $('#modal-login').modal("hide");
+            $("#navbar-container").css("display", "block");
+            $("#sidebar").css("display", "block");
+            $("#main").css("display", "block");
+            $("#modal-login").modal("hide");
         },
         401: function() {
-            $('#navbar-container').css("display", "none");
-            $('#sidebar').css("display", "none");
-            $('#main').css("display", "none");
-            $('#modal-login').modal("show");
+            $("#navbar-container").css("display", "none");
+            $("#sidebar").css("display", "none");
+            $("#main").css("display", "none");
+            $("#modal-login").modal("show");
             $("#username").focus();
         }
     }
@@ -128,10 +128,10 @@ function submitLogin() {
         },
         statusCode: {
             200: function(){
-                $('#navbar-container').css("display", "block");
-                $('#sidebar').css("display", "block");
-                $('#main').css("display", "block");
-                $('#modal-login').modal("hide");
+                $("#navbar-container").css("display", "block");
+                $("#sidebar").css("display", "block");
+                $("#main").css("display", "block");
+                $("#modal-login").modal("hide");
                 initialize();
             },
             401: function(){
@@ -155,11 +155,11 @@ function logout() {
  * Populates the system modal with general app info
  */
 function populateAboutModal(data) {
-    $('#systemAppName').html(data.application);
-    $('#systemAppVersion').html(data.version);
-    $('#systemAppTimestamp').html(data.timestamp);
-    $('#dcAppName').html(data.dependencyCheck.application);
-    $('#dcAppVersion').html(data.dependencyCheck.version);
+    $("#systemAppName").html(data.application);
+    $("#systemAppVersion").html(data.version);
+    $("#systemAppTimestamp").html(data.timestamp);
+    $("#dcAppName").html(data.dependencyCheck.application);
+    $("#dcAppVersion").html(data.dependencyCheck.version);
 }
 
 /**

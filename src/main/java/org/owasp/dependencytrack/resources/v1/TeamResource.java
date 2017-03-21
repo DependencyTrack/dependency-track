@@ -111,7 +111,6 @@ public class TeamResource extends AlpineResource {
         //Team team = MapperUtil.readAsObjectOf(Team.class, jsonRequest);
         Validator validator = super.getValidator();
         failOnValidationError(
-                validator.validateProperty(jsonTeam, "uuid"),
                 validator.validateProperty(jsonTeam, "name")
         );
 

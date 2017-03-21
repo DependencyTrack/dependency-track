@@ -21,11 +21,13 @@ import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.Authenticator;
 import alpine.auth.JsonWebToken;
 import alpine.auth.KeyManager;
+import alpine.auth.PasswordService;
 import alpine.auth.PermissionRequired;
 import alpine.logging.Logger;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
 import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -224,7 +226,7 @@ public class UserResource extends AlpineResource {
     @ApiOperation(
             value = "Adds the username to the specified team.",
             notes = "Requires 'manage users' and 'manage teams' permission.",
-            response = LdapUser.class
+            response = UserPrincipal.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The user is already a member of the specified team"),
@@ -238,18 +240,18 @@ public class UserResource extends AlpineResource {
             @ApiParam(value = "The UUID of the team to associate username with", required = true)
                     IdentifiableObject identifiableObject) {
         try (QueryManager qm = new QueryManager()) {
-            LdapUser user = qm.getLdapUser(username);
             Team team = qm.getObjectByUuid(Team.class, identifiableObject.getUuid());
-            if (user == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
-            }
             if (team == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
-            boolean modified = qm.addUserToTeam(user, team);
-            user = qm.getObjectById(LdapUser.class, user.getId());
+            UserPrincipal principal = qm.getUserPrincipal(username);
+            if (principal == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
+            }
+            boolean modified = qm.addUserToTeam(principal, team);
+            principal = qm.getObjectById(principal.getClass(), principal.getId());
             if (modified) {
-                return Response.ok(user).build();
+                return Response.ok(principal).build();
             } else {
                 return Response.status(Response.Status.NOT_MODIFIED).entity("The user is already a member of the specified team.").build();
             }
@@ -279,7 +281,7 @@ public class UserResource extends AlpineResource {
             }
             ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
             if (user == null) {
-                user = qm.createManagedUser(jsonUser.getUsername(), null); // todo password
+                user = qm.createManagedUser(jsonUser.getUsername(), String.valueOf(PasswordService.createHash("password".toCharArray()))); // todo password
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -320,7 +322,7 @@ public class UserResource extends AlpineResource {
     @ApiOperation(
             value = "Removes the username from the specified team.",
             notes = "Requires 'manage users' and 'manage teams' permission.",
-            response = LdapUser.class
+            response = UserPrincipal.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The user was not a member of the specified team"),
@@ -334,20 +336,22 @@ public class UserResource extends AlpineResource {
             @ApiParam(value = "The UUID of the team to un-associate username from", required = true)
                     IdentifiableObject identifiableObject) {
         try (QueryManager qm = new QueryManager()) {
-            LdapUser user = qm.getLdapUser(username);
             Team team = qm.getObjectByUuid(Team.class, identifiableObject.getUuid());
-            if (user == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
-            }
             if (team == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
-            boolean modified = qm.removeUserFromTeam(user, team);
-            user = qm.getObjectById(LdapUser.class, user.getId());
+            UserPrincipal principal = qm.getUserPrincipal(username);
+            if (principal == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
+            }
+            boolean modified = qm.removeUserFromTeam(principal, team);
+            principal = qm.getObjectById(principal.getClass(), principal.getId());
             if (modified) {
-                return Response.ok(user).build();
+                return Response.ok(principal).build();
             } else {
-                return Response.status(Response.Status.NOT_MODIFIED).entity("The user was not a member of the specified team.").build();
+                return Response.status(Response.Status.NOT_MODIFIED)
+                        .entity("The user was not a member of the specified team.")
+                        .build();
             }
         }
     }

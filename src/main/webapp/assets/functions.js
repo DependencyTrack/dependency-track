@@ -176,12 +176,16 @@ function debounce(func, wait, immediate) {
         let context = this, args = arguments;
         let later = function() {
             timeout = null;
-            if (!immediate) func.apply(context, args);
+            if (!immediate) {
+                func.apply(context, args);
+            }
         };
         let callNow = immediate && !timeout;
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
+        if (callNow) {
+            func.apply(context, args);
+        }
     };
 }
 
@@ -220,7 +224,7 @@ $(document).ready(function () {
             current = window.location.pathname;
         for (let i = 0; i < anchor.length; i++) {
             let pathname = getLocation(anchor[i].href).pathname;
-            if(pathname == current) {
+            if(pathname === current) {
                 anchor[i].parentElement.className = "active";
             }
         }

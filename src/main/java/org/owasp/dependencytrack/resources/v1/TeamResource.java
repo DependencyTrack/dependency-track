@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
+import alpine.logging.Logger;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.resources.AlpineResource;
@@ -29,6 +30,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import org.owasp.security.logging.SecurityMarkers;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -45,6 +47,8 @@ import java.util.List;
 @Path("/v1/team")
 @Api(value = "team", authorizations = @Authorization(value="X-Api-Key"))
 public class TeamResource extends AlpineResource {
+
+    private static final Logger logger = Logger.getLogger(TeamResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -116,6 +120,8 @@ public class TeamResource extends AlpineResource {
 
         try (QueryManager qm = new QueryManager()) {
             Team team = qm.createTeam(jsonTeam.getName(), true);
+            logger.info(SecurityMarkers.SECURITY_AUDIT, "Team created: '" + team.getName() + "' by: " + getPrincipal().getName() +
+                    " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
             return Response.status(Response.Status.CREATED).entity(team).build();
         }
     }
@@ -140,6 +146,8 @@ public class TeamResource extends AlpineResource {
                 team.setName(jsonTeam.getName());
                 //todo: set permissions
                 team = qm.updateTeam(jsonTeam);
+                logger.info(SecurityMarkers.SECURITY_AUDIT, "Team updated: '" + team.getName() + "' by: " + getPrincipal().getName() +
+                        " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
                 return Response.ok(team).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
@@ -164,6 +172,8 @@ public class TeamResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
             if (team != null) {
+                logger.info(SecurityMarkers.SECURITY_AUDIT, "Team deleted: '" + team.getName() + "' by: " + getPrincipal().getName() +
+                        " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
                 qm.delete(team.getApiKeys());
                 qm.delete(team);
                 return Response.status(Response.Status.NO_CONTENT).build();

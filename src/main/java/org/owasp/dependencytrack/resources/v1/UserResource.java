@@ -95,7 +95,7 @@ public class UserResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a list of all managed users",
             notes = "Requires 'manage users' permission.",
-            response = LdapUser.class,
+            response = ManagedUser.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of managed users")
     )
@@ -161,6 +161,7 @@ public class UserResource extends AlpineResource {
     }
 
     @PUT
+    @Path("ldap")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -191,6 +192,7 @@ public class UserResource extends AlpineResource {
     }
 
     @DELETE
+    @Path("ldap")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -250,6 +252,63 @@ public class UserResource extends AlpineResource {
                 return Response.ok(user).build();
             } else {
                 return Response.status(Response.Status.NOT_MODIFIED).entity("The user is already a member of the specified team.").build();
+            }
+        }
+    }
+
+    @PUT
+    @Path("managed")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates a new user.",
+            notes = "Requires 'manage users' permission.",
+            response = LdapUser.class,
+            code = 201
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Username cannot be null or blank."),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 409, message = "A user with the same username already exists. Cannot create new user")
+    })
+    @PermissionRequired(Permission.MANAGE_USERS)
+    public Response createManagedUser(ManagedUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            if (StringUtils.isBlank(jsonUser.getUsername())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
+            }
+            ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
+            if (user == null) {
+                user = qm.createManagedUser(jsonUser.getUsername(), null); // todo password
+                return Response.status(Response.Status.CREATED).entity(user).build();
+            } else {
+                return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Path("managed")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Deletes a user.",
+            notes = "Requires 'manage users' permission.",
+            code = 204
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The user could not be found")
+    })
+    @PermissionRequired(Permission.MANAGE_USERS)
+    public Response deleteManagedUser(ManagedUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
+            if (user != null) {
+                qm.delete(user);
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
             }
         }
     }

@@ -29,6 +29,8 @@ var URL_ABOUT = "/version";
 var URL_LOGIN = "/v1/user/login";
 var URL_TEAM = "/v1/team";
 var URL_USER = "/v1/user";
+var URL_USER_LDAP = "/v1/user/ldap";
+var URL_USER_MANAGED = "/v1/user/managed";
 var URL_USER_SELF = "/v1/user/self";
 
 

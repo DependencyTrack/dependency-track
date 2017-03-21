@@ -295,6 +295,12 @@ h4 {
 .btn-primary:hover {
     background-color: #768AAD;
 }
+.btn-default {
+    background-color: #eeeeee;
+}
+.btn-default:hover {
+    background-color: #d4d4d4;
+}
 .navbar-inverse {
     background: #1f262d;
 }

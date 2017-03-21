@@ -17,7 +17,8 @@
                 <div class="panel-heading">
                     <ul class="nav nav-tabs">
                         <li class="active"><a href="#teamsTab" data-toggle="tab">Teams</a></li>
-                        <li><a href="#usersTab" data-toggle="tab">LDAP Users</a></li>
+                        <li><a href="#ldapUsersTab" data-toggle="tab">LDAP Users</a></li>
+                        <li><a href="#managedUsersTab" data-toggle="tab">Managed Users</a></li>
                     </ul>
                 </div>
                 <div class="panel-body tight">
@@ -25,7 +26,7 @@
                         <div class="tab-pane active" id="teamsTab">
                             <div id="teamsToolbar">
                                 <div class="form-inline" role="form">
-                                    <button id="createTeamButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateTeam"><span class="glyphicon glyphicon-plus"></span> Create Team</button>
+                                    <button id="createTeamButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateTeam"><span class="fa fa-plus"></span> Create Team</button>
                                 </div>
                             </div>
                             <table id="teamsTable" class="table table-hover detail-table" data-toggle="table"
@@ -43,21 +44,41 @@
                                 </thead>
                             </table>
                         </div>
-                        <div class="tab-pane" id="usersTab">
-                            <div id="usersToolbar">
+                        <div class="tab-pane" id="ldapUsersTab">
+                            <div id="ldapUsersToolbar">
                                 <div class="form-inline" role="form">
-                                    <button id="createUserButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateUser"><span class="glyphicon glyphicon-plus"></span> Create User</button>
+                                    <button id="createLdapUserButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateLdapUser"><span class="fa fa-plus"></span> Create User</button>
                                 </div>
                             </div>
-                            <table id="usersTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/user"/>" data-response-handler="formatUserTable"
+                            <table id="ldapUsersTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/user/ldap"/>" data-response-handler="formatLdapUserTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
-                                   data-detail-view="true" data-detail-formatter="userDetailFormatter"
-                                   data-toolbar="#usersToolbar" data-click-to-select="true" data-height="100%">
+                                   data-detail-view="true" data-detail-formatter="ldapUserDetailFormatter"
+                                   data-toolbar="#ldapUsersToolbar" data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
                                     <th data-align="left" data-field="username">Username</th>
                                     <th data-align="left" data-field="dn">Distinguished Name</th>
+                                    <th data-align="left" data-field="teamsNum">Teams</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="managedUsersTab">
+                            <div id="managedUsersToolbar">
+                                <div class="form-inline" role="form">
+                                    <button id="createManagedUserButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateManagedUser"><span class="fa fa-plus"></span> Create User</button>
+                                </div>
+                            </div>
+                            <table id="managedUsersTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/user/managed"/>" data-response-handler="formatManagedUserTable"
+                                   data-show-refresh="true" data-show-columns="true" data-search="true"
+                                   data-detail-view="true" data-detail-formatter="managedUserDetailFormatter"
+                                   data-toolbar="#managedUsersToolbar" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="username">Username</th>
+                                    <th data-align="left" data-field="email">Email</th>
                                     <th data-align="left" data-field="teamsNum">Teams</th>
                                 </tr>
                                 </thead>
@@ -91,21 +112,41 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalCreateUser" tabindex="-1" role="dialog">
+    <div class="modal fade" id="modalCreateLdapUser" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Create User</h4>
+                    <h4 class="modal-title">Create LDAP User</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="sr-only" for="createUserNameInput">Team Name</label>
-                        <input type="text" name="username" placeholder="LDAP username..." class="form-control" id="createUserNameInput">
+                        <label class="sr-only" for="createLdapUserNameInput">Username</label>
+                        <input type="text" name="username" placeholder="LDAP username..." class="form-control" id="createLdapUserNameInput">
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createUserCreateButton">Create</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createLdapUserCreateButton">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCreateManagedUser" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create Managed User</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="sr-only" for="createManagedUserNameInput">Username</label>
+                        <input type="text" name="username" placeholder="Username..." class="form-control" id="createManagedUserNameInput">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createManagedUserCreateButton">Create</button>
                 </div>
             </div>
         </div>

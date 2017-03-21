@@ -17,86 +17,6 @@
 
 "use strict";
 
-/**
- * Setup events and trigger other stuff when the page is loaded and ready
- */
-$(document).ready(function () {
-
-    // Initialize all tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-
-    // Listen for if the button to create a team is clicked
-    $('#createTeamCreateButton').on('click', createTeam);
-
-    // Listen for if the button to create a user is clicked
-    $('#createUserCreateButton').on('click', createUser);
-
-    // Listen for if the button to assign a team to a user is clicked
-    $('#assignTeamToUser').on('click', assignTeamToUser);
-
-    // When modal closes, clear out the input fields
-    $('#modalCreateTeam').on('hidden.bs.modal', function () {
-        $('#createTeamNameInput').val('');
-    });
-    $('#modalCreateUser').on('hidden.bs.modal', function () {
-        $('#createUserNameInput').val('');
-    });
-
-    // When modal is about to be shown, update the data model
-    const teamsMembershipTable = $('#teamsMembershipTable');
-    $('#modalAssignTeamToUser').on('show.bs.modal', function () {
-        teamsMembershipTable.bootstrapTable('load', teamData());
-        teamsMembershipTable.bootstrapTable('refresh', {silent: true});
-    });
-
-    const teamTable = $('#teamsTable');
-    teamTable.on("click-row.bs.table", function(e, row, $tr) {
-        if ($tr.next().is('tr.detail-view')) {
-            teamTable.bootstrapTable('collapseRow', $tr.data('index'));
-            teamTable.expanded = false;
-        } else {
-            teamTable.bootstrapTable('collapseAllRows');
-            teamTable.bootstrapTable('expandRow', $tr.data('index'));
-            teamTable.expanded = true;
-            teamTable.expandedUuid = row.uuid;
-        }
-    });
-
-    teamTable.on("load-success.bs.table", function(e, data) {
-        teamData(data); // Cache team data for other views/purposes
-        if (teamTable.expanded == true) {
-            $.each(data, function(i, team) {
-                if (team.uuid == teamTable.expandedUuid) {
-                    teamTable.bootstrapTable('expandRow', i);
-                }
-            });
-        }
-    });
-
-    const userTable = $('#usersTable');
-    userTable.on("click-row.bs.table", function(e, row, $tr) {
-        if ($tr.next().is('tr.detail-view')) {
-            userTable.bootstrapTable('collapseRow', $tr.data('index'));
-            userTable.expanded = false;
-        } else {
-            userTable.bootstrapTable('collapseAllRows');
-            userTable.bootstrapTable('expandRow', $tr.data('index'));
-            userTable.expanded = true;
-            userTable.expandedUuid = row.username;
-        }
-    });
-
-    userTable.on("load-success.bs.table", function(e, data) {
-        if (userTable.expanded == true) {
-            $.each(data, function(i, user) {
-                if (user.username == userTable.expandedUuid) {
-                    userTable.bootstrapTable('expandRow', i);
-                }
-            });
-        }
-    });
-});
-
 function teamData(data) {
     if (data === undefined) {
         data = JSON.parse(localStorage['teamData']);
@@ -134,7 +54,21 @@ function formatTeamTable(res) {
 /**
  * Called by bootstrap table to format the data in the ldap users table.
  */
-function formatUserTable(res) {
+function formatLdapUserTable(res) {
+    for (let i=0; i<res.length; i++) {
+        if (res[i].teams === undefined) {
+            res[i].teamsNum = 0;
+        } else {
+            res[i].teamsNum = res[i].teams.length;
+        }
+    }
+    return res;
+}
+
+/**
+ * Called by bootstrap table to format the data in the managed users table.
+ */
+function formatManagedUserTable(res) {
     for (let i=0; i<res.length; i++) {
         if (res[i].teams === undefined) {
             res[i].teamsNum = 0;
@@ -237,7 +171,7 @@ function teamDetailFormatter(index, row) {
  * expanded. This function handles the dynamic creation of the expanded
  * view with simple inline templates.
  */
-function userDetailFormatter(index, row) {
+function ldapUserDetailFormatter(index, row) {
     let html = [];
 
     let teamsHtml = '';
@@ -282,7 +216,67 @@ function userDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $('#deleteUser-${row.username}').on('click', deleteUser);
+        $('#deleteUser-${row.username}').on('click', deleteLdapUser);
+        $('#add-user-${row.username}-to-team').on('click', function () {
+            $("#assignTeamToUser").attr('data-username', $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
+        });
+    </script>
+`;
+    html.push(template);
+    return html.join('');
+}
+
+/**
+ * Function called by bootstrap table when row is clicked/touched, and
+ * expanded. This function handles the dynamic creation of the expanded
+ * view with simple inline templates.
+ */
+function managedUserDetailFormatter(index, row) {
+    let html = [];
+
+    let teamsHtml = '';
+    if (!(row.teams === undefined)) {
+        for (let i = 0; i < row.teams.length; i++) {
+            teamsHtml += `
+            <li class="list-group-item" id="container-apikey-${row.teams[i].key}">
+                <a href="#" id="delete-${row.teams[i].uuid}" onclick="removeTeamMembership('${row.teams[i].uuid}', '${row.username}')" data-toggle="tooltip" title="Remove from Team">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                <span id="${row.username}-team-${row.teams[i].uuid}">${row.teams[i].name}</span>
+            </li>`;
+        }
+    }
+    teamsHtml += `
+            <li class="list-group-item" id="container-no-apikey">
+                <a href="#" id="add-user-${row.username}-to-team" data-toggle="modal" data-target="#modalAssignTeamToUser" data-username="${row.username}" title="Add to Team">
+                    <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
+                </a>
+                <span>&nbsp;</span>
+            </li>`;
+
+
+    let template = `
+    <div class="col-sm-6 col-md-6">
+    <form id="form-${row.uuid}">
+        <div class="form-group">
+            <label for="inputApiKeys">Team Membership</label>
+            <ul class="list-group" id="inputApiKeys">
+                ${teamsHtml}
+            </ul>
+        </div> 
+    </div>
+    <div class="col-sm-6 col-md-6">
+        <div class="form-group">
+            <label for="inputTeamMembers">Statistics</label>
+            <ul class="list-group" id="inputTeamMembers">
+                Last logon:
+            </ul>
+        </div>
+        <button type="button" class="btn btn-danger pull-right" id="deleteUser-${row.username}" data-user-username="${row.username}">Delete User</button>
+    </form>
+    </div>
+    <script type="text/javascript">
+        $('#deleteUser-${row.username}').on('click', deleteManagedUser);
         $('#add-user-${row.username}-to-team').on('click', function () {
             $("#assignTeamToUser").attr('data-username', $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
@@ -448,18 +442,18 @@ function deleteApiKey(apikey) {
 /**
  * Service called when a user is created.
  */
-function createUser() {
-    const inputField = $('#createUserNameInput');
+function createLdapUser() {
+    const inputField = $('#createLdapUserNameInput');
     const username = inputField.val();
     $.ajax({
-        url: contextPath() + URL_USER,
+        url: contextPath() + URL_USER_LDAP,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
         data: JSON.stringify({username: username}),
         statusCode: {
             201: function (data) {
-                $('#usersTable').bootstrapTable('refresh', {silent: true});
+                $('#ldapUsersTable').bootstrapTable('refresh', {silent: true});
             },
             400: function (data) {
                 //todo: username cannot be blank
@@ -478,19 +472,76 @@ function createUser() {
 /**
  * Service called when a user is deleted.
  */
-function deleteUser() {
+function deleteLdapUser() {
     const username = $(this).data("user-username");
     $.ajax({
-        url: contextPath() + URL_USER,
+        url: contextPath() + URL_USER_LDAP,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
         data: JSON.stringify({username: username}),
         statusCode: {
             204: function (data) {
-                const userTable = $('#usersTable');
-                userTable.expanded = false;
-                userTable.bootstrapTable('collapseAllRows');
-                userTable.bootstrapTable('refresh', {silent: true});
+                const ldapUserTable = $('#ldapUsersTable');
+                ldapUserTable.expanded = false;
+                ldapUserTable.bootstrapTable('collapseAllRows');
+                ldapUserTable.bootstrapTable('refresh', {silent: true});
+            },
+            404: function (data) {
+                //todo: the user could not be found
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            console.log("failed");
+        }
+    });
+}
+
+/**
+ * Service called when a user is created.
+ */
+function createManagedUser() {
+    const inputField = $('#createManagedUserNameInput');
+    const username = inputField.val();
+    $.ajax({
+        url: contextPath() + URL_USER_MANAGED,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            201: function (data) {
+                $('#managedUsersTable').bootstrapTable('refresh', {silent: true});
+            },
+            400: function (data) {
+                //todo: username cannot be blank
+            },
+            409: function (data) {
+                //todo: a user with the same username already exists
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            console.log("failed");
+        }
+    });
+    inputField.val('');
+}
+
+/**
+ * Service called when a user is deleted.
+ */
+function deleteManagedUser() {
+    const username = $(this).data("user-username");
+    $.ajax({
+        url: contextPath() + URL_USER_MANAGED,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            204: function (data) {
+                const managedUserTable = $('#managedUsersTable');
+                managedUserTable.expanded = false;
+                managedUserTable.bootstrapTable('collapseAllRows');
+                managedUserTable.bootstrapTable('refresh', {silent: true});
             },
             404: function (data) {
                 //todo: the user could not be found
@@ -559,3 +610,112 @@ function removeTeamMembership(uuid, username) {
         }
     });
 }
+
+/**
+ * Setup events and trigger other stuff when the page is loaded and ready
+ */
+$(document).ready(function () {
+
+    // Initialize all tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Listen for if the button to create a team is clicked
+    $('#createTeamCreateButton').on('click', createTeam);
+
+    // Listen for if the button to create a user is clicked
+    $('#createLdapUserCreateButton').on('click', createLdapUser);
+
+    // Listen for if the button to create a user is clicked
+    $('#createManagedUserCreateButton').on('click', createManagedUser);
+
+    // Listen for if the button to assign a team to a user is clicked
+    $('#assignTeamToUser').on('click', assignTeamToUser);
+
+    // When modal closes, clear out the input fields
+    $('#modalCreateTeam').on('hidden.bs.modal', function () {
+        $('#createTeamNameInput').val('');
+    });
+    $('#modalCreateLdapUser').on('hidden.bs.modal', function () {
+        $('#createLdapUserNameInput').val('');
+    });
+    $('#modalCreateManagedUser').on('hidden.bs.modal', function () {
+        $('#createManagedUserNameInput').val('');
+    });
+
+    // When modal is about to be shown, update the data model
+    const teamsMembershipTable = $('#teamsMembershipTable');
+    $('#modalAssignTeamToUser').on('show.bs.modal', function () {
+        teamsMembershipTable.bootstrapTable('load', teamData());
+        teamsMembershipTable.bootstrapTable('refresh', {silent: true});
+    });
+
+    const teamTable = $('#teamsTable');
+    teamTable.on("click-row.bs.table", function(e, row, $tr) {
+        if ($tr.next().is('tr.detail-view')) {
+            teamTable.bootstrapTable('collapseRow', $tr.data('index'));
+            teamTable.expanded = false;
+        } else {
+            teamTable.bootstrapTable('collapseAllRows');
+            teamTable.bootstrapTable('expandRow', $tr.data('index'));
+            teamTable.expanded = true;
+            teamTable.expandedUuid = row.uuid;
+        }
+    });
+
+    teamTable.on("load-success.bs.table", function(e, data) {
+        teamData(data); // Cache team data for other views/purposes
+        if (teamTable.expanded == true) {
+            $.each(data, function(i, team) {
+                if (team.uuid == teamTable.expandedUuid) {
+                    teamTable.bootstrapTable('expandRow', i);
+                }
+            });
+        }
+    });
+
+    const ldapUserTable = $('#ldapUsersTable');
+    ldapUserTable.on("click-row.bs.table", function(e, row, $tr) {
+        if ($tr.next().is('tr.detail-view')) {
+            ldapUserTable.bootstrapTable('collapseRow', $tr.data('index'));
+            ldapUserTable.expanded = false;
+        } else {
+            ldapUserTable.bootstrapTable('collapseAllRows');
+            ldapUserTable.bootstrapTable('expandRow', $tr.data('index'));
+            ldapUserTable.expanded = true;
+            ldapUserTable.expandedUuid = row.username;
+        }
+    });
+
+    ldapUserTable.on("load-success.bs.table", function(e, data) {
+        if (ldapUserTable.expanded == true) {
+            $.each(data, function(i, user) {
+                if (user.username == ldapUserTable.expandedUuid) {
+                    ldapUserTable.bootstrapTable('expandRow', i);
+                }
+            });
+        }
+    });
+
+    const managedUserTable = $('#managedUsersTable');
+    managedUserTable.on("click-row.bs.table", function(e, row, $tr) {
+        if ($tr.next().is('tr.detail-view')) {
+            managedUserTable.bootstrapTable('collapseRow', $tr.data('index'));
+            managedUserTable.expanded = false;
+        } else {
+            managedUserTable.bootstrapTable('collapseAllRows');
+            managedUserTable.bootstrapTable('expandRow', $tr.data('index'));
+            managedUserTable.expanded = true;
+            managedUserTable.expandedUuid = row.username;
+        }
+    });
+
+    managedUserTable.on("load-success.bs.table", function(e, data) {
+        if (managedUserTable.expanded == true) {
+            $.each(data, function(i, user) {
+                if (user.username == managedUserTable.expandedUuid) {
+                    managedUserTable.bootstrapTable('expandRow', i);
+                }
+            });
+        }
+    });
+});

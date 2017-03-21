@@ -29,7 +29,7 @@
         <li class="active"><a href="#" data-toggle="tooltip" data-placement="right" title="Dashboard"><i class="fa fa-area-chart"></i><span>Dashboard</span></a></li>
         <li><a href="#" data-toggle="tooltip" data-placement="right" title="Projects"><i class="fa fa-sitemap"></i><span>Projects</span></a></li>
         <li><a href="#" data-toggle="tooltip" data-placement="right" title="Components"><i class="fa fa-cubes"></i><span>Components</span></a></li>
-        <li><a href="#" data-toggle="tooltip" data-placement="right" title="Licenses"><i class="fa fa-file-text-o"></i><span>Licenses</span></a></li>
+        <li><a href="#" data-toggle="tooltip" data-placement="right" title="Licenses"><i class="fa fa-balance-scale"></i><span>Licenses</span></a></li>
         <li><a href="#" data-toggle="tooltip" data-placement="right" title="Profile"><i class="fa fa-user"></i><span>Profile</span></a> </li>
         <li><a href="#" data-toggle="tooltip" data-placement="right" title="Administration"><i class="fa fa-cogs"></i><span>Administration</span></a></li>
         <li><a href="#" data-toggle="tooltip" data-placement="right" title="About"><i class="fa fa-info-circle"></i><span>About</span></a></li>

@@ -18,13 +18,8 @@ body {
     display: none;
 }
 .main {
-    padding: 0 20px 20px 20px;
-}
-@media (min-width: 768px) {
-    .main {
-        padding-right: 40px;
-        padding-left: 40px;
-    }
+    padding-right: 30px;
+    padding-left: 60px;
 }
 .main .page-header {
     margin-top: 0;
@@ -305,13 +300,14 @@ h4 {
 }
 /* Sidebar Navigation */
 #sidebar {
+    top: 50px;
     display: block;
     float: left;
     background: #2E363F;
     z-index:1;
     width: 43px;
-    height:100%;
-    position: absolute;
+    height: 100%;
+    position: fixed;
 }
 #sidebar > ul {
     list-style: none;

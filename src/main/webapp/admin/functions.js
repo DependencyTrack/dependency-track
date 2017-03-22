@@ -19,9 +19,9 @@
 
 function teamData(data) {
     if (data === undefined) {
-        data = JSON.parse(localStorage['teamData']);
+       return JSON.parse(sessionStorage["teamData"]);
     } else {
-        localStorage['teamData'] = JSON.stringify(data);
+        sessionStorage["teamData"] = JSON.stringify(data);
     }
     return data;
 }
@@ -42,7 +42,7 @@ function formatTeamTable(res) {
             res[i].membersNum = res[i].ldapUsers.length;
         }
 
-        if (res[i].hakmaster == true) {
+        if (res[i].hakmaster === true) {
             res[i].hakmasterIcon = "&#10004;";
         } else {
             res[i].hakmasterIcon = "";
@@ -85,13 +85,13 @@ function formatManagedUserTable(res) {
  * view with simple inline templates.
  */
 function teamDetailFormatter(index, row) {
-    let hakmasterChecked = '';
-    if (row.hakmaster == true) {
+    let hakmasterChecked = "";
+    if (row.hakmaster === true) {
         hakmasterChecked = 'checked="checked"';
     }
     let html = [];
 
-    let apiKeysHtml = '';
+    let apiKeysHtml = "";
     if (!(row.apiKeys === undefined)) {
         for (let i = 0; i < row.apiKeys.length; i++) {
             apiKeysHtml += `
@@ -115,7 +115,7 @@ function teamDetailFormatter(index, row) {
             </li>`;
 
 
-    let membersHtml = '';
+    let membersHtml = "";
     if (!(row.ldapUsers === undefined)) {
         for (let i = 0; i < row.ldapUsers.length; i++) {
             membersHtml += `
@@ -157,13 +157,13 @@ function teamDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $('#inputTeamName-${row.uuid}').keypress(debounce(updateTeam, 750));
-        $('#inputTeamHakmaster-${row.uuid}').change(updateTeam);
-        $('#deleteTeam-${row.uuid}').on('click', deleteTeam);
+        $("#inputTeamName-${row.uuid}").keypress(debounce(updateTeam, 750));
+        $("#inputTeamHakmaster-${row.uuid}").change(updateTeam);
+        $("#deleteTeam-${row.uuid}").on("click", deleteTeam);
     </script>
 `;
     html.push(template);
-    return html.join('');
+    return html.join("");
 }
 
 /**
@@ -174,7 +174,7 @@ function teamDetailFormatter(index, row) {
 function ldapUserDetailFormatter(index, row) {
     let html = [];
 
-    let teamsHtml = '';
+    let teamsHtml = "";
     if (!(row.teams === undefined)) {
         for (let i = 0; i < row.teams.length; i++) {
             teamsHtml += `
@@ -216,14 +216,14 @@ function ldapUserDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $('#deleteUser-${row.username}').on('click', deleteLdapUser);
-        $('#add-user-${row.username}-to-team').on('click', function () {
-            $("#assignTeamToUser").attr('data-username', $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
+        $("#deleteUser-${row.username}").on("click", deleteLdapUser);
+        $("#add-user-${row.username}-to-team").on("click", function () {
+            $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
     </script>
 `;
     html.push(template);
-    return html.join('');
+    return html.join("");
 }
 
 /**
@@ -234,7 +234,7 @@ function ldapUserDetailFormatter(index, row) {
 function managedUserDetailFormatter(index, row) {
     let html = [];
 
-    let teamsHtml = '';
+    let teamsHtml = "";
     if (!(row.teams === undefined)) {
         for (let i = 0; i < row.teams.length; i++) {
             teamsHtml += `
@@ -276,21 +276,21 @@ function managedUserDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $('#deleteUser-${row.username}').on('click', deleteManagedUser);
-        $('#add-user-${row.username}-to-team').on('click', function () {
-            $("#assignTeamToUser").attr('data-username', $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
+        $("#deleteUser-${row.username}").on("click", deleteManagedUser);
+        $("#add-user-${row.username}-to-team").on("click", function () {
+            $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
     </script>
 `;
     html.push(template);
-    return html.join('');
+    return html.join("");
 }
 
 /**
  * Service called when a team is created.
  */
 function createTeam() {
-    const inputField = $('#createTeamNameInput');
+    const inputField = $("#createTeamNameInput");
     const teamName = inputField.val();
     $.ajax({
         url: contextPath() + URL_TEAM,
@@ -300,14 +300,14 @@ function createTeam() {
         data: JSON.stringify({name: teamName}),
         statusCode: {
             201: function(data) {
-                $('#teamsTable').bootstrapTable('refresh', {silent: true});
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
             }
         },
         error: function(xhr, ajaxOptions, thrownError){
             console.log("failed");
         }
     });
-    inputField.val('');
+    inputField.val("");
 }
 
 /**
@@ -315,8 +315,8 @@ function createTeam() {
  */
 function updateTeam() {
     const teamUuid = $(this).data("team-uuid");
-    const teamName = $('#inputTeamName-' + teamUuid).val();
-    const isHakmaster = $('#inputTeamHakmaster-' + teamUuid).is(':checked');
+    const teamName = $("#inputTeamName-" + teamUuid).val();
+    const isHakmaster = $("#inputTeamHakmaster-" + teamUuid).is(":checked");
     $.ajax({
         url: contextPath() + URL_TEAM,
         contentType: CONTENT_TYPE_JSON,
@@ -325,7 +325,7 @@ function updateTeam() {
         data: JSON.stringify({uuid: teamUuid, name: teamName, hakmaster: isHakmaster}),
         statusCode: {
             200: function(data) {
-                $('#teamsTable').bootstrapTable('refresh', {silent: true});
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
             },
             404: function(data) {
                 //todo: the uuid of the team could not be found
@@ -351,8 +351,8 @@ function deleteTeam() {
             204: function(data) {
                 const teamTable = $('#teamsTable');
                 teamTable.expanded = false;
-                teamTable.bootstrapTable('collapseAllRows');
-                teamTable.bootstrapTable('refresh', {silent: true});
+                teamTable.bootstrapTable("collapseAllRows");
+                teamTable.bootstrapTable("refresh", {silent: true});
             },
             404: function(data) {
                 //todo: the uuid of the team could not be found
@@ -375,7 +375,7 @@ function addApiKey(uuid) {
         type: METHOD_PUT,
         statusCode: {
             201: function(data) {
-                $('#teamsTable').bootstrapTable('refresh', {silent: true});
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
             },
             404: function(data) {
                 //todo: the uuid of the team could not be found
@@ -398,13 +398,13 @@ function regenerateApiKey(apikey) {
         type: METHOD_POST,
         statusCode: {
             200: function(data) {
-                $('#apikey-' + apikey).html(data.key);
-                $('#apikey-' + apikey).attr("id","apikey-" + data.key);
-                $('#regen-' + apikey).attr("id","regen-" + data.key);
-                $('#regen-' + data.key).attr("onclick","regenerateApiKey('" + data.key + "')");
-                $('#delete-' + apikey).attr("id","delete-" + data.key);
-                $('#delete-' + data.key).attr("onclick","deleteApiKey('" + data.key + "')");
-                $('#teamsTable').bootstrapTable('refresh', {silent: true});
+                $("#apikey-" + apikey).html(data.key);
+                $("#apikey-" + apikey).attr("id","apikey-" + data.key);
+                $("#regen-" + apikey).attr("id","regen-" + data.key);
+                $("#regen-" + data.key).attr("onclick","regenerateApiKey('" + data.key + "')");
+                $("#delete-" + apikey).attr("id","delete-" + data.key);
+                $("#delete-" + data.key).attr("onclick","deleteApiKey('" + data.key + "')");
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
             },
             404: function(data) {
                 //todo: the api key could not be found
@@ -426,8 +426,8 @@ function deleteApiKey(apikey) {
         type: METHOD_DELETE,
         statusCode: {
             204: function (data) {
-                $('#container-apikey-' + apikey).remove();
-                $('#teamsTable').bootstrapTable('refresh', {silent: true});
+                $("#container-apikey-" + apikey).remove();
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
             },
             404: function (data) {
                 //todo: the api key could not be found
@@ -443,7 +443,7 @@ function deleteApiKey(apikey) {
  * Service called when a user is created.
  */
 function createLdapUser() {
-    const inputField = $('#createLdapUserNameInput');
+    const inputField = $("#createLdapUserNameInput");
     const username = inputField.val();
     $.ajax({
         url: contextPath() + URL_USER_LDAP,
@@ -453,7 +453,7 @@ function createLdapUser() {
         data: JSON.stringify({username: username}),
         statusCode: {
             201: function (data) {
-                $('#ldapUsersTable').bootstrapTable('refresh', {silent: true});
+                $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
             },
             400: function (data) {
                 //todo: username cannot be blank
@@ -466,7 +466,7 @@ function createLdapUser() {
             console.log("failed");
         }
     });
-    inputField.val('');
+    inputField.val("");
 }
 
 /**
@@ -483,8 +483,8 @@ function deleteLdapUser() {
             204: function (data) {
                 const ldapUserTable = $('#ldapUsersTable');
                 ldapUserTable.expanded = false;
-                ldapUserTable.bootstrapTable('collapseAllRows');
-                ldapUserTable.bootstrapTable('refresh', {silent: true});
+                ldapUserTable.bootstrapTable("collapseAllRows");
+                ldapUserTable.bootstrapTable("refresh", {silent: true});
             },
             404: function (data) {
                 //todo: the user could not be found
@@ -500,7 +500,7 @@ function deleteLdapUser() {
  * Service called when a user is created.
  */
 function createManagedUser() {
-    const inputField = $('#createManagedUserNameInput');
+    const inputField = $("#createManagedUserNameInput");
     const username = inputField.val();
     $.ajax({
         url: contextPath() + URL_USER_MANAGED,
@@ -510,7 +510,7 @@ function createManagedUser() {
         data: JSON.stringify({username: username}),
         statusCode: {
             201: function (data) {
-                $('#managedUsersTable').bootstrapTable('refresh', {silent: true});
+                $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
             },
             400: function (data) {
                 //todo: username cannot be blank
@@ -523,7 +523,7 @@ function createManagedUser() {
             console.log("failed");
         }
     });
-    inputField.val('');
+    inputField.val("");
 }
 
 /**
@@ -538,10 +538,10 @@ function deleteManagedUser() {
         data: JSON.stringify({username: username}),
         statusCode: {
             204: function (data) {
-                const managedUserTable = $('#managedUsersTable');
+                const managedUserTable = $("#managedUsersTable");
                 managedUserTable.expanded = false;
-                managedUserTable.bootstrapTable('collapseAllRows');
-                managedUserTable.bootstrapTable('refresh', {silent: true});
+                managedUserTable.bootstrapTable("collapseAllRows");
+                managedUserTable.bootstrapTable("refresh", {silent: true});
             },
             404: function (data) {
                 //todo: the user could not be found
@@ -557,8 +557,8 @@ function deleteManagedUser() {
  * Service called when teams are assigned to a user
  */
 function assignTeamToUser() {
-    const username = $('#assignTeamToUser').attr('data-username');
-    const selections = $('#teamsMembershipTable').bootstrapTable('getAllSelections');
+    const username = $("#assignTeamToUser").attr("data-username");
+    const selections = $("#teamsMembershipTable").bootstrapTable("getAllSelections");
     for (let i = 0; i < selections.length; i++) {
         let uuid = selections[i].uuid;
         $.ajax({
@@ -569,8 +569,8 @@ function assignTeamToUser() {
             data: JSON.stringify({uuid: uuid}),
             statusCode: {
                 200: function (data) {
-                    $('#teamsTable').bootstrapTable('refresh', {silent: true});
-                    $('#usersTable').bootstrapTable('refresh', {silent: true});
+                    $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                    $("#usersTable").bootstrapTable("refresh", {silent: true});
                 },
                 304: function (data) {
                     //todo: The user is already a member of the specified team
@@ -594,9 +594,9 @@ function removeTeamMembership(uuid, username) {
         data: JSON.stringify({uuid: uuid}),
         statusCode: {
             200: function (data) {
-                $('#container-' + uuid + '-' + username + '-membership').remove();
-                $('#teamsTable').bootstrapTable('refresh', {silent: true});
-                $('#usersTable').bootstrapTable('refresh', {silent: true});
+                $("#container-" + uuid + "-" + username + "-membership").remove();
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                $("#usersTable").bootstrapTable("refresh", {silent: true});
             },
             304: function (data) {
                 //todo: The user was not a member of the specified team
@@ -620,43 +620,43 @@ $(document).ready(function () {
     $('[data-toggle="tooltip"]').tooltip();
 
     // Listen for if the button to create a team is clicked
-    $('#createTeamCreateButton').on('click', createTeam);
+    $("#createTeamCreateButton").on("click", createTeam);
 
     // Listen for if the button to create a user is clicked
-    $('#createLdapUserCreateButton').on('click', createLdapUser);
+    $("#createLdapUserCreateButton").on("click", createLdapUser);
 
     // Listen for if the button to create a user is clicked
-    $('#createManagedUserCreateButton').on('click', createManagedUser);
+    $("#createManagedUserCreateButton").on("click", createManagedUser);
 
     // Listen for if the button to assign a team to a user is clicked
-    $('#assignTeamToUser').on('click', assignTeamToUser);
+    $("#assignTeamToUser").on("click", assignTeamToUser);
 
     // When modal closes, clear out the input fields
-    $('#modalCreateTeam').on('hidden.bs.modal', function () {
-        $('#createTeamNameInput').val('');
+    $("#modalCreateTeam").on("hidden.bs.modal", function () {
+        $("#createTeamNameInput").val("");
     });
-    $('#modalCreateLdapUser').on('hidden.bs.modal', function () {
-        $('#createLdapUserNameInput').val('');
+    $("#modalCreateLdapUser").on("hidden.bs.modal", function () {
+        $("#createLdapUserNameInput").val("");
     });
-    $('#modalCreateManagedUser').on('hidden.bs.modal', function () {
-        $('#createManagedUserNameInput').val('');
+    $("#modalCreateManagedUser").on("hidden.bs.modal", function () {
+        $("#createManagedUserNameInput").val("");
     });
 
     // When modal is about to be shown, update the data model
-    const teamsMembershipTable = $('#teamsMembershipTable');
-    $('#modalAssignTeamToUser').on('show.bs.modal', function () {
-        teamsMembershipTable.bootstrapTable('load', teamData());
-        teamsMembershipTable.bootstrapTable('refresh', {silent: true});
+    const teamsMembershipTable = $("#teamsMembershipTable");
+    $("#modalAssignTeamToUser").on("show.bs.modal", function () {
+        teamsMembershipTable.bootstrapTable("load", teamData());
+        teamsMembershipTable.bootstrapTable("refresh", {silent: true});
     });
 
-    const teamTable = $('#teamsTable');
+    const teamTable = $("#teamsTable");
     teamTable.on("click-row.bs.table", function(e, row, $tr) {
-        if ($tr.next().is('tr.detail-view')) {
-            teamTable.bootstrapTable('collapseRow', $tr.data('index'));
+        if ($tr.next().is("tr.detail-view")) {
+            teamTable.bootstrapTable("collapseRow", $tr.data("index"));
             teamTable.expanded = false;
         } else {
-            teamTable.bootstrapTable('collapseAllRows');
-            teamTable.bootstrapTable('expandRow', $tr.data('index'));
+            teamTable.bootstrapTable("collapseAllRows");
+            teamTable.bootstrapTable("expandRow", $tr.data("index"));
             teamTable.expanded = true;
             teamTable.expandedUuid = row.uuid;
         }
@@ -664,10 +664,10 @@ $(document).ready(function () {
 
     teamTable.on("load-success.bs.table", function(e, data) {
         teamData(data); // Cache team data for other views/purposes
-        if (teamTable.expanded == true) {
+        if (teamTable.expanded === true) {
             $.each(data, function(i, team) {
-                if (team.uuid == teamTable.expandedUuid) {
-                    teamTable.bootstrapTable('expandRow', i);
+                if (team.uuid === teamTable.expandedUuid) {
+                    teamTable.bootstrapTable("expandRow", i);
                 }
             });
         }
@@ -675,45 +675,45 @@ $(document).ready(function () {
 
     const ldapUserTable = $('#ldapUsersTable');
     ldapUserTable.on("click-row.bs.table", function(e, row, $tr) {
-        if ($tr.next().is('tr.detail-view')) {
-            ldapUserTable.bootstrapTable('collapseRow', $tr.data('index'));
+        if ($tr.next().is("tr.detail-view")) {
+            ldapUserTable.bootstrapTable("collapseRow", $tr.data("index"));
             ldapUserTable.expanded = false;
         } else {
-            ldapUserTable.bootstrapTable('collapseAllRows');
-            ldapUserTable.bootstrapTable('expandRow', $tr.data('index'));
+            ldapUserTable.bootstrapTable("collapseAllRows");
+            ldapUserTable.bootstrapTable("expandRow", $tr.data("index"));
             ldapUserTable.expanded = true;
             ldapUserTable.expandedUuid = row.username;
         }
     });
 
     ldapUserTable.on("load-success.bs.table", function(e, data) {
-        if (ldapUserTable.expanded == true) {
+        if (ldapUserTable.expanded === true) {
             $.each(data, function(i, user) {
-                if (user.username == ldapUserTable.expandedUuid) {
-                    ldapUserTable.bootstrapTable('expandRow', i);
+                if (user.username === ldapUserTable.expandedUuid) {
+                    ldapUserTable.bootstrapTable("expandRow", i);
                 }
             });
         }
     });
 
-    const managedUserTable = $('#managedUsersTable');
+    const managedUserTable = $("#managedUsersTable");
     managedUserTable.on("click-row.bs.table", function(e, row, $tr) {
-        if ($tr.next().is('tr.detail-view')) {
-            managedUserTable.bootstrapTable('collapseRow', $tr.data('index'));
+        if ($tr.next().is("tr.detail-view")) {
+            managedUserTable.bootstrapTable("collapseRow", $tr.data("index"));
             managedUserTable.expanded = false;
         } else {
-            managedUserTable.bootstrapTable('collapseAllRows');
-            managedUserTable.bootstrapTable('expandRow', $tr.data('index'));
+            managedUserTable.bootstrapTable("collapseAllRows");
+            managedUserTable.bootstrapTable("expandRow", $tr.data("index"));
             managedUserTable.expanded = true;
             managedUserTable.expandedUuid = row.username;
         }
     });
 
     managedUserTable.on("load-success.bs.table", function(e, data) {
-        if (managedUserTable.expanded == true) {
+        if (managedUserTable.expanded === true) {
             $.each(data, function(i, user) {
-                if (user.username == managedUserTable.expandedUuid) {
-                    managedUserTable.bootstrapTable('expandRow', i);
+                if (user.username === managedUserTable.expandedUuid) {
+                    managedUserTable.bootstrapTable("expandRow", i);
                 }
             });
         }

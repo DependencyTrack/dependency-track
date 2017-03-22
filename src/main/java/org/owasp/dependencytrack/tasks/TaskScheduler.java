@@ -20,10 +20,10 @@ import alpine.event.LdapSyncEvent;
 import alpine.tasks.AlpineTaskScheduler;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
 
-public class TaskScheduler extends AlpineTaskScheduler {
+public final class TaskScheduler extends AlpineTaskScheduler {
 
     // Holds an instance of TaskScheduler
-    private static final TaskScheduler instance = new TaskScheduler();
+    private static final TaskScheduler INSTANCE = new TaskScheduler();
 
     private TaskScheduler() {
 
@@ -35,11 +35,11 @@ public class TaskScheduler extends AlpineTaskScheduler {
     }
 
     /**
-     * Return an instance of the TaskScheduler instance
+     * Return an instance of the TaskScheduler instance.
      * @return a TaskScheduler instance
      */
     public static TaskScheduler getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
 }

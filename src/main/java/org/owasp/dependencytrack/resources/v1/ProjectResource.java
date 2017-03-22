@@ -43,7 +43,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/project")
-@Api(value = "project", authorizations = @Authorization(value="X-Api-Key"))
+@Api(value = "project", authorizations = @Authorization(value = "X-Api-Key"))
 public class ProjectResource extends AlpineResource {
 
     @GET
@@ -60,8 +60,8 @@ public class ProjectResource extends AlpineResource {
     @PermissionRequired(Permission.PROJECT_VIEW)
     public Response getProjects() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            long totalCount = qm.getCount(Project.class);
-            List<Project> projects = qm.getProjects();
+            final long totalCount = qm.getCount(Project.class);
+            final List<Project> projects = qm.getProjects();
             return Response.ok(projects).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
@@ -82,7 +82,7 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            Project project = qm.getObjectByUuid(Project.class, uuid);
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 return Response.ok(project).build();
             } else {
@@ -105,7 +105,7 @@ public class ProjectResource extends AlpineResource {
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response createProject(Project jsonProject) {
-        Validator validator = super.getValidator();
+        final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonProject, "name"),
                 validator.validateProperty(jsonProject, "description"),
@@ -117,7 +117,7 @@ public class ProjectResource extends AlpineResource {
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
                 parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
             }
-            Project project = qm.createProject(
+            final Project project = qm.createProject(
                     jsonProject.getName(),
                     StringUtils.trimToNull(jsonProject.getDescription()),
                     StringUtils.trimToNull(jsonProject.getVersion()),
@@ -140,7 +140,7 @@ public class ProjectResource extends AlpineResource {
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response updateProject(Project jsonProject) {
-        Validator validator = super.getValidator();
+        final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonProject, "name"),
                 validator.validateProperty(jsonProject, "description"),
@@ -178,7 +178,7 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to delete", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
+            final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
                 qm.recursivelyDeleteProject(project);
                 return Response.status(Response.Status.NO_CONTENT).build();

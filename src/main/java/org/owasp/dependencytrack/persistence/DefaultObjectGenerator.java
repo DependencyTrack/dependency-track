@@ -30,7 +30,7 @@ import java.util.List;
 
 public class DefaultObjectGenerator implements ServletContextListener {
 
-    private static final Logger logger = Logger.getLogger(DefaultObjectGenerator.class);
+    private static final Logger LOGGER = Logger.getLogger(DefaultObjectGenerator.class);
 
     public void contextInitialized(ServletContextEvent event) {
         loadDefaultLicenses();
@@ -39,12 +39,13 @@ public class DefaultObjectGenerator implements ServletContextListener {
         try {
             new CweImporter().processCweDefinitions();
         } catch (Exception e) {
-            logger.error("Error adding CWEs to database");
-            logger.error(e.getMessage());
+            LOGGER.error("Error adding CWEs to database");
+            LOGGER.error(e.getMessage());
         }
     }
 
     public void contextDestroyed(ServletContextEvent event) {
+        /* Intentionally blank to satisfy interface */
     }
 
     /**
@@ -56,18 +57,18 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 return;
             }
 
-            logger.info("Adding default SPDX license definitions to datastore.");
+            LOGGER.info("Adding default SPDX license definitions to datastore.");
 
-            SpdxLicenseDetailParser parser = new SpdxLicenseDetailParser();
+            final SpdxLicenseDetailParser parser = new SpdxLicenseDetailParser();
             try {
-                List<License> licenses = parser.getLicenseDefinitions();
+                final List<License> licenses = parser.getLicenseDefinitions();
                 for (License license : licenses) {
-                    logger.info("Added: " + license.getName());
+                    LOGGER.info("Added: " + license.getName());
                     qm.createLicense(license);
                 }
             } catch (IOException | URISyntaxException e) {
-                logger.error("An error occurred during the parsing SPDX license definitions.");
-                logger.error(e.getMessage());
+                LOGGER.error("An error occurred during the parsing SPDX license definitions.");
+                LOGGER.error(e.getMessage());
             }
         }
     }
@@ -80,9 +81,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
             if (qm.getManagedUsers().size() > 0 && qm.getTeams().size() > 0) {
                 return;
             }
-            logger.info("Adding default users and teams to datastore.");
-            ManagedUser admin = qm.createManagedUser("admin", new String(PasswordService.createHash("admin".toCharArray())));
-            Team defaultTeam = qm.createTeam("Default Team", true);
+            LOGGER.info("Adding default users and teams to datastore.");
+            final ManagedUser admin = qm.createManagedUser("admin", new String(PasswordService.createHash("admin".toCharArray())));
+            final Team defaultTeam = qm.createTeam("Default Team", true);
             qm.addUserToTeam(admin, defaultTeam);
         }
     }

@@ -61,7 +61,7 @@ public class License implements Serializable {
      * The contents of the license.
      */
     @Persistent
-    @Column(name = "TEXT", jdbcType="CLOB")
+    @Column(name = "TEXT", jdbcType = "CLOB")
     @JsonProperty(value = "licenseText")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String text;
@@ -70,7 +70,7 @@ public class License implements Serializable {
      * The standard license template typically used for the creation of the license text.
      */
     @Persistent
-    @Column(name = "TEMPLATE", jdbcType="CLOB")
+    @Column(name = "TEMPLATE", jdbcType = "CLOB")
     @JsonProperty(value = "standardLicenseTemplate")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String template;
@@ -79,7 +79,7 @@ public class License implements Serializable {
      * The standard license header typically added to the top of source code.
      */
     @Persistent
-    @Column(name = "HEADER", jdbcType="CLOB")
+    @Column(name = "HEADER", jdbcType = "CLOB")
     @JsonProperty(value = "standardLicenseHeader")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String header;
@@ -88,7 +88,7 @@ public class License implements Serializable {
      * A comment about the license. Typically includes release date, etc.
      */
     @Persistent
-    @Column(name = "COMMENT", jdbcType="CLOB")
+    @Column(name = "COMMENT", jdbcType = "CLOB")
     @JsonProperty(value = "licenseComments")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String comment;
@@ -98,7 +98,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "LICENSEID")
-    @Index(name="LICENSE_LICENSEID_IDX")
+    @Index(name = "LICENSE_LICENSEID_IDX")
     @JsonProperty(value = "licenseId")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Size(min = 1, max = 255)

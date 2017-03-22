@@ -38,12 +38,12 @@ public class QueryManager extends AlpineQueryManager {
     private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
 
     /**
-     * Default constructor
+     * Default constructor.
      */
     public QueryManager() { }
 
     /**
-     * Constructs a new QueryManager
+     * Constructs a new QueryManager.
      */
     public QueryManager(final AlpineRequest request) {
         super(request);
@@ -51,13 +51,13 @@ public class QueryManager extends AlpineQueryManager {
 
     @SuppressWarnings("unchecked")
     public List<Project> getProjects() {
-        Query query = pm.newQuery(Project.class);
+        final Query query = pm.newQuery(Project.class);
         query.setOrdering("name asc");
-        return (List<Project>)execute(query);
+        return (List<Project>) execute(query);
     }
 
     public Project createProject(String name, String description, String version, Project parent) {
-        Project project = new Project();
+        final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
@@ -72,7 +72,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Project updateProject(Project transientProject) {
-        Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+        final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         pm.currentTransaction().begin();
         project.setName(transientProject.getName());
         project.setVersion(transientProject.getVersion());
@@ -93,7 +93,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public ProjectProperty createProjectProperty(Project project, String key, String value) {
-        ProjectProperty property = new ProjectProperty();
+        final ProjectProperty property = new ProjectProperty();
         property.setProject(project);
         property.setKey(key);
         property.setValue(value);
@@ -104,7 +104,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Scan createScan(Project project, Date executed, Date imported) {
-        Scan scan = new Scan();
+        final Scan scan = new Scan();
         scan.setExecuted(executed);
         scan.setImported(imported);
         scan.setProject(project);
@@ -117,27 +117,27 @@ public class QueryManager extends AlpineQueryManager {
 
     @SuppressWarnings("unchecked")
     public List<Scan> getScans(Project project) {
-        Query query = pm.newQuery(Scan.class, "project == :project");
-        return (List<Scan>)query.execute(project);
+        final Query query = pm.newQuery(Scan.class, "project == :project");
+        return (List<Scan>) query.execute(project);
     }
 
     @SuppressWarnings("unchecked")
     public List<Component> getComponents() {
-        Query query = pm.newQuery(Component.class);
+        final Query query = pm.newQuery(Component.class);
         query.setOrdering("name asc");
-        return (List<Component>)execute(query);
+        return (List<Component>) execute(query);
     }
 
     @SuppressWarnings("unchecked")
     public Component getComponentByHash(String hash) {
-        Query query = pm.newQuery(Component.class, "md5 == :hash || sha1 == :hash");
-        List<Component> result = (List<Component>)query.execute(hash);
+        final Query query = pm.newQuery(Component.class, "md5 == :hash || sha1 == :hash");
+        final List<Component> result = (List<Component>) query.execute(hash);
         return result.size() == 0 ? null : result.get(0);
     }
 
     public Component createComponent(String name, String filename, String md5, String sha1,
                                      String description, String license, Component parent) {
-        Component component = new Component();
+        final Component component = new Component();
         component.setName(name);
         component.setFilename(filename);
         component.setMd5(md5);
@@ -154,7 +154,7 @@ public class QueryManager extends AlpineQueryManager {
 
     public Evidence createEvidence(Component component, String type, int confidenceScore,
                                     String source, String name, String value) {
-        Evidence evidence = new Evidence();
+        final Evidence evidence = new Evidence();
         evidence.setComponent(component);
         evidence.setType(type);
         evidence.setConfidence(confidenceScore);
@@ -170,21 +170,21 @@ public class QueryManager extends AlpineQueryManager {
 
     @SuppressWarnings("unchecked")
     public List<License> getLicenses() {
-        Query query = pm.newQuery(License.class);
+        final Query query = pm.newQuery(License.class);
         query.setOrdering("name asc");
-        return (List<License>)execute(query);
+        return (List<License>) execute(query);
     }
 
     @SuppressWarnings("unchecked")
     public License getLicense(String licenseId) {
-        Query query = pm.newQuery(License.class, "licenseId == :licenseId");
-        List<License> result = (List<License>)query.execute(licenseId);
+        final Query query = pm.newQuery(License.class, "licenseId == :licenseId");
+        final List<License> result = (List<License>) query.execute(licenseId);
         return result.size() == 0 ? null : result.get(0);
     }
 
     public License createLicense(License transientLicense) {
         pm.currentTransaction().begin();
-        License license = new License();
+        final License license = new License();
         license.setComment(transientLicense.getComment());
         license.setDeprecatedLicenseId(transientLicense.isDeprecatedLicenseId());
         license.setHeader(transientLicense.getHeader());
@@ -201,7 +201,7 @@ public class QueryManager extends AlpineQueryManager {
     public Vulnerability createVulnerability(String name, String desc, Cwe cwe,
                                              BigDecimal cvss, String matchedCpe, String matchAlPreviousCpe) {
         pm.currentTransaction().begin();
-        Vulnerability vuln = new Vulnerability();
+        final Vulnerability vuln = new Vulnerability();
         vuln.setName(name);
         vuln.setDescription(desc);
         vuln.setCwe(cwe);
@@ -216,8 +216,8 @@ public class QueryManager extends AlpineQueryManager {
 
     @SuppressWarnings("unchecked")
     public Vulnerability getVulnerabilityByName(String name) {
-        Query query = pm.newQuery(Vulnerability.class, "name == :name");
-        List<Vulnerability> result = (List<Vulnerability>)query.execute(name);
+        final Query query = pm.newQuery(Vulnerability.class, "name == :name");
+        final List<Vulnerability> result = (List<Vulnerability>) query.execute(name);
         return result.size() == 0 ? null : result.get(0);
     }
 
@@ -237,16 +237,16 @@ public class QueryManager extends AlpineQueryManager {
 
     @SuppressWarnings("unchecked")
     public Cwe getCweById(int cweId) {
-        Query query = pm.newQuery(Cwe.class, "cweId == :cweId");
-        List<Cwe> result = (List<Cwe>)query.execute(cweId);
+        final Query query = pm.newQuery(Cwe.class, "cweId == :cweId");
+        final List<Cwe> result = (List<Cwe>) query.execute(cweId);
         return result.size() == 0 ? null : result.get(0);
     }
 
     @SuppressWarnings("unchecked")
     public List<Cwe> getCwes() {
-        Query query = pm.newQuery(Cwe.class);
+        final Query query = pm.newQuery(Cwe.class);
         query.setOrdering("id asc");
-        return (List<Cwe>)execute(query);
+        return (List<Cwe>) execute(query);
     }
 
     public void bind(Scan scan, Component component) {

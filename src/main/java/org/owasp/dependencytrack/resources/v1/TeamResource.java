@@ -45,10 +45,10 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/team")
-@Api(value = "team", authorizations = @Authorization(value="X-Api-Key"))
+@Api(value = "team", authorizations = @Authorization(value = "X-Api-Key"))
 public class TeamResource extends AlpineResource {
 
-    private static final Logger logger = Logger.getLogger(TeamResource.class);
+    private static final Logger LOGGER = Logger.getLogger(TeamResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -65,8 +65,8 @@ public class TeamResource extends AlpineResource {
     @PermissionRequired(Permission.MANAGE_TEAMS)
     public Response getTeams() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            long totalCount = qm.getCount(Team.class);
-            List<Team> teams = qm.getTeams();
+            final long totalCount = qm.getCount(Team.class);
+            final List<Team> teams = qm.getTeams();
             return Response.ok(teams).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
@@ -88,7 +88,7 @@ public class TeamResource extends AlpineResource {
             @ApiParam(value = "The UUID of the team to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            Team team = qm.getObjectByUuid(Team.class, uuid);
+            final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
                 return Response.ok(team).build();
             } else {
@@ -113,15 +113,15 @@ public class TeamResource extends AlpineResource {
     //public Response createTeam(String jsonRequest) {
     public Response createTeam(Team jsonTeam) {
         //Team team = MapperUtil.readAsObjectOf(Team.class, jsonRequest);
-        Validator validator = super.getValidator();
+        final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonTeam, "name")
         );
 
         try (QueryManager qm = new QueryManager()) {
-            Team team = qm.createTeam(jsonTeam.getName(), true);
-            logger.info(SecurityMarkers.SECURITY_AUDIT, "Team created: '" + team.getName() + "' by: " + getPrincipal().getName() +
-                    " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+            final Team team = qm.createTeam(jsonTeam.getName(), true);
+            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Team created: '" + team.getName() + "' by: " + getPrincipal().getName()
+                    + " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
             return Response.status(Response.Status.CREATED).entity(team).build();
         }
     }
@@ -146,8 +146,9 @@ public class TeamResource extends AlpineResource {
                 team.setName(jsonTeam.getName());
                 //todo: set permissions
                 team = qm.updateTeam(jsonTeam);
-                logger.info(SecurityMarkers.SECURITY_AUDIT, "Team updated: '" + team.getName() + "' by: " + getPrincipal().getName() +
-                        " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Team updated: '" + team.getName()
+                        + "' by: " + getPrincipal().getName() + " / ip address: " + super.getRemoteAddress()
+                        + " / agent: " + super.getUserAgent() + ")");
                 return Response.ok(team).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
@@ -170,10 +171,10 @@ public class TeamResource extends AlpineResource {
     @PermissionRequired(Permission.MANAGE_TEAMS)
     public Response deleteTeam(Team jsonTeam) {
         try (QueryManager qm = new QueryManager()) {
-            Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
+            final Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
             if (team != null) {
-                logger.info(SecurityMarkers.SECURITY_AUDIT, "Team deleted: '" + team.getName() + "' by: " + getPrincipal().getName() +
-                        " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Team deleted: '" + team.getName() + "' by: " + getPrincipal().getName()
+                        + " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
                 qm.delete(team.getApiKeys());
                 qm.delete(team);
                 return Response.status(Response.Status.NO_CONTENT).build();
@@ -201,9 +202,9 @@ public class TeamResource extends AlpineResource {
             @ApiParam(value = "The UUID of the team to generate a key for", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            Team team = qm.getObjectByUuid(Team.class, uuid);
+            final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                ApiKey apiKey = qm.createApiKey(team);
+                final ApiKey apiKey = qm.createApiKey(team);
                 return Response.status(Response.Status.CREATED).entity(apiKey).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
@@ -254,7 +255,7 @@ public class TeamResource extends AlpineResource {
             @ApiParam(value = "The API key to delete", required = true)
             @PathParam("apikey") String apikey) {
         try (QueryManager qm = new QueryManager()) {
-            ApiKey apiKey = qm.getApiKey(apikey);
+            final ApiKey apiKey = qm.getApiKey(apikey);
             if (apiKey != null) {
                 qm.delete(apiKey);
                 return Response.status(Response.Status.NO_CONTENT).build();

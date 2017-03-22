@@ -36,23 +36,23 @@ public class ProjectProperty implements Serializable {
     private static final long serialVersionUID = -821103184547741489L;
 
     @PrimaryKey
-    @Persistent(valueStrategy= IdGeneratorStrategy.INCREMENT)
+    @Persistent(valueStrategy = IdGeneratorStrategy.INCREMENT)
     @JsonIgnore
     private long id;
 
-    @Persistent(defaultFetchGroup="true")
-    @Column(name="PROJECT_ID", allowsNull="false")
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "PROJECT_ID", allowsNull = "false")
     private Project project;
 
     @Persistent
-    @Column(name="KEY", allowsNull="false")
+    @Column(name = "KEY", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The key may only contain printable characters")
     private String key;
 
     @Persistent
-    @Column(name="VALUE", allowsNull="false")
+    @Column(name = "VALUE", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The value may only contain printable characters")

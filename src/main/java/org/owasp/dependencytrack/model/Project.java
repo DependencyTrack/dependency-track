@@ -40,14 +40,14 @@ import java.util.List;
 
 @PersistenceCapable
 @FetchGroups({
-        @FetchGroup(name="ALL", members={
-                @Persistent(name="name"),
-                @Persistent(name="version"),
-                @Persistent(name="uuid"),
-                @Persistent(name="parent"),
-                @Persistent(name="children"),
-                @Persistent(name="properties"),
-                @Persistent(name="tags")
+        @FetchGroup(name = "ALL", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "uuid"),
+                @Persistent(name = "parent"),
+                @Persistent(name = "children"),
+                @Persistent(name = "properties"),
+                @Persistent(name = "tags")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -60,49 +60,49 @@ public class Project implements Serializable {
     }
 
     @PrimaryKey
-    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
     @Persistent
-    @Unique(name="PROJECT_NAME_IDX")
-    @Column(name="NAME", jdbcType="VARCHAR", allowsNull="false")
+    @Unique(name = "PROJECT_NAME_IDX")
+    @Column(name = "NAME", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
-    @Size(min =1, max = 255)
+    @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
-    @Column(name="DESCRIPTION", jdbcType="VARCHAR")
+    @Column(name = "DESCRIPTION", jdbcType = "VARCHAR")
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
 
     @Persistent
-    @Column(name="VERSION", jdbcType="VARCHAR")
+    @Column(name = "VERSION", jdbcType = "VARCHAR")
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
     @Persistent
-    @Unique(name="PROJECT_UUID_IDX")
-    @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @Unique(name = "PROJECT_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;
 
     @Persistent
-    @Column(name="PARENT_PROJECT_ID")
+    @Column(name = "PARENT_PROJECT_ID")
     private Project parent;
 
-    @Persistent(mappedBy="parent")
+    @Persistent(mappedBy = "parent")
     private Collection<Project> children;
 
-    @Persistent(mappedBy="project")
+    @Persistent(mappedBy = "project")
     private List<ProjectProperty> properties;
 
-    @Persistent(table="PROJECTS_TAGS", defaultFetchGroup = "true")
-    @Join(column="PROJECT_ID")
-    @Element(column="TAG_ID")
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="name ASC"))
+    @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true")
+    @Join(column = "PROJECT_ID")
+    @Element(column = "TAG_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Tag> tags;
 
     public long getId() {

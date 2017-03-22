@@ -44,102 +44,102 @@ public class Component implements Serializable {
     private static final long serialVersionUID = 6841650046433674702L;
 
     @PrimaryKey
-    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
     @Persistent
-    @Column(name="GROUP", jdbcType="VARCHAR")
-    @Index(name="COMPONENT_GROUP_IDX")
+    @Column(name = "GROUP", jdbcType = "VARCHAR")
+    @Index(name = "COMPONENT_GROUP_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
     private String group;
 
     @Persistent
-    @Column(name="NAME", jdbcType="VARCHAR", allowsNull="false")
-    @Index(name="COMPONENT_NAME_IDX")
+    @Column(name = "NAME", jdbcType = "VARCHAR", allowsNull = "false")
+    @Index(name = "COMPONENT_NAME_IDX")
     @NotNull
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
-    @Column(name="VERSION", jdbcType="VARCHAR")
+    @Column(name = "VERSION", jdbcType = "VARCHAR")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
     @Persistent
-    @Column(name="CLASSIFIER", jdbcType="VARCHAR")
-    @Index(name="COMPONENT_CLASSIFIER_IDX")
+    @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
+    @Index(name = "COMPONENT_CLASSIFIER_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The classifier may only contain printable characters")
     private String classifier;
 
     @Persistent
-    @Column(name="FILENAME", jdbcType="VARCHAR")
+    @Column(name = "FILENAME", jdbcType = "VARCHAR")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.FS_DIRECTORY_NAME, message = "The specified filename is not valid and cannot be used as a filename")
     private String filename;
 
     @Persistent
-    @Column(name="EXTENSION", jdbcType="VARCHAR")
+    @Column(name = "EXTENSION", jdbcType = "VARCHAR")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.FS_FILE_NAME, message = "The specified filename extension is not valid and cannot be used as a extension")
     private String extension;
 
     @Persistent
-    @Index(name="COMPONENT_MD5_IDX")
-    @Column(name="MD5", jdbcType="VARCHAR", length=32)
+    @Index(name = "COMPONENT_MD5_IDX")
+    @Column(name = "MD5", jdbcType = "VARCHAR", length = 32)
     @Pattern(regexp = RegexSequence.Definition.HASH_MD5, message = "The MD5 hash must be a valid 32 character HEX number")
     private String md5;
 
     @Persistent
-    @Index(name="COMPONENT_SHA1_IDX")
-    @Column(name="SHA1", jdbcType="VARCHAR", length=40)
+    @Index(name = "COMPONENT_SHA1_IDX")
+    @Column(name = "SHA1", jdbcType = "VARCHAR", length = 40)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA1, message = "The SHA1 hash must be a valid 40 character HEX number")
     private String sha1;
 
     @Persistent
-    @Column(name="DESCRIPTION", jdbcType="VARCHAR", length=1024)
+    @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
 
     @Persistent
-    @Column(name="LICENSE", jdbcType="VARCHAR")
+    @Column(name = "LICENSE", jdbcType = "VARCHAR")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
 
     @Persistent
-    @Column(name="LICENSE_ID")
+    @Column(name = "LICENSE_ID")
     private License resolvedLicense;
 
     @Persistent
-    @Column(name="PARENT_COMPONENT_ID")
+    @Column(name = "PARENT_COMPONENT_ID")
     private Component parent;
 
-    @Persistent(mappedBy="parent")
+    @Persistent(mappedBy = "parent")
     private Collection<Component> children;
 
-    @Persistent(mappedBy="component")
+    @Persistent(mappedBy = "component")
     private Collection<Evidence> evidence;
 
     @Persistent
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     @JsonIgnore
     private List<Scan> scans;
 
-    @Persistent(table="COMPONENTS_VULNERABILITIES")
-    @Join(column="COMPONENT_ID")
-    @Element(column="VULNERABILITY_ID")
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
+    @Persistent(table = "COMPONENTS_VULNERABILITIES")
+    @Join(column = "COMPONENT_ID")
+    @Element(column = "VULNERABILITY_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
     @Persistent
-    @Unique(name="COMPONENT_UUID_IDX")
-    @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @Unique(name = "COMPONENT_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;

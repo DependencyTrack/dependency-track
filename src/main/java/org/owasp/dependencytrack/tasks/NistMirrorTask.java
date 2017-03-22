@@ -48,35 +48,35 @@ public class NistMirrorTask implements Subscriber {
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private File outputDir;
 
-    private static final Logger logger = Logger.getLogger(NistMirrorTask.class);
+    private static final Logger LOGGER = Logger.getLogger(NistMirrorTask.class);
 
 
     public void inform(Event e) {
         if (e instanceof NistMirrorEvent) {
-            logger.info("Starting NIST mirroring task");
-            File mirrorPath = getMirrorPath();
+            LOGGER.info("Starting NIST mirroring task");
+            final File mirrorPath = getMirrorPath();
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
-            logger.info("NIST mirroring complete");
+            LOGGER.info("NIST mirroring complete");
         }
     }
 
     private File getMirrorPath() {
         return new File(
-                System.getProperty("user.home") + File.separator +
-                        ".dependency-track" + File.separator +
-                        "nist");
+                System.getProperty("user.home") + File.separator
+                        + ".dependency-track" + File.separator
+                        + "nist");
     }
 
     private void getAllFiles() {
-        Date currentDate = new Date();
-        logger.info("Downloading files at " + currentDate);
+        final Date currentDate = new Date();
+        LOGGER.info("Downloading files at " + currentDate);
 
         doDownload(CVE_12_MODIFIED_URL);
         doDownload(CVE_20_MODIFIED_URL);
-        for (int i=START_YEAR; i<=END_YEAR; i++) {
-            String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
-            String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
+        for (int i = START_YEAR; i <= END_YEAR; i++) {
+            final String cve12BaseUrl = CVE_12_BASE_URL.replace("%d", String.valueOf(i));
+            final String cve20BaseUrl = CVE_20_BASE_URL.replace("%d", String.valueOf(i));
             doDownload(cve12BaseUrl);
             doDownload(cve20BaseUrl);
         }
@@ -84,21 +84,21 @@ public class NistMirrorTask implements Subscriber {
 
     private void setOutputDir(String outputDirPath) {
         outputDir = new File(outputDirPath);
-        if ( ! outputDir.exists()) {
+        if (!outputDir.exists()) {
             outputDir.mkdirs();
         }
     }
 
     private long checkHead(String cveUrl) {
         try {
-            URL url = new URL(cveUrl);
-            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+            final URL url = new URL(cveUrl);
+            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("HEAD");
             connection.connect();
             connection.getInputStream();
             return connection.getContentLengthLong();
         } catch (IOException e) {
-            logger.error("Failed to determine content length");
+            LOGGER.error("Failed to determine content length");
         }
         return 0;
     }
@@ -117,21 +117,21 @@ public class NistMirrorTask implements Subscriber {
         }
 
         try {
-            URL url = new URL(cveUrl);
+            final URL url = new URL(cveUrl);
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
 
             if (file.exists()) {
-                long fileSize = checkHead(cveUrl);
+                final long fileSize = checkHead(cveUrl);
                 if (file.length() == fileSize) {
-                    logger.info("Using cached version of " + filename);
+                    LOGGER.info("Using cached version of " + filename);
                     return;
                 }
             }
 
-            URLConnection connection = url.openConnection(proxy);
-            logger.info("Downloading " + url.toExternalForm());
+            final URLConnection connection = url.openConnection(proxy);
+            LOGGER.info("Downloading " + url.toExternalForm());
             bis = new BufferedInputStream(connection.getInputStream());
             file = new File(outputDir, filename);
             bos = new BufferedOutputStream(new FileOutputStream(file));
@@ -142,28 +142,29 @@ public class NistMirrorTask implements Subscriber {
             }
             success = true;
         } catch (IOException e) {
-            logger.error("Download failed : " + e.getLocalizedMessage());
+            LOGGER.error("Download failed : " + e.getLocalizedMessage());
         } finally {
             close(bis);
             close(bos);
         }
-        if (file != null && success)
+        if (file != null && success) {
             uncompress(file);
+        }
     }
 
     private void uncompress(File file) {
-        byte[] buffer = new byte[1024];
+        final byte[] buffer = new byte[1024];
         GZIPInputStream gzis = null;
         FileOutputStream out = null;
-        try{
-            logger.info("Uncompressing " + file.getName());
+        try {
+            LOGGER.info("Uncompressing " + file.getName());
             gzis = new GZIPInputStream(new FileInputStream(file));
             out = new FileOutputStream(new File(file.getAbsolutePath().replaceAll(".gz", "")));
             int len;
             while ((len = gzis.read(buffer)) > 0) {
                 out.write(buffer, 0, len);
             }
-        }catch(IOException ex){
+        } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
             close(gzis);
@@ -171,7 +172,7 @@ public class NistMirrorTask implements Subscriber {
         }
     }
 
-    private void close (Closeable object) {
+    private void close(Closeable object) {
         if (object != null) {
             try {
                 object.close();

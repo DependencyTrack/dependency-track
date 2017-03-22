@@ -37,13 +37,13 @@ public class Cwe implements Serializable {
     private static final long serialVersionUID = -2370075071951574877L;
 
     @PrimaryKey
-    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
     @Persistent
-    @Unique(name="CWE_CWEID_IDX")
-    @Column(name="CWEID", allowsNull="false")
+    @Unique(name = "CWE_CWEID_IDX")
+    @Column(name = "CWEID", allowsNull = "false")
     private int cweId;
 
     @Persistent

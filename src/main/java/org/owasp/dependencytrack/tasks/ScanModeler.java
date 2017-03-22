@@ -41,22 +41,22 @@ public class ScanModeler implements Subscriber {
 
     public void inform(Event e) {
         if (e instanceof ScanUploadEvent) {
-            ScanUploadEvent event = (ScanUploadEvent)e;
+            final ScanUploadEvent event = (ScanUploadEvent) e;
 
-            File file = event.getFile();
-            byte[] scanData = event.getScan();
+            final File file = event.getFile();
+            final byte[] scanData = event.getScan();
             QueryManager qm = null;
             try {
-                Analysis analysis = (file != null) ?
-                        new DependencyCheckParser().parse(file) :
-                        new DependencyCheckParser().parse(scanData);
+                final Analysis analysis = (file != null)
+                        ? new DependencyCheckParser().parse(file)
+                        : new DependencyCheckParser().parse(scanData);
                 qm = new QueryManager();
-                Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
-                Scan scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), new Date());
+                final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                final Scan scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), new Date());
 
-                List<Component> components = new ArrayList<>();
+                final List<Component> components = new ArrayList<>();
                 for (Dependency dependency : analysis.getDependencies()) {
-                    Component component = qm.createComponent(
+                    final Component component = qm.createComponent(
                             dependency.getFileName(),
                             dependency.getFileName(),
                             dependency.getMd5(),
@@ -74,7 +74,7 @@ public class ScanModeler implements Subscriber {
                                 Cwe cwe = null;
                                 // Lookup CWE (if exists in report)
                                 if (dcvuln.getCwe() != null) {
-                                    int cweId = Integer.parseInt(dcvuln.getCwe().substring(4, 7).trim());
+                                    final int cweId = Integer.parseInt(dcvuln.getCwe().substring(4, 7).trim());
                                     cwe = qm.getCweById(cweId);
                                 }
                                 dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), cwe, new BigDecimal(dcvuln.getCvssScore()), null, null);

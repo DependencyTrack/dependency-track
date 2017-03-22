@@ -37,48 +37,48 @@ import java.util.TreeMap;
  */
 public class CweImporter {
 
-    private static final Logger logger = Logger.getLogger(CweImporter.class);
-    private static final Map<Integer, String> CWE_Mappings = new TreeMap<>();
+    private static final Logger LOGGER = Logger.getLogger(CweImporter.class);
+    private static final Map<Integer, String> CWE_MAPPINGS = new TreeMap<>();
 
     public void processCweDefinitions() throws Exception {
         try (QueryManager qm = new QueryManager()) {
-            logger.info("Syncing CWEs with datastore");
+            LOGGER.info("Syncing CWEs with datastore");
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
             factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             factory.setXIncludeAware(false);
             factory.setExpandEntityReferences(false);
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            final DocumentBuilder builder = factory.newDocumentBuilder();
 
-            InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.10.xml");
-            Document doc = builder.parse(is);
-            XPathFactory xPathfactory = XPathFactory.newInstance();
-            XPath xpath = xPathfactory.newXPath();
+            final InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.10.xml");
+            final Document doc = builder.parse(is);
+            final XPathFactory xPathfactory = XPathFactory.newInstance();
+            final XPath xpath = xPathfactory.newXPath();
 
-            XPathExpression expr1 = xpath.compile("/Weakness_Catalog/Categories/Category");
-            XPathExpression expr2 = xpath.compile("/Weakness_Catalog/Weaknesses/Weakness");
-            XPathExpression expr3 = xpath.compile("/Weakness_Catalog/Compound_Elements/Compound_Element");
+            final XPathExpression expr1 = xpath.compile("/Weakness_Catalog/Categories/Category");
+            final XPathExpression expr2 = xpath.compile("/Weakness_Catalog/Weaknesses/Weakness");
+            final XPathExpression expr3 = xpath.compile("/Weakness_Catalog/Compound_Elements/Compound_Element");
 
             parseNodes((NodeList) expr1.evaluate(doc, XPathConstants.NODESET));
             parseNodes((NodeList) expr2.evaluate(doc, XPathConstants.NODESET));
             parseNodes((NodeList) expr3.evaluate(doc, XPathConstants.NODESET));
 
-            for (Map.Entry<Integer, String> entry : CWE_Mappings.entrySet()) {
+            for (Map.Entry<Integer, String> entry : CWE_MAPPINGS.entrySet()) {
                 qm.createCweIfNotExist(entry.getKey(), entry.getValue().replaceAll("\\\\", "\\\\\\\\"));
             }
         }
     }
 
     private static void parseNodes(NodeList nodeList) {
-        for (int i=0; i<nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            NamedNodeMap attributes = node.getAttributes();
-            Integer id = Integer.valueOf(attributes.getNamedItem("ID").getNodeValue());
-            String desc = attributes.getNamedItem("Name").getNodeValue();
-            CWE_Mappings.put(id, desc);
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            final Node node = nodeList.item(i);
+            final NamedNodeMap attributes = node.getAttributes();
+            final Integer id = Integer.valueOf(attributes.getNamedItem("ID").getNodeValue());
+            final String desc = attributes.getNamedItem("Name").getNodeValue();
+            CWE_MAPPINGS.put(id, desc);
         }
     }
 

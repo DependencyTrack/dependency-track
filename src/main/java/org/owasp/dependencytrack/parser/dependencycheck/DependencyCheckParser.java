@@ -41,17 +41,17 @@ public class DependencyCheckParser {
     private Analysis parse(StreamSource streamSource) throws ParseException {
         try {
             // Parse the native threat model
-            JAXBContext jaxbContext = JAXBContext.newInstance(Analysis.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            final JAXBContext jaxbContext = JAXBContext.newInstance(Analysis.class);
+            final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
             // Prevent XML External Entity Injection
-            XMLInputFactory xif = XMLInputFactory.newFactory();
+            final XMLInputFactory xif = XMLInputFactory.newFactory();
             xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
             xif.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, false);
             xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-            XMLStreamReader xsr = xif.createXMLStreamReader(streamSource);
+            final XMLStreamReader xsr = xif.createXMLStreamReader(streamSource);
 
-            return (Analysis)unmarshaller.unmarshal(xsr);
+            return (Analysis) unmarshaller.unmarshal(xsr);
 
         } catch (JAXBException | XMLStreamException e) {
             throw new ParseException(e);

@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
 import java.util.Base64;
 
 @Path("/v1/scan")
-@Api(value = "scan", authorizations = @Authorization(value="X-Api-Key"))
+@Api(value = "scan", authorizations = @Authorization(value = "X-Api-Key"))
 public class ScanResource extends AlpineResource {
 
     @PUT
@@ -55,15 +55,15 @@ public class ScanResource extends AlpineResource {
     })
     @PermissionRequired(Permission.SCAN_UPLOAD)
     public Response uploadScan(ScanSubmitRequest request) {
-        Validator validator = getValidator();
+        final Validator validator = getValidator();
         failOnValidationError(
                 validator.validateProperty(request, "project"),
                 validator.validateProperty(request, "scan")
         );
         try (QueryManager qm = new QueryManager()) {
-            Project project = qm.getObjectByUuid(Project.class, request.getProject());
+            final Project project = qm.getObjectByUuid(Project.class, request.getProject());
             if (project != null) {
-                byte[] decodedScan = Base64.getDecoder().decode(request.getScan());
+                final byte[] decodedScan = Base64.getDecoder().decode(request.getScan());
                 EventService.getInstance().publish(new ScanUploadEvent(project.getUuid(), decodedScan));
                 return Response.ok().build();
             } else {

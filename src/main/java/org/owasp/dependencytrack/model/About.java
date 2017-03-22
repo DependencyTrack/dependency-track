@@ -30,23 +30,23 @@ public class About implements Serializable {
         Settings.initialize();
     }
 
-    private static final String application = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_NAME);
-    private static final String version = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_VERSION);
-    private static final String timestamp = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_TIMESTAMP);
-    private static final String dcApplication = Settings.getString(Settings.KEYS.APPLICATION_NAME);
-    private static final String dcVersion = Settings.getString(Settings.KEYS.APPLICATION_VERSION);
+    private static final String APPLICATION = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_NAME);
+    private static final String VERSION = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_VERSION);
+    private static final String TIMESTAMP = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_TIMESTAMP);
+    private static final String DC_APPLICATION = Settings.getString(Settings.KEYS.APPLICATION_NAME);
+    private static final String DC_VERSION = Settings.getString(Settings.KEYS.APPLICATION_VERSION);
 
 
     public String getApplication() {
-        return application;
+        return APPLICATION;
     }
 
     public String getVersion() {
-        return version;
+        return VERSION;
     }
 
     public String getTimestamp() {
-        return timestamp;
+        return TIMESTAMP;
     }
 
     public DependencyCheck getDependencyCheck() {
@@ -56,11 +56,11 @@ public class About implements Serializable {
     private static class DependencyCheck {
 
         public String getApplication() {
-            return dcApplication;
+            return DC_APPLICATION;
         }
 
         public String getVersion() {
-            return dcVersion;
+            return DC_VERSION;
         }
     }
 

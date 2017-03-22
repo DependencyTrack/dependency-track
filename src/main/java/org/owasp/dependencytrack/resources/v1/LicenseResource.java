@@ -35,7 +35,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/license")
-@Api(value = "license", authorizations = @Authorization(value="X-Api-Key"))
+@Api(value = "license", authorizations = @Authorization(value = "X-Api-Key"))
 public class LicenseResource extends AlpineResource {
 
     @GET
@@ -51,8 +51,8 @@ public class LicenseResource extends AlpineResource {
     })
     public Response getLicenses() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            long totalLicenses = qm.getCount(License.class);
-            List<License> licenses = qm.getLicenses();
+            final long totalLicenses = qm.getCount(License.class);
+            final List<License> licenses = qm.getLicenses();
             return Response.ok(licenses).header(TOTAL_COUNT_HEADER, totalLicenses).build();
         }
     }
@@ -72,7 +72,7 @@ public class LicenseResource extends AlpineResource {
             @ApiParam(value = "The SPDX License ID of the license to retrieve", required = true)
             @PathParam("licenseId") String licenseId) {
         try (QueryManager qm = new QueryManager()) {
-            License license = qm.getLicense(licenseId);
+            final License license = qm.getLicense(licenseId);
             if (license != null) {
                 return Response.ok(license).build();
             } else {

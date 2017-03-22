@@ -40,7 +40,7 @@ public final class VersionResource {
     )
     @AuthenticationNotRequired
     public Response getVersion() {
-        return Response.ok(new GenericEntity<About>(new About()) {}).build();
+        return Response.ok(new GenericEntity<About>(new About()) { }).build();
     }
 
 }

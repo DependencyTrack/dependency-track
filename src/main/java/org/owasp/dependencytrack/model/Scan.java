@@ -42,34 +42,34 @@ public class Scan implements Serializable {
     private static final long serialVersionUID = 3950039972008164729L;
 
     @PrimaryKey
-    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
     @Persistent
-    @Column(name="EXECUTED", jdbcType="TIMESTAMP", allowsNull="false")
+    @Column(name = "EXECUTED", jdbcType = "TIMESTAMP", allowsNull = "false")
     @NotNull
     private Date executed;
 
     @Persistent
-    @Column(name="IMPORTED", jdbcType="TIMESTAMP", allowsNull="false")
+    @Column(name = "IMPORTED", jdbcType = "TIMESTAMP", allowsNull = "false")
     @NotNull
     private Date imported;
 
-    @Persistent(defaultFetchGroup="true")
-    @Column(name="PROJECT_ID", allowsNull="false")
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;
 
-    @Persistent(table="SCANS_COMPONENTS")
-    @Join(column="SCAN_ID")
-    @Element(column="COMPONENT_ID")
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="id ASC"))
+    @Persistent(table = "SCANS_COMPONENTS")
+    @Join(column = "SCAN_ID")
+    @Element(column = "COMPONENT_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Component> components;
 
     @Persistent
-    @Unique(name="SCAN_UUID_IDX")
-    @Column(name="NAME", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @Unique(name = "SCAN_UUID_IDX")
+    @Column(name = "NAME", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;

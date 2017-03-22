@@ -51,7 +51,7 @@ public class Tag implements Serializable {
     private String name;
 
     @Persistent
-    @Order(extensions=@Extension(vendorName="datanucleus", key="list-ordering", value="name ASC"))
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Project> projects;
 
     public long getId() {

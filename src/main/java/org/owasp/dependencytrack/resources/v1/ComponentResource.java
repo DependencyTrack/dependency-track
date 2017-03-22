@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/v1/component")
-@Api(value = "component", authorizations = @Authorization(value="X-Api-Key"))
+@Api(value = "component", authorizations = @Authorization(value = "X-Api-Key"))
 public class ComponentResource extends AlpineResource {
 
     @GET
@@ -56,8 +56,8 @@ public class ComponentResource extends AlpineResource {
     @PermissionRequired(Permission.COMPONENT_VIEW)
     public Response getAllComponents() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            long totalCount = qm.getCount(Component.class);
-            List<Component> components = qm.getComponents();
+            final long totalCount = qm.getCount(Component.class);
+            final List<Component> components = qm.getComponents();
             return Response.ok(components).header(TOTAL_COUNT_HEADER, totalCount).build();
         }
     }
@@ -78,7 +78,7 @@ public class ComponentResource extends AlpineResource {
             @ApiParam(value = "The UUID of the component to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            Component component = qm.getObjectByUuid(Component.class, uuid);
+            final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 return Response.ok(component).build();
             } else {
@@ -106,7 +106,7 @@ public class ComponentResource extends AlpineResource {
             failOnValidationError(
                     new ValidationTask(RegexSequence.Pattern.HASH_MD5_SHA1, hash, "Invalid MD5 or SHA1 hash.")
             );
-            Component component = qm.getComponentByHash(hash);
+            final Component component = qm.getComponentByHash(hash);
             if (component != null) {
                 return Response.ok(component).build();
             } else {

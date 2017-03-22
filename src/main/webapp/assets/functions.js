@@ -15,6 +15,8 @@
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
 
+"use strict";
+
 /**
  * Constants
  */
@@ -39,10 +41,14 @@ function contextPath() {
 }
 
 /**
- * Called after we have verified that a user is authenticated (if authentication is enabled)
+ * Populates the system modal with general app info
  */
-function initialize() {
-    callVersionResource();
+function populateAboutModal(data) {
+    $("#systemAppName").html(data.application);
+    $("#systemAppVersion").html(data.version);
+    $("#systemAppTimestamp").html(data.timestamp);
+    $("#dcAppName").html(data.dependencyCheck.application);
+    $("#dcAppVersion").html(data.dependencyCheck.version);
 }
 
 /**
@@ -74,6 +80,13 @@ function callVersionResource() {
             }
         }
     });
+}
+
+/**
+ * Called after we have verified that a user is authenticated (if authentication is enabled)
+ */
+function initialize() {
+    callVersionResource();
 }
 
 /**
@@ -149,17 +162,6 @@ function submitLogin() {
 function logout() {
     $.sessionStorage.remove("token");
     location.reload();
-}
-
-/**
- * Populates the system modal with general app info
- */
-function populateAboutModal(data) {
-    $("#systemAppName").html(data.application);
-    $("#systemAppVersion").html(data.version);
-    $("#systemAppTimestamp").html(data.timestamp);
-    $("#dcAppName").html(data.dependencyCheck.application);
-    $("#dcAppVersion").html(data.dependencyCheck.version);
 }
 
 /**

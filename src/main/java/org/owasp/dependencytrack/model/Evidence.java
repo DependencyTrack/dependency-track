@@ -37,48 +37,48 @@ public class Evidence implements Serializable {
     private static final long serialVersionUID = 6801194446909782113L;
 
     @PrimaryKey
-    @Persistent(valueStrategy= IdGeneratorStrategy.NATIVE)
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
-    @Persistent(defaultFetchGroup="true")
-    @Column(name="COMPONENT_ID", allowsNull="false")
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "COMPONENT_ID", allowsNull = "false")
     private Component component;
 
     @Persistent
-    @Column(name="TYPE", jdbcType="VARCHAR")
+    @Column(name = "TYPE", jdbcType = "VARCHAR")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The type may only contain printable characters")
     private String type;
 
     @Persistent
-    @Column(name="CONFIDENCE")
+    @Column(name = "CONFIDENCE")
     private int confidence;
 
     @Persistent
-    @Column(name="SOURCE", jdbcType="VARCHAR", allowsNull="false")
+    @Column(name = "SOURCE", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The source may only contain printable characters")
     private String source;
 
     @Persistent
-    @Column(name="NAME", jdbcType="VARCHAR", length=128, allowsNull="false")
+    @Column(name = "NAME", jdbcType = "VARCHAR", length = 128, allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
-    @Column(name="VALUE", jdbcType="VARCHAR", length=4096)
+    @Column(name = "VALUE", jdbcType = "VARCHAR", length = 4096)
     @Size(max = 4096)
     // NOTE: Evidence may contain control characters and unicode replacement characters.
     // Nearly impossible to perform positive input validation on this field.
     private String value;
 
     @Persistent
-    @Unique(name="EVIDENCE_UUID_IDX")
-    @Column(name="UUID", jdbcType="VARCHAR", length=36, allowsNull="false")
+    @Unique(name = "EVIDENCE_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
     private String uuid;

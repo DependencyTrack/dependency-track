@@ -38,8 +38,8 @@ public class SpdxLicenseDetailParser {
      * Reads in a json file and returns a License object.
      */
     public License parse(Path path) throws IOException {
-        byte[] jdon = Files.readAllBytes(path);
-        ObjectMapper objectMapper = new ObjectMapper();
+        final byte[] jdon = Files.readAllBytes(path);
+        final ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.readValue(jdon, License.class);
     }
 
@@ -48,13 +48,13 @@ public class SpdxLicenseDetailParser {
      * files.
      */
     public List<License> getLicenseDefinitions() throws IOException, URISyntaxException {
-        List<License> licenses = new ArrayList<>();
-        File dir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()
+        final List<License> licenses = new ArrayList<>();
+        final File dir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()
                 + "/license-list-data/json/details");
-        File[] files = dir.listFiles();
+        final File[] files = dir.listFiles();
         if (files != null) {
             for (File nextFile : files) {
-                License license = parse(nextFile.toPath());
+                final License license = parse(nextFile.toPath());
                 licenses.add(license);
             }
         }

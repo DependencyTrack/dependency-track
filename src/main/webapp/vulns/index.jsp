@@ -5,14 +5,14 @@
 <html lang="en">
 <head>
     <jsp:include page="/WEB-INF/fragments/header.jsp"/>
-    <title>OWASP Dependency-Track - Licenses</title>
+    <title>OWASP Dependency-Track - Vulnerabilities</title>
 </head>
 <body>
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12 col-md-12 main" id="main">
-            <h3>Licenses</h3>
+            <h3>Vulnerabilities</h3>
         </div>
     </div>
 

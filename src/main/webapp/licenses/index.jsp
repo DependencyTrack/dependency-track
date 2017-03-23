@@ -15,7 +15,7 @@
             <h3>Licenses</h3>
         </div>
     </div>
-
+    <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 </div>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
 </body>

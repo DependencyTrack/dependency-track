@@ -47,7 +47,6 @@ body {
     background-color: #837E7C;
     color: #444444;
     font-weight: 600;
-    text-transform: uppercase;
 }
 .table td {
     white-space: nowrap;
@@ -238,6 +237,16 @@ h4 {
 }
 .label-lg {
     font-size: 125%;
+}
+.widget {
+    background: #efefef;
+}
+.widget-row {
+    margin-left: -15px;
+    margin-right: -15px;
+}
+.huge {
+    font-size: 40px;
 }
 .btn-breadcrumb .btn:not(:last-child):after {
     content: " ";

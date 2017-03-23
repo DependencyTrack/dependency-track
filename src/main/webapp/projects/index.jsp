@@ -13,9 +13,123 @@
     <div class="row">
         <div class="col-sm-12 col-md-12 main" id="main">
             <h3>Projects</h3>
-        </div>
-    </div>
+            <div class="widget-row">
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel widget">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-shield fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">206</div>
+                                    <div>Portfolio Vulnerabilities</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel widget">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-thermometer-half  fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">15</div>
+                                    <div>Projects at Risk</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel widget">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-balance-scale fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">26</div>
+                                    <div>Policy Violations</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="panel widget">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-bell fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">5</div>
+                                    <div>Recent Alerts</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div class="panel-footer">
+                                <span class="pull-left">View Details</span>
+                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                                <div class="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
 
+            </div> <!-- /widget-row> -->
+
+            <div id="projectsToolbar">
+                <div class="form-inline" role="form">
+                    <button id="createProjectButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateProject"><span class="fa fa-plus"></span> Create Project</button>
+                </div>
+            </div>
+            <table id="projectsTable" class="table table-hover detail-table" data-toggle="table"
+                   data-url="<c:url value="/api/v1/projects"/>" data-response-handler="formatProjectsTable"
+                   data-show-refresh="true" data-show-columns="true" data-search="true"
+                   data-detail-view="true" data-detail-formatter="projectsDetailFormatter"
+                   data-toolbar="#projectsToolbar" data-click-to-select="true" data-height="100%">
+                <thead>
+                <tr>
+                    <th data-align="left" data-field="name">Project Name</th>
+                    <th data-align="left" data-field="lastscan">Last Scanned</th>
+                    <th data-align="left" data-field="bomupdated">BOM Updated</th>
+                    <th data-align="left" data-field="subprojects">Sub Projects</th>
+                    <th data-align="left" data-field="versions">Versions</th>
+                    <th data-align="left" data-field="irs">Security Risk</th>
+                </tr>
+                </thead>
+            </table>
+
+        </div> <!-- /main-row> -->
+    </div>
+    <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 </div>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
 </body>

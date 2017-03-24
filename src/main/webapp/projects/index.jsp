@@ -9,9 +9,9 @@
 </head>
 <body>
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-sm-12 col-md-12 main" id="main">
+<div class="container-fluid" id="main">
+    <div class="content-row">
+        <div class="col-sm-12 col-md-12">
             <h3>Projects</h3>
             <div class="widget-row">
                 <div class="col-lg-3 col-md-6">

@@ -34,6 +34,7 @@ const URL_USER = "/v1/user";
 const URL_USER_LDAP = "/v1/user/ldap";
 const URL_USER_MANAGED = "/v1/user/managed";
 const URL_USER_SELF = "/v1/user/self";
+const URL_PROJECT = "/v1/project";
 
 
 function contextPath() {

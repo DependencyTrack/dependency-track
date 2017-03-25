@@ -36,6 +36,14 @@ body {
 .page-content .page-header {
     margin-top: 0;
 }
+.bootstrap-tagsinput {
+    display: block;
+}
+.bootstrap-tagsinput .tag {
+    color: #efefef;
+    background: #204d74;
+    font-size: 0.9em;
+}
 .placeholders {
     margin-bottom: 30px;
     text-align: center;

@@ -89,7 +89,6 @@
             </div>
         </div>
     </div>
-    <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 
     <!-- Modals specific to administration -->
     <div class="modal fade" id="modalCreateTeam" tabindex="-1" role="dialog">

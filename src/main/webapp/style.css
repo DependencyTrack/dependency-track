@@ -44,6 +44,13 @@ body {
     background: #204d74;
     font-size: 0.9em;
 }
+.tag-standalone {
+    font-weight: normal;
+    color: #ffffff;
+    background: #768AAD;
+    font-size: 0.9em;
+    margin-right: 10px;
+}
 .placeholders {
     margin-bottom: 30px;
     text-align: center;
@@ -276,6 +283,10 @@ h4 {
 .title {
     font-size: 24px;
 }
+.title .name {
+    font-weight: 600;
+    color: #204d74;
+}
 .title-icon {
     font-size: 5em;
     width: 90px;
@@ -287,12 +298,6 @@ h4 {
 }
 .title-container {
     float: left;
-}
-.tag {
-    font-weight: normal;
-    color: #0366d6;
-    background: #f1f8ff;
-    margin-right: 10px;
 }
 .huge {
     font-size: 40px;

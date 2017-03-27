@@ -34,8 +34,8 @@ public class ProjectTest extends BaseTest {
     public void testProjectPersistence() throws Exception {
         QueryManager qm = new QueryManager();
 
-        Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null);
-        Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null);
+        Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null);
+        Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null);
         Scan scan = qm.createScan(p1, new Date(), new Date());
 
         Assert.assertEquals("Example Project 1", p1.getName());

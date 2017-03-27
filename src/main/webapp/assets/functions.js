@@ -202,6 +202,20 @@ function getLocation(href) {
 }
 
 /**
+ * Check if a string is empty, null or undefined
+ */
+function isEmpty(string) {
+    return (!string || 0 === string.length);
+}
+
+/**
+ * Check if a string is blank, null or undefined I use:
+ */
+function isBlank(string) {
+    return (!string || /^\s*$/.test(string));
+}
+
+/**
  * Executed when the DOM is ready for JavaScript to be executed.
  */
 $(document).ready(function () {

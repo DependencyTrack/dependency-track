@@ -84,62 +84,6 @@ function clearInputFields() {
 }
 
 /**
- * Service called when a project is updated.
- */
-function updateProject() {
-    const uuid = $(this).data("project-uuid");
-    const name = $("#inputProjectName-" + uuid).val();
-    const version = $("#inputProjectVersion-" + uuid).val();
-    const description = $("#inputProjectDescription-" + uuid).val();
-    const tags = $("#inputProjectTags-" + uuid).val();
-    $.ajax({
-        url: contextPath() + URL_PROJECT,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_POST,
-        data: JSON.stringify({uuid: uuid, name: name, version: version, description: description, tags: tags}),
-        statusCode: {
-            200: function(data) {
-                $("#projectsTable").bootstrapTable("refresh", {silent: true});
-            },
-            404: function(data) {
-                //todo: the uuid of the project could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-}
-
-/**
- * Service called when a project is deleted.
- */
-function deleteProject() {
-    const uuid = $(this).data("project-uuid");
-    $.ajax({
-        url: contextPath() + URL_PROJECT,
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        data: JSON.stringify({uuid: uuid}),
-        statusCode: {
-            204: function(data) {
-                const projectsTable = $('#projectsTable');
-                projectsTable.expanded = false;
-                projectsTable.bootstrapTable("collapseAllRows");
-                projectsTable.bootstrapTable("refresh", {silent: true});
-            },
-            404: function(data) {
-                //todo: the uuid of the project could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-}
-
-/**
  * Setup events and trigger other stuff when the page is loaded and ready
  */
 $(document).ready(function () {

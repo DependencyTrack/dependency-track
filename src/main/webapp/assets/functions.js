@@ -35,6 +35,7 @@ const URL_USER_LDAP = "/v1/user/ldap";
 const URL_USER_MANAGED = "/v1/user/managed";
 const URL_USER_SELF = "/v1/user/self";
 const URL_PROJECT = "/v1/project";
+const URL_LICENSE = "/v1/license";
 
 
 function contextPath() {
@@ -196,6 +197,9 @@ function debounce(func, wait, immediate) {
  * Useful for parsing HREF's
  */
 function getLocation(href) {
+    if (href === null) {
+        href = window.location;
+    }
     let location = document.createElement("a");
     location.href = href;
     return location;
@@ -247,4 +251,31 @@ $(document).ready(function () {
         }
     })();
 
+});
+
+/**
+ * Extends JQuery
+ */
+$.extend({
+
+    /**
+     * Retrieves the querystring, parses it.
+     */
+    getUrlVars: function() {
+        let vars = [], hash;
+        let hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        for(let i = 0; i < hashes.length; i++) {
+            hash = hashes[i].split('=');
+            vars.push(hash[0]);
+            vars[hash[0]] = hash[1];
+        }
+        return vars;
+    },
+
+    /**
+     * Provides a function to extract a param from the querystring.
+     */
+    getUrlVar: function(name) {
+        return $.getUrlVars()[name];
+    }
 });

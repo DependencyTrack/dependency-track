@@ -20,9 +20,9 @@
                                 <i class="fa fa-sitemap"></i>
                             </div>
                             <div class="title-container">
-                                <span class="title">Example Project <span class="fa fa-chevron-right"></span> 1.0</span>
+                                <span class="title"><span class="name">Example Project</span> &#x025B8; 1.0</span>
                                 <br/>Sub Project: 0<br/>
-                                <a href="#"><span class="badge tag">rest</span></a><a href="#"><span class="badge tag">api</span></a><a href="#"><span class="badge tag">java</span></a><a href="#"><span class="badge tag">javascript</span></a>
+                                <a href="#"><span class="badge tag-standalone">rest</span></a><a href="#"><span class="badge tag-standalone">api</span></a><a href="#"><span class="badge tag-standalone">java</span></a><a href="#"><span class="badge tag-standalone">javascript</span></a>
                             </div>
                         </div>
                         <div class="col-sm-3 col-md-3 col-lg-2">

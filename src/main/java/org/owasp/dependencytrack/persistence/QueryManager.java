@@ -26,13 +26,22 @@ import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectProperty;
 import org.owasp.dependencytrack.model.Scan;
+import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
 import javax.jdo.Query;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
+ * providing methods that operate on the Dependency-Track specific models.
+ *
+ * @author Steve Springett
+ * @since 1.0.0
+ */
 public class QueryManager extends AlpineQueryManager {
 
     private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
@@ -44,11 +53,16 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Constructs a new QueryManager.
+     * @param request an AlpineRequest object
      */
     public QueryManager(final AlpineRequest request) {
         super(request);
     }
 
+    /**
+     * Returns a list of all projets.
+     * @return a List of Projects
+     */
     @SuppressWarnings("unchecked")
     public List<Project> getProjects() {
         final Query query = pm.newQuery(Project.class);
@@ -56,12 +70,96 @@ public class QueryManager extends AlpineQueryManager {
         return (List<Project>) execute(query);
     }
 
-    public Project createProject(String name, String description, String version, Project parent) {
+    /**
+     * Returns a list of Tag objects what have been resolved. It resolved
+     * tags by querying the database to retrieve the tag. If the tag does
+     * not exist, the tag will be created and returned with other resolved
+     * tags.
+     * @param tags a List of Tags to resolve
+     * @return List of resolved Tags
+     */
+    @SuppressWarnings("unchecked")
+    public synchronized List<Tag> resolveTags(List<Tag> tags) {
+        final List<Tag> resolvedTags = new ArrayList<>();
+        final List<String> unresolvedTags = new ArrayList<>();
+        for (Tag tag: tags) {
+            final Tag resolvedTag = getTagByName(tag.getName());
+            if (resolvedTag != null) {
+                resolvedTags.add(resolvedTag);
+            } else {
+                unresolvedTags.add(tag.getName());
+            }
+        }
+        resolvedTags.addAll(createTags(unresolvedTags));
+        return resolvedTags;
+    }
+
+    /**
+     * Returns a list of Tag objects by name.
+     * @param name the name of the Tag
+     * @return a Tag object
+     */
+    @SuppressWarnings("unchecked")
+    public Tag getTagByName(String name) {
+        final Query query = pm.newQuery(Tag.class, "name == :name");
+        final List<Tag> result = (List<Tag>) query.execute(name);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Creates a new Tag object with the specified name.
+     * @param name the name of the Tag to create
+     * @return the created Tag object
+     */
+    public Tag createTag(String name) {
+        final Tag resolvedTag = getTagByName(name);
+        if (resolvedTag != null) {
+            return resolvedTag;
+        }
+        final Tag tag = new Tag();
+        tag.setName(name);
+        pm.currentTransaction().begin();
+        pm.makePersistent(tag);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(Tag.class, tag.getId());
+    }
+
+    /**
+     * Creates one or more Tag objects from the specified name(s).
+     * @param names the name(s) of the Tag(s) to create
+     * @return the created Tag object(s)
+     */
+    public List<Tag> createTags(List<String> names) {
+        final List<Tag> newTags = new ArrayList<>();
+        for (String name: names) {
+            if (getTagByName(name) == null) {
+                final Tag tag = new Tag();
+                tag.setName(name);
+                newTags.add(tag);
+            }
+        }
+        pm.currentTransaction().begin();
+        pm.makePersistentAll(newTags);
+        pm.currentTransaction().commit();
+        return newTags;
+    }
+
+    /**
+     * Creates a new Project.
+     * @param name the name of the project to create
+     * @param description a description of the project
+     * @param version the project version
+     * @param tags a List of Tags - these will be resolved if necessary
+     * @param parent an optional parent Project
+     * @return the created Project
+     */
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
         project.setUuid(UUID.randomUUID().toString());
+        project.setTags(resolveTags(tags));
         if (parent != null) {
             project.setParent(parent);
         }
@@ -71,6 +169,11 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Project.class, project.getId());
     }
 
+    /**
+     * Updates an existing Project.
+     * @param transientProject the project to update
+     * @return the updated Project
+     */
     public Project updateProject(Project transientProject) {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         pm.currentTransaction().begin();
@@ -80,6 +183,10 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Project.class, project.getId());
     }
 
+    /**
+     * Deletes a Project and all objects dependant on the project.
+     * @param project the Project to delete
+     */
     public void recursivelyDeleteProject(Project project) {
         if (project.getChildren() != null) {
             for (Project child: project.getChildren()) {
@@ -92,6 +199,13 @@ public class QueryManager extends AlpineQueryManager {
         delete(project);
     }
 
+    /**
+     * Creates a key/value pair (ProjectProperty) for the specified Project.
+     * @param project the Project to create the property for
+     * @param key the key of the property
+     * @param value the value of the property
+     * @return the created ProjectProperty object
+     */
     public ProjectProperty createProjectProperty(Project project, String key, String value) {
         final ProjectProperty property = new ProjectProperty();
         property.setProject(project);
@@ -103,6 +217,13 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(ProjectProperty.class, property.getId());
     }
 
+    /**
+     * Creates a new Scan.
+     * @param project the Project to create a Scan for
+     * @param executed the Date when the scan was executed
+     * @param imported the Date when the scan was imported
+     * @return a new Scan object
+     */
     public Scan createScan(Project project, Date executed, Date imported) {
         final Scan scan = new Scan();
         scan.setExecuted(executed);
@@ -115,12 +236,21 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Scan.class, scan.getId());
     }
 
+    /**
+     * Returns a list of all Scans for the specified Project.
+     * @param project the Project to retrieve scans for
+     * @return a List of Scans
+     */
     @SuppressWarnings("unchecked")
     public List<Scan> getScans(Project project) {
         final Query query = pm.newQuery(Scan.class, "project == :project");
         return (List<Scan>) query.execute(project);
     }
 
+    /**
+     * Returns a list of all Components defined in the datastore.
+     * @return a List of Components
+     */
     @SuppressWarnings("unchecked")
     public List<Component> getComponents() {
         final Query query = pm.newQuery(Component.class);
@@ -128,6 +258,11 @@ public class QueryManager extends AlpineQueryManager {
         return (List<Component>) execute(query);
     }
 
+    /**
+     * Returns a Component by its hash. Supports MD5 and SHA1 file hashes.
+     * @param hash the hash of the component to retrieve
+     * @return a Component, or null if not found
+     */
     @SuppressWarnings("unchecked")
     public Component getComponentByHash(String hash) {
         final Query query = pm.newQuery(Component.class, "md5 == :hash || sha1 == :hash");
@@ -135,6 +270,17 @@ public class QueryManager extends AlpineQueryManager {
         return result.size() == 0 ? null : result.get(0);
     }
 
+    /**
+     * Creates a new Component.
+     * @param name the name of the Component
+     * @param filename the optional filename
+     * @param md5 the optional MD5 hash
+     * @param sha1 the optional SHA1 hash
+     * @param description an optional description
+     * @param license an optional license
+     * @param parent an optional parent Component
+     * @return a new Component
+     */
     public Component createComponent(String name, String filename, String md5, String sha1,
                                      String description, String license, Component parent) {
         final Component component = new Component();
@@ -152,6 +298,16 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Component.class, component.getId());
     }
 
+    /**
+     * Creates new evidence for a Component.
+     * @param component the Component to create evidence for
+     * @param type the type of evidence
+     * @param confidenceScore the confidence score
+     * @param source the source of where the evidence was obtained from
+     * @param name the name of the evidence
+     * @param value the value of the evidence
+     * @return a new Evidence object
+     */
     public Evidence createEvidence(Component component, String type, int confidenceScore,
                                     String source, String name, String value) {
         final Evidence evidence = new Evidence();
@@ -168,6 +324,10 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Evidence.class, evidence.getId());
     }
 
+    /**
+     * Returns a List of all License objects.
+     * @return a List of all License objects
+     */
     @SuppressWarnings("unchecked")
     public List<License> getLicenses() {
         final Query query = pm.newQuery(License.class);
@@ -175,6 +335,11 @@ public class QueryManager extends AlpineQueryManager {
         return (List<License>) execute(query);
     }
 
+    /**
+     * Returns a License object from the specified SPDX license ID.
+     * @param licenseId the SPDX license ID to retrieve
+     * @return a License object, or null if not found
+     */
     @SuppressWarnings("unchecked")
     public License getLicense(String licenseId) {
         final Query query = pm.newQuery(License.class, "licenseId == :licenseId");
@@ -182,6 +347,11 @@ public class QueryManager extends AlpineQueryManager {
         return result.size() == 0 ? null : result.get(0);
     }
 
+    /**
+     * Creates a new License.
+     * @param transientLicense the License object to create
+     * @return a created License object
+     */
     public License createLicense(License transientLicense) {
         pm.currentTransaction().begin();
         final License license = new License();
@@ -198,6 +368,16 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(License.class, license.getId());
     }
 
+    /**
+     * Creates a new Vulnerability.
+     * @param name the name of the vulnerability. This is typically CWE-something
+     * @param desc the description of the vulnerability
+     * @param cwe the common weakness enumeration, or weakness categorization
+     * @param cvss the cvss score 0.0 - 10.0
+     * @param matchedCpe the matched CPE
+     * @param matchAlPreviousCpe refer to DC report
+     * @return a new Vulnerability object
+     */
     public Vulnerability createVulnerability(String name, String desc, Cwe cwe,
                                              BigDecimal cvss, String matchedCpe, String matchAlPreviousCpe) {
         pm.currentTransaction().begin();
@@ -214,6 +394,11 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Vulnerability.class, vuln.getId());
     }
 
+    /**
+     * Returns a vulnerability by it's name (i.e. CVE-2017-0001)
+     * @param name the name of the vulnerability
+     * @return the matching Vulnerability object, or null if not found
+     */
     @SuppressWarnings("unchecked")
     public Vulnerability getVulnerabilityByName(String name) {
         final Query query = pm.newQuery(Vulnerability.class, "name == :name");
@@ -221,6 +406,14 @@ public class QueryManager extends AlpineQueryManager {
         return result.size() == 0 ? null : result.get(0);
     }
 
+    /**
+     * Checks if the specified CWE id exists or not. If not, creates
+     * a new CWE with the specified ID and name. In both cases, the
+     * CWE will be returned.
+     * @param id the CWE ID
+     * @param name the name of the CWE
+     * @return a CWE object
+     */
     public Cwe createCweIfNotExist(int id, String name) {
         Cwe cwe = getCweById(id);
         if (cwe != null) {
@@ -235,6 +428,11 @@ public class QueryManager extends AlpineQueryManager {
         return pm.getObjectById(Cwe.class, cwe.getId());
     }
 
+    /**
+     * Returns a CWE by it's CWE-ID.
+     * @param cweId the CWE-ID
+     * @return a CWE object, or null if not found
+     */
     @SuppressWarnings("unchecked")
     public Cwe getCweById(int cweId) {
         final Query query = pm.newQuery(Cwe.class, "cweId == :cweId");
@@ -242,6 +440,10 @@ public class QueryManager extends AlpineQueryManager {
         return result.size() == 0 ? null : result.get(0);
     }
 
+    /**
+     * Returns a complete list of all CWE's.
+     * @return a List of CWEs
+     */
     @SuppressWarnings("unchecked")
     public List<Cwe> getCwes() {
         final Query query = pm.newQuery(Cwe.class);
@@ -249,6 +451,11 @@ public class QueryManager extends AlpineQueryManager {
         return (List<Cwe>) execute(query);
     }
 
+    /**
+     * Binds the two objects together in a corresponding join table.
+     * @param scan a Scan object
+     * @param component a Component object
+     */
     public void bind(Scan scan, Component component) {
         pm.currentTransaction().begin();
         scan.getComponents().add(component);
@@ -256,6 +463,11 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().commit();
     }
 
+    /**
+     * Binds the two objects together in a corresponding join table.
+     * @param component a Component object
+     * @param vulnerability a Vulnerability object
+     */
     public void bind(Component component, Vulnerability vulnerability) {
         pm.currentTransaction().begin();
         vulnerability.getComponents().add(component);

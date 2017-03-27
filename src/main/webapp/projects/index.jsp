@@ -111,13 +111,12 @@
                 </div>
             </div>
             <table id="projectsTable" class="table table-hover detail-table" data-toggle="table"
-                   data-url="<c:url value="/api/v1/projects"/>" data-response-handler="formatProjectsTable"
-                   data-show-refresh="true" data-show-columns="true" data-search="true"
-                   data-detail-view="true" data-detail-formatter="projectsDetailFormatter"
+                   data-url="<c:url value="/api/v1/project"/>" data-response-handler="formatProjectsTable"
+                   data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                    data-toolbar="#projectsToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
-                    <th data-align="left" data-field="name">Project Name</th>
+                    <th data-align="left" data-field="projecthref">Project Name</th>
                     <th data-align="left" data-field="lastscan">Last Scanned</th>
                     <th data-align="left" data-field="bomupdated">BOM Updated</th>
                     <th data-align="left" data-field="subprojects">Sub Projects</th>
@@ -129,8 +128,43 @@
 
         </div> <!-- /main-row> -->
     </div>
+
+    <!-- Modals specific to projects -->
+    <div class="modal" id="modalCreateProject" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create Project</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="sr-only" for="createProjectNameInput">Team Name</label>
+                        <input type="text" name="name" required="true" placeholder="Project Name..." class="form-control" id="createProjectNameInput">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="createProjectVersionInput">Team Name</label>
+                        <input type="text" name="version" required="true" placeholder="Version..." class="form-control" id="createProjectVersionInput">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="createProjectDescriptionInput">Description</label>
+                        <textarea name="description" required="true" placeholder="Description" class="form-control" id="createProjectDescriptionInput"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="createProjectTagsInput">Tags</label>
+                        <input type="text" name="version" placeholder="Tags, comma separated" class="form-control" data-role="tagsinput" id="createProjectTagsInput">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createProjectCreateButton">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 </div>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
+<script type="text/javascript" src="<c:url value="/projects/functions.js"/>"></script>
 </body>
 </html>

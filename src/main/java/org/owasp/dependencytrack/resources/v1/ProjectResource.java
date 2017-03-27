@@ -121,6 +121,7 @@ public class ProjectResource extends AlpineResource {
                     jsonProject.getName(),
                     StringUtils.trimToNull(jsonProject.getDescription()),
                     StringUtils.trimToNull(jsonProject.getVersion()),
+                    jsonProject.getTags(),
                     parent);
             return Response.status(Response.Status.CREATED).entity(project).build();
         }

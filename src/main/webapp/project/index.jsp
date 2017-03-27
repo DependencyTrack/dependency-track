@@ -122,7 +122,7 @@
                     </div>
                     <div class="form-group">
                         <label class="sr-only" for="createComponentLicenseSelect">License</label>
-                        <select name="license" class="selectpicker form-control" data-live-search="true" id="createComponentLicenseSelect">
+                        <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="createComponentLicenseSelect">
                             <option></option>
                         </select>
                     </div>

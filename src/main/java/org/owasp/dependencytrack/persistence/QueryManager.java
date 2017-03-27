@@ -80,6 +80,9 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public synchronized List<Tag> resolveTags(List<Tag> tags) {
+        if (tags == null) {
+            return null;
+        }
         final List<Tag> resolvedTags = new ArrayList<>();
         final List<String> unresolvedTags = new ArrayList<>();
         for (Tag tag: tags) {

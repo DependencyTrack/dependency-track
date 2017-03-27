@@ -13,6 +13,7 @@
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-table/bootstrap-table.min.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-toggle/css/bootstrap-toggle.min.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-tagsinput/bootstrap-tagsinput.css"/>">
+<link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-select/css/bootstrap-select.min.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/fonts/opensans/opensans.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/font-awesome/css/font-awesome.min.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/style.css"/>">

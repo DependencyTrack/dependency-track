@@ -5,5 +5,6 @@
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-table/bootstrap-table.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-toggle/js/bootstrap-toggle.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-tagsinput/bootstrap-tagsinput.min.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/bootstrap-select/js/bootstrap-select.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bind.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/functions.js"/>"></script>

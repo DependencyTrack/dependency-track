@@ -157,7 +157,7 @@ function teamDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $("#inputTeamName-${row.uuid}").keypress(debounce(updateTeam, 750));
+        $("#inputTeamName-${row.uuid}").keypress($common.debounce(updateTeam, 750));
         $("#inputTeamHakmaster-${row.uuid}").change(updateTeam);
         $("#deleteTeam-${row.uuid}").on("click", deleteTeam);
     </script>

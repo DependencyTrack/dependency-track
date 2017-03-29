@@ -28,34 +28,8 @@ function formatProjectsTable(res) {
     return res;
 }
 
-/**
- * Service called when a project is created.
- */
-function createProject() {
-    const name = $("#createProjectNameInput").val();
-    const version = $("#createProjectVersionInput").val();
-    const description = $("#createProjectDescriptionInput").val();
-    const tags = tagsStringToObjectArray($("#createProjectTagsInput").val());
-    console.log("name: " + name);
-    console.log("version: " + version);
-    console.log("description: " + description);
-    console.log("tags: " + tags);
-    $.ajax({
-        url: contextPath() + URL_PROJECT,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_PUT,
-        data: JSON.stringify({name: name, version: version, description: description, tags: tags}),
-        statusCode: {
-            201: function(data) {
-                $("#projectsTable").bootstrapTable("refresh", {silent: true});
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError) {
-            console.log("failed");
-        }
-    });
-    clearInputFields();
+function projectCreated(data) {
+    $("#projectsTable").bootstrapTable("refresh", {silent: true});
 }
 
 /**
@@ -64,7 +38,7 @@ function createProject() {
  */
 function tagsStringToObjectArray(tagsString) {
     let tagsArray = [];
-    if (!isEmpty(tagsString)) {
+    if (!$common.isEmpty(tagsString)) {
         let tmpArray = tagsString.split(",");
         for (let i in tmpArray) {
             tagsArray.push({name: tmpArray[i]});
@@ -92,10 +66,17 @@ $(document).ready(function () {
     $('[data-toggle="tooltip"]').tooltip();
 
     // Listen for if the button to create a project is clicked
-    $("#createProjectCreateButton").on("click", createProject);
+    $("#createProjectCreateButton").on("click", function() {
+        const name = $("#createProjectNameInput").val();
+        const version = $("#createProjectVersionInput").val();
+        const description = $("#createProjectDescriptionInput").val();
+        const tags = tagsStringToObjectArray($("#createProjectTagsInput").val());
+        $rest.createProject(name, version, description, tags, projectCreated);
+        clearInputFields();
+    });
 
     // When modal closes, clear out the input fields
-    $("#modalCreateProject").on("hidden.bs.modal", function () {
+    $("#modalCreateProject").on("hidden.bs.modal", function() {
         $("#createProjectNameInput").val("");
     });
 

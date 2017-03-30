@@ -67,10 +67,14 @@ $rest.getVersion = function getVersion(successCallback, failCallback) {
         dataType: DATA_TYPE,
         type: METHOD_GET,
         success: function (data) {
-            $rest.callbackValidator(successCallback(data));
+            if (successCallback) {
+                $rest.callbackValidator(successCallback(data));
+            }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -85,10 +89,14 @@ $rest.login = function login(username, password, successCallback, failCallback) 
         data: ({username: username, password: password}),
         statusCode: {
             200: function(data) {
-                $rest.callbackValidator(successCallback(data));
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             },
             401: function(data) {
-                $rest.callbackValidator(failCallback(data));
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         }
     });
@@ -103,10 +111,14 @@ $rest.getPrincipalSelf = function getPrincipalSelf(successCallback, failCallback
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_GET,
         success: function (data) {
-            $rest.callbackValidator(successCallback(data));
+            if (successCallback) {
+                $rest.callbackValidator(successCallback(data));
+            }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -123,11 +135,15 @@ $rest.createProject = function createProject(name, version, description, tags, s
         data: JSON.stringify({name: name, version: version, description: description, tags: tags}),
         statusCode: {
             201: function(data) {
-                $rest.callbackValidator(successCallback(data));
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -143,14 +159,20 @@ $rest.getProject = function getProject(uuid, successCallback, failCallback) {
         type: METHOD_GET,
         statusCode: {
             200: function(data) {
-                $rest.callbackValidator(successCallback(data))
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             },
             404: function(data) {
-                $rest.callbackValidator(failCallback(data));
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -167,14 +189,20 @@ $rest.updateProject = function updateProject(uuid, name, version, description, t
         data: JSON.stringify({uuid: uuid, name: name, version: version, description: description, tags: tags}),
         statusCode: {
             200: function(data) {
-                $rest.callbackValidator(successCallback(data))
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             },
             404: function(data) {
-                $rest.callbackValidator(failCallback(data))
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -190,14 +218,20 @@ $rest.deleteProject = function deleteProject(uuid, successCallback, failCallback
         data: JSON.stringify({uuid: uuid}),
         statusCode: {
             204: function(data) {
-                $rest.callbackValidator(successCallback(data));
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             },
             404: function(data) {
-                $rest.callbackValidator(failCallback(data));
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -205,20 +239,24 @@ $rest.deleteProject = function deleteProject(uuid, successCallback, failCallback
 /**
  * Service called when a component is created.
  */
-$rest.createComponent = function createComponent(name, version, group, description, licenseId, successCallback, failCallback) {
+$rest.createComponent = function createComponent(name, version, group, description, license, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_COMPONENT,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
-        data: JSON.stringify({name: name, version: version, group:group, description: description, licenseId: licenseId}),
+        data: JSON.stringify({name: name, version: version, group:group, description: description, license: license}),
         statusCode: {
             201: function(data) {
-                $rest.callbackValidator(successCallback(data));
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
-            $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
         }
     });
 };
@@ -234,10 +272,14 @@ $rest.getLicenses = function getLicenses(successCallback, failCallback) {
         type: METHOD_GET,
         statusCode: {
             200: function(data) {
-                $rest.callbackValidator(successCallback(data));
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             },
             404: function(data) {
-                $rest.callbackValidator(failCallback(data));
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         }
     });

@@ -25,5 +25,6 @@ public class Permission extends AlpinePermission {
     public static final String PROJECT_VIEW = "PROJECT_VIEW";
 
     public static final String COMPONENT_VIEW = "COMPONENT_VIEW";
+    public static final String COMPONENT_MANAGE = "COMPONENT_MANAGE";
 
 }

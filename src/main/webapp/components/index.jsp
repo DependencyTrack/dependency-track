@@ -116,7 +116,7 @@
                    data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
-                    <th data-align="left" data-field="componentthref">Name</th>
+                    <th data-align="left" data-field="componenthref">Name</th>
                     <th data-align="left" data-field="version">Version</th>
                     <th data-align="left" data-field="group">Group</th>
                     <th data-align="left" data-field="license">License</th>

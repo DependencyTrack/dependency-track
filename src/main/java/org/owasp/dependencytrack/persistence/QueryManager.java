@@ -276,23 +276,29 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Creates a new Component.
      * @param name the name of the Component
+     * @param version the optional version of the Component
+     * @param group the optional group (or vendor) of the Component
      * @param filename the optional filename
      * @param md5 the optional MD5 hash
      * @param sha1 the optional SHA1 hash
      * @param description an optional description
-     * @param license an optional license
+     * @param resolvedLicense an optional resolved SPDX license
+     * @param license an optional license name (text)
      * @param parent an optional parent Component
      * @return a new Component
      */
-    public Component createComponent(String name, String filename, String md5, String sha1,
-                                     String description, String license, Component parent) {
+    public Component createComponent(String name, String version, String group, String filename, String md5, String sha1,
+                                     String description, License resolvedLicense, String license, Component parent) {
         final Component component = new Component();
         component.setName(name);
+        component.setVersion(version);
+        component.setGroup(group);
         component.setFilename(filename);
         component.setMd5(md5);
         component.setSha1(sha1);
         component.setDescription(description);
         component.setLicense(license);
+        component.setResolvedLicense(resolvedLicense);
         component.setParent(parent);
         component.setUuid(UUID.randomUUID().toString());
         pm.currentTransaction().begin();

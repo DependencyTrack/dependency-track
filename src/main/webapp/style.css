@@ -1,5 +1,5 @@
 html {
-    overflow: hidden;
+    overflow-x: hidden;
 }
 body {
     padding-top: 50px;

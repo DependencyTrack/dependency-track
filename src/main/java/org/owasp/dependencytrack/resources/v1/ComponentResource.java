@@ -27,10 +27,14 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import javax.validation.Validator;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -112,6 +116,47 @@ public class ComponentResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }
+        }
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates a new component",
+            notes = "Requires 'manage component' permission.",
+            response = Component.class,
+            code = 201
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    public Response createComponent(Component jsonComponent) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonComponent, "name"),
+                validator.validateProperty(jsonComponent, "version"),
+                validator.validateProperty(jsonComponent, "group"),
+                validator.validateProperty(jsonComponent, "description"),
+                validator.validateProperty(jsonComponent, "license")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            Component parent = null;
+            if (jsonComponent.getParent() != null && jsonComponent.getParent().getUuid() != null) {
+                parent = qm.getObjectByUuid(Component.class, jsonComponent.getParent().getUuid());
+            }
+            final Component component = qm.createComponent(
+                    StringUtils.trimToNull(jsonComponent.getName()),
+                    StringUtils.trimToNull(jsonComponent.getVersion()),
+                    StringUtils.trimToNull(jsonComponent.getGroup()),
+                    null, null, null,
+                    StringUtils.trimToNull(jsonComponent.getDescription()),
+                    qm.getLicense(jsonComponent.getLicense()),
+                    null,
+                    parent);
+            return Response.status(Response.Status.CREATED).entity(component).build();
         }
     }
 

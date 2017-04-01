@@ -22,6 +22,7 @@
  */
 const CONTENT_TYPE_JSON = "application/json";
 const CONTENT_TYPE_TEXT = "text/plain";
+const TOTAL_COUNT_HEADER = "X-Total-Count";
 const DATA_TYPE = "json";
 const METHOD_GET = "GET";
 const METHOD_POST = "POST";
@@ -149,6 +150,30 @@ $rest.createProject = function createProject(name, version, description, tags, s
 };
 
 /**
+ * Service called to retrieve all projects
+ */
+$rest.getProjects = function getProjects(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_PROJECT,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
  * Service called to retrieve a specific project
  */
 $rest.getProject = function getProject(uuid, successCallback, failCallback) {
@@ -250,6 +275,59 @@ $rest.createComponent = function createComponent(name, version, group, descripti
             201: function(data) {
                 if (successCallback) {
                     $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve all components
+ */
+$rest.getComponents = function getProjects(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_COMPONENT,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve a specific project
+ */
+$rest.getComponent = function getProject(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_COMPONENT + "/" + uuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
                 }
             }
         },

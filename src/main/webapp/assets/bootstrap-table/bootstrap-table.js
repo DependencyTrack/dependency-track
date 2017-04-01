@@ -1970,9 +1970,13 @@
             cache: this.options.cache,
             contentType: this.options.contentType,
             dataType: this.options.dataType,
-            success: function (res) {
-                res = calculateObjectValue(that.options, that.options.responseHandler, [res], res);
-
+            // Begin modification by Steve Springett
+            success: function (tmpres, status, xhr) {
+                tmpres = calculateObjectValue(that.options, that.options.responseHandler, [tmpres], tmpres);
+                var res = [];
+                res.rows = tmpres;
+                res.total = xhr.getResponseHeader("X-Total-Count");
+                // End modification
                 that.load(res);
                 that.trigger('load-success', res);
                 if (!silent) that.$tableLoading.hide();

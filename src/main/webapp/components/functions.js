@@ -18,7 +18,7 @@
 "use strict";
 
 /**
- * Called by bootstrap table to format the data in the projects table.
+ * Called by bootstrap table to format the data in the components table.
  */
 function formatComponentsTable(res) {
     for (let i=0; i<res.length; i++) {

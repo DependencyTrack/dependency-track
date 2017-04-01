@@ -113,6 +113,8 @@
             <table id="componentsTable" class="table table-hover detail-table" data-toggle="table"
                    data-url="<c:url value="/api/v1/component"/>" data-response-handler="formatComponentsTable"
                    data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
+                   data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
+                   data-page-size="10" data-page-list="[10, 25, 50, 100]"
                    data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>

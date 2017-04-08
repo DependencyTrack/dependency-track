@@ -22,7 +22,7 @@ body {
 .navbar-fixed-top {
     border: 0;
 }
-#navbar-container, #main, #sidebar {
+#main {
     display: none;
 }
 .page-content {
@@ -375,7 +375,6 @@ h4 {
 /* Sidebar Navigation */
 #sidebar {
     top: 50px;
-    display: none;
     float: left;
     background: #2E363F;
     z-index:1;

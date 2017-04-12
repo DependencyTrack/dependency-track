@@ -21,6 +21,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.resources.AlpineRequest;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Cwe;
+import org.owasp.dependencytrack.model.Dependency;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
@@ -458,6 +459,93 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(Cwe.class);
         query.setOrdering("id asc");
         return (List<Cwe>) execute(query);
+    }
+
+    /**
+     * Checks if the specified Dependency exists or not. If not, creates
+     * a new Dependency with the specified project and component. In both
+     * cases, the Dependency will be returned.
+     * @param project the Project
+     * @param component the Component
+     * @param addedBy optional string representation of a username
+     * @param notes any notes on why the dependency exists or its usage
+     * @return a Dependency object
+     */
+    public Dependency createDependencyIfNotExist(Project project, Component component, String addedBy, String notes) {
+        Dependency dependency = getDependency(project, component);
+        if (dependency != null) {
+            return dependency;
+        }
+        dependency = new Dependency();
+        dependency.setProject(project);
+        dependency.setComponent(component);
+        dependency.setAddedBy(addedBy);
+        dependency.setAddedOn(new Date());
+        dependency.setNotes(notes);
+        pm.currentTransaction().begin();
+        pm.makePersistent(dependency);
+        pm.currentTransaction().commit();
+        return pm.getObjectById(Dependency.class, dependency.getId());
+    }
+
+    /**
+     * Returns a List of Dependency for the specified Project.
+     * @param project the Project to retrieve dependencies of
+     * @return a List of Dependency objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Dependency> getDependencies(Project project) {
+        final Query query = pm.newQuery(Dependency.class, "project == :project");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
+        return (List<Dependency>) query.execute(project);
+    }
+
+    /**
+     * Returns a List of Dependency for the specified Component.
+     * @param component the Component to retrieve dependencies of
+     * @return a List of Dependency objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Dependency> getDependencies(Component component) {
+        final Query query = pm.newQuery(Dependency.class, "component == :component");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
+        return (List<Dependency>) query.execute(component);
+    }
+
+    /**
+     * Returns the number of Dependency objects for the specified Project.
+     * @param project the Project to retrieve dependencies of
+     * @return the total number of dependencies for the project
+     */
+    @SuppressWarnings("unchecked")
+    public long getDependencyCount(Project project) {
+        final Query query = pm.newQuery(Dependency.class, "project == :project");
+        return getCount(query, project);
+    }
+
+    /**
+     * Returns the number of Dependency objects for the specified Component.
+     * @param component the Component to retrieve dependencies of
+     * @return the total number of dependencies for the component
+     */
+    @SuppressWarnings("unchecked")
+    public long getDependencyCount(Component component) {
+        final Query query = pm.newQuery(Dependency.class, "component == :component");
+        return getCount(query, component);
+    }
+
+    /**
+     * Returns a Dependency for the specified Project and Component.
+     * @param project the Project the component is part of
+     * @param component the Component
+     * @return a Dependency object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Dependency getDependency(Project project, Component component) {
+        final Query query = pm.newQuery(Dependency.class, "project == :project && component == :component");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
+        final List<Dependency> result = (List<Dependency>) query.execute(project, component);
+        return result.size() == 0 ? null : result.get(0);
     }
 
     /**

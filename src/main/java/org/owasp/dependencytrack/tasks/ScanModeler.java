@@ -69,6 +69,8 @@ public class ScanModeler implements Subscriber {
                             null
                     );
 
+                    qm.createDependencyIfNotExist(project, component, null, null);
+
                     if (dependency.getVulnerabilities() != null && dependency.getVulnerabilities().getVulnerabilities() != null) {
                         for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
                             //first - check if vuln already exists...

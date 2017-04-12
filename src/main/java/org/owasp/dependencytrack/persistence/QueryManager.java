@@ -497,7 +497,7 @@ public class QueryManager extends AlpineQueryManager {
     public List<Dependency> getDependencies(Project project) {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
-        return (List<Dependency>) query.execute(project);
+        return (List<Dependency>) execute(query, project);
     }
 
     /**
@@ -509,7 +509,7 @@ public class QueryManager extends AlpineQueryManager {
     public List<Dependency> getDependencies(Component component) {
         final Query query = pm.newQuery(Dependency.class, "component == :component");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
-        return (List<Dependency>) query.execute(component);
+        return (List<Dependency>) execute(query, component);
     }
 
     /**

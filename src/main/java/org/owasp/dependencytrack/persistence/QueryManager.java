@@ -571,6 +571,36 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns the number of Vulnerability objects for the specified Project.
+     * @param project the Project to retrieve vulnerabilities of
+     * @return the total number of vulnerabilities for the project
+     */
+    @SuppressWarnings("unchecked")
+    public long getVulnerabilityCount(Project project) {
+        long total = 0;
+        final List<Dependency> dependencies = getDependencies(project);
+        for (Dependency dependency: dependencies) {
+            total += getVulnerabilityCount(dependency.getComponent());
+        }
+        return total;
+    }
+
+    /**
+     * Returns a List of Vulnerability for the specified Project.
+     * @param project the Project to retrieve vulnerabilities of
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getVulnerabilities(Project project) {
+        final List<Vulnerability> vulnerabilities = new ArrayList<>();
+        final List<Dependency> dependencies = getDependencies(project);
+        for (Dependency dependency: dependencies) {
+            vulnerabilities.addAll(getVulnerabilities(dependency.getComponent()));
+        }
+        return vulnerabilities;
+    }
+
+    /**
      * Binds the two objects together in a corresponding join table.
      * @param scan a Scan object
      * @param component a Component object

@@ -3,6 +3,7 @@
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.storageapi.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap/js/bootstrap.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-table/bootstrap-table.min.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/bootstrap-table/extensions/flat-json/bootstrap-table-flat-json.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-toggle/js/bootstrap-toggle.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-tagsinput/bootstrap-tagsinput.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-select/js/bootstrap-select.min.js"/>"></script>

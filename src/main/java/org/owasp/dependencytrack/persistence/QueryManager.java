@@ -549,6 +549,28 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns the number of Vulnerability objects for the specified Component.
+     * @param component the Component to retrieve vulnerabilities of
+     * @return the total number of vulnerabilities for the component
+     */
+    @SuppressWarnings("unchecked")
+    public long getVulnerabilityCount(Component component) {
+        final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
+        return getCount(query, component);
+    }
+
+    /**
+     * Returns a List of Vulnerability for the specified Component.
+     * @param component the Component to retrieve vulnerabilities of
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getVulnerabilities(Component component) {
+        final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
+        return (List<Vulnerability>) execute(query, component);
+    }
+
+    /**
      * Binds the two objects together in a corresponding join table.
      * @param scan a Scan object
      * @param component a Component object

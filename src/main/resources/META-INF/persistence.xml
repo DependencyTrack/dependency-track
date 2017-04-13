@@ -29,6 +29,7 @@
         <class>org.owasp.dependencytrack.model.Project</class>
         <class>org.owasp.dependencytrack.model.ProjectProperty</class>
         <class>org.owasp.dependencytrack.model.Scan</class>
+        <class>org.owasp.dependencytrack.model.Stat</class>
         <class>org.owasp.dependencytrack.model.Tag</class>
         <class>org.owasp.dependencytrack.model.Vulnerability</class>
 

@@ -22,6 +22,7 @@ import alpine.tasks.LdapSyncTask;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.tasks.NistMirrorTask;
 import org.owasp.dependencytrack.tasks.ScanModeler;
+import org.owasp.dependencytrack.tasks.StatsUpdateTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -37,6 +38,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     }
 
     public void contextInitialized(ServletContextEvent event) {
+        EVENT_SERVICE.subscribe(StatsUpdateEvent.class, StatsUpdateTask.class);
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanModeler.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
@@ -47,6 +49,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent event) {
         TaskScheduler.getInstance().shutdown();
 
+        EVENT_SERVICE.unsubscribe(StatsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(ScanModeler.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);

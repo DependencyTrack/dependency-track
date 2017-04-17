@@ -18,6 +18,6 @@ package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
 
-public class StatUpdateEvent implements Event {
+public class StatsUpdateEvent implements Event {
 
 }

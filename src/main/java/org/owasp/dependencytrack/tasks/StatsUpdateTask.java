@@ -19,14 +19,14 @@ package org.owasp.dependencytrack.tasks;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
-import org.owasp.dependencytrack.event.StatUpdateEvent;
+import org.owasp.dependencytrack.event.StatsUpdateEvent;
 
 public class StatsUpdateTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(StatsUpdateTask.class);
 
     public void inform(Event e) {
-        if (e instanceof StatUpdateEvent) {
+        if (e instanceof StatsUpdateEvent) {
             LOGGER.info("Starting statistics update task");
             //todo : call stats update methods
             LOGGER.info("Statistics update complete");

@@ -29,6 +29,7 @@ import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Serialized;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -121,6 +122,14 @@ public class License implements Serializable {
     @JsonProperty(value = "isDeprecatedLicenseId")
     private boolean deprecatedLicenseId;
 
+    /**
+     * The seeAlso field - may contain URLs to the original license info.
+     */
+    @Persistent
+    @Serialized
+    @Column(name = "SEEALSO")
+    @JsonProperty(value = "seeAlso")
+    private String[] seeAlso;
 
     public long getId() {
         return id;
@@ -192,5 +201,13 @@ public class License implements Serializable {
 
     public void setDeprecatedLicenseId(boolean deprecatedLicenseId) {
         this.deprecatedLicenseId = deprecatedLicenseId;
+    }
+
+    public String[] getSeeAlso() {
+        return seeAlso;
+    }
+
+    public void setSeeAlso(String[] seeAlso) {
+        this.seeAlso = seeAlso;
     }
 }

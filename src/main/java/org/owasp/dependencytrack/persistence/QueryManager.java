@@ -373,6 +373,7 @@ public class QueryManager extends AlpineQueryManager {
         license.setName(transientLicense.getName());
         license.setTemplate(transientLicense.getTemplate());
         license.setText(transientLicense.getText());
+        license.setSeeAlso(transientLicense.getSeeAlso());
         pm.makePersistent(license);
         pm.currentTransaction().commit();
         return pm.getObjectById(License.class, license.getId());

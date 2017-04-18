@@ -72,6 +72,18 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a project by it's name
+     * @param name the name of the Project
+     * @return a Project object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Project getProject(String name) {
+        final Query query = pm.newQuery(Project.class, "name == :name");
+        final List<Project> result = (List<Project>) query.execute(name);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
      * Returns a list of Tag objects what have been resolved. It resolved
      * tags by querying the database to retrieve the tag. If the tag does
      * not exist, the tag will be created and returned with other resolved

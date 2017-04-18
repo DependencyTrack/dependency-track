@@ -101,7 +101,8 @@ public class ProjectResource extends AlpineResource {
             code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 409, message = "A project with the specified name already exists")
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response createProject(Project jsonProject) {
@@ -117,13 +118,18 @@ public class ProjectResource extends AlpineResource {
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
                 parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
             }
-            final Project project = qm.createProject(
-                    jsonProject.getName(),
-                    StringUtils.trimToNull(jsonProject.getDescription()),
-                    StringUtils.trimToNull(jsonProject.getVersion()),
-                    jsonProject.getTags(),
-                    parent);
-            return Response.status(Response.Status.CREATED).entity(project).build();
+            Project project = qm.getProject(jsonProject.getName().trim());
+            if (project == null) {
+                project = qm.createProject(
+                        jsonProject.getName().trim(),
+                        StringUtils.trimToNull(jsonProject.getDescription()),
+                        StringUtils.trimToNull(jsonProject.getVersion()),
+                        jsonProject.getTags(),
+                        parent);
+                return Response.status(Response.Status.CREATED).entity(project).build();
+            } else {
+                return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();
+            }
         }
     }
 
@@ -137,7 +143,8 @@ public class ProjectResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the project could not be found")
+            @ApiResponse(code = 404, message = "The UUID of the project could not be found"),
+            @ApiResponse(code = 409, message = "A project with the specified name already exists")
     })
     @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response updateProject(Project jsonProject) {
@@ -151,10 +158,15 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid());
             if (project != null) {
-                project.setName(jsonProject.getName());
-                project.setDescription(jsonProject.getDescription());
-                project = qm.updateProject(jsonProject);
-                return Response.ok(project).build();
+                final Project tmpProject = qm.getProject(jsonProject.getName().trim());
+                if (tmpProject == null || (tmpProject.getUuid().equals(project.getUuid()))) {
+                    project.setName(jsonProject.getName().trim());
+                    project.setDescription(jsonProject.getDescription());
+                    project = qm.updateProject(jsonProject);
+                    return Response.ok(project).build();
+                } else {
+                    return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }

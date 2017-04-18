@@ -22,7 +22,7 @@
  */
 function formatProjectsTable(res) {
     for (let i=0; i<res.length; i++) {
-        let projecturl = "../project?uuid=" + res[i].uuid;
+        let projecturl = "../project/?uuid=" + res[i].uuid;
         res[i].projecthref = "<a href=\"" + projecturl + "\">" + res[i].name + "</a>";
     }
     return res;

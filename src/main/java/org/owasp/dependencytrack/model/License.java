@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.model;
 
+import alpine.json.TrimmedStringArrayDeserializer;
 import alpine.json.TrimmedStringDeserializer;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -129,6 +130,7 @@ public class License implements Serializable {
     @Serialized
     @Column(name = "SEEALSO")
     @JsonProperty(value = "seeAlso")
+    @JsonDeserialize(using = TrimmedStringArrayDeserializer.class)
     private String[] seeAlso;
 
     public long getId() {

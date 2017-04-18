@@ -311,6 +311,9 @@ public class QueryManager extends AlpineQueryManager {
         component.setSha1(sha1);
         component.setDescription(description);
         component.setLicense(license);
+        if (resolvedLicense != null) {
+            resolvedLicense = getObjectById(License.class, resolvedLicense.getId());
+        }
         component.setResolvedLicense(resolvedLicense);
         component.setParent(parent);
         component.setUuid(UUID.randomUUID().toString());

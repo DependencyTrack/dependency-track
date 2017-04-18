@@ -22,7 +22,7 @@
  */
 function formatComponentsTable(res) {
     for (let i=0; i<res.length; i++) {
-        let componenturl = "../component?uuid=" + res[i].uuid;
+        let componenturl = "../component/?uuid=" + res[i].uuid;
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + res[i].name + "</a>";
     }
     return res;

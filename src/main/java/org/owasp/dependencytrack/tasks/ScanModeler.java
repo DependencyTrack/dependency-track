@@ -22,12 +22,15 @@ import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Cwe;
+import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
+import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
+import org.owasp.dependencytrack.parser.dependencycheck.resolver.LicenseResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
 import java.math.BigDecimal;
@@ -56,18 +59,30 @@ public class ScanModeler implements Subscriber {
 
                 final List<Component> components = new ArrayList<>();
                 for (Dependency dependency : analysis.getDependencies()) {
-                    final Component component = qm.createComponent(
-                            dependency.getFileName(), // name
-                            null, // version
-                            null, // group
-                            dependency.getFileName(),
-                            dependency.getMd5(),
-                            dependency.getSha1(),
-                            dependency.getDescription(),
-                            null, // resolved license //todo: try to match it
-                            dependency.getLicense(),
-                            null
-                    );
+
+                    // Attempt to resolve component
+                    final ComponentResolver componentResolver = new ComponentResolver();
+                    Component component = componentResolver.resolve(dependency);
+
+                    // Attempt to resolve license
+                    final LicenseResolver licenseResolver = new LicenseResolver();
+                    final License resolvedLicense = licenseResolver.resolve(dependency);
+
+                    if (component == null) {
+                        // Component could not be resolved (was null), so create a new component
+                        component = qm.createComponent(
+                                dependency.getFileName(), // name
+                                null, // version
+                                null, // group
+                                dependency.getFileName(),
+                                dependency.getMd5(),
+                                dependency.getSha1(),
+                                dependency.getDescription(),
+                                resolvedLicense,
+                                dependency.getLicense(),
+                                null
+                        );
+                    }
 
                     qm.createDependencyIfNotExist(project, component, null, null);
 

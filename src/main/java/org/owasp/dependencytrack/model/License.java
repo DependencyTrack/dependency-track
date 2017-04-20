@@ -126,7 +126,7 @@ public class License implements Serializable {
     /**
      * The seeAlso field - may contain URLs to the original license info.
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Serialized
     @Column(name = "SEEALSO")
     @JsonProperty(value = "seeAlso")

@@ -364,6 +364,30 @@ $rest.getLicenses = function getLicenses(successCallback, failCallback) {
 };
 
 /**
+ * Service called to retrieve a specific license
+ */
+$rest.getLicense = function getLicense(licenseId, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_LICENSE + "/" + licenseId,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

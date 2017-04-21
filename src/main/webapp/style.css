@@ -503,6 +503,8 @@ h4 {
     margin-left: 8px;
 }
 .formattedLicenseContent {
+    font-size: 1.12em;
+    font-family: monospace;
     white-space: pre-wrap;
 }
 #licenseGeneralTable td {

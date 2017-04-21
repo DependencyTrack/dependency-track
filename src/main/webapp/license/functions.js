@@ -18,25 +18,22 @@
 "use strict";
 
 function populateLicenseData(data) {
-    $("#licenseName").text(data.name);
-    $("#licenseText").text(data.licenseText);
-    $("#templateText").text(data.standardLicenseTemplate);
-    $("#headerText").text(data.standardLicenseHeader);
-
-    $("#generalLicenseName").text(data.name);
-    $("#generalLicenseId").text(data.licenseId);
-    $("#generalOsiApproved").text(data.isOsiApproved);
-    $("#generalDeprecated").text(data.isDeprecatedLicenseId);
-    $("#generalComments").text(data.licenseComments);
-
-    let seeAlsoField = "";
-    if (data.seeAlso !== null) {
-        for (let i = 0; i < data.seeAlso.length; i++) {
-            seeAlsoField += "<a href=\"" + data.seeAlso[i] + "\">" + data.seeAlso[i] + "</a><br/>";
+    let license = Bind(data, {
+        name: ".licenseName",
+        licenseText: ".licenseText",
+        standardLicenseTemplate: ".templateText",
+        standardLicenseHeader: ".headerText",
+        licenseId: ".licenseId",
+        isOsiApproved: ".isOsiApproved",
+        isDeprecatedLicenseId: ".isDeprecatedLicenseId",
+        licenseComments: ".licenseComments",
+        seeAlso: {
+            dom: '.seeAlso',
+            transform: function (value) {
+                return "<a href=\"" + this.safe(value) + "\">" + this.safe(value) + "</a><br/>";
+            },
         }
-    }
-    $("#generalSeeAlso").html(seeAlsoField);
-
+    });
     if (data.isOsiApproved === true) {
         $("#generalOsiLogo").css("display", "block");
     }

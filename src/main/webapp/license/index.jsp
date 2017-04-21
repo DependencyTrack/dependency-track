@@ -12,7 +12,7 @@
 <div class="container-fluid" id="main">
     <div class="content-row">
         <div class="col-sm-12 col-md-12">
-            <h3 id="licenseName"></h3>
+            <h3 class="licenseName"></h3>
 
             <div class="panel with-nav-tabs panel-default">
                 <div class="panel-heading">
@@ -29,27 +29,27 @@
                             <table id="licenseGeneralTable">
                                 <tr>
                                     <td>License Name:</td>
-                                    <td id="generalLicenseName"></td>
+                                    <td class="licenseName"></td>
                                 </tr>
                                 <tr>
                                     <td>SPDX License ID:</td>
-                                    <td id="generalLicenseId"></td>
+                                    <td class="licenseId"></td>
                                 </tr>
                                 <tr>
                                     <td>OSI Approved:</td>
-                                    <td id="generalOsiApproved"></td>
+                                    <td class="isOsiApproved"></td>
                                 </tr>
                                 <tr>
                                     <td>Deprecated:</td>
-                                    <td id="generalDeprecated"></td>
+                                    <td class="isDeprecatedLicenseId"></td>
                                 </tr>
                                 <tr>
                                     <td>Comments:</td>
-                                    <td id="generalComments"></td>
+                                    <td class="licenseComments"></td>
                                 </tr>
                                 <tr>
                                     <td>See Also:</td>
-                                    <td id="generalSeeAlso"></td>
+                                    <td class="seeAlso"></td>
                                 </tr>
                                 <tr>
                                     <td></td>
@@ -58,13 +58,13 @@
                             </table>
                         </div>
                         <div class="tab-pane" id="textTab">
-                            <div id="licenseText" class="formattedLicenseContent"></div>
+                            <div class="licenseText formattedLicenseContent"></div>
                         </div>
                         <div class="tab-pane" id="templateTab">
-                            <div id="templateText" class="formattedLicenseContent"></div>
+                            <div class="templateText formattedLicenseContent"></div>
                         </div>
                         <div class="tab-pane" id="headerTab">
-                            <div id="headerText" class="formattedLicenseContent"></div>
+                            <div class="headerText formattedLicenseContent"></div>
                         </div>
                     </div>
                 </div>

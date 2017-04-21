@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.model;
 
 public enum Severity {
+    CRITICAL,
     HIGH,
     MEDIUM,
     LOW,

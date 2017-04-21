@@ -52,6 +52,10 @@ public class Evidence extends BaseObject {
         this.confidence = normalize(confidence);
     }
 
+    public int getConfidenceScore() {
+        return this.getConfidenceScore(this.getConfidenceType());
+    }
+
     public String getSource() {
         return source;
     }

@@ -43,15 +43,15 @@ public abstract class BaseObject {
     public int getConfidenceScore(Confidence confidence) {
         switch (confidence.name()) {
             case "HIGHEST":
-                return 1;
+                return 4;
             case "HIGH":
-                return 2;
-            case "MEDIUM":
                 return 3;
+            case "MEDIUM":
+                return 2;
             case "LOW":
-                return 4;
+                return 1;
             default:
-                return 4;
+                return 1;
         }
     }
 

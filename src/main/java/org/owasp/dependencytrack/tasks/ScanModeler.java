@@ -30,6 +30,7 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
+import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentVersionResolver;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.LicenseResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
@@ -72,7 +73,7 @@ public class ScanModeler implements Subscriber {
                         // Component could not be resolved (was null), so create a new component
                         component = qm.createComponent(
                                 dependency.getFileName(), // name
-                                null, // version
+                                new ComponentVersionResolver().resolve(dependency),
                                 null, // group
                                 dependency.getFileName(),
                                 dependency.getMd5(),

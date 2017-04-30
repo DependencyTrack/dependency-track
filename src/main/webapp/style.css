@@ -370,7 +370,7 @@ h4 {
     background-color: #d4d4d4;
 }
 .navbar-inverse {
-    background: #1f262d;
+    background: #1f262d linear-gradient(47deg, #2E363F 33.5px, #1f262d 33.5px);
 }
 /* Sidebar Navigation */
 #sidebar {

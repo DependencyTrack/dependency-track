@@ -22,8 +22,13 @@
  */
 function formatComponentsTable(res) {
     for (let i=0; i<res.length; i++) {
-        let projecturl = "../project?uuid=" + res[i].uuid;
-        res[i].projecthref = "<a href=\"" + projecturl + "\">" + res[i].name + "</a>";
+        let componenturl = "../component/?uuid=" + res[i].component.uuid;
+        res[i].componenthref = "<a href=\"" + componenturl + "\">" + res[i].component.name + "</a>";
+
+        if (res[i].component.hasOwnProperty("resolvedLicense")) {
+            let licenseurl = "../license/?licenseId=" + res[i].component.resolvedLicense.licenseId;
+            res[i].component.license = "<a href=\"" + licenseurl + "\">" + res[i].component.resolvedLicense.licenseId + "</a>";
+        }
     }
     return res;
 }

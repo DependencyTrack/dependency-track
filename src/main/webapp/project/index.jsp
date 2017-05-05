@@ -78,18 +78,17 @@
                 </div>
             </div>
             <table id="componentsTable" class="table table-hover detail-table" data-toggle="table"
-                   data-url="<c:url value="/api/v1/component"/>" data-response-handler="formatComponentTable"
-                   data-show-refresh="true" data-show-columns="true" data-search="true"
-                   data-detail-view="true" data-detail-formatter="componentDetailFormatter"
+                   data-url="<c:url value="/api/v1/dependency/project/${param['uuid']}"/>" data-response-handler="formatComponentsTable"
+                   data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                    data-page-size="10" data-page-list="[10, 25, 50, 100]"
                    data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
-                    <th data-align="left" data-field="name">Component</th>
-                    <th data-align="left" data-field="version">Version</th>
-                    <th data-align="left" data-field="group">Group</th>
-                    <th data-align="left" data-field="license">License</th>
+                    <th data-align="left" data-field="componenthref">Component</th>
+                    <th data-align="left" data-field="component.version">Version</th>
+                    <th data-align="left" data-field="component.group">Group</th>
+                    <th data-align="left" data-field="component.license">License</th>
                     <th data-align="left" data-field="matchType">Match Type</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>

@@ -21,25 +21,25 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Evidence;
 import java.util.List;
 
 /**
- * Attempts to resolve the version of the component from evidence
- * available in the specified dependency.
+ * This class will resolve string-based evidence.
  */
-public class ComponentVersionResolver implements IResolver {
+public abstract class AbstractStringResolver {
 
     /**
-     * {@inheritDoc}
+     * Attempts to resolve the most likely to be accurate evidence.
+     * @param dependency the Dependency to extract evidence from
+     * @param evidenceType the type of evidence to extract (typically: product, vendor, version)
+     * @param minConfidenceScore the minimum confidence score
+     * @return the highly confidence evidence, or null if not found or doesn't meet criteria
      */
-    public String resolve(Dependency dependency) {
+    protected String resolve(Dependency dependency, String evidenceType, int minConfidenceScore) {
         Evidence best = null;
         final List<Evidence> evidenceList = dependency.getEvidenceCollected();
         for (Evidence evidence: evidenceList) {
             // do not trust configure.in - all kinds of irrelevant stuff in there
-            if ("version".equals(evidence.getType()) && !("configure.in".equals(evidence.getSource()))) {
-                if ("file".equals(evidence.getSource()) && "HIGHEST".equals(evidence.getConfidence())) {
-                    return evidence.getValue();
-                }
+            if (evidenceType.equals(evidence.getType()) && !("configure.in".equals(evidence.getSource()))) {
                 if (best == null || (evidence.getConfidenceScore() > best.getConfidenceScore())) {
-                    if (evidence.getConfidenceScore() >= 2) { // We only want MEDIUM, HIGH or HIGHEST
+                    if (evidence.getConfidenceScore() >= minConfidenceScore) {
                         best = evidence;
                     }
                 }

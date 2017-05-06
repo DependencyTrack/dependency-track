@@ -100,7 +100,9 @@ public class ScanModeler implements Subscriber {
                                     final int cweId = Integer.parseInt(dcvuln.getCwe().substring(4, 7).trim());
                                     cwe = qm.getCweById(cweId);
                                 }
-                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), cwe, new BigDecimal(dcvuln.getCvssScore()), null, null);
+                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), cwe,
+                                        new BigDecimal(dcvuln.getCvssScore()), null,
+                                        null, null, null, null);
                                 qm.bind(component, dtvuln);
                             }
 

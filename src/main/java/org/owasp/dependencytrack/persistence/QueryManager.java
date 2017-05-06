@@ -398,6 +398,7 @@ public class QueryManager extends AlpineQueryManager {
      * Creates a new Vulnerability.
      * @param name the name of the vulnerability. This is typically CWE-something
      * @param desc the description of the vulnerability
+     * @param source the source of the vulnerability data
      * @param cwe the common weakness enumeration, or weakness categorization
      * @param cvssv2Score the cvss score 0.0 - 10.0
      * @param cvssv2Vector the cvss vector
@@ -407,13 +408,14 @@ public class QueryManager extends AlpineQueryManager {
      * @param matchAlPreviousCpe refer to DC report
      * @return a new Vulnerability object
      */
-    public Vulnerability createVulnerability(String name, String desc, Cwe cwe, BigDecimal cvssv2Score,
-                                             String cvssv2Vector, BigDecimal cvssv3Score, String cvssv3Vector,
-                                             String matchedCpe, String matchAlPreviousCpe) {
+    public Vulnerability createVulnerability(String name, String desc, Vulnerability.Source source, Cwe cwe,
+                                             BigDecimal cvssv2Score, String cvssv2Vector, BigDecimal cvssv3Score,
+                                             String cvssv3Vector, String matchedCpe, String matchAlPreviousCpe) {
         pm.currentTransaction().begin();
         final Vulnerability vuln = new Vulnerability();
         vuln.setName(name);
         vuln.setDescription(desc);
+        vuln.setSource(source);
         vuln.setCwe(cwe);
         vuln.setCvssV2Score(cvssv2Score);
         vuln.setCvssV2Vector(cvssv2Vector);

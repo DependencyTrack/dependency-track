@@ -25,6 +25,7 @@ import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Scan;
+import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
@@ -100,7 +101,8 @@ public class ScanModeler implements Subscriber {
                                     final int cweId = Integer.parseInt(dcvuln.getCwe().substring(4, 7).trim());
                                     cwe = qm.getCweById(cweId);
                                 }
-                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(), cwe,
+                                dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(),
+                                        Vulnerability.Source.NVD, cwe,
                                         new BigDecimal(dcvuln.getCvssScore()), null,
                                         null, null, null, null);
                                 qm.bind(component, dtvuln);

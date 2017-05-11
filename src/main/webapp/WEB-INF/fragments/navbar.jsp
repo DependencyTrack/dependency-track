@@ -29,7 +29,7 @@
         <li><a href="<c:url value="/"/>" data-toggle="tooltip" data-placement="right" title="Dashboard"><i class="fa fa-area-chart"></i><span>Dashboard</span></a></li>
         <li><a href="<c:url value="/projects/"/>" data-toggle="tooltip" data-placement="right" title="Projects"><i class="fa fa-sitemap"></i><span>Projects</span></a></li>
         <li><a href="<c:url value="/components/"/>" data-toggle="tooltip" data-placement="right" title="Components"><i class="fa fa-cubes"></i><span>Components</span></a></li>
-        <li><a href="<c:url value="/vulns/"/>" data-toggle="tooltip" data-placement="right" title="Vulnerabilities"><i class="fa fa-shield"></i><span>Vulnerabilities</span></a></li>
+        <li><a href="<c:url value="/vulnerabilities/"/>" data-toggle="tooltip" data-placement="right" title="Vulnerabilities"><i class="fa fa-shield"></i><span>Vulnerabilities</span></a></li>
         <li><a href="<c:url value="/licenses/"/>" data-toggle="tooltip" data-placement="right" title="Licenses"><i class="fa fa-balance-scale"></i><span>Licenses</span></a></li>
         <li><a href="<c:url value="/admin/"/>" data-toggle="tooltip" data-placement="right" title="Administration"><i class="fa fa-cogs"></i><span>Administration</span></a></li>
     </ul>

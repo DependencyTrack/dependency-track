@@ -87,6 +87,12 @@
             <artifactId>alpine</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
+        <!-- CVSS Calculator -->
+        <dependency>
+            <groupId>us.springett</groupId>
+            <artifactId>cvss-calculator</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- OWASP Dependency-Check -->
         <dependency>
             <groupId>org.owasp</groupId>

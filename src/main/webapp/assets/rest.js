@@ -38,6 +38,7 @@ const URL_USER_SELF = "/v1/user/self";
 const URL_PROJECT = "/v1/project";
 const URL_LICENSE = "/v1/license";
 const URL_COMPONENT = "/v1/component";
+const URL_VULNERABILITY = "/v1/vulnerability";
 
 const $rest = function() {
 };
@@ -382,6 +383,64 @@ $rest.getLicense = function getLicense(licenseId, successCallback, failCallback)
                 if (failCallback) {
                     $rest.callbackValidator(failCallback(data));
                 }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve a specific vulnerability
+ */
+$rest.getVulnerabilityByUuid = function getVulnerabilityByUuid(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_VULNERABILITY + "/uuid/" + uuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve a specific vulnerability
+ */
+$rest.getVulnerabilityByVulnId = function getVulnerabilityByName(source, vulnId, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_VULNERABILITY + "/source/" + source + "/vuln/" + vulnId,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
             }
         }
     });

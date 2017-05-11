@@ -36,6 +36,8 @@ import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolv
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentVersionResolver;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.LicenseResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import us.springett.cvss.CvssV2;
+import us.springett.cvss.Score;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -93,7 +95,7 @@ public class ScanModeler implements Subscriber {
                     if (dependency.getVulnerabilities() != null && dependency.getVulnerabilities().getVulnerabilities() != null) {
                         for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
                             //first - check if vuln already exists...
-                            org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByName(dcvuln.getName());
+                            org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByVulnId(dcvuln.getName());
                             if (dtvuln == null) { // Vuln doesn't exist - create it
                                 Cwe cwe = null;
                                 // Lookup CWE (if exists in report)
@@ -101,13 +103,43 @@ public class ScanModeler implements Subscriber {
                                     final int cweId = Integer.parseInt(dcvuln.getCwe().substring(4, 7).trim());
                                     cwe = qm.getCweById(cweId);
                                 }
+
+                                // Re-scoring in order to obtain impact and exploitable sub scores not present in the NVD feed.
+                                final String av = normalize(dcvuln.getCvssAccessVector());
+                                final String ac = normalize(dcvuln.getCvssAccessComplexity());
+                                final String au = normalize(dcvuln.getCvssAuthenticationr());
+                                final String c = normalize(dcvuln.getCvssConfidentialImpact());
+                                final String i = normalize(dcvuln.getCvssIntegrityImpact());
+                                final String a = normalize(dcvuln.getCvssAvailabilityImpact());
+
+                                BigDecimal v2BaseScore = null;
+                                BigDecimal v2ImpactSubScore = null;
+                                BigDecimal v2ExploitSubScore = null;
+                                String v2Vector = null;
+
+                                if (av != null && ac != null && au != null && c != null && i != null && a != null) {
+                                    final CvssV2 cvssV2 = new CvssV2()
+                                            .attackVector(CvssV2.AttackVector.valueOf(av))
+                                            .attackComplexity(CvssV2.AttackComplexity.valueOf(ac))
+                                            .authentication(CvssV2.Authentication.valueOf(au))
+                                            .confidentiality(CvssV2.CIA.valueOf(c))
+                                            .integrity(CvssV2.CIA.valueOf(i))
+                                            .availability(CvssV2.CIA.valueOf(a));
+
+                                    final Score score = cvssV2.calculateScore();
+                                    v2BaseScore = new BigDecimal(score.getBaseScore());
+                                    v2ImpactSubScore = new BigDecimal(score.getImpactSubScore());
+                                    v2ExploitSubScore = new BigDecimal(score.getExploitabilitySubScore());
+                                    v2Vector = cvssV2.getVector();
+                                }
+
                                 dtvuln = qm.createVulnerability(dcvuln.getName(), dcvuln.getDescription(),
                                         Vulnerability.Source.NVD, cwe,
-                                        new BigDecimal(dcvuln.getCvssScore()), null,
-                                        null, null, null, null);
+                                        v2BaseScore, v2ImpactSubScore, v2ExploitSubScore, v2Vector,
+                                        null, null, null, null,
+                                        null, null);
                                 qm.bind(component, dtvuln);
                             }
-
                         }
                     }
 
@@ -127,6 +159,24 @@ public class ScanModeler implements Subscriber {
                     qm.close();
                 }
             }
+        }
+    }
+
+    private String normalize(String in) {
+        switch (in) {
+            case ("SINGLE_INSTANCE")    : return "SINGLE";
+            case ("MULTIPLE_INSTANCES") : return "MULTIPLE";
+            case ("NONE")               : return "NONE";
+            case ("LOW")                : return "LOW";
+            case ("MEDIUM")             : return "MEDIUM";
+            case ("HIGH")               : return "HIGH";
+            case ("PARTIAL")            : return "PARTIAL";
+            case ("COMPLETE")           : return "COMPLETE";
+            case ("LOCAL")              : return "LOCAL";
+            case ("ADJACENT")           : return "ADJACENT";
+            case ("NETWORK")            : return "NETWORK";
+            case ("PHYSICAL")           : return "PHYSICAL";
+            default                     : return null;
         }
     }
 }

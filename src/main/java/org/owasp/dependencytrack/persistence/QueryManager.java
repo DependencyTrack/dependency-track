@@ -396,30 +396,40 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Creates a new Vulnerability.
-     * @param name the name of the vulnerability. This is typically CWE-something
+     * @param vulnId the name of the vulnerability. This is typically CVE-something
      * @param desc the description of the vulnerability
      * @param source the source of the vulnerability data
      * @param cwe the common weakness enumeration, or weakness categorization
-     * @param cvssv2Score the cvss score 0.0 - 10.0
+     * @param cvssv2BaseScore the cvss score 0.0 - 10.0
+     * @param cvssv2ImpactSubScore the cvss score 0.0 - 10.0
+     * @param cvssv2ExploitSubScore the cvss score 0.0 - 10.0
      * @param cvssv2Vector the cvss vector
-     * @param cvssv3Score the cvss score 0.0 - 10.0
+     * @param cvssv3BaseScore the cvss score 0.0 - 10.0
+     * @param cvssv3ImpactSubScore the cvss score 0.0 - 10.0
+     * @param cvssv3ExploitSubScore the cvss score 0.0 - 10.0
      * @param cvssv3Vector the cvss vector
      * @param matchedCpe the matched CPE
      * @param matchAlPreviousCpe refer to DC report
      * @return a new Vulnerability object
      */
-    public Vulnerability createVulnerability(String name, String desc, Vulnerability.Source source, Cwe cwe,
-                                             BigDecimal cvssv2Score, String cvssv2Vector, BigDecimal cvssv3Score,
+    public Vulnerability createVulnerability(String vulnId, String desc, Vulnerability.Source source, Cwe cwe,
+                                             BigDecimal cvssv2BaseScore, BigDecimal cvssv2ImpactSubScore,
+                                             BigDecimal cvssv2ExploitSubScore, String cvssv2Vector,
+                                             BigDecimal cvssv3BaseScore, BigDecimal cvssv3ImpactSubScore, BigDecimal cvssv3ExploitSubScore,
                                              String cvssv3Vector, String matchedCpe, String matchAlPreviousCpe) {
         pm.currentTransaction().begin();
         final Vulnerability vuln = new Vulnerability();
-        vuln.setName(name);
+        vuln.setVulnId(vulnId);
         vuln.setDescription(desc);
         vuln.setSource(source);
         vuln.setCwe(cwe);
-        vuln.setCvssV2Score(cvssv2Score);
+        vuln.setCvssV2BaseScore(cvssv2BaseScore);
+        vuln.setCvssV2ImpactSubScore(cvssv2ImpactSubScore);
+        vuln.setCvssV2ExploitabilitySubScore(cvssv2ExploitSubScore);
         vuln.setCvssV2Vector(cvssv2Vector);
-        vuln.setCvssV3Score(cvssv3Score);
+        vuln.setCvssV3BaseScore(cvssv3BaseScore);
+        vuln.setCvssV3ImpactSubScore(cvssv3ImpactSubScore);
+        vuln.setCvssV3ExploitabilitySubScore(cvssv3ExploitSubScore);
         vuln.setCvssV3Vector(cvssv3Vector);
         vuln.setMatchedCPE(matchedCpe);
         vuln.setMatchedAllPreviousCPE(matchAlPreviousCpe);
@@ -431,13 +441,26 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Returns a vulnerability by it's name (i.e. CVE-2017-0001)
-     * @param name the name of the vulnerability
+     * @param vulnId the name of the vulnerability
      * @return the matching Vulnerability object, or null if not found
      */
     @SuppressWarnings("unchecked")
-    public Vulnerability getVulnerabilityByName(String name) {
-        final Query query = pm.newQuery(Vulnerability.class, "name == :name");
-        final List<Vulnerability> result = (List<Vulnerability>) query.execute(name);
+    public Vulnerability getVulnerabilityByVulnId(String vulnId) {
+        final Query query = pm.newQuery(Vulnerability.class, "vulnId == :vulnId");
+        final List<Vulnerability> result = (List<Vulnerability>) query.execute(vulnId);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Returns a vulnerability by it's name (i.e. CVE-2017-0001) and source
+     * @param source the source of the vulnerability
+     * @param vulnId the name of the vulnerability
+     * @return the matching Vulnerability object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
+        final Query query = pm.newQuery(Vulnerability.class, "source == :source && vulnId == :vulnId");
+        final List<Vulnerability> result = (List<Vulnerability>) query.execute(source, vulnId);
         return result.size() == 0 ? null : result.get(0);
     }
 
@@ -571,6 +594,26 @@ public class QueryManager extends AlpineQueryManager {
         query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
         final List<Dependency> result = (List<Dependency>) query.execute(project, component);
         return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Returns the number of total Vulnerability objects.
+     * @return the total number of vulnerabilities for the component
+     */
+    @SuppressWarnings("unchecked")
+    public long getVulnerabilityCount() {
+        final Query query = pm.newQuery(Vulnerability.class);
+        return getCount(query);
+    }
+
+    /**
+     * Returns a List of all Vulnerabilities.
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getVulnerabilities() {
+        final Query query = pm.newQuery(Vulnerability.class);
+        return (List<Vulnerability>) execute(query);
     }
 
     /**

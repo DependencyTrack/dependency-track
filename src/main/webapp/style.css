@@ -236,8 +236,11 @@ h4 {
     max-height: 200px;
     overflow-y: scroll;
 }
-.severity-high, .status-failed {
+.severity-critical, .status-failed {
     color: #d43f3a;
+}
+.severity-high {
+    color: #d4663a;
 }
 .severity-medium, .status-warning {
     color: #fdc431;
@@ -248,8 +251,11 @@ h4 {
 .severity-info {
     color: #357abd;
 }
-.severity-high-bg, .status-failed-bg {
+.severity-critical-bg, .status-failed-bg {
     background: #d43f3a none;
+}
+.severity-high-bg {
+    background: #d4663a none;
 }
 .severity-medium-bg, .status-warning-bg {
     background: #fdc431 none;
@@ -515,5 +521,34 @@ h4 {
     font-weight: 600;
 }
 #generalOsiLogo {
+    display: none;
+}
+p {
+    font-size: 1.125em;
+}
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+.chart {
+    position: relative;
+    display: inline-block;
+    width: 90px;
+    height: 90px;
+    text-align: center;
+}
+.chart canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.cvssScoreChartScore {
+    display: inline-block;
+    line-height: 90px;
+    z-index: 2;
+    font-size: 1.313em;
+}
+.cvssv2VectorRow, .cvssv3VectorRow {
     display: none;
 }

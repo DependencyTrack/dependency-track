@@ -156,6 +156,32 @@ $(document).ready(function () {
 });
 
 /**
+ * Defines JSON characters that need to be escaped when data is used in HTML
+ */
+const __entityMap = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': '&quot;',
+    "'": '&#39;',
+    "/": '&#x2F;'
+};
+
+/**
+ * Perform client-side JSON escaping
+ */
+
+function toHtml(string) {
+    if(typeof string === 'string') {
+        return String(string).replace(/[&<>"'\/]/g, function (s) {
+            return __entityMap[s];
+        });
+    } else {
+        return string;
+    }
+}
+
+/**
  * Extends JQuery
  */
 $.extend({

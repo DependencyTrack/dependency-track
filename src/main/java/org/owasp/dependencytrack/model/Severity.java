@@ -21,5 +21,6 @@ public enum Severity {
     HIGH,
     MEDIUM,
     LOW,
-    INFO
+    INFO,
+    UNKNOWN
 }

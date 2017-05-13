@@ -1974,8 +1974,12 @@
             success: function (tmpres, status, xhr) {
                 tmpres = calculateObjectValue(that.options, that.options.responseHandler, [tmpres], tmpres);
                 var res = [];
-                res.rows = tmpres;
-                res.total = xhr.getResponseHeader("X-Total-Count");
+                if (that.options.pagination && that.options.sidePagination === "server") {
+                    res.rows = tmpres;
+                    res.total = xhr.getResponseHeader("X-Total-Count");
+                } else {
+                    res = tmpres;
+                }
                 // End modification
                 that.load(res);
                 that.trigger('load-success', res);

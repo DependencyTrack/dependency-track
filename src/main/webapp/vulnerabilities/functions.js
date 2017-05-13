@@ -22,8 +22,8 @@
  */
 function formatVulnerabilityTable(res) {
     for (let i=0; i<res.length; i++) {
-        let vulnurl = "../vulnerability/?source=" + res[i].source + "&name=" + res[i].name;
-        res[i].vulnerabilityhref = "<a href=\"" + vulnurl + "\">" + res[i].name + "</a>";
+        let vulnurl = "../vulnerability/?source=" + res[i].source + "&vulnId=" + res[i].vulnId;
+        res[i].vulnerabilityhref = "<a href=\"" + vulnurl + "\">" + res[i].vulnId + "</a>";
 
         if (res[i].hasOwnProperty("cwe")) {
             res[i].cwefield = "CWE-" + res[i].cwe.cweId + " " + res[i].cwe.name;

@@ -447,6 +447,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public Vulnerability getVulnerabilityByVulnId(String vulnId) {
         final Query query = pm.newQuery(Vulnerability.class, "vulnId == :vulnId");
+        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
         final List<Vulnerability> result = (List<Vulnerability>) query.execute(vulnId);
         return result.size() == 0 ? null : result.get(0);
     }
@@ -460,6 +461,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
         final Query query = pm.newQuery(Vulnerability.class, "source == :source && vulnId == :vulnId");
+        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
         final List<Vulnerability> result = (List<Vulnerability>) query.execute(source, vulnId);
         return result.size() == 0 ? null : result.get(0);
     }
@@ -666,6 +668,22 @@ public class QueryManager extends AlpineQueryManager {
             vulnerabilities.addAll(getVulnerabilities(dependency.getComponent()));
         }
         return vulnerabilities;
+    }
+
+    /**
+     * Returns a List of Projects affected by a specific vulnerability.
+     * @param vulnerability the vulnerability to query on
+     * @return a List of Projects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Project> getProjects(Vulnerability vulnerability) {
+        final List<Project> projects = new ArrayList<>();
+        for (Component component: vulnerability.getComponents()) {
+            for (Dependency dependency: getDependencies(component)) {
+                projects.add(dependency.getProject());
+            }
+        }
+        return projects;
     }
 
     /**

@@ -142,8 +142,8 @@ $(document).ready(function () {
      * the sidebar based in the current url and the href of each button.
      */
     (function() {
-        let nav = document.getElementById('sidebar'),
-            anchor = nav.getElementsByTagName('a'),
+        let nav = document.getElementById("sidebar"),
+            anchor = nav.getElementsByTagName("a"),
             current = window.location.pathname;
         for (let i = 0; i < anchor.length; i++) {
             let pathname = $common.getLocation(anchor[i].href).pathname;
@@ -162,9 +162,9 @@ const __entityMap = {
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
-    '"': '&quot;',
-    "'": '&#39;',
-    "/": '&#x2F;'
+    '"': "&quot;",
+    "'": "&#39;",
+    "/": "&#x2F;"
 };
 
 /**
@@ -172,7 +172,7 @@ const __entityMap = {
  */
 
 function toHtml(string) {
-    if(typeof string === 'string') {
+    if(typeof string === "string") {
         return String(string).replace(/[&<>"'\/]/g, function (s) {
             return __entityMap[s];
         });
@@ -191,9 +191,9 @@ $.extend({
      */
     getUrlVars: function() {
         let vars = [], hash;
-        let hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        let hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
         for(let i = 0; i < hashes.length; i++) {
-            hash = hashes[i].split('=');
+            hash = hashes[i].split("=");
             vars.push(hash[0]);
             vars[hash[0]] = hash[1];
         }

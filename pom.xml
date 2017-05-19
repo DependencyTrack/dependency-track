@@ -65,7 +65,9 @@
     </developers>
 
     <properties>
-        <dependency-check.plugin.version>1.4.5</dependency-check.plugin.version>
+        <!-- Dependency Versions -->
+        <lib.lucene.version>5.5.4</lib.lucene.version>
+        <lib.dependency-check.version>1.4.5</lib.dependency-check.version>
     </properties>
 
     <!-- Resolve Alpine snapshot releases -->
@@ -97,12 +99,38 @@
         <dependency>
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-core</artifactId>
-            <version>${dependency-check.plugin.version}</version>
+            <version>${lib.dependency-check.version}</version>
         </dependency>
         <dependency>
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-utils</artifactId>
-            <version>${dependency-check.plugin.version}</version>
+            <version>${lib.dependency-check.version}</version>
+        </dependency>
+        <!-- Lucene / Overrides the Lucene version included with Dependency-Check -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${lib.lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+            <version>${lib.lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${lib.lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queries</artifactId>
+            <version>${lib.lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-sandbox</artifactId>
+            <version>${lib.lucene.version}</version>
         </dependency>
     </dependencies>
 

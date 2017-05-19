@@ -60,7 +60,6 @@ $rest.smartsearchProject = function smartsearch() {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
             filter: function(response) {
-                console.log(response);
                 return response.results.project;
             }
         }
@@ -79,7 +78,6 @@ $rest.smartsearchComponent = function smartsearch() {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
             filter: function(response) {
-                console.log(response);
                 return response.results.component;
             }
         }
@@ -98,7 +96,6 @@ $rest.smartsearchVulnerability = function smartsearch() {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
             filter: function(response) {
-                console.log(response);
                 return response.results.vulnerability;
             }
         }
@@ -117,7 +114,6 @@ $rest.smartsearchLicense = function smartsearch() {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
             filter: function(response) {
-                console.log(response);
                 return response.results.license;
             }
         }

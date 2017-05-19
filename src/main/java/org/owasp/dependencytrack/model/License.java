@@ -31,6 +31,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
+import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -133,6 +134,13 @@ public class License implements Serializable {
     @JsonDeserialize(using = TrimmedStringArrayDeserializer.class)
     private String[] seeAlso;
 
+    @Persistent
+    @Unique(name = "LICENSE_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
+    @NotNull
+    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
+    private String uuid;
+
     public long getId() {
         return id;
     }
@@ -212,4 +220,13 @@ public class License implements Serializable {
     public void setSeeAlso(String[] seeAlso) {
         this.seeAlso = seeAlso;
     }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
 }

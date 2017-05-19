@@ -17,8 +17,12 @@
 package org.owasp.dependencytrack.persistence;
 
 import alpine.Config;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.persistence.AlpineQueryManager;
 import alpine.resources.AlpineRequest;
+import org.owasp.dependencytrack.event.IndexAddEvent;
+import org.owasp.dependencytrack.event.IndexDeleteEvent;
+import org.owasp.dependencytrack.event.IndexUpdateEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Dependency;
@@ -29,6 +33,7 @@ import org.owasp.dependencytrack.model.ProjectProperty;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
+import javax.jdo.FetchPlan;
 import javax.jdo.Query;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -182,7 +187,10 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().begin();
         pm.makePersistent(project);
         pm.currentTransaction().commit();
-        return pm.getObjectById(Project.class, project.getId());
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Project result = pm.getObjectById(Project.class, project.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        return result;
     }
 
     /**
@@ -196,7 +204,10 @@ public class QueryManager extends AlpineQueryManager {
         project.setName(transientProject.getName());
         project.setVersion(transientProject.getVersion());
         pm.currentTransaction().commit();
-        return pm.getObjectById(Project.class, project.getId());
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Project result = pm.getObjectById(Project.class, project.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexUpdateEvent(pm.detachCopy(result)));
+        return result;
     }
 
     /**
@@ -209,6 +220,10 @@ public class QueryManager extends AlpineQueryManager {
                 recursivelyDeleteProject(child);
             }
         }
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Project result = pm.getObjectById(Project.class, project.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexDeleteEvent(pm.detachCopy(result)));
+
         delete(project.getProperties());
         delete(getScans(project));
         delete(project.getChildren());
@@ -320,7 +335,55 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().begin();
         pm.makePersistent(component);
         pm.currentTransaction().commit();
-        return pm.getObjectById(Component.class, component.getId());
+
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Component result = pm.getObjectById(Component.class, component.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        return result;
+    }
+
+    /**
+     * Updated an existing Component.
+     * @param transientComponent the component to update
+     * @return a Component
+     */
+    public Component updateComponent(Component transientComponent) {
+        final Component component = getObjectByUuid(Component.class, transientComponent.getUuid());
+        pm.currentTransaction().begin();
+        component.setName(transientComponent.getName());
+        component.setVersion(transientComponent.getVersion());
+        component.setGroup(transientComponent.getGroup());
+        component.setFilename(transientComponent.getFilename());
+        component.setMd5(transientComponent.getMd5());
+        component.setSha1(transientComponent.getSha1());
+        component.setDescription(transientComponent.getDescription());
+        component.setLicense(transientComponent.getLicense());
+        component.setResolvedLicense(transientComponent.getResolvedLicense());
+        component.setParent(transientComponent.getParent());
+        pm.currentTransaction().commit();
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Component result = pm.getObjectById(Component.class, component.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexUpdateEvent(pm.detachCopy(result)));
+        return result;
+    }
+
+    /**
+     * Deletes a Component and all objects dependant on the component.
+     * @param component the Component to delete
+     */
+    public void recursivelyDeleteComponent(Component component) {
+        if (component.getChildren() != null) {
+            for (Component child: component.getChildren()) {
+                recursivelyDeleteComponent(child);
+            }
+        }
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Component result = pm.getObjectById(Component.class, component.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexDeleteEvent(pm.detachCopy(result)));
+
+        //todo delete dependencies
+        delete(component.getChildren());
+        delete(component);
     }
 
     /**
@@ -389,9 +452,13 @@ public class QueryManager extends AlpineQueryManager {
         license.setTemplate(transientLicense.getTemplate());
         license.setText(transientLicense.getText());
         license.setSeeAlso(transientLicense.getSeeAlso());
+        license.setUuid(UUID.randomUUID().toString());
         pm.makePersistent(license);
         pm.currentTransaction().commit();
-        return pm.getObjectById(License.class, license.getId());
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final License result = pm.getObjectById(License.class, license.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        return result;
     }
 
     /**
@@ -436,7 +503,10 @@ public class QueryManager extends AlpineQueryManager {
         vuln.setUuid(UUID.randomUUID().toString());
         pm.makePersistent(vuln);
         pm.currentTransaction().commit();
-        return pm.getObjectById(Vulnerability.class, vuln.getId());
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final Vulnerability result = pm.getObjectById(Vulnerability.class, vuln.getId());
+        SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        return result;
     }
 
     /**

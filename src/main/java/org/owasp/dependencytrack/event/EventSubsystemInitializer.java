@@ -18,8 +18,10 @@ package org.owasp.dependencytrack.event;
 
 import alpine.event.LdapSyncEvent;
 import alpine.event.framework.EventService;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.tasks.LdapSyncTask;
 import org.owasp.dependencycheck.utils.Settings;
+import org.owasp.dependencytrack.tasks.IndexTask;
 import org.owasp.dependencytrack.tasks.NistMirrorTask;
 import org.owasp.dependencytrack.tasks.ScanModeler;
 import org.owasp.dependencytrack.tasks.StatsUpdateTask;
@@ -32,6 +34,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the EventService
     private static final EventService EVENT_SERVICE = EventService.getInstance();
 
+    // Starts the SingleThreadedEventService
+    private static final SingleThreadedEventService EVENT_SERVICE_ST = SingleThreadedEventService.getInstance();
+
     // Initialize Dependency-Check settings singleton before processing any event
     static {
         Settings.initialize();
@@ -42,6 +47,11 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanModeler.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
+
+        EVENT_SERVICE_ST.subscribe(IndexAddEvent.class, IndexTask.class);
+        EVENT_SERVICE_ST.subscribe(IndexUpdateEvent.class, IndexTask.class);
+        EVENT_SERVICE_ST.subscribe(IndexDeleteEvent.class, IndexTask.class);
+        EVENT_SERVICE_ST.subscribe(IndexReindexEvent.class, IndexTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -54,5 +64,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE.shutdown();
+
+        EVENT_SERVICE_ST.unsubscribe(IndexTask.class);
+        EVENT_SERVICE_ST.shutdown();
     }
 }

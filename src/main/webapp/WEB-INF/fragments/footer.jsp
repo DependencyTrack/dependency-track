@@ -2,6 +2,7 @@
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery-3.1.1.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.storageapi.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.easypiechart.min.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/jquery/typeahead.bundle.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap/js/bootstrap.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-table/bootstrap-table.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-table/extensions/flat-json/bootstrap-table-flat-json.min.js"/>"></script>

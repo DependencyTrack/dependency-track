@@ -49,6 +49,82 @@ $rest.contextPath = function contextPath() {
 };
 
 /**
+ * Retrieves search suggestions by utilizing Bloodhound which calls
+ * the server-side search resource.
+ */
+$rest.smartsearchProject = function smartsearch() {
+    return new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace("name"),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            wildcard: '%QUERY',
+            filter: function(response) {
+                console.log(response);
+                return response.results.project;
+            }
+        }
+    });
+};
+
+/**
+ * Retrieves search suggestions by utilizing Bloodhound which calls
+ * the server-side search resource.
+ */
+$rest.smartsearchComponent = function smartsearch() {
+    return new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace("name"),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            wildcard: '%QUERY',
+            filter: function(response) {
+                console.log(response);
+                return response.results.component;
+            }
+        }
+    });
+};
+
+/**
+ * Retrieves search suggestions by utilizing Bloodhound which calls
+ * the server-side search resource.
+ */
+$rest.smartsearchVulnerability = function smartsearch() {
+    return new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace("vulnId"),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            wildcard: '%QUERY',
+            filter: function(response) {
+                console.log(response);
+                return response.results.vulnerability;
+            }
+        }
+    });
+};
+
+/**
+ * Retrieves search suggestions by utilizing Bloodhound which calls
+ * the server-side search resource.
+ */
+$rest.smartsearchLicense = function smartsearch() {
+    return new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace("name"),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            wildcard: '%QUERY',
+            filter: function(response) {
+                console.log(response);
+                return response.results.license;
+            }
+        }
+    });
+};
+
+/**
  * Validates the specified parameter is a function that
  * can be called.
  */

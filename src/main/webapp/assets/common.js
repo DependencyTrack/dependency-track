@@ -136,6 +136,7 @@ $(document).ready(function () {
 
     // Get information about the current logged in user (if available)
     $rest.getPrincipalSelf(initialize);
+    let contextPath = $rest.contextPath();
 
     /**
      * Function that adds the 'active' class to one of the buttons in
@@ -152,6 +153,53 @@ $(document).ready(function () {
             }
         }
     })();
+
+    $("#smart-search .typeahead").typeahead(null,
+        {
+            name: "project",
+            source: $rest.smartsearchProject(),
+            display: "name",
+            templates: {
+                header: '<h4 class="section-title">Projects</h4>',
+                suggestion: function (data) {
+                    return '<a class="tt-suggestion-item" href="' + contextPath + '/project/?uuid=' + data.uuid + '">' + data.name + '</a>';
+                }
+            }
+        },
+        {
+            name: "component",
+            source: $rest.smartsearchComponent(),
+            display: "name",
+            templates: {
+                header: '<h4 class="section-title">Components</h4>',
+                suggestion: function (data) {
+                    return '<a class="tt-suggestion-item" href="' + contextPath + '/component/?uuid=' + data.uuid + '">' + data.name + '</a>';
+                }
+            }
+        },
+        {
+            name: "vulnerability",
+            source: $rest.smartsearchVulnerability(),
+            display: "vulnId",
+            templates: {
+                header: '<h4 class="section-title">Vulnerabilities</h4>',
+                suggestion: function (data) {
+                    return '<a class="tt-suggestion-item" href="' + contextPath + '/vulnerability/?source=' + data.source + '&vulnId=' + data.vulnId + '">' + data.vulnId + '</a>';
+                }
+            }
+        },
+        {
+            name: "license",
+            source: $rest.smartsearchLicense(),
+            display: "name",
+            templates: {
+                header: '<h4 class="section-title">Licenses</h4>',
+                suggestion: function (data) {
+                    return '<a class="tt-suggestion-item" href="' + contextPath + '/license/?licenseId=' + data.licenseId + '">' + data.name + '</a>';
+                }
+            }
+        }
+    );
 
 });
 

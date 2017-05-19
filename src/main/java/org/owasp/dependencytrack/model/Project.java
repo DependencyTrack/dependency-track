@@ -96,7 +96,7 @@ public class Project implements Serializable {
     @Persistent(mappedBy = "parent")
     private Collection<Project> children;
 
-    @Persistent(mappedBy = "project")
+    @Persistent(mappedBy = "project", defaultFetchGroup = "true")
     private List<ProjectProperty> properties;
 
     @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true")

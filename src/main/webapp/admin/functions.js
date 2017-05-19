@@ -293,7 +293,7 @@ function createTeam() {
     const inputField = $("#createTeamNameInput");
     const teamName = inputField.val();
     $.ajax({
-        url: contextPath() + URL_TEAM,
+        url: $rest.contextPath() + URL_TEAM,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
@@ -318,7 +318,7 @@ function updateTeam() {
     const teamName = $("#inputTeamName-" + teamUuid).val();
     const isHakmaster = $("#inputTeamHakmaster-" + teamUuid).is(":checked");
     $.ajax({
-        url: contextPath() + URL_TEAM,
+        url: $rest.contextPath() + URL_TEAM,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_POST,
@@ -343,7 +343,7 @@ function updateTeam() {
 function deleteTeam() {
     const teamUuid = $(this).data("team-uuid");
     $.ajax({
-        url: contextPath() + URL_TEAM,
+        url: $rest.contextPath() + URL_TEAM,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
         data: JSON.stringify({uuid: teamUuid}),
@@ -369,7 +369,7 @@ function deleteTeam() {
  */
 function addApiKey(uuid) {
     $.ajax({
-        url: contextPath() + URL_TEAM + "/" + uuid + "/key",
+        url: $rest.contextPath() + URL_TEAM + "/" + uuid + "/key",
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
@@ -392,7 +392,7 @@ function addApiKey(uuid) {
  */
 function regenerateApiKey(apikey) {
     $.ajax({
-        url: contextPath() + URL_TEAM + "/key/" + apikey,
+        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_POST,
@@ -421,7 +421,7 @@ function regenerateApiKey(apikey) {
  */
 function deleteApiKey(apikey) {
     $.ajax({
-        url: contextPath() + URL_TEAM + "/key/" + apikey,
+        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
         statusCode: {
@@ -446,7 +446,7 @@ function createLdapUser() {
     const inputField = $("#createLdapUserNameInput");
     const username = inputField.val();
     $.ajax({
-        url: contextPath() + URL_USER_LDAP,
+        url: $rest.contextPath() + URL_USER_LDAP,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
@@ -475,7 +475,7 @@ function createLdapUser() {
 function deleteLdapUser() {
     const username = $(this).data("user-username");
     $.ajax({
-        url: contextPath() + URL_USER_LDAP,
+        url: $rest.contextPath() + URL_USER_LDAP,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
         data: JSON.stringify({username: username}),
@@ -503,7 +503,7 @@ function createManagedUser() {
     const inputField = $("#createManagedUserNameInput");
     const username = inputField.val();
     $.ajax({
-        url: contextPath() + URL_USER_MANAGED,
+        url: $rest.contextPath() + URL_USER_MANAGED,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
@@ -532,7 +532,7 @@ function createManagedUser() {
 function deleteManagedUser() {
     const username = $(this).data("user-username");
     $.ajax({
-        url: contextPath() + URL_USER_MANAGED,
+        url: $rest.contextPath() + URL_USER_MANAGED,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
         data: JSON.stringify({username: username}),
@@ -562,7 +562,7 @@ function assignTeamToUser() {
     for (let i = 0; i < selections.length; i++) {
         let uuid = selections[i].uuid;
         $.ajax({
-            url: contextPath() + URL_USER + "/" + username + "/membership",
+            url: $rest.contextPath() + URL_USER + "/" + username + "/membership",
             contentType: CONTENT_TYPE_JSON,
             dataType: DATA_TYPE,
             type: METHOD_POST,
@@ -588,7 +588,7 @@ function assignTeamToUser() {
 
 function removeTeamMembership(uuid, username) {
     $.ajax({
-        url: contextPath() + URL_USER + "/" + username + "/membership",
+        url: $rest.contextPath() + URL_USER + "/" + username + "/membership",
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
         data: JSON.stringify({uuid: uuid}),

@@ -17,10 +17,15 @@
 package org.owasp.dependencytrack.persistence;
 
 import alpine.auth.PasswordService;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import alpine.model.ManagedUser;
 import alpine.model.Team;
+import org.owasp.dependencytrack.event.IndexCommitEvent;
+import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -33,6 +38,11 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private static final Logger LOGGER = Logger.getLogger(DefaultObjectGenerator.class);
 
     public void contextInitialized(ServletContextEvent event) {
+        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Project.class));
+        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Component.class));
+        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Vulnerability.class));
+        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(License.class));
+
         loadDefaultLicenses();
         loadDefaultPersonas();
 
@@ -64,12 +74,13 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 final List<License> licenses = parser.getLicenseDefinitions();
                 for (License license : licenses) {
                     LOGGER.info("Added: " + license.getName());
-                    qm.createLicense(license);
+                    qm.createLicense(license, true);
                 }
             } catch (IOException | URISyntaxException e) {
                 LOGGER.error("An error occurred during the parsing SPDX license definitions.");
                 LOGGER.error(e.getMessage());
             }
+            qm.commitSearchIndex(true, License.class);
         }
     }
 

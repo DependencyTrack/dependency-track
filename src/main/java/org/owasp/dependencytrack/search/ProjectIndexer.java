@@ -27,8 +27,13 @@ import java.io.IOException;
 public final class ProjectIndexer extends IndexManager implements ObjectIndexer<Project> {
 
     private static final Logger LOGGER = Logger.getLogger(ProjectIndexer.class);
+    private static final ProjectIndexer INSTANCE = new ProjectIndexer();
+
+    protected static ProjectIndexer getInstance() {
+        return INSTANCE;
+    }
     
-    protected ProjectIndexer() {
+    private ProjectIndexer() {
         super(IndexType.PROJECT);
     }
 
@@ -60,8 +65,6 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
 
         try {
             getIndexWriter().addDocument(doc);
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error adding object to index");
             LOGGER.error(e.getMessage());
@@ -96,8 +99,6 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
 
         try {
             getIndexWriter().updateDocument(new Term(IndexConstants.PROJECT_UUID, project.getUuid()), doc);
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error updating object in index");
             LOGGER.error(e.getMessage());
@@ -112,8 +113,6 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     public synchronized void remove(Project project) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid()));
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error removing object from index");
             LOGGER.error(e.getMessage());

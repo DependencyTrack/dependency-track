@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.search;
 
+import alpine.Config;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
@@ -25,14 +26,28 @@ import org.owasp.dependencytrack.model.Vulnerability;
 public class IndexManagerFactory {
 
     public static ObjectIndexer getIndexManager(IndexEvent event) {
-        if (event.getObject() instanceof Project) {
-            return new ProjectIndexer();
-        } else if (event.getObject() instanceof Component) {
-            return new ComponentIndexer();
-        } else if (event.getObject() instanceof Vulnerability) {
-            return new VulnerabilityIndexer();
-        } else if (event.getObject() instanceof License) {
-            return new LicenseIndexer();
+        if (Config.isUnitTestsEnabled()) {
+            return new ObjectIndexer() {
+                @Override
+                public String[] getSearchFields() { return new String[0]; }
+                @Override
+                public void add(Object object) { }
+                @Override
+                public void update(Object object) { }
+                @Override
+                public void remove(Object object) { }
+                @Override
+                public void commit() { }
+            };
+        }
+        if (event.getObject() instanceof Project || Project.class == event.getIndexableClass()) {
+            return ProjectIndexer.getInstance();
+        } else if (event.getObject() instanceof Component || Component.class == event.getIndexableClass()) {
+            return ComponentIndexer.getInstance();
+        } else if (event.getObject() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
+            return VulnerabilityIndexer.getInstance();
+        } else if (event.getObject() instanceof License || License.class == event.getIndexableClass()) {
+            return LicenseIndexer.getInstance();
         }
         throw new IllegalArgumentException("Unsupported indexer requested");
     }

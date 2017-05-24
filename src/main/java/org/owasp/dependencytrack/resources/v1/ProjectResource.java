@@ -125,7 +125,8 @@ public class ProjectResource extends AlpineResource {
                         StringUtils.trimToNull(jsonProject.getDescription()),
                         StringUtils.trimToNull(jsonProject.getVersion()),
                         jsonProject.getTags(),
-                        parent);
+                        parent,
+                        true);
                 return Response.status(Response.Status.CREATED).entity(project).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();
@@ -162,7 +163,7 @@ public class ProjectResource extends AlpineResource {
                 if (tmpProject == null || (tmpProject.getUuid().equals(project.getUuid()))) {
                     project.setName(jsonProject.getName().trim());
                     project.setDescription(jsonProject.getDescription());
-                    project = qm.updateProject(jsonProject);
+                    project = qm.updateProject(jsonProject, true);
                     return Response.ok(project).build();
                 } else {
                     return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();

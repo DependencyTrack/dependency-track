@@ -20,6 +20,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.IndexAddEvent;
+import org.owasp.dependencytrack.event.IndexCommitEvent;
 import org.owasp.dependencytrack.event.IndexDeleteEvent;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.event.IndexReindexEvent;
@@ -44,6 +45,8 @@ public class IndexTask implements Subscriber {
                 indexManager.update((event).getObject());
             } else if (e instanceof IndexDeleteEvent) {
                 indexManager.remove((event).getObject());
+            } else if (e instanceof IndexCommitEvent) {
+                indexManager.commit();
             } else if (e instanceof IndexReindexEvent) {
                 LOGGER.info("Starting reindex task");
                 //todo

@@ -25,6 +25,7 @@ import org.owasp.dependencytrack.model.Vulnerability;
 public abstract class IndexEvent implements Event {
 
     private Object indexableObject;
+    private Class indexableClass;
 
     public IndexEvent() { }
 
@@ -44,8 +45,15 @@ public abstract class IndexEvent implements Event {
         this.indexableObject = license;
     }
 
+    public IndexEvent(Class clazz) {
+        this.indexableClass = clazz;
+    }
+
     public Object getObject() {
         return indexableObject;
     }
 
+    public Class getIndexableClass() {
+        return indexableClass;
+    }
 }

@@ -20,7 +20,9 @@ import alpine.Config;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.persistence.AlpineQueryManager;
 import alpine.resources.AlpineRequest;
+import alpine.util.UuidUtil;
 import org.owasp.dependencytrack.event.IndexAddEvent;
+import org.owasp.dependencytrack.event.IndexCommitEvent;
 import org.owasp.dependencytrack.event.IndexDeleteEvent;
 import org.owasp.dependencytrack.event.IndexUpdateEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -35,7 +37,6 @@ import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
 import javax.jdo.FetchPlan;
 import javax.jdo.Query;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -172,9 +173,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param version the project version
      * @param tags a List of Tags - these will be resolved if necessary
      * @param parent an optional parent Project
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created Project
      */
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -190,15 +192,17 @@ public class QueryManager extends AlpineQueryManager {
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
         SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
         return result;
     }
 
     /**
      * Updates an existing Project.
      * @param transientProject the project to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(Project transientProject) {
+    public Project updateProject(Project transientProject, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
         pm.currentTransaction().begin();
         project.setName(transientProject.getName());
@@ -207,6 +211,7 @@ public class QueryManager extends AlpineQueryManager {
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
         SingleThreadedEventService.getInstance().publish(new IndexUpdateEvent(pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
         return result;
     }
 
@@ -313,10 +318,12 @@ public class QueryManager extends AlpineQueryManager {
      * @param resolvedLicense an optional resolved SPDX license
      * @param license an optional license name (text)
      * @param parent an optional parent Component
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a new Component
      */
     public Component createComponent(String name, String version, String group, String filename, String md5, String sha1,
-                                     String description, License resolvedLicense, String license, Component parent) {
+                                     String description, License resolvedLicense, String license, Component parent,
+                                     boolean commitIndex) {
         final Component component = new Component();
         component.setName(name);
         component.setVersion(version);
@@ -339,15 +346,17 @@ public class QueryManager extends AlpineQueryManager {
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Component result = pm.getObjectById(Component.class, component.getId());
         SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Component.class);
         return result;
     }
 
     /**
      * Updated an existing Component.
      * @param transientComponent the component to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a Component
      */
-    public Component updateComponent(Component transientComponent) {
+    public Component updateComponent(Component transientComponent, boolean commitIndex) {
         final Component component = getObjectByUuid(Component.class, transientComponent.getUuid());
         pm.currentTransaction().begin();
         component.setName(transientComponent.getName());
@@ -364,17 +373,19 @@ public class QueryManager extends AlpineQueryManager {
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Component result = pm.getObjectById(Component.class, component.getId());
         SingleThreadedEventService.getInstance().publish(new IndexUpdateEvent(pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Component.class);
         return result;
     }
 
     /**
      * Deletes a Component and all objects dependant on the component.
      * @param component the Component to delete
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
-    public void recursivelyDeleteComponent(Component component) {
+    public void recursivelyDeleteComponent(Component component, boolean commitIndex) {
         if (component.getChildren() != null) {
             for (Component child: component.getChildren()) {
-                recursivelyDeleteComponent(child);
+                recursivelyDeleteComponent(child, false);
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
@@ -384,6 +395,7 @@ public class QueryManager extends AlpineQueryManager {
         //todo delete dependencies
         delete(component.getChildren());
         delete(component);
+        commitSearchIndex(commitIndex, Component.class);
     }
 
     /**
@@ -438,9 +450,10 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Creates a new License.
      * @param transientLicense the License object to create
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a created License object
      */
-    public License createLicense(License transientLicense) {
+    public License createLicense(License transientLicense, boolean commitIndex) {
         pm.currentTransaction().begin();
         final License license = new License();
         license.setComment(transientLicense.getComment());
@@ -458,55 +471,79 @@ public class QueryManager extends AlpineQueryManager {
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final License result = pm.getObjectById(License.class, license.getId());
         SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, License.class);
         return result;
     }
 
     /**
      * Creates a new Vulnerability.
-     * @param vulnId the name of the vulnerability. This is typically CVE-something
-     * @param desc the description of the vulnerability
-     * @param source the source of the vulnerability data
-     * @param cwe the common weakness enumeration, or weakness categorization
-     * @param cvssv2BaseScore the cvss score 0.0 - 10.0
-     * @param cvssv2ImpactSubScore the cvss score 0.0 - 10.0
-     * @param cvssv2ExploitSubScore the cvss score 0.0 - 10.0
-     * @param cvssv2Vector the cvss vector
-     * @param cvssv3BaseScore the cvss score 0.0 - 10.0
-     * @param cvssv3ImpactSubScore the cvss score 0.0 - 10.0
-     * @param cvssv3ExploitSubScore the cvss score 0.0 - 10.0
-     * @param cvssv3Vector the cvss vector
-     * @param matchedCpe the matched CPE
-     * @param matchAlPreviousCpe refer to DC report
-     * @return a new Vulnerability object
+     * @param vulnerability the vulnerability to persist
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a new vulnerability object
      */
-    public Vulnerability createVulnerability(String vulnId, String desc, Vulnerability.Source source, Cwe cwe,
-                                             BigDecimal cvssv2BaseScore, BigDecimal cvssv2ImpactSubScore,
-                                             BigDecimal cvssv2ExploitSubScore, String cvssv2Vector,
-                                             BigDecimal cvssv3BaseScore, BigDecimal cvssv3ImpactSubScore, BigDecimal cvssv3ExploitSubScore,
-                                             String cvssv3Vector, String matchedCpe, String matchAlPreviousCpe) {
+    public Vulnerability createVulnerability(Vulnerability vulnerability, boolean commitIndex) {
+        if (vulnerability.getUuid() == null || !UuidUtil.isValidUUID(vulnerability.getUuid())) {
+            vulnerability.setUuid(UUID.randomUUID().toString());
+        }
         pm.currentTransaction().begin();
-        final Vulnerability vuln = new Vulnerability();
-        vuln.setVulnId(vulnId);
-        vuln.setDescription(desc);
-        vuln.setSource(source);
-        vuln.setCwe(cwe);
-        vuln.setCvssV2BaseScore(cvssv2BaseScore);
-        vuln.setCvssV2ImpactSubScore(cvssv2ImpactSubScore);
-        vuln.setCvssV2ExploitabilitySubScore(cvssv2ExploitSubScore);
-        vuln.setCvssV2Vector(cvssv2Vector);
-        vuln.setCvssV3BaseScore(cvssv3BaseScore);
-        vuln.setCvssV3ImpactSubScore(cvssv3ImpactSubScore);
-        vuln.setCvssV3ExploitabilitySubScore(cvssv3ExploitSubScore);
-        vuln.setCvssV3Vector(cvssv3Vector);
-        vuln.setMatchedCPE(matchedCpe);
-        vuln.setMatchedAllPreviousCPE(matchAlPreviousCpe);
-        vuln.setUuid(UUID.randomUUID().toString());
-        pm.makePersistent(vuln);
+        pm.makePersistent(vulnerability);
         pm.currentTransaction().commit();
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Vulnerability result = pm.getObjectById(Vulnerability.class, vuln.getId());
+        final Vulnerability result = pm.getObjectById(Vulnerability.class, vulnerability.getId());
         SingleThreadedEventService.getInstance().publish(new IndexAddEvent(pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Vulnerability.class);
         return result;
+    }
+
+    /**
+     * Updates a vulnerability.
+     * @param transientVulnerability the vulnerability to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a Vulnerability object
+     */
+    public Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
+        if (transientVulnerability.getId() > 0) {
+            final Vulnerability vulnerability = getObjectById(Vulnerability.class, transientVulnerability.getId());
+            if (vulnerability != null) {
+                pm.currentTransaction().begin();
+                vulnerability.setDescription(transientVulnerability.getDescription());
+                vulnerability.setSource(transientVulnerability.getSource());
+                vulnerability.setCwe(transientVulnerability.getCwe());
+                vulnerability.setCvssV2BaseScore(transientVulnerability.getCvssV2BaseScore());
+                vulnerability.setCvssV2ImpactSubScore(transientVulnerability.getCvssV2ImpactSubScore());
+                vulnerability.setCvssV2ExploitabilitySubScore(transientVulnerability.getCvssV2ExploitabilitySubScore());
+                vulnerability.setCvssV2Vector(transientVulnerability.getCvssV2Vector());
+                vulnerability.setCvssV3BaseScore(transientVulnerability.getCvssV3BaseScore());
+                vulnerability.setCvssV3ImpactSubScore(transientVulnerability.getCvssV3ImpactSubScore());
+                vulnerability.setCvssV3ExploitabilitySubScore(transientVulnerability.getCvssV3ExploitabilitySubScore());
+                vulnerability.setCvssV3Vector(transientVulnerability.getCvssV3Vector());
+                vulnerability.setMatchedCPE(transientVulnerability.getMatchedCPE());
+                vulnerability.setMatchedAllPreviousCPE(transientVulnerability.getMatchedAllPreviousCPE());
+                pm.currentTransaction().commit();
+                pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+                final Vulnerability result = pm.getObjectById(Vulnerability.class, vulnerability.getId());
+                SingleThreadedEventService.getInstance().publish(new IndexUpdateEvent(pm.detachCopy(result)));
+                commitSearchIndex(commitIndex, Vulnerability.class);
+                return result;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Synchronizes a vulnerability. Method first checkes to see if the vulnerability already
+     * exists and if so, updates the vulnerability. If the vulnerability does not already exist,
+     * this method will create a new vulnerability.
+     * @param transientVulnerability the vulnerability to synchronize
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a Vulnerability object
+     */
+    public Vulnerability synchronizeVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
+        Vulnerability vulnerability = updateVulnerability(transientVulnerability, commitIndex);
+        if (vulnerability == null) {
+            vulnerability = createVulnerability(transientVulnerability, commitIndex);
+        }
+        return vulnerability;
     }
 
     /**
@@ -780,4 +817,14 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().commit();
     }
 
+    /**
+     * Commits the Lucene inxex.
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @param clazz the indexable class to commit the index of
+     */
+    public void commitSearchIndex(boolean commitIndex, Class clazz) {
+        if (commitIndex) {
+            SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(clazz));
+        }
+    }
 }

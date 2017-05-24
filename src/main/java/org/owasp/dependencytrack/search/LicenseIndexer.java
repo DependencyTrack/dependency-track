@@ -26,8 +26,13 @@ import java.io.IOException;
 public final class LicenseIndexer extends IndexManager implements ObjectIndexer<License> {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseIndexer.class);
+    private static final LicenseIndexer INSTANCE = new LicenseIndexer();
 
-    protected LicenseIndexer() {
+    protected static LicenseIndexer getInstance() {
+        return INSTANCE;
+    }
+
+    private LicenseIndexer() {
         super(IndexType.LICENSE);
     }
 
@@ -49,8 +54,6 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
 
         try {
             getIndexWriter().addDocument(doc);
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error adding object to index");
             LOGGER.error(e.getMessage());
@@ -76,8 +79,6 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
 
         try {
             getIndexWriter().updateDocument(new Term(IndexConstants.LICENSE_UUID, license.getUuid()), doc);
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error updating object in index");
             LOGGER.error(e.getMessage());
@@ -92,8 +93,6 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
     public synchronized void remove(License license) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid()));
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error removing object from index");
             LOGGER.error(e.getMessage());

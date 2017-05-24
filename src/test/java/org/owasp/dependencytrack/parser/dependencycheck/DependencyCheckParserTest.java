@@ -110,7 +110,7 @@ public class DependencyCheckParserTest extends BaseTest {
         Analysis analysis = new DependencyCheckParser().parse(file);
 
         QueryManager qm = new QueryManager();
-        Project project = qm.createProject(analysis.getProjectInfo().getName(), "My Description", "1.0.0", null, null);
+        Project project = qm.createProject(analysis.getProjectInfo().getName(), "My Description", "1.0.0", null, null, false);
         Scan scan = qm.createScan(project, new Date(), new Date());
 
         Assert.assertEquals(analysis.getProjectInfo().getName(), project.getName());
@@ -128,7 +128,8 @@ public class DependencyCheckParserTest extends BaseTest {
                     dependency.getDescription(),
                     null, // resolved license //todo: try to match it
                     dependency.getLicense(),
-                    null
+                    null,
+                    false
             );
 
             Assert.assertNotNull(component);

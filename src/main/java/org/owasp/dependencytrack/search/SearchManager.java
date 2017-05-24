@@ -39,10 +39,10 @@ public class SearchManager {
     public SearchResult searchIndices(String queryString, int limit) {
         final SearchResult searchResult = new SearchResult();
         final IndexManager[] indexManagers = {
-                new ProjectIndexer(),
-                new ComponentIndexer(),
-                new VulnerabilityIndexer(),
-                new LicenseIndexer()
+                ProjectIndexer.getInstance(),
+                ComponentIndexer.getInstance(),
+                VulnerabilityIndexer.getInstance(),
+                LicenseIndexer.getInstance()
         };
         Stream.of(indexManagers).parallel().forEach(
                 indexManager -> {

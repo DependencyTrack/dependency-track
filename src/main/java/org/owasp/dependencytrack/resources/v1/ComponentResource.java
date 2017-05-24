@@ -155,7 +155,8 @@ public class ComponentResource extends AlpineResource {
                     StringUtils.trimToNull(jsonComponent.getDescription()),
                     qm.getLicense(jsonComponent.getLicense()),
                     null,
-                    parent);
+                    parent,
+                    true);
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
     }

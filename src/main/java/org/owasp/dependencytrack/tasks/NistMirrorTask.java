@@ -22,6 +22,7 @@ import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
+import org.owasp.dependencytrack.parser.nvd.NvdParser;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -73,10 +74,6 @@ public class NistMirrorTask implements Subscriber {
     private void getAllFiles() {
         final Date currentDate = new Date();
         LOGGER.info("Downloading files at " + currentDate);
-
-        doDownload(CVE_XML_12_MODIFIED_URL);
-        doDownload(CVE_XML_20_MODIFIED_URL);
-        doDownload(CVE_JSON_10_MODIFIED_URL);
         for (int i = START_YEAR; i <= END_YEAR; i++) {
             final String xml12BaseUrl = CVE_XML_12_BASE_URL.replace("%d", String.valueOf(i));
             final String xml20BaseUrl = CVE_XML_20_BASE_URL.replace("%d", String.valueOf(i));
@@ -85,6 +82,9 @@ public class NistMirrorTask implements Subscriber {
             doDownload(xml20BaseUrl);
             doDownload(json10BaseUrl);
         }
+        doDownload(CVE_XML_12_MODIFIED_URL);
+        doDownload(CVE_XML_20_MODIFIED_URL);
+        doDownload(CVE_JSON_10_MODIFIED_URL);
     }
 
     private void setOutputDir(String outputDirPath) {
@@ -164,11 +164,14 @@ public class NistMirrorTask implements Subscriber {
         try {
             LOGGER.info("Uncompressing " + file.getName());
             gzis = new GZIPInputStream(new FileInputStream(file));
-            out = new FileOutputStream(new File(file.getAbsolutePath().replaceAll(".gz", "")));
+            final File uncompressedFile = new File(file.getAbsolutePath().replaceAll(".gz", ""));
+            out = new FileOutputStream(uncompressedFile);
             int len;
             while ((len = gzis.read(buffer)) > 0) {
                 out.write(buffer, 0, len);
             }
+            final NvdParser parser = new NvdParser();
+            parser.parse(uncompressedFile);
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {

@@ -157,6 +157,19 @@ public abstract class IndexManager implements AutoCloseable {
     }
 
     /**
+     * Commits changes to the index and closes the IndexWriter.
+     */
+    public void commit() {
+        try {
+            getIndexWriter().commit();
+            close();
+        } catch (IOException e) {
+            LOGGER.error("Error committing index");
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    /**
      * Closes the IndexWriter.
      */
     public void close() {

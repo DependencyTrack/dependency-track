@@ -26,8 +26,13 @@ import java.io.IOException;
 public final class ComponentIndexer extends IndexManager implements ObjectIndexer<Component> {
 
     private static final Logger LOGGER = Logger.getLogger(ComponentIndexer.class);
+    private static final ComponentIndexer INSTANCE = new ComponentIndexer();
 
-    protected ComponentIndexer() {
+    protected static ComponentIndexer getInstance() {
+        return INSTANCE;
+    }
+
+    private ComponentIndexer() {
         super(IndexType.COMPONENT);
     }
 
@@ -52,8 +57,6 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
 
         try {
             getIndexWriter().addDocument(doc);
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error adding object to index");
             LOGGER.error(e.getMessage());
@@ -82,8 +85,6 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
 
         try {
             getIndexWriter().updateDocument(new Term(IndexConstants.COMPONENT_UUID, component.getUuid()), doc);
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error updating object in index");
             LOGGER.error(e.getMessage());
@@ -98,8 +99,6 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     public synchronized void remove(Component component) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid()));
-            getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error removing object from index");
             LOGGER.error(e.getMessage());

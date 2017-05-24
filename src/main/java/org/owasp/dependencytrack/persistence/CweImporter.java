@@ -21,26 +21,30 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.TreeMap;
 
 /**
  * This class parses CWEs and adds them to the database (if necessary).
- * cwec_v2.10.xml obtained from https://cwe.mitre.org/data/xml/cwec_v2.10.xml
+ * cwec_v2.11.xml obtained from https://cwe.mitre.org/data/xml/cwec_v2.11.xml
  */
 public class CweImporter {
 
     private static final Logger LOGGER = Logger.getLogger(CweImporter.class);
     private static final Map<Integer, String> CWE_MAPPINGS = new TreeMap<>();
 
-    public void processCweDefinitions() throws Exception {
+    public void processCweDefinitions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Syncing CWEs with datastore");
 
@@ -53,7 +57,7 @@ public class CweImporter {
             factory.setExpandEntityReferences(false);
             final DocumentBuilder builder = factory.newDocumentBuilder();
 
-            final InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.10.xml");
+            final InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.11.xml");
             final Document doc = builder.parse(is);
             final XPathFactory xPathfactory = XPathFactory.newInstance();
             final XPath xpath = xPathfactory.newXPath();

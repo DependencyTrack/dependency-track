@@ -38,6 +38,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private static final Logger LOGGER = Logger.getLogger(DefaultObjectGenerator.class);
 
     public void contextInitialized(ServletContextEvent event) {
+        // Creates empty indexes on startup if indexes do not exist
         SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Project.class));
         SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Component.class));
         SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Vulnerability.class));

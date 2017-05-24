@@ -68,7 +68,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public synchronized void update(Component component) {
+    public void update(Component component) {
         final Document doc = getDocument(IndexConstants.COMPONENT_UUID, component.getUuid());
         if (doc == null) {
             LOGGER.warn("Could not find object in index. Adding.");
@@ -96,7 +96,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public synchronized void remove(Component component) {
+    public void remove(Component component) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid()));
         } catch (IOException e) {

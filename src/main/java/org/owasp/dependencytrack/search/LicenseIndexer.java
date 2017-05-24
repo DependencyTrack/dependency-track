@@ -65,7 +65,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public synchronized void update(License license) {
+    public void update(License license) {
         final Document doc = getDocument(IndexConstants.LICENSE_UUID, license.getUuid());
         if (doc == null) {
             LOGGER.warn("Could not find object in index. Adding.");
@@ -90,7 +90,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public synchronized void remove(License license) {
+    public void remove(License license) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid()));
         } catch (IOException e) {

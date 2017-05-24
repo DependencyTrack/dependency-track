@@ -47,7 +47,6 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    //public synchronized void add(Project project) {
     public void add(Project project) {
         final Document doc = new Document();
         addField(doc, IndexConstants.PROJECT_UUID, project.getUuid(), Field.Store.YES, false);
@@ -76,7 +75,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public synchronized void update(Project project) {
+    public void update(Project project) {
         final Document doc = getDocument(IndexConstants.PROJECT_UUID, project.getUuid());
         if (doc == null) {
             LOGGER.warn("Could not find object in index. Adding.");
@@ -110,7 +109,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public synchronized void remove(Project project) {
+    public void remove(Project project) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid()));
         } catch (IOException e) {

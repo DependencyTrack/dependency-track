@@ -73,6 +73,7 @@ public class CweImporter {
             for (Map.Entry<Integer, String> entry : CWE_MAPPINGS.entrySet()) {
                 qm.createCweIfNotExist(entry.getKey(), entry.getValue().replaceAll("\\\\", "\\\\\\\\"));
             }
+            LOGGER.info("CWE sync complete");
         }
     }
 

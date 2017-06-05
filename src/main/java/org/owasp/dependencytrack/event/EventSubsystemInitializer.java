@@ -48,11 +48,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
 
-        EVENT_SERVICE_ST.subscribe(IndexAddEvent.class, IndexTask.class);
-        EVENT_SERVICE_ST.subscribe(IndexUpdateEvent.class, IndexTask.class);
-        EVENT_SERVICE_ST.subscribe(IndexDeleteEvent.class, IndexTask.class);
-        EVENT_SERVICE_ST.subscribe(IndexCommitEvent.class, IndexTask.class);
-        EVENT_SERVICE_ST.subscribe(IndexReindexEvent.class, IndexTask.class);
+        EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
 
         TaskScheduler.getInstance();
     }

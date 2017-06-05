@@ -19,12 +19,7 @@ package org.owasp.dependencytrack.tasks;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
-import org.owasp.dependencytrack.event.IndexAddEvent;
-import org.owasp.dependencytrack.event.IndexCommitEvent;
-import org.owasp.dependencytrack.event.IndexDeleteEvent;
 import org.owasp.dependencytrack.event.IndexEvent;
-import org.owasp.dependencytrack.event.IndexReindexEvent;
-import org.owasp.dependencytrack.event.IndexUpdateEvent;
 import org.owasp.dependencytrack.search.IndexManagerFactory;
 import org.owasp.dependencytrack.search.ObjectIndexer;
 
@@ -39,15 +34,15 @@ public class IndexTask implements Subscriber {
             final IndexEvent event = (IndexEvent) e;
             final ObjectIndexer indexManager = IndexManagerFactory.getIndexManager(event);
 
-            if (e instanceof IndexAddEvent) {
+            if (IndexEvent.Action.CREATE == event.getAction()) {
                 indexManager.add((event).getObject());
-            } else if (e instanceof IndexUpdateEvent) {
+            } else if (IndexEvent.Action.UPDATE == event.getAction()) {
                 indexManager.update((event).getObject());
-            } else if (e instanceof IndexDeleteEvent) {
+            } else if (IndexEvent.Action.DELETE == event.getAction()) {
                 indexManager.remove((event).getObject());
-            } else if (e instanceof IndexCommitEvent) {
+            } else if (IndexEvent.Action.COMMIT == event.getAction()) {
                 indexManager.commit();
-            } else if (e instanceof IndexReindexEvent) {
+            } else if (IndexEvent.Action.REINDEX == event.getAction()) {
                 LOGGER.info("Starting reindex task");
                 //todo
                 LOGGER.info("Reindexing complete");

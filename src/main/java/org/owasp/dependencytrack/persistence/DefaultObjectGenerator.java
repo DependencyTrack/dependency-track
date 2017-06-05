@@ -21,7 +21,7 @@ import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import alpine.model.ManagedUser;
 import alpine.model.Team;
-import org.owasp.dependencytrack.event.IndexCommitEvent;
+import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
@@ -39,10 +39,10 @@ public class DefaultObjectGenerator implements ServletContextListener {
 
     public void contextInitialized(ServletContextEvent event) {
         // Creates empty indexes on startup if indexes do not exist
-        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Project.class));
-        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Component.class));
-        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Vulnerability.class));
-        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(License.class));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Project.class));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Component.class));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, License.class));
 
         loadDefaultLicenses();
         loadDefaultPersonas();

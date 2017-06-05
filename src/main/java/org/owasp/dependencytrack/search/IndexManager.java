@@ -115,6 +115,7 @@ public abstract class IndexManager implements AutoCloseable {
     protected void openIndex() throws IOException {
         final Analyzer analyzer = new StandardAnalyzer();
         final IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         iwriter = new IndexWriter(getDirectory(), config);
     }
 
@@ -162,7 +163,6 @@ public abstract class IndexManager implements AutoCloseable {
     public void commit() {
         try {
             getIndexWriter().commit();
-            close();
         } catch (IOException e) {
             LOGGER.error("Error committing index");
             LOGGER.error(e.getMessage());

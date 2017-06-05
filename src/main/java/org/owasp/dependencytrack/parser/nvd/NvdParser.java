@@ -18,7 +18,7 @@ package org.owasp.dependencytrack.parser.nvd;
 
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
-import org.owasp.dependencytrack.event.IndexCommitEvent;
+import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -106,7 +106,7 @@ public final class NvdParser {
             LOGGER.error("Error parsing NVD JSON data");
             LOGGER.error(e.getMessage());
         }
-        SingleThreadedEventService.getInstance().publish(new IndexCommitEvent(Vulnerability.class));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
     private void parseCveImpact(JsonObject cveItem, Vulnerability vulnerability) {
@@ -196,11 +196,6 @@ public final class NvdParser {
             case ("CHANGED")            : return "CHANGED";
             default                     : return null;
         }
-    }
-
-    public static void main(String[] args) {
-        final NvdParser parser = new NvdParser();
-        parser.parse(new File("/Users/steve/Development/OWASP/dependency-track/src/main/resources/nvdcve-1.0-2017.json"));
     }
 
 }

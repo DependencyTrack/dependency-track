@@ -22,31 +22,48 @@ import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Vulnerability;
 
-public abstract class IndexEvent implements Event {
+public class IndexEvent implements Event {
 
+    public enum Action {
+        CREATE,
+        UPDATE,
+        DELETE,
+        COMMIT,
+        REINDEX
+    }
+
+    private Action action;
     private Object indexableObject;
     private Class indexableClass;
 
-    public IndexEvent() { }
 
-    public IndexEvent(Project project) {
+    public IndexEvent(Action action, Project project) {
+        this.action = action;
         this.indexableObject = project;
     }
 
-    public IndexEvent(Component component) {
+    public IndexEvent(Action action, Component component) {
+        this.action = action;
         this.indexableObject = component;
     }
 
-    public IndexEvent(Vulnerability vulnerability) {
+    public IndexEvent(Action action, Vulnerability vulnerability) {
+        this.action = action;
         this.indexableObject = vulnerability;
     }
 
-    public IndexEvent(License license) {
+    public IndexEvent(Action action, License license) {
+        this.action = action;
         this.indexableObject = license;
     }
 
-    public IndexEvent(Class clazz) {
+    public IndexEvent(Action action, Class clazz) {
+        this.action = action;
         this.indexableClass = clazz;
+    }
+
+    public Action getAction() {
+        return action;
     }
 
     public Object getObject() {

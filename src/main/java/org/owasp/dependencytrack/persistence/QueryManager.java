@@ -20,7 +20,6 @@ import alpine.Config;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.persistence.AlpineQueryManager;
 import alpine.resources.AlpineRequest;
-import alpine.util.UuidUtil;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Cwe;
@@ -37,7 +36,6 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -178,7 +176,6 @@ public class QueryManager extends AlpineQueryManager {
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
-        project.setUuid(UUID.randomUUID().toString());
         project.setTags(resolveTags(tags));
         if (parent != null) {
             project.setParent(parent);
@@ -262,7 +259,6 @@ public class QueryManager extends AlpineQueryManager {
         scan.setExecuted(executed);
         scan.setImported(imported);
         scan.setProject(project);
-        scan.setUuid(UUID.randomUUID().toString());
         pm.currentTransaction().begin();
         pm.makePersistent(scan);
         pm.currentTransaction().commit();
@@ -335,7 +331,6 @@ public class QueryManager extends AlpineQueryManager {
         }
         component.setResolvedLicense(resolvedLicense);
         component.setParent(parent);
-        component.setUuid(UUID.randomUUID().toString());
         pm.currentTransaction().begin();
         pm.makePersistent(component);
         pm.currentTransaction().commit();
@@ -414,7 +409,6 @@ public class QueryManager extends AlpineQueryManager {
         evidence.setSource(source);
         evidence.setName(name);
         evidence.setValue(value);
-        evidence.setUuid(UUID.randomUUID().toString());
         pm.currentTransaction().begin();
         pm.makePersistent(evidence);
         pm.currentTransaction().commit();
@@ -462,7 +456,6 @@ public class QueryManager extends AlpineQueryManager {
         license.setTemplate(transientLicense.getTemplate());
         license.setText(transientLicense.getText());
         license.setSeeAlso(transientLicense.getSeeAlso());
-        license.setUuid(UUID.randomUUID().toString());
         pm.makePersistent(license);
         pm.currentTransaction().commit();
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
@@ -479,9 +472,6 @@ public class QueryManager extends AlpineQueryManager {
      * @return a new vulnerability object
      */
     public Vulnerability createVulnerability(Vulnerability vulnerability, boolean commitIndex) {
-        if (vulnerability.getUuid() == null || !UuidUtil.isValidUUID(vulnerability.getUuid())) {
-            vulnerability.setUuid(UUID.randomUUID().toString());
-        }
         pm.currentTransaction().begin();
         pm.makePersistent(vulnerability);
         pm.currentTransaction().commit();

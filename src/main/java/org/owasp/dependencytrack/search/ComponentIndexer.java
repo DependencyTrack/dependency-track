@@ -48,7 +48,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      */
     public void add(Component component) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.COMPONENT_UUID, component.getUuid(), Field.Store.YES, false);
+        addField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString(), Field.Store.YES, false);
         addField(doc, IndexConstants.COMPONENT_NAME, component.getName(), Field.Store.YES, true);
         addField(doc, IndexConstants.COMPONENT_GROUP, component.getGroup(), Field.Store.YES, true);
         addField(doc, IndexConstants.COMPONENT_VERSION, component.getVersion(), Field.Store.YES, false);
@@ -69,14 +69,14 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      * @param component A persisted Component object.
      */
     public void update(Component component) {
-        final Document doc = getDocument(IndexConstants.COMPONENT_UUID, component.getUuid());
+        final Document doc = getDocument(IndexConstants.COMPONENT_UUID, component.getUuid().toString());
         if (doc == null) {
             LOGGER.warn("Could not find object in index. Adding.");
             add(component);
             return;
         }
 
-        updateField(doc, IndexConstants.COMPONENT_UUID, component.getUuid());
+        updateField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString());
         updateField(doc, IndexConstants.COMPONENT_NAME, component.getName());
         updateField(doc, IndexConstants.COMPONENT_GROUP, component.getGroup());
         updateField(doc, IndexConstants.COMPONENT_VERSION, component.getVersion());
@@ -84,7 +84,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         updateField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.getDescription());
 
         try {
-            getIndexWriter().updateDocument(new Term(IndexConstants.COMPONENT_UUID, component.getUuid()), doc);
+            getIndexWriter().updateDocument(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()), doc);
         } catch (IOException e) {
             LOGGER.error("Error updating object in index");
             LOGGER.error(e.getMessage());
@@ -98,7 +98,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      */
     public void remove(Component component) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()));
         } catch (IOException e) {
             LOGGER.error("Error removing object from index");
             LOGGER.error(e.getMessage());

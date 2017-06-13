@@ -18,24 +18,25 @@ package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
 import java.io.File;
+import java.util.UUID;
 
 public class ScanUploadEvent implements Event {
 
-    private String projectUuid;
+    private UUID projectUuid;
     private File file;
     private byte[] scan;
 
-    public ScanUploadEvent(final String projectUuid, final byte[] scan) {
+    public ScanUploadEvent(final UUID projectUuid, final byte[] scan) {
         this.projectUuid = projectUuid;
         this.scan = scan;
     }
 
-    public ScanUploadEvent(final String projectUuid, final File file) {
+    public ScanUploadEvent(final UUID projectUuid, final File file) {
         this.projectUuid = projectUuid;
         this.file = file;
     }
 
-    public String getProjectUuid() {
+    public UUID getProjectUuid() {
         return projectUuid;
     }
 

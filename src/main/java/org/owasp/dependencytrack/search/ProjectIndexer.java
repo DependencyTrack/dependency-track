@@ -49,7 +49,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      */
     public void add(Project project) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.PROJECT_UUID, project.getUuid(), Field.Store.YES, false);
+        addField(doc, IndexConstants.PROJECT_UUID, project.getUuid().toString(), Field.Store.YES, false);
         addField(doc, IndexConstants.PROJECT_NAME, project.getName(), Field.Store.YES, true);
         addField(doc, IndexConstants.PROJECT_VERSION, project.getVersion(), Field.Store.YES, false);
         addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.getDescription(), Field.Store.YES, true);
@@ -76,14 +76,14 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      * @param project A persisted Project object.
      */
     public void update(Project project) {
-        final Document doc = getDocument(IndexConstants.PROJECT_UUID, project.getUuid());
+        final Document doc = getDocument(IndexConstants.PROJECT_UUID, project.getUuid().toString());
         if (doc == null) {
             LOGGER.warn("Could not find object in index. Adding.");
             add(project);
             return;
         }
 
-        updateField(doc, IndexConstants.PROJECT_UUID, project.getUuid());
+        updateField(doc, IndexConstants.PROJECT_UUID, project.getUuid().toString());
         updateField(doc, IndexConstants.PROJECT_NAME, project.getName());
         updateField(doc, IndexConstants.PROJECT_VERSION, project.getVersion());
         updateField(doc, IndexConstants.PROJECT_DESCRIPTION, project.getDescription());
@@ -97,7 +97,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         updateField(doc, IndexConstants.PROJECT_PROPERTIES, sb.toString().trim());
 
         try {
-            getIndexWriter().updateDocument(new Term(IndexConstants.PROJECT_UUID, project.getUuid()), doc);
+            getIndexWriter().updateDocument(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()), doc);
         } catch (IOException e) {
             LOGGER.error("Error updating object in index");
             LOGGER.error(e.getMessage());
@@ -111,7 +111,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      */
     public void remove(Project project) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()));
         } catch (IOException e) {
             LOGGER.error("Error removing object from index");
             LOGGER.error(e.getMessage());

@@ -41,15 +41,15 @@ public class ProjectTest extends BaseTest {
         Assert.assertEquals("Example Project 1", p1.getName());
         Assert.assertEquals("Example Project 2", p2.getName());
 
-        Assert.assertNotNull(UUID.fromString(p1.getUuid()));
-        Assert.assertNotNull(UUID.fromString(p2.getUuid()));
+        Assert.assertNotNull(p1.getUuid());
+        Assert.assertNotNull(p2.getUuid());
 
         Assert.assertNotNull(scan.getProject());
         Assert.assertEquals("Example Project 1", scan.getProject().getName());
         Assert.assertEquals("Description 1", scan.getProject().getDescription());
         Assert.assertEquals("1.0", scan.getProject().getVersion());
 
-        Assert.assertNotNull(UUID.fromString(scan.getUuid()));
+        Assert.assertNotNull(scan.getUuid());
         Assert.assertNotNull(scan.getExecuted());
         Assert.assertNotNull(scan.getImported());
 

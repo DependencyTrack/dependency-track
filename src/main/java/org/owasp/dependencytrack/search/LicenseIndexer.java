@@ -48,7 +48,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      */
     public void add(License license) {
         final Document doc = new Document();
-        addField(doc, IndexConstants.LICENSE_UUID, license.getUuid(), Field.Store.YES, false);
+        addField(doc, IndexConstants.LICENSE_UUID, license.getUuid().toString(), Field.Store.YES, false);
         addField(doc, IndexConstants.LICENSE_LICENSEID, license.getLicenseId(), Field.Store.YES, true);
         addField(doc, IndexConstants.LICENSE_NAME, license.getName(), Field.Store.YES, true);
 
@@ -66,19 +66,19 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      * @param license A persisted License object.
      */
     public void update(License license) {
-        final Document doc = getDocument(IndexConstants.LICENSE_UUID, license.getUuid());
+        final Document doc = getDocument(IndexConstants.LICENSE_UUID, license.getUuid().toString());
         if (doc == null) {
             LOGGER.warn("Could not find object in index. Adding.");
             add(license);
             return;
         }
 
-        updateField(doc, IndexConstants.LICENSE_UUID, license.getUuid());
+        updateField(doc, IndexConstants.LICENSE_UUID, license.getUuid().toString());
         updateField(doc, IndexConstants.LICENSE_LICENSEID, license.getLicenseId());
         updateField(doc, IndexConstants.LICENSE_NAME, license.getName());
 
         try {
-            getIndexWriter().updateDocument(new Term(IndexConstants.LICENSE_UUID, license.getUuid()), doc);
+            getIndexWriter().updateDocument(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()), doc);
         } catch (IOException e) {
             LOGGER.error("Error updating object in index");
             LOGGER.error(e.getMessage());
@@ -92,7 +92,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      */
     public void remove(License license) {
         try {
-            getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid()));
+            getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()));
         } catch (IOException e) {
             LOGGER.error("Error removing object from index");
             LOGGER.error(e.getMessage());

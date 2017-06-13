@@ -36,6 +36,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -137,12 +138,11 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
-    @Persistent
+    @Persistent(customValueStrategy = "uuid")
     @Unique(name = "COMPONENT_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
-    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
-    private String uuid;
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -280,11 +280,11 @@ public class Component implements Serializable {
         this.vulnerabilities = vulnerabilities;
     }
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 }

@@ -37,6 +37,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @PersistenceCapable
 @FetchGroups({
@@ -82,12 +83,11 @@ public class Project implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
-    @Persistent
+    @Persistent(customValueStrategy = "uuid")
     @Unique(name = "PROJECT_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
-    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
-    private String uuid;
+    private UUID uuid;
 
     @Persistent
     @Column(name = "PARENT_PROJECT_ID")
@@ -137,11 +137,11 @@ public class Project implements Serializable {
         this.version = version;
     }
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 

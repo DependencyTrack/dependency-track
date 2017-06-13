@@ -29,6 +29,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.UUID;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -76,12 +77,11 @@ public class Evidence implements Serializable {
     // Nearly impossible to perform positive input validation on this field.
     private String value;
 
-    @Persistent
+    @Persistent(customValueStrategy = "uuid")
     @Unique(name = "EVIDENCE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
-    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
-    private String uuid;
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -139,11 +139,11 @@ public class Evidence implements Serializable {
         this.component = component;
     }
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 }

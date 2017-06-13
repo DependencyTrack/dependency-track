@@ -16,7 +16,6 @@
  */
 package org.owasp.dependencytrack.model;
 
-import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
@@ -30,10 +29,10 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -67,12 +66,11 @@ public class Scan implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Component> components;
 
-    @Persistent
+    @Persistent(customValueStrategy = "uuid")
     @Unique(name = "SCAN_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
-    @Pattern(regexp = RegexSequence.Definition.UUID, message = "The uuid must be a valid 36 character UUID")
-    private String uuid;
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -114,11 +112,11 @@ public class Scan implements Serializable {
         this.components = components;
     }
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 }

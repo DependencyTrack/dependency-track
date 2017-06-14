@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
+import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +36,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/v1/dependency")
 @Api(value = "dependency", authorizations = @Authorization(value = "X-Api-Key"))
@@ -59,9 +59,8 @@ public class DependencyResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final long totalCount = qm.getDependencyCount(project);
-                final List<Dependency> dependencies = qm.getDependencies(project);
-                return Response.ok(dependencies).header(TOTAL_COUNT_HEADER, totalCount).build();
+                final PaginatedResult result = qm.getDependencies(project);
+                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -86,9 +85,8 @@ public class DependencyResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
-                final long totalCount = qm.getDependencyCount(component);
-                final List<Dependency> dependencies = qm.getDependencies(component);
-                return Response.ok(dependencies).header(TOTAL_COUNT_HEADER, totalCount).build();
+                final PaginatedResult result = qm.getDependencies(component);
+                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }

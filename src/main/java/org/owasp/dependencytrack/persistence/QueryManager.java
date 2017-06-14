@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.persistence;
 import alpine.Config;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.persistence.AlpineQueryManager;
+import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -66,14 +67,19 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")
-    public List<Project> getProjects() {
+    public PaginatedResult getProjects() {
         final Query query = pm.newQuery(Project.class);
         query.setOrdering("name asc");
-        return (List<Project>) execute(query);
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
     }
 
     /**
-     * Returns a project by it's name
+     * Returns a project by it's name.
      * @param name the name of the Project
      * @return a Project object, or null if not found
      */
@@ -281,10 +287,15 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Components
      */
     @SuppressWarnings("unchecked")
-    public List<Component> getComponents() {
+    public PaginatedResult getComponents() {
         final Query query = pm.newQuery(Component.class);
         query.setOrdering("name asc");
-        return (List<Component>) execute(query);
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
     }
 
     /**
@@ -420,10 +431,15 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all License objects
      */
     @SuppressWarnings("unchecked")
-    public List<License> getLicenses() {
+    public PaginatedResult getLicenses() {
         final Query query = pm.newQuery(License.class);
         query.setOrdering("name asc");
-        return (List<License>) execute(query);
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:filter) || licenseId.toLowerCase().matches(:filter)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
     }
 
     /**
@@ -599,10 +615,15 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of CWEs
      */
     @SuppressWarnings("unchecked")
-    public List<Cwe> getCwes() {
+    public PaginatedResult getCwes() {
         final Query query = pm.newQuery(Cwe.class);
         query.setOrdering("id asc");
-        return (List<Cwe>) execute(query);
+        if (filter != null) {
+            query.setFilter("id == :id || name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filter, filterString);
+        }
+        return execute(query);
     }
 
     /**
@@ -638,10 +659,10 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Dependency objects
      */
     @SuppressWarnings("unchecked")
-    public List<Dependency> getDependencies(Project project) {
+    public PaginatedResult getDependencies(Project project) {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
-        return (List<Dependency>) execute(query, project);
+        return execute(query, project);
     }
 
     /**
@@ -650,10 +671,10 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Dependency objects
      */
     @SuppressWarnings("unchecked")
-    public List<Dependency> getDependencies(Component component) {
+    public PaginatedResult getDependencies(Component component) {
         final Query query = pm.newQuery(Dependency.class, "component == :component");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
-        return (List<Dependency>) execute(query, component);
+        return execute(query, component);
     }
 
     /**
@@ -707,9 +728,14 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public List<Vulnerability> getVulnerabilities() {
+    public PaginatedResult getVulnerabilities() {
         final Query query = pm.newQuery(Vulnerability.class);
-        return (List<Vulnerability>) execute(query);
+        if (filter != null) {
+            query.setFilter("vulnId.toLowerCase().matches(:vulnId)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
     }
 
     /**
@@ -729,9 +755,9 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public List<Vulnerability> getVulnerabilities(Component component) {
+    public PaginatedResult getVulnerabilities(Component component) {
         final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
-        return (List<Vulnerability>) execute(query, component);
+        return execute(query, component);
     }
 
     /**
@@ -742,7 +768,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public long getVulnerabilityCount(Project project) {
         long total = 0;
-        final List<Dependency> dependencies = getDependencies(project);
+        final List<Dependency> dependencies = getDependencies(project).getList(Dependency.class);
         for (Dependency dependency: dependencies) {
             total += getVulnerabilityCount(dependency.getComponent());
         }
@@ -757,9 +783,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public List<Vulnerability> getVulnerabilities(Project project) {
         final List<Vulnerability> vulnerabilities = new ArrayList<>();
-        final List<Dependency> dependencies = getDependencies(project);
+        final List<Dependency> dependencies = getDependencies(project).getList(Dependency.class);
         for (Dependency dependency: dependencies) {
-            vulnerabilities.addAll(getVulnerabilities(dependency.getComponent()));
+            vulnerabilities.addAll(getVulnerabilities(dependency.getComponent()).getObjects());
         }
         return vulnerabilities;
     }
@@ -773,7 +799,7 @@ public class QueryManager extends AlpineQueryManager {
     public List<Project> getProjects(Vulnerability vulnerability) {
         final List<Project> projects = new ArrayList<>();
         for (Component component: vulnerability.getComponents()) {
-            for (Dependency dependency: getDependencies(component)) {
+            for (Dependency dependency: getDependencies(component).getList(Dependency.class)) {
                 projects.add(dependency.getProject());
             }
         }

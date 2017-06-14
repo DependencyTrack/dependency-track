@@ -45,7 +45,7 @@ public class LicenseResolver implements IResolver {
     public License resolve(Dependency dependency) {
         if (dependency.getLicense() != null) {
             try (QueryManager qm = new QueryManager()) {
-                final List<License> licenses = qm.getLicenses();
+                final List<License> licenses = qm.getLicenses().getList(License.class);
                 for (License license : licenses) {
                     if (StringUtils.containsIgnoreCase(dependency.getLicense(), license.getLicenseId())) {
                         return license;

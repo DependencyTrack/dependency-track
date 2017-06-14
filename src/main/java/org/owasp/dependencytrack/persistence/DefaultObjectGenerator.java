@@ -64,7 +64,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     private void loadDefaultLicenses() {
         try (QueryManager qm = new QueryManager()) {
-            if (qm.getLicenses().size() > 0) {
+            if (qm.getLicenses().getTotal() > 0) {
                 return;
             }
 

@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
+import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -40,7 +41,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/v1/project")
 @Api(value = "project", authorizations = @Authorization(value = "X-Api-Key"))
@@ -60,9 +60,8 @@ public class ProjectResource extends AlpineResource {
     @PermissionRequired(Permission.PROJECT_VIEW)
     public Response getProjects() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final long totalCount = qm.getCount(Project.class);
-            final List<Project> projects = qm.getProjects();
-            return Response.ok(projects).header(TOTAL_COUNT_HEADER, totalCount).build();
+            final PaginatedResult result = qm.getProjects();
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 

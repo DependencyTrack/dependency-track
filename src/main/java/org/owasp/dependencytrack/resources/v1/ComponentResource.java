@@ -17,6 +17,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
+import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import alpine.validation.RegexSequence;
 import alpine.validation.ValidationTask;
@@ -40,7 +41,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/v1/component")
 @Api(value = "component", authorizations = @Authorization(value = "X-Api-Key"))
@@ -60,9 +60,8 @@ public class ComponentResource extends AlpineResource {
     @PermissionRequired(Permission.COMPONENT_VIEW)
     public Response getAllComponents() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final long totalCount = qm.getCount(Component.class);
-            final List<Component> components = qm.getComponents();
-            return Response.ok(components).header(TOTAL_COUNT_HEADER, totalCount).build();
+            final PaginatedResult result = qm.getComponents();
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 

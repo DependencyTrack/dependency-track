@@ -278,6 +278,8 @@ h4 {
 }
 .widget {
     background: #efefef;
+    box-shadow: 0 0 15px 0 rgba(46, 54, 63, 0.2);
+    border: 1px #cfcfcf solid;
 }
 .widget-row {
     margin-left: -15px;

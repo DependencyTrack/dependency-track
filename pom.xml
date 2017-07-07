@@ -67,7 +67,9 @@
     <properties>
         <!-- Dependency Versions -->
         <lib.lucene.version>5.5.4</lib.lucene.version>
-        <lib.dependency-check.version>1.4.5</lib.dependency-check.version>
+        <lib.dependency-check.version>2.0.1</lib.dependency-check.version>
+        <!-- build properties -->
+        <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>
 
     <!-- Resolve Alpine snapshot releases -->

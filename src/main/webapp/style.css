@@ -18,7 +18,7 @@ body {
 #navbar-container {
     padding-left: 45px;
     padding-right: 15px;
-    box-shadow: 0 2px 15px 0 #2e363f;
+    box-shadow: 0 2px 15px 0 rgba(46, 54, 63, 0.8); /* same as: #2e363f but with opacity mod */
 }
 .navbar-fixed-top {
     border: 0;

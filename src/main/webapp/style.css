@@ -413,7 +413,8 @@ h4 {
     margin-right: 10px;
 }
 #sidebar > ul > li.active > a {
-    background: url("images/menu-active.png") no-repeat scroll right center transparent !important;
+    background: url("images/menu-active.svg") no-repeat scroll right center transparent !important;
+    background-size: 7px 14px;
     text-decoration:none;
 }
 #sidebar > ul > li.active {

@@ -1,5 +1,5 @@
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<script type="text/javascript" src="<c:url value="/assets/jquery/jquery-3.1.1.min.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/jquery/jquery-3.2.1.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.storageapi.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.easypiechart.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/typeahead.bundle.min.js"/>"></script>

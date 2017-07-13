@@ -14,10 +14,26 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-package org.owasp.dependencytrack.event;
+package org.owasp.dependencytrack.metrics;
 
-import alpine.event.framework.Event;
+public final class Metrics {
 
-public class StatsUpdateEvent implements Event {
+    private Metrics() { }
+
+    public static double inheritedRiskScore(int high, int medium, int low) {
+        return inheritedRiskScore(0, high, medium, low);
+    }
+
+    public static double inheritedRiskScore(int critical, int high, int medium, int low) {
+        return (double) ((critical * 10) + (high * 5) + (medium * 3) + (low * 1));
+    }
+
+    public static double vulnerableComponentRatio(int vulnerabilities, int vulnerableComponents) {
+        double ratio = 0.0;
+        if (vulnerableComponents > 0) {
+            ratio = (double) vulnerabilities / vulnerableComponents;
+        }
+        return ratio;
+    }
 
 }

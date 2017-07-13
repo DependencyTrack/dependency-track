@@ -14,23 +14,25 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-package org.owasp.dependencytrack.tasks;
+package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
-import org.owasp.dependencytrack.event.StatsUpdateEvent;
 
-public class StatsUpdateTask implements Subscriber {
+public class MetricsUpdateEvent implements Event {
 
-    private static final Logger LOGGER = Logger.getLogger(StatsUpdateTask.class);
+    private Object target = null;
 
-    public void inform(Event e) {
-        if (e instanceof StatsUpdateEvent) {
-            LOGGER.info("Starting statistics update task");
-            //todo : call stats update methods
-            LOGGER.info("Statistics update complete");
-        }
+    // Call this to perform a global metrics update event
+    public MetricsUpdateEvent() {
+    }
+
+    // Call this to perform a metrics update on a specific project or component
+    public MetricsUpdateEvent(Object target) {
+        this.target = target;
+    }
+
+    public Object getTarget() {
+        return target;
     }
 
 }

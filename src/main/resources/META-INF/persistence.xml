@@ -22,14 +22,16 @@
 
     <persistence-unit name="Alpine">
         <class>org.owasp.dependencytrack.model.Component</class>
+        <class>org.owasp.dependencytrack.model.ComponentMetrics</class>
         <class>org.owasp.dependencytrack.model.Cwe</class>
         <class>org.owasp.dependencytrack.model.Dependency</class>
         <class>org.owasp.dependencytrack.model.Evidence</class>
         <class>org.owasp.dependencytrack.model.License</class>
+        <class>org.owasp.dependencytrack.model.PortfolioMetrics</class>
         <class>org.owasp.dependencytrack.model.Project</class>
+        <class>org.owasp.dependencytrack.model.ProjectMetrics</class>
         <class>org.owasp.dependencytrack.model.ProjectProperty</class>
         <class>org.owasp.dependencytrack.model.Scan</class>
-        <class>org.owasp.dependencytrack.model.Stat</class>
         <class>org.owasp.dependencytrack.model.Tag</class>
         <class>org.owasp.dependencytrack.model.Vulnerability</class>
 

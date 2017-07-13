@@ -23,11 +23,14 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.ComponentMetrics;
 import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Dependency;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.ProjectMetrics;
 import org.owasp.dependencytrack.model.ProjectProperty;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.model.Tag;
@@ -804,6 +807,75 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         return projects;
+    }
+
+    /**
+     * Retrieves the most recent PortfolioMetrics.
+     * @return a PortfolioMetrics object
+     */
+    @SuppressWarnings("unchecked")
+    public PortfolioMetrics getMostRecentPortfolioMetrics() {
+        final Query query = pm.newQuery(PortfolioMetrics.class);
+        query.setOrdering("lastOccurrence desc");
+        final List<PortfolioMetrics> result = execute(query).getList(PortfolioMetrics.class);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Retrieves PortfolioMetrics in descending order starting with the most recent.
+     * @return a PaginatedResult object
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getPortfolioMetrics() {
+        final Query query = pm.newQuery(PortfolioMetrics.class);
+        query.setOrdering("lastOccurrence desc");
+        return execute(query);
+    }
+
+    /**
+     * Retrieves the most recent ProjectMetrics.
+     * @return a ProjectMetrics object
+     */
+    @SuppressWarnings("unchecked")
+    public ProjectMetrics getMostRecentProjectMetrics(Project project) {
+        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
+        query.setOrdering("lastOccurrence desc");
+        final List<ProjectMetrics> result = execute(query, project).getList(ProjectMetrics.class);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Retrieves ProjectMetrics in descending order starting with the most recent.
+     * @return a PaginatedResult object
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getProjectMetrics(Project project) {
+        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
+        query.setOrdering("lastOccurrence desc");
+        return execute(query, project);
+    }
+
+    /**
+     * Retrieves the most recent ComponentMetrics.
+     * @return a ComponentMetrics object
+     */
+    @SuppressWarnings("unchecked")
+    public ComponentMetrics getMostRecentComponentMetrics(Component component) {
+        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
+        query.setOrdering("lastOccurrence desc");
+        final List<ComponentMetrics> result = execute(query, component).getList(ComponentMetrics.class);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Retrieves ComponentMetrics in descending order starting with the most recent.
+     * @return a PaginatedResult object
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getComponentMetrics(Component component) {
+        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
+        query.setOrdering("lastOccurrence desc");
+        return execute(query, component);
     }
 
     /**

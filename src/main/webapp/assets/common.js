@@ -204,6 +204,16 @@ $(document).ready(function () {
 });
 
 /**
+ * Changes the first letter to uppercase and the remaining letters to lowercase.
+ */
+function capitalize(string) {
+    if (string && string.length > 2) {
+        return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+    }
+    return string;
+}
+
+/**
  * Defines JSON characters that need to be escaped when data is used in HTML
  */
 const __entityMap = {

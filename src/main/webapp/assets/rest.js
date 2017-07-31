@@ -46,7 +46,7 @@ const $rest = function() {
 
 $rest.contextPath = function contextPath() {
     let path = $("meta[name=context-path]").attr("content");
-    return path.endsWith('/') ? path : path + '/';
+    return path.endsWith("/") ? path : path + "/";
 };
 
 /**

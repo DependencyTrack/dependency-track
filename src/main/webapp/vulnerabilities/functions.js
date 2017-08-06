@@ -28,8 +28,27 @@ function formatVulnerabilityTable(res) {
         if (res[i].hasOwnProperty("cwe")) {
             res[i].cwefield = "CWE-" + res[i].cwe.cweId + " " + res[i].cwe.name;
         }
+
+        if (res[i].hasOwnProperty("severity")) {
+            res[i].severityLabel = formatSeverityLabel(res[i].severity);
+        }
     }
     return res;
+}
+
+function formatSeverityLabel(severity) {
+    let severityLabel = capitalize(severity);
+    let severityClass = "severity-" + severity.toLowerCase() + "-bg";
+
+    return `
+     <div style="height:24px;margin:-4px;">
+        <div class="${severityClass} text-center pull-left" style="width:24px; height:24px; color:#ffffff">
+            <i class="fa fa-bug" style="font-size:12px; padding:6px" aria-hidden="true"></i>
+         </div>
+         <div class="text-center pull-left" style="height:24px;">
+             <div style="font-size:12px; padding:4px"><span class="severity-value">${severityLabel}</span></div>
+         </div>
+     </div>`;
 }
 
 /**

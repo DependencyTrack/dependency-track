@@ -118,10 +118,10 @@
                    data-toolbar="#vulnerabilitiesToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
-                    <th data-align="left" data-field="vulnerabilityhref">Name</th>
-                    <th data-align="left" data-field="source">Source</th>
-                    <th data-align="left" data-field="cwefield">CWE</th>
-                    <th data-align="left" data-field="severity">Severity</th>
+                    <th data-align="left" data-class="tight" data-field="vulnerabilityhref">Name</th>
+                    <th data-align="left" data-class="tight" data-field="source">Source</th>
+                    <th data-align="left" data-class="expand" data-field="cwefield">CWE</th>
+                    <th data-align="left" data-class="tight" data-field="severityLabel">Severity</th>
                 </tr>
                 </thead>
             </table>

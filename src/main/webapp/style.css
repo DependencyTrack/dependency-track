@@ -100,6 +100,12 @@ table tr:first-child th {
 .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
     background-color: #FFFFCC;
 }
+.table td.tight, .table th.tight {
+    width: 1%;
+}
+.table td.expand, .table th.expand {
+    width: 10%;
+}
 .login-modal-header .close {
     font-size: 36px;
     color: #888;
@@ -266,6 +272,9 @@ h4 {
 }
 .severity-info-bg {
     background: #357abd none;
+}
+.severity-unassigned-bg, .severity-unknown-bg {
+    background: #c0c0c0 none;
 }
 .label-sm {
     font-size: 75%;

@@ -115,7 +115,7 @@
                 <tr>
                     <th data-align="left" data-field="name">Name</th>
                     <th data-align="left" data-field="licensehref">SPDX License ID</th>
-                    <th data-align="left" data-field="osiApprovedLabel">OSI Approved</th>
+                    <th data-align="center" data-field="osiApprovedLabel" data-class="tight">OSI Approved</th>
                 </tr>
                 </thead>
             </table>

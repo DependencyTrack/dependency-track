@@ -29,11 +29,20 @@ function formatVulnerabilityTable(res) {
             res[i].cwefield = "CWE-" + res[i].cwe.cweId + " " + res[i].cwe.name;
         }
 
+        if (res[i].hasOwnProperty("source")) {
+            res[i].sourceLabel = formatSourceLabel(res[i].source);
+        }
+
         if (res[i].hasOwnProperty("severity")) {
             res[i].severityLabel = formatSeverityLabel(res[i].severity);
         }
     }
     return res;
+}
+
+function formatSourceLabel(source) {
+    let sourceClass = "label-source-" + source.toLowerCase();
+    return `<span class="label ${sourceClass}">${source}</span>`;
 }
 
 function formatSeverityLabel(severity) {

@@ -285,6 +285,42 @@ h4 {
 .label-lg {
     font-size: 125%;
 }
+.label-source-nvd {
+    font-weight: normal;
+    color: #222222;
+    background-color: #AECEE5;
+    border: 1px solid #5C9CCB;
+}
+.label-source-nsp {
+    font-weight: normal;
+    color: #222222;
+    background-color: #B4AFE4;
+    border: 1px solid #6E63CC;
+}
+.label-source-retire {
+    font-weight: normal;
+    color: #222222;
+    background-color: #AFE4BF;
+    border: 1px solid #73D08F;
+}
+.label-source-vulndb {
+    font-weight: normal;
+    color: #222222;
+    background-color: #FFC78B;
+    border: 1px solid #FE9536;
+}
+.label-source-victims {
+    font-weight: normal;
+    color: #222222;
+    background-color: #E4AFAF;
+    border: 1px solid #CC6666;
+}
+.label-source-manual {
+    font-weight: normal;
+    color: #222222;
+    background-color: #EBE5A8;
+    border: 1px solid #DCD167;
+}
 .widget {
     background: #efefef;
     box-shadow: 0 0 15px 0 rgba(46, 54, 63, 0.2);

@@ -66,7 +66,7 @@ public class ComponentResource extends AlpineResource {
     }
 
     @GET
-    @Path("/uuid/{uuid}")
+    @Path("/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a specific component",

@@ -57,18 +57,11 @@ public class NistMirrorTask implements Subscriber {
     public void inform(Event e) {
         if (e instanceof NistMirrorEvent) {
             LOGGER.info("Starting NIST mirroring task");
-            final File mirrorPath = getMirrorPath();
+            final File mirrorPath = new File(Config.getInstance().getDataDirectorty(), "nist");
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
             LOGGER.info("NIST mirroring complete");
         }
-    }
-
-    private File getMirrorPath() {
-        return new File(
-                System.getProperty("user.home") + File.separator
-                        + ".dependency-track" + File.separator
-                        + "nist");
     }
 
     private void getAllFiles() {

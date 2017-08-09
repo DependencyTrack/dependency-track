@@ -68,6 +68,7 @@
         <!-- Dependency Versions -->
         <lib.lucene.version>5.5.4</lib.lucene.version>
         <lib.dependency-check.version>2.0.1</lib.dependency-check.version>
+        <lib.unirest.version>1.4.9</lib.unirest.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>
@@ -133,6 +134,12 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-sandbox</artifactId>
             <version>${lib.lucene.version}</version>
+        </dependency>
+        <!-- Unirest -->
+        <dependency>
+            <groupId>com.mashape.unirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>${lib.unirest.version}</version>
         </dependency>
     </dependencies>
 

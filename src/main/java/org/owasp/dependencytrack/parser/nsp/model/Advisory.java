@@ -99,12 +99,6 @@ public class Advisory {
     private String title;
 
     /**
-     * The linear dependency path that lead to this module. [0] is the root with
-     * each subsequent array member leading up to the final (this) module.
-     */
-    private String[] path;
-
-    /**
      * The optional CVE(s) associated with this advisory.
      */
     private String[] cves;

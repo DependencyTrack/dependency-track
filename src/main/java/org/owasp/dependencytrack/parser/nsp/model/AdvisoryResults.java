@@ -19,7 +19,7 @@ package org.owasp.dependencytrack.parser.nsp.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Advisories {
+public class AdvisoryResults {
 
     private int offset;
     private int count;

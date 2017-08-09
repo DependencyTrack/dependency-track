@@ -20,7 +20,7 @@ import alpine.logging.Logger;
 import com.mashape.unirest.http.JsonNode;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.owasp.dependencytrack.parser.nsp.model.Advisories;
+import org.owasp.dependencytrack.parser.nsp.model.AdvisoryResults;
 import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,10 +29,10 @@ public class NspAdvsoriesParser {
 
     private static final Logger LOGGER = Logger.getLogger(NspAdvsoriesParser.class);
 
-    public Advisories parse(JsonNode jsonNode) {
+    public AdvisoryResults parse(JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
 
-        final Advisories advisories = new Advisories();
+        final AdvisoryResults advisories = new AdvisoryResults();
         final JSONObject root = jsonNode.getObject();
         advisories.setOffset(root.getInt("offset"));
         advisories.setTotal(root.getInt("total"));

@@ -33,8 +33,6 @@ public class IndexManagerFactory {
                 @Override
                 public void add(Object object) { }
                 @Override
-                public void update(Object object) { }
-                @Override
                 public void remove(Object object) { }
                 @Override
                 public void commit() { }

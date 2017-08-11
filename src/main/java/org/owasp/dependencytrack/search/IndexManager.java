@@ -30,12 +30,12 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
@@ -236,14 +236,12 @@ public abstract class IndexManager implements AutoCloseable {
     protected Document getDocument(String fieldName, String uuid) {
         final List<Document> list = new ArrayList<>();
         try {
-            final Query query = getQueryParser().parse(fieldName + ":" + uuid);
+            final TermQuery query = new TermQuery(new Term(fieldName, uuid));
             final TopDocs results = getIndexSearcher().search(query, 1000000);
             final ScoreDoc[] hits = results.scoreDocs;
             for (ScoreDoc hit : hits) {
                 list.add(getIndexSearcher().doc(hit.doc));
             }
-        } catch (ParseException e) {
-            LOGGER.error("Failed to parse search string");
         } catch (CorruptIndexException e) {
             LOGGER.error("Corrupted Lucene Index Detected");
             LOGGER.error(e.getMessage());

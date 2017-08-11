@@ -64,34 +64,6 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     }
 
     /**
-     * Updates a Component object in the Lucene index.
-     *
-     * @param component A persisted Component object.
-     */
-    public void update(Component component) {
-        final Document doc = getDocument(IndexConstants.COMPONENT_UUID, component.getUuid().toString());
-        if (doc == null) {
-            LOGGER.warn("Could not find object in index. Adding.");
-            add(component);
-            return;
-        }
-
-        updateField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString());
-        updateField(doc, IndexConstants.COMPONENT_NAME, component.getName());
-        updateField(doc, IndexConstants.COMPONENT_GROUP, component.getGroup());
-        updateField(doc, IndexConstants.COMPONENT_VERSION, component.getVersion());
-        updateField(doc, IndexConstants.COMPONENT_SHA1, component.getSha1());
-        updateField(doc, IndexConstants.COMPONENT_DESCRIPTION, component.getDescription());
-
-        try {
-            getIndexWriter().updateDocument(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()), doc);
-        } catch (IOException e) {
-            LOGGER.error("Error updating object in index");
-            LOGGER.error(e.getMessage());
-        }
-    }
-
-    /**
      * Deletes a Component object from the Lucene index.
      *
      * @param component A persisted Component object.

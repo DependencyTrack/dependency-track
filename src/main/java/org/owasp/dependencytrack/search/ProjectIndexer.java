@@ -71,40 +71,6 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     }
 
     /**
-     * Updates a Projecrt object in the Lucene index.
-     *
-     * @param project A persisted Project object.
-     */
-    public void update(Project project) {
-        final Document doc = getDocument(IndexConstants.PROJECT_UUID, project.getUuid().toString());
-        if (doc == null) {
-            LOGGER.warn("Could not find object in index. Adding.");
-            add(project);
-            return;
-        }
-
-        updateField(doc, IndexConstants.PROJECT_UUID, project.getUuid().toString());
-        updateField(doc, IndexConstants.PROJECT_NAME, project.getName());
-        updateField(doc, IndexConstants.PROJECT_VERSION, project.getVersion());
-        updateField(doc, IndexConstants.PROJECT_DESCRIPTION, project.getDescription());
-
-        final StringBuilder sb = new StringBuilder();
-        if (project.getProperties() != null) {
-            for (ProjectProperty property : project.getProperties()) {
-                sb.append(property.getValue()).append(" ");
-            }
-        }
-        updateField(doc, IndexConstants.PROJECT_PROPERTIES, sb.toString().trim());
-
-        try {
-            getIndexWriter().updateDocument(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()), doc);
-        } catch (IOException e) {
-            LOGGER.error("Error updating object in index");
-            LOGGER.error(e.getMessage());
-        }
-    }
-
-    /**
      * Deletes a Project object from the Lucene index.
      *
      * @param project A persisted Project object.

@@ -37,7 +37,8 @@ public class IndexTask implements Subscriber {
             if (IndexEvent.Action.CREATE == event.getAction()) {
                 indexManager.add((event).getObject());
             } else if (IndexEvent.Action.UPDATE == event.getAction()) {
-                indexManager.update((event).getObject());
+                indexManager.remove((event).getObject());
+                indexManager.add((event).getObject());
             } else if (IndexEvent.Action.DELETE == event.getAction()) {
                 indexManager.remove((event).getObject());
             } else if (IndexEvent.Action.COMMIT == event.getAction()) {

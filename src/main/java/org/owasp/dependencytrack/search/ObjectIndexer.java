@@ -22,8 +22,6 @@ public interface ObjectIndexer<T> {
 
     void add(T object);
 
-    void update(T object);
-
     void remove(T object);
 
     void commit();

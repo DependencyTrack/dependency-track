@@ -61,31 +61,6 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
     }
 
     /**
-     * Updates a License object in the Lucene index.
-     *
-     * @param license A persisted License object.
-     */
-    public void update(License license) {
-        final Document doc = getDocument(IndexConstants.LICENSE_UUID, license.getUuid().toString());
-        if (doc == null) {
-            LOGGER.warn("Could not find object in index. Adding.");
-            add(license);
-            return;
-        }
-
-        updateField(doc, IndexConstants.LICENSE_UUID, license.getUuid().toString());
-        updateField(doc, IndexConstants.LICENSE_LICENSEID, license.getLicenseId());
-        updateField(doc, IndexConstants.LICENSE_NAME, license.getName());
-
-        try {
-            getIndexWriter().updateDocument(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()), doc);
-        } catch (IOException e) {
-            LOGGER.error("Error updating object in index");
-            LOGGER.error(e.getMessage());
-        }
-    }
-
-    /**
      * Deletes a License object from the Lucene index.
      *
      * @param license A persisted License object.

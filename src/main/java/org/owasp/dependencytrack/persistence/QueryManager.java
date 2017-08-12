@@ -485,17 +485,44 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Updates a vulnerability.
-     * @param vulnerability the vulnerability to update
+     * @param transientVulnerability the vulnerability to update
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a Vulnerability object
      */
-    public Vulnerability updateVulnerability(Vulnerability vulnerability, boolean commitIndex) {
-        if (vulnerability.getId() > 0) {
-            vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
+    public Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
+        final Vulnerability vulnerability;
+        if (transientVulnerability.getId() > 0) {
+            vulnerability = getObjectById(Vulnerability.class, transientVulnerability.getId());
         } else {
-            vulnerability = getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+            vulnerability = getVulnerabilityByVulnId(transientVulnerability.getSource(), transientVulnerability.getVulnId());
         }
+
         if (vulnerability != null) {
+            vulnerability.setCreated(transientVulnerability.getCreated());
+            vulnerability.setPublished(transientVulnerability.getPublished());
+            vulnerability.setUpdated(transientVulnerability.getUpdated());
+            vulnerability.setVulnId(transientVulnerability.getVulnId());
+            vulnerability.setSource(transientVulnerability.getSource());
+            vulnerability.setCredits(transientVulnerability.getCredits());
+            vulnerability.setVulnerableVersions(transientVulnerability.getVulnerableVersions());
+            vulnerability.setPatchedVersions(transientVulnerability.getPatchedVersions());
+            vulnerability.setDescription(transientVulnerability.getDescription());
+            vulnerability.setTitle(transientVulnerability.getTitle());
+            vulnerability.setSubTitle(transientVulnerability.getSubTitle());
+            vulnerability.setReferences(transientVulnerability.getReferences());
+            vulnerability.setRecommendation(transientVulnerability.getRecommendation());
+            vulnerability.setCwe(transientVulnerability.getCwe());
+            vulnerability.setCvssV2Vector(transientVulnerability.getCvssV2Vector());
+            vulnerability.setCvssV2BaseScore(transientVulnerability.getCvssV2BaseScore());
+            vulnerability.setCvssV2ImpactSubScore(transientVulnerability.getCvssV2ImpactSubScore());
+            vulnerability.setCvssV2ExploitabilitySubScore(transientVulnerability.getCvssV2ExploitabilitySubScore());
+            vulnerability.setCvssV3Vector(transientVulnerability.getCvssV3Vector());
+            vulnerability.setCvssV3BaseScore(transientVulnerability.getCvssV3BaseScore());
+            vulnerability.setCvssV3ImpactSubScore(transientVulnerability.getCvssV3ImpactSubScore());
+            vulnerability.setCvssV3ExploitabilitySubScore(transientVulnerability.getCvssV3ExploitabilitySubScore());
+            vulnerability.setMatchedAllPreviousCPE(transientVulnerability.getMatchedAllPreviousCPE());
+            vulnerability.setMatchedCPE(transientVulnerability.getMatchedCPE());
+
             final Vulnerability result = persist(vulnerability);
             SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, result));
             commitSearchIndex(commitIndex, Vulnerability.class);

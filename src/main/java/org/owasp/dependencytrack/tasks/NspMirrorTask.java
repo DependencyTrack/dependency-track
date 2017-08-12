@@ -18,6 +18,7 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.Config;
 import alpine.event.framework.Event;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.mashape.unirest.http.HttpResponse;
@@ -26,9 +27,15 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
+import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.parser.nsp.NspAdvsoriesParser;
+import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import org.owasp.dependencytrack.parser.nsp.model.AdvisoryResults;
+import org.owasp.dependencytrack.persistence.QueryManager;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.Date;
 
 public class NspMirrorTask implements Subscriber {
@@ -79,7 +86,54 @@ public class NspMirrorTask implements Subscriber {
 
     private void updateDatasource(AdvisoryResults results) {
         LOGGER.info("Updating datasource with NSP advisories");
-        // todo: sync advisories with database
+        try (QueryManager qm = new QueryManager()) {
+            for (Advisory advisory: results.getAdvisories()) {
+                qm.synchronizeVulnerability(mapAdvisoryToVulnerability(advisory), false);
+            }
+        }
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+    }
+
+    private Vulnerability mapAdvisoryToVulnerability(Advisory advisory) {
+        final Vulnerability vuln = new Vulnerability();
+        vuln.setSource(Vulnerability.Source.NSP);
+        vuln.setVulnId(String.valueOf(advisory.getId()));
+        vuln.setDescription(advisory.getOverview());
+        vuln.setTitle(advisory.getTitle());
+        vuln.setSubTitle(advisory.getModuleName());
+
+        if (StringUtils.isNotBlank(advisory.getCreatedAt())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getCreatedAt());
+            vuln.setCreated(Date.from(odt.toInstant()));
+        }
+        if (StringUtils.isNotBlank(advisory.getPublishDate())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getPublishDate());
+            vuln.setPublished(Date.from(odt.toInstant()));
+        }
+        if (StringUtils.isNotBlank(advisory.getUpdatedAt())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getUpdatedAt());
+            vuln.setUpdated(Date.from(odt.toInstant()));
+        }
+
+        if (advisory.getCvssVector() != null) {
+            if (advisory.getCvssVector().startsWith("CVSS:3.0")) {
+                vuln.setCvssV3Vector(advisory.getCvssVector());
+                vuln.setCvssV3BaseScore(BigDecimal.valueOf(advisory.getCvssScore()));
+                //todo: parse vector and recalculate base, impact, and exploitability scores
+            } else {
+                vuln.setCvssV2Vector(advisory.getCvssVector());
+                vuln.setCvssV2BaseScore(BigDecimal.valueOf(advisory.getCvssScore()));
+                //todo: parse vector and recalculate base, impact, and exploitability scores
+            }
+        }
+
+        vuln.setCredits(advisory.getAuthor());
+        vuln.setRecommendation(advisory.getRecommendation());
+        vuln.setReferences(advisory.getReferences());
+        vuln.setVulnerableVersions(advisory.getVulnerableVersions());
+        vuln.setPatchedVersions(advisory.getPatchedVersions());
+
+        return vuln;
     }
 
 }

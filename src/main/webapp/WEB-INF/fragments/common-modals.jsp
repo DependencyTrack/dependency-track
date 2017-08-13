@@ -43,7 +43,7 @@
     </div>
 </div>
 
-<div class="modal" id="modal-login" tabindex="-1" role="dialog" aria-labelledby="modal-login-label" aria-hidden="true">
+<div class="modal" id="modal-login" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="modal-login-label" aria-hidden="true">
     <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
             <div class="modal-content login-modal-content">

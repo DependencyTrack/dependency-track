@@ -28,24 +28,25 @@ const METHOD_GET = "GET";
 const METHOD_POST = "POST";
 const METHOD_PUT = "PUT";
 const METHOD_DELETE = "DELETE";
-const URL_ABOUT = "/api/version";
-const URL_LOGIN = "/api/v1/user/login";
-const URL_TEAM = "/api/v1/team";
-const URL_USER = "/api/v1/user";
-const URL_USER_LDAP = "/api/v1/user/ldap";
-const URL_USER_MANAGED = "/api/v1/user/managed";
-const URL_USER_SELF = "/api/v1/user/self";
-const URL_PROJECT = "/api/v1/project";
-const URL_LICENSE = "/api/v1/license";
-const URL_COMPONENT = "/api/v1/component";
-const URL_VULNERABILITY = "/api/v1/vulnerability";
-const URL_SEARCH = "/api/v1/search";
+const URL_ABOUT = "api/version";
+const URL_LOGIN = "api/v1/user/login";
+const URL_TEAM = "api/v1/team";
+const URL_USER = "api/v1/user";
+const URL_USER_LDAP = "api/v1/user/ldap";
+const URL_USER_MANAGED = "api/v1/user/managed";
+const URL_USER_SELF = "api/v1/user/self";
+const URL_PROJECT = "api/v1/project";
+const URL_LICENSE = "api/v1/license";
+const URL_COMPONENT = "api/v1/component";
+const URL_VULNERABILITY = "api/v1/vulnerability";
+const URL_SEARCH = "api/v1/search";
 
 const $rest = function() {
 };
 
 $rest.contextPath = function contextPath() {
-    return $("meta[name=context-path]").attr("content");
+    let path = $("meta[name=context-path]").attr("content");
+    return path.endsWith("/") ? path : path + "/";
 };
 
 /**

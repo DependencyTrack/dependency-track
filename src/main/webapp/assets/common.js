@@ -110,8 +110,10 @@ function logout() {
  */
 $("#login-form").submit(function(event) {
     event.preventDefault();
-    let username = $("#username").val();
-    let password = $("#password").val();
+    let usernameElement = $("#username");
+    let username = usernameElement.val();
+    let passwordElement = $("#password");
+    let password = passwordElement.val();
     $rest.login(username, password, function(data) {
         $.sessionStorage.set("token", data);
         $("#navbar-container").css("display", "block");
@@ -122,8 +124,8 @@ $("#login-form").submit(function(event) {
     }, function(data) {
         // todo: Display invalid username or password somewhere
     });
-    username.val("");
-    password.val("");
+    usernameElement.val("");
+    passwordElement.val("");
 });
 
 /**

@@ -142,16 +142,16 @@ $(document).ready(function () {
 
     /**
      * Function that adds the 'active' class to one of the buttons in
-     * the sidebar based in the current url and the href of each button.
+     * the sidebar based on the data-sidebar attribute in the pages' body.
      */
     (function() {
         let nav = document.getElementById("sidebar"),
-            anchor = nav.getElementsByTagName("a"),
-            current = window.location.pathname;
-        for (let i = 0; i < anchor.length; i++) {
-            let pathname = $common.getLocation(anchor[i].href).pathname;
-            if(pathname === current) {
-                anchor[i].parentElement.className = "active";
+            anchors = nav.getElementsByTagName("a"),
+            bodySidebar = document.body.getAttribute("data-sidebar");
+
+        for (let i = 0; i < anchors.length; i++) {
+            if(bodySidebar === anchors[i].getAttribute("data-sidebar")) {
+                anchors[i].parentElement.className = "active";
             }
         }
     })();

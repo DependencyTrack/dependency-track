@@ -7,7 +7,7 @@
     <jsp:include page="/WEB-INF/fragments/header.jsp"/>
     <title>OWASP Dependency-Track - Administration</title>
 </head>
-<body>
+<body data-sidebar="admin">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
 <div class="container-fluid">
     <div class="content-row main">

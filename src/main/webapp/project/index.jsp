@@ -9,8 +9,8 @@
 </head>
 <body>
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div class="container-fluid" id="main">
-    <div class="widget-detail-row">
+<div class="container-fluid">
+    <div class="widget-detail-row main">
         <div class="col-lg-12 col-md-12">
             <div class="panel widget">
                 <div class="panel-heading">
@@ -70,7 +70,7 @@
             </div>
         </div>
     </div>
-    <div class="content-row">
+    <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <div id="componentsToolbar">
                 <div class="form-inline" role="form">

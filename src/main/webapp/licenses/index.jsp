@@ -9,8 +9,8 @@
 </head>
 <body>
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div class="container-fluid" id="main">
-    <div class="content-row">
+<div class="container-fluid">
+    <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Licenses</h3>
             <div class="widget-row">

@@ -118,7 +118,7 @@ $("#login-form").submit(function(event) {
         $.sessionStorage.set("token", data);
         $("#navbar-container").css("display", "block");
         $("#sidebar").css("display", "block");
-        $("#main").css("display", "block");
+        $(".main").css("display", "block");
         $("#modal-login").modal("hide");
         initialize();
     }, function(data) {

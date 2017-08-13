@@ -534,13 +534,13 @@ $.ajaxSetup({
         200: function() {
             $("#navbar-container").css("display", "block");
             $("#sidebar").css("display", "block");
-            $("#main").css("display", "block");
+            $(".main").css("display", "block");
             $("#modal-login").modal("hide");
         },
         401: function() {
             $("#navbar-container").css("display", "none");
             $("#sidebar").css("display", "none");
-            $("#main").css("display", "none");
+            $(".main").css("display", "none");
             $("#modal-login").modal("show");
             $("#username").focus();
         }

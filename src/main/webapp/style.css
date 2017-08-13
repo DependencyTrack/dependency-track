@@ -23,7 +23,7 @@ body {
 .navbar-fixed-top {
     border: 0;
 }
-#main {
+.main {
     display: none;
 }
 .page-content {

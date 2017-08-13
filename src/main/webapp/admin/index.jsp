@@ -10,8 +10,8 @@
 <body>
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
 <div class="container-fluid">
-    <div class="content-row">
-        <div class="col-sm-12 col-md-12 main" id="main">
+    <div class="content-row main">
+        <div class="col-sm-12 col-md-12">
             <h3>Administration</h3>
             <div class="panel with-nav-tabs panel-default tight">
                 <div class="panel-heading">

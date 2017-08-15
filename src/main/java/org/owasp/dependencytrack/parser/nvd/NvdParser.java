@@ -18,10 +18,12 @@ package org.owasp.dependencytrack.parser.nvd;
 
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
+import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import us.springett.cvss.Cvss;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -30,6 +32,9 @@ import javax.json.JsonString;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.sql.Date;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 
 public final class NvdParser {
 
@@ -60,6 +65,20 @@ public final class NvdParser {
                 final JsonObject meta0 = cve.getJsonObject("CVE_data_meta");
                 final JsonString meta1 = meta0.getJsonString("ID");
                 vulnerability.setVulnId(meta1.getString());
+
+                // CVE Published and Modified dates
+                final String publishedDateString = cveItem.getString("publishedDate");
+                final String lastModifiedDateString = cveItem.getString("lastModifiedDate");
+                try {
+                    if (StringUtils.isNotBlank(publishedDateString)) {
+                        vulnerability.setPublished(Date.from(OffsetDateTime.parse(publishedDateString).toInstant()));
+                    }
+                    if (StringUtils.isNotBlank(lastModifiedDateString)) {
+                        vulnerability.setUpdated(Date.from(OffsetDateTime.parse(lastModifiedDateString).toInstant()));
+                    }
+                } catch (DateTimeParseException | NullPointerException | IllegalArgumentException e) {
+                    LOGGER.error("Unable to parse dates from NVD data feed", e);
+                }
 
                 // CVE Description
                 final JsonObject descO = cve.getJsonObject("description");
@@ -106,28 +125,30 @@ public final class NvdParser {
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
-    private void parseCveImpact(JsonObject cveItem, Vulnerability vulnerability) {
+    private void parseCveImpact(JsonObject cveItem, Vulnerability vuln) {
         final JsonObject imp0 = cveItem.getJsonObject("impact");
         final JsonObject imp1 = imp0.getJsonObject("baseMetricV2");
         if (imp1 != null) {
             final JsonObject imp2 = imp1.getJsonObject("cvssV2");
             if (imp2 != null) {
-                vulnerability.setCvssV2Vector(imp2.getJsonString("vectorString").getString());
-                vulnerability.setCvssV2BaseScore(imp2.getJsonNumber("baseScore").bigDecimalValue());
+                final Cvss cvss = Cvss.fromVector(imp2.getJsonString("vectorString").getString());
+                vuln.setCvssV2Vector(cvss.getVector()); // normalize the vector but use the scores from the feed
+                vuln.setCvssV2BaseScore(imp2.getJsonNumber("baseScore").bigDecimalValue());
             }
-            vulnerability.setCvssV2ExploitabilitySubScore(imp1.getJsonNumber("exploitabilityScore").bigDecimalValue());
-            vulnerability.setCvssV2ImpactSubScore(imp1.getJsonNumber("impactScore").bigDecimalValue());
+            vuln.setCvssV2ExploitabilitySubScore(imp1.getJsonNumber("exploitabilityScore").bigDecimalValue());
+            vuln.setCvssV2ImpactSubScore(imp1.getJsonNumber("impactScore").bigDecimalValue());
         }
 
         final JsonObject imp3 = imp0.getJsonObject("baseMetricV3");
         if (imp3 != null) {
             final JsonObject imp4 = imp3.getJsonObject("cvssV3");
             if (imp4 != null) {
-                vulnerability.setCvssV3Vector(imp4.getJsonString("vectorString").getString());
-                vulnerability.setCvssV3BaseScore(imp4.getJsonNumber("baseScore").bigDecimalValue());
+                final Cvss cvss = Cvss.fromVector(imp4.getJsonString("vectorString").getString());
+                vuln.setCvssV3Vector(cvss.getVector()); // normalize the vector but use the scores from the feed
+                vuln.setCvssV3BaseScore(imp4.getJsonNumber("baseScore").bigDecimalValue());
             }
-            vulnerability.setCvssV3ExploitabilitySubScore(imp3.getJsonNumber("exploitabilityScore").bigDecimalValue());
-            vulnerability.setCvssV3ImpactSubScore(imp3.getJsonNumber("impactScore").bigDecimalValue());
+            vuln.setCvssV3ExploitabilitySubScore(imp3.getJsonNumber("exploitabilityScore").bigDecimalValue());
+            vuln.setCvssV3ImpactSubScore(imp3.getJsonNumber("impactScore").bigDecimalValue());
         }
     }
 

@@ -116,6 +116,27 @@ public final class NvdParser {
                         }
                     }
                 }
+
+                // References
+                final JsonObject ref0 = cve.getJsonObject("references");
+                final JsonArray ref1 = ref0.getJsonArray("reference_data");
+                final StringBuilder sb = new StringBuilder();
+                for (int l = 0; l < ref1.size(); l++) {
+                    final JsonObject ref2 = ref1.getJsonObject(l);
+                    for (String s : ref2.keySet()) {
+                        if ("url".equals(s)) {
+                            // Convert reference to Markdown format
+                            final String url = ref2.getString("url");
+                            sb.append("* ").append(url).append("\n");
+                        }
+                    }
+                }
+                final String references = sb.toString();
+                if (references.length() > 0) {
+                    vulnerability.setReferences(references.substring(0, references.lastIndexOf("\n")));
+                }
+
+                // Update the vulnerability
                 qm.synchronizeVulnerability(vulnerability, false);
             }
         } catch (Exception e) {

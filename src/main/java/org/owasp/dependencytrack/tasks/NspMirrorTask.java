@@ -34,6 +34,10 @@ import org.owasp.dependencytrack.parser.nsp.NspAdvsoriesParser;
 import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import org.owasp.dependencytrack.parser.nsp.model.AdvisoryResults;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import us.springett.cvss.Cvss;
+import us.springett.cvss.CvssV2;
+import us.springett.cvss.CvssV3;
+import us.springett.cvss.Score;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Date;
@@ -115,15 +119,19 @@ public class NspMirrorTask implements Subscriber {
             vuln.setUpdated(Date.from(odt.toInstant()));
         }
 
-        if (advisory.getCvssVector() != null) {
-            if (advisory.getCvssVector().startsWith("CVSS:3.0")) {
-                vuln.setCvssV3Vector(advisory.getCvssVector());
-                vuln.setCvssV3BaseScore(BigDecimal.valueOf(advisory.getCvssScore()));
-                //todo: parse vector and recalculate base, impact, and exploitability scores
-            } else {
-                vuln.setCvssV2Vector(advisory.getCvssVector());
-                vuln.setCvssV2BaseScore(BigDecimal.valueOf(advisory.getCvssScore()));
-                //todo: parse vector and recalculate base, impact, and exploitability scores
+        final Cvss cvss = Cvss.fromVector(advisory.getCvssVector());
+        if (cvss != null) {
+            final Score score = cvss.calculateScore();
+            if (cvss instanceof CvssV2) {
+                vuln.setCvssV2Vector(cvss.getVector());
+                vuln.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
+                vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
+                vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
+            } else if (cvss instanceof CvssV3) {
+                vuln.setCvssV3Vector(cvss.getVector());
+                vuln.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
+                vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
+                vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
             }
         }
 

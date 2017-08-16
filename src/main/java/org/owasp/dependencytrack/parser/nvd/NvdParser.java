@@ -127,7 +127,7 @@ public final class NvdParser {
                         if ("url".equals(s)) {
                             // Convert reference to Markdown format
                             final String url = ref2.getString("url");
-                            sb.append("* ").append(url).append("\n");
+                            sb.append("* [").append(url).append("](").append(url).append(")\n");
                         }
                     }
                 }

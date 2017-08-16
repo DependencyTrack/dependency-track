@@ -729,7 +729,7 @@ public class QueryManager extends AlpineQueryManager {
     public PaginatedResult getVulnerabilities() {
         final Query query = pm.newQuery(Vulnerability.class);
         if (orderBy == null) {
-            query.setOrdering("vulnId:ascending,source:ascending");
+            query.setOrdering("vulnId descending, source ascending");
         }
         if (filter != null) {
             query.setFilter("vulnId.toLowerCase().matches(:vulnId)");

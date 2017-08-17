@@ -1,18 +1,18 @@
 language: java
 jdk: oraclejdk8
-
 env:
   global:
-   - secure: "TQZGDK1eLnY/PFC41ESFRob0dfmhIehuY9n3OVu3gUKrLjEZS5VqTWczx54jrtB0bHH46ZogthATjpaJwgOoAI2AuqHiz3reCAgKA4XE/gGhgiIDLUTUg+fbG6frEPRjWB/OBamCWIip3pB6Acm/nqczFCAVfK2OIyQZvyCGFO0="
-
+  - secure: TQZGDK1eLnY/PFC41ESFRob0dfmhIehuY9n3OVu3gUKrLjEZS5VqTWczx54jrtB0bHH46ZogthATjpaJwgOoAI2AuqHiz3reCAgKA4XE/gGhgiIDLUTUg+fbG6frEPRjWB/OBamCWIip3pB6Acm/nqczFCAVfK2OIyQZvyCGFO0=
 addons:
   coverity_scan:
     project:
-      name: "stevespringett/dependency-track"
-      description: "Dependency-Track Coverity Scan"
+      name: stevespringett/dependency-track
+      description: Dependency-Track Coverity Scan
     notification_email: Steve.Springett@owasp.org
-    build_command_prepend:
+    build_command_prepend: 
     build_command: mvn clean package
     branch_pattern: coverity_scan
-
 script: mvn clean package
+notifications:
+  slack:
+    secure: FtU/UJX7A904c3JgrQ9AE5zYWO8gIMhzAfL8MFRbUd2AfFbNNpb1OaEbIr61Ho0V/HpBYiL/4YDaINKhy/VeUyz1hqAQingvwip6XrblpoEV2bGXZNVOLW72/z41qNwZ2q7Ebx3F1L1jHSUUPBs91FaqWWpwVNXi5FWPT7OkGv0=

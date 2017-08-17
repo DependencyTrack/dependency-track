@@ -164,7 +164,7 @@ $(document).ready(function () {
             templates: {
                 header: '<h4 class="section-title">Projects</h4>',
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + '/project/?uuid=' + data.uuid + '">' + data.name + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'project/?uuid=' + data.uuid + '">' + data.name + '</a>';
                 }
             }
         },
@@ -175,7 +175,7 @@ $(document).ready(function () {
             templates: {
                 header: '<h4 class="section-title">Components</h4>',
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + '/component/?uuid=' + data.uuid + '">' + data.name + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'component/?uuid=' + data.uuid + '">' + data.name + '</a>';
                 }
             }
         },
@@ -186,7 +186,7 @@ $(document).ready(function () {
             templates: {
                 header: '<h4 class="section-title">Vulnerabilities</h4>',
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + '/vulnerability/?source=' + data.source + '&vulnId=' + data.vulnId + '">' + data.vulnId + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'vulnerability/?source=' + data.source + '&vulnId=' + data.vulnId + '">' + data.vulnId + '</a>';
                 }
             }
         },
@@ -197,7 +197,7 @@ $(document).ready(function () {
             templates: {
                 header: '<h4 class="section-title">Licenses</h4>',
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + '/license/?licenseId=' + data.licenseId + '">' + data.name + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'license/?licenseId=' + data.licenseId + '">' + data.name + '</a>';
                 }
             }
         }

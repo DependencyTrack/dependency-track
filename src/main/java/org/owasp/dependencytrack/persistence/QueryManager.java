@@ -910,4 +910,12 @@ public class QueryManager extends AlpineQueryManager {
             SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, clazz));
         }
     }
+
+    /**
+     * Commits the Lucene inxex.
+     * @param clazz the indexable class to commit the index of
+     */
+    public void commitSearchIndex(Class clazz) {
+        commitSearchIndex(true, clazz);
+    }
 }

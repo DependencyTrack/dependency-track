@@ -22,6 +22,11 @@
         </encoder>
     </appender>
 
+    <logger name="alpine" level="INFO" additivity="false">
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </logger>
+
     <logger name="org.owasp" level="INFO" additivity="false">
         <appender-ref ref="FILE" />
         <appender-ref ref="SECURITY_CONSOLE" />

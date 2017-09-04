@@ -68,7 +68,6 @@ public class DependencyCheckTask implements Subscriber {
                     }
                 }
             } else {
-                LOGGER.info("Analyzing " + event.getComponents().size() + " component(s)");
                 analyze(event.getComponents());
             }
         }
@@ -112,7 +111,7 @@ public class DependencyCheckTask implements Subscriber {
             dependencies.add(dependency);
         }
 
-        LOGGER.info("Performing Dependency-Check analysis against " + dependencies.size() + " component(s)");
+        LOGGER.info("Analyzing " + dependencies.size() + " component(s)");
 
         final String dcRootDir = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "dependency-check";
         final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();

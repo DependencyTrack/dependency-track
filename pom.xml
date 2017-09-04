@@ -66,8 +66,8 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <lib.lucene.version>5.5.4</lib.lucene.version>
-        <lib.dependency-check.version>2.0.1</lib.dependency-check.version>
+        <lib.lucene.version>4.7.2</lib.lucene.version>
+        <lib.dependency-check.version>2.1.1</lib.dependency-check.version>
         <lib.unirest.version>1.4.9</lib.unirest.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>

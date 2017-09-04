@@ -4,7 +4,7 @@
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>${user.home}/.dependency-track/dependency-track.log</file>
         <encoder>
-            <pattern>%date [%marker] %level [%logger{0}] %msg%n</pattern>
+            <pattern>%date [%marker] %level [%logger] %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -27,12 +27,16 @@
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
-    <logger name="org.owasp" level="INFO" additivity="false">
+    <logger name="org.owasp.dependencytrack" level="INFO" additivity="false">
         <appender-ref ref="FILE" />
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
-    <root level="DEBUG">
+    <logger name="org.owasp.dependencycheck" level="INFO" additivity="false">
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <root level="WARN">
         <appender-ref ref="FILE" />
         <appender-ref ref="SECURITY_CONSOLE" />
     </root>

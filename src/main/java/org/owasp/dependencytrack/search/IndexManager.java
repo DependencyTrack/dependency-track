@@ -39,6 +39,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
+import org.apache.lucene.util.Version;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public abstract class IndexManager implements AutoCloseable {
     private IndexSearcher isearcher = null;
     private MultiFieldQueryParser qparser = null;
     private IndexType indexType;
+    private static final Version VERSION = Version.LUCENE_47;
 
     /**
      * This methods should be overwritten.
@@ -105,7 +107,7 @@ public abstract class IndexManager implements AutoCloseable {
                 LOGGER.error("Unable to create index directory: " + indexDir.getCanonicalPath());
             }
         }
-        return new SimpleFSDirectory(indexDir.toPath());
+        return new SimpleFSDirectory(indexDir);
     }
 
     /**
@@ -113,8 +115,8 @@ public abstract class IndexManager implements AutoCloseable {
      * @throws IOException when the index cannot be opened
      */
     protected void openIndex() throws IOException {
-        final Analyzer analyzer = new StandardAnalyzer();
-        final IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        final Analyzer analyzer = new StandardAnalyzer(VERSION);
+        final IndexWriterConfig config = new IndexWriterConfig(VERSION, analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         iwriter = new IndexWriter(getDirectory(), config);
     }
@@ -149,9 +151,9 @@ public abstract class IndexManager implements AutoCloseable {
      * @return a QueryParser
      */
     protected QueryParser getQueryParser() {
-        final Analyzer analyzer = new StandardAnalyzer();
+        final Analyzer analyzer = new StandardAnalyzer(VERSION);
         if (qparser == null) {
-            qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
+            qparser = new MultiFieldQueryParser(VERSION , getSearchFields(), analyzer, IndexConstants.getBoostMap());
             qparser.setAllowLeadingWildcard(true);
         }
         return qparser;

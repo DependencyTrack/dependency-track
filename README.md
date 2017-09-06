@@ -2,6 +2,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1d99b45c27e4d069f94d24bcce8d7e6)](https://www.codacy.com/app/stevespringett/dependency-track?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=stevespringett/dependency-track&amp;utm_campaign=Badge_Grade)
 [![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
 <img src="https://stevespringett.github.io/dependency-track/images/dt.svg" width="300" align="right">
+[![License][license-image]][license-url]
 
 Dependency-Track
 =========
@@ -97,6 +98,8 @@ the [NOTICES.txt] [notices] file for more information.
 
   [GitHub Wiki]: https://github.com/stevespringett/dependency-track/wiki
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
+  [license-image]: https://img.shields.io/badge/License-GPL%20v3-blue.svg
+  [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
   [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
   [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt

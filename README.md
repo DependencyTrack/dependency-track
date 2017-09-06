@@ -99,7 +99,7 @@ the [NOTICES.txt] [notices] file for more information.
   [GitHub Wiki]: https://github.com/stevespringett/dependency-track/wiki
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
   [license-image]: https://img.shields.io/badge/License-GPL%20v3-blue.svg
-  [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
+  [license-url]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt
   [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
   [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt

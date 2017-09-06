@@ -21,6 +21,8 @@
              xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd" version="1.0">
 
     <persistence-unit name="Alpine">
+        <class>org.owasp.dependencytrack.model.Analysis</class>
+        <class>org.owasp.dependencytrack.model.AnalysisComment</class>
         <class>org.owasp.dependencytrack.model.Component</class>
         <class>org.owasp.dependencytrack.model.ComponentMetrics</class>
         <class>org.owasp.dependencytrack.model.Cwe</class>

@@ -48,17 +48,18 @@ public class DependencyCheckParserTest extends BaseTest {
         File file = new File("src/test/resources/dependency-check-report.xml");
         Analysis analysis = new DependencyCheckParser().parse(file);
 
-        Assert.assertEquals("1.4.4", analysis.getScanInfo().getEngineVersion());
-        Assert.assertEquals(17, analysis.getScanInfo().getDataSources().size());
+        Assert.assertEquals("2.1.2-SNAPSHOT", analysis.getScanInfo().getEngineVersion());
+        Assert.assertEquals(19, analysis.getScanInfo().getDataSources().size());
         Assert.assertEquals("My Example Application", analysis.getProjectInfo().getName());
-        Assert.assertEquals("2016-12-06T20:08:02.748-0700", sdf.format(analysis.getProjectInfo().getReportDate()));
-        Assert.assertEquals("This report contains data retrieved from the National Vulnerability Database: http://nvd.nist.gov", analysis.getProjectInfo().getCredits());
+        Assert.assertEquals("2017-09-08T00:28:27.566-0700", sdf.format(analysis.getProjectInfo().getReportDate()));
+        Assert.assertEquals("This report contains data retrieved from the National Vulnerability Database: https://nvd.nist.gov and from the Node Security Platform: https://nodesecurity.io", analysis.getProjectInfo().getCredits());
         Assert.assertEquals(1034, analysis.getDependencies().size());
 
         int foundCount = 0;
         for (Dependency dependency: analysis.getDependencies()) {
             if (dependency.getFileName().equals("bootstrap.jar")) {
                 foundCount++;
+                Assert.assertFalse(dependency.isVirtual());
                 Assert.assertEquals("/workspace/apache-tomcat-7.0.52/bin/bootstrap.jar", dependency.getFilePath());
                 Assert.assertEquals("ed56f95fdb8ee2903d821253f09f49f4", dependency.getMd5());
                 Assert.assertEquals("d841369b0cf38390d451015786b6a8ff803d22cd", dependency.getSha1());
@@ -77,6 +78,7 @@ public class DependencyCheckParserTest extends BaseTest {
                 Assert.assertEquals("https://web.nvd.nist.gov/view/vuln/search-results?adv_search=true&cves=on&cpe_version=cpe%3A%2Fa%3Aapache%3Atomcat%3A7.0.52", dependency.getIdentifiers().getIdentifiers().get(0).getUrl());
 
                 Assert.assertEquals(18, dependency.getVulnerabilities().getVulnerabilities().size());
+                Assert.assertEquals("NVD", dependency.getVulnerabilities().getVulnerabilities().get(0).getSource());
                 Assert.assertEquals("CVE-2016-6325", dependency.getVulnerabilities().getVulnerabilities().get(0).getName());
 
                 Assert.assertEquals("7.2", dependency.getVulnerabilities().getVulnerabilities().get(0).getCvssScore());

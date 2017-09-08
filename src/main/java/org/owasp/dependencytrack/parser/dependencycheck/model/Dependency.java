@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.model;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -24,6 +25,7 @@ import java.util.List;
 @XmlRootElement(name = "dependency")
 public class Dependency extends BaseObject {
 
+    private boolean isVirtual;
     private String fileName;
     private String filePath;
     private String md5;
@@ -33,6 +35,15 @@ public class Dependency extends BaseObject {
     private List<Evidence> evidenceCollected;
     private Identifiers identifiers;
     private Vulnerabilities vulnerabilities;
+
+    public boolean isVirtual() {
+        return isVirtual;
+    }
+
+    @XmlAttribute(name = "isVirtual")
+    public void setVirtual(boolean virtual) {
+        isVirtual = virtual;
+    }
 
     public String getFileName() {
         return fileName;

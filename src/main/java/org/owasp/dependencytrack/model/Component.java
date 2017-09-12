@@ -280,6 +280,14 @@ public class Component implements Serializable {
         this.vulnerabilities = vulnerabilities;
     }
 
+    public void addVulnerability(Vulnerability vulnerability) {
+        vulnerabilities.add(vulnerability);
+    }
+
+    public void removeVulnerability(Vulnerability vulnerability) {
+        this.vulnerabilities.remove(vulnerability);
+    }
+
     public UUID getUuid() {
         return uuid;
     }

@@ -40,9 +40,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ScanModeler implements Subscriber {
+public class ScanUploadProcessingTask implements Subscriber {
 
-    private static final Logger LOGGER = Logger.getLogger(ScanModeler.class);
+    private static final Logger LOGGER = Logger.getLogger(ScanUploadProcessingTask.class);
 
     public void inform(Event e) {
         if (e instanceof ScanUploadEvent) {

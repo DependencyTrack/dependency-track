@@ -23,23 +23,37 @@ import java.util.List;
 
 public class DependencyCheckEvent implements Event {
 
+    public enum Action {
+        ANALYZE,
+        UPDATE_ONLY
+    }
+
+    private Action action;
     private List<Component> components = new ArrayList<>();
 
-    public DependencyCheckEvent() { }
+    public DependencyCheckEvent(Action action) {
+        this.action = action;
+    }
 
     public DependencyCheckEvent(Component component) {
+        this.action = Action.ANALYZE;
         this.components.add(component);
     }
 
     public DependencyCheckEvent(List<Component> components) {
+        this.action = Action.ANALYZE;
         this.components.addAll(components);
+    }
+
+    public Action getAction() {
+        return action;
     }
 
     public List<Component> getComponents() {
         return this.components;
     }
 
-    public boolean analyzePortfolio(){
+    public boolean analyzePortfolio() {
         return components.size() == 0;
     }
 }

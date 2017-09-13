@@ -16,7 +16,6 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck;
 
-import alpine.Config;
 import org.junit.Assert;
 import org.junit.Test;
 import org.owasp.dependencytrack.BaseTest;
@@ -35,10 +34,6 @@ import java.util.List;
 import java.util.TimeZone;
 
 public class DependencyCheckParserTest extends BaseTest {
-
-    public DependencyCheckParserTest() {
-        Config.enableUnitTests();
-    }
 
     @Test
     public void parseTest() throws Exception {

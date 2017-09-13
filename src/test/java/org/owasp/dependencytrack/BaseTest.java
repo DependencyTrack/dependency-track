@@ -16,15 +16,22 @@
  */
 package org.owasp.dependencytrack;
 
+import alpine.Config;
 import alpine.persistence.PersistenceManagerFactory;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import javax.jdo.PersistenceManager;
 import javax.jdo.datastore.JDOConnection;
 import java.sql.Connection;
 import java.sql.Statement;
 
 public abstract class BaseTest {
+
+    @BeforeClass
+    public static void init() {
+        Config.enableUnitTests();
+    }
 
     @Before
     @After

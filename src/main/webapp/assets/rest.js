@@ -40,6 +40,7 @@ const URL_LICENSE = "api/v1/license";
 const URL_COMPONENT = "api/v1/component";
 const URL_VULNERABILITY = "api/v1/vulnerability";
 const URL_SEARCH = "api/v1/search";
+const URL_METRICS = "api/v1/metrics";
 
 const $rest = function() {
 };
@@ -515,6 +516,78 @@ $rest.getVulnerabilityByVulnId = function getVulnerabilityByName(source, vulnId,
         error: function(xhr, ajaxOptions, thrownError) {
             if (failCallback) {
                 $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve current metrics the entire portfolio
+ */
+$rest.getPortfolioCurrentMetrics = function getPortfolioCurrentMetrics(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/portfolio/current",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve current metrics for a specific component
+ */
+$rest.getProjectCurrentMetrics = function getProjectCurrentMetrics(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/project/" + uuid + "/current",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve current metrics for a specific component
+ */
+$rest.getComponentCurrentMetrics = function getComponentCurrentMetrics(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/component/" + uuid + "/current",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         }
     });

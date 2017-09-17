@@ -142,12 +142,6 @@
             <artifactId>unirest-java</artifactId>
             <version>${lib.unirest.version}</version>
         </dependency>
-        <!-- OAuth -->
-        <dependency>
-            <groupId>com.github.scribejava</groupId>
-            <artifactId>scribejava-core</artifactId>
-            <version>${lib.scribejava.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -81,18 +81,23 @@ function populateLicenseData(data) {
     select.selectpicker('refresh');
 }
 
+function populateMetrics(data) {
+    $("#metricCritical").html(data.critical);
+    $("#metricHigh").html(data.high);
+    $("#metricMedium").html(data.medium);
+    $("#metricLow").html(data.low);
+    $("#metricIrs").html(data.inheritedRiskScore);
+}
+
 /**
  * Setup events and trigger other stuff when the page is loaded and ready
  */
 $(document).ready(function () {
-
     let uuid = $.getUrlVar('uuid');
 
     $rest.getProject(uuid, populateProjectData);
     $rest.getLicenses(populateLicenseData);
-
-    // Initialize all tooltips
-    //$('[data-toggle="tooltip"]').tooltip();
+    $rest.getProjectCurrentMetrics(uuid, populateMetrics);
 
     // Listen for when the button to create a project is clicked
     $("#createComponentCreateButton").on("click", function () {

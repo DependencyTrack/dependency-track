@@ -35,18 +35,23 @@
                                         <table>
                                             <tr>
                                                 <td width="100%"></td>
+                                                <td nowrap><span class="severity-critical fa fa-circle-o"></span>&nbsp;Critical Severity:&nbsp;</td>
+                                                <td nowrap><span id="metricCritical"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td></td>
                                                 <td nowrap><span class="severity-high fa fa-circle-o"></span>&nbsp;High Severity:&nbsp;</td>
-                                                <td nowrap>1</td>
+                                                <td nowrap><span id="metricHigh"></span></td>
                                             </tr>
                                             <tr>
                                                 <td></td>
                                                 <td nowrap><span class="severity-medium fa fa-circle-o"></span>&nbsp;Medium Severity:&nbsp;</td>
-                                                <td nowrap>225</td>
+                                                <td nowrap><span id="metricMedium"></span></td>
                                             </tr>
                                             <tr>
                                                 <td></td>
                                                 <td nowrap><span class="severity-low fa fa-circle-o"></span>&nbsp;Low Severity:&nbsp;</td>
-                                                <td nowrap>36</td>
+                                                <td nowrap><span id="metricLow"></span></td>
                                             </tr>
                                         </table>
                                     </td>
@@ -54,7 +59,7 @@
                             </table>
                         </div>
                         <div class="col-sm-3 col-md-3 col-lg-2 text-right">
-                            <div class="huge">716</div>
+                            <div class="huge"><span id="metricIrs"></span></div>
                             <div>Inherited Risk Score</div>
                         </div>
 

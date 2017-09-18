@@ -67,15 +67,15 @@
     <properties>
         <!-- Dependency Versions -->
         <lib.lucene.version>4.7.2</lib.lucene.version>
-        <lib.dependency-check.version>2.1.1</lib.dependency-check.version>
+        <lib.dependency-check.version>2.1.2-SNAPSHOT</lib.dependency-check.version>
         <lib.unirest.version>1.4.9</lib.unirest.version>
         <lib.scribejava.version>4.2.0</lib.scribejava.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>
 
-    <!-- Resolve Alpine snapshot releases -->
     <repositories>
+        <!-- Resolve Alpine snapshot releases -->
         <repository>
             <id>ossrh-snapshot</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -83,6 +83,18 @@
                 <updatePolicy>always</updatePolicy>
                 <enabled>true</enabled>
             </snapshots>
+        </repository>
+        <!-- Resolve Dependency-Check snapshot releases -->
+        <repository>
+            <id>dependency-check.snapshot</id>
+            <url>https://dependencycheck.jfrog.io/dependencycheck/libs-snapshot</url>
+            <snapshots>
+                <updatePolicy>always</updatePolicy>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
         </repository>
     </repositories>
 

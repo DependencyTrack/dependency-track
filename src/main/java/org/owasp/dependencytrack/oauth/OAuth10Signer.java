@@ -16,6 +16,7 @@
  */
 package org.owasp.dependencytrack.oauth;
 
+import alpine.Config;
 import org.apache.commons.collections.KeyValue;
 import org.apache.commons.collections.keyvalue.DefaultKeyValue;
 import javax.crypto.Mac;
@@ -40,6 +41,10 @@ public class OAuth10Signer {
 
     private static final String ENCODING = "UTF-8";
     private static final String HMAC_SHA1 = "HmacSHA1";
+    private static final String USER_AGENT = Config.getInstance().getProperty(
+            Config.AlpineKey.APPLICATION_NAME
+                    + " v" + Config.AlpineKey.APPLICATION_VERSION
+                    + " (" + Config.AlpineKey.APPLICATION_TIMESTAMP + ")");
 
     private String consumerKey;
     private String consumerSecret;
@@ -91,6 +96,8 @@ public class OAuth10Signer {
             throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         final Map<String, String> map = new HashMap<>();
         map.put("Authorization", getAuthorizationHeader(url));
+        map.put("User-Agent", USER_AGENT);
+        map.put("X-User-Agent", USER_AGENT);
         return map;
     }
 

@@ -711,6 +711,12 @@ public class QueryManager extends AlpineQueryManager {
     public PaginatedResult getDependencies(Project project) {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
+        query.setOrdering("component.name asc");
+        if (filter != null) {
+            query.setFilter("component.name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
         return execute(query, project);
     }
 

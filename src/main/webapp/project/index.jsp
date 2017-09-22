@@ -94,7 +94,6 @@
                     <th data-align="left" data-field="component.version">Version</th>
                     <th data-align="left" data-field="component.group">Group</th>
                     <th data-align="left" data-field="component.license">License</th>
-                    <th data-align="left" data-field="matchType">Match Type</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>

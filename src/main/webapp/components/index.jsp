@@ -122,8 +122,7 @@
                     <th data-align="left" data-field="version">Version</th>
                     <th data-align="left" data-field="group">Group</th>
                     <th data-align="left" data-field="license">License</th>
-                    <th data-align="left" data-field="vulns">Vulnerabilities</th>
-                    <th data-align="left" data-field="irs">Security Risk</th>
+                    <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>
             </table>

@@ -21,6 +21,7 @@
  * Called by bootstrap table to format the data in the components table.
  */
 function formatComponentsTable(res) {
+    let componentsTable = $("#componentsTable");
     for (let i=0; i<res.length; i++) {
         let componenturl = "../component/?uuid=" + res[i].uuid;
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + res[i].name + "</a>";
@@ -29,6 +30,14 @@ function formatComponentsTable(res) {
             let licenseurl = "../license/?licenseId=" + res[i].resolvedLicense.licenseId;
             res[i].license = "<a href=\"" + licenseurl + "\">" + res[i].resolvedLicense.licenseId + "</a>";
         }
+
+        $rest.getComponentCurrentMetrics(res[i].uuid, function (data) {
+            res[i].vulnerabilities = generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
+            componentsTable.bootstrapTable('updateRow', {
+                index: i,
+                row: res[i]
+            });
+        });
     }
     return res;
 }

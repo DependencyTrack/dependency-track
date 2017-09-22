@@ -123,7 +123,7 @@
                     <th data-align="left" data-field="bomupdated">BOM Updated</th>
                     <th data-align="left" data-field="subprojects">Sub Projects</th>
                     <th data-align="left" data-field="versions">Versions</th>
-                    <th data-align="left" data-field="irs">Security Risk</th>
+                    <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>
             </table>

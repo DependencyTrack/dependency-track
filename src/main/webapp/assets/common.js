@@ -206,6 +206,35 @@ $(document).ready(function () {
 });
 
 /**
+ * Creates a multi-color progress bar consisting of the number of
+ * critical, high, medium, and low severity vulnerabilities.
+ */
+function generateSeverityProgressBar(critical, high, medium, low) {
+    var percentCritical = (critical/(critical+high+medium+low))*100;
+    var percentHigh = (high/(critical+high+medium+low))*100;
+    var percentMedium = (medium/(critical+high+medium+low))*100;
+    var percentLow = (low/(critical+high+medium+low))*100;
+    var block = '<span class="progress">';
+    if (critical > 0) {
+        block += '<div class="progress-bar severity-critical-bg" data-toggle="tooltip" data-placement="top" title="Critical: ' + critical + ' (' + Math.round(percentCritical*10)/10 + '%)" style="width:' + percentCritical+ '%">' + critical + '</div>';
+    }
+    if (high > 0) {
+        block += '<div class="progress-bar severity-high-bg" data-toggle="tooltip" data-placement="top" title="High: ' + high + ' (' + Math.round(percentHigh * 10) / 10 + '%)" style="width:' + percentHigh + '%">' + high + '</div>';
+    }
+    if (medium > 0) {
+        block += '<div class="progress-bar severity-medium-bg" data-toggle="tooltip" data-placement="top" title="Medium: ' + medium + ' (' + Math.round(percentMedium * 10) / 10 + '%)" style="width:' + percentMedium + '%">' + medium + '</div>';
+    }
+    if (low > 0) {
+        block += '<div class="progress-bar severity-low-bg" data-toggle="tooltip" data-placement="top" title="Low: ' + low + ' (' + Math.round(percentLow * 10) / 10 + '%)" style="width:' + percentLow + '%">' + low + '</div>';
+    }
+    if (critical === 0 && high === 0 && medium === 0 && low === 0) {
+        block += '<div class="progress-bar severity-info-bg" data-toggle="tooltip" data-placement="top" title="No Vulnerabilities Detected" style="width:100%">0</div>';
+    }
+    block += '</span>';
+    return block;
+}
+
+/**
  * Changes the first letter to uppercase and the remaining letters to lowercase.
  */
 function capitalize(string) {

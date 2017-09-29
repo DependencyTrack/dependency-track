@@ -70,7 +70,7 @@
         <lib.dependency-check.version>2.1.2-SNAPSHOT</lib.dependency-check.version>
         <lib.unirest.version>1.4.9</lib.unirest.version>
         <lib.scribejava.version>4.2.0</lib.scribejava.version>
-        <lib.signpost-core.version>1.2</lib.signpost-core.version>
+        <lib.signpost-core.version>1.2.1.2</lib.signpost-core.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>

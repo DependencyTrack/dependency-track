@@ -30,6 +30,12 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
+/**
+ * Model for tracking Common Weakness Enumerations (CWE).
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Cwe implements Serializable {

@@ -20,6 +20,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
+/**
+ * Defines the scanInfo element in a Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "scanInfo")
 public class ScanInfo extends BaseObject {
 

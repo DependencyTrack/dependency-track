@@ -16,6 +16,12 @@
  */
 package org.owasp.dependencytrack.model;
 
+/**
+ * Defines internal severity labels.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public enum Severity {
     CRITICAL,
     HIGH,

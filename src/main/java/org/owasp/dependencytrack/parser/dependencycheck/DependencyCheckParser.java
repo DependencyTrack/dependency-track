@@ -28,16 +28,40 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 
+/**
+ * Dependency-Check XML report parser.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class DependencyCheckParser {
 
+    /**
+     * Parses a Dependency-Check report.
+     * @param file the XML report
+     * @return an Analysis object
+     * @throws ParseException when errors are encountered
+     */
     public Analysis parse(File file) throws ParseException {
         return parse(new StreamSource(file.getAbsolutePath()));
     }
 
+    /**
+     * Parses a Dependency-Check report.
+     * @param scanData the XML report
+     * @return an Analysis object
+     * @throws ParseException when errors are encountered
+     */
     public Analysis parse(byte[] scanData) throws ParseException {
         return parse(new StreamSource(new ByteArrayInputStream(scanData)));
     }
 
+    /**
+     * Parses a Dependency-Check report.
+     * @param streamSource the XML report
+     * @return an Analysis object
+     * @throws ParseException when errors are encountered
+     */
     private Analysis parse(StreamSource streamSource) throws ParseException {
         try {
             // Parse the native threat model

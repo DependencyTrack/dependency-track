@@ -21,6 +21,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Wrapper class for returning search results.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class SearchResult {
 
     private Map<String, List<Map<String, String>>> results = Collections.synchronizedMap(new HashMap<>());

@@ -31,6 +31,12 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.UUID;
 
+/**
+ * Model for tracking various metadata uses as evidence in identifying components.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Evidence implements Serializable {

@@ -37,6 +37,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+/**
+ * JAX-RS resources for processing dependencies.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/v1/dependency")
 @Api(value = "dependency", authorizations = @Authorization(value = "X-Api-Key"))
 public class DependencyResource extends AlpineResource {

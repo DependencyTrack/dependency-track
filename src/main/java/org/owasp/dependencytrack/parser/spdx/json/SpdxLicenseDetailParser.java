@@ -31,6 +31,9 @@ import java.util.List;
  * parse SPDX files themselves. License data is obtained from:
  *
  * https://github.com/spdx/license-list-data
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class SpdxLicenseDetailParser {
 

@@ -38,6 +38,9 @@ import java.util.TreeMap;
 /**
  * This class parses CWEs and adds them to the database (if necessary).
  * cwec_v2.11.xml obtained from https://cwe.mitre.org/data/xml/cwec_v2.11.xml
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class CweImporter {
 

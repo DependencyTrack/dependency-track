@@ -21,6 +21,12 @@ import org.owasp.dependencycheck.utils.Settings;
 import javax.inject.Singleton;
 import java.io.Serializable;
 
+/**
+ * This class provides basic information about the application.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Singleton
 public class About implements Serializable {
 

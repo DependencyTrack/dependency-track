@@ -18,6 +18,12 @@ package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
 
+/**
+ * Defines an Event to update metrics.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class MetricsUpdateEvent implements Event {
 
     private Object target = null;

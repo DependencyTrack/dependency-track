@@ -28,6 +28,12 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Metrics specific to individual projects.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectMetrics implements Serializable {

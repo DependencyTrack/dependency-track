@@ -48,6 +48,9 @@ import java.util.List;
 /**
  * The IndexManager is an abstract class that provides wrappers and convenience methods
  * for managing Lucene indexes.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public abstract class IndexManager implements AutoCloseable {
 

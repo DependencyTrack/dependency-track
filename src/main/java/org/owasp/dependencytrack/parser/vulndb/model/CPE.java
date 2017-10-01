@@ -16,6 +16,12 @@
  */
 package org.owasp.dependencytrack.parser.vulndb.model;
 
+/**
+ * Defines an optional CPE returned in a response.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class CPE {
 
     private String cpe;

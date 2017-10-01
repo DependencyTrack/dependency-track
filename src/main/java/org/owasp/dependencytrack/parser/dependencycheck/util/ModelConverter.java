@@ -23,8 +23,18 @@ import org.owasp.dependencytrack.parser.dependencycheck.resolver.CweResolver;
 import java.io.File;
 import java.math.BigDecimal;
 
+/**
+ * Utility class that converts various Dependency-Check and Dependency-Track
+ * models to each others format.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class ModelConverter {
 
+    /**
+     * Private constructor.
+     */
     private ModelConverter() { }
 
     /**

@@ -27,6 +27,12 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+/**
+ * JAX-RS resource that provides Dependency-Track version information.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/version")
 @Produces(MediaType.APPLICATION_JSON)
 @Api(value = "version")

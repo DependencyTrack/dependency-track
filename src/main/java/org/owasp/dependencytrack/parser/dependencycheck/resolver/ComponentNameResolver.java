@@ -21,6 +21,9 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 /**
  * Attempts to resolve the name of the component from evidence
  * available in the specified dependency.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class ComponentNameResolver extends AbstractStringResolver implements IResolver {
 

@@ -19,6 +19,12 @@ package org.owasp.dependencytrack.parser.nsp.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Defines the top-level JSON node containing results and counts.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class AdvisoryResults {
 
     private int offset;

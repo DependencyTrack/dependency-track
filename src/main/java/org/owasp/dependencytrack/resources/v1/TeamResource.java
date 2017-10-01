@@ -44,6 +44,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+/**
+ * JAX-RS resources for processing teams.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/v1/team")
 @Api(value = "team", authorizations = @Authorization(value = "X-Api-Key"))
 public class TeamResource extends AlpineResource {

@@ -21,6 +21,12 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Defines the evidence element in a Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "evidence")
 public class Evidence extends BaseObject {
 

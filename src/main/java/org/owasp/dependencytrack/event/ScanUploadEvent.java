@@ -20,6 +20,12 @@ import alpine.event.framework.Event;
 import java.io.File;
 import java.util.UUID;
 
+/**
+ * Defines an event triggered when a Dependency-Check scan is submitted.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class ScanUploadEvent implements Event {
 
     private UUID projectUuid;

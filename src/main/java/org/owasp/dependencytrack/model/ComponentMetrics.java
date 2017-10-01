@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-
 package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,6 +28,12 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Metrics specific for individual components.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComponentMetrics implements Serializable {

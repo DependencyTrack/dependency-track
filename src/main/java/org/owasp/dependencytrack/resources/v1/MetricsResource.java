@@ -38,6 +38,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+/**
+ * JAX-RS resources for processing metrics.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/v1/metrics")
 @Api(value = "metrics", authorizations = @Authorization(value = "X-Api-Key"))
 public class MetricsResource extends AlpineResource {

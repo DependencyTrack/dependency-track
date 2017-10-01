@@ -16,6 +16,12 @@
  */
 package org.owasp.dependencytrack.metrics;
 
+/**
+ * Helper class for enhancing metrics.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class Metrics {
 
     private Metrics() { }
@@ -35,5 +41,4 @@ public final class Metrics {
         }
         return ratio;
     }
-
 }

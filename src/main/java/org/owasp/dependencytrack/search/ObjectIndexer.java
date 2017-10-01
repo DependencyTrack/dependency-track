@@ -16,14 +16,36 @@
  */
 package org.owasp.dependencytrack.search;
 
+/**
+ * Interface that defines Indexers.
+ * @param <T> type of indexer
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public interface ObjectIndexer<T> {
 
+    /**
+     * Search fields supported by the index.
+     * @return an array of Strings
+     */
     String[] getSearchFields();
 
+    /**
+     * Add object to index.
+     * @param object the object to add
+     */
     void add(T object);
 
+    /**
+     * Remove object from index.
+     * @param object the object to remove
+     */
     void remove(T object);
 
+    /**
+     * Commits any changes to the index.
+     */
     void commit();
 
 }

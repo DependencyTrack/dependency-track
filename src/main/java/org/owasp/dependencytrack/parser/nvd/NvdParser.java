@@ -36,6 +36,12 @@ import java.sql.Date;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 
+/**
+ * Parser and processor of NVD data feeds.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class NvdParser {
 
     private static final Logger LOGGER = Logger.getLogger(NvdParser.class);

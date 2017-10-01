@@ -32,6 +32,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/**
+ * Performs search operations on an index.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class SearchManager {
 
     private static final Logger LOGGER = Logger.getLogger(SearchManager.class);

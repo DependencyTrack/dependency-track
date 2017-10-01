@@ -21,6 +21,12 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
+/**
+ * Defines the top-level Analysis object in a Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "analysis")
 public class Analysis extends BaseObject {
 

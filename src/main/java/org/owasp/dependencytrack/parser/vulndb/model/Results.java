@@ -19,6 +19,13 @@ package org.owasp.dependencytrack.parser.vulndb.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Defines a top-level Results object containing a list of
+ * possible results and count/page data.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class Results {
 
     private int page;

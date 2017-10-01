@@ -21,6 +21,12 @@ import org.owasp.dependencytrack.model.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Defines multiple event types to execute Dependency-Check in various ways.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class DependencyCheckEvent implements Event {
 
     public enum Action {
@@ -57,4 +63,3 @@ public class DependencyCheckEvent implements Event {
         return components.size() == 0;
     }
 }
-

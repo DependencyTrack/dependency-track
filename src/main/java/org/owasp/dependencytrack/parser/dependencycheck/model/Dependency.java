@@ -22,6 +22,12 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
+/**
+ * Defines the dependency element in a Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "dependency")
 public class Dependency extends BaseObject {
 
@@ -127,6 +133,9 @@ public class Dependency extends BaseObject {
         this.vulnerabilities = vulnerabilities;
     }
 
+    /**
+     * Defines a list of identifier elements for the dependency.
+     */
     @XmlRootElement(name = "identifiers")
     public static class Identifiers {
 
@@ -152,6 +161,9 @@ public class Dependency extends BaseObject {
         }
     }
 
+    /**
+     * Defines a list of vulnerability elements for the dependency.
+     */
     @XmlRootElement(name = "vulnerabilities")
     public static class Vulnerabilities {
 
@@ -176,5 +188,4 @@ public class Dependency extends BaseObject {
             this.suppressedVulnerabilities = suppressedVulnerabilities;
         }
     }
-
 }

@@ -33,10 +33,19 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
+/**
+ * Creates default objects on an empty database.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class DefaultObjectGenerator implements ServletContextListener {
 
     private static final Logger LOGGER = Logger.getLogger(DefaultObjectGenerator.class);
 
+    /**
+     * {@inheritDoc}
+     */
     public void contextInitialized(ServletContextEvent event) {
         // Creates empty indexes on startup if indexes do not exist
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Project.class));
@@ -55,6 +64,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void contextDestroyed(ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }

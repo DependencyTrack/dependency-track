@@ -21,6 +21,9 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 /**
  * Interface for defining Dependency-Track object resolvers from
  * Dependency-Check objects.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public interface IResolver {
 

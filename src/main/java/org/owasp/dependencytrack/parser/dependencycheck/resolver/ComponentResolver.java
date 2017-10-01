@@ -23,6 +23,9 @@ import org.owasp.dependencytrack.persistence.QueryManager;
 /**
  * Attempts to resolve an existing Dependency-Track Component from a
  * Dependency-Check Dependency.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class ComponentResolver implements IResolver {
 

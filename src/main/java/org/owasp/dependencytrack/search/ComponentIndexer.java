@@ -23,6 +23,12 @@ import org.apache.lucene.index.Term;
 import org.owasp.dependencytrack.model.Component;
 import java.io.IOException;
 
+/**
+ * Indexer for operating on components.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class ComponentIndexer extends IndexManager implements ObjectIndexer<Component> {
 
     private static final Logger LOGGER = Logger.getLogger(ComponentIndexer.class);
@@ -32,6 +38,9 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         return INSTANCE;
     }
 
+    /**
+     * Private constructor.
+     */
     private ComponentIndexer() {
         super(IndexType.COMPONENT);
     }

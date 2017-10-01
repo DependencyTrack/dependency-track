@@ -23,6 +23,9 @@ import org.owasp.dependencytrack.persistence.QueryManager;
 /**
  * Attempts to resolve an existing Dependency-Track CWE from a
  * Dependency-Check Vulnerability.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class CweResolver {
 

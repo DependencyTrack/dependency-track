@@ -18,6 +18,12 @@ package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
 
+/**
+ * Defines an event used to start a mirror of Node Security Platform.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class NspMirrorEvent implements Event {
 
 }

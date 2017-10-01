@@ -16,6 +16,12 @@
  */
 package org.owasp.dependencytrack.model;
 
+/**
+ * Provides a list of available states an analysis decision may have.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public enum AnalysisState {
     EXPLOITABLE,
     IN_TRIAGE,

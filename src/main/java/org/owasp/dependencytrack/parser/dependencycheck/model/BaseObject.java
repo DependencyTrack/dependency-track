@@ -19,6 +19,13 @@ package org.owasp.dependencytrack.parser.dependencycheck.model;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencycheck.dependency.Confidence;
 
+/**
+ * Defines a base object that provides helper methods used to
+ * determine confidence of evidence used in identifying components.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public abstract class BaseObject {
 
     protected String normalize(String string) {

@@ -23,6 +23,9 @@ import java.util.List;
 /**
  * Attempts to resolve the version of the component from evidence
  * available in the specified dependency.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class ComponentVersionResolver implements IResolver {
 

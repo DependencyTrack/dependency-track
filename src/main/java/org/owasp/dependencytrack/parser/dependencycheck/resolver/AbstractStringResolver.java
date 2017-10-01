@@ -22,6 +22,9 @@ import java.util.List;
 
 /**
  * This class will resolve string-based evidence.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public abstract class AbstractStringResolver {
 

@@ -25,10 +25,21 @@ import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Parser for Node Security Platform API response.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class NspAdvsoriesParser {
 
     private static final Logger LOGGER = Logger.getLogger(NspAdvsoriesParser.class);
 
+    /**
+     * Parses the JSON response from the NSP API.
+     * @param jsonNode the JSON node to parse
+     * @return an AdvisoryResults object
+     */
     public AdvisoryResults parse(JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
 

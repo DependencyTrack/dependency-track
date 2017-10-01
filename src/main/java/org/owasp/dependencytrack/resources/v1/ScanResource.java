@@ -38,6 +38,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Base64;
 
+/**
+ * JAX-RS resources for processing scans.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/v1/scan")
 @Api(value = "scan", authorizations = @Authorization(value = "X-Api-Key"))
 public class ScanResource extends AlpineResource {

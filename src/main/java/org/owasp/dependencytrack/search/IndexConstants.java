@@ -18,8 +18,17 @@ package org.owasp.dependencytrack.search;
 
 import java.util.HashMap;
 
+/**
+ * Helper class that defines constants used by the indexers.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class IndexConstants {
 
+    /**
+     * Private constructor.
+     */
     private IndexConstants() { }
 
     static final String PROJECT_UUID = "uuid";

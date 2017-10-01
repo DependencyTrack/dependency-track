@@ -24,7 +24,7 @@ import java.util.List;
  * This class defines the Version objects returned.
  *
  * @author Steve Springett
- * @since 1.0.0
+ * @since 3.0.0
  */
 public class Version {
 

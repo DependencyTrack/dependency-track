@@ -19,6 +19,12 @@ package org.owasp.dependencytrack.parser.dependencycheck.model;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Defines the datasource element in the Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "dataSource")
 public class DataSource extends BaseObject {
 

@@ -21,6 +21,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
+/**
+ * Defines a custom request object used when uploading Dependency-Check scans.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class ScanSubmitRequest {
 
     @NotNull

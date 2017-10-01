@@ -38,6 +38,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Model class for tracking individual components.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Component implements Serializable {

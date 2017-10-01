@@ -39,6 +39,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Model for tracking individual projects. Projects are high-level containers
+ * of components and (optionally) other projects. Project are often software
+ * applications, firmware, operating systems, or devices.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
@@ -56,6 +64,9 @@ public class Project implements Serializable {
 
     private static final long serialVersionUID = -7592438796591673355L;
 
+    /**
+     * Defines JDO fetch groups for this class.
+     */
     public enum FetchGroup {
         ALL
     }

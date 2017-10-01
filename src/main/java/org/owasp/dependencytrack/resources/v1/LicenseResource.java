@@ -34,6 +34,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+/**
+ * JAX-RS resources for processing licenses.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/v1/license")
 @Api(value = "license", authorizations = @Authorization(value = "X-Api-Key"))
 public class LicenseResource extends AlpineResource {

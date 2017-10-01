@@ -31,6 +31,12 @@ import org.owasp.dependencytrack.tasks.TaskScheduler;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+/**
+ * Initializes the event subsystem and configures event subscribers.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class EventSubsystemInitializer implements ServletContextListener {
 
     // Starts the EventService
@@ -44,6 +50,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
         Settings.initialize();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void contextInitialized(ServletContextEvent event) {
         EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanUploadProcessingTask.class);
@@ -57,6 +66,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
         TaskScheduler.getInstance();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void contextDestroyed(ServletContextEvent event) {
         TaskScheduler.getInstance().shutdown();
 

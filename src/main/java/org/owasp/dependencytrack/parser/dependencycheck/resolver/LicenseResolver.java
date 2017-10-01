@@ -24,6 +24,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Attempts to resolve an existing Dependency-Track License from a
+ * Dependency-Check Dependency.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class LicenseResolver implements IResolver {
 
     /**

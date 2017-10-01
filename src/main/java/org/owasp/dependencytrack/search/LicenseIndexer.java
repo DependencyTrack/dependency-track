@@ -23,6 +23,12 @@ import org.apache.lucene.index.Term;
 import org.owasp.dependencytrack.model.License;
 import java.io.IOException;
 
+/**
+ * Indexer for operating on licenses.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class LicenseIndexer extends IndexManager implements ObjectIndexer<License> {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseIndexer.class);
@@ -32,6 +38,9 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         return INSTANCE;
     }
 
+    /**
+     * Private constructor.
+     */
     private LicenseIndexer() {
         super(IndexType.LICENSE);
     }

@@ -19,26 +19,27 @@ package org.owasp.dependencytrack.exception;
 /**
  * Exception for when parsing files.
  *
- * @since 1.0.0
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class ParseException extends Exception {
 
     /**
-     * @since 1.0.0
+     * @since 3.0.0
      */
     public ParseException(String message) {
         super(message);
     }
 
     /**
-     * @since 1.0.0
+     * @since 3.0.0
      */
     public ParseException(Throwable cause) {
         super(cause);
     }
 
     /**
-     * @since 1.0.0
+     * @since 3.0.0
      */
     public ParseException(String message, Throwable cause) {
         super(message, cause);

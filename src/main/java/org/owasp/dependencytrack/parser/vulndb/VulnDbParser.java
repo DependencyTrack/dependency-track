@@ -34,6 +34,12 @@ import org.owasp.dependencytrack.parser.vulndb.model.Vulnerability;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Parser for VulnDB API response.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class VulnDbParser {
 
     private static final Logger LOGGER = Logger.getLogger(VulnDbParser.class);

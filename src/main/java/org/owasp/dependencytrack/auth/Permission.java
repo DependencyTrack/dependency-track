@@ -18,6 +18,12 @@ package org.owasp.dependencytrack.auth;
 
 import alpine.auth.AlpinePermission;
 
+/**
+ * Defines permissions specific to Dependency-Track.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class Permission extends AlpinePermission {
 
     public static final String SCAN_UPLOAD = "SCAN_UPLOAD";

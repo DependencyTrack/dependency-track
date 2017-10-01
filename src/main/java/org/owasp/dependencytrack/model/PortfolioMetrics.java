@@ -28,6 +28,13 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Metrics for the entire application as a whole, not specific to individual
+ * components or projects.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PortfolioMetrics implements Serializable {

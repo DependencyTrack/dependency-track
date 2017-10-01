@@ -23,6 +23,12 @@ import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Vulnerability;
 
+/**
+ * Creates IndexManager implementations based on event types.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class IndexManagerFactory {
 
     public static ObjectIndexer getIndexManager(IndexEvent event) {

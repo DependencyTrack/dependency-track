@@ -29,6 +29,13 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Collection;
 
+/**
+ * The Analysis model tracks human auditing decisions for vulnerabilities found
+ * on a given dependency.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Analysis implements Serializable {

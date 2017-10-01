@@ -20,6 +20,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.UUID;
 
+/**
+ * Defines a base-class for uniquely identifiable models.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class IdentifiableObject implements Serializable {
 
     private static final long serialVersionUID = 4691958634895134378L;
@@ -34,6 +40,10 @@ public class IdentifiableObject implements Serializable {
         this.uuid = uuid;
     }
 
+    /**
+     * Utility method for determining the UUID is valid or not.
+     * @return true if valid, false if not valid
+     */
     @JsonIgnore
     public boolean isValid() {
         try {

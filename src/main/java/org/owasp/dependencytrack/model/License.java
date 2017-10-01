@@ -38,6 +38,12 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.UUID;
 
+/**
+ * Defines a Model class for tracking licenses.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

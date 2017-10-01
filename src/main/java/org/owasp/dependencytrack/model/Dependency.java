@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License along with
  * Dependency-Track. If not, see http://www.gnu.org/licenses/.
  */
-
 package org.owasp.dependencytrack.model;
 
 import alpine.json.TrimmedStringDeserializer;
@@ -32,6 +31,12 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Model for tracking what {@link Component}s are used in what {@link Project}s.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
@@ -57,6 +62,9 @@ import java.util.Date;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Dependency implements Serializable {
 
+    /**
+     * Defines names of JDO fetch groups for this class.
+     */
     public enum FetchGroup {
         ALL,
         PROJECT_ONLY,

@@ -21,6 +21,9 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 /**
  * Attempts to resolve the group of the component from evidence
  * available in the specified dependency.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
  */
 public class ComponentGroupResolver extends AbstractStringResolver implements IResolver {
 

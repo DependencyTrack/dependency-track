@@ -27,6 +27,13 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * The AnalysisComment model provides zero or more comments for a human
+ * auditing decision ({@link Analysis}).
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AnalysisComment implements Serializable {

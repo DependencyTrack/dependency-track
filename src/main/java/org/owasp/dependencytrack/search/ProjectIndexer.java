@@ -24,6 +24,12 @@ import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectProperty;
 import java.io.IOException;
 
+/**
+ * Indexer for operating on projects.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class ProjectIndexer extends IndexManager implements ObjectIndexer<Project> {
 
     private static final Logger LOGGER = Logger.getLogger(ProjectIndexer.class);
@@ -32,7 +38,10 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     protected static ProjectIndexer getInstance() {
         return INSTANCE;
     }
-    
+
+    /**
+     * Private constructor.
+     */
     private ProjectIndexer() {
         super(IndexType.PROJECT);
     }

@@ -46,7 +46,7 @@ import java.util.List;
  * providing methods that operate on the Dependency-Track specific models.
  *
  * @author Steve Springett
- * @since 1.0.0
+ * @since 3.0.0
  */
 public class QueryManager extends AlpineQueryManager {
 

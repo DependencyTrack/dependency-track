@@ -19,6 +19,12 @@ package org.owasp.dependencytrack.parser.dependencycheck.model;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * Defines the reference element in a Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "reference")
 public class Reference extends BaseObject {
 

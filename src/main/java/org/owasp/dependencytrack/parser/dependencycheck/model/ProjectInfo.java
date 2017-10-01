@@ -21,6 +21,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
 
+/**
+ * Defines the projectInfo element in a Dependency-Check report.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @XmlRootElement(name = "projectInfo")
 public class ProjectInfo extends BaseObject {
 

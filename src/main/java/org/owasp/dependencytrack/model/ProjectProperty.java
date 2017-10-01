@@ -29,6 +29,12 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
+/**
+ * User-defined key/value model for individual projects.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @PersistenceCapable(table = "PROJECT_PROPERTY")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectProperty implements Serializable {

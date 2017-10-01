@@ -56,6 +56,12 @@ import javax.ws.rs.core.Response;
 import java.security.Principal;
 import java.util.List;
 
+/**
+ * JAX-RS resources for processing users.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 @Path("/v1/user")
 @Api(value = "user", authorizations = @Authorization(value = "X-Api-Key"))
 public class UserResource extends AlpineResource {

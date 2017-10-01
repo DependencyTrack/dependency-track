@@ -21,7 +21,7 @@ package org.owasp.dependencytrack.parser.vulndb.model;
  * texts. This class defines the ExternalText objects returned.
  *
  * @author Steve Springett
- * @since 1.0.0
+ * @since 3.0.0
  */
 public class ExternalText {
 

@@ -22,6 +22,12 @@ import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Vulnerability;
 
+/**
+ * Defines various Lucene index events.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class IndexEvent implements Event {
 
     public enum Action {

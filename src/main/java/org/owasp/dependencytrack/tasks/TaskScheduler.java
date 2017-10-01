@@ -23,11 +23,20 @@ import org.owasp.dependencytrack.event.NistMirrorEvent;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
 
+/**
+ * A Singleton implementation of {@link AlpineTaskScheduler} that configures scheduled and repeatable tasks.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public final class TaskScheduler extends AlpineTaskScheduler {
 
     // Holds an instance of TaskScheduler
     private static final TaskScheduler INSTANCE = new TaskScheduler();
 
+    /**
+     * Private constructor.
+     */
     private TaskScheduler() {
 
         // Creates a new event that executes every 6 hours (21600000) after an initial 10 second (10000) delay

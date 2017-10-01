@@ -39,6 +39,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Subscriber task that performs a Dependency-Check analysis or update.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class DependencyCheckTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(DependencyCheckTask.class);
@@ -48,6 +54,9 @@ public class DependencyCheckTask implements Subscriber {
     private static final String DC_REPORT_FILE = DC_REPORT_DIR + File.separator + "dependency-check-report.xml";
     private static final String DC_GLOBAL_SUPPRESSION = DC_ROOT_DIR + File.separator + "suppressions.xml";
 
+    /**
+     * {@inheritDoc}
+     */
     public void inform(Event e) {
         if (e instanceof DependencyCheckEvent) {
             final DependencyCheckEvent event = (DependencyCheckEvent) e;
@@ -59,6 +68,10 @@ public class DependencyCheckTask implements Subscriber {
         }
     }
 
+    /**
+     * Perfors a Dependency-Check analysis.
+     * @param event a DependencyCheckEvent
+     */
     private void performAnalysis(DependencyCheckEvent event) {
         LOGGER.info("Executing Dependency-Check analysis task");
         if (event.analyzePortfolio()) {
@@ -86,6 +99,10 @@ public class DependencyCheckTask implements Subscriber {
         }
     }
 
+    /**
+     * Performs an update of the Dependeny-Check data directory only.
+     * @param event a DependencyCheckEvent
+     */
     private void performUpdateOnly(DependencyCheckEvent event) {
         LOGGER.info("Executing Dependency-Check update-only task");
         final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
@@ -101,6 +118,10 @@ public class DependencyCheckTask implements Subscriber {
         LOGGER.info("Dependency-Check update-only complete");
     }
 
+    /**
+     * Analyzes a list of Components.
+     * @param components a list of Components
+     */
     private void analyze(List<Component> components) {
         // Iterate through the components, create evidence, and create the resulting dependency
         final List<org.owasp.dependencycheck.dependency.Dependency> dependencies = new ArrayList<>();
@@ -133,6 +154,9 @@ public class DependencyCheckTask implements Subscriber {
         processResults();
     }
 
+    /**
+     * Processes Dependency-Check results after the completion of a scan.
+     */
     private void processResults() {
         LOGGER.info("Processing Dependency-Check analysis results");
         try (QueryManager qm = new QueryManager()) {

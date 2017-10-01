@@ -18,6 +18,13 @@ package org.owasp.dependencytrack;
 
 import alpine.Config;
 
+/**
+ * Alpine {@link Config.Key} implementation to support Dependency-Track specific
+ * configuration keys.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public enum DependencyTrackConfigKey implements Config.Key {
 
     DATASOURCE_VULN_DB_ENABLED  ("datasource.vulndb.enabled", false),

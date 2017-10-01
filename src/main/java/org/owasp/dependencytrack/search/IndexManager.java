@@ -64,6 +64,7 @@ public abstract class IndexManager implements AutoCloseable {
     /**
      * This methods should be overwritten.
      * @return an array of all fields that can be searched on
+     * @since 3.0.0
      */
     public String[] getSearchFields() {
         return new String[]{};
@@ -71,6 +72,7 @@ public abstract class IndexManager implements AutoCloseable {
 
     /**
      * Defines the type of supported indexes.
+     * @since 3.0.0
      */
     protected enum IndexType {
         PROJECT,
@@ -83,6 +85,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Constructs a new IndexManager. All classes that extend this class should call
      * super(indexType) in their constructor.
      * @param indexType the type of index to use
+     * @since 3.0.0
      */
     protected IndexManager(IndexType indexType) {
         this.indexType = indexType;
@@ -91,6 +94,7 @@ public abstract class IndexManager implements AutoCloseable {
     /**
      * Returns the index type.
      * @return the index type
+     * @since 3.0.0
      */
     protected IndexType getIndexType() {
         return indexType;
@@ -100,6 +104,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Retrieves the index directory based on the type of index used.
      * @return a Directory
      * @throws IOException when the directory cannot be accessed
+     * @since 3.0.0
      */
     private synchronized Directory getDirectory() throws IOException {
         final File indexDir = new File(
@@ -116,6 +121,7 @@ public abstract class IndexManager implements AutoCloseable {
     /**
      * Opens the index.
      * @throws IOException when the index cannot be opened
+     * @since 3.0.0
      */
     protected void openIndex() throws IOException {
         final Analyzer analyzer = new StandardAnalyzer(VERSION);
@@ -128,6 +134,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Returns an IndexWriter, by opening the index if necessary.
      * @return an IndexWriter
      * @throws IOException when the index cannot be opened
+     * @since 3.0.0
      */
     protected IndexWriter getIndexWriter() throws IOException {
         if (iwriter == null) {
@@ -140,6 +147,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Returns an IndexSearcher by opening the index directory first, if necessary.
      * @return an IndexSearcher
      * @throws IOException when the index directory cannot be opened
+     * @since 3.0.0
      */
     protected IndexSearcher getIndexSearcher() throws IOException {
         if (isearcher == null) {
@@ -152,11 +160,12 @@ public abstract class IndexManager implements AutoCloseable {
     /**
      * Returns a QueryParser.
      * @return a QueryParser
+     * @since 3.0.0
      */
     protected QueryParser getQueryParser() {
         final Analyzer analyzer = new StandardAnalyzer(VERSION);
         if (qparser == null) {
-            qparser = new MultiFieldQueryParser(VERSION , getSearchFields(), analyzer, IndexConstants.getBoostMap());
+            qparser = new MultiFieldQueryParser(VERSION, getSearchFields(), analyzer, IndexConstants.getBoostMap());
             qparser.setAllowLeadingWildcard(true);
         }
         return qparser;
@@ -164,6 +173,7 @@ public abstract class IndexManager implements AutoCloseable {
 
     /**
      * Commits changes to the index and closes the IndexWriter.
+     * @since 3.0.0
      */
     public void commit() {
         try {
@@ -176,6 +186,7 @@ public abstract class IndexManager implements AutoCloseable {
 
     /**
      * Closes the IndexWriter.
+     * @since 3.0.0
      */
     public void close() {
         if (iwriter != null) {
@@ -190,7 +201,7 @@ public abstract class IndexManager implements AutoCloseable {
     /**
      * Upon finalization, closes if not already closed.
      * @throws Throwable the {@code Exception} raised by this method
-     * @since 1.0.0
+     * @since 3.0.0
      */
     protected void finalize() throws Throwable {
         close();
@@ -204,6 +215,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @param value the value of the field
      * @param store storage options
      * @param tokenize specifies if the field should be tokenized or not
+     * @since 3.0.0
      */
     protected void addField(Document doc, String name, String value, Field.Store store, boolean tokenize) {
         if (StringUtils.isBlank(value)) {
@@ -223,6 +235,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @param doc the Lucene Document to update the field in
      * @param name the name of the field
      * @param value the value of the field
+     * @since 3.0.0
      */
     protected void updateField(Document doc, String name, String value) {
         if (StringUtils.isBlank(value)) {
@@ -237,6 +250,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @param fieldName the name of the field
      * @param uuid the UUID to retrieve a Document for
      * @return a Lucene Document
+     * @since 3.0.0
      */
     protected Document getDocument(String fieldName, String uuid) {
         final List<Document> list = new ArrayList<>();

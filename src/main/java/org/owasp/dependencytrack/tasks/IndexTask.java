@@ -23,10 +23,19 @@ import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.search.IndexManagerFactory;
 import org.owasp.dependencytrack.search.ObjectIndexer;
 
+/**
+ * Subscriber task that performs an action on an Index.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class IndexTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(IndexTask.class);
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked")
     public void inform(Event e) {
 

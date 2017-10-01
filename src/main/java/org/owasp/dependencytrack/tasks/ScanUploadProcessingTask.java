@@ -40,10 +40,20 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Subscriber task that performs processing of a Dependency-Check scan
+ * when it is uploaded.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class ScanUploadProcessingTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ScanUploadProcessingTask.class);
 
+    /**
+     * {@inheritDoc}
+     */
     public void inform(Event e) {
         if (e instanceof ScanUploadEvent) {
             final ScanUploadEvent event = (ScanUploadEvent) e;

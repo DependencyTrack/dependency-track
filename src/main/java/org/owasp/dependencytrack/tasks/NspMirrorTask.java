@@ -42,11 +42,20 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
+/**
+ * Subscriber task that performs a mirror of the Node Security Platform public advisories.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class NspMirrorTask implements Subscriber {
 
     private static final String NSP_API_BASE_URL = "https://api.nodesecurity.io/advisories";
     private static final Logger LOGGER = Logger.getLogger(NspMirrorTask.class);
 
+    /**
+     * {@inheritDoc}
+     */
     public void inform(Event e) {
         if (e instanceof NspMirrorEvent) {
             LOGGER.info("Starting NSP mirroring task");
@@ -55,6 +64,9 @@ public class NspMirrorTask implements Subscriber {
         }
     }
 
+    /**
+     * Performs an incremental mirror (using pagination) of the NSP public advisory database.
+     */
     private void getAdvisories() {
         final Date currentDate = new Date();
         LOGGER.info("Retrieving NSP advisories at " + currentDate);
@@ -88,6 +100,10 @@ public class NspMirrorTask implements Subscriber {
         }
     }
 
+    /**
+     * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
+     * @param results the results to synchronize
+     */
     private void updateDatasource(AdvisoryResults results) {
         LOGGER.info("Updating datasource with NSP advisories");
         try (QueryManager qm = new QueryManager()) {
@@ -98,6 +114,11 @@ public class NspMirrorTask implements Subscriber {
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
+    /**
+     * Helper method that maps an NSP advisory object to a Dependency-Track vulnerability object.
+     * @param advisory the NSP advisory to map
+     * @return a Dependency-Track Vulnerability object
+     */
     private Vulnerability mapAdvisoryToVulnerability(Advisory advisory) {
         final Vulnerability vuln = new Vulnerability();
         vuln.setSource(Vulnerability.Source.NSP);

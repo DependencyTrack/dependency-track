@@ -35,10 +35,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Subscriber task that performs calculations of various Metircs.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class MetricsUpdateTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(MetricsUpdateTask.class);
 
+    /**
+     * {@inheritDoc}
+     */
     public void inform(Event e) {
         if (e instanceof MetricsUpdateEvent) {
             final MetricsUpdateEvent event = (MetricsUpdateEvent) e;
@@ -59,6 +68,10 @@ public class MetricsUpdateTask implements Subscriber {
         }
     }
 
+    /**
+     * Performs high-level metric updates on the portfolio.
+     * @param qm a QueryManager instance
+     */
     private void updateMetrics(QueryManager qm) {
         LOGGER.info("Executing metrics update on portfolio");
         final Date measuredAt = new Date();
@@ -136,6 +149,12 @@ public class MetricsUpdateTask implements Subscriber {
         }
     }
 
+    /**
+     * Performs metric updates on a specific project.
+     * @param qm a QueryManager instance
+     * @param project the project to perform metric updates on
+     * @return MetricCounters
+     */
     private MetricCounters updateMetrics(QueryManager qm, Project project) {
         LOGGER.debug("Executing metrics update on project: " + project.getUuid());
         final Date measuredAt = new Date();
@@ -207,6 +226,12 @@ public class MetricsUpdateTask implements Subscriber {
         return counters;
     }
 
+    /**
+     * Performs metric updates on a specific component.
+     * @param qm a QueryManager instance
+     * @param component the component to perform metric updates on
+     * @return MetricCounters
+     */
     private MetricCounters updateMetrics(QueryManager qm, Component component) {
         LOGGER.debug("Executing metrics update on project: " + component.getUuid());
         final Date measuredAt = new Date();
@@ -243,12 +268,19 @@ public class MetricsUpdateTask implements Subscriber {
         return counters;
     }
 
+    /**
+     * A value object that holds various counters returned by the updating of metrics.
+     */
     private class MetricCounters {
 
         private int critical, high, medium, low;
         private int projects, vulnerableProjects, components, vulnerableComponents, vulnerabilities;
 
-        public void updateSeverity(Severity severity) {
+        /**
+         * Increments critical, high, medium, low counters based on the specified severity.
+         * @param severity the severity to update counters on
+         */
+        private void updateSeverity(Severity severity) {
             if (Severity.CRITICAL == severity) {
                 critical++;
             } else if (Severity.HIGH == severity) {
@@ -260,11 +292,20 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        public int chmlTotal() {
+        /**
+         * Returns the sum of the total number of critical, high, medium, and low severity vulnerabilities.
+         * @return the sum of the counters for critical, high, medium, and low.
+         */
+        private int chmlTotal() {
             return critical + high + medium + low;
         }
 
-        public double getInheritedRiskScore() {
+        /**
+         * Returns the calculated Inherited Risk Score.
+         * See: {@link Metrics#inheritedRiskScore(int, int, int, int)}
+         * @return the calculated score
+         */
+        private double getInheritedRiskScore() {
             return Metrics.inheritedRiskScore(critical, high, medium, low);
         }
     }

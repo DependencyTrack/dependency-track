@@ -39,6 +39,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
+/**
+ * Subscriber task that performs a mirror of the National Vulnerability Database.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
 public class NistMirrorTask implements Subscriber {
 
     private static final String CVE_XML_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
@@ -54,6 +60,9 @@ public class NistMirrorTask implements Subscriber {
     private static final Logger LOGGER = Logger.getLogger(NistMirrorTask.class);
 
 
+    /**
+     * {@inheritDoc}
+     */
     public void inform(Event e) {
         if (e instanceof NistMirrorEvent) {
             LOGGER.info("Starting NIST mirroring task");
@@ -64,6 +73,9 @@ public class NistMirrorTask implements Subscriber {
         }
     }
 
+    /**
+     * Download all NVD XML and JSON feeds from NIST.
+     */
     private void getAllFiles() {
         final Date currentDate = new Date();
         LOGGER.info("Downloading files at " + currentDate);
@@ -80,6 +92,11 @@ public class NistMirrorTask implements Subscriber {
         doDownload(CVE_JSON_10_MODIFIED_URL);
     }
 
+    /**
+     * Defines the output directory where the mirrored files will be stored.
+     * Creates the directory if non-existent.
+     * @param outputDirPath the target output directory path
+     */
     private void setOutputDir(String outputDirPath) {
         outputDir = new File(outputDirPath);
         if (!outputDir.exists()) {
@@ -87,6 +104,12 @@ public class NistMirrorTask implements Subscriber {
         }
     }
 
+    /**
+     * Performs a HTTP HEAD request to determine if a URL has updates since the last
+     * time it was requested.
+     * @param cveUrl the URL to perform a HTTP HEAD request on
+     * @return the length of the content if it were to be downloaded
+     */
     private long checkHead(String cveUrl) {
         try {
             final URL url = new URL(cveUrl);
@@ -101,6 +124,10 @@ public class NistMirrorTask implements Subscriber {
         return 0;
     }
 
+    /**
+     * Performs a download of specified URL.
+     * @param cveUrl the URL contents to download
+     */
     private void doDownload(String cveUrl) {
         BufferedInputStream bis = null;
         BufferedOutputStream bos = null;
@@ -150,6 +177,10 @@ public class NistMirrorTask implements Subscriber {
         }
     }
 
+    /**
+     * Extracts a GZip file.
+     * @param file the file to extract
+     */
     private void uncompress(File file) {
         final byte[] buffer = new byte[1024];
         GZIPInputStream gzis = null;
@@ -173,6 +204,10 @@ public class NistMirrorTask implements Subscriber {
         }
     }
 
+    /**
+     * Closes a closable object.
+     * @param object the object to close
+     */
     private void close(Closeable object) {
         if (object != null) {
             try {

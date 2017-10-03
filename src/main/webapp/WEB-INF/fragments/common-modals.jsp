@@ -9,32 +9,61 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-sm-6 col-md-6">
-                        <img src="<c:url value="/images/dc.svg"/>" style="width:200px; margin-bottom:20px">
+                        <a href="https://www.owasp.org/index.php/OWASP_Dependency_Track_Project">
+                            <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
+                        </a>
                         <p>
-                            Dependency-Check is a utility that identifies project dependencies and checks if there
-                            are any known, publicly disclosed vulnerabilities.
+                            OWASP Dependency-Track is a Software Composition Analysis (SCA) application that
+                            allows organizations to automatically ingest and identify third-party components and any inherited
+                            vulnerabilities from their use.
                         </p>
+                        <p>
+                            <span id="systemAppName"></span> v<strong id="systemAppVersion"></strong>
+                        </p>
+                        <p>
+                            Copyright &copy; Steve Springett. All Rights Reserved.
+                        </p>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                        <a href="https://www.owasp.org/index.php/OWASP_Dependency_Check">
+                            <img src="<c:url value="/images/dc.svg"/>" style="width:200px; margin-bottom:20px">
+                        </a>
+                        <p>
+                            OWASP Dependency-Check is a Software Composition Analysis (SCA) utility that uses
+                            evidence-based analysis to identify project dependencies and determines if they contain
+                            publicly disclosed vulnerabilities.
                         <p>
                             <span id="dcAppName"></span> v<strong id="dcAppVersion"></strong>
                         </p>
                         <p>
-                            Dependency-Check is Copyright &copy; Jeremy Long. All Rights Reserved.
-                        </p>
-                    </div>
-                    <div class="col-sm-6 col-md-6">
-                        <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
-                        <p>
-                            Dependency-Track is an component management system that proactively identifies
-                            vulnerabilities over time, and across applications.
-                        </p>
-                        <p>
-                            <span id="systemAppName"></span> v<strong id="systemAppVersion"></strong> (built on: <span id="systemAppTimestamp"></span>)
-                        </p>
-                        <p>
-                            Dependency-Track is Copyright &copy; Steve Springett. All Rights Reserved.
+                            Copyright &copy; Jeremy Long. All Rights Reserved.
                         </p>
                     </div>
                 </div>
+                <div class="row" style="border-bottom: 1px solid #e5e5e5; margin: 10px 0 10px 0; padding: 0;">
+                    <h4>Credits</h4>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6 col-md-6">
+                        <a href="https://github.com/stevespringett/Alpine">
+                            <img src="<c:url value="/images/Alpine.svg"/>" style="width:200px; margin-bottom:20px">
+                        </a>
+                        <p>
+                            An opinionated scaffolding library that jump-starts Java projects with an API-first
+                            design, secure defaults, and minimal dependencies.
+                        </p>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                        <h4>Datasource providers</h4>
+                        <ul>
+                            <li><a href="https://nvd.nist.gov/">National Vulnerability Database</a></li>
+                            <li><a href="https://nodesecurity.io/">Node Security Platform</a></li>
+                            <li><a href="https://vulndb.cyberriskanalytics.com">VulnDB</a> (Optional)</li>
+                        </ul>
+                    </div>
+                </div>
+
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>

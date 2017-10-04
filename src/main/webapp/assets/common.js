@@ -235,6 +235,45 @@ function generateSeverityProgressBar(critical, high, medium, low) {
 }
 
 /**
+ * Given a UNIX timestamp, this function will return a formatted date.
+ * i.e. 15 Jan 2017
+ */
+function formatTimestamp(timestamp) {
+    let date = new Date(timestamp);
+    let months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+}
+
+/**
+ * Formats and returns a specialized label for a vulnerability source (NVD, NSP, VulnDB, etc).
+ */
+function formatSourceLabel(source) {
+    let sourceClass = "label-source-" + source.toLowerCase();
+    return `<span class="label ${sourceClass}">${source}</span>`;
+}
+
+/**
+ * Formats and returns a specialized label for the severity of a vulnerability.
+ */
+function formatSeverityLabel(severity) {
+    if (!severity) {
+        return;
+    }
+    let severityLabel = capitalize(severity);
+    let severityClass = "severity-" + severity.toLowerCase() + "-bg";
+
+    return `
+     <div style="height:24px;margin:-4px;">
+        <div class="${severityClass} text-center pull-left" style="width:24px; height:24px; color:#ffffff">
+            <i class="fa fa-bug" style="font-size:12px; padding:6px" aria-hidden="true"></i>
+         </div>
+         <div class="text-center pull-left" style="height:24px;">
+             <div style="font-size:12px; padding:4px"><span class="severity-value">${severityLabel}</span></div>
+         </div>
+     </div>`;
+}
+
+/**
  * Changes the first letter to uppercase and the remaining letters to lowercase.
  */
 function capitalize(string) {

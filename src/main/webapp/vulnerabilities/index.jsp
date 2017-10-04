@@ -119,7 +119,7 @@
                 <thead>
                 <tr>
                     <th data-align="left" data-class="tight" data-field="vulnerabilityhref">Name</th>
-                    <th data-align="left" data-class="tight" data-field="sourceLabel">Source</th>
+                    <th data-align="left" data-class="tight" data-field="publishedLabel">Published</th>
                     <th data-align="left" data-class="expand" data-field="cwefield">CWE</th>
                     <th data-align="left" data-class="tight" data-field="severityLabel">Severity</th>
                 </tr>

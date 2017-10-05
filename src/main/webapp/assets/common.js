@@ -319,7 +319,7 @@ $.extend({
      */
     getUrlVars: function() {
         let vars = [], hash;
-        let hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
+        let hashes = window.location.href.replace("#", "").slice(window.location.href.indexOf("?") + 1).split("&");
         for(let i = 0; i < hashes.length; i++) {
             hash = hashes[i].split("=");
             vars.push(hash[0]);

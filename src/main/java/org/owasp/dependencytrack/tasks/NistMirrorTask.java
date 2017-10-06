@@ -18,7 +18,7 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.Config;
 import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
+import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
@@ -45,7 +45,7 @@ import java.util.zip.GZIPInputStream;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NistMirrorTask implements Subscriber {
+public class NistMirrorTask implements LoggableSubscriber {
 
     private static final String CVE_XML_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
     private static final String CVE_XML_20_MODIFIED_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-Modified.xml.gz";

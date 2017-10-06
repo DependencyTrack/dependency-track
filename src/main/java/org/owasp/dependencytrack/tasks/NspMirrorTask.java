@@ -18,8 +18,8 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.Config;
 import alpine.event.framework.Event;
+import alpine.event.framework.LoggableSubscriber;
 import alpine.event.framework.SingleThreadedEventService;
-import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
@@ -48,7 +48,7 @@ import java.util.Date;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NspMirrorTask implements Subscriber {
+public class NspMirrorTask implements LoggableSubscriber {
 
     private static final String NSP_API_BASE_URL = "https://api.nodesecurity.io/advisories";
     private static final Logger LOGGER = Logger.getLogger(NspMirrorTask.class);

@@ -3,6 +3,7 @@
 [![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
 <img src="https://stevespringett.github.io/dependency-track/images/dt.svg" width="300" align="right">
 [![License][license-image]][license-url]
+[![Join the chat at https://gitter.im/dependency-track/Lobby](https://badges.gitter.im/dependency-track/Lobby.svg)](https://gitter.im/dependency-track/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Dependency-Track
 =========

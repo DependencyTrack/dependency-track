@@ -3,6 +3,8 @@
 Dependency-Track
 =========
 
+[![Join the chat at https://gitter.im/dependency-track/Lobby](https://badges.gitter.im/dependency-track/Lobby.svg)](https://gitter.im/dependency-track/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 OWASP Dependency-Track is a Java web application that allows organizations to
 document the use of third-party components across multiple applications and
 versions. Further, it provides automatic visibility into the use of components

@@ -206,6 +206,14 @@ $(document).ready(function () {
 });
 
 /**
+ * Displays an error modal with the specified message.
+ */
+function displayErrorModal(message) {
+    $("#modal-genericError").modal("show");
+    $("#modal-genericErrorContent").html(message);
+}
+
+/**
  * Creates a multi-color progress bar consisting of the number of
  * critical, high, medium, and low severity vulnerabilities.
  */

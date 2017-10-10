@@ -817,6 +817,116 @@ $rest.deleteLdapUser = function deleteLdapUser(username, successCallback, failCa
 };
 
 /**
+ * Service called when an API key is created.
+ */
+$rest.addApiKey = function addApiKey(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM + "/" + uuid + "/key",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when an API key is regenerated.
+ */
+$rest.regenerateApiKey = function regenerateApiKey(apikey, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when an API key is deleted.
+ */
+$rest.deleteApiKey = function deleteApiKey(apikey, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when an API key is deleted.
+ */
+function deleteApiKey(apikey) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        statusCode: {
+            204: function (data) {
+                $("#container-apikey-" + apikey).remove();
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
+            },
+            404: function (data) {
+                //todo: the api key could not be found
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            console.log("failed");
+        }
+    });
+}
+
+/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

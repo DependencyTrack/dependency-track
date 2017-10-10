@@ -373,77 +373,37 @@ function deleteLdapUser() {
 }
 
 /**
- * Service called when an API key is created.
+ * Creates a API key by retrieving field values and calling the REST function for the service.
  */
 function addApiKey(uuid) {
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM + "/" + uuid + "/key",
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_PUT,
-        statusCode: {
-            201: function(data) {
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-            },
-            404: function(data) {
-                //todo: the uuid of the team could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    $rest.addApiKey(uuid, function (data) {
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
     });
 }
 
+
 /**
- * Service called when an API key is regenerated.
+ * Regenerates a API key by retrieving field values and calling the REST function for the service.
  */
 function regenerateApiKey(apikey) {
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_POST,
-        statusCode: {
-            200: function(data) {
-                $("#apikey-" + apikey).html(data.key);
-                $("#apikey-" + apikey).attr("id","apikey-" + data.key);
-                $("#regen-" + apikey).attr("id","regen-" + data.key);
-                $("#regen-" + data.key).attr("onclick","regenerateApiKey('" + data.key + "')");
-                $("#delete-" + apikey).attr("id","delete-" + data.key);
-                $("#delete-" + data.key).attr("onclick","deleteApiKey('" + data.key + "')");
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-            },
-            404: function(data) {
-                //todo: the api key could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    $rest.regenerateApiKey(apikey, function (data) {
+        $("#apikey-" + apikey).html(data.key);
+        $("#apikey-" + apikey).attr("id", "apikey-" + data.key);
+        $("#regen-" + apikey).attr("id", "regen-" + data.key);
+        $("#regen-" + data.key).attr("onclick", "regenerateApiKey('" + data.key + "')");
+        $("#delete-" + apikey).attr("id", "delete-" + data.key);
+        $("#delete-" + data.key).attr("onclick", "deleteApiKey('" + data.key + "')");
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
     });
 }
 
 /**
- * Service called when an API key is deleted.
+ * Deletes a API key by retrieving field values and calling the REST function for the service.
  */
 function deleteApiKey(apikey) {
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        statusCode: {
-            204: function (data) {
-                $("#container-apikey-" + apikey).remove();
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-            },
-            404: function (data) {
-                //todo: the api key could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    $rest.deleteApiKey(apikey, function (data) {
+        $("#container-apikey-" + apikey).remove();
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
     });
 }
 

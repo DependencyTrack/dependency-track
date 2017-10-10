@@ -904,29 +904,6 @@ $rest.deleteApiKey = function deleteApiKey(apikey, successCallback, failCallback
 };
 
 /**
- * Service called when an API key is deleted.
- */
-function deleteApiKey(apikey) {
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM + "/key/" + apikey,
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        statusCode: {
-            204: function (data) {
-                $("#container-apikey-" + apikey).remove();
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-            },
-            404: function (data) {
-                //todo: the api key could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-}
-
-/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

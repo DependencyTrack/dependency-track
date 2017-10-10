@@ -287,80 +287,88 @@ function managedUserDetailFormatter(index, row) {
 }
 
 /**
- * Service called when a team is created.
+ * Creates a team by retrieving field values and calling the REST function for the service.
  */
 function createTeam() {
-    const inputField = $("#createTeamNameInput");
-    const teamName = inputField.val();
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_PUT,
-        data: JSON.stringify({name: teamName}),
-        statusCode: {
-            201: function(data) {
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    let inputField = $("#createTeamNameInput");
+    let teamName = inputField.val();
+    $rest.createTeam(teamName, function() {
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
     });
     inputField.val("");
 }
 
 /**
- * Service called when a team is updated.
+ * Updates a team by retrieving field values and calling the REST function for the service.
  */
 function updateTeam() {
-    const teamUuid = $(this).data("team-uuid");
-    const teamName = $("#inputTeamName-" + teamUuid).val();
-    const isHakmaster = $("#inputTeamHakmaster-" + teamUuid).is(":checked");
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_POST,
-        data: JSON.stringify({uuid: teamUuid, name: teamName, hakmaster: isHakmaster}),
-        statusCode: {
-            200: function(data) {
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-            },
-            404: function(data) {
-                //todo: the uuid of the team could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    let teamUuid = $(this).data("team-uuid");
+    let teamName = $("#inputTeamName-" + teamUuid).val();
+    $rest.updateTeam(teamUuid, teamName, function() {
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
     });
 }
 
 /**
- * Service called when a team is deleted.
+ * Deletes a team by retrieving field values and calling the REST function for the service.
  */
 function deleteTeam() {
     const teamUuid = $(this).data("team-uuid");
-    $.ajax({
-        url: $rest.contextPath() + URL_TEAM,
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        data: JSON.stringify({uuid: teamUuid}),
-        statusCode: {
-            204: function(data) {
-                const teamTable = $('#teamsTable');
-                teamTable.expanded = false;
-                teamTable.bootstrapTable("collapseAllRows");
-                teamTable.bootstrapTable("refresh", {silent: true});
-            },
-            404: function(data) {
-                //todo: the uuid of the team could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    $rest.deleteTeam(teamUuid, function() {
+        let table = $('#teamsTable');
+        table.expanded = false;
+        table.bootstrapTable("collapseAllRows");
+        table.bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
+ * Creates a managed user by retrieving field values and calling the REST function for the service.
+ */
+function createManagedUser() {
+    const inputField = $("#createManagedUserNameInput");
+    const username = inputField.val();
+    $rest.createManagedUser(username, function() {
+        $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+    });
+    inputField.val("");
+}
+
+/**
+ * Deletes a managed user by retrieving field values and calling the REST function for the service.
+ */
+function deleteManagedUser() {
+    const username = $(this).data("user-username");
+    $rest.deleteManagedUser(username, function() {
+        let table = $('#managedUsersTable');
+        table.expanded = false;
+        table.bootstrapTable("collapseAllRows");
+        table.bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
+ * Creates a LDAP user by retrieving field values and calling the REST function for the service.
+ */
+function createLdapUser() {
+    const inputField = $("#createLdapUserNameInput");
+    const username = inputField.val();
+    $rest.createLdapUser(username, function() {
+        $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+    });
+    inputField.val("");
+}
+
+/**
+ * Deletes a LDAP user by retrieving field values and calling the REST function for the service.
+ */
+function deleteLdapUser() {
+    const username = $(this).data("user-username");
+    $rest.deleteLdapUser(username, function() {
+        let table = $('#ldapUsersTable');
+        table.expanded = false;
+        table.bootstrapTable("collapseAllRows");
+        table.bootstrapTable("refresh", {silent: true});
     });
 }
 
@@ -431,120 +439,6 @@ function deleteApiKey(apikey) {
             },
             404: function (data) {
                 //todo: the api key could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-}
-
-/**
- * Service called when a user is created.
- */
-function createLdapUser() {
-    const inputField = $("#createLdapUserNameInput");
-    const username = inputField.val();
-    $.ajax({
-        url: $rest.contextPath() + URL_USER_LDAP,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_PUT,
-        data: JSON.stringify({username: username}),
-        statusCode: {
-            201: function (data) {
-                $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
-            },
-            400: function (data) {
-                //todo: username cannot be blank
-            },
-            409: function (data) {
-                //todo: a user with the same username already exists
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-    inputField.val("");
-}
-
-/**
- * Service called when a user is deleted.
- */
-function deleteLdapUser() {
-    const username = $(this).data("user-username");
-    $.ajax({
-        url: $rest.contextPath() + URL_USER_LDAP,
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        data: JSON.stringify({username: username}),
-        statusCode: {
-            204: function (data) {
-                const ldapUserTable = $('#ldapUsersTable');
-                ldapUserTable.expanded = false;
-                ldapUserTable.bootstrapTable("collapseAllRows");
-                ldapUserTable.bootstrapTable("refresh", {silent: true});
-            },
-            404: function (data) {
-                //todo: the user could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-}
-
-/**
- * Service called when a user is created.
- */
-function createManagedUser() {
-    const inputField = $("#createManagedUserNameInput");
-    const username = inputField.val();
-    $.ajax({
-        url: $rest.contextPath() + URL_USER_MANAGED,
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_PUT,
-        data: JSON.stringify({username: username}),
-        statusCode: {
-            201: function (data) {
-                $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
-            },
-            400: function (data) {
-                //todo: username cannot be blank
-            },
-            409: function (data) {
-                //todo: a user with the same username already exists
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
-    });
-    inputField.val("");
-}
-
-/**
- * Service called when a user is deleted.
- */
-function deleteManagedUser() {
-    const username = $(this).data("user-username");
-    $.ajax({
-        url: $rest.contextPath() + URL_USER_MANAGED,
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        data: JSON.stringify({username: username}),
-        statusCode: {
-            204: function (data) {
-                const managedUserTable = $("#managedUsersTable");
-                managedUserTable.expanded = false;
-                managedUserTable.bootstrapTable("collapseAllRows");
-                managedUserTable.bootstrapTable("refresh", {silent: true});
-            },
-            404: function (data) {
-                //todo: the user could not be found
             }
         },
         error: function(xhr, ajaxOptions, thrownError){

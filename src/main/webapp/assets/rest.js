@@ -594,6 +594,229 @@ $rest.getComponentCurrentMetrics = function getComponentCurrentMetrics(uuid, suc
 };
 
 /**
+ * Service called when a team is created.
+ */
+$rest.createTeam = function createTeam(name, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({name: name}),
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a team is updated.
+ */
+$rest.updateTeam = function updateTeam(uuid, name, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({uuid: uuid, name: name}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a team is deleted.
+ */
+$rest.deleteTeam = function deleteTeam(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_TEAM,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        data: JSON.stringify({uuid: uuid}),
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a managed user is created.
+ */
+$rest.createManagedUser = function createManagedUser(username, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER_MANAGED,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a managed user is updated.
+ * //todo: complete this service on client and server side
+ */
+$rest.updateManagedUser = function updateManagedUser(username, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER_MANAGED,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a managed user is deleted.
+ */
+$rest.deleteManagedUser = function deleteManagedUser(username, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER_MANAGED,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a LDAP user is created.
+ */
+$rest.createLdapUser = function createLdapUser(username, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER_LDAP,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a LDAP user is deleted.
+ */
+$rest.deleteLdapUser = function deleteLdapUser(username, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER_LDAP,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        data: JSON.stringify({username: username}),
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

@@ -904,6 +904,74 @@ $rest.deleteApiKey = function deleteApiKey(apikey, successCallback, failCallback
 };
 
 /**
+ * Service called when a user is assigned to a team.
+ */
+$rest.assignUserToTeam = function assignUserToTeam(username, teamuuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER + "/" + username + "/membership",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({uuid: teamuuid}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                // The user is already a member of the specified team
+                // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a user is un-assigned from a team.
+ */
+$rest.removeUserFromTeam = function removeUserFromTeam(username, teamuuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER + "/" + username + "/membership",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
+        data: JSON.stringify({uuid: teamuuid}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                // The user was not a member of the specified team
+                // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

@@ -41,12 +41,6 @@ function formatTeamTable(res) {
         } else {
             res[i].membersNum = res[i].ldapUsers.length;
         }
-
-        if (res[i].hakmaster === true) {
-            res[i].hakmasterIcon = "&#10004;";
-        } else {
-            res[i].hakmasterIcon = "";
-        }
     }
     return res;
 }
@@ -85,10 +79,6 @@ function formatManagedUserTable(res) {
  * view with simple inline templates.
  */
 function teamDetailFormatter(index, row) {
-    let hakmasterChecked = "";
-    if (row.hakmaster === true) {
-        hakmasterChecked = 'checked="checked"';
-    }
     let html = [];
 
     let apiKeysHtml = "";
@@ -127,6 +117,17 @@ function teamDetailFormatter(index, row) {
             </li>`;
         }
     }
+    if (!(row.managedUsers === undefined)) {
+        for (let i = 0; i < row.managedUsers.length; i++) {
+            membersHtml += `
+            <li class="list-group-item" id="container-${row.uuid}-${row.managedUsers[i].username}-membership">
+                <a href="#" onclick="removeTeamMembership('${row.uuid}', '${row.managedUsers[i].username}')" data-toggle="tooltip" title="Remove User From Team">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                ${row.managedUsers[i].username}
+            </li>`;
+        }
+    }
 
     let template = `
     <div class="col-sm-6 col-md-6">
@@ -141,10 +142,6 @@ function teamDetailFormatter(index, row) {
                 ${apiKeysHtml}
             </ul>
         </div> 
-        <div class="form-group">
-            <label for="inputApiKeys">Hakmaster</label>
-            <input type="checkbox" class="checkbox-inline" id="inputTeamHakmaster-${row.uuid}" placeholder="Hakmaster" ${hakmasterChecked} data-team-uuid="${row.uuid}">
-        </div> 
     </div>
     <div class="col-sm-6 col-md-6">
         <div class="form-group">
@@ -158,7 +155,6 @@ function teamDetailFormatter(index, row) {
     </div>
     <script type="text/javascript">
         $("#inputTeamName-${row.uuid}").keypress($common.debounce(updateTeam, 750));
-        $("#inputTeamHakmaster-${row.uuid}").change(updateTeam);
         $("#deleteTeam-${row.uuid}").on("click", deleteTeam);
     </script>
 `;
@@ -408,60 +404,31 @@ function deleteApiKey(apikey) {
 }
 
 /**
- * Service called when teams are assigned to a user
+ * Assigns a user to a team by retrieving field values and calling the REST function for the service.
  */
 function assignTeamToUser() {
     const username = $("#assignTeamToUser").attr("data-username");
     const selections = $("#teamsMembershipTable").bootstrapTable("getAllSelections");
     for (let i = 0; i < selections.length; i++) {
         let uuid = selections[i].uuid;
-        $.ajax({
-            url: $rest.contextPath() + URL_USER + "/" + username + "/membership",
-            contentType: CONTENT_TYPE_JSON,
-            dataType: DATA_TYPE,
-            type: METHOD_POST,
-            data: JSON.stringify({uuid: uuid}),
-            statusCode: {
-                200: function (data) {
-                    $("#teamsTable").bootstrapTable("refresh", {silent: true});
-                    $("#usersTable").bootstrapTable("refresh", {silent: true});
-                },
-                304: function (data) {
-                    //todo: The user is already a member of the specified team
-                },
-                404: function (data) {
-                    //todo: The user or team could not be found
-                }
-            },
-            error: function(xhr, ajaxOptions, thrownError){
-                console.log("failed");
+        $rest.assignUserToTeam(username, uuid, function (data) {
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+                $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
             }
-        });
+        );
     }
 }
 
+/**
+ * Removes assignment of a user to a team by retrieving field values and calling the REST function for the service.
+ */
 function removeTeamMembership(uuid, username) {
-    $.ajax({
-        url: $rest.contextPath() + URL_USER + "/" + username + "/membership",
-        contentType: CONTENT_TYPE_JSON,
-        type: METHOD_DELETE,
-        data: JSON.stringify({uuid: uuid}),
-        statusCode: {
-            200: function (data) {
-                $("#container-" + uuid + "-" + username + "-membership").remove();
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-                $("#usersTable").bootstrapTable("refresh", {silent: true});
-            },
-            304: function (data) {
-                //todo: The user was not a member of the specified team
-            },
-            404: function (data) {
-                //todo: the user or team could not be found
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            console.log("failed");
-        }
+    $rest.removeUserFromTeam(username, uuid, function (data) {
+        $("#container-" + uuid + "-" + username + "-membership").remove();
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
+        $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+        $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
     });
 }
 

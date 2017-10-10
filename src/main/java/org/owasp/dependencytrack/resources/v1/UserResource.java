@@ -85,8 +85,7 @@ public class UserResource extends AlpineResource {
         try {
             final Principal principal = auth.authenticate();
             if (principal != null) {
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Successful user login (username: " + username
-                        + " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "Successful user login / username: " + username);
                 final KeyManager km = KeyManager.getInstance();
                 final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
                 final String token = jwt.createToken(principal);
@@ -94,8 +93,7 @@ public class UserResource extends AlpineResource {
             }
         } catch (AuthenticationException e) {
         }
-        LOGGER.warn(SecurityMarkers.SECURITY_AUDIT, "Unauthorized login attempt (username: " + username
-                + " / ip address: " + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+        super.addAuditableEvent(LOGGER, "Unauthorized login attempt / username: " + username);
         return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
@@ -194,9 +192,7 @@ public class UserResource extends AlpineResource {
             LdapUser user = qm.getLdapUser(jsonUser.getUsername());
             if (user == null) {
                 user = qm.createLdapUser(jsonUser.getUsername());
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "LDAP user created: '" + jsonUser.getUsername() + "' by: "
-                        + getPrincipal().getName() +  " / ip address: " + super.getRemoteAddress() + " / agent: "
-                        + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "LDAP user created: " + jsonUser.getUsername());
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -223,9 +219,7 @@ public class UserResource extends AlpineResource {
             final LdapUser user = qm.getLdapUser(jsonUser.getUsername());
             if (user != null) {
                 qm.delete(user);
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: '" + jsonUser.getUsername() + "' by: "
-                        + getPrincipal().getName() + " / ip address: " + super.getRemoteAddress() + " / agent: "
-                        + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "LDAP user deleted: " + jsonUser.getUsername());
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -257,9 +251,7 @@ public class UserResource extends AlpineResource {
             ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
             if (user == null) {
                 user = qm.createManagedUser(jsonUser.getUsername(), String.valueOf(PasswordService.createHash("password".toCharArray()))); // todo password
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Managed user created: '" + jsonUser.getUsername() + "' by: "
-                        + getPrincipal().getName() + " / ip address: " + super.getRemoteAddress() + " / agent: "
-                        + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "Managed user created: " + jsonUser.getUsername());
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
@@ -286,9 +278,7 @@ public class UserResource extends AlpineResource {
             final ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
             if (user != null) {
                 qm.delete(user);
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: '" + jsonUser.getUsername() + "' by: "
-                        + getPrincipal().getName() + " / ip address: " + super.getRemoteAddress() + " / agent: "
-                        + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "Managed user deleted: " + jsonUser.getUsername());
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
@@ -328,9 +318,7 @@ public class UserResource extends AlpineResource {
             final boolean modified = qm.addUserToTeam(principal, team);
             principal = qm.getObjectById(principal.getClass(), principal.getId());
             if (modified) {
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Added team membership for: '" + principal.getName()
-                        + "' / team: '" + team.getName() + "' by: " + getPrincipal().getName() + " / ip address: "
-                        + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "Added team membership for: " + principal.getName() + " / team: " + team.getName());
                 return Response.ok(principal).build();
             } else {
                 return Response.status(Response.Status.NOT_MODIFIED).entity("The user is already a member of the specified team.").build();
@@ -370,9 +358,7 @@ public class UserResource extends AlpineResource {
             final boolean modified = qm.removeUserFromTeam(principal, team);
             principal = qm.getObjectById(principal.getClass(), principal.getId());
             if (modified) {
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Removed team membership for: '" + principal.getName()
-                        + "' / team: '" + team.getName() + "' by: " + getPrincipal().getName() + " / ip address: "
-                        + super.getRemoteAddress() + " / agent: " + super.getUserAgent() + ")");
+                super.addAuditableEvent(LOGGER, "Removed team membership for: " + principal.getName() + " / team: " + team.getName());
                 return Response.ok(principal).build();
             } else {
                 return Response.status(Response.Status.NOT_MODIFIED)

@@ -610,8 +610,8 @@ $.ajaxSetup({
             $(".main").css("display", "block");
             $("#modal-login").modal("hide");
         },
-        400: function() {
-            displayErrorModal("The request made was incorrect or not in the proper format (400).");
+        400: function(xhr) {
+            displayErrorModal(xhr, "The request made was incorrect or not in the proper format (400).");
         },
         401: function() {
             $("#navbar-container").css("display", "none");
@@ -620,17 +620,17 @@ $.ajaxSetup({
             $("#modal-login").modal("show");
             $("#username").focus();
         },
-        403: function() {
-            displayErrorModal("The request is forbidden (403).");
+        403: function(xhr) {
+            displayErrorModal(xhr, "The request is forbidden (403).");
         },
-        404: function() {
-            displayErrorModal("The requested object could not be found (404).");
+        404: function(xhr) {
+            displayErrorModal(xhr, "The requested object could not be found (404).");
         },
-        409: function() {
-            displayErrorModal("A conflict occurred preventing the request from being processed (409).");
+        409: function(xhr) {
+            displayErrorModal(xhr, "A conflict occurred preventing the request from being processed (409).");
         },
         500: function() {
-            displayErrorModal("An unexpected error occurred. Please contact the Dependency-Track administrator for assistance (500).");
+            displayErrorModal(null, "An unexpected error occurred. Please contact the Dependency-Track administrator for assistance (500).");
         }
     }
 });

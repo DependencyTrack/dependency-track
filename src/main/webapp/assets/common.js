@@ -208,7 +208,11 @@ $(document).ready(function () {
 /**
  * Displays an error modal with the specified message.
  */
-function displayErrorModal(message) {
+function displayErrorModal(xhr, fallbackMessage) {
+    let message = fallbackMessage;
+    if (xhr && xhr.responseText && xhr.responseText.trim()) {
+        message = xhr.responseText.trim();
+    }
     $("#modal-genericError").modal("show");
     $("#modal-genericErrorContent").html(message);
 }
@@ -218,11 +222,11 @@ function displayErrorModal(message) {
  * critical, high, medium, and low severity vulnerabilities.
  */
 function generateSeverityProgressBar(critical, high, medium, low) {
-    var percentCritical = (critical/(critical+high+medium+low))*100;
-    var percentHigh = (high/(critical+high+medium+low))*100;
-    var percentMedium = (medium/(critical+high+medium+low))*100;
-    var percentLow = (low/(critical+high+medium+low))*100;
-    var block = '<span class="progress">';
+    let percentCritical = (critical/(critical+high+medium+low))*100;
+    let percentHigh = (high/(critical+high+medium+low))*100;
+    let percentMedium = (medium/(critical+high+medium+low))*100;
+    let percentLow = (low/(critical+high+medium+low))*100;
+    let block = '<span class="progress">';
     if (critical > 0) {
         block += '<div class="progress-bar severity-critical-bg" data-toggle="tooltip" data-placement="top" title="Critical: ' + critical + ' (' + Math.round(percentCritical*10)/10 + '%)" style="width:' + percentCritical+ '%">' + critical + '</div>';
     }

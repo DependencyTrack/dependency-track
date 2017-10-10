@@ -206,7 +206,9 @@ $(document).ready(function () {
 });
 
 /**
- * Displays an error modal with the specified message.
+ * Displays an error modal with the specified message. If the responseText
+ * from an AJAX response is available, that text will be used. If not, the
+ * fallback message will be used instead.
  */
 function displayErrorModal(xhr, fallbackMessage) {
     let message = fallbackMessage;

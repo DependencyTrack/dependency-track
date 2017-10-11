@@ -84,7 +84,7 @@ function populateProjectData(data) {
         let html = "";
         for (let i=0; i<data.tags.length; i++) {
             let tag = data.tags[i].name;
-            html += `<a href="../projects/?tag=${encodeURIComponent(tag)}"><span class="badge tag-standalone">${tag}</span></a>`;
+            html += `<a href="../projects/?tag=${encodeURIComponent(tag)}"><span class="badge tag-standalone">${filterXSS(tag)}</span></a>`;
         }
         $("#tags").html(html);
     }

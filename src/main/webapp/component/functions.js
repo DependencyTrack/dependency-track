@@ -18,21 +18,21 @@
 "use strict";
 
 function populateComponentData(data) {
-    $("#componentName").html(data.name);
+    $("#componentName").html(filterXSS(data.name));
     if (data.version) {
-        $("#componentVersion").html(" &#x025B8; " + data.version);
+        $("#componentVersion").html(" &#x025B8; " + filterXSS(data.version));
     }
     if (data.resolvedLicense && data.resolvedLicense.name) {
-        $("#componentLicense").html(data.resolvedLicense.name);
+        $("#componentLicense").html(filterXSS(data.resolvedLicense.name));
     } else if (data.license) {
-        $("#componentLicense").html(data.license);
+        $("#componentLicense").html(filterXSS(data.license));
     }
 }
 
 function formatVulnerabilitiesTable(res) {
     for (let i=0; i<res.length; i++) {
         let vulnurl = "../vulnerability/?source=" + res[i].source + "&vulnId=" + res[i].vulnId;
-        res[i].vulnerabilityhref = formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + res[i].vulnId + "</a>";
+        res[i].vulnerabilityhref = formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
 
         if (res[i].hasOwnProperty("cwe")) {
             res[i].cwefield = "CWE-" + res[i].cwe.cweId + " " + res[i].cwe.name;
@@ -52,17 +52,18 @@ function formatVulnerabilitiesTable(res) {
 function formatProjectsTable(res) {
     for (let i=0; i<res.length; i++) {
         let projecturl = "../project/?uuid=" + res[i].project.uuid;
-        res[i].project.projecthref = "<a href=\"" + projecturl + "\">" + res[i].project.name + "</a>";
+        res[i].project.projecthref = "<a href=\"" + projecturl + "\">" + filterXSS(res[i].project.name) + "</a>";
+        res[i].project.version = filterXSS(res[i].project.version);
     }
     return res;
 }
 
 function populateMetrics(data) {
-    $("#metricCritical").html(data.critical);
-    $("#metricHigh").html(data.high);
-    $("#metricMedium").html(data.medium);
-    $("#metricLow").html(data.low);
-    $("#metricIrs").html(data.inheritedRiskScore);
+    $("#metricCritical").html(filterXSS(data.critical));
+    $("#metricHigh").html(filterXSS(data.high));
+    $("#metricMedium").html(filterXSS(data.medium));
+    $("#metricLow").html(filterXSS(data.low));
+    $("#metricIrs").html(filterXSS(data.inheritedRiskScore));
 }
 
 /**

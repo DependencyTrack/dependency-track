@@ -383,7 +383,7 @@ function addApiKey(uuid) {
  */
 function regenerateApiKey(apikey) {
     $rest.regenerateApiKey(apikey, function (data) {
-        $("#apikey-" + apikey).html(data.key);
+        $("#apikey-" + apikey).html(filterXSS(data.key));
         $("#apikey-" + apikey).attr("id", "apikey-" + data.key);
         $("#regen-" + apikey).attr("id", "regen-" + data.key);
         $("#regen-" + data.key).attr("onclick", "regenerateApiKey('" + data.key + "')");

@@ -24,11 +24,13 @@ function formatComponentsTable(res) {
     let componentsTable = $("#componentsTable");
     for (let i=0; i<res.length; i++) {
         let componenturl = "../component/?uuid=" + res[i].uuid;
-        res[i].componenthref = "<a href=\"" + componenturl + "\">" + res[i].name + "</a>";
+        res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].name) + "</a>";
+        res[i].version = filterXSS(res[i].version);
+        res[i].group = filterXSS(res[i].group);
 
         if (res[i].hasOwnProperty("resolvedLicense")) {
             let licenseurl = "../license/?licenseId=" + res[i].resolvedLicense.licenseId;
-            res[i].license = "<a href=\"" + licenseurl + "\">" + res[i].resolvedLicense.licenseId + "</a>";
+            res[i].license = "<a href=\"" + licenseurl + "\">" + filterXSS(res[i].resolvedLicense.licenseId) + "</a>";
         }
 
         $rest.getComponentCurrentMetrics(res[i].uuid, function (data) {

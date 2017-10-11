@@ -24,11 +24,13 @@ function formatComponentsTable(res) {
     let componentsTable = $("#componentsTable");
     for (let i=0; i<res.length; i++) {
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
-        res[i].componenthref = "<a href=\"" + componenturl + "\">" + res[i].component.name + "</a>";
+        res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].component.name)+ "</a>";
+        res[i].component.version = filterXSS(res[i].component.version);
+        res[i].component.group = filterXSS(res[i].component.group);
 
         if (res[i].component.hasOwnProperty("resolvedLicense")) {
             let licenseurl = "../license/?licenseId=" + res[i].component.resolvedLicense.licenseId;
-            res[i].component.license = "<a href=\"" + licenseurl + "\">" + res[i].component.resolvedLicense.licenseId + "</a>";
+            res[i].component.license = "<a href=\"" + licenseurl + "\">" + filterXSS(res[i].component.resolvedLicense.licenseId) + "</a>";
         }
 
         $rest.getComponentCurrentMetrics(res[i].component.uuid, function (data) {
@@ -76,9 +78,9 @@ function clearInputFields() {
 }
 
 function populateProjectData(data) {
-    $("#projectTitle").html(data.name);
+    $("#projectTitle").html(filterXSS(data.name));
     if (data.version) {
-        $("#projectVersion").html(" &#x025B8; " + data.version);
+        $("#projectVersion").html(" &#x025B8; " + filterXSS(data.version));
     }
     if (data.tags) {
         let html = "";
@@ -99,11 +101,11 @@ function populateLicenseData(data) {
 }
 
 function populateMetrics(data) {
-    $("#metricCritical").html(data.critical);
-    $("#metricHigh").html(data.high);
-    $("#metricMedium").html(data.medium);
-    $("#metricLow").html(data.low);
-    $("#metricIrs").html(data.inheritedRiskScore);
+    $("#metricCritical").html(filterXSS(data.critical));
+    $("#metricHigh").html(filterXSS(data.high));
+    $("#metricMedium").html(filterXSS(data.medium));
+    $("#metricLow").html(filterXSS(data.low));
+    $("#metricIrs").html(filterXSS(data.inheritedRiskScore));
 }
 
 /**

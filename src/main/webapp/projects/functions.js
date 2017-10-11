@@ -24,7 +24,7 @@ function formatProjectsTable(res) {
     let projectsTable = $("#projectsTable");
     for (let i=0; i<res.length; i++) {
         let projecturl = "../project/?uuid=" + res[i].uuid;
-        res[i].projecthref = "<a href=\"" + projecturl + "\">" + res[i].name + "</a>";
+        res[i].projecthref = "<a href=\"" + projecturl + "\">" + filterXSS(res[i].name) + "</a>";
 
         $rest.getProjectCurrentMetrics(res[i].uuid, function (data) {
             res[i].vulnerabilities = generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);

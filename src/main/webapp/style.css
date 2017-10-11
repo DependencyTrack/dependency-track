@@ -334,6 +334,12 @@ h4 {
     margin-left: 15px;
     margin-right: -30px;
 }
+.widget .panel-footer:hover {
+     background: #e0e0e0;
+}
+.widget .widget-details-selector:focus, .widget .widget-details-selector:active:focus {
+    outline:none;
+}
 .title {
     font-size: 24px;
 }

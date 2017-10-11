@@ -80,6 +80,14 @@ function populateProjectData(data) {
     if (data.version) {
         $("#projectVersion").html(" &#x025B8; " + data.version);
     }
+    if (data.tags) {
+        let html = "";
+        for (let i=0; i<data.tags.length; i++) {
+            let tag = data.tags[i].name;
+            html += `<a href="../projects/?tag=${encodeURIComponent(tag)}"><span class="badge tag-standalone">${tag}</span></a>`;
+        }
+        $("#tags").html(html);
+    }
 }
 
 function populateLicenseData(data) {

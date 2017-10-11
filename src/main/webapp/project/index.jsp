@@ -25,7 +25,7 @@
                                     <span id="projectVersion"></span>
                                 </span>
                                 <br/>Sub Project: 0<br/>
-                                <a href="#"><span class="badge tag-standalone">rest</span></a><a href="#"><span class="badge tag-standalone">api</span></a><a href="#"><span class="badge tag-standalone">java</span></a><a href="#"><span class="badge tag-standalone">javascript</span></a>
+                                <span id="tags"></span>
                             </div>
                         </div>
                         <div class="col-sm-3 col-md-3 col-lg-2">

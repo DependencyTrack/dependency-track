@@ -53,7 +53,7 @@ public class Tag implements Serializable {
     @Column(name = "NAME", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.WORD_CHARS, message = "The name may only contain word characters")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent

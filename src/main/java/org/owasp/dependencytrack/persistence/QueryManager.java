@@ -21,6 +21,7 @@ import alpine.event.framework.SingleThreadedEventService;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
@@ -109,11 +110,14 @@ public class QueryManager extends AlpineQueryManager {
         final List<Tag> resolvedTags = new ArrayList<>();
         final List<String> unresolvedTags = new ArrayList<>();
         for (Tag tag: tags) {
-            final Tag resolvedTag = getTagByName(tag.getName());
-            if (resolvedTag != null) {
-                resolvedTags.add(resolvedTag);
-            } else {
-                unresolvedTags.add(tag.getName());
+            final String trimmedTag = StringUtils.trimToNull(tag.getName());
+            if (trimmedTag != null) {
+                final Tag resolvedTag = getTagByName(trimmedTag);
+                if (resolvedTag != null) {
+                    resolvedTags.add(resolvedTag);
+                } else {
+                    unresolvedTags.add(trimmedTag);
+                }
             }
         }
         resolvedTags.addAll(createTags(unresolvedTags));
@@ -127,8 +131,9 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public Tag getTagByName(String name) {
+        final String trimmedTag = StringUtils.trimToNull(name);
         final Query query = pm.newQuery(Tag.class, "name == :name");
-        final List<Tag> result = (List<Tag>) query.execute(name);
+        final List<Tag> result = (List<Tag>) query.execute(trimmedTag);
         return result.size() == 0 ? null : result.get(0);
     }
 
@@ -138,12 +143,13 @@ public class QueryManager extends AlpineQueryManager {
      * @return the created Tag object
      */
     public Tag createTag(String name) {
-        final Tag resolvedTag = getTagByName(name);
+        final String trimmedTag = StringUtils.trimToNull(name);
+        final Tag resolvedTag = getTagByName(trimmedTag);
         if (resolvedTag != null) {
             return resolvedTag;
         }
         final Tag tag = new Tag();
-        tag.setName(name);
+        tag.setName(trimmedTag);
         pm.currentTransaction().begin();
         pm.makePersistent(tag);
         pm.currentTransaction().commit();
@@ -158,9 +164,10 @@ public class QueryManager extends AlpineQueryManager {
     public List<Tag> createTags(List<String> names) {
         final List<Tag> newTags = new ArrayList<>();
         for (String name: names) {
-            if (getTagByName(name) == null) {
+            final String trimmedTag = StringUtils.trimToNull(name);
+            if (getTagByName(trimmedTag) == null) {
                 final Tag tag = new Tag();
-                tag.setName(name);
+                tag.setName(trimmedTag);
                 newTags.add(tag);
             }
         }

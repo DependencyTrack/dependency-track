@@ -70,6 +70,7 @@ public class UserResource extends AlpineResource {
 
     @POST
     @Path("login")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation(
             value = "Assert login credentials",

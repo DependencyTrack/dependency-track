@@ -151,10 +151,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         final Tag tag = new Tag();
         tag.setName(trimmedTag);
-        pm.currentTransaction().begin();
-        pm.makePersistent(tag);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(Tag.class, tag.getId());
+        return persist(tag);
     }
 
     /**
@@ -172,10 +169,7 @@ public class QueryManager extends AlpineQueryManager {
                 newTags.add(tag);
             }
         }
-        pm.currentTransaction().begin();
-        pm.makePersistentAll(newTags);
-        pm.currentTransaction().commit();
-        return newTags;
+        return new ArrayList<>(persist(newTags));
     }
 
     /**
@@ -258,10 +252,7 @@ public class QueryManager extends AlpineQueryManager {
         property.setProject(project);
         property.setKey(key);
         property.setValue(value);
-        pm.currentTransaction().begin();
-        pm.makePersistent(property);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(ProjectProperty.class, property.getId());
+        return persist(property);
     }
 
     /**
@@ -276,10 +267,7 @@ public class QueryManager extends AlpineQueryManager {
         scan.setExecuted(executed);
         scan.setImported(imported);
         scan.setProject(project);
-        pm.currentTransaction().begin();
-        pm.makePersistent(scan);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(Scan.class, scan.getId());
+        return persist(scan);
     }
 
     /**
@@ -353,12 +341,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         component.setResolvedLicense(resolvedLicense);
         component.setParent(parent);
-        pm.currentTransaction().begin();
-        pm.makePersistent(component);
-        pm.currentTransaction().commit();
-
-        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Component result = pm.getObjectById(Component.class, component.getId());
+        final Component result = persist(component);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
         return result;
@@ -383,9 +366,7 @@ public class QueryManager extends AlpineQueryManager {
         component.setLicense(transientComponent.getLicense());
         component.setResolvedLicense(transientComponent.getResolvedLicense());
         component.setParent(transientComponent.getParent());
-        pm.currentTransaction().commit();
-        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Component result = pm.getObjectById(Component.class, component.getId());
+        final Component result = persist(component);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
         return result;
@@ -431,10 +412,7 @@ public class QueryManager extends AlpineQueryManager {
         evidence.setSource(source);
         evidence.setName(name);
         evidence.setValue(value);
-        pm.currentTransaction().begin();
-        pm.makePersistent(evidence);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(Evidence.class, evidence.getId());
+        return persist(evidence);
     }
 
     /**
@@ -569,7 +547,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a vulnerability by it's name (i.e. CVE-2017-0001) and source
+     * Returns a vulnerability by it's name (i.e. CVE-2017-0001) and source.
      * @param source the source of the vulnerability
      * @param vulnId the name of the vulnerability
      * @return the matching Vulnerability object, or null if not found
@@ -583,7 +561,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Adds a vulnerability to a component
+     * Adds a vulnerability to a component.
      * @param vulnerability the vulnerabillity to add
      * @param component the component affected by the vulnerabiity
      */
@@ -599,7 +577,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Removes a vulnerability from a component
+     * Removes a vulnerability from a component.
      * @param vulnerability the vulnerabillity to remove
      * @param component the component unaffected by the vulnerabiity
      */
@@ -649,10 +627,7 @@ public class QueryManager extends AlpineQueryManager {
         cwe = new Cwe();
         cwe.setCweId(id);
         cwe.setName(name);
-        pm.currentTransaction().begin();
-        pm.makePersistent(cwe);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(Cwe.class, cwe.getId());
+        return persist(cwe);
     }
 
     /**
@@ -704,10 +679,7 @@ public class QueryManager extends AlpineQueryManager {
         dependency.setAddedBy(addedBy);
         dependency.setAddedOn(new Date());
         dependency.setNotes(notes);
-        pm.currentTransaction().begin();
-        pm.makePersistent(dependency);
-        pm.currentTransaction().commit();
-        return pm.getObjectById(Dependency.class, dependency.getId());
+        return persist(dependency);
     }
 
     /**
@@ -897,6 +869,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Retrieves the most recent ProjectMetrics.
+     * @param project the Project to retrieve metrics for
      * @return a ProjectMetrics object
      */
     @SuppressWarnings("unchecked")
@@ -909,6 +882,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Retrieves ProjectMetrics in descending order starting with the most recent.
+     * @param project the Project to retrieve metrics for
      * @return a PaginatedResult object
      */
     @SuppressWarnings("unchecked")
@@ -929,6 +903,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Retrieves the most recent ComponentMetrics.
+     * @param component the Component to retrieve metrics for
      * @return a ComponentMetrics object
      */
     @SuppressWarnings("unchecked")
@@ -941,6 +916,7 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Retrieves ComponentMetrics in descending order starting with the most recent.
+     * @param component the Component to retrieve metrics for
      * @return a PaginatedResult object
      */
     @SuppressWarnings("unchecked")

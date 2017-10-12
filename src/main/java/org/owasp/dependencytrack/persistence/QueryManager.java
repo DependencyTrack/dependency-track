@@ -197,8 +197,8 @@ public class QueryManager extends AlpineQueryManager {
         if (parent != null) {
             project.setParent(parent);
         }
-        final Project result = super.persist(project);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, result));
+        final Project result = persist(project);
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -219,8 +219,8 @@ public class QueryManager extends AlpineQueryManager {
         project.setDescription(description);
         project.setVersion(version);
         project.setTags(resolveTags(tags));
-        final Project result = super.persist(project);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, result));
+        final Project result = persist(project);
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -473,7 +473,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public License createLicense(License license, boolean commitIndex) {
         final License result = persist(license);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, result));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, License.class);
         return result;
     }
@@ -486,7 +486,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public Vulnerability createVulnerability(Vulnerability vulnerability, boolean commitIndex) {
         final Vulnerability result = persist(vulnerability);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, result));
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Vulnerability.class);
         return result;
     }
@@ -532,7 +532,7 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setMatchedCPE(transientVulnerability.getMatchedCPE());
 
             final Vulnerability result = persist(vulnerability);
-            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, result));
+            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
             commitSearchIndex(commitIndex, Vulnerability.class);
             return result;
         }

@@ -54,7 +54,7 @@ public class SearchResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permission.PROJECT_VIEW)
-    public Response getProjects(@PathParam("query") String query) {
+    public Response search(@PathParam("query") String query) {
         final SearchManager searchManager = new SearchManager();
         final SearchResult searchResult = searchManager.searchIndices(query, 10);
         return Response.ok(searchResult).build();

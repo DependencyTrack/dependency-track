@@ -467,7 +467,7 @@ $rest.getLicense = function getLicense(licenseId, successCallback, failCallback)
  */
 $rest.getVulnerabilityByUuid = function getVulnerabilityByUuid(uuid, successCallback, failCallback) {
     $.ajax({
-        url: $rest.contextPath() + URL_VULNERABILITY + "/uuid/" + uuid,
+        url: $rest.contextPath() + URL_VULNERABILITY + "/" + uuid,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,

@@ -298,6 +298,20 @@ function capitalize(string) {
 }
 
 /**
+ * Given a comma-separated string, creates an array of objects.
+ */
+function csvStringToObjectArray(csvString) {
+    let csvArray = [];
+    if (!$common.isEmpty(csvString)) {
+        let tmpArray = csvString.split(",");
+        for (let i in tmpArray) {
+            csvArray.push({name: tmpArray[i]});
+        }
+    }
+    return csvArray;
+}
+
+/**
  * Defines JSON characters that need to be escaped when data is used in HTML
  */
 const __entityMap = {

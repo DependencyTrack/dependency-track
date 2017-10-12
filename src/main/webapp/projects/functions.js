@@ -42,21 +42,6 @@ function projectCreated(data) {
 }
 
 /**
- * Given a comma-separated string of tags, creates an
- * array of tag objects.
- */
-function tagsStringToObjectArray(tagsString) {
-    let tagsArray = [];
-    if (!$common.isEmpty(tagsString)) {
-        let tmpArray = tagsString.split(",");
-        for (let i in tmpArray) {
-            tagsArray.push({name: tmpArray[i]});
-        }
-    }
-    return tagsArray;
-}
-
-/**
  * Clears all the input fields from the modal.
  */
 function clearInputFields() {
@@ -79,7 +64,7 @@ $(document).ready(function () {
         const name = $("#createProjectNameInput").val();
         const version = $("#createProjectVersionInput").val();
         const description = $("#createProjectDescriptionInput").val();
-        const tags = tagsStringToObjectArray($("#createProjectTagsInput").val());
+        const tags = csvStringToObjectArray($("#createProjectTagsInput").val());
         $rest.createProject(name, version, description, tags, projectCreated);
         clearInputFields();
     });

@@ -41,6 +41,7 @@ import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -196,31 +197,30 @@ public class QueryManager extends AlpineQueryManager {
         if (parent != null) {
             project.setParent(parent);
         }
-        pm.currentTransaction().begin();
-        pm.makePersistent(project);
-        pm.currentTransaction().commit();
-        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Project result = pm.getObjectById(Project.class, project.getId());
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        final Project result = super.persist(project);
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
 
     /**
      * Updates an existing Project.
-     * @param transientProject the project to update
+     * @param uuid the uuid of the project to update
+     * @param name the name of the project
+     * @param description a description of the project
+     * @param version the project version
+     * @param tags a List of Tags - these will be resolved if necessary
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(Project transientProject, boolean commitIndex) {
-        final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
-        pm.currentTransaction().begin();
-        project.setName(transientProject.getName());
-        project.setVersion(transientProject.getVersion());
-        pm.currentTransaction().commit();
-        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Project result = pm.getObjectById(Project.class, project.getId());
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, boolean commitIndex) {
+        final Project project = getObjectByUuid(Project.class, uuid);
+        project.setName(name);
+        project.setDescription(description);
+        project.setVersion(version);
+        project.setTags(resolveTags(tags));
+        final Project result = super.persist(project);
+        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, result));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -239,6 +239,7 @@ public class QueryManager extends AlpineQueryManager {
         final Project result = pm.getObjectById(Project.class, project.getId());
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
+        deleteProjectMetrics(project);
         delete(project.getProperties());
         delete(getScans(project));
         delete(project.getChildren());
@@ -915,6 +916,15 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
         query.setOrdering("lastOccurrence desc");
         return execute(query, project);
+    }
+
+    /**
+     * Deleted all metrics associated for the specified Project.
+     * @param project the Project to delete metrics for
+     */
+    public void deleteProjectMetrics(Project project) {
+        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
+        query.deletePersistentAll(project);
     }
 
     /**

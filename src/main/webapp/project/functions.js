@@ -78,15 +78,26 @@ function clearInputFields() {
 }
 
 function populateProjectData(data) {
-    $("#projectTitle").html(filterXSS(data.name));
+    let escapedProjectName = filterXSS(data.name);
+    let escapedProjectVersion = filterXSS(data.version);
+    let escapedProjectDescription = filterXSS(data.description);
+
+    $("#projectNameInput").val(data.name);
+    $("#projectVersionInput").val(data.version);
+    $("#projectDescriptionInput").val(data.description);
+
+    console.log(data);
+    $("#projectTitle").html(escapedProjectName);
     if (data.version) {
-        $("#projectVersion").html(" &#x025B8; " + filterXSS(data.version));
+        $("#projectVersion").html(" &#x025B8; " + escapedProjectVersion);
     }
     if (data.tags) {
         let html = "";
+        let tagsInput = $("#projectTagsInput");
         for (let i=0; i<data.tags.length; i++) {
             let tag = data.tags[i].name;
             html += `<a href="../projects/?tag=${encodeURIComponent(tag)}"><span class="badge tag-standalone">${filterXSS(tag)}</span></a>`;
+            tagsInput.tagsinput('add', tag);
         }
         $("#tags").html(html);
     }
@@ -131,6 +142,22 @@ $(document).ready(function () {
     // When modal closes, clear out the input fields
     $("#modalCreateComponent").on("hidden.bs.modal", function () {
         $("#createComponentNameInput").val("");
+    });
+
+    $("#updateProjectButton").on("click", function () {
+        let name = $("#projectNameInput").val();
+        let version = $("#projectVersionInput").val();
+        let description = $("#projectDescriptionInput").val();
+        let tags = csvStringToObjectArray($("#projectTagsInput").val());
+        $rest.updateProject(uuid, name, version, description, tags, function() {
+            $rest.getProject(uuid, populateProjectData);
+        });
+    });
+
+    $("#deleteProjectButton").on("click", function () {
+        $rest.deleteProject(uuid, function() {
+            window.location.href = "../projects";
+        });
     });
 
 });

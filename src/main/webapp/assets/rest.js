@@ -313,10 +313,9 @@ $rest.updateProject = function updateProject(uuid, name, version, description, t
  */
 $rest.deleteProject = function deleteProject(uuid, successCallback, failCallback) {
     $.ajax({
-        url: $rest.contextPath() + URL_PROJECT,
+        url: $rest.contextPath() + URL_PROJECT + "/" + uuid,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_DELETE,
-        data: JSON.stringify({uuid: uuid}),
         statusCode: {
             204: function(data) {
                 if (successCallback) {

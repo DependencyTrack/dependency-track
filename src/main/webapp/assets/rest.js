@@ -362,6 +362,64 @@ $rest.createComponent = function createComponent(name, version, group, descripti
 };
 
 /**
+ * Service called when a component is updated.
+ */
+$rest.updateComponent = function updateComponent(uuid, name, version, group, description, license, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_COMPONENT,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({uuid: uuid, name: name, version: version, group: group, description: description, license: license}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a component is deleted.
+ */
+$rest.deleteComponent = function deleteProject(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_COMPONENT + "/" + uuid,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called to retrieve all components
  */
 $rest.getComponents = function getProjects(successCallback, failCallback) {
@@ -419,7 +477,7 @@ $rest.getComponent = function getProject(uuid, successCallback, failCallback) {
  */
 $rest.getLicenses = function getLicenses(successCallback, failCallback) {
     $.ajax({
-        url: $rest.contextPath() + URL_LICENSE,
+        url: $rest.contextPath() + URL_LICENSE + "?offset=0&limit=1000",
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,

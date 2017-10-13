@@ -153,7 +153,7 @@
                         <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="projectNameInput">
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="projectVersionInput">Component Version</label>
+                        <label class="sr-only" for="projectVersionInput">Version</label>
                         <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="projectVersionInput">
                     </div>
                     <div class="form-group">

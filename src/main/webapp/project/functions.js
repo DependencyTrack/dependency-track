@@ -86,7 +86,6 @@ function populateProjectData(data) {
     $("#projectVersionInput").val(data.version);
     $("#projectDescriptionInput").val(data.description);
 
-    console.log(data);
     $("#projectTitle").html(escapedProjectName);
     if (data.version) {
         $("#projectVersion").html(" &#x025B8; " + escapedProjectVersion);

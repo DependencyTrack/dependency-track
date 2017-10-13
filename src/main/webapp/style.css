@@ -558,6 +558,9 @@ h4 {
 #sidebar .fa {
     font-size: 20px;
 }
+#navbar .fa {
+    font-size: 1.25em;
+}
 .page-list .btn-group .btn-default {
     background-color: #ffffff;
     padding: 2px 6px 3px 6px;

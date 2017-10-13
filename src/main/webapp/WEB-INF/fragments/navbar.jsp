@@ -1,4 +1,9 @@
+<%@page import="alpine.Config" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%!
+    private static final boolean AUTHN_ENABLED = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION);
+    private static final boolean AUTHZ_ENABLED = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
+%>
 <nav id="navbar-container" class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -22,9 +27,11 @@
                         <input class="typeahead" type="text" placeholder="Search...">
                     </div>
                 </li>
-                <li id="nav-about"><a href="#" data-toggle="modal" data-target="#modalAbout"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> About</a></li>
-                <li id="nav-admin"><a href="<c:url value="/admin"/>"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span> Admin</a></li>
-                <li id="nav-logout"><a href="#" onclick="logout();"><span class="glyphicon glyphicon glyphicon-log-out" aria-hidden="true"></span> Logout</a></li>
+                <li id="nav-about"><a href="#" data-toggle="modal" data-target="#modal-about"><span class="fa fa-info-circle" aria-hidden="true"></span> About</a></li>
+                <% if(AUTHN_ENABLED) { %>
+                <li id="nav-profile"><a href="#" data-toggle="modal" data-target="#modal-profile"><span class="fa fa-user" aria-hidden="true"></span> Profile</a></li>
+                <li id="nav-logout"><a href="#" onclick="logout();"><span class="fa fa-sign-out" aria-hidden="true"></span> Logout</a></li>
+                <% } %>
             </ul>
         </div>
     </div>
@@ -36,6 +43,8 @@
         <li><a href="<c:url value="/components/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="components" title="Components"><i class="fa fa-cubes"></i><span>Components</span></a></li>
         <li><a href="<c:url value="/vulnerabilities/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="vulnerabilities" title="Vulnerabilities"><i class="fa fa-shield"></i><span>Vulnerabilities</span></a></li>
         <li><a href="<c:url value="/licenses/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="licenses" title="Licenses"><i class="fa fa-balance-scale"></i><span>Licenses</span></a></li>
+        <% if(AUTHN_ENABLED) { %>
         <li><a href="<c:url value="/admin/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="admin" title="Administration"><i class="fa fa-cogs"></i><span>Administration</span></a></li>
+        <% } %>
     </ul>
 </div>

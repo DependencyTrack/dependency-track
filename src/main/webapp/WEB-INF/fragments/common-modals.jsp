@@ -1,5 +1,5 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<div class="modal fade" id="modalAbout" tabindex="-1" role="dialog">
+<div class="modal fade" id="modal-about" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -92,6 +92,40 @@
                         <button type="submit" class="btn btn-primary btn-block">Log In</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-profile" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Profile</h4>
+            </div>
+            <div class="modal-body">
+                <h3>MOCKUP: Not yet working</h3>
+                <div class="form-group">
+                    <label class="sr-only" for="profileNameInput">Name</label>
+                    <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="profileNameInput">
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="profileEmailInput">Email</label>
+                    <input type="text" name="email" required="true" placeholder="Email..." class="form-control" id="profileEmailInput">
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="profilePasswordInput">Password</label>
+                    <input type="password" name="password" required="true" placeholder="Password..." class="form-control" id="profilePasswordInput">
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="profileConfirmPasswordInput">Confirm Password</label>
+                    <input type="password" name="password" required="true" placeholder="Confirm Password..." class="form-control" id="profileConfirmPasswordInput">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Update</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

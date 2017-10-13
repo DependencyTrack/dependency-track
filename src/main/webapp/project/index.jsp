@@ -122,7 +122,7 @@
                         <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="createComponentGroupInput">
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="createComponentDescriptionInput">Group</label>
+                        <label class="sr-only" for="createComponentDescriptionInput">Description</label>
                         <textarea name="description" required="false" placeholder="Description..." class="form-control" id="createComponentDescriptionInput"></textarea>
                     </div>
                     <div class="form-group">

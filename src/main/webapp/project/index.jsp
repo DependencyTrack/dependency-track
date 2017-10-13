@@ -166,8 +166,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteProjectButton">Delete Project</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="updateProjectButton">Update Project</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteProjectButton">Delete</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="updateProjectButton">Update</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
             </div>

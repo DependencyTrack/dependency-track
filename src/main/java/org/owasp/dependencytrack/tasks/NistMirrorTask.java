@@ -155,17 +155,26 @@ public class NistMirrorTask implements LoggableSubscriber {
                 }
             }
 
-            final URLConnection connection = url.openConnection(proxy);
-            LOGGER.info("Downloading " + url.toExternalForm());
-            bis = new BufferedInputStream(connection.getInputStream());
-            file = new File(outputDir, filename);
-            bos = new BufferedOutputStream(new FileOutputStream(file));
+            LOGGER.info("Initiating download of " + url.toExternalForm());
+            final HttpURLConnection connection = (HttpURLConnection)url.openConnection(proxy);
+            if (connection.getResponseCode() == 200) {
+                LOGGER.info("Downloading...");
+                bis = new BufferedInputStream(connection.getInputStream());
+                file = new File(outputDir, filename);
+                bos = new BufferedOutputStream(new FileOutputStream(file));
 
-            int i;
-            while ((i = bis.read()) != -1) {
-                bos.write(i);
+                int i;
+                while ((i = bis.read()) != -1) {
+                    bos.write(i);
+                }
+                success = true;
+            } else if (connection.getResponseCode() == 403) {
+                LOGGER.warn("Unable to download - HTTP Response 403: " + connection.getResponseMessage());
+                LOGGER.warn("This may occur if the NVD is throttling connections due to excessive load or repeated " +
+                        "connections from the same IP address or as a result of firewall or proxy authentication failures");
+            } else {
+                LOGGER.warn("Unable to download - HTTP Response " + connection.getResponseCode() + ": " + connection.getResponseMessage());
             }
-            success = true;
         } catch (IOException e) {
             LOGGER.error("Download failed : " + e.getLocalizedMessage());
         } finally {

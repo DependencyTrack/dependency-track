@@ -166,9 +166,14 @@ public class ProjectResource extends AlpineResource {
             if (project != null) {
                 final Project tmpProject = qm.getProject(jsonProject.getName().trim());
                 if (tmpProject == null || (tmpProject.getUuid().equals(project.getUuid()))) {
+                    // Name cannot be empty or null - prevent it
+                    String name = StringUtils.trimToNull(jsonProject.getName());
+                    if (name != null) {
+                        project.setName(name);
+                    }
                     project = qm.updateProject(
                             jsonProject.getUuid(),
-                            jsonProject.getName().trim(),
+                            name,
                             StringUtils.trimToNull(jsonProject.getDescription()),
                             StringUtils.trimToNull(jsonProject.getVersion()),
                             jsonProject.getTags(),
@@ -203,7 +208,7 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
-                qm.recursivelyDeleteProject(project);
+                qm.recursivelyDelete(project);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();

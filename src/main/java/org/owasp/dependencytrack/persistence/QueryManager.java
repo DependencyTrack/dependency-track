@@ -223,17 +223,19 @@ public class QueryManager extends AlpineQueryManager {
      * Deletes a Project and all objects dependant on the project.
      * @param project the Project to delete
      */
-    public void recursivelyDeleteProject(Project project) {
+    public void recursivelyDelete(Project project) {
         if (project.getChildren() != null) {
             for (Project child: project.getChildren()) {
-                recursivelyDeleteProject(child);
+                recursivelyDelete(child);
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
-        deleteProjectMetrics(project);
+        deleteMetrics(project);
+        deleteDependencies(project);
+        deleteScans(project);
         delete(project.getProperties());
         delete(getScans(project));
         delete(project.getChildren());
@@ -279,6 +281,28 @@ public class QueryManager extends AlpineQueryManager {
     public List<Scan> getScans(Project project) {
         final Query query = pm.newQuery(Scan.class, "project == :project");
         return (List<Scan>) query.execute(project);
+    }
+
+    /**
+     * Deletes scans belonging to the specified Project.
+     * @param project the Project to delete scans for
+     */
+    public void deleteScans(Project project) {
+        final Query query = pm.newQuery(Scan.class, "project == :project");
+        query.deletePersistentAll(project);
+    }
+
+    /**
+     * Deletes scans belonging to the specified Component.
+     * @param component the Component to delete scans for
+     */
+    @SuppressWarnings("unchecked")
+    public void deleteScans(Component component) {
+        final Query query = pm.newQuery(Scan.class, "components.contains(component)");
+        for (Scan scan: (List<Scan>) query.execute(component)) {
+            scan.getComponents().remove(component);
+            persist(scan);
+        }
     }
 
     /**
@@ -355,7 +379,6 @@ public class QueryManager extends AlpineQueryManager {
      */
     public Component updateComponent(Component transientComponent, boolean commitIndex) {
         final Component component = getObjectByUuid(Component.class, transientComponent.getUuid());
-        pm.currentTransaction().begin();
         component.setName(transientComponent.getName());
         component.setVersion(transientComponent.getVersion());
         component.setGroup(transientComponent.getGroup());
@@ -377,18 +400,19 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
-    public void recursivelyDeleteComponent(Component component, boolean commitIndex) {
+    public void recursivelyDelete(Component component, boolean commitIndex) {
         if (component.getChildren() != null) {
             for (Component child: component.getChildren()) {
-                recursivelyDeleteComponent(child, false);
+                recursivelyDelete(child, false);
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Component result = pm.getObjectById(Component.class, component.getId());
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
-        //todo delete dependencies
-        delete(component.getChildren());
+        deleteMetrics(component);
+        deleteDependencies(component);
+        deleteScans(component);
         delete(component);
         commitSearchIndex(commitIndex, Component.class);
     }
@@ -713,6 +737,28 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Deletes all dependencies for the specified Project.
+     * @param project the Project to delete dependencies of
+     */
+    @SuppressWarnings("unchecked")
+    public void deleteDependencies(Project project) {
+        final Query query = pm.newQuery(Dependency.class, "project == :project");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
+        query.deletePersistentAll(project);
+    }
+
+    /**
+     * Deletes all dependencies for the specified Component.
+     * @param component the Component to delete dependencies of
+     */
+    @SuppressWarnings("unchecked")
+    public void deleteDependencies(Component component) {
+        final Query query = pm.newQuery(Dependency.class, "component == :component");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
+        query.deletePersistentAll(component);
+    }
+
+    /**
      * Returns the number of Dependency objects for the specified Project.
      * @param project the Project to retrieve dependencies of
      * @return the total number of dependencies for the project
@@ -893,15 +939,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Deleted all metrics associated for the specified Project.
-     * @param project the Project to delete metrics for
-     */
-    public void deleteProjectMetrics(Project project) {
-        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
-        query.deletePersistentAll(project);
-    }
-
-    /**
      * Retrieves the most recent ComponentMetrics.
      * @param component the Component to retrieve metrics for
      * @return a ComponentMetrics object
@@ -924,6 +961,24 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
         return execute(query, component);
+    }
+
+    /**
+     * Deleted all metrics associated for the specified Project.
+     * @param project the Project to delete metrics for
+     */
+    public void deleteMetrics(Project project) {
+        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
+        query.deletePersistentAll(project);
+    }
+
+    /**
+     * Deleted all metrics associated for the specified Component.
+     * @param component the Component to delete metrics for
+     */
+    public void deleteMetrics(Component component) {
+        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
+        query.deletePersistentAll(component);
     }
 
     /**

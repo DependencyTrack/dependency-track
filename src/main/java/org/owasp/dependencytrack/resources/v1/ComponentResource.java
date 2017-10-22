@@ -34,7 +34,9 @@ import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -163,6 +165,75 @@ public class ComponentResource extends AlpineResource {
                     parent,
                     true);
             return Response.status(Response.Status.CREATED).entity(component).build();
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates a component",
+            notes = "Requires 'manage component' permission.",
+            response = Component.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the component could not be found"),
+    })
+    @PermissionRequired(Permission.PROJECT_MANAGE)
+    public Response updateProject(Component jsonComponent) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonComponent, "name"),
+                validator.validateProperty(jsonComponent, "description"),
+                validator.validateProperty(jsonComponent, "version"),
+                validator.validateProperty(jsonComponent, "group")
+        );
+        try (QueryManager qm = new QueryManager()) {
+            Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
+            if (component != null) {
+                // Name cannot be empty or null - prevent it
+                String name = StringUtils.trimToNull(jsonComponent.getName());
+                if (name != null) {
+                    component.setName(name);
+                }
+                component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
+                component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
+                component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
+
+                return Response.ok(qm.updateComponent(component, true)).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Path("/{uuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Deletes a component",
+            notes = "Requires 'manage component' permission.",
+            code = 204
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the component could not be found")
+    })
+    @PermissionRequired(Permission.PROJECT_MANAGE)
+    public Response deleteProject(
+            @ApiParam(value = "The UUID of the component to delete", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
+            if (component != null) {
+                qm.recursivelyDelete(component, false);
+                qm.commitSearchIndex(Component.class);
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+            }
         }
     }
 

@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
@@ -45,10 +47,27 @@ import java.util.UUID;
  * @since 3.0.0
  */
 @PersistenceCapable
+@FetchGroups({
+        @FetchGroup(name = "ALL", members = {
+                @Persistent(name = "resolvedLicense"),
+                @Persistent(name = "parent"),
+                @Persistent(name = "children"),
+                @Persistent(name = "evidence"),
+                @Persistent(name = "scans"),
+                @Persistent(name = "vulnerabilities"),
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Component implements Serializable {
 
     private static final long serialVersionUID = 6841650046433674702L;
+
+    /**
+     * Defines JDO fetch groups for this class.
+     */
+    public enum FetchGroup {
+        ALL
+    }
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)

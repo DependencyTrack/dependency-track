@@ -31,6 +31,7 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -200,6 +201,10 @@ public class ComponentResource extends AlpineResource {
                 component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
                 component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
                 component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
+
+                String license = StringUtils.trimToNull(jsonComponent.getLicense());
+                License resolvedLicense = qm.getLicense(license);
+                component.setResolvedLicense(resolvedLicense);
 
                 return Response.ok(qm.updateComponent(component, true)).build();
             } else {

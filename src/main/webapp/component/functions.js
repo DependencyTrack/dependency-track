@@ -33,23 +33,22 @@ function populateComponentData(data) {
     }
     if (data.resolvedLicense && data.resolvedLicense.name) {
         $("#componentLicense").html(filterXSS(data.resolvedLicense.name));
-
-        // Retrieve the list of licenses and determine which one should be selected
-        $rest.getLicenses(function (licenseData) {
-            let select = $("#componentLicenseSelect");
-            $.each(licenseData, function() {
-                if (this.licenseId === data.resolvedLicense.licenseId) {
-                    select.append($("<option selected=\"selected\"/>").val(this.licenseId).text(this.name));
-                } else {
-                    select.append($("<option />").val(this.licenseId).text(this.name));
-                }
-            });
-            select.selectpicker('refresh');
-        });
-
     } else if (data.license) {
         $("#componentLicense").html(filterXSS(data.license));
     }
+
+    // Retrieve the list of licenses and determine which one should be selected
+    $rest.getLicenses(function (licenseData) {
+        let select = $("#componentLicenseSelect");
+        $.each(licenseData, function() {
+            if (data.resolvedLicense && data.resolvedLicense.licenseId && this.licenseId === data.resolvedLicense.licenseId) {
+                select.append($("<option selected=\"selected\"/>").val(this.licenseId).text(this.name));
+            } else {
+                select.append($("<option />").val(this.licenseId).text(this.name));
+            }
+        });
+        select.selectpicker('refresh');
+    });
 }
 
 function populateLicenseData(data) {

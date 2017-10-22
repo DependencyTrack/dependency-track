@@ -64,7 +64,7 @@
 
                     </div>
                 </div>
-                <a href="#" class="widget-details-selector">
+                <a href="#" class="widget-details-selector" data-toggle="modal" data-target="#modalDetails">
                     <div class="panel-footer">
                         <span class="pull-left">View Details</span>
                         <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
@@ -118,6 +118,47 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals specific to a component -->
+    <div class="modal fade" id="modalDetails" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Component Details</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="sr-only" for="componentNameInput">Component Name</label>
+                        <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="componentNameInput">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="componentVersionInput">Version</label>
+                        <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="componentVersionInput">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="componentGroupInput">Group</label>
+                        <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="componentGroupInput">
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="componentDescriptionInput">Description</label>
+                        <textarea name="description" required="false" placeholder="Description..." class="form-control" id="componentDescriptionInput"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only" for="componentLicenseSelect">License</label>
+                        <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="componentLicenseSelect">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteComponentButton">Delete</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="updateComponentButton">Update</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

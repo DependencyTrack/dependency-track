@@ -18,15 +18,46 @@
 "use strict";
 
 function populateComponentData(data) {
-    $("#componentName").html(filterXSS(data.name));
+    let escapedComponentName = filterXSS(data.name);
+    let escapedComponentVersion = filterXSS(data.version);
+    let escapedComponentDescription = filterXSS(data.description);
+
+    $("#componentNameInput").val(data.name);
+    $("#componentVersionInput").val(data.version);
+    $("#componentGroupInput").val(data.group);
+    $("#componentDescriptionInput").val(data.description);
+
+    $("#componentName").html(escapedComponentName);
     if (data.version) {
-        $("#componentVersion").html(" &#x025B8; " + filterXSS(data.version));
+        $("#componentVersion").html(" &#x025B8; " + escapedComponentVersion);
     }
     if (data.resolvedLicense && data.resolvedLicense.name) {
         $("#componentLicense").html(filterXSS(data.resolvedLicense.name));
+
+        // Retrieve the list of licenses and determine which one should be selected
+        $rest.getLicenses(function (licenseData) {
+            let select = $("#componentLicenseSelect");
+            $.each(licenseData, function() {
+                if (this.licenseId === data.resolvedLicense.licenseId) {
+                    select.append($("<option selected=\"selected\"/>").val(this.licenseId).text(this.name));
+                } else {
+                    select.append($("<option />").val(this.licenseId).text(this.name));
+                }
+            });
+            select.selectpicker('refresh');
+        });
+
     } else if (data.license) {
         $("#componentLicense").html(filterXSS(data.license));
     }
+}
+
+function populateLicenseData(data) {
+    let select = $("#componentLicenseSelect");
+    $.each(data, function() {
+        select.append($("<option />").val(this.licenseId).text(this.name));
+    });
+    select.selectpicker('refresh');
 }
 
 function formatVulnerabilitiesTable(res) {
@@ -74,4 +105,21 @@ $(document).ready(function () {
 
     $rest.getComponent(uuid, populateComponentData);
     $rest.getComponentCurrentMetrics(uuid, populateMetrics);
+
+    $("#updateComponentButton").on("click", function () {
+        let name = $("#componentNameInput").val();
+        let version = $("#componentVersionInput").val();
+        let description = $("#componentDescriptionInput").val();
+        let group = $("#componentGroupInput").val();
+        let license = $("#componentLicenseSelect").val();
+        $rest.updateComponent(uuid, name, version, group, description, license, function() {
+            $rest.getComponent(uuid, populateComponentData);
+        });
+    });
+
+    $("#deleteComponentButton").on("click", function () {
+        $rest.deleteComponent(uuid, function() {
+            window.location.href = "../components";
+        });
+    });
 });

@@ -45,7 +45,7 @@
             <property name="javax.jdo.option.ConnectionUserName" value="sa"/>
             <property name="javax.jdo.option.ConnectionPassword" value=""/>
             <property name="javax.jdo.option.Mapping" value="h2"/>
-            <property name="datanucleus.connectionPoolingType" value="DBCP"/>
+            <property name="datanucleus.connectionPoolingType" value="DBCP2"/>
             <property name="datanucleus.schema.autoCreateSchema" value="true"/>
             <property name="datanucleus.schema.autoCreateTables" value="true"/>
             <property name="datanucleus.schema.autoCreateColumns" value="true"/>

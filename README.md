@@ -38,7 +38,7 @@ mvn clean package
 Deploying With Servlet Container
 -------------------
 
-Dependency-Track can be deployed to any Servlet 3 compatible container including Tomcat and Jetty.
+Dependency-Track can be deployed to any Servlet 3.1 compatible container such as Tomcat 8.5 or higher.
 Simply copy dependency-track.war to the webapps directory and restart the servlet engine.
 
 Deploying With Docker

@@ -89,6 +89,8 @@ function populateProjectData(data) {
     $("#projectTitle").html(escapedProjectName);
     if (data.version) {
         $("#projectVersion").html(" &#x025B8; " + escapedProjectVersion);
+    } else {
+        $("#projectVersion").empty();
     }
     if (data.tags) {
         let html = "";
@@ -99,6 +101,8 @@ function populateProjectData(data) {
             tagsInput.tagsinput('add', tag);
         }
         $("#tags").html(html);
+    } else {
+        $("#tags").empty();
     }
 }
 

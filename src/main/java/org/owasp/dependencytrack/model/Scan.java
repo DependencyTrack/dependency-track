@@ -66,7 +66,7 @@ public class Scan implements Serializable {
     @NotNull
     private Project project;
 
-    @Persistent(table = "SCANS_COMPONENTS")
+    @Persistent(table = "SCANS_COMPONENTS", mappedBy = "scans")
     @Join(column = "SCAN_ID")
     @Element(column = "COMPONENT_ID", dependent = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))

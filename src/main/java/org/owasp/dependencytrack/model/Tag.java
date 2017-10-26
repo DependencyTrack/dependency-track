@@ -84,4 +84,12 @@ public class Tag implements Serializable {
         this.projects = projects;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (object != null && object instanceof Tag) {
+            return this.id == ((Tag) object).id;
+        }
+        return false;
+    }
+
 }

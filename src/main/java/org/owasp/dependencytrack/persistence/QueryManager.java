@@ -106,7 +106,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public synchronized List<Tag> resolveTags(List<Tag> tags) {
         if (tags == null) {
-            return null;
+            return new ArrayList<>();
         }
         final List<Tag> resolvedTags = new ArrayList<>();
         final List<String> unresolvedTags = new ArrayList<>();
@@ -212,7 +212,10 @@ public class QueryManager extends AlpineQueryManager {
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
-        project.setTags(resolveTags(tags));
+
+        List<Tag> resolvedTags = resolveTags(tags);
+        bind(project, resolvedTags);
+
         final Project result = persist(project);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
@@ -979,6 +982,28 @@ public class QueryManager extends AlpineQueryManager {
     public void deleteMetrics(Component component) {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.deletePersistentAll(component);
+    }
+
+    /**
+     * Binds the two objects together in a corresponding join table.
+     * @param project a Project object
+     * @param tags a List of Tag objects
+     */
+    @SuppressWarnings("unchecked")
+    public void bind(Project project, List<Tag> tags) {
+        final Query query = pm.newQuery(Tag.class, "projects.contains(:project)");
+        List<Tag> currentProjectTags = (List<Tag>)query.execute(project);
+        pm.currentTransaction().begin();
+        for (Tag tag: currentProjectTags) {
+            if (!tags.contains(tag)) {
+                tag.getProjects().remove(project);
+            }
+        }
+        project.setTags(tags);
+        for (Tag tag: tags) {
+            tag.getProjects().add(project);
+        }
+        pm.currentTransaction().commit();
     }
 
     /**

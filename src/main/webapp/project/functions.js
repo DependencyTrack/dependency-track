@@ -35,7 +35,7 @@ function formatComponentsTable(res) {
 
         $rest.getComponentCurrentMetrics(res[i].component.uuid, function (data) {
             res[i].component.vulnerabilities = generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
-            componentsTable.bootstrapTable('updateRow', {
+            componentsTable.bootstrapTable("updateRow", {
                 index: i,
                 row: res[i].component
             });
@@ -98,7 +98,7 @@ function populateProjectData(data) {
         for (let i=0; i<data.tags.length; i++) {
             let tag = data.tags[i].name;
             html += `<a href="../projects/?tag=${encodeURIComponent(tag)}"><span class="badge tag-standalone">${filterXSS(tag)}</span></a>`;
-            tagsInput.tagsinput('add', tag);
+            tagsInput.tagsinput("add", tag);
         }
         $("#tags").html(html);
     } else {
@@ -111,7 +111,7 @@ function populateLicenseData(data) {
     $.each(data, function() {
         select.append($("<option />").val(this.licenseId).text(this.name));
     });
-    select.selectpicker('refresh');
+    select.selectpicker("refresh");
 }
 
 function populateMetrics(data) {
@@ -126,7 +126,7 @@ function populateMetrics(data) {
  * Setup events and trigger other stuff when the page is loaded and ready
  */
 $(document).ready(function () {
-    let uuid = $.getUrlVar('uuid');
+    let uuid = $.getUrlVar("uuid");
 
     $rest.getProject(uuid, populateProjectData);
     $rest.getLicenses(populateLicenseData);

@@ -55,6 +55,13 @@ function clearInputFields() {
  * Setup events and trigger other stuff when the page is loaded and ready
  */
 $(document).ready(function () {
+    let tag = $.getUrlVar("tag");
+    if (tag) {
+        $("#projectsTable").bootstrapTable("refresh", {
+            url: $rest.contextPath() + URL_PROJECT + "/tag/" + encodeURIComponent(tag),
+            silent: true
+        });
+    }
 
     // Initialize all tooltips
     $('[data-toggle="tooltip"]').tooltip();

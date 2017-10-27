@@ -96,6 +96,17 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a paginated result of projects by tag.
+     * @param tag the tag associated with the Project
+     * @return a List of Projects that contain the tag
+     */
+    public PaginatedResult getProjects(Tag tag) {
+        final Query query = pm.newQuery(Project.class, "tags.contains(:tag)");
+        query.setOrdering("name asc");
+        return execute(query, tag);
+    }
+
+    /**
      * Returns a list of Tag objects what have been resolved. It resolved
      * tags by querying the database to retrieve the tag. If the tag does
      * not exist, the tag will be created and returned with other resolved

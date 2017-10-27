@@ -29,6 +29,7 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.auth.Permission;
 import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -93,6 +94,30 @@ public class ProjectResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
+        }
+    }
+
+    @GET
+    @Path("/tag/{tag}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all projects by tag",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects with the tag")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permission.PROJECT_VIEW)
+    public Response getProjectsByTag(
+            @ApiParam(value = "The tag to query on", required = true)
+            @PathParam("tag") String tagString) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+
+            Tag tag = qm.getTagByName(tagString);
+            final PaginatedResult result = qm.getProjects(tag);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 

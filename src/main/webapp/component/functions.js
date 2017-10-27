@@ -30,11 +30,15 @@ function populateComponentData(data) {
     $("#componentName").html(escapedComponentName);
     if (data.version) {
         $("#componentVersion").html(" &#x025B8; " + escapedComponentVersion);
+    } else {
+        $("#componentVersion").empty();
     }
     if (data.resolvedLicense && data.resolvedLicense.name) {
         $("#componentLicense").html(filterXSS(data.resolvedLicense.name));
     } else if (data.license) {
         $("#componentLicense").html(filterXSS(data.license));
+    } else {
+        $("#componentLicense").empty();
     }
 
     // Retrieve the list of licenses and determine which one should be selected

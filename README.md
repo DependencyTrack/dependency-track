@@ -103,6 +103,6 @@ the [NOTICES.txt] [notices] file for more information.
   [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
   [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
   [post]: mailto:owasp_dependency_track_project@lists.owasp.org
-  [GPLv3]: https://github.com/stevespringett/dependency-track/blob/master/LICENSE.txt
+  [Apache License 2.0]: https://github.com/stevespringett/dependency-track/blob/3.0-dev/LICENSE.txt
   [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine

@@ -29,7 +29,6 @@ import org.owasp.dependencytrack.tasks.NspMirrorTask;
 import org.owasp.dependencytrack.tasks.ScanUploadProcessingTask;
 import org.owasp.dependencytrack.tasks.MetricsUpdateTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
-import org.owasp.dependencytrack.tasks.VulnDbMirrorTask;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 

@@ -127,7 +127,7 @@ public class TeamResource extends AlpineResource {
 
         try (QueryManager qm = new QueryManager()) {
             final Team team = qm.createTeam(jsonTeam.getName(), true);
-            super.addAuditableEvent(LOGGER, "Team created: " + team.getName());
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team created: " + team.getName());
             return Response.status(Response.Status.CREATED).entity(team).build();
         }
     }
@@ -152,7 +152,7 @@ public class TeamResource extends AlpineResource {
                 team.setName(jsonTeam.getName());
                 //todo: set permissions
                 team = qm.updateTeam(jsonTeam);
-                super.addAuditableEvent(LOGGER, "Team updated: " + team.getName());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team updated: " + team.getName());
                 return Response.ok(team).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
@@ -177,7 +177,7 @@ public class TeamResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
             if (team != null) {
-                super.addAuditableEvent(LOGGER, "Team deleted: " + team.getName());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team deleted: " + team.getName());
                 qm.delete(team.getApiKeys());
                 qm.delete(team);
                 return Response.status(Response.Status.NO_CONTENT).build();

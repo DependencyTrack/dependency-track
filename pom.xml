@@ -69,9 +69,7 @@
         <!-- Dependency Versions -->
         <lib.lucene.version>4.7.2</lib.lucene.version>
         <lib.dependency-check.version>2.1.2-SNAPSHOT</lib.dependency-check.version>
-        <lib.unirest.version>1.4.9</lib.unirest.version>
-        <lib.scribejava.version>4.2.0</lib.scribejava.version>
-        <lib.signpost-core.version>1.2.1.2</lib.signpost-core.version>
+        <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>
@@ -150,17 +148,11 @@
             <artifactId>lucene-sandbox</artifactId>
             <version>${lib.lucene.version}</version>
         </dependency>
-        <!-- Unirest -->
+        <!-- VulnDB data mirroring and parsing -->
         <dependency>
-            <groupId>com.mashape.unirest</groupId>
-            <artifactId>unirest-java</artifactId>
-            <version>${lib.unirest.version}</version>
-        </dependency>
-        <!-- OAuth 1.0a Signing Request -->
-        <dependency>
-            <groupId>oauth.signpost</groupId>
-            <artifactId>signpost-core</artifactId>
-            <version>${lib.signpost-core.version}</version>
+            <groupId>us.springett</groupId>
+            <artifactId>vulndb-data-mirror</artifactId>
+            <version>${lib.vulndb-data-mirror.version}</version>
         </dependency>
     </dependencies>
 

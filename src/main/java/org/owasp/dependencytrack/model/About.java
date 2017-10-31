@@ -33,15 +33,17 @@ public class About implements Serializable {
 
     private static final long serialVersionUID = -7573425245706188307L;
 
-    static {
-        Settings.initialize();
-    }
-
     private static final String APPLICATION = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_NAME);
     private static final String VERSION = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_VERSION);
     private static final String TIMESTAMP = Config.getInstance().getProperty(Config.AlpineKey.APPLICATION_TIMESTAMP);
-    private static final String DC_APPLICATION = Settings.getString(Settings.KEYS.APPLICATION_NAME);
-    private static final String DC_VERSION = Settings.getString(Settings.KEYS.APPLICATION_VERSION);
+    private static String DC_APPLICATION;
+    private static String DC_VERSION;
+
+    static {
+        Settings settings = new Settings();
+        DC_APPLICATION = settings.getString(Settings.KEYS.APPLICATION_NAME);
+        DC_VERSION = settings.getString(Settings.KEYS.APPLICATION_VERSION);
+    }
 
 
     public String getApplication() {

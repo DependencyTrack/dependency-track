@@ -21,7 +21,6 @@ import alpine.event.LdapSyncEvent;
 import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.tasks.LdapSyncTask;
-import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencytrack.tasks.DependencyCheckTask;
 import org.owasp.dependencytrack.tasks.IndexTask;
 import org.owasp.dependencytrack.tasks.NistMirrorTask;
@@ -45,11 +44,6 @@ public class EventSubsystemInitializer implements ServletContextListener {
 
     // Starts the SingleThreadedEventService
     private static final SingleThreadedEventService EVENT_SERVICE_ST = SingleThreadedEventService.getInstance();
-
-    // Initialize Dependency-Check settings singleton before processing any event
-    static {
-        Settings.initialize();
-    }
 
     /**
      * {@inheritDoc}

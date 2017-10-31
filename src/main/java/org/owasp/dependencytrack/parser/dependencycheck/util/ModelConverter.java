@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.parser.dependencycheck.util;
 
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.dependency.Confidence;
+import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.CweResolver;
 import java.io.File;
@@ -91,13 +92,13 @@ public final class ModelConverter {
         dependency.setFilePath(String.valueOf(component.getUuid()));
         // Add evidence to the dependency
         if (component.getGroup() != null) {
-            dependency.getVendorEvidence().addEvidence("dependency-track", "vendor", component.getGroup(), Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", component.getGroup(), Confidence.HIGHEST);
         }
         if (component.getName() != null) {
-            dependency.getProductEvidence().addEvidence("dependency-track", "name", component.getName(), Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "name", component.getName(), Confidence.HIGHEST);
         }
         if (component.getVersion() != null) {
-            dependency.getVersionEvidence().addEvidence("dependency-track", "version", component.getVersion(), Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.VERSION, "dependency-track", "version", component.getVersion(), Confidence.HIGHEST);
         }
         return dependency;
     }

@@ -23,7 +23,7 @@ import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
-import org.owasp.dependencytrack.event.VulnDbMirrorEvent;
+import org.owasp.dependencytrack.event.VulnDbSyncEvent;
 
 /**
  * A Singleton implementation of {@link AlpineTaskScheduler} that configures scheduled and repeatable tasks.
@@ -51,7 +51,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         scheduleEvent(new NistMirrorEvent(), 60000, 86400000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 minute (60000) delay
-        scheduleEvent(new VulnDbMirrorEvent(), 60000, 86400000);
+        scheduleEvent(new VulnDbSyncEvent(), 60000, 86400000);
 
         // Creates a new event that executes every 1 hour (3600000) after an initial 10 second (10000) delay
         scheduleEvent(new MetricsUpdateEvent(), 10000, 3600000);

@@ -28,7 +28,7 @@ import org.owasp.dependencytrack.tasks.NistMirrorTask;
 import org.owasp.dependencytrack.tasks.NspMirrorTask;
 import org.owasp.dependencytrack.tasks.ScanUploadProcessingTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
-import org.owasp.dependencytrack.tasks.VulnDbMirrorTask;
+import org.owasp.dependencytrack.tasks.VulnDbSyncTask;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -55,7 +55,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
         EVENT_SERVICE.subscribe(NspMirrorEvent.class, NspMirrorTask.class);
-        EVENT_SERVICE.subscribe(VulnDbMirrorEvent.class, VulnDbMirrorTask.class);
+        EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ST.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
@@ -74,7 +74,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE.unsubscribe(NspMirrorTask.class);
-        EVENT_SERVICE.unsubscribe(VulnDbMirrorTask.class);
+        EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
         EVENT_SERVICE.shutdown();
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);

@@ -20,5 +20,5 @@ package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
 
-public class VulnDbMirrorEvent implements Event {
+public class VulnDbSyncEvent implements Event {
 }

@@ -86,6 +86,17 @@ Subscribe: [https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_proj
 
 Post: [owasp_dependency_track_project@lists.owasp.org] [post]
 
+
+Support
+-------------------
+
+OWASP Dependency-Track is an open source project, created by people who believe that the knowledge of using 
+vulnerable components should be accessible to anyone with a desire to know. By supporting this project, you'll
+allow the team to outsource testing, infrastructure, further research and development efforts, and engage in 
+outreach to various communities that would benefit from this technology.
+
+[![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=paypal%40owasp%2eorg&lc=US&item_name=OWASP%20Dependency-Track&no_note=0&currency_code=USD&bn=PP%2dDonationsBF)
+
 Copyright & License
 -------------------
 

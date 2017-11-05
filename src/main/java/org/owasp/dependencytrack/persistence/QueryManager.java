@@ -826,9 +826,6 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities() {
         final Query query = pm.newQuery(Vulnerability.class);
-        if (orderBy == null) {
-            query.setOrdering("vulnId descending, source ascending");
-        }
         if (filter != null) {
             query.setFilter("vulnId.toLowerCase().matches(:vulnId)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";

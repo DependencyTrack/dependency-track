@@ -1035,10 +1035,16 @@ $rest.removeUserFromTeam = function removeUserFromTeam(username, teamuuid, succe
 $.ajaxSetup({
     beforeSend: function(xhr) {
         let jwt = $.sessionStorage.get("token");
-        if (jwt != null) {
+        if (jwt !== null) {
             xhr.setRequestHeader("Authorization", "Bearer " + jwt);
         }
     },
+    error: function(xhr, textStatus, errorThrown) {
+        if(textStatus === "timeout") {
+            displayErrorModal(xhr, "The server is not responding. Please try again or contact the administrator.");
+        }
+    },
+    timeout: 10000,
     statusCode: {
         200: function() {
             $("#navbar-container").css("display", "block");

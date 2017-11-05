@@ -299,6 +299,18 @@ function capitalize(string) {
 }
 
 /**
+ * Helper function that returns the variable if it is not null, undefined, NaN,
+ * an empty string (""), 0, or false. Otherwise, returns the default value.
+ */
+function valueWithDefault(variable, defaultValue) {
+    if (variable) {
+        return variable;
+    } else {
+        return defaultValue;
+    }
+}
+
+/**
  * Given a comma-separated string, creates an array of objects.
  */
 function csvStringToObjectArray(csvString) {

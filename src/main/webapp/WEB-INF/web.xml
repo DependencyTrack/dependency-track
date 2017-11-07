@@ -36,6 +36,19 @@
     </listener>
 
     <filter>
+        <filter-name>WhitelistUrlFilter</filter-name>
+        <filter-class>alpine.filters.WhitelistUrlFilter</filter-class>
+        <init-param>
+            <param-name>allowUrls</param-name>
+            <param-value>/,/admin,/api,/assets,/component,/components,/favicon.ico,/images,/license,/licenses,/project,/projects,/style.css,/vulnerabilities,/vulnerability</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>WhitelistUrlFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
         <filter-name>ClickjackingFilter</filter-name>
         <filter-class>alpine.filters.ClickjackingFilter</filter-class>
         <init-param>

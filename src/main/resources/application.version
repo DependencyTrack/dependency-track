@@ -1,0 +1,4 @@
+# Automatically populated by Maven build - do not modify
+name=${project.name}
+version=${project.version}
+timestamp=${timestamp}

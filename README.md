@@ -15,7 +15,7 @@ top of existing components assume risk for software they did not create. Vulnera
 components are inherited by all applications that use those components. The OWASP Top Ten (2013 and 2017)
 both recognize the risk of using components with known vulnerabilities. 
 
-Dependency-Track is a Software Composition Analysis (SCA) tool that keeps track of all the third-party 
+Dependency-Track is a Software Composition Analysis (SCA) platform that keeps track of all third-party 
 components used in all the applications an organization creates or consumes. It integrates with multiple
 vulnerability databases including the National Vulnerability Database (NVD), Node Security Platform (NSP),
 and VulnDB (from Risk Based Security) in order to proactively identify vulnerabilities in components that

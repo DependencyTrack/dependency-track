@@ -27,8 +27,6 @@ Dependency-Check Jenkins Plugin is highly recommended for this purpose.
 
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
-Dependency-Track is built on top of [Alpine].
-
 **NOTICE: Dependency-Track is pre-release alpha quality software. It is expected to be feature complete 
 in Janurary 2018 with betas and release candidates available in Q1.**
 

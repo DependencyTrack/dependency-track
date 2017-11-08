@@ -42,7 +42,7 @@ supports the following two deployment options:
 Deploying Standalone
 -------------------
 
-The easiest way to get Dependency-Track setup is to automatically create and deploy a Executable WAR.
+The easiest way to get Dependency-Track setup is to automatically create and deploy an executable WAR.
 
 ```shell
 mvn clean package -P embedded-jetty

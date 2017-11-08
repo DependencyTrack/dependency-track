@@ -8,25 +8,29 @@
 Dependency-Track
 =========
 
-This is the development branch of v3.0, the next generation of Dependency-Track, 
-written from the ground-up, using an API-first design, modern technologies, and
-without many of the limitations of the previous versions. Version 3 is not 
-backward compatible with previous versions due to fundamentally different approaches
-and data models.
+Modern applications leverage the availability of existing components for use as building blocks 
+in application development. By using existing components, organizations can dramatically decrease
+time-to-market. Reusing existing components however, comes at a cost. Organizations that build  
+on top of existing components assume risk for software they did not create. Vulnerabilities in
+third-party components are inherited by all applications that use those components. The OWASP 
+Top Ten (2013 and 2017) both recognize the risk of using components with known vulnerabilities. 
 
-Introduction
--
-OWASP Dependency-Track is a Java web application that allows organizations to
-document the use of third-party components across multiple applications and
-versions. Further, it provides automatic visibility into the use of components
-with known vulnerabilities.
+Dependency-Track is a Software Composition Analysis (SCA) tool that keeps track of all the third-party 
+components used in all the applications an organization creates or consumes. It integrates with multiple
+vulnerability databases including the National Vulnerability Database (NVD), Node Security Platform (NSP),
+and VulnDB (from Risk Based Security) in order to proactively identify vulnerabilities in components that
+are placing your applications at risk.  
 
-The OWASP Top Ten 2013 introduces, for the first time, the use of third-party
-components with known vulnerabilities. Dependency-Track aims to document the
-usage of all components, the vendors, libraires, versions and licenses used
-and provide visibility into the use of vulnerable components.
+Dependency-Track is designed to be used in a completely automated DevOps environment where Dependency-Check
+results or specific BOM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
+Dependency-Check Jenkins Plugin is highly recommended for this purpose.
+
+Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
 Dependency-Track is built on top of [Alpine].
+
+**NOTICE: Dependency-Track is pre-release alpha quality software. It is expected to be feature complete 
+in Janurary 2018 with betas and release candidates available in Q1.**
 
 
 Distributions

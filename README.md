@@ -46,7 +46,7 @@ The easiest way to get Dependency-Track setup is to automatically create and dep
 
 ```shell
 mvn clean package -P embedded-jetty
-java -jar dependency-track.war
+java -jar target/dependency-track.war
 ```
 
  

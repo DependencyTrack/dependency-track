@@ -28,31 +28,57 @@ and provide visibility into the use of vulnerable components.
 
 Dependency-Track is built on top of [Alpine].
 
-Compiling
+
+Distributions
 -------------------
+
+Ready-to-deploy distributions will be available beginning with 3.0.0-beta-1. Dependency-Track
+supports the following two deployment options:
+
+* Executable WAR
+* Docker container
+
+
+Deploying Standalone
+-------------------
+
+The easiest way to get Dependency-Track setup is to automatically create and deploy a Executable WAR.
 
 ```shell
-mvn clean package
+mvn clean package -P embedded-jetty
+java -jar dependency-track.war
 ```
 
-Deploying With Servlet Container
--------------------
-
-Dependency-Track can be deployed to any Servlet 3.1 compatible container such as Tomcat 8.5 or higher.
-Simply copy dependency-track.war to the webapps directory and restart the servlet engine.
-
+ 
 Deploying With Docker
 -------------------
 
-The easiest way to get Dependency-Track setup is to automatically create and deploy a Docker container.
-This can be accomplished by first compiling the software, then by executing Docker-specific commands. 
+For users leveraging Docker, the process simply wraps the standalone executable inside a Docker container.
+Begin by first compiling the software, then by executing Docker-specific commands. 
+
+```shell
+mvn clean package -P embedded-jetty
+docker build -f src/main/docker/Dockerfile -t hakbot .
+docker run -p 8080:8080 -t hakbot
+```
+ 
+ 
+Compiling
+-------------------
+
+To create an executable WAR that is ready to launch (recommended for most users):
+
+```shell
+mvn clean package -P embedded-jetty
+```
+
+To create a WAR that must be manually deployed to a modern Servlet container (i.e. Tomcat 8.5+):
 
 ```shell
 mvn clean package
-docker build -f src/main/docker/Dockerfile -t dtrack .
-docker run -p 8080:8080 -t dtrack
 ```
- 
+
+
 Configuration
 -------------------
 

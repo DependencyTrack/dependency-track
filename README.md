@@ -10,10 +10,10 @@ Dependency-Track
 
 Modern applications leverage the availability of existing components for use as building blocks 
 in application development. By using existing components, organizations can dramatically decrease
-time-to-market. Reusing existing components however, comes at a cost. Organizations that build  
-on top of existing components assume risk for software they did not create. Vulnerabilities in
-third-party components are inherited by all applications that use those components. The OWASP 
-Top Ten (2013 and 2017) both recognize the risk of using components with known vulnerabilities. 
+time-to-market. Reusing existing components however, comes at a cost. Organizations that build on 
+top of existing components assume risk for software they did not create. Vulnerabilities in third-party
+components are inherited by all applications that use those components. The OWASP Top Ten (2013 and 2017)
+both recognize the risk of using components with known vulnerabilities. 
 
 Dependency-Track is a Software Composition Analysis (SCA) tool that keeps track of all the third-party 
 components used in all the applications an organization creates or consumes. It integrates with multiple

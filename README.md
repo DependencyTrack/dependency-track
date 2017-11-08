@@ -58,7 +58,7 @@ Begin by first compiling the software, then by executing Docker-specific command
 
 ```shell
 mvn clean package -P embedded-jetty
-docker build -f src/main/docker/Dockerfile -t hakbot .
+docker build -f src/main/docker/Dockerfile -t dependency-track .
 docker run -p 8080:8080 -t hakbot
 ```
  

@@ -53,7 +53,7 @@ java -jar dependency-track.war
 Deploying With Docker
 -------------------
 
-For users leveraging Docker, the process simply wraps the standalone executable inside a Docker container.
+For users leveraging Docker, the process simply wraps the executable WAR inside a Docker container.
 Begin by first compiling the software, then by executing Docker-specific commands. 
 
 ```shell

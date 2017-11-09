@@ -24,7 +24,7 @@ to proactively identify vulnerabilities in components that are placing your appl
 Dependency-Track is designed to be used in an automated DevOps environment where [Dependency-Check]
 results or specific BOM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
 [Dependency-Check Jenkins Plugin] is highly recommended for this purpose and is well suited for use
-in Jenkins Pipeline. In such an environment, Dependency-Track enables your DevOps teams to accelerate while
+in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to accelerate while
 still keeping tabs on component usage and any inherited risk.
 
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
@@ -147,6 +147,7 @@ the [NOTICES.txt] [notices] file for more information.
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
   [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
   [Dependency-Check Jenkins Plugin]: https://plugins.jenkins.io/dependency-check-jenkins-plugin
+  [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline/
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
   [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
   [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project

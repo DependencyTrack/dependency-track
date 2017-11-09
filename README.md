@@ -44,9 +44,9 @@ Features
 * Easily identify projects that are potentially vulnerable to newly published vulnerabilities
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports [CycloneDX] and [SPDX] bill-of-material formats
-* Easy to read metrics for components, projects, and the portfolio
+* Easy to read metrics for components, projects, and portfolio
 * API-first design facilitates easy integration with other systems
-* API documentation in Swagger 2.0 (OpenAPI 3 support coming soon)
+* API documentation available in Swagger 2.0 (OpenAPI 3 support coming soon)
 * Flexible authentication supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 

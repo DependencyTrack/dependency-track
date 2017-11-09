@@ -17,8 +17,8 @@ both recognize the risk of [using components with known vulnerabilities](https:/
 
 Dependency-Track is a Software Composition Analysis (SCA) platform that keeps track of all third-party 
 components used in all the applications an organization creates or consumes. It integrates with multiple
-vulnerability databases including the National Vulnerability Database (NVD), Node Security Platform (NSP),
-and VulnDB from Risk Based Security. Dependency-Track monitors all applications in its portfolio in order
+vulnerability databases including the [National Vulnerability Database] (NVD), [Node Security Platform] (NSP),
+and [VulnDB] from [Risk Based Security]. Dependency-Track monitors all applications in its portfolio in order
 to proactively identify vulnerabilities in components that are placing your applications at risk.  
 
 Dependency-Track is designed to be used in an automated DevOps environment where [Dependency-Check]
@@ -139,6 +139,10 @@ Dependency-Track makes use of several other open source libraries. Please see
 the [NOTICES.txt] [notices] file for more information.
 
   [GitHub Wiki]: https://github.com/stevespringett/dependency-track/wiki
+  [National Vulnerability Database]: https://nvd.nist.gov
+  [Node Security Platform]: https://nodesecurity.io
+  [VulnDB]: https://vulndb.cyberriskanalytics.com
+  [Risk Based Security]: https://www.riskbasedsecurity.com
   [OWASP Top Ten]: https://www.owasp.org/index.php/Category:OWASP_Top_Ten_Project
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
   [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check

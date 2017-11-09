@@ -33,6 +33,24 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 in Janurary 2018 with betas and release candidates available in Q1.**
 
 
+Features
+-------------------
+
+* Dramatically increases visibility into the use of vulnerable components
+* Supports an unlimited number of projects and components
+* Projects can range from applications, operating systems, firmware, to IoT devices
+* Tracks vulnerabilities across entire project portfolio
+* Tracks vulnerabilities by component
+* Easily identify projects that are potentially vulnerable to newly published vulnerabilities
+* Supports standardized SPDX license ID’s and tracks license use by component
+* Supports [CycloneDX] and [SPDX] bill-of-material formats
+* Easy to read metrics for components, projects, and the portfolio
+* API-first design facilitates easy integration with other systems
+* API documentation in Swagger 2.0 (OpenAPI 3 support coming soon)
+* Flexible authentication supports internally managed users, Active Directory/LDAP, and API Keys
+* Simple to install and configure. Get up and running in just a few minutes
+
+
 Distributions
 -------------------
 
@@ -138,7 +156,6 @@ Permission to modify and redistribute is granted under the terms of the
 Dependency-Track makes use of several other open source libraries. Please see
 the [NOTICES.txt] [notices] file for more information.
 
-  [GitHub Wiki]: https://github.com/stevespringett/dependency-track/wiki
   [National Vulnerability Database]: https://nvd.nist.gov
   [Node Security Platform]: https://nodesecurity.io
   [VulnDB]: https://vulndb.cyberriskanalytics.com
@@ -147,7 +164,9 @@ the [NOTICES.txt] [notices] file for more information.
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
   [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
   [Dependency-Check Jenkins Plugin]: https://plugins.jenkins.io/dependency-check-jenkins-plugin
-  [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline/
+  [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline
+  [CycloneDX]: https://github.com/CycloneDX
+  [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
   [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
   [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project

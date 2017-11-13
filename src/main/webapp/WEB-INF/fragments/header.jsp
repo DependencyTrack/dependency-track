@@ -17,4 +17,5 @@
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/fonts/opensans/opensans.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/font-awesome/css/font-awesome.min.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/radar-chart.css"/>">
+<link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/nv.d3.min.css"/>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/style.css"/>">

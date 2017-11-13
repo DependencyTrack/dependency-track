@@ -11,6 +11,7 @@
 <script type="text/javascript" src="<c:url value="/assets/bootstrap-select/js/bootstrap-select.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/d3/d3.v3.5.17.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/d3/radar-chart.min.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/d3/nv.d3.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/js-xss/xss.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/showdown/showdown.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/showdown/showdown-xss-filter.js"/>"></script>

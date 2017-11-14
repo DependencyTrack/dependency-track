@@ -926,6 +926,17 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Retrieves PortfolioMetrics in ascending order starting with the oldest since the date specified.
+     * @return a List of metrics
+     */
+    @SuppressWarnings("unchecked")
+    public List<PortfolioMetrics> getPortfolioMetricsSince(Date since) {
+        final Query query = pm.newQuery(PortfolioMetrics.class, "lastOccurrence >= :since");
+        query.setOrdering("lastOccurrence asc");
+        return (List<PortfolioMetrics>)query.execute(since);
+    }
+
+    /**
      * Retrieves the most recent ProjectMetrics.
      * @param project the Project to retrieve metrics for
      * @return a ProjectMetrics object
@@ -951,6 +962,17 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Retrieves ProjectMetrics in ascending order starting with the oldest since the date specified.
+     * @return a List of metrics
+     */
+    @SuppressWarnings("unchecked")
+    public List<ProjectMetrics> getProjectMetricsSince(Project project, Date since) {
+        final Query query = pm.newQuery(PortfolioMetrics.class, "project == :project && lastOccurrence >= :since");
+        query.setOrdering("lastOccurrence asc");
+        return (List<ProjectMetrics>)query.execute(project, since);
+    }
+
+    /**
      * Retrieves the most recent ComponentMetrics.
      * @param component the Component to retrieve metrics for
      * @return a ComponentMetrics object
@@ -973,6 +995,17 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
         return execute(query, component);
+    }
+
+    /**
+     * Retrieves ComponentMetrics in ascending order starting with the oldest since the date specified.
+     * @return a List of metrics
+     */
+    @SuppressWarnings("unchecked")
+    public List<ComponentMetrics> getComponentMetricsSince(Component component, Date since) {
+        final Query query = pm.newQuery(PortfolioMetrics.class, "component == :component && lastOccurrence >= :since");
+        query.setOrdering("lastOccurrence asc");
+        return (List<ComponentMetrics>)query.execute(component, since);
     }
 
     /**

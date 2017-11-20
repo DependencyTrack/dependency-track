@@ -24,18 +24,18 @@
 function formatVulnerabilityTable(res) {
     for (let i=0; i<res.length; i++) {
         let vulnurl = "../vulnerability/?source=" + res[i].source + "&vulnId=" + res[i].vulnId;
-        res[i].vulnerabilityhref = formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
+        res[i].vulnerabilityhref = $common.formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
 
         if (res[i].hasOwnProperty("cwe")) {
             res[i].cwefield = "CWE-" + res[i].cwe.cweId + " " + res[i].cwe.name;
         }
 
         if (res[i].hasOwnProperty("severity")) {
-            res[i].severityLabel = formatSeverityLabel(res[i].severity);
+            res[i].severityLabel = $common.formatSeverityLabel(res[i].severity);
         }
 
         if (res[i].hasOwnProperty("published")) {
-            res[i].publishedLabel = formatTimestamp(res[i].published);
+            res[i].publishedLabel = $common.formatTimestamp(res[i].published);
         }
     }
     return res;

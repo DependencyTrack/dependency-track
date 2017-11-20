@@ -28,7 +28,7 @@ function formatProjectsTable(res) {
         res[i].projecthref = "<a href=\"" + projecturl + "\">" + filterXSS(res[i].name) + "</a>";
 
         $rest.getProjectCurrentMetrics(res[i].uuid, function (data) {
-            res[i].vulnerabilities = generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
+            res[i].vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
             projectsTable.bootstrapTable('updateRow', {
                 index: i,
                 row: res[i]
@@ -72,7 +72,7 @@ $(document).ready(function () {
         const name = $("#createProjectNameInput").val();
         const version = $("#createProjectVersionInput").val();
         const description = $("#createProjectDescriptionInput").val();
-        const tags = csvStringToObjectArray($("#createProjectTagsInput").val());
+        const tags = $common.csvStringToObjectArray($("#createProjectTagsInput").val());
         $rest.createProject(name, version, description, tags, projectCreated);
         clearInputFields();
     });

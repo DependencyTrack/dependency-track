@@ -580,7 +580,7 @@ $rest.getVulnerabilityByVulnId = function getVulnerabilityByName(source, vulnId,
 };
 
 /**
- * Service called to retrieve current metrics the entire portfolio
+ * Service called to retrieve current metrics for the entire portfolio
  */
 $rest.getPortfolioCurrentMetrics = function getPortfolioCurrentMetrics(successCallback, failCallback) {
     $.ajax({
@@ -604,11 +604,60 @@ $rest.getPortfolioCurrentMetrics = function getPortfolioCurrentMetrics(successCa
 };
 
 /**
- * Service called to retrieve current metrics for a specific component
+ * Service called to retrieve historical metrics for the entire portfolio
+ */
+$rest.getPortfolioMetrics = function getPortfolioMetrics(daysBack, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/portfolio/" + daysBack + "/days",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+
+/**
+ * Service called to retrieve current metrics for a specific project
  */
 $rest.getProjectCurrentMetrics = function getProjectCurrentMetrics(uuid, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_METRICS + "/project/" + uuid + "/current",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve historical metrics for a specific project
+ */
+$rest.getProjectMetrics = function getProjectMetrics(uuid, daysBack, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/project/" + uuid + "/days/" + daysBack,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,
@@ -633,6 +682,30 @@ $rest.getProjectCurrentMetrics = function getProjectCurrentMetrics(uuid, success
 $rest.getComponentCurrentMetrics = function getComponentCurrentMetrics(uuid, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_METRICS + "/component/" + uuid + "/current",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve historical metrics for a specific component
+ */
+$rest.getComponentMetrics = function getComponentMetrics(uuid, daysBack, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/component/" + uuid + "/days/" + daysBack,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,
@@ -1041,7 +1114,7 @@ $.ajaxSetup({
     },
     error: function(xhr, textStatus, errorThrown) {
         if(textStatus === "timeout") {
-            displayErrorModal(xhr, "The server is not responding. Please try again or contact the administrator.");
+            $common.displayErrorModal(xhr, "The server is not responding. Please try again or contact the administrator.");
         }
     },
     timeout: 10000,
@@ -1053,7 +1126,7 @@ $.ajaxSetup({
             $("#modal-login").modal("hide");
         },
         400: function(xhr) {
-            displayErrorModal(xhr, "The request made was incorrect or not in the proper format (400).");
+            $common.displayErrorModal(xhr, "The request made was incorrect or not in the proper format (400).");
         },
         401: function() {
             $("#navbar-container").css("display", "none");
@@ -1063,16 +1136,16 @@ $.ajaxSetup({
             $("#username").focus();
         },
         403: function(xhr) {
-            displayErrorModal(xhr, "The request is forbidden (403).");
+            $common.displayErrorModal(xhr, "The request is forbidden (403).");
         },
         404: function(xhr) {
-            displayErrorModal(xhr, "The requested object could not be found (404).");
+            $common.displayErrorModal(xhr, "The requested object could not be found (404).");
         },
         409: function(xhr) {
-            displayErrorModal(xhr, "A conflict occurred preventing the request from being processed (409).");
+            $common.displayErrorModal(xhr, "A conflict occurred preventing the request from being processed (409).");
         },
         500: function() {
-            displayErrorModal(null, "An unexpected error occurred. Please contact the Dependency-Track administrator for assistance (500).");
+            $common.displayErrorModal(null, "An unexpected error occurred. Please contact the Dependency-Track administrator for assistance (500).");
         }
     }
 });

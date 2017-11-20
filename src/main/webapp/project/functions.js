@@ -35,7 +35,7 @@ function formatComponentsTable(res) {
         }
 
         $rest.getComponentCurrentMetrics(res[i].component.uuid, function (data) {
-            res[i].component.vulnerabilities = generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
+            res[i].component.vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
             componentsTable.bootstrapTable("updateRow", {
                 index: i,
                 row: res[i].component
@@ -152,7 +152,7 @@ $(document).ready(function () {
         let name = $("#projectNameInput").val();
         let version = $("#projectVersionInput").val();
         let description = $("#projectDescriptionInput").val();
-        let tags = csvStringToObjectArray($("#projectTagsInput").val());
+        let tags = $common.csvStringToObjectArray($("#projectTagsInput").val());
         $rest.updateProject(uuid, name, version, description, tags, function() {
             $rest.getProject(uuid, populateProjectData);
         });

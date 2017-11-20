@@ -28,6 +28,11 @@ const $common = function() {
  * leading edge, instead of the trailing.
  *
  * https://davidwalsh.name/javascript-debounce-function
+ *
+ * @callback callback
+ * @param {callback} func the function to call
+ * @param {number} wait the time to wait
+ * @param {boolean} immediate
  */
 $common.debounce = function debounce(func, wait, immediate) {
     let timeout;
@@ -76,9 +81,18 @@ $common.isBlank = function isBlank(string) {
 /**
  * Called after we have verified that a user is authenticated (if authentication is enabled)
  */
-$common.initialize = function initialize(data) {
-    //todo: check permissions - populate admin and other navigational things accordingly
+$common.initialize = function initialize() {
+    //todo: check permissions - populate admin and other navigational things accordingly - add 'data' to param
     $rest.getVersion(
+        /**
+         * @param {Object} data JSON response object
+         * @param data.application the name of the application
+         * @param data.version the version of the application
+         * @param data.timestamp the timestamp in which the application was built
+         * @param data.dependencyCheck.application the name of Dependency-Check
+         * @param data.dependencyCheck.version the version of Dependency-Check
+         * @method $ jQuery selector
+         */
         function onVersionSuccess(data) {
             // Populates teh system modeal with general app info
             $("#systemAppName").html(data.application);
@@ -106,6 +120,8 @@ $common.logout = function logout() {
 /**
  * Executed when the login button is clicked. Prevent the form from actually being
  * submitted and uses javascript to submit the form info.
+ *
+ * @method $ jQuery selector
  */
 $("#login-form").submit(function(event) {
     event.preventDefault();
@@ -222,6 +238,8 @@ $common.formatSeverityLabel = function formatSeverityLabel(severity) {
 
 /**
  * Changes the first letter to uppercase and the remaining letters to lowercase.
+ *
+ * @param {string} string the String to capitalize
  */
 $common.capitalize = function capitalize(string) {
     if (string && string.length > 2) {
@@ -299,13 +317,19 @@ $(document).ready(function () {
         }
     })();
 
-    $("#smart-search .typeahead").typeahead(null,
+    $("#smart-search-input").typeahead(null,
         {
             name: "project",
             source: $rest.smartsearchProject(),
             display: "name",
             templates: {
                 header: '<h4 class="section-title">Projects</h4>',
+                /**
+                 * @param data the JSON data returned
+                 * @param data.uuid the UUID of the object
+                 * @param data.name the name of the object
+                 * @returns {string}
+                 */
                 suggestion: function (data) {
                     return '<a class="tt-suggestion-item" href="' + contextPath + 'project/?uuid=' + data.uuid + '">' + data.name + '</a>';
                 }
@@ -317,6 +341,12 @@ $(document).ready(function () {
             display: "name",
             templates: {
                 header: '<h4 class="section-title">Components</h4>',
+                /**
+                 * @param data the JSON data returned
+                 * @param data.uuid the UUID of the object
+                 * @param data.name the name of the object
+                 * @returns {string}
+                 */
                 suggestion: function (data) {
                     return '<a class="tt-suggestion-item" href="' + contextPath + 'component/?uuid=' + data.uuid + '">' + data.name + '</a>';
                 }
@@ -328,6 +358,12 @@ $(document).ready(function () {
             display: "vulnId",
             templates: {
                 header: '<h4 class="section-title">Vulnerabilities</h4>',
+                /**
+                 * @param data the JSON data returned
+                 * @param data.source the source of of the vulnerability
+                 * @param data.vulnId the ID unique to the source
+                 * @returns {string}
+                 */
                 suggestion: function (data) {
                     return '<a class="tt-suggestion-item" href="' + contextPath + 'vulnerability/?source=' + data.source + '&vulnId=' + data.vulnId + '">' + data.vulnId + '</a>';
                 }
@@ -339,6 +375,12 @@ $(document).ready(function () {
             display: "name",
             templates: {
                 header: '<h4 class="section-title">Licenses</h4>',
+                /**
+                 * @param data the JSON data returned
+                 * @param data.licenseId unique license ID
+                 * @param data.name the name of the object
+                 * @returns {string}
+                 */
                 suggestion: function (data) {
                     return '<a class="tt-suggestion-item" href="' + contextPath + 'license/?licenseId=' + data.licenseId + '">' + data.name + '</a>';
                 }

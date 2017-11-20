@@ -24,7 +24,7 @@
             <ul class="nav navbar-nav navbar-right">
                 <li>
                     <div id="smart-search">
-                        <input class="typeahead" type="text" placeholder="Search...">
+                        <input id="smart-search-input" class="typeahead" type="text" placeholder="Search...">
                     </div>
                 </li>
                 <li id="nav-about"><a href="#" data-toggle="modal" data-target="#modal-about"><span class="fa fa-info-circle" aria-hidden="true"></span> About</a></li>

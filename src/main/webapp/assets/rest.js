@@ -22,8 +22,8 @@
  * Constants
  */
 const CONTENT_TYPE_JSON = "application/json";
-const CONTENT_TYPE_TEXT = "text/plain";
-const TOTAL_COUNT_HEADER = "X-Total-Count";
+//const CONTENT_TYPE_TEXT = "text/plain";
+//const TOTAL_COUNT_HEADER = "X-Total-Count";
 const DATA_TYPE = "json";
 const METHOD_GET = "GET";
 const METHOD_POST = "POST";
@@ -62,6 +62,12 @@ $rest.smartsearchProject = function smartsearch() {
         remote: {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
+            /**
+             * @param {Object} response the JSON response
+             * @param response.results
+             * @param response.results.project
+             * @returns {*}
+             */
             filter: function(response) {
                 return response.results.project;
             }
@@ -80,6 +86,12 @@ $rest.smartsearchComponent = function smartsearch() {
         remote: {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
+            /**
+             * @param {Object} response the JSON response
+             * @param response.results
+             * @param response.results.component
+             * @returns {*}
+             */
             filter: function(response) {
                 return response.results.component;
             }
@@ -98,6 +110,12 @@ $rest.smartsearchVulnerability = function smartsearch() {
         remote: {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
+            /**
+             * @param {Object} response the JSON response
+             * @param response.results
+             * @param response.results.vulnerability
+             * @returns {*}
+             */
             filter: function(response) {
                 return response.results.vulnerability;
             }
@@ -116,6 +134,12 @@ $rest.smartsearchLicense = function smartsearch() {
         remote: {
             url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
             wildcard: '%QUERY',
+            /**
+             * @param {Object} response the JSON response
+             * @param response.results
+             * @param response.results.license
+             * @returns {*}
+             */
             filter: function(response) {
                 return response.results.license;
             }
@@ -1112,13 +1136,16 @@ $.ajaxSetup({
             xhr.setRequestHeader("Authorization", "Bearer " + jwt);
         }
     },
-    error: function(xhr, textStatus, errorThrown) {
+    error: function(xhr, textStatus) {
         if(textStatus === "timeout") {
             $common.displayErrorModal(xhr, "The server is not responding. Please try again or contact the administrator.");
         }
     },
     timeout: 10000,
     statusCode: {
+        /**
+         * @method $ jQuery selector
+         */
         200: function() {
             $("#navbar-container").css("display", "block");
             $("#sidebar").css("display", "block");
@@ -1128,6 +1155,9 @@ $.ajaxSetup({
         400: function(xhr) {
             $common.displayErrorModal(xhr, "The request made was incorrect or not in the proper format (400).");
         },
+        /**
+         * @method $ jQuery selector
+         */
         401: function() {
             $("#navbar-container").css("display", "none");
             $("#sidebar").css("display", "none");

@@ -18,8 +18,8 @@
 package org.owasp.dependencytrack.search;
 
 import alpine.Config;
+import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;

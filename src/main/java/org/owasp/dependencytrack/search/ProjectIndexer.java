@@ -17,7 +17,7 @@
  */
 package org.owasp.dependencytrack.search;
 
-import org.apache.log4j.Logger;
+import alpine.logging.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;

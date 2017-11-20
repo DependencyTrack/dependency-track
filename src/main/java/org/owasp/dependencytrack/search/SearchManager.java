@@ -17,8 +17,8 @@
  */
 package org.owasp.dependencytrack.search;
 
+import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;

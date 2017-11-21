@@ -49,7 +49,9 @@ public class CweImporter {
     private static final Map<Integer, String> CWE_MAPPINGS = new TreeMap<>();
 
     public void processCweDefinitions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager();
+                InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.11.xml")) {
+
             LOGGER.info("Syncing CWEs with datastore");
 
             final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -61,7 +63,6 @@ public class CweImporter {
             factory.setExpandEntityReferences(false);
             final DocumentBuilder builder = factory.newDocumentBuilder();
 
-            final InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.11.xml");
             final Document doc = builder.parse(is);
             final XPathFactory xPathfactory = XPathFactory.newInstance();
             final XPath xpath = xPathfactory.newXPath();

@@ -54,9 +54,9 @@ public final class NvdParser {
 
         LOGGER.info("Parsing " + file.getName());
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager();
+             InputStream in = new FileInputStream(file)) {
 
-            final InputStream in = new FileInputStream(file);
             final JsonReader reader = Json.createReader(in);
 
             final JsonObject root = reader.readObject();

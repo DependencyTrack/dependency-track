@@ -16,7 +16,7 @@ RUN adduser -h ${DATA_DIR} -s bash -D ${USER}
 USER ${USER}
 
 # Copy the compiled WAR to the application directory created above
-COPY ./target/dependency-track.war ${APP_DIR}
+COPY ./target/dependency-track-embedded.war ${APP_DIR}
 
 VOLUME ${DATA_DIR}
 
@@ -24,4 +24,4 @@ EXPOSE 8080
 
 # Launch Dependency-Track
 WORKDIR ${APP_DIR}
-CMD java -jar dependency-track.war
+CMD java -jar dependency-track-embedded.war

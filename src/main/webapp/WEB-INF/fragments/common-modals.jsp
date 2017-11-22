@@ -18,7 +18,7 @@
                             inherited vulnerabilities from their use.
                         </p>
                         <p>
-                            <span id="systemAppName"></span> v<strong id="systemAppVersion"></strong>
+                            <span id="systemAppName"></span> v<span id="systemAppVersion"></span>
                         </p>
                         <p>
                             Copyright &copy; Steve Springett. All Rights Reserved.
@@ -33,7 +33,7 @@
                             evidence-based analysis to identify project dependencies and determines if they contain
                             publicly disclosed vulnerabilities.
                         <p>
-                            <span id="dcAppName"></span> v<strong id="dcAppVersion"></strong>
+                            <span id="dcAppName"></span> v<span id="dcAppVersion"></span>
                         </p>
                         <p>
                             Copyright &copy; Jeremy Long. All Rights Reserved.

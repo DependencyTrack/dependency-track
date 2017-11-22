@@ -13,9 +13,9 @@
                             <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
-                            OWASP Dependency-Track is a Software Composition Analysis (SCA) application that
-                            allows organizations to automatically ingest and identify third-party components and any inherited
-                            vulnerabilities from their use.
+                            OWASP Dependency-Track is a Software Composition Analysis (SCA) platform that allows
+                            organizations to automatically ingest and identify third-party components and any
+                            inherited vulnerabilities from their use.
                         </p>
                         <p>
                             <span id="systemAppName"></span> v<strong id="systemAppVersion"></strong>

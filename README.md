@@ -20,7 +20,9 @@ Dependency-Track is a Software Composition Analysis (SCA) platform that keeps tr
 components used in all the applications an organization creates or consumes. It integrates with multiple
 vulnerability databases including the [National Vulnerability Database] (NVD), [Node Security Platform] (NSP),
 and [VulnDB] from [Risk Based Security]. Dependency-Track monitors all applications in its portfolio in order
-to proactively identify vulnerabilities in components that are placing your applications at risk.  
+to proactively identify vulnerabilities in components that are placing your applications at risk. Use of 
+Dependency-Track can play a vital role in an overall Supply Chain Risk Management (SCRM) program by providing 
+many of the recommendations outlined in the [NIST Cybersecurity Framework](https://www.nist.gov/cybersecurity-framework).
 
 Dependency-Track is designed to be used in an automated DevOps environment where [Dependency-Check]
 results or specific BOM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
@@ -31,7 +33,7 @@ still keeping tabs on component usage and any inherited risk.
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
 **NOTICE: Dependency-Track is pre-release alpha quality software. It is expected to be feature complete 
-in Janurary 2018 with betas and release candidates available in Q1.**
+in January 2018 with betas and release candidates available in Q1.**
 
 
 Features

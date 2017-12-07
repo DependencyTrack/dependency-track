@@ -96,23 +96,23 @@ public class MetricsUpdateTask implements Subscriber {
         for (MetricCounters projectMetrics: projectCountersList) {
             // Add individual project metrics to the overall portfolio metrics
             portfolioCounters.projects++;
-            portfolioCounters.critical = portfolioCounters.critical + projectMetrics.critical;
-            portfolioCounters.high = portfolioCounters.high + projectMetrics.high;
-            portfolioCounters.medium = portfolioCounters.medium + projectMetrics.medium;
-            portfolioCounters.low = portfolioCounters.low + projectMetrics.low;
+            portfolioCounters.critical += projectMetrics.critical;
+            portfolioCounters.high += projectMetrics.high;
+            portfolioCounters.medium += projectMetrics.medium;
+            portfolioCounters.low += projectMetrics.low;
 
             // All vulnerabilities
-            portfolioCounters.vulnerabilities = portfolioCounters.vulnerabilities + projectMetrics.chmlTotal();
+            portfolioCounters.vulnerabilities += projectMetrics.chmlTotal();
 
             // All dependant components
-            portfolioCounters.components = portfolioCounters.components + projectMetrics.components;
+            portfolioCounters.components += projectMetrics.components;
 
             // Only vulnerable components
-            portfolioCounters.vulnerableComponents = portfolioCounters.vulnerableComponents + projectMetrics.vulnerableComponents;
+            portfolioCounters.vulnerableComponents += projectMetrics.vulnerableComponents;
 
             // Only vulnerable projects
             if (projectMetrics.chmlTotal() > 0) {
-                portfolioCounters.vulnerableProjects = portfolioCounters.vulnerableProjects + 1;
+                portfolioCounters.vulnerableProjects++;
             }
         }
 
@@ -186,14 +186,14 @@ public class MetricsUpdateTask implements Subscriber {
         for (MetricCounters compMetric: countersList) {
             // Add individual component metrics to the overall project metrics
             counters.components++;
-            counters.critical = counters.critical + compMetric.critical;
-            counters.high = counters.high + compMetric.high;
-            counters.medium = counters.medium + compMetric.medium;
-            counters.low = counters.low + compMetric.low;
-            counters.vulnerabilities = counters.vulnerabilities + counters.chmlTotal();  // todo: is this correct?
+            counters.critical += compMetric.critical;
+            counters.high += compMetric.high;
+            counters.medium += compMetric.medium;
+            counters.low += compMetric.low;
+            counters.vulnerabilities += compMetric.chmlTotal();
 
-            if (counters.chmlTotal() > 0) {
-                counters.vulnerableComponents = counters.vulnerableComponents + 1;
+            if (compMetric.chmlTotal() > 0) {
+                counters.vulnerableComponents++;
             }
         }
 

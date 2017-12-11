@@ -153,18 +153,18 @@ directory on Windows machines. This directory contains the NIST NVD mirror, embe
 and audit logs, as well as keys used during normal operation, such as validating JWT tokens. It is essential that
 best practices are followed to secure the .dependency-track directory structure.
 
-Mailing List
+Community
 -------------------
 
-Subscribe: [https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project] [subscribe]
+Gitter: https://gitter.im/dependency-track/Lobby
 
-Post: [owasp_dependency_track_project@lists.owasp.org] [post]
+Google Groups: https://groups.google.com/forum/#!forum/dependency-track
 
 
 Support
 -------------------
 
-OWASP Dependency-Track is an open source project, created by people who believe that the knowledge of using 
+Dependency-Track is an open source project, created by people who believe that the knowledge of using 
 vulnerable components should be accessible to anyone with a desire to know. By supporting this project, you'll
 allow the team to outsource testing, infrastructure, further research and development efforts, and engage in 
 outreach to various communities that would benefit from this technology.
@@ -195,8 +195,6 @@ the [NOTICES.txt] [notices] file for more information.
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
   [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
-  [subscribe]: https://lists.owasp.org/mailman/listinfo/owasp_dependency_track_project
-  [post]: mailto:owasp_dependency_track_project@lists.owasp.org
   [Apache License 2.0]: https://github.com/stevespringett/dependency-track/blob/3.0-dev/LICENSE.txt
   [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine

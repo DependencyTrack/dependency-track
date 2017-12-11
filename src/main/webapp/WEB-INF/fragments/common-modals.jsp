@@ -13,7 +13,7 @@
                             <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
-                            OWASP Dependency-Track is a Software Composition Analysis (SCA) platform that allows
+                            Dependency-Track is a Software Composition Analysis (SCA) platform that allows
                             organizations to automatically ingest and identify third-party components and any
                             inherited vulnerabilities from their use.
                         </p>
@@ -29,7 +29,7 @@
                             <img src="<c:url value="/images/dc.svg"/>" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
-                            OWASP Dependency-Check is a Software Composition Analysis (SCA) utility that uses
+                            Dependency-Check is a Software Composition Analysis (SCA) utility that uses
                             evidence-based analysis to identify project dependencies and determines if they contain
                             publicly disclosed vulnerabilities.
                         <p>

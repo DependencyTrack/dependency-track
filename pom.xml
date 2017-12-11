@@ -35,7 +35,7 @@
     <name>Dependency-Track</name>
     <url>https://www.owasp.org/index.php/OWASP_Dependency_Track</url>
     <description>
-        OWASP Dependency-Track is an intelligent Software Composition Analysis (SCA) application
+        Dependency-Track is an intelligent Software Composition Analysis (SCA) application
         that allows organizations to automatically ingest and identify third-party components and
         any inherited vulnerabilities from their use.
     </description>

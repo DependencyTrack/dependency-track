@@ -5,7 +5,7 @@
 <html lang="en">
 <head>
     <jsp:include page="/WEB-INF/fragments/header.jsp"/>
-    <title>OWASP Dependency-Track</title>
+    <title>Dependency-Track</title>
 </head>
 <body data-sidebar="dashboard">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
@@ -20,5 +20,6 @@
     <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 </div>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
+<script type="text/javascript" src="<c:url value="/functions.js"/>"></script>
 </body>
 </html>

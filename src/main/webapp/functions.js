@@ -260,7 +260,6 @@ function createVulnerabilityChart(metrics) {
             .staggerLabels(false)
             .duration(300)
         ;
-        chart.xAxis.tickFormat(d3.format(",f"));
         chart.yAxis.tickFormat(d3.format(",f"));
         d3.select("#vulnerabilitychart").append("svg").datum(data).call(chart);
         nv.utils.windowResize(chart.update);

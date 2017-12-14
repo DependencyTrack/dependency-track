@@ -201,10 +201,14 @@ $common.generateSeverityProgressBar = function generateSeverityProgressBar(criti
  * Given a UNIX timestamp, this function will return a formatted date.
  * i.e. 15 Jan 2017
  */
-$common.formatTimestamp = function formatTimestamp(timestamp) {
+$common.formatTimestamp = function formatTimestamp(timestamp, includeTime) {
     let date = new Date(timestamp);
     let months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+    if (includeTime) {
+        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear() + " at " + date.toTimeString();
+    } else {
+        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+    }
 };
 
 /**

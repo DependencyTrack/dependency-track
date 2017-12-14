@@ -604,6 +604,25 @@ $rest.getVulnerabilityByVulnId = function getVulnerabilityByName(source, vulnId,
 };
 
 /**
+ * Service called to retrieve vulnerability metrics
+ */
+$rest.getVulnerabilityMetrics = function getVulnerabilityMetrics(successCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/vulnerability",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
  * Service called to retrieve current metrics for the entire portfolio
  */
 $rest.getPortfolioCurrentMetrics = function getPortfolioCurrentMetrics(successCallback, failCallback) {

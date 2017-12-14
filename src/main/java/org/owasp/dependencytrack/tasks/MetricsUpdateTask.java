@@ -281,16 +281,22 @@ public class MetricsUpdateTask implements Subscriber {
     private void updateVulnerabilitiesMetrics(QueryManager qm) {
         LOGGER.debug("Executing metrics update on vulnerability database");
         final Date measuredAt = new Date();
-        final VulnerabilityMetricCounters counters = new VulnerabilityMetricCounters(measuredAt);
+        final VulnerabilityMetricCounters yearMonthCounters = new VulnerabilityMetricCounters(measuredAt, true);
+        final VulnerabilityMetricCounters yearCounters = new VulnerabilityMetricCounters(measuredAt, false);
         final PaginatedResult vulnsResult = qm.getVulnerabilities();
         for (Vulnerability vulnerability: vulnsResult.getList(Vulnerability.class)) {
             if (vulnerability.getCreated() != null) {
-                counters.updateMetics(vulnerability.getCreated());
+                yearMonthCounters.updateMetics(vulnerability.getCreated());
+                yearCounters.updateMetics(vulnerability.getCreated());
             } else if (vulnerability.getPublished() != null) {
-                counters.updateMetics(vulnerability.getPublished());
+                yearMonthCounters.updateMetics(vulnerability.getPublished());
+                yearCounters.updateMetics(vulnerability.getPublished());
             }
         }
-        for (VulnerabilityMetrics metric: counters.getMetrics()) {
+        for (VulnerabilityMetrics metric: yearMonthCounters.getMetrics()) {
+            qm.synchronizeVulnerabilityMetrics(metric);
+        }
+        for (VulnerabilityMetrics metric: yearCounters.getMetrics()) {
             qm.synchronizeVulnerabilityMetrics(metric);
         }
     }
@@ -301,10 +307,12 @@ public class MetricsUpdateTask implements Subscriber {
     private class VulnerabilityMetricCounters {
 
         private Date measuredAt;
+        private boolean trackMonth;
         private List<VulnerabilityMetrics> metrics = new ArrayList<>();
 
-        private VulnerabilityMetricCounters(Date measuredAt) {
+        private VulnerabilityMetricCounters(Date measuredAt, boolean trackMonth) {
             this.measuredAt = measuredAt;
+            this.trackMonth = trackMonth;
         }
 
         private void updateMetics(Date timestamp) {
@@ -314,7 +322,10 @@ public class MetricsUpdateTask implements Subscriber {
 
             boolean found = false;
             for (VulnerabilityMetrics metric: metrics) {
-                if (metric.getYear() == year && metric.getMonth() == month) {
+                if (trackMonth && metric.getYear() == year && metric.getMonth() == month) {
+                    metric.setCount(metric.getCount() + 1);
+                    found = true;
+                } else if (!trackMonth && metric.getYear() == year) {
                     metric.setCount(metric.getCount() + 1);
                     found = true;
                 }
@@ -322,7 +333,9 @@ public class MetricsUpdateTask implements Subscriber {
             if (!found) {
                 VulnerabilityMetrics metric = new VulnerabilityMetrics();
                 metric.setYear(year);
-                metric.setMonth(month);
+                if (trackMonth) {
+                    metric.setMonth(month);
+                }
                 metric.setCount(1);
                 metric.setMeasuredAt(measuredAt);
                 metrics.add(metric);

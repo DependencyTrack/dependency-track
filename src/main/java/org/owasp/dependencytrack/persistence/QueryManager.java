@@ -1024,14 +1024,21 @@ public class QueryManager extends AlpineQueryManager {
      * Synchronizes VulnerabilityMetrics.
      */
     public void synchronizeVulnerabilityMetrics(VulnerabilityMetrics metric) {
-        final Query query = pm.newQuery(VulnerabilityMetrics.class, "year == :year && month == :month");
-        final List<VulnerabilityMetrics> result = execute(query, metric.getYear(), metric.getMonth()).getList(VulnerabilityMetrics.class);
+        final Query query;
+        final List<VulnerabilityMetrics> result;
+        if (metric.getMonth() == null) {
+            query = pm.newQuery(VulnerabilityMetrics.class, "year == :year && month == null");
+            result = execute(query, metric.getYear()).getList(VulnerabilityMetrics.class);
+        } else {
+            query = pm.newQuery(VulnerabilityMetrics.class, "year == :year && month == :month");
+            result = execute(query, metric.getYear(), metric.getMonth()).getList(VulnerabilityMetrics.class);
+        }
         if (result.size() == 1) {
             VulnerabilityMetrics m = result.get(0);
             m.setCount(metric.getCount());
             m.setMeasuredAt(metric.getMeasuredAt());
             persist(m);
-        } else if (result.size() == 0){
+        } else if (result.size() == 0) {
             persist(metric);
         } else {
             delete(result);

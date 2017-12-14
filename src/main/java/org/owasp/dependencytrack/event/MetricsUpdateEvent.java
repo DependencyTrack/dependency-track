@@ -18,6 +18,8 @@
 package org.owasp.dependencytrack.event;
 
 import alpine.event.framework.Event;
+import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.Project;
 
 /**
  * Defines an Event to update metrics.
@@ -27,15 +29,36 @@ import alpine.event.framework.Event;
  */
 public class MetricsUpdateEvent implements Event {
 
-    private Object target = null;
-
-    // Call this to perform a global metrics update event
-    public MetricsUpdateEvent() {
+    public enum Type {
+        PORTFOLIO,
+        PROJECT,
+        COMPONENT,
+        VULNERABILITY
     }
+
+    private Type type = Type.PORTFOLIO;
+    private Object target = null;
 
     // Call this to perform a metrics update on a specific project or component
     public MetricsUpdateEvent(Object target) {
+        if (target == null) {
+            this.type = Type.PORTFOLIO;
+        } else if (target instanceof Project) {
+            this.type = Type.PROJECT;
+        } else if (target instanceof Component) {
+            this.type = Type.COMPONENT;
+        }
         this.target = target;
+    }
+
+    // Call this to perform metrics not related to the portfolio, projects, or components.
+    // For example, running metrics on vulnerabilities being tracked in the database.
+    public MetricsUpdateEvent(Type type) {
+        this.type = type;
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public Object getTarget() {

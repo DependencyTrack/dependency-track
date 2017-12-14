@@ -37,15 +37,18 @@
         <class>org.owasp.dependencytrack.model.Scan</class>
         <class>org.owasp.dependencytrack.model.Tag</class>
         <class>org.owasp.dependencytrack.model.Vulnerability</class>
+        <class>org.owasp.dependencytrack.model.VulnerabilityMetrics</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
-            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:~/.dependency-track/db;MVCC=TRUE"/>
+            <property name="javax.jdo.option.ConnectionURL" value="jdbc:h2:~/.dependency-track/db"/>
             <property name="javax.jdo.option.ConnectionDriverName" value="org.h2.Driver"/>
             <property name="javax.jdo.option.ConnectionUserName" value="sa"/>
             <property name="javax.jdo.option.ConnectionPassword" value=""/>
             <property name="javax.jdo.option.Mapping" value="h2"/>
+            <property name="javax.jdo.option.NontransactionalRead" value="true"/>
+            <property name="javax.jdo.option.NontransactionalWrite" value="true"/>
             <property name="datanucleus.connectionPoolingType" value="DBCP2"/>
             <property name="datanucleus.schema.autoCreateSchema" value="true"/>
             <property name="datanucleus.schema.autoCreateTables" value="true"/>
@@ -53,8 +56,6 @@
             <property name="datanucleus.schema.autoCreateConstraints" value="true"/>
             <property name="datanucleus.generateSchema.database.mode" value="create"/>
             <property name="datanucleus.query.jdoql.allowAll" value="true"/>
-            <property name="datanucleus.NontransactionalRead" value="true"/>
-            <property name="datanucleus.NontransactionalWrite" value="true"/>
             <!-- <property name="datanucleus.nontx.atomic" value="true"/> -->
         </properties>
 

@@ -37,6 +37,7 @@ import org.owasp.dependencytrack.model.ProjectProperty;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.model.VulnerabilityMetrics;
 import javax.jdo.FetchPlan;
 import javax.jdo.Query;
 import java.util.ArrayList;
@@ -1006,6 +1007,25 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(PortfolioMetrics.class, "component == :component && lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
         return (List<ComponentMetrics>)query.execute(component, since);
+    }
+
+    /**
+     * Synchronizes VulnerabilityMetrics.
+     */
+    public void synchronizeVulnerabilityMetrics(VulnerabilityMetrics metric) {
+        final Query query = pm.newQuery(VulnerabilityMetrics.class, "year == :year && month == :month");
+        final List<VulnerabilityMetrics> result = execute(query, metric.getYear(), metric.getMonth()).getList(VulnerabilityMetrics.class);
+        if (result.size() == 1) {
+            VulnerabilityMetrics m = result.get(0);
+            m.setCount(metric.getCount());
+            m.setMeasuredAt(metric.getMeasuredAt());
+            persist(m);
+        } else if (result.size() == 0){
+            persist(metric);
+        } else {
+            delete(result);
+            persist(metric);
+        }
     }
 
     /**

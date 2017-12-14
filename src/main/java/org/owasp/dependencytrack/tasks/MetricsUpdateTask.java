@@ -31,7 +31,10 @@ import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectMetrics;
 import org.owasp.dependencytrack.model.Severity;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.model.VulnerabilityMetrics;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -55,12 +58,14 @@ public class MetricsUpdateTask implements Subscriber {
 
             LOGGER.info("Starting metrics update task");
             try (QueryManager qm = new QueryManager()) {
-                if (event.getTarget() == null) {
+                if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
                     updateMetrics(qm);
                 } else if (event.getTarget() instanceof Project) {
                     updateMetrics(qm, (Project) event.getTarget());
                 } else if (event.getTarget() instanceof Component) {
                     updateMetrics(qm, (Component) event.getTarget());
+                } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
+                    updateVulnerabilitiesMetrics(qm);
                 }
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage());
@@ -267,6 +272,66 @@ public class MetricsUpdateTask implements Subscriber {
             qm.persist(componentMetrics);
         }
         return counters;
+    }
+
+    /**
+     * Performs metric updates on the entire vulnerability database.
+     * @param qm a QueryManager instance
+     */
+    private void updateVulnerabilitiesMetrics(QueryManager qm) {
+        LOGGER.debug("Executing metrics update on vulnerability database");
+        final Date measuredAt = new Date();
+        final VulnerabilityMetricCounters counters = new VulnerabilityMetricCounters(measuredAt);
+        final PaginatedResult vulnsResult = qm.getVulnerabilities();
+        for (Vulnerability vulnerability: vulnsResult.getList(Vulnerability.class)) {
+            if (vulnerability.getCreated() != null) {
+                counters.updateMetics(vulnerability.getCreated());
+            } else if (vulnerability.getPublished() != null) {
+                counters.updateMetics(vulnerability.getPublished());
+            }
+        }
+        for (VulnerabilityMetrics metric: counters.getMetrics()) {
+            qm.synchronizeVulnerabilityMetrics(metric);
+        }
+    }
+
+    /**
+     * A value object that holds various counters returned by the updating of metrics.
+     */
+    private class VulnerabilityMetricCounters {
+
+        private Date measuredAt;
+        private List<VulnerabilityMetrics> metrics = new ArrayList<>();
+
+        private VulnerabilityMetricCounters(Date measuredAt) {
+            this.measuredAt = measuredAt;
+        }
+
+        private void updateMetics(Date timestamp) {
+            LocalDateTime date = LocalDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault());
+            int year = date.getYear();
+            int month = date.getMonthValue();
+
+            boolean found = false;
+            for (VulnerabilityMetrics metric: metrics) {
+                if (metric.getYear() == year && metric.getMonth() == month) {
+                    metric.setCount(metric.getCount() + 1);
+                    found = true;
+                }
+            }
+            if (!found) {
+                VulnerabilityMetrics metric = new VulnerabilityMetrics();
+                metric.setYear(year);
+                metric.setMonth(month);
+                metric.setCount(1);
+                metric.setMeasuredAt(measuredAt);
+                metrics.add(metric);
+            }
+        }
+
+        private List<VulnerabilityMetrics> getMetrics() {
+            return metrics;
+        }
     }
 
     /**

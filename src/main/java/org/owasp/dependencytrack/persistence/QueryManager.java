@@ -904,6 +904,17 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Retrieves the current VulnerabilityMetrics
+     * @return a VulnerabilityMetrics object
+     */
+    @SuppressWarnings("unchecked")
+    public List<VulnerabilityMetrics> getVulnerabilityMetrics() {
+        final Query query = pm.newQuery(VulnerabilityMetrics.class);
+        query.setOrdering("year asc, month asc");
+        return execute(query).getList(VulnerabilityMetrics.class);
+    }
+
+    /**
      * Retrieves the most recent PortfolioMetrics.
      * @return a PortfolioMetrics object
      */

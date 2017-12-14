@@ -32,6 +32,7 @@ import org.owasp.dependencytrack.model.ComponentMetrics;
 import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectMetrics;
+import org.owasp.dependencytrack.model.VulnerabilityMetrics;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.util.DateUtil;
 import javax.ws.rs.GET;
@@ -52,6 +53,25 @@ import java.util.List;
 @Path("/v1/metrics")
 @Api(value = "metrics", authorizations = @Authorization(value = "X-Api-Key"))
 public class MetricsResource extends AlpineResource {
+
+    @GET
+    @Path("/vulnerability")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns the sum of all vulnerabilities in the database by year and month",
+            response = VulnerabilityMetrics.class,
+            responseContainer = "List"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permission.PROJECT_VIEW)
+    public Response getVulnerabilityMetrics() {
+        try (QueryManager qm = new QueryManager()) {
+            final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+            return Response.ok(metrics).build();
+        }
+    }
 
     @GET
     @Path("/portfolio/current")

@@ -110,6 +110,10 @@ public class DependencyCheckTask implements Subscriber {
         scanAgent.setDataDirectory(DC_DATA_DIR);
         scanAgent.setAutoUpdate(true);
         scanAgent.setUpdateOnly(true);
+        scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));
+        scanAgent.setProxyPort(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PORT));
+        scanAgent.setProxyUsername(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME));
+        scanAgent.setProxyPassword(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD));
 
         try {
             scanAgent.execute();
@@ -139,6 +143,10 @@ public class DependencyCheckTask implements Subscriber {
         scanAgent.setAutoUpdate(false);
         scanAgent.setUpdateOnly(false);
         scanAgent.setDependencies(dependencies);
+        scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));
+        scanAgent.setProxyPort(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PORT));
+        scanAgent.setProxyUsername(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME));
+        scanAgent.setProxyPassword(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD));
 
         // If a global suppression file exists, use it.
         final File suppressions = new File(DC_GLOBAL_SUPPRESSION);

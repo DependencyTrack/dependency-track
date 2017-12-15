@@ -65,6 +65,34 @@ Ecosystem Overview
 * Dependency-Check can use Dependency-Track as a source of evidence
 * Dependency-Track results can be integrated into ThreadFix
 
+Screenshots
+-------------------
+The dashboard:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/dashboard.png)
+
+
+A list of all projects:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/projects.png)
+
+
+Viewing a list of components that are dependencies of a specific project:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/components.png)
+
+
+Viewing an individual vulnerable component:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerable-component.png)
+
+
+Viewing an individual vulnerability:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerability.png)
+
+
+Viewing all vulnerabilities in the system:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerabilities.png)
+
+
+Viewing an individual license:
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/license.png)
 
 Distributions
 -------------------

@@ -256,7 +256,7 @@ function createVulnerabilityChart(metrics) {
             .x(function(d) { return d.label })
             .y(function(d) { return d.value })
             .valueFormat(d3.format(".0f"))
-            .color(['#357abd'])
+            .color(["#357abd"])
             .staggerLabels(false)
             .duration(300)
         ;

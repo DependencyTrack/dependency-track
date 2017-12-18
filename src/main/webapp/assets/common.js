@@ -205,7 +205,7 @@ $common.formatTimestamp = function formatTimestamp(timestamp, includeTime) {
     let date = new Date(timestamp);
     let months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     if (includeTime) {
-        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear() + " at " + date.toTimeString();
+        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear() + " at " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     } else {
         return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
     }

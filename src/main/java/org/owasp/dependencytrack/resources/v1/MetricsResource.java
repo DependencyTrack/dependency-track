@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +28,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.time.DateUtils;
 import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
 import org.owasp.dependencytrack.model.PortfolioMetrics;
@@ -142,6 +144,22 @@ public class MetricsResource extends AlpineResource {
     }
 
     @GET
+    @Path("/portfolio/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Requests a refresh of the portfolio metrics",
+            response = PortfolioMetrics.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permission.PROJECT_VIEW)
+    public Response RefreshPortfolioMetrics() {
+        SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+        return Response.ok().build();
+    }
+
+    @GET
     @Path("/project/{uuid}/current")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -212,6 +230,31 @@ public class MetricsResource extends AlpineResource {
 
         Date since = DateUtils.addDays(new Date(), -days);
         return getProjectMetrics(uuid, since);
+    }
+
+    @GET
+    @Path("/project/{uuid}/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Requests a refresh of a specific projects metrics"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permission.PROJECT_VIEW)
+    public Response RefreshProjectMetrics(
+            @ApiParam(value = "The UUID of the project to refresh metrics on", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project != null) {
+                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(project));
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
     }
 
     @GET
@@ -288,6 +331,31 @@ public class MetricsResource extends AlpineResource {
 
         Date since = DateUtils.addDays(new Date(), -days);
         return getComponentMetrics(uuid, since);
+    }
+
+    @GET
+    @Path("/component/{uuid}/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Requests a refresh of a specific components metrics"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The component could not be found")
+    })
+    @PermissionRequired(Permission.PROJECT_VIEW)
+    public Response RefreshComponentMetrics(
+            @ApiParam(value = "The UUID of the component to refresh metrics on", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Component component = qm.getObjectByUuid(Component.class, uuid);
+            if (component != null) {
+                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+            }
+        }
     }
 
     /**

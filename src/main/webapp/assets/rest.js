@@ -768,6 +768,78 @@ $rest.getComponentMetrics = function getComponentMetrics(uuid, daysBack, success
 };
 
 /**
+ * Service called to refresh metrics for the entire portfolio
+ */
+$rest.refreshPortfolioMetrics = function refreshPortfolioMetrics(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/portfolio/refresh",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to refresh metrics for a specific project
+ */
+$rest.refreshProjectMetrics = function refreshProjectMetrics(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/project/" + uuid + "/refresh",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to refresh metrics for a specific component
+ */
+$rest.refreshComponentMetrics = function refreshComponentMetrics(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/component/" + uuid + "/refresh",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
  * Service called when a team is created.
  */
 $rest.createTeam = function createTeam(name, successCallback, failCallback) {

@@ -158,6 +158,14 @@ $common.displayErrorModal = function displayErrorModal(xhr, fallbackMessage) {
 };
 
 /**
+ * Displays an informational modal with the specified message.
+ */
+$common.displayInfoModal = function displayInfoModal(message) {
+    $("#modal-informational").modal("show");
+    $("#modal-infoMessage").html(message);
+};
+
+/**
  * Creates an informational, single-color progress bar.
  */
 $common.generateProgressBar = function generateProgressBar(count, total) {

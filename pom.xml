@@ -72,6 +72,7 @@
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
+        <logback.configuration.file>${project.build.sourceDirectory}/../resources/logback.xml</logback.configuration.file>
     </properties>
 
     <repositories>

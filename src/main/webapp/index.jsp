@@ -141,7 +141,7 @@
                                             </tr>
                                             <tr>
                                                 <td>Last Measurement:</td>
-                                                <td><span id="statLastMeasurement"></span></td>
+                                                <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
                                             </tr>
                                         </table>
                                     </div>

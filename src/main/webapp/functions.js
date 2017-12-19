@@ -18,21 +18,6 @@
 
 "use strict";
 
-
-/**
- * Setup events and trigger other stuff when the page is loaded and ready.
- */
-$(document).ready(function () {
-    $rest.getPortfolioMetrics(90, function(metrics) {
-        createPortfolioVulnerabilityChart(metrics);
-        createProjectVulnerabilityChart(metrics);
-        createComponentVulnerabilityChart(metrics);
-        populateProgressBars(metrics);
-        updateStats(metrics);
-    });
-    $rest.getVulnerabilityMetrics(createVulnerabilityChart);
-});
-
 function createPortfolioVulnerabilityChart(metrics) {
     let data = prepareChartData(metrics);
 
@@ -54,7 +39,7 @@ function createPortfolioVulnerabilityChart(metrics) {
             .staggerLabels(true)
         ;
         chart.yAxis.axisLabel("Portfolio Vulnerabilities").tickFormat(d3.format("d"));
-
+        d3.selectAll("#portfoliochart > *").remove();
         d3.select("#portfoliochart").append("svg").datum(data).call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -129,7 +114,7 @@ function createProjectVulnerabilityChart(metrics) {
             .staggerLabels(true)
         ;
         chart.yAxis.axisLabel("Projects").tickFormat(d3.format("d"));
-
+        d3.selectAll("#projectchart > *").remove();
         d3.select("#projectchart").append("svg").datum(data).call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -183,7 +168,7 @@ function createComponentVulnerabilityChart(metrics) {
             .staggerLabels(true)
         ;
         chart.yAxis.axisLabel("Components").tickFormat(d3.format("d"));
-
+        d3.selectAll("#componentchart > *").remove();
         d3.select("#componentchart").append("svg").datum(data).call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -261,6 +246,7 @@ function createVulnerabilityChart(metrics) {
             .duration(300)
         ;
         chart.yAxis.tickFormat(d3.format(",f"));
+        d3.selectAll("#vulnerabilitychart > *").remove();
         d3.select("#vulnerabilitychart").append("svg").datum(data).call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -286,3 +272,33 @@ function createVulnerabilityChart(metrics) {
     }
 
 }
+
+function getDashboardData() {
+    console.log("Retrieving dashboard data");
+    d3.selectAll(".nvtooltip").remove();
+    $rest.getPortfolioMetrics(90, function(metrics) {
+        createPortfolioVulnerabilityChart(metrics);
+        createProjectVulnerabilityChart(metrics);
+        createComponentVulnerabilityChart(metrics);
+        populateProgressBars(metrics);
+        updateStats(metrics);
+    });
+    $rest.getVulnerabilityMetrics(createVulnerabilityChart);
+}
+
+/**
+ * Setup events and trigger other stuff when the page is loaded and ready.
+ */
+$(document).ready(function () {
+    getDashboardData();
+    setInterval(getDashboardData, 30 * 1000); // Refresh dashboard every 30 seconds
+
+    // Listen for refresh icon to be triggered
+    $("#refresh").on("click", function() {
+        $rest.refreshPortfolioMetrics(function() {
+            $("#statLastMeasurement").html("Refresh triggered");
+            $common.displayInfoModal("A refresh has been requested. The amount of time required to refresh is dependant on the amount of background processing currently being performed and the size of the data-set being refreshed.")
+        });
+    });
+
+});

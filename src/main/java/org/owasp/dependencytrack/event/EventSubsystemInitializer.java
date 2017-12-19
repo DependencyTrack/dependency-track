@@ -43,22 +43,28 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the EventService
     private static final EventService EVENT_SERVICE = EventService.getInstance();
 
-    // Starts the SingleThreadedEventService
-    private static final SingleThreadedEventService EVENT_SERVICE_ST = SingleThreadedEventService.getInstance();
+    // Starts the SingleThreadedEventService (Used for indexing service)
+    private static final SingleThreadedEventService EVENT_SERVICE_INDEX = SingleThreadedEventService.getInstance();
+
+    // Starts the SingleThreadedEventService (Used for Metrics updates)
+    private static final SingleThreadedEventService EVENT_SERVICE_METRICS = SingleThreadedEventService.getInstance();
+
+    // Starts the SingleThreadedEventService (Used for Dependency-Check analysis)
+    private static final SingleThreadedEventService EVENT_SERVICE_ODC = SingleThreadedEventService.getInstance();
 
     /**
      * {@inheritDoc}
      */
     public void contextInitialized(ServletContextEvent event) {
-        EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
         EVENT_SERVICE.subscribe(NspMirrorEvent.class, NspMirrorTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
 
-        EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
-        EVENT_SERVICE_ST.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
+        EVENT_SERVICE_INDEX.subscribe(IndexEvent.class, IndexTask.class);
+        EVENT_SERVICE_ODC.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
+        EVENT_SERVICE_METRICS.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -69,7 +75,6 @@ public class EventSubsystemInitializer implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent event) {
         TaskScheduler.getInstance().shutdown();
 
-        EVENT_SERVICE.unsubscribe(MetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(ScanUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
@@ -77,8 +82,13 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
         EVENT_SERVICE.shutdown();
 
-        EVENT_SERVICE_ST.unsubscribe(IndexTask.class);
-        EVENT_SERVICE_ST.unsubscribe(DependencyCheckTask.class);
-        EVENT_SERVICE_ST.shutdown();
+        EVENT_SERVICE_INDEX.unsubscribe(IndexTask.class);
+        EVENT_SERVICE_INDEX.shutdown();
+
+        EVENT_SERVICE_ODC.unsubscribe(DependencyCheckTask.class);
+        EVENT_SERVICE_ODC.shutdown();
+
+        EVENT_SERVICE_METRICS.unsubscribe(MetricsUpdateTask.class);
+        EVENT_SERVICE_METRICS.shutdown();
     }
 }

@@ -118,7 +118,7 @@
                             <div class="panel widget">
                                 <div class="panel-heading">
                                     <div class="row">
-                                        <table width="100%" class="table">
+                                        <table width="100%" class="table widget-table">
                                             <tr>
                                                 <td>Projects (total):</td>
                                                 <td><span id="statTotalProject"></span></td>

@@ -673,6 +673,12 @@ p {
     padding: 3px 0;
     border-bottom: 1px solid #ccc;
 }
+.widget-table tr:first-child td {
+    border-top: 0;
+}
+.widget-table {
+    margin-bottom: 0;
+}
 .fa-refresh:hover {
     color: #00AA00;
     cursor:pointer;

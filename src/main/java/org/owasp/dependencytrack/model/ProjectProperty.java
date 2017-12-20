@@ -43,7 +43,7 @@ public class ProjectProperty implements Serializable {
     private static final long serialVersionUID = -821103184547741489L;
 
     @PrimaryKey
-    @Persistent(valueStrategy = IdGeneratorStrategy.INCREMENT)
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 

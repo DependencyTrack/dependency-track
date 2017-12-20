@@ -105,6 +105,18 @@ function populateProjectData(data) {
     } else {
         $("#tags").empty();
     }
+    if (data.properties) {
+        $("#projectPropertiesTable").css("display", "table");
+        let html = "";
+        for (let i=0; i<data.properties.length; i++) {
+            let property = data.properties[i];
+            html += `<tr><td>${filterXSS(property.key)}</td><td>${filterXSS(property.value)}</td></tr>`;
+        }
+        $("#projectPropertiesTableData").html(html);
+    } else {
+        $("#projectPropertiesTableData").empty();
+        $("#projectPropertiesTable").css("display", "none");
+    }
 }
 
 function populateLicenseData(data) {

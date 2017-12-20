@@ -164,6 +164,16 @@
                         <label class="sr-only" for="projectTagsInput">Tags</label>
                         <input type="text" name="tags" placeholder="Tags, comma separated" class="form-control" data-role="tagsinput" id="projectTagsInput">
                     </div>
+                    <table id="projectPropertiesTable" class="table">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectPropertiesTableData">
+                        </tbody>
+                    </table>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteProjectButton">Delete</button>

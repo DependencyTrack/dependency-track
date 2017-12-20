@@ -673,3 +673,7 @@ p {
     padding: 3px 0;
     border-bottom: 1px solid #ccc;
 }
+.fa-refresh:hover {
+    color: #00AA00;
+    cursor:pointer;
+}

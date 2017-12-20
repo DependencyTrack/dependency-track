@@ -47,7 +47,7 @@ public class ProjectProperty implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent(defaultFetchGroup = "true")
+    @Persistent
     @Column(name = "PROJECT_ID", allowsNull = "false")
     private Project project;
 

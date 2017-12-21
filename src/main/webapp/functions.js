@@ -274,7 +274,6 @@ function createVulnerabilityChart(metrics) {
 }
 
 function getDashboardData() {
-    console.log("Retrieving dashboard data");
     d3.selectAll(".nvtooltip").remove();
     $rest.getPortfolioMetrics(90, function(metrics) {
         createPortfolioVulnerabilityChart(metrics);

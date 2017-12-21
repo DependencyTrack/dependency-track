@@ -22,7 +22,7 @@
                                     <i class="fa fa-shield fa-5x"></i>
                                 </div>
                                 <div class="col-xs-9 text-right">
-                                    <div class="huge">206</div>
+                                    <div class="huge" id="statPortfolioVulnerabilities">-</div>
                                     <div>Portfolio Vulnerabilities</div>
                                 </div>
                             </div>
@@ -41,10 +41,10 @@
                         <div class="panel-heading">
                             <div class="row">
                                 <div class="col-xs-3">
-                                    <i class="fa fa-thermometer-half  fa-5x"></i>
+                                    <i class="fa fa-sitemap  fa-5x"></i>
                                 </div>
                                 <div class="col-xs-9 text-right">
-                                    <div class="huge">15</div>
+                                    <div class="huge" id="statVulnerableProjects">-</div>
                                     <div>Projects at Risk</div>
                                 </div>
                             </div>
@@ -63,11 +63,11 @@
                         <div class="panel-heading">
                             <div class="row">
                                 <div class="col-xs-3">
-                                    <i class="fa fa-balance-scale fa-5x"></i>
+                                    <i class="fa fa-cubes  fa-5x"></i>
                                 </div>
                                 <div class="col-xs-9 text-right">
-                                    <div class="huge">26</div>
-                                    <div>Policy Violations</div>
+                                    <div class="huge" id="statVulnerableComponents">-</div>
+                                    <div>Vulnerable Components</div>
                                 </div>
                             </div>
                         </div>
@@ -85,11 +85,11 @@
                         <div class="panel-heading">
                             <div class="row">
                                 <div class="col-xs-3">
-                                    <i class="fa fa-bell fa-5x"></i>
+                                    <i class="fa fa-thermometer-half fa-5x"></i>
                                 </div>
                                 <div class="col-xs-9 text-right">
-                                    <div class="huge">5</div>
-                                    <div>Recent Alerts</div>
+                                    <div class="huge" id="statInheritedRiskScore">-</div>
+                                    <div>Inherited Risk Score</div>
                                 </div>
                             </div>
                         </div>

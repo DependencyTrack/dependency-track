@@ -121,7 +121,7 @@
                                         <table width="100%" class="table widget-table">
                                             <tr>
                                                 <td>Projects (total):</td>
-                                                <td><span id="statTotalProject"></span></td>
+                                                <td><span id="statTotalProjects"></span></td>
                                             </tr>
                                             <tr>
                                                 <td>Vulnerable Projects:</td>

@@ -226,7 +226,7 @@ function updateStats(metrics) {
     }
     let metric = metrics[metrics.length - 1]; //Use the most recent metric
     $("#projectsAtRisk").html(filterXSS(metric.vulnerableProjects));
-    $("#statTotalProject").html(filterXSS(metric.projects));
+    $("#statTotalProjects").html(filterXSS(metric.projects));
     $("#statVulnerableProjects").html(filterXSS(metric.vulnerableProjects));
     $("#statTotalComponents").html(filterXSS(metric.components));
     $("#statVulnerableComponents").html(filterXSS(metric.vulnerableComponents));

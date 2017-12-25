@@ -25,12 +25,19 @@ import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.event.VulnDbSyncEvent;
+import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import us.springett.cvss.CvssV2;
+import us.springett.cvss.CvssV3;
+import us.springett.cvss.Score;
 import us.springett.vulndbdatamirror.parser.VulnDbParser;
+import us.springett.vulndbdatamirror.parser.model.CvssV2Metric;
+import us.springett.vulndbdatamirror.parser.model.CvssV3Metric;
 import us.springett.vulndbdatamirror.parser.model.Results;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
@@ -89,7 +96,8 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             for (Object o: results.getResults()) {
                 if (o instanceof us.springett.vulndbdatamirror.parser.model.Vulnerability) {
                     us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln = (us.springett.vulndbdatamirror.parser.model.Vulnerability)o;
-                    qm.synchronizeVulnerability(convert(vulnDbVuln), false);
+                    org.owasp.dependencytrack.model.Vulnerability vulnerability = convert(qm, vulnDbVuln);
+                    qm.synchronizeVulnerability(vulnerability, false);
                 }
             }
         }
@@ -100,7 +108,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
      * @param vulnDbVuln the VulnDB vulnerability to convert
      * @return a Dependency-Track Vulnerability object
      */
-    private org.owasp.dependencytrack.model.Vulnerability convert(us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln) {
+    private org.owasp.dependencytrack.model.Vulnerability convert(QueryManager qm, us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln) {
         final org.owasp.dependencytrack.model.Vulnerability vuln = new org.owasp.dependencytrack.model.Vulnerability();
         vuln.setSource(org.owasp.dependencytrack.model.Vulnerability.Source.VULNDB);
         vuln.setVulnId(sanitize(String.valueOf(vulnDbVuln.getId())));
@@ -143,7 +151,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
 
         /* References */
         final StringBuilder references = new StringBuilder();
-        for (us.springett.vulndbdatamirror.parser.model.ExternalReference reference: vulnDbVuln.getExtReferences()) {
+        for (us.springett.vulndbdatamirror.parser.model.ExternalReference reference : vulnDbVuln.getExtReferences()) {
             final String sType = sanitize(reference.getType());
             final String sValue = sanitize(reference.getValue());
             // Convert reference to Markdown format
@@ -158,7 +166,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
 
         /* Credits */
         final StringBuilder credits = new StringBuilder();
-        for (us.springett.vulndbdatamirror.parser.model.Author author: vulnDbVuln.getAuthors()) {
+        for (us.springett.vulndbdatamirror.parser.model.Author author : vulnDbVuln.getAuthors()) {
             final String name = sanitize(author.getName());
             final String company = sanitize(author.getCompany());
             if (name != null && company != null) {
@@ -172,12 +180,49 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                 }
             }
         }
-        String creditsText = credits.toString();
+        final String creditsText = credits.toString();
         if (creditsText.endsWith(", ")) {
             vuln.setCredits(StringUtils.trimToNull(creditsText.substring(0, creditsText.length() - 2)));
         }
 
-        //todo: CVSS and CVE mapping
+        CvssV2 cvssV2;
+        for (CvssV2Metric metric : vulnDbVuln.getCvssV2Metrics()) {
+            cvssV2 = metric.toNormalizedMetric();
+            Score score = cvssV2.calculateScore();
+            vuln.setCvssV2Vector(cvssV2.getVector());
+            vuln.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
+            vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
+            vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
+            if (metric.getCveId() != null) {
+                break; // Always prefer use of the NVD scoring, if available
+            }
+        }
+
+        CvssV3 cvssV3;
+        for (CvssV3Metric metric : vulnDbVuln.getCvssV3Metrics()) {
+            cvssV3 = metric.toNormalizedMetric();
+            Score score = cvssV3.calculateScore();
+            vuln.setCvssV3Vector(cvssV3.getVector());
+            vuln.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
+            vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
+            vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
+            if (metric.getCveId() != null) {
+                break; // Always prefer use of the NVD scoring, if available
+            }
+        }
+
+        if (vulnDbVuln.getNvdAdditionalInfo() != null) {
+            final String cweString = vulnDbVuln.getNvdAdditionalInfo().getCweId();
+            if (cweString != null && cweString.startsWith("CWE-")) {
+                try {
+                    final int cweId = Integer.parseInt(cweString.substring(4, cweString.length()).trim());
+                    final Cwe cwe = qm.getCweById(cweId);
+                    vuln.setCwe(cwe);
+                } catch (NumberFormatException e) {
+                    LOGGER.error("Error parsing CWE ID: " + cweString, e);
+                }
+            }
+        }
 
         return vuln;
     }

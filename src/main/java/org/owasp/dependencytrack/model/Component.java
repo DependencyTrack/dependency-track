@@ -152,6 +152,10 @@ public class Component implements Serializable {
     private String sha3_512;
 
     @Persistent
+    @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
+    private String purl;
+
+    @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
@@ -296,6 +300,14 @@ public class Component implements Serializable {
 
     public void setSha3_512(String sha3_512) {
         this.sha3_512 = sha3_512;
+    }
+
+    public String getPurl() {
+        return purl;
+    }
+
+    public void setPurl(String purl) {
+        this.purl = purl;
     }
 
     public String getDescription() {

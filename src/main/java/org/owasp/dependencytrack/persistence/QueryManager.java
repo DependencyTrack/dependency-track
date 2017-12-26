@@ -192,10 +192,11 @@ public class QueryManager extends AlpineQueryManager {
      * @param version the project version
      * @param tags a List of Tags - these will be resolved if necessary
      * @param parent an optional parent Project
+     * @param purl an optional Package URL
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created Project
      */
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, boolean commitIndex) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, String purl, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -204,6 +205,7 @@ public class QueryManager extends AlpineQueryManager {
         if (parent != null) {
             project.setParent(parent);
         }
+        project.setPurl(purl);
         final Project result = persist(project);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
@@ -217,14 +219,16 @@ public class QueryManager extends AlpineQueryManager {
      * @param description a description of the project
      * @param version the project version
      * @param tags a List of Tags - these will be resolved if necessary
+     * @param purl an optional Package URL
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, boolean commitIndex) {
+    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, String purl, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, uuid);
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
+        project.setPurl(purl);
 
         List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
@@ -361,11 +365,12 @@ public class QueryManager extends AlpineQueryManager {
      * @param resolvedLicense an optional resolved SPDX license
      * @param license an optional license name (text)
      * @param parent an optional parent Component
+     * @param purl an optional Package URL
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a new Component
      */
     public Component createComponent(String name, String version, String group, String filename, String md5, String sha1,
-                                     String description, License resolvedLicense, String license, Component parent,
+                                     String description, License resolvedLicense, String license, Component parent, String purl,
                                      boolean commitIndex) {
         final Component component = new Component();
         component.setName(name);
@@ -381,6 +386,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         component.setResolvedLicense(resolvedLicense);
         component.setParent(parent);
+        component.setPurl(purl);
         final Component result = persist(component);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
@@ -405,6 +411,7 @@ public class QueryManager extends AlpineQueryManager {
         component.setLicense(transientComponent.getLicense());
         component.setResolvedLicense(transientComponent.getResolvedLicense());
         component.setParent(transientComponent.getParent());
+        component.setPurl(transientComponent.getPurl());
         final Component result = persist(component);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);

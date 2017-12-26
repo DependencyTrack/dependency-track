@@ -95,6 +95,10 @@ public class Project implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
+    @Persistent
+    @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
+    private String purl;
+
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "PROJECT_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -148,6 +152,14 @@ public class Project implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getPurl() {
+        return purl;
+    }
+
+    public void setPurl(String purl) {
+        this.purl = purl;
     }
 
     public UUID getUuid() {

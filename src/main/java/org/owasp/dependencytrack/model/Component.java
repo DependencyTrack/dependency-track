@@ -128,6 +128,30 @@ public class Component implements Serializable {
     private String sha1;
 
     @Persistent
+    @Index(name = "COMPONENT_SHA256_IDX")
+    @Column(name = "SHA-256", jdbcType = "VARCHAR", length = 64)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The SHA-256 hash must be a valid 64 character HEX number")
+    private String sha256;
+
+    @Persistent
+    @Index(name = "COMPONENT_SHA512_IDX")
+    @Column(name = "SHA-512", jdbcType = "VARCHAR", length = 128)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA-512 hash must be a valid 128 character HEX number")
+    private String sha512;
+
+    @Persistent
+    @Index(name = "COMPONENT_SHA3_256_IDX")
+    @Column(name = "SHA3-256", jdbcType = "VARCHAR", length = 64)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The SHA3-256 hash must be a valid 64 character HEX number")
+    private String sha3_256;
+
+    @Persistent
+    @Index(name = "COMPONENT_SHA3_512_IDX")
+    @Column(name = "SHA3-512", jdbcType = "VARCHAR", length = 128)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA3-512 hash must be a valid 128 character HEX number")
+    private String sha3_512;
+
+    @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
@@ -240,6 +264,38 @@ public class Component implements Serializable {
 
     public void setSha1(String sha1) {
         this.sha1 = sha1;
+    }
+
+    public String getSha256() {
+        return sha256;
+    }
+
+    public void setSha256(String sha256) {
+        this.sha256 = sha256;
+    }
+
+    public String getSha512() {
+        return sha512;
+    }
+
+    public void setSha512(String sha512) {
+        this.sha512 = sha512;
+    }
+
+    public String getSha3_256() {
+        return sha3_256;
+    }
+
+    public void setSha3_256(String sha3_256) {
+        this.sha3_256 = sha3_256;
+    }
+
+    public String getSha3_512() {
+        return sha3_512;
+    }
+
+    public void setSha3_512(String sha3_512) {
+        this.sha3_512 = sha3_512;
     }
 
     public String getDescription() {

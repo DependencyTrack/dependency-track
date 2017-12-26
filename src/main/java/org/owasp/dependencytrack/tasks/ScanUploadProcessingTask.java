@@ -94,6 +94,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                                 resolvedLicense,
                                 dependency.getLicense(),
                                 null,
+                                null, // ODC does not support purl - setting to null
                                 false
                         );
                     }

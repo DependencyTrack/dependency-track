@@ -141,7 +141,8 @@ public class ProjectResource extends AlpineResource {
         failOnValidationError(
                 validator.validateProperty(jsonProject, "name"),
                 validator.validateProperty(jsonProject, "description"),
-                validator.validateProperty(jsonProject, "version")
+                validator.validateProperty(jsonProject, "version"),
+                validator.validateProperty(jsonProject, "purl")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -157,6 +158,7 @@ public class ProjectResource extends AlpineResource {
                         StringUtils.trimToNull(jsonProject.getVersion()),
                         jsonProject.getTags(),
                         parent,
+                        StringUtils.trimToNull(jsonProject.getPurl()),
                         true);
                 return Response.status(Response.Status.CREATED).entity(project).build();
             } else {
@@ -184,7 +186,8 @@ public class ProjectResource extends AlpineResource {
         failOnValidationError(
                 validator.validateProperty(jsonProject, "name"),
                 validator.validateProperty(jsonProject, "description"),
-                validator.validateProperty(jsonProject, "version")
+                validator.validateProperty(jsonProject, "version"),
+                validator.validateProperty(jsonProject, "purl")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -203,6 +206,7 @@ public class ProjectResource extends AlpineResource {
                             StringUtils.trimToNull(jsonProject.getDescription()),
                             StringUtils.trimToNull(jsonProject.getVersion()),
                             jsonProject.getTags(),
+                            StringUtils.trimToNull(jsonProject.getPurl()),
                             true);
                     return Response.ok(project).build();
                 } else {

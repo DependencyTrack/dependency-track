@@ -148,7 +148,8 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "version"),
                 validator.validateProperty(jsonComponent, "group"),
                 validator.validateProperty(jsonComponent, "description"),
-                validator.validateProperty(jsonComponent, "license")
+                validator.validateProperty(jsonComponent, "license"),
+                validator.validateProperty(jsonComponent, "purl")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -165,6 +166,7 @@ public class ComponentResource extends AlpineResource {
                     qm.getLicense(jsonComponent.getLicense()),
                     null,
                     parent,
+                    StringUtils.trimToNull(jsonComponent.getPurl()),
                     true);
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
@@ -189,7 +191,8 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "name"),
                 validator.validateProperty(jsonComponent, "description"),
                 validator.validateProperty(jsonComponent, "version"),
-                validator.validateProperty(jsonComponent, "group")
+                validator.validateProperty(jsonComponent, "group"),
+                validator.validateProperty(jsonComponent, "purl")
         );
         try (QueryManager qm = new QueryManager()) {
             Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
@@ -202,6 +205,7 @@ public class ComponentResource extends AlpineResource {
                 component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
                 component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
                 component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
+                component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
 
                 String license = StringUtils.trimToNull(jsonComponent.getLicense());
                 License resolvedLicense = qm.getLicense(license);

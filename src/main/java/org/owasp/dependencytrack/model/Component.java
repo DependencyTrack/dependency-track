@@ -129,25 +129,25 @@ public class Component implements Serializable {
 
     @Persistent
     @Index(name = "COMPONENT_SHA256_IDX")
-    @Column(name = "SHA-256", jdbcType = "VARCHAR", length = 64)
+    @Column(name = "SHA_256", jdbcType = "VARCHAR", length = 64)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The SHA-256 hash must be a valid 64 character HEX number")
     private String sha256;
 
     @Persistent
     @Index(name = "COMPONENT_SHA512_IDX")
-    @Column(name = "SHA-512", jdbcType = "VARCHAR", length = 128)
+    @Column(name = "SHA_512", jdbcType = "VARCHAR", length = 128)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA-512 hash must be a valid 128 character HEX number")
     private String sha512;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_256_IDX")
-    @Column(name = "SHA3-256", jdbcType = "VARCHAR", length = 64)
+    @Column(name = "SHA3_256", jdbcType = "VARCHAR", length = 64)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The SHA3-256 hash must be a valid 64 character HEX number")
     private String sha3_256;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_512_IDX")
-    @Column(name = "SHA3-512", jdbcType = "VARCHAR", length = 128)
+    @Column(name = "SHA3_512", jdbcType = "VARCHAR", length = 128)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA3-512 hash must be a valid 128 character HEX number")
     private String sha3_512;
 

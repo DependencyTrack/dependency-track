@@ -113,11 +113,11 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permission.COMPONENT_VIEW)
     public Response getComponentByHash(
-            @ApiParam(value = "The MD5 or SHA1 hash of the component to retrieve", required = true)
+            @ApiParam(value = "The MD5, SHA-1, SHA-256, SHA-512, SHA3-256, or SHA3-512 hash of the component to retrieve", required = true)
             @PathParam("hash") String hash) {
         try (QueryManager qm = new QueryManager()) {
             failOnValidationError(
-                    new ValidationTask(RegexSequence.Pattern.HASH_MD5_SHA1, hash, "Invalid MD5 or SHA1 hash.")
+                    new ValidationTask(RegexSequence.Pattern.HASH_MD5_SHA1_SHA256_SHA512, hash, "Invalid MD5, SHA-1, SHA-256, SHA-512, SHA3-256, or SHA3-512 hash.")
             );
             final Component component = qm.getComponentByHash(hash);
             if (component != null) {

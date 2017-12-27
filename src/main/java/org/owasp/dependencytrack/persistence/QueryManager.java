@@ -342,13 +342,24 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a Component by its hash. Supports MD5 and SHA1 file hashes.
+     * Returns a Component by its hash. Supports MD5, SHA-1, SHA-256, SHA-512, SHA3-256, and SHA3-512 hashes.
      * @param hash the hash of the component to retrieve
      * @return a Component, or null if not found
      */
     @SuppressWarnings("unchecked")
     public Component getComponentByHash(String hash) {
-        final Query query = pm.newQuery(Component.class, "md5 == :hash || sha1 == :hash");
+        final Query query;
+        if (hash.length() == 32) {
+            query = pm.newQuery(Component.class, "md5 == :hash");
+        } else if (hash.length() == 40) {
+            query = pm.newQuery(Component.class, "sha1 == :hash");
+        } else if (hash.length() == 64) {
+            query = pm.newQuery(Component.class, "sha256 == :hash || sha3_256 == :hash");
+        } else if (hash.length() == 128) {
+            query = pm.newQuery(Component.class, "sha512 == :hash || sha3_512 == :hash");
+        } else {
+            return null;
+        }
         final List<Component> result = (List<Component>) query.execute(hash);
         return result.size() == 0 ? null : result.get(0);
     }

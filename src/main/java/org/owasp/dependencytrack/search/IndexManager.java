@@ -60,7 +60,6 @@ public abstract class IndexManager implements AutoCloseable {
     private IndexSearcher isearcher = null;
     private MultiFieldQueryParser qparser = null;
     private IndexType indexType;
-    private static final Version VERSION = Version.LUCENE_47;
 
     /**
      * This methods should be overwritten.
@@ -116,7 +115,7 @@ public abstract class IndexManager implements AutoCloseable {
                 LOGGER.error("Unable to create index directory: " + indexDir.getCanonicalPath());
             }
         }
-        return new SimpleFSDirectory(indexDir);
+        return new SimpleFSDirectory(indexDir.toPath());
     }
 
     /**
@@ -125,8 +124,8 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.0.0
      */
     protected void openIndex() throws IOException {
-        final Analyzer analyzer = new StandardAnalyzer(VERSION);
-        final IndexWriterConfig config = new IndexWriterConfig(VERSION, analyzer);
+        final Analyzer analyzer = new StandardAnalyzer();
+        final IndexWriterConfig config = new IndexWriterConfig(analyzer);
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         iwriter = new IndexWriter(getDirectory(), config);
     }
@@ -164,9 +163,9 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.0.0
      */
     protected QueryParser getQueryParser() {
-        final Analyzer analyzer = new StandardAnalyzer(VERSION);
+        final Analyzer analyzer = new StandardAnalyzer();
         if (qparser == null) {
-            qparser = new MultiFieldQueryParser(VERSION, getSearchFields(), analyzer, IndexConstants.getBoostMap());
+            qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
             qparser.setAllowLeadingWildcard(true);
         }
         return qparser;

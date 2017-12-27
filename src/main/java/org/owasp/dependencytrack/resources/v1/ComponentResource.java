@@ -184,8 +184,8 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the component could not be found"),
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
-    public Response updateProject(Component jsonComponent) {
+    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    public Response updateComponent(Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonComponent, "name"),
@@ -231,8 +231,8 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the component could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
-    public Response deleteProject(
+    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    public Response deleteComponent(
             @ApiParam(value = "The UUID of the component to delete", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {

@@ -68,7 +68,7 @@
     <properties>
         <!-- Dependency Versions -->
         <lib.lucene.version>5.5.5</lib.lucene.version>
-        <lib.dependency-check.version>3.0.2</lib.dependency-check.version>
+        <lib.dependency-check.version>3.1.0</lib.dependency-check.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>

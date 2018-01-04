@@ -366,38 +366,11 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Creates a new Component.
-     * @param name the name of the Component
-     * @param version the optional version of the Component
-     * @param group the optional group (or vendor) of the Component
-     * @param filename the optional filename
-     * @param md5 the optional MD5 hash
-     * @param sha1 the optional SHA1 hash
-     * @param description an optional description
-     * @param resolvedLicense an optional resolved SPDX license
-     * @param license an optional license name (text)
-     * @param parent an optional parent Component
-     * @param purl an optional Package URL
+     * @param component the Component to persist
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a new Component
      */
-    public Component createComponent(String name, String version, String group, String filename, String md5, String sha1,
-                                     String description, License resolvedLicense, String license, Component parent, String purl,
-                                     boolean commitIndex) {
-        final Component component = new Component();
-        component.setName(name);
-        component.setVersion(version);
-        component.setGroup(group);
-        component.setFilename(filename);
-        component.setMd5(md5);
-        component.setSha1(sha1);
-        component.setDescription(description);
-        component.setLicense(license);
-        if (resolvedLicense != null) {
-            resolvedLicense = getObjectById(License.class, resolvedLicense.getId());
-        }
-        component.setResolvedLicense(resolvedLicense);
-        component.setParent(parent);
-        component.setPurl(purl);
+    public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
@@ -418,6 +391,10 @@ public class QueryManager extends AlpineQueryManager {
         component.setFilename(transientComponent.getFilename());
         component.setMd5(transientComponent.getMd5());
         component.setSha1(transientComponent.getSha1());
+        component.setSha256(transientComponent.getSha256());
+        component.setSha512(transientComponent.getSha512());
+        component.setSha3_256(transientComponent.getSha3_256());
+        component.setSha3_512(transientComponent.getSha3_512());
         component.setDescription(transientComponent.getDescription());
         component.setLicense(transientComponent.getLicense());
         component.setResolvedLicense(transientComponent.getResolvedLicense());
@@ -1110,10 +1087,13 @@ public class QueryManager extends AlpineQueryManager {
      * @param component a Component object
      */
     public void bind(Scan scan, Component component) {
-        pm.currentTransaction().begin();
-        scan.getComponents().add(component);
-        component.getScans().add(scan);
-        pm.currentTransaction().commit();
+        boolean bound = scan.getComponents().stream().anyMatch(s -> s.getId() == scan.getId());
+        if (!bound) {
+            pm.currentTransaction().begin();
+            scan.getComponents().add(component);
+            component.getScans().add(scan);
+            pm.currentTransaction().commit();
+        }
     }
 
     /**
@@ -1122,10 +1102,13 @@ public class QueryManager extends AlpineQueryManager {
      * @param vulnerability a Vulnerability object
      */
     public void bind(Component component, Vulnerability vulnerability) {
-        pm.currentTransaction().begin();
-        vulnerability.getComponents().add(component);
-        component.getVulnerabilities().add(vulnerability);
-        pm.currentTransaction().commit();
+        boolean bound = vulnerability.getComponents().stream().anyMatch(c -> c.getId() == component.getId());
+        if (!bound) {
+            pm.currentTransaction().begin();
+            vulnerability.getComponents().add(component);
+            component.getVulnerabilities().add(vulnerability);
+            pm.currentTransaction().commit();
+        }
     }
 
     /**

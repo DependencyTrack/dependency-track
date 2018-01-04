@@ -74,29 +74,26 @@ public class ScanUploadProcessingTask implements Subscriber {
                 for (Dependency dependency : analysis.getDependencies()) {
 
                     // Attempt to resolve component
-                    final ComponentResolver componentResolver = new ComponentResolver();
+                    final ComponentResolver componentResolver = new ComponentResolver(qm);
                     Component component = componentResolver.resolve(dependency);
 
                     // Attempt to resolve license
-                    final LicenseResolver licenseResolver = new LicenseResolver();
+                    final LicenseResolver licenseResolver = new LicenseResolver(qm);
                     final License resolvedLicense = licenseResolver.resolve(dependency);
 
                     if (component == null) {
                         // Component could not be resolved (was null), so create a new component
-                        component = qm.createComponent(
-                                new ComponentNameResolver().resolve(dependency),
-                                new ComponentVersionResolver().resolve(dependency),
-                                new ComponentGroupResolver().resolve(dependency),
-                                dependency.getFileName(),
-                                dependency.getMd5(),
-                                dependency.getSha1(),
-                                dependency.getDescription(),
-                                resolvedLicense,
-                                dependency.getLicense(),
-                                null,
-                                null, // ODC does not support purl - setting to null
-                                false
-                        );
+                        component = new Component();
+                        component.setName(new ComponentNameResolver().resolve(dependency));
+                        component.setVersion(new ComponentVersionResolver().resolve(dependency));
+                        component.setGroup(new ComponentGroupResolver().resolve(dependency));
+                        component.setFilename(dependency.getFileName());
+                        component.setMd5(dependency.getMd5());
+                        component.setSha1(dependency.getSha1());
+                        //todo: update this when ODC support other hash functions
+                        component.setDescription(dependency.getDescription());
+                        component.setResolvedLicense(resolvedLicense);
+                        component = qm.createComponent(component, false);
                     }
 
                     qm.createDependencyIfNotExist(project, component, null, null);

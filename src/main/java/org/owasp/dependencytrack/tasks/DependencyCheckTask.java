@@ -177,16 +177,14 @@ public class DependencyCheckTask implements Subscriber {
 
                 // Add vulnerability to an affected component
                 if (vulnerabilities != null) {
-                    for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities
-                            .getVulnerabilities()) {
+                    for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities.getVulnerabilities()) {
                         // Resolve internally stored vulnerability
-                        Vulnerability internalVuln = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability
-                                .getName());
+                        Vulnerability internalVuln = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getName());
                         if (internalVuln == null) {
                             // For some reason, the vulnerability discovered in the scan does not exist in the ODT database.
                             // This could be due to timing issue where the scan picked up a new vuln prior to ODT doing so,
                             // or it might be due to a ODC plugin that uses a vulnerability datasource that ODT does not support.
-                            internalVuln = qm.createVulnerability(ModelConverter.convert(vulnerability), true);
+                            internalVuln = qm.createVulnerability(ModelConverter.convert(qm, vulnerability), true);
                         }
                         qm.addVulnerability(internalVuln, component);
                     }

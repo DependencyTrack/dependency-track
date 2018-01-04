@@ -30,19 +30,23 @@ import org.owasp.dependencytrack.persistence.QueryManager;
  */
 public class ComponentResolver implements IResolver {
 
+    private QueryManager qm;
+
+    public ComponentResolver(QueryManager qm) {
+        this.qm = qm;
+    }
+
     /**
      * {@inheritDoc}
      */
     public Component resolve(Dependency dependency) {
-        try (QueryManager qm = new QueryManager()) {
-            Component component = qm.getComponentByHash(dependency.getMd5());
-            if (component != null) {
-                return component;
-            }
-            component = qm.getComponentByHash(dependency.getSha1());
-            if (component != null) {
-                return component;
-            }
+        Component component = qm.getComponentByHash(dependency.getMd5());
+        if (component != null) {
+            return component;
+        }
+        component = qm.getComponentByHash(dependency.getSha1());
+        if (component != null) {
+            return component;
         }
         return null;
     }

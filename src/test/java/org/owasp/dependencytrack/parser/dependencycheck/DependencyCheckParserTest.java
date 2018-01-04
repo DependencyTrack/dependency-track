@@ -116,20 +116,14 @@ public class DependencyCheckParserTest extends BaseTest {
 
         List<Component> components = new ArrayList<>();
         for (Dependency dependency: analysis.getDependencies()) {
-            Component component = qm.createComponent(
-                    dependency.getFileName(), // name
-                    null, // version
-                    null, // group
-                    dependency.getFileName(),
-                    dependency.getMd5(),
-                    dependency.getSha1(),
-                    dependency.getDescription(),
-                    null, // resolved license //todo: try to match it
-                    dependency.getLicense(),
-                    null,
-                    null,
-                    false
-            );
+
+            Component component = new Component();
+            component.setName(dependency.getFileName());
+            component.setFilename(dependency.getFileName());
+            component.setMd5(dependency.getMd5());
+            component.setSha1(dependency.getSha1());
+            component.setDescription(dependency.getDescription());
+            component = qm.createComponent(component, false);
 
             Assert.assertNotNull(component);
             Assert.assertEquals(dependency.getFileName(), component.getFilename());

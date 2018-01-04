@@ -22,6 +22,8 @@ import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.CweResolver;
+import org.owasp.dependencytrack.persistence.QueryManager;
+
 import java.io.File;
 import java.math.BigDecimal;
 
@@ -44,14 +46,14 @@ public final class ModelConverter {
      * @param parserVuln the parsed Dependency-Check vulnerability to convert
      * @return a native Vulnerability object
      */
-    public static org.owasp.dependencytrack.model.Vulnerability convert(
+    public static org.owasp.dependencytrack.model.Vulnerability convert(QueryManager qm,
             org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability parserVuln) {
 
         final org.owasp.dependencytrack.model.Vulnerability persistable = new org.owasp.dependencytrack.model.Vulnerability();
         persistable.setSource(parserVuln.getSource());
         persistable.setVulnId(parserVuln.getName());
 
-        persistable.setCwe(new CweResolver().resolve(parserVuln.getCwe()));
+        persistable.setCwe(new CweResolver(qm).resolve(parserVuln.getCwe()));
         persistable.setDescription(parserVuln.getDescription());
 
         try {

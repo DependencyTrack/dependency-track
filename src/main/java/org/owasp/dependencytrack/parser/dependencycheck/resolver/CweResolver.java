@@ -30,33 +30,37 @@ import org.owasp.dependencytrack.persistence.QueryManager;
  */
 public class CweResolver {
 
+    private QueryManager qm;
+
+    public CweResolver(QueryManager qm) {
+        this.qm = qm;
+    }
+
     /**
      * Resolves a CWE by its string representation.
      * @param cweString the string to resolve
      */
     public Cwe resolve(String cweString) {
-        try (QueryManager qm = new QueryManager()) {
-            if (StringUtils.isNotBlank(cweString)) {
-                String lookupString = "";
-                if (cweString.startsWith("CWE-") && cweString.contains(" ")) {
-                    // This is likely to be in the following format:
-                    // CWE-264 Permissions, Privileges, and Access Controls
-                    lookupString = cweString.substring(4, cweString.indexOf(" "));
-                } else if (cweString.startsWith("CWE-") && cweString.length() < 9) {
-                    // This is likely to be in the following format:
-                    // CWE-264
-                    lookupString = cweString.substring(4, cweString.length());
-                } else if (cweString.length() < 5) {
-                    // This is likely to be in the following format:
-                    // 264
-                    lookupString = cweString;
-                }
+        if (StringUtils.isNotBlank(cweString)) {
+            String lookupString = "";
+            if (cweString.startsWith("CWE-") && cweString.contains(" ")) {
+                // This is likely to be in the following format:
+                // CWE-264 Permissions, Privileges, and Access Controls
+                lookupString = cweString.substring(4, cweString.indexOf(" "));
+            } else if (cweString.startsWith("CWE-") && cweString.length() < 9) {
+                // This is likely to be in the following format:
+                // CWE-264
+                lookupString = cweString.substring(4, cweString.length());
+            } else if (cweString.length() < 5) {
+                // This is likely to be in the following format:
+                // 264
+                lookupString = cweString;
+            }
 
-                try {
-                    return qm.getCweById(Integer.valueOf(lookupString));
-                } catch (NumberFormatException e) {
-                    // throw it away
-                }
+            try {
+                return qm.getCweById(Integer.valueOf(lookupString));
+            } catch (NumberFormatException e) {
+                // throw it away
             }
         }
         return null;

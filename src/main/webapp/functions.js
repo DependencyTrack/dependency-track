@@ -212,11 +212,11 @@ function populateProgressBars(metrics) {
     let metric = metrics[metrics.length - 1]; //Use the most recent metric
 
     let vulnerableProjects = $("#vulnerableProjects");
-    vulnerableProjects.html(metric.vulnerableProjects + " / " + metric.projects);
+    vulnerableProjects.html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")) + " / " + filterXSS($common.valueWithDefault(metric.projects, "0")));
     vulnerableProjects.css("width",((metric.vulnerableProjects / metric.projects) * 100 )+ "%");
 
     let vulnerableComponents = $("#vulnerableComponents");
-    vulnerableComponents.html(metric.vulnerableComponents + " / " + metric.components);
+    vulnerableComponents.html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")) + " / " + filterXSS($common.valueWithDefault(metric.components, "0")));
     vulnerableComponents.css("width",((metric.vulnerableComponents / metric.components) * 100 )+ "%");
 }
 
@@ -225,12 +225,13 @@ function updateStats(metrics) {
         return;
     }
     let metric = metrics[metrics.length - 1]; //Use the most recent metric
-    $("#projectsAtRisk").html(filterXSS(metric.vulnerableProjects));
-    $("#statTotalProjects").html(filterXSS(metric.projects));
-    $("#statVulnerableProjects").html(filterXSS(metric.vulnerableProjects));
-    $("#statTotalComponents").html(filterXSS(metric.components));
-    $("#statVulnerableComponents").html(filterXSS(metric.vulnerableComponents));
-    $("#statPortfolioVulnerabilities").html(filterXSS(metric.vulnerabilities));
+    console.log(metric.vulnerableProjects);
+    $("#projectsAtRisk").html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")));
+    $("#statTotalProjects").html(filterXSS($common.valueWithDefault(metric.projects, "0")));
+    $("#statVulnerableProjects").html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")));
+    $("#statTotalComponents").html(filterXSS($common.valueWithDefault(metric.components, "0")));
+    $("#statVulnerableComponents").html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")));
+    $("#statPortfolioVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
     $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
 }
 

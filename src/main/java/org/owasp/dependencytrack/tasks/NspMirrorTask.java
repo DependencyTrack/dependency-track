@@ -22,6 +22,8 @@ import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
+import alpine.util.JavaVersion;
+import alpine.util.SystemUtil;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -35,6 +37,7 @@ import org.owasp.dependencytrack.parser.nsp.NspAdvsoriesParser;
 import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import org.owasp.dependencytrack.parser.nsp.model.AdvisoryResults;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import org.owasp.dependencytrack.util.HttpClientFactory;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -60,7 +63,15 @@ public class NspMirrorTask implements LoggableSubscriber {
     public void inform(Event e) {
         if (e instanceof NspMirrorEvent) {
             LOGGER.info("Starting NSP mirroring task");
-            getAdvisories();
+
+            //todo: remove this check when Java 9 is eventually a requirement
+            JavaVersion javaVersion = SystemUtil.getJavaVersion();
+            if (javaVersion.getMajor() == 8 && javaVersion.getUpdate() < 101) {
+                LOGGER.error("Unable to mirror contents of Node Security Platform. NSP requires Java 1.8.0_101 or higher.");
+            } else {
+                getAdvisories();
+            }
+
             LOGGER.info("NSP mirroring complete");
         }
     }
@@ -73,11 +84,7 @@ public class NspMirrorTask implements LoggableSubscriber {
         LOGGER.info("Retrieving NSP advisories at " + currentDate);
 
         try {
-            final String proxyAddr = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS);
-            if (StringUtils.isNotBlank(proxyAddr)) {
-                final Integer proxyPort = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
-                Unirest.setProxy(new HttpHost(proxyAddr, proxyPort));
-            }
+            Unirest.setHttpClient(HttpClientFactory.createClient());
 
             boolean more = true;
             int offset = 0;

@@ -348,6 +348,9 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public Component getComponentByHash(String hash) {
+        if (hash == null) {
+            return null;
+        }
         final Query query;
         if (hash.length() == 32) {
             query = pm.newQuery(Component.class, "md5 == :hash");
@@ -361,6 +364,20 @@ public class QueryManager extends AlpineQueryManager {
             return null;
         }
         final List<Component> result = (List<Component>) query.execute(hash);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Returns a Component by group, name, and version.
+     * @param group the group of the component to retrieve
+     * @param name the name of the component to retrieve
+     * @param version the version of the component to retrieve
+     * @return a Component, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Component getComponentByAttributes(String group, String name, String version) {
+        final Query query = pm.newQuery(Component.class, "group == :group && name == :name && version == :version");
+        final List<Component> result = (List<Component>) query.execute(group, name, version);
         return result.size() == 0 ? null : result.get(0);
     }
 

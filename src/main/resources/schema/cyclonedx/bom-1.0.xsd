@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
-           xmlns:bom="http://cyclonedx.org/schema/bom"
+           xmlns:bom="http://cyclonedx.org/schema/bom/1.0"
            xmlns:spdx="http://cyclonedx.org/schema/spdx"
            elementFormDefault="qualified"
-           targetNamespace="http://cyclonedx.org/schema/bom"
-           vc:minVersion="1.1"
+           targetNamespace="http://cyclonedx.org/schema/bom/1.0"
+           vc:minVersion="1.0"
+           vc:maxVersion="1.1"
            version="1.0-M2">
 
     <xs:import namespace="http://cyclonedx.org/schema/spdx" schemaLocation="http://cyclonedx.org/schema/spdx"/>
@@ -34,10 +35,10 @@
             <xs:element name="version" type="bom:semver" minOccurs="1" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>The component version. The version should comply to the semantic versioning
-                        specification.</xs:documentation>
+                    specification.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="description" type="xs:normalizedString" minOccurs="1" maxOccurs="1">
+            <xs:element name="description" type="xs:normalizedString" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>Specifies a description for the component</xs:documentation>
                 </xs:annotation>
@@ -45,7 +46,7 @@
             <xs:element name="scope" type="bom:scope" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>Specifies the scope of the component. If scope is not specified, 'runtime'
-                        scope will be assumed.</xs:documentation>
+                    scope will be assumed.</xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="hashes">
@@ -67,7 +68,7 @@
                                                 <xs:documentation>A valid SPDX license ID</xs:documentation>
                                             </xs:annotation>
                                         </xs:element>
-                                        <xs:element name="other" type="xs:normalizedString" minOccurs="0" maxOccurs="unbounded">
+                                        <xs:element name="name" type="xs:normalizedString" minOccurs="0" maxOccurs="unbounded">
                                             <xs:annotation>
                                                 <xs:documentation>If SPDX does not define the license used, this field may be used to provide the license name</xs:documentation>
                                             </xs:annotation>
@@ -79,9 +80,22 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="copyright" type="xs:normalizedString" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>An optional copyright notice informing users of the underlying claims to copyright ownership in a published work.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:element name="cpe" type="xs:string" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>Specifies a well-formed CPE name. See https://nvd.nist.gov/products/cpe</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="purl" type="xs:anyURI" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Specifies the package-url (PURL). The purl, if specified, must be valid and conform
+                        to the specification defined at: https://github.com/package-url/purl-spec
+                    </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="modified" type="xs:boolean" minOccurs="1" maxOccurs="1">
@@ -148,9 +162,9 @@
             <xs:enumeration value="optional">
                 <xs:annotation>
                     <xs:documentation>The component is optional at runtime. Optional components are components that
-                        are not capable of being called due to them not be installed or otherwise accessible by any means.
-                        Components that are installed but due to configuration or other restrictions are prohibited from
-                        being called must be scoped as 'required'.</xs:documentation>
+                    are not capable of being called due to them not be installed or otherwise accessible by any means.
+                    Components that are installed but due to configuration or other restrictions are prohibited from
+                    being called must be scoped as 'required'.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
         </xs:restriction>
@@ -159,6 +173,8 @@
     <xs:simpleType name="classification">
         <xs:restriction base="xs:string">
             <xs:enumeration value="application"/>
+            <xs:enumeration value="framework"/>
+            <xs:enumeration value="library"/>
             <xs:enumeration value="operating-system"/>
             <xs:enumeration value="device"/>
         </xs:restriction>
@@ -202,11 +218,11 @@
             <xs:attribute name="version" type="xs:integer" default="1">
                 <xs:annotation>
                     <xs:documentation>The version allows component publishers/authors to make changes to existing
-                        BOMs to update various aspects of the document such as description or licenses. When a system
-                        is presented with multiiple BOMs for the same component, the system should use the most recent
-                        version of the BOM. The default version is '1' and should be incremented for each version of the
-                        BOM that is published. Each version of a component should have a unique BOM and if no changes are
-                        made to the BOMs, then each BOM will have a version of '1'.</xs:documentation>
+                    BOMs to update various aspects of the document such as description or licenses. When a system
+                    is presented with multiiple BOMs for the same component, the system should use the most recent
+                    version of the BOM. The default version is '1' and should be incremented for each version of the
+                    BOM that is published. Each version of a component should have a unique BOM and if no changes are
+                    made to the BOMs, then each BOM will have a version of '1'.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:anyAttribute namespace="##other" processContents="lax">

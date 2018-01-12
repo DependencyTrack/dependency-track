@@ -21,6 +21,7 @@ import alpine.event.LdapSyncEvent;
 import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.tasks.LdapSyncTask;
+import org.owasp.dependencytrack.tasks.BomUploadProcessingTask;
 import org.owasp.dependencytrack.tasks.DependencyCheckTask;
 import org.owasp.dependencytrack.tasks.IndexTask;
 import org.owasp.dependencytrack.tasks.MetricsUpdateTask;
@@ -56,6 +57,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
      * {@inheritDoc}
      */
     public void contextInitialized(ServletContextEvent event) {
+        EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
@@ -75,6 +77,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent event) {
         TaskScheduler.getInstance().shutdown();
 
+        EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(ScanUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(NistMirrorTask.class);

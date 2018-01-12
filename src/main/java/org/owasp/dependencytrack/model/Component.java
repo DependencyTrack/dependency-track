@@ -176,6 +176,7 @@ public class Component implements Serializable {
     private Component parent;
 
     @Persistent(mappedBy = "parent")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
 
     @Persistent(mappedBy = "component")

@@ -150,6 +150,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getPurl());
         Assert.assertTrue(component.getDescription().startsWith("The Saxon package"));
         Assert.assertNull(component.getLicense());
+        Assert.assertEquals("Copyright Saxonica Ltd", component.getCopyright());
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
@@ -177,6 +178,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getExtension());
         Assert.assertNull(component.getPurl());
         Assert.assertTrue(component.getDescription().startsWith("The GNU C Library"));
+        Assert.assertEquals("Copyright 2008-2010 John Smith", component.getCopyright());
         Assert.assertEquals("CyberNeko License", component.getLicense());
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
@@ -205,6 +207,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getExtension());
         Assert.assertNull(component.getPurl());
         Assert.assertNull(component.getDescription());
+        Assert.assertEquals("Copyright 2010, 2011 Source Auditor Inc.", component.getCopyright());
         Assert.assertNull(component.getLicense());
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
@@ -233,6 +236,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getExtension());
         Assert.assertNull(component.getPurl());
         Assert.assertNull(component.getDescription());
+        Assert.assertEquals("Copyright 2008-2010 John Smith", component.getCopyright());
         Assert.assertNull(component.getLicense());
         Assert.assertNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
@@ -261,6 +265,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getExtension());
         Assert.assertNull(component.getPurl());
         Assert.assertNull(component.getDescription());
+        Assert.assertEquals("(c) Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Hewlett-Packard Development Company, LP", component.getCopyright());
         Assert.assertNull(component.getLicense());
         Assert.assertNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
@@ -289,6 +294,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getExtension());
         Assert.assertNull(component.getPurl());
         Assert.assertNull(component.getDescription());
+        Assert.assertEquals("Copyright 2010, 2011 Source Auditor Inc.", component.getCopyright());
         Assert.assertNull(component.getLicense());
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
@@ -317,6 +323,7 @@ public class SpdxDocumentParserTest extends BaseTest {
         Assert.assertNull(component.getExtension());
         Assert.assertNull(component.getPurl());
         Assert.assertNull(component.getDescription());
+        Assert.assertEquals("Copyright 2001-2011 The Apache Software Foundation", component.getCopyright());
         Assert.assertNull(component.getLicense());
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());

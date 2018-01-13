@@ -148,7 +148,9 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "version"),
                 validator.validateProperty(jsonComponent, "group"),
                 validator.validateProperty(jsonComponent, "description"),
+                validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "license"),
+                validator.validateProperty(jsonComponent, "cpe"),
                 validator.validateProperty(jsonComponent, "purl"),
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
@@ -177,6 +179,7 @@ public class ComponentResource extends AlpineResource {
             component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
             component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
             component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
+            component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
             if (resolvedLicense != null) {
                 component.setLicense(null);
                 component.setResolvedLicense(resolvedLicense);
@@ -185,6 +188,7 @@ public class ComponentResource extends AlpineResource {
                 component.setResolvedLicense(null);
             }
             component.setParent(parent);
+            component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
             component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
             component.setName(StringUtils.trimToNull(jsonComponent.getName()));
 
@@ -213,6 +217,8 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "description"),
                 validator.validateProperty(jsonComponent, "version"),
                 validator.validateProperty(jsonComponent, "group"),
+                validator.validateProperty(jsonComponent, "copyright"),
+                validator.validateProperty(jsonComponent, "cpe"),
                 validator.validateProperty(jsonComponent, "purl"),
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),

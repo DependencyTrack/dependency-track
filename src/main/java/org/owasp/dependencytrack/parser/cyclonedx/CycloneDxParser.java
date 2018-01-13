@@ -132,8 +132,8 @@ public class CycloneDxParser {
             component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
             component.setDescription(StringUtils.trimToNull(cycloneDxComponent.getDescription()));
             component.setClassifier(StringUtils.trimToNull(cycloneDxComponent.getType()));
-            //component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
-            //component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
+            component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
+            component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
             component.setPurl(StringUtils.trimToNull(cycloneDxComponent.getPurl()));
 
             for (Hash hash : cycloneDxComponent.getHashes()) {

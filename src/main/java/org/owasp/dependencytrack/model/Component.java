@@ -152,6 +152,12 @@ public class Component implements Serializable {
     private String sha3_512;
 
     @Persistent
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The CPE may only contain printable characters")
+    private String cpe;
+
+    @Persistent
+    @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
     private String purl;
 
@@ -160,6 +166,12 @@ public class Component implements Serializable {
     @Size(max = 1024)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
+
+    @Persistent
+    @Column(name = "COPYRIGHT", jdbcType = "VARCHAR", length = 1024)
+    @Size(max = 1024)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The copyright may only contain printable characters")
+    private String copyright;
 
     @Persistent
     @Column(name = "LICENSE", jdbcType = "VARCHAR")
@@ -303,6 +315,14 @@ public class Component implements Serializable {
         this.sha3_512 = sha3_512;
     }
 
+    public String getCpe() {
+        return cpe;
+    }
+
+    public void setCpe(String cpe) {
+        this.cpe = cpe;
+    }
+
     public String getPurl() {
         return purl;
     }
@@ -317,6 +337,14 @@ public class Component implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getCopyright() {
+        return copyright;
+    }
+
+    public void setCopyright(String copyright) {
+        this.copyright = copyright;
     }
 
     public String getLicense() {

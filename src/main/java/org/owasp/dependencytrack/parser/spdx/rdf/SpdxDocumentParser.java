@@ -144,6 +144,7 @@ public class SpdxDocumentParser {
                 component.setVersion(StringUtils.trimToNull(spdxPackage.getVersionInfo()));
                 // Populate checksums
                 composeChecksums(component, spdxPackage.getChecksums());
+                component.setCopyright(StringUtils.trimToNull(spdxPackage.getCopyrightText()));
                 // Process licenses - the package authors declared license always takes priority
                 AnyLicenseInfo declaredLicense = spdxPackage.getLicenseDeclared();
                 AnyLicenseInfo concludedLicense = spdxPackage.getLicenseConcluded();
@@ -161,6 +162,7 @@ public class SpdxDocumentParser {
                 component.setName(spdxFile.getName());
                 // Populate checksums
                 composeChecksums(component, spdxFile.getChecksums());
+                component.setCopyright(StringUtils.trimToNull(spdxFile.getCopyrightText()));
                 // Process licenses
                 AnyLicenseInfo concludedLicense = spdxFile.getLicenseConcluded();
                 processLicenses(component, concludedLicense);

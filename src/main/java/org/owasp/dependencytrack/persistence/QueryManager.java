@@ -413,9 +413,11 @@ public class QueryManager extends AlpineQueryManager {
         component.setSha3_256(transientComponent.getSha3_256());
         component.setSha3_512(transientComponent.getSha3_512());
         component.setDescription(transientComponent.getDescription());
+        component.setCopyright(transientComponent.getCopyright());
         component.setLicense(transientComponent.getLicense());
         component.setResolvedLicense(transientComponent.getResolvedLicense());
         component.setParent(transientComponent.getParent());
+        component.setCpe(transientComponent.getCpe());
         component.setPurl(transientComponent.getPurl());
         final Component result = persist(component);
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));

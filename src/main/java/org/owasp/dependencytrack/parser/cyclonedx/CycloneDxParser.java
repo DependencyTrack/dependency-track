@@ -40,6 +40,8 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -86,11 +88,7 @@ public class CycloneDxParser {
     private Bom parse(StreamSource streamSource) throws ParseException {
         try {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            StreamSource[] sources = {
-                    new StreamSource(this.getClass().getResourceAsStream("/schema/cyclonedx/bom-1.0.xsd")),
-                    new StreamSource(this.getClass().getResourceAsStream("/schema/cyclonedx/spdx.xsd"))
-            };
-            Schema schema = schemaFactory.newSchema(sources);
+            Schema schema = schemaFactory.newSchema(new URL("http://cyclonedx.org/schema/bom/1.0"));
 
             // Parse the native bom
             final JAXBContext jaxbContext = JAXBContext.newInstance(Bom.class);
@@ -107,7 +105,7 @@ public class CycloneDxParser {
         } catch (UnmarshalException e) {
             LOGGER.error("Invalid CycloneDX BOM. Unable to parse.", e);
             throw new ParseException(e);
-        } catch (JAXBException | XMLStreamException | SAXException  e) {
+        } catch (JAXBException | XMLStreamException | SAXException | IOException e) {
             LOGGER.error("An error occurred parsing CycloneDX BOM", e);
             throw new ParseException(e);
         }

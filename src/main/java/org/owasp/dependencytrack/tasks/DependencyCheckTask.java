@@ -37,8 +37,11 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.owasp.dependencytrack.tasks.NistMirrorTask.NVD_MIRROR_DIR;
 
 /**
  * Subscriber task that performs a Dependency-Check analysis or update.
@@ -64,7 +67,7 @@ public class DependencyCheckTask implements Subscriber {
             if (DependencyCheckEvent.Action.ANALYZE == event.getAction()) {
                 performAnalysis(event);
             } else if (DependencyCheckEvent.Action.UPDATE_ONLY == event.getAction()) {
-                performUpdateOnly(event);
+                performUpdateOnly();
             }
         }
     }
@@ -102,19 +105,10 @@ public class DependencyCheckTask implements Subscriber {
 
     /**
      * Performs an update of the Dependeny-Check data directory only.
-     * @param event a DependencyCheckEvent
      */
-    private void performUpdateOnly(DependencyCheckEvent event) {
+    private void performUpdateOnly() {
         LOGGER.info("Executing Dependency-Check update-only task");
-        final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
-        scanAgent.setDataDirectory(DC_DATA_DIR);
-        scanAgent.setAutoUpdate(true);
-        scanAgent.setUpdateOnly(true);
-        scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));
-        scanAgent.setProxyPort(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PORT));
-        scanAgent.setProxyUsername(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME));
-        scanAgent.setProxyPassword(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD));
-
+        DependencyCheckScanAgent scanAgent = createScanAgent(true);
         try {
             scanAgent.execute();
         } catch (ScanAgentException ex) {
@@ -133,21 +127,9 @@ public class DependencyCheckTask implements Subscriber {
         for (Component component: components) {
             dependencies.add(ModelConverter.convert(component));
         }
-
         LOGGER.info("Analyzing " + dependencies.size() + " component(s)");
-
-        final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
-        scanAgent.setDataDirectory(DC_DATA_DIR);
-        scanAgent.setReportOutputDirectory(DC_REPORT_DIR);
-        scanAgent.setReportFormat(ReportGenerator.Format.XML);
-        scanAgent.setAutoUpdate(false);
-        scanAgent.setUpdateOnly(false);
+        DependencyCheckScanAgent scanAgent = createScanAgent(false);
         scanAgent.setDependencies(dependencies);
-        scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));
-        scanAgent.setProxyPort(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PORT));
-        scanAgent.setProxyUsername(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME));
-        scanAgent.setProxyPassword(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD));
-
         // If a global suppression file exists, use it.
         final File suppressions = new File(DC_GLOBAL_SUPPRESSION);
         if (suppressions.exists() && suppressions.isFile()) {
@@ -196,11 +178,13 @@ public class DependencyCheckTask implements Subscriber {
                 if (component.getVulnerabilities() != null) {
                     for (Vulnerability internalVuln : component.getVulnerabilities()) {
                         boolean found = false;
-                        for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities
-                                .getVulnerabilities()) {
-                            if (internalVuln.getSource().equals(vulnerability.getSource()) && internalVuln.getVulnId()
-                                    .equals(vulnerability.getName())) {
-                                found = true;
+                        if (vulnerabilities != null) {
+                            for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities
+                                    .getVulnerabilities()) {
+                                if (internalVuln.getSource().equals(vulnerability.getSource()) && internalVuln.getVulnId()
+                                        .equals(vulnerability.getName())) {
+                                    found = true;
+                                }
                             }
                         }
                         if (!found) {
@@ -214,5 +198,28 @@ public class DependencyCheckTask implements Subscriber {
             LOGGER.error("An error occurred while parsing Dependency-Check report", e);
         }
         LOGGER.info("Processing complete");
+    }
+
+    private DependencyCheckScanAgent createScanAgent(boolean update) {
+        final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
+        scanAgent.setDataDirectory(DC_DATA_DIR);
+        scanAgent.setReportOutputDirectory(DC_REPORT_DIR);
+        scanAgent.setReportFormat(ReportGenerator.Format.XML);
+        scanAgent.setAutoUpdate(update);
+        scanAgent.setUpdateOnly(update);
+        //scanAgent.setCpeStartsWithFilter("cpe:"); //todo: will be available in 3.1.1
+        scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));
+        scanAgent.setProxyPort(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PORT));
+        scanAgent.setProxyUsername(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME));
+        scanAgent.setProxyPassword(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD));
+        try {
+            scanAgent.setCveUrl12Base(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-%d.xml.gz");
+            scanAgent.setCveUrl20Base(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-2.0-%d.xml.gz");
+            scanAgent.setCveUrl12Modified(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-Modified.xml.gz");
+            scanAgent.setCveUrl20Modified(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-2.0-Modified.xml.gz");
+        } catch (MalformedURLException e) {
+            LOGGER.error("The local file URL Dependency-Check is using to retrieve the NVD mirrored contents is invalid", e);
+        }
+        return scanAgent;
     }
 }

@@ -20,8 +20,10 @@ package org.owasp.dependencytrack.tasks;
 import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
+import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
 import org.owasp.dependencytrack.parser.nvd.NvdParser;
 import java.io.BufferedInputStream;
@@ -35,7 +37,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
@@ -48,6 +49,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class NistMirrorTask implements LoggableSubscriber {
 
+    public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
     private static final String CVE_XML_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
     private static final String CVE_XML_20_MODIFIED_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-Modified.xml.gz";
     private static final String CVE_XML_12_BASE_URL = "https://nvd.nist.gov/download/nvdcve-%d.xml.gz";
@@ -67,10 +69,13 @@ public class NistMirrorTask implements LoggableSubscriber {
     public void inform(Event e) {
         if (e instanceof NistMirrorEvent) {
             LOGGER.info("Starting NIST mirroring task");
-            final File mirrorPath = new File(Config.getInstance().getDataDirectorty(), "nist");
+            final File mirrorPath = new File(NVD_MIRROR_DIR);
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
             LOGGER.info("NIST mirroring complete");
+
+            // Publish a Dependency-Check UPDATE ONLY event to update its data directory.
+            SingleThreadedEventService.getInstance().publish(new DependencyCheckEvent(DependencyCheckEvent.Action.UPDATE_ONLY));
         }
     }
 
@@ -101,7 +106,9 @@ public class NistMirrorTask implements LoggableSubscriber {
     private void setOutputDir(String outputDirPath) {
         outputDir = new File(outputDirPath);
         if (!outputDir.exists()) {
-            outputDir.mkdirs();
+            if (outputDir.mkdirs()) {
+                LOGGER.info("Mirrored data directory created successfully");
+            }
         }
     }
 

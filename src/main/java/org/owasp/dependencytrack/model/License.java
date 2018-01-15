@@ -109,7 +109,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "LICENSEID")
-    @Index(name = "LICENSE_LICENSEID_IDX")
+    @Index(name = "LICENSE_LICENSEID_IDX", unique = "true")
     @JsonProperty(value = "licenseId")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Size(min = 1, max = 255)

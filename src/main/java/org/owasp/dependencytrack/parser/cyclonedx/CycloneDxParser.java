@@ -117,61 +117,61 @@ public class CycloneDxParser {
      * @return a List of Component object
      */
     public List<Component> convert(Bom bom) {
-        final List<Component> components = new ArrayList<>();
-        for (int i = 0; i < bom.getComponents().size(); i++) {
-            components.add(convert(bom.getComponents().get(i)));
+        try (QueryManager qm = new QueryManager()) {
+            final List<Component> components = new ArrayList<>();
+            for (int i = 0; i < bom.getComponents().size(); i++) {
+                components.add(convert(qm, bom.getComponents().get(i)));
+            }
+            return components;
         }
-        return components;
     }
 
-    private Component convert(org.owasp.dependencytrack.parser.cyclonedx.model.Component cycloneDxComponent) {
-        try (QueryManager qm = new QueryManager()) {
-            final Component component = new Component();
-            component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
-            component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
-            component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
-            component.setDescription(StringUtils.trimToNull(cycloneDxComponent.getDescription()));
-            component.setClassifier(StringUtils.trimToNull(cycloneDxComponent.getType()));
-            component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
-            component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
-            component.setPurl(StringUtils.trimToNull(cycloneDxComponent.getPurl()));
+    private Component convert(QueryManager qm, org.owasp.dependencytrack.parser.cyclonedx.model.Component cycloneDxComponent) {
+        final Component component = new Component();
+        component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
+        component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
+        component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
+        component.setDescription(StringUtils.trimToNull(cycloneDxComponent.getDescription()));
+        component.setClassifier(StringUtils.trimToNull(cycloneDxComponent.getType()));
+        component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
+        component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
+        component.setPurl(StringUtils.trimToNull(cycloneDxComponent.getPurl()));
 
-            for (Hash hash : cycloneDxComponent.getHashes()) {
-                if ("MD5".equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setMd5(StringUtils.trimToNull(hash.getHash()));
-                } else if ("SHA-1".equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha1(StringUtils.trimToNull(hash.getHash()));
-                } else if ("SHA-256".equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha256(StringUtils.trimToNull(hash.getHash()));
-                } else if ("SHA-512".equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha512(StringUtils.trimToNull(hash.getHash()));
-                } else if ("SHA3-256".equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha3_256(StringUtils.trimToNull(hash.getHash()));
-                } else if ("SHA3-512".equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha3_512(StringUtils.trimToNull(hash.getHash()));
-                }
+        for (Hash hash : cycloneDxComponent.getHashes()) {
+            if ("MD5".equalsIgnoreCase(hash.getAlgorithm())) {
+                component.setMd5(StringUtils.trimToNull(hash.getHash()));
+            } else if ("SHA-1".equalsIgnoreCase(hash.getAlgorithm())) {
+                component.setSha1(StringUtils.trimToNull(hash.getHash()));
+            } else if ("SHA-256".equalsIgnoreCase(hash.getAlgorithm())) {
+                component.setSha256(StringUtils.trimToNull(hash.getHash()));
+            } else if ("SHA-512".equalsIgnoreCase(hash.getAlgorithm())) {
+                component.setSha512(StringUtils.trimToNull(hash.getHash()));
+            } else if ("SHA3-256".equalsIgnoreCase(hash.getAlgorithm())) {
+                component.setSha3_256(StringUtils.trimToNull(hash.getHash()));
+            } else if ("SHA3-512".equalsIgnoreCase(hash.getAlgorithm())) {
+                component.setSha3_512(StringUtils.trimToNull(hash.getHash()));
             }
-
-            for (org.owasp.dependencytrack.parser.cyclonedx.model.License cycloneLicense: cycloneDxComponent.getLicenses()) {
-                if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                    License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
-                    if (license != null) {
-                        component.setResolvedLicense(license);
-                    }
-                }
-                component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
-            }
-
-            final Collection<Component> components = new ArrayList<>();
-            for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
-                components.add(convert(cycloneDxComponent.getComponents().get(i)));
-            }
-            if (components.size() > 0) {
-                component.setChildren(components);
-            }
-
-            return component;
         }
+
+        for (org.owasp.dependencytrack.parser.cyclonedx.model.License cycloneLicense: cycloneDxComponent.getLicenses()) {
+            if (StringUtils.isNotBlank(cycloneLicense.getId())) {
+                License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                if (license != null) {
+                    component.setResolvedLicense(license);
+                }
+            }
+            component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+        }
+
+        final Collection<Component> components = new ArrayList<>();
+        for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
+            components.add(convert(qm, cycloneDxComponent.getComponents().get(i)));
+        }
+        if (components.size() > 0) {
+            component.setChildren(components);
+        }
+
+        return component;
     }
 
 }

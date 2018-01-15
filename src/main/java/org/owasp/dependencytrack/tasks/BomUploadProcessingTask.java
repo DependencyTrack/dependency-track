@@ -81,7 +81,9 @@ public class BomUploadProcessingTask implements Subscriber {
                         resolvedComponent.setFilename(component.getFilename());
                         resolvedComponent.setExtension(component.getExtension());
                         resolvedComponent.setLicense(component.getLicense());
-                        resolvedComponent.setResolvedLicense(component.getResolvedLicense());
+                        if (component.getResolvedLicense() != null) {
+                            resolvedComponent.setResolvedLicense(qm.getLicense(component.getResolvedLicense().getLicenseId()));
+                        }
                         bind(qm, project, resolvedComponent);
                     } else {
                         component = qm.createComponent(component, false);

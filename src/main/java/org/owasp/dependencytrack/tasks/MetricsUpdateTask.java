@@ -59,11 +59,11 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.info("Starting metrics update task");
             try (QueryManager qm = new QueryManager()) {
                 if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                    updateMetrics(qm);
+                    updateProjectMetrics(qm);
                 } else if (event.getTarget() instanceof Project) {
-                    updateMetrics(qm, (Project) event.getTarget());
+                    updateProjectMetrics(qm, ((Project) event.getTarget()).getId());
                 } else if (event.getTarget() instanceof Component) {
-                    updateMetrics(qm, (Component) event.getTarget());
+                    updateComponentMetrics(qm, ((Component) event.getTarget()).getId());
                 } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
                     updateVulnerabilitiesMetrics(qm);
                 }
@@ -78,7 +78,7 @@ public class MetricsUpdateTask implements Subscriber {
      * Performs high-level metric updates on the portfolio.
      * @param qm a QueryManager instance
      */
-    private void updateMetrics(QueryManager qm) {
+    private void updateProjectMetrics(QueryManager qm) {
         LOGGER.info("Executing metrics update on portfolio");
         final Date measuredAt = new Date();
 
@@ -93,7 +93,7 @@ public class MetricsUpdateTask implements Subscriber {
         // Iterate through all projects
         for (Project project: projects) {
             // Update the projects metrics
-            final MetricCounters projectMetrics = updateMetrics(qm, project);
+            final MetricCounters projectMetrics = updateProjectMetrics(qm, project.getId());
             projectCountersList.add(projectMetrics);
         }
 
@@ -158,10 +158,11 @@ public class MetricsUpdateTask implements Subscriber {
     /**
      * Performs metric updates on a specific project.
      * @param qm a QueryManager instance
-     * @param project the project to perform metric updates on
+     * @param oid the object ID of the project
      * @return MetricCounters
      */
-    private MetricCounters updateMetrics(QueryManager qm, Project project) {
+    private MetricCounters updateProjectMetrics(QueryManager qm, long oid) {
+        Project project = qm.getObjectById(Project.class, oid);
         LOGGER.debug("Executing metrics update on project: " + project.getUuid());
         final Date measuredAt = new Date();
 
@@ -181,7 +182,7 @@ public class MetricsUpdateTask implements Subscriber {
             final Component component = dependency.getComponent();
 
             // Update the components metrics
-            final MetricCounters componentMetrics = updateMetrics(qm, component);
+            final MetricCounters componentMetrics = updateComponentMetrics(qm, component.getId());
 
             // Adds the metrics from the component to the list of metrics for the project
             countersList.add(componentMetrics);
@@ -235,10 +236,11 @@ public class MetricsUpdateTask implements Subscriber {
     /**
      * Performs metric updates on a specific component.
      * @param qm a QueryManager instance
-     * @param component the component to perform metric updates on
+     * @param oid object ID of the component to perform metric updates on
      * @return MetricCounters
      */
-    private MetricCounters updateMetrics(QueryManager qm, Component component) {
+    private MetricCounters updateComponentMetrics(QueryManager qm, long oid) {
+        Component component = qm.getObjectById(Component.class, oid);
         LOGGER.debug("Executing metrics update on project: " + component.getUuid());
         final Date measuredAt = new Date();
 

@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.Config;
 import alpine.event.framework.Event;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.persistence.PaginatedResult;
@@ -29,6 +30,7 @@ import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencytrack.event.DependencyCheckEvent;
+import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.exception.ParseException;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Vulnerability;
@@ -192,6 +194,8 @@ public class DependencyCheckTask implements Subscriber {
                         }
                     }
                 }
+
+                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
 
             }
         } catch (ParseException e) {

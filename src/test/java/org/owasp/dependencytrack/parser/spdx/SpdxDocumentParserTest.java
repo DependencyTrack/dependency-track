@@ -25,6 +25,8 @@ import org.owasp.dependencytrack.BaseTest;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.owasp.dependencytrack.persistence.DefaultObjectGenerator;
+import org.owasp.dependencytrack.persistence.QueryManager;
+
 import java.util.List;
 
 public class SpdxDocumentParserTest extends BaseTest {
@@ -37,96 +39,104 @@ public class SpdxDocumentParserTest extends BaseTest {
 
     @Test
     public void testSpdxRdf20() throws Exception {
-        final SpdxDocumentParser parser = new SpdxDocumentParser();
-        final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXRdfExample-v2.0.rdf"));
-        final List<Component> components = parser.parse(bom);
-        Assert.assertEquals(5, components.size());
-        for (int i = 0; i < components.size(); i++) {
-            final Component component = components.get(i);
-            Assert.assertNotNull(component);
-            if (i == 0) {
-                validateGlibc(component);
-            } else if (i == 1) {
-                validateJenaFoo(component);
-            } else if (i == 2) {
-                validateDoapProject(component);
-            } else if (i == 3) {
-                validateCommonsLang(component);
-            } else if (i == 5) {
-                validateJenaFoo(component);
+        try (QueryManager qm = new QueryManager()) {
+            final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
+            final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXRdfExample-v2.0.rdf"));
+            final List<Component> components = parser.parse(bom);
+            Assert.assertEquals(5, components.size());
+            for (int i = 0; i < components.size(); i++) {
+                final Component component = components.get(i);
+                Assert.assertNotNull(component);
+                if (i == 0) {
+                    validateGlibc(component);
+                } else if (i == 1) {
+                    validateJenaFoo(component);
+                } else if (i == 2) {
+                    validateDoapProject(component);
+                } else if (i == 3) {
+                    validateCommonsLang(component);
+                } else if (i == 5) {
+                    validateJenaFoo(component);
+                }
             }
         }
     }
 
     @Test
     public void testSpdxTag20() throws Exception {
-        final SpdxDocumentParser parser = new SpdxDocumentParser();
-        final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXTagExample-v2.0.spdx"));
-        final List<Component> components = parser.parse(bom);
-        Assert.assertEquals(5, components.size());
-        for (int i = 0; i < components.size(); i++) {
-            final Component component = components.get(i);
-            Assert.assertNotNull(component);
-            if (i == 0) {
-                validateGlibc(component);
-            } else if (i == 1) {
-                validateJavaX(component);
-            } else if (i == 2) {
-                validateJenaSources(component);
-            } else if (i == 3) {
-                validateCommonsLang(component);
-            } else if (i == 4) {
-                validateJenaFoo(component);
+        try (QueryManager qm = new QueryManager()) {
+            final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
+            final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXTagExample-v2.0.spdx"));
+            final List<Component> components = parser.parse(bom);
+            Assert.assertEquals(5, components.size());
+            for (int i = 0; i < components.size(); i++) {
+                final Component component = components.get(i);
+                Assert.assertNotNull(component);
+                if (i == 0) {
+                    validateGlibc(component);
+                } else if (i == 1) {
+                    validateJavaX(component);
+                } else if (i == 2) {
+                    validateJenaSources(component);
+                } else if (i == 3) {
+                    validateCommonsLang(component);
+                } else if (i == 4) {
+                    validateJenaFoo(component);
+                }
             }
         }
     }
 
     @Test
     public void testSpdxRdf21() throws Exception {
-        final SpdxDocumentParser parser = new SpdxDocumentParser();
-        final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXRdfExample-v2.1.rdf"));
-        final List<Component> components = parser.parse(bom);
-        Assert.assertEquals(6, components.size());
-        for (int i = 0; i < components.size(); i++) {
-            final Component component = components.get(i);
-            Assert.assertNotNull(component);
-            if (i == 0) {
-                validateSaxon(component);
-            } else if (i == 1) {
-                validateGlibc(component);
-            } else if (i == 2) {
-                validateJenaFoo(component);
-            } else if (i == 3) {
-                validateCommonsLang(component);
-            } else if (i == 4) {
-                validateJenaSources(component);
-            } else if (i == 5) {
-                validateDoapProject(component);
+        try (QueryManager qm = new QueryManager()) {
+            final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
+            final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXRdfExample-v2.1.rdf"));
+            final List<Component> components = parser.parse(bom);
+            Assert.assertEquals(6, components.size());
+            for (int i = 0; i < components.size(); i++) {
+                final Component component = components.get(i);
+                Assert.assertNotNull(component);
+                if (i == 0) {
+                    validateSaxon(component);
+                } else if (i == 1) {
+                    validateGlibc(component);
+                } else if (i == 2) {
+                    validateJenaFoo(component);
+                } else if (i == 3) {
+                    validateCommonsLang(component);
+                } else if (i == 4) {
+                    validateJenaSources(component);
+                } else if (i == 5) {
+                    validateDoapProject(component);
+                }
             }
         }
     }
 
     @Test
     public void testSpdxTag21() throws Exception {
-        final SpdxDocumentParser parser = new SpdxDocumentParser();
-        final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXTagExample-v2.1.spdx"));
-        final List<Component> components = parser.parse(bom);
-        Assert.assertEquals(6, components.size());
-        for (int i = 0; i < components.size(); i++) {
-            final Component component = components.get(i);
-            Assert.assertNotNull(component);
-            if (i == 0) {
-                validateSaxon(component);
-            } else if (i == 1) {
-                validateGlibc(component);
-            } else if (i == 2) {
-                validateDoapProject(component);
-            } else if (i == 3) {
-                validateJenaSources(component);
-            } else if (i == 4) {
-                validateCommonsLang(component);
-            } else if (i == 5) {
-                validateJenaFoo(component);
+        try (QueryManager qm = new QueryManager()) {
+            final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
+            final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXTagExample-v2.1.spdx"));
+            final List<Component> components = parser.parse(bom);
+            Assert.assertEquals(6, components.size());
+            for (int i = 0; i < components.size(); i++) {
+                final Component component = components.get(i);
+                Assert.assertNotNull(component);
+                if (i == 0) {
+                    validateSaxon(component);
+                } else if (i == 1) {
+                    validateGlibc(component);
+                } else if (i == 2) {
+                    validateDoapProject(component);
+                } else if (i == 3) {
+                    validateJenaSources(component);
+                } else if (i == 4) {
+                    validateCommonsLang(component);
+                } else if (i == 5) {
+                    validateJenaFoo(component);
+                }
             }
         }
     }

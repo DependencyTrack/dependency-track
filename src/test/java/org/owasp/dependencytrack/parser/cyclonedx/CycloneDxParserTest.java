@@ -25,6 +25,8 @@ import org.owasp.dependencytrack.BaseTest;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.parser.cyclonedx.model.Bom;
 import org.owasp.dependencytrack.persistence.DefaultObjectGenerator;
+import org.owasp.dependencytrack.persistence.QueryManager;
+
 import java.util.List;
 
 public class CycloneDxParserTest extends BaseTest {
@@ -37,29 +39,31 @@ public class CycloneDxParserTest extends BaseTest {
 
     @Test
     public void testValidBom() throws Exception {
-        final CycloneDxParser parser = new CycloneDxParser();
-        final byte[] bomBytes = IOUtils.toByteArray(this.getClass().getResourceAsStream("/bom.xml"));
-        final Bom bom = parser.parse(bomBytes);
-        Assert.assertEquals(1, bom.getComponents().size());
-        Assert.assertEquals(1, bom.getVersion());
-        final List<Component> components = parser.convert(bom);
+        try (QueryManager qm = new QueryManager()) {
+            final CycloneDxParser parser = new CycloneDxParser(qm);
+            final byte[] bomBytes = IOUtils.toByteArray(this.getClass().getResourceAsStream("/bom.xml"));
+            final Bom bom = parser.parse(bomBytes);
+            Assert.assertEquals(1, bom.getComponents().size());
+            Assert.assertEquals(1, bom.getVersion());
+            final List<Component> components = parser.convert(bom);
 
-        Assert.assertEquals(1, components.size());
+            Assert.assertEquals(1, components.size());
 
-        Component c1 = components.get(0);
-        Assert.assertEquals("org.example", c1.getGroup());
-        Assert.assertEquals("1.0.0", c1.getVersion());
-        Assert.assertEquals("application", c1.getClassifier());
-        Assert.assertEquals("2342c2eaf1feb9a80195dbaddf2ebaa3", c1.getMd5());
-        Assert.assertEquals("68b78babe00a053f9e35ec6a2d9080f5b90122b0", c1.getSha1());
-        Assert.assertEquals("708f1f53b41f11f02d12a11b1a38d2905d47b099afc71a0f1124ef8582ec7313", c1.getSha256());
-        Assert.assertEquals("387b7ae16b9cae45f830671541539bf544202faae5aac544a93b7b0a04f5f846fa2f4e81ef3f1677e13aed7496408a441f5657ab6d54423e56bf6f38da124aef", c1.getSha512());
-        Assert.assertEquals("cpe:2.3:a:example:myapplication:1.0.0", c1.getCpe());
-        Assert.assertEquals("maven:com.example/myapplication@1.0.0packaging=war", c1.getPurl());
-        Assert.assertEquals("An example application", c1.getDescription());
-        Assert.assertEquals("Copyright Example Inc. All rights reserved.", c1.getCopyright());
-        Assert.assertEquals("Apache-2.0", c1.getResolvedLicense().getLicenseId());
-        Assert.assertEquals(2, c1.getChildren().size());
+            Component c1 = components.get(0);
+            Assert.assertEquals("org.example", c1.getGroup());
+            Assert.assertEquals("1.0.0", c1.getVersion());
+            Assert.assertEquals("application", c1.getClassifier());
+            Assert.assertEquals("2342c2eaf1feb9a80195dbaddf2ebaa3", c1.getMd5());
+            Assert.assertEquals("68b78babe00a053f9e35ec6a2d9080f5b90122b0", c1.getSha1());
+            Assert.assertEquals("708f1f53b41f11f02d12a11b1a38d2905d47b099afc71a0f1124ef8582ec7313", c1.getSha256());
+            Assert.assertEquals("387b7ae16b9cae45f830671541539bf544202faae5aac544a93b7b0a04f5f846fa2f4e81ef3f1677e13aed7496408a441f5657ab6d54423e56bf6f38da124aef", c1.getSha512());
+            Assert.assertEquals("cpe:2.3:a:example:myapplication:1.0.0", c1.getCpe());
+            Assert.assertEquals("maven:com.example/myapplication@1.0.0packaging=war", c1.getPurl());
+            Assert.assertEquals("An example application", c1.getDescription());
+            Assert.assertEquals("Copyright Example Inc. All rights reserved.", c1.getCopyright());
+            Assert.assertEquals("Apache-2.0", c1.getResolvedLicense().getLicenseId());
+            Assert.assertEquals(2, c1.getChildren().size());
+        }
     }
 
 }

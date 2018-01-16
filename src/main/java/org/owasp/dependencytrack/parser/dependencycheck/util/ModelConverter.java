@@ -75,13 +75,13 @@ public final class ModelConverter {
         final boolean isVirtual = !(StringUtils.isNotBlank(component.getMd5()) || StringUtils.isNotBlank(component.getSha1()));
         final org.owasp.dependencycheck.dependency.Dependency dependency =
                 new org.owasp.dependencycheck.dependency.Dependency(new File(FileUtils.getBitBucket()), isVirtual);
-        // Sets hashes if exists
-        if (StringUtils.isNotBlank(component.getMd5())) {
-            dependency.setMd5sum(component.getMd5());
-        }
-        if (StringUtils.isNotBlank(component.getSha1())) {
-            dependency.setSha1sum(component.getSha1());
-        }
+
+        dependency.setMd5sum(StringUtils.trimToNull(component.getMd5()));
+        dependency.setSha1sum(StringUtils.trimToNull(component.getSha1()));
+        dependency.setName(StringUtils.trimToNull(component.getName()));
+        dependency.setVersion(StringUtils.trimToNull(component.getVersion()));
+        dependency.setDescription(StringUtils.trimToNull(component.getDescription()));
+
         // Sets licenses if exists
         if (component.getResolvedLicense() != null) {
             dependency.setLicense(component.getResolvedLicense().getName());
@@ -92,6 +92,7 @@ public final class ModelConverter {
         // This will be used later when processing the report.
         dependency.setFileName(String.valueOf(component.getName()));
         dependency.setFilePath(String.valueOf(component.getUuid()));
+
         // Add evidence to the dependency
         if (component.getGroup() != null) {
             dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", component.getGroup(), Confidence.HIGHEST);

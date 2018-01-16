@@ -47,57 +47,60 @@ public class BomUploadProcessingTask implements Subscriber {
         if (e instanceof BomUploadEvent) {
             final BomUploadEvent event = (BomUploadEvent) e;
             final byte[] bomBytes = event.getBom();
-            QueryManager qm = null;
+            QueryManager qm = new QueryManager();
             try {
                 final List<Component> components;
                 final String bomString = new String(bomBytes);
-                if (bomString.startsWith("<?xml") && bomString.contains("<bom")
-                        && bomString.contains("http://cyclonedx.org/schema/bom")) {
-                    final CycloneDxParser parser = new CycloneDxParser();
+                if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
+                    final CycloneDxParser parser = new CycloneDxParser(qm);
                     components = parser.convert(parser.parse(bomBytes));
                 } else {
-                    final SpdxDocumentParser parser = new SpdxDocumentParser();
+                    final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
                     components = parser.parse(bomBytes);
                 }
-
-                qm = new QueryManager();
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 for (Component component: components) {
-                    final ComponentResolver cr = new ComponentResolver(qm);
-                    final Component resolvedComponent = cr.resolve(component);
-                    if (resolvedComponent != null) {
-                        resolvedComponent.setName(component.getName());
-                        resolvedComponent.setGroup(component.getGroup());
-                        resolvedComponent.setVersion(component.getVersion());
-                        resolvedComponent.setMd5(component.getMd5());
-                        resolvedComponent.setSha1(component.getSha1());
-                        resolvedComponent.setSha256(component.getSha256());
-                        resolvedComponent.setSha512(component.getSha512());
-                        resolvedComponent.setSha3_256(component.getSha3_256());
-                        resolvedComponent.setSha3_512(component.getSha3_512());
-                        resolvedComponent.setPurl(component.getPurl());
-                        resolvedComponent.setClassifier(component.getClassifier());
-                        resolvedComponent.setDescription(component.getDescription());
-                        resolvedComponent.setFilename(component.getFilename());
-                        resolvedComponent.setExtension(component.getExtension());
-                        resolvedComponent.setLicense(component.getLicense());
-                        if (component.getResolvedLicense() != null) {
-                            resolvedComponent.setResolvedLicense(qm.getLicense(component.getResolvedLicense().getLicenseId()));
-                        }
-                        bind(qm, project, resolvedComponent);
-                    } else {
-                        component = qm.createComponent(component, false);
-                        bind(qm, project, component);
-                    }
+                    processComponent(qm, project, component);
                 }
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom");
                 LOGGER.error(ex.getMessage());
             } finally {
-                if (qm != null) {
-                    qm.commitSearchIndex(true, Component.class);
-                    qm.close();
-                }
+                qm.commitSearchIndex(true, Component.class);
+                qm.close();
+            }
+        }
+    }
+
+    private void processComponent(QueryManager qm, Project project, Component component) {
+        final ComponentResolver cr = new ComponentResolver(qm);
+        final Component resolvedComponent = cr.resolve(component);
+        if (resolvedComponent != null) {
+            resolvedComponent.setName(component.getName());
+            resolvedComponent.setGroup(component.getGroup());
+            resolvedComponent.setVersion(component.getVersion());
+            resolvedComponent.setMd5(component.getMd5());
+            resolvedComponent.setSha1(component.getSha1());
+            resolvedComponent.setSha256(component.getSha256());
+            resolvedComponent.setSha512(component.getSha512());
+            resolvedComponent.setSha3_256(component.getSha3_256());
+            resolvedComponent.setSha3_512(component.getSha3_512());
+            resolvedComponent.setPurl(component.getPurl());
+            resolvedComponent.setClassifier(component.getClassifier());
+            resolvedComponent.setDescription(component.getDescription());
+            resolvedComponent.setFilename(component.getFilename());
+            resolvedComponent.setExtension(component.getExtension());
+            resolvedComponent.setLicense(component.getLicense());
+            resolvedComponent.setResolvedLicense(component.getResolvedLicense());
+            qm.persist(resolvedComponent);
+            bind(qm, project, resolvedComponent);
+        } else {
+            component = qm.createComponent(component, false);
+            bind(qm, project, component);
+        }
+        if (component.getChildren() != null) {
+            for (Component child: component.getChildren()) {
+                processComponent(qm, project, child);
             }
         }
     }

@@ -56,6 +56,12 @@ public class CycloneDxParser {
 
     private static final Logger LOGGER = Logger.getLogger(CycloneDxParser.class);
 
+    private QueryManager qm;
+
+    public CycloneDxParser(QueryManager qm) {
+        this.qm = qm;
+    }
+
     /**
      * Parses a CycloneDX BOM.
      *
@@ -117,16 +123,14 @@ public class CycloneDxParser {
      * @return a List of Component object
      */
     public List<Component> convert(Bom bom) {
-        try (QueryManager qm = new QueryManager()) {
-            final List<Component> components = new ArrayList<>();
-            for (int i = 0; i < bom.getComponents().size(); i++) {
-                components.add(convert(qm, bom.getComponents().get(i)));
-            }
-            return components;
+        final List<Component> components = new ArrayList<>();
+        for (int i = 0; i < bom.getComponents().size(); i++) {
+            components.add(convert(bom.getComponents().get(i)));
         }
+        return components;
     }
 
-    private Component convert(QueryManager qm, org.owasp.dependencytrack.parser.cyclonedx.model.Component cycloneDxComponent) {
+    private Component convert(org.owasp.dependencytrack.parser.cyclonedx.model.Component cycloneDxComponent) {
         final Component component = new Component();
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
@@ -165,7 +169,7 @@ public class CycloneDxParser {
 
         final Collection<Component> components = new ArrayList<>();
         for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
-            components.add(convert(qm, cycloneDxComponent.getComponents().get(i)));
+            components.add(convert(cycloneDxComponent.getComponents().get(i)));
         }
         if (components.size() > 0) {
             component.setChildren(components);

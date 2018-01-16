@@ -58,6 +58,12 @@ public class SpdxDocumentParser {
         TAG
     }
 
+    private QueryManager qm;
+
+    public SpdxDocumentParser(QueryManager qm) {
+        this.qm = qm;
+    }
+
     public List<Component> parse(byte[] spdx) throws ParseException {
         final String spdxString = new String(spdx);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {
@@ -209,13 +215,11 @@ public class SpdxDocumentParser {
     }
 
     private void processSpdxListedLicense(Component component, SpdxListedLicense spdxListedLicense) {
-        try (QueryManager qm = new QueryManager()) {
-            License license = qm.getLicense(spdxListedLicense.getLicenseId());
-            if (license != null) {
-                component.setResolvedLicense(license);
-            } else {
-                component.setLicense(spdxListedLicense.getName());
-            }
+        License license = qm.getLicense(spdxListedLicense.getLicenseId());
+        if (license != null) {
+            component.setResolvedLicense(license);
+        } else {
+            component.setLicense(spdxListedLicense.getName());
         }
     }
 }

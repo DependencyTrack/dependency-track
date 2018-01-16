@@ -94,11 +94,11 @@ function formatProjectsTable(res) {
 }
 
 function populateMetrics(data) {
-    $("#metricCritical").html(filterXSS(data.critical));
-    $("#metricHigh").html(filterXSS(data.high));
-    $("#metricMedium").html(filterXSS(data.medium));
-    $("#metricLow").html(filterXSS(data.low));
-    $("#metricIrs").html(filterXSS(data.inheritedRiskScore));
+    $("#metricCritical").html(data.critical);
+    $("#metricHigh").html(data.high);
+    $("#metricMedium").html(data.medium);
+    $("#metricLow").html(data.low);
+    $("#metricIrs").html(data.inheritedRiskScore);
 }
 
 /**

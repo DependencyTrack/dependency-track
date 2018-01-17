@@ -737,6 +737,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Checks if the specified Dependency exists or not. If so, removes
+     * the component as a dependency of the project.
+     * @param project the Project
+     * @param component the Component
+     */
+    public void removeDependencyIfExist(Project project, Component component) {
+        Dependency dependency = getDependency(project, component);
+        if (dependency != null) {
+            delete(dependency);
+        }
+    }
+
+    /**
      * Returns a List of Dependency for the specified Project.
      * @param project the Project to retrieve dependencies of
      * @return a List of Dependency objects

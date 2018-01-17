@@ -39,6 +39,7 @@ const URL_USER_SELF = "api/v1/user/self";
 const URL_PROJECT = "api/v1/project";
 const URL_LICENSE = "api/v1/license";
 const URL_COMPONENT = "api/v1/component";
+const URL_DEPENDENCY = "api/v1/dependency";
 const URL_VULNERABILITY = "api/v1/vulnerability";
 const URL_SEARCH = "api/v1/search";
 const URL_METRICS = "api/v1/metrics";
@@ -486,6 +487,56 @@ $rest.getComponent = function getProject(uuid, successCallback, failCallback) {
             404: function(data) {
                 if (failCallback) {
                     $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a component is added as a dependency to a project.
+ */
+$rest.addDependency = function addDependency(projectUuid, componentUuid, notes, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_DEPENDENCY,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({projectUuid: projectUuid, componentUuid: componentUuid, notes: notes}),
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a component is removed as a dependency from a project.
+ */
+$rest.removeDependency = function removeDependency(projectUuid, componentUuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_DEPENDENCY,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
+        data: JSON.stringify({projectUuid: projectUuid, componentUuid: componentUuid}),
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
                 }
             }
         },

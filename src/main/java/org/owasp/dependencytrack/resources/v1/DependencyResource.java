@@ -132,7 +132,7 @@ public class DependencyResource extends AlpineResource {
                 if (getAlpineRequest().getPrincipal() != null) {
                     addedBy = getAlpineRequest().getPrincipal().getName();
                 }
-                Dependency dependency = qm.createDependencyIfNotExist(project, component,addedBy, request.getNotes());
+                Dependency dependency = qm.createDependencyIfNotExist(project, component, addedBy, request.getNotes());
                 return Response.status(Response.Status.CREATED).entity(dependency).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project or component could not be found.").build();

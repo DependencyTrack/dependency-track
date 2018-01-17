@@ -56,7 +56,7 @@ public class MetricsUpdateTask implements Subscriber {
         if (e instanceof MetricsUpdateEvent) {
             final MetricsUpdateEvent event = (MetricsUpdateEvent) e;
 
-            LOGGER.info("Starting metrics update task");
+            LOGGER.debug("Starting metrics update task");
             try (QueryManager qm = new QueryManager()) {
                 if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
                     updateProjectMetrics(qm);
@@ -163,7 +163,7 @@ public class MetricsUpdateTask implements Subscriber {
      */
     private MetricCounters updateProjectMetrics(QueryManager qm, long oid) {
         Project project = qm.getObjectById(Project.class, oid);
-        LOGGER.debug("Executing metrics update on project: " + project.getUuid());
+        LOGGER.info("Executing metrics update on project: " + project.getUuid());
         final Date measuredAt = new Date();
 
         final MetricCounters counters = new MetricCounters();
@@ -241,7 +241,7 @@ public class MetricsUpdateTask implements Subscriber {
      */
     private MetricCounters updateComponentMetrics(QueryManager qm, long oid) {
         Component component = qm.getObjectById(Component.class, oid);
-        LOGGER.debug("Executing metrics update on project: " + component.getUuid());
+        LOGGER.debug("Executing metrics update on component: " + component.getUuid());
         final Date measuredAt = new Date();
 
         final MetricCounters counters = new MetricCounters();
@@ -281,7 +281,7 @@ public class MetricsUpdateTask implements Subscriber {
      * @param qm a QueryManager instance
      */
     private void updateVulnerabilitiesMetrics(QueryManager qm) {
-        LOGGER.debug("Executing metrics update on vulnerability database");
+        LOGGER.info("Executing metrics update on vulnerability database");
         final Date measuredAt = new Date();
         final VulnerabilityMetricCounters yearMonthCounters = new VulnerabilityMetricCounters(measuredAt, true);
         final VulnerabilityMetricCounters yearCounters = new VulnerabilityMetricCounters(measuredAt, false);

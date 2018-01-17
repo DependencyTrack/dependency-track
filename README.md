@@ -58,7 +58,7 @@ Features
 
 Ecosystem Overview
 -------------------
-![alt tag](docs/images/ecosystem.png)
+![alt tag](https://github.com/stevespringett/dependency-track/raw/master/docs/images/ecosystem.png)
 * Dependency-Check results can be published to SonarQube ([plugin](https://github.com/stevespringett/dependency-check-sonar-plugin))
 * Dependency-Check results can be published to ThreadFix ([plugin](https://plugins.jenkins.io/threadfix))
 * Dependency-Check results can be published to Dependency-Track
@@ -69,31 +69,31 @@ Ecosystem Overview
 Screenshots
 -------------------
 The dashboard:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/dashboard.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/dashboard.png)
 
 
 A list of all projects:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/projects.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/projects.png)
 
 
 Viewing a list of components that are dependencies of a specific project:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/components.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/components.png)
 
 
 Viewing an individual vulnerable component:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerable-component.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/vulnerable-component.png)
 
 
 Viewing an individual vulnerability:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerability.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/vulnerability.png)
 
 
 Viewing all vulnerabilities in the system:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerabilities.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/vulnerabilities.png)
 
 
 Viewing an individual license:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/license.png)
+![alt text](https://github.com/stevespringett/dependency-track/raw/master/docs/images/screenshots/license.png)
 
 Distributions
 -------------------

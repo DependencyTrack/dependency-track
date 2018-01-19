@@ -135,7 +135,7 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addDependencyFromExistingButton">Add Dependency (From Existing)</button>
+                                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addDependencyFromExistingButton">Add Dependency</button>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="fromNewTab">
@@ -165,7 +165,7 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addDependencyFromNewButton">Add Dependency (From New)</button>
+                                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addDependencyFromNewButton">Add Dependency</button>
                                     </div>
                                 </div>
                             </div>

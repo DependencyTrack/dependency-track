@@ -126,8 +126,8 @@ public class DependencyResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, request.getProjectUuid());
             if (project != null) {
                 String addedBy = null;
-                if (getAlpineRequest().getPrincipal() != null) {
-                    addedBy = getAlpineRequest().getPrincipal().getName();
+                if (getPrincipal() != null) {
+                    addedBy = getPrincipal().getName();
                 }
                 for (String componentUuid : request.getComponentUuids()) {
                     final Component component = qm.getObjectByUuid(Component.class, componentUuid);

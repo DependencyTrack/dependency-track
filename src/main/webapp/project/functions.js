@@ -19,10 +19,10 @@
 "use strict";
 
 /**
- * Called by bootstrap table to format the data in the components table.
+ * Called by bootstrap table to format the data in the dependencies table.
  */
-function formatComponentsTable(res) {
-    let componentsTable = $("#componentsTable");
+function formatDependenciesTable(res) {
+    let dependenciesTable = $("#dependenciesTable");
     for (let i=0; i<res.length; i++) {
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].component.name)+ "</a>";
@@ -36,7 +36,7 @@ function formatComponentsTable(res) {
 
         $rest.getComponentCurrentMetrics(res[i].component.uuid, function (data) {
             res[i].component.vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
-            componentsTable.bootstrapTable("updateRow", {
+            dependenciesTable.bootstrapTable("updateRow", {
                 index: i,
                 row: res[i].component
             });
@@ -46,11 +46,15 @@ function formatComponentsTable(res) {
 }
 
 /**
- * Called when a component is successfully created
+ * Called by bootstrap table to format the data in the components table (when adding a new dependency from an existing component).
  */
-function componentCreated() {
-    $("#projectsTable").bootstrapTable("refresh", {silent: true});
-    clearInputFields();
+function formatComponentsTable(res) {
+    for (let i=0; i<res.length; i++) {
+        res[i].name = filterXSS(res[i].name);
+        res[i].version = filterXSS(res[i].version);
+        res[i].group = filterXSS(res[i].group);
+    }
+    return res;
 }
 
 /**
@@ -72,10 +76,11 @@ function tagsStringToObjectArray(tagsString) {
  * Clears all the input fields from the modal.
  */
 function clearInputFields() {
-    $("#createProjectNameInput").val("");
-    $("#createProjectVersionInput").val("");
-    $("#createProjectDescriptionInput").val("");
-    $("#createProjectTagsInput").val("");
+    $("#createComponentNameInput").val("");
+    $("#createComponentVersionInput").val("");
+    $("#createComponentGroupInput").val("");
+    $("#createComponentDescriptionInput").val("");
+    $("#createComponentLicenseSelect").val("");
 }
 
 function populateProjectData(data) {
@@ -145,19 +150,42 @@ $(document).ready(function () {
     $rest.getLicenses(populateLicenseData);
     $rest.getProjectCurrentMetrics(uuid, populateMetrics);
 
-    // Listen for when the button to create a project is clicked
-    $("#createComponentCreateButton").on("click", function () {
+    // Listen for when the button to add a dependency from a new component is clicked
+    $("#addDependencyFromNewButton").on("click", function () {
         const name = $("#createComponentNameInput").val();
         const version = $("#createComponentVersionInput").val();
         const group = $("#createComponentGroupInput").val();
         const description = $("#createComponentDescriptionInput").val();
         const licenseId = $("#createComponentLicenseSelect").val();
-        $rest.createComponent(name, version, group, description, licenseId, componentCreated(), clearInputFields());
+        $rest.createComponent(name, version, group, description, licenseId, function(data) {
+            $rest.addDependency(uuid, [data.uuid], null, function() {
+                $("#dependenciesTable").bootstrapTable("refresh", {silent: true});
+            });
+        });
+        $('#modalAddDependency').modal("hide");
+        $("#componentsTable").bootstrapTable("uncheckAll");
+        clearInputFields();
+    });
+
+    // Listen for when the button to add a dependency from an existing component is clicked
+    $("#addDependencyFromExistingButton").on("click", function () {
+        let componentsTable = $("#componentsTable");
+        let selections = componentsTable.bootstrapTable("getSelections");
+        let componentUuids = [];
+        for (let i=0; i<selections.length; i++) {
+            componentUuids[i] = selections[i].uuid;
+        }
+        $rest.addDependency(uuid, componentUuids, null, function() {
+            $("#dependenciesTable").bootstrapTable("refresh", {silent: true});
+        });
+        $('#modalAddDependency').modal("hide");
+        componentsTable.bootstrapTable("uncheckAll");
+        clearInputFields();
     });
 
     // When modal closes, clear out the input fields
-    $("#modalCreateComponent").on("hidden.bs.modal", function () {
-        $("#createComponentNameInput").val("");
+    $("#modalAddDependency").on("hidden.bs.modal", function () {
+        //$("#createComponentNameInput").val("");
     });
 
     $("#updateProjectButton").on("click", function () {

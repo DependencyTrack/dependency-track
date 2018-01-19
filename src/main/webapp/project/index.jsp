@@ -79,11 +79,11 @@
         <div class="col-sm-12 col-md-12">
             <div id="componentsToolbar">
                 <div class="form-inline" role="form">
-                    <button id="createComponentButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateComponent"><span class="fa fa-plus"></span> Create Component</button>
+                    <button id="addDependencyButton" class="btn btn-default" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
                 </div>
             </div>
-            <table id="componentsTable" class="table table-hover detail-table" data-toggle="table"
-                   data-url="<c:url value="/api/v1/dependency/project/${param['uuid']}"/>" data-response-handler="formatComponentsTable"
+            <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
+                   data-url="<c:url value="/api/v1/dependency/project/${param['uuid']}"/>" data-response-handler="formatDependenciesTable"
                    data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                    data-page-size="10" data-page-list="[10, 25, 50, 100]"
@@ -102,39 +102,75 @@
     </div>
 
     <!-- Modals specific to a project -->
-    <div class="modal" id="modalCreateComponent" tabindex="-1" role="dialog">
+    <div class="modal" id="modalAddDependency" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Create Component</h4>
+                    <h4 class="modal-title">Add Dependency</h4>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="sr-only" for="createComponentNameInput">Component Name</label>
-                        <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="createComponentNameInput">
+                    <div class="panel with-nav-tabs panel-default tight panel-with-tabbed-modal-body">
+                        <div class="panel-heading">
+                            <ul class="nav nav-tabs">
+                                <li class="active"><a href="#fromExistingTab" data-toggle="tab">From Existing Component</a></li>
+                                <li><a href="#fromNewTab" data-toggle="tab">From New Component</a></li>
+                            </ul>
+                        </div>
+                        <div class="panel-body tight">
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="fromExistingTab">
+                                    <div class="modal-body">
+                                        <table id="componentsTable" class="table table-hover" data-toggle="table"
+                                               data-url="<c:url value="/api/v1/component"/>" data-response-handler="formatComponentsTable"
+                                               data-search="true" data-click-to-select="true" data-page-size="5"
+                                               data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true">
+                                            <thead>
+                                            <tr>
+                                                <th data-align="center" data-field="state" data-checkbox="true"></th>
+                                                <th data-align="left" data-field="name">Name</th>
+                                                <th data-align="left" data-field="version">Version</th>
+                                                <th data-align="left" data-field="group">Group</th>
+                                            </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addDependencyFromExistingButton">Add Dependency (From Existing)</button>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="fromNewTab">
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label class="sr-only" for="createComponentNameInput">Component Name</label>
+                                            <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="createComponentNameInput">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="sr-only" for="createComponentVersionInput">Component Version</label>
+                                            <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="createComponentVersionInput">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="sr-only" for="createComponentGroupInput">Component Group</label>
+                                            <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="createComponentGroupInput">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="sr-only" for="createComponentDescriptionInput">Description</label>
+                                            <textarea name="description" required="false" placeholder="Description..." class="form-control" id="createComponentDescriptionInput"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="sr-only" for="createComponentLicenseSelect">License</label>
+                                            <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="createComponentLicenseSelect">
+                                                <option></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="addDependencyFromNewButton">Add Dependency (From New)</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="createComponentVersionInput">Component Version</label>
-                        <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="createComponentVersionInput">
-                    </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="createComponentGroupInput">Component Group</label>
-                        <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="createComponentGroupInput">
-                    </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="createComponentDescriptionInput">Description</label>
-                        <textarea name="description" required="false" placeholder="Description..." class="form-control" id="createComponentDescriptionInput"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="createComponentLicenseSelect">License</label>
-                        <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="createComponentLicenseSelect">
-                            <option></option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createComponentCreateButton">Create</button>
                 </div>
             </div>
         </div>

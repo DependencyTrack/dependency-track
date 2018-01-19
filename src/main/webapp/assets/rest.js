@@ -499,15 +499,15 @@ $rest.getComponent = function getProject(uuid, successCallback, failCallback) {
 };
 
 /**
- * Service called when a component is added as a dependency to a project.
+ * Service called when one or more components is added as a dependency to a project.
  */
-$rest.addDependency = function addDependency(projectUuid, componentUuid, notes, successCallback, failCallback) {
+$rest.addDependency = function addDependency(projectUuid, componentUuids, notes, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_DEPENDENCY,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
-        data: JSON.stringify({projectUuid: projectUuid, componentUuid: componentUuid, notes: notes}),
+        data: JSON.stringify({projectUuid: projectUuid, componentUuids: componentUuids, notes: notes}),
         statusCode: {
             201: function(data) {
                 if (successCallback) {
@@ -524,15 +524,15 @@ $rest.addDependency = function addDependency(projectUuid, componentUuid, notes, 
 };
 
 /**
- * Service called when a component is removed as a dependency from a project.
+ * Service called when one or more components are removed as a dependency from a project.
  */
-$rest.removeDependency = function removeDependency(projectUuid, componentUuid, successCallback, failCallback) {
+$rest.removeDependency = function removeDependency(projectUuid, componentUuids, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_DEPENDENCY,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_DELETE,
-        data: JSON.stringify({projectUuid: projectUuid, componentUuid: componentUuid}),
+        data: JSON.stringify({projectUuid: projectUuid, componentUuids: componentUuids}),
         statusCode: {
             204: function(data) {
                 if (successCallback) {

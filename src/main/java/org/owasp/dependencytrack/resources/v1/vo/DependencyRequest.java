@@ -33,19 +33,15 @@ public class DependencyRequest {
     @NotNull
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
     private String projectUuid;
-
-    @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The component must be a valid 36 character UUID")
-    private String componentUuid;
-
+    private String[] componentUuids;
     private String notes;
 
     @JsonCreator
     public DependencyRequest(@JsonProperty(value = "projectUuid", required = true) String projectUuid,
-                             @JsonProperty(value = "componentUuid", required = true) String componentUuid,
+                             @JsonProperty(value = "componentUuids", required = true) String[] componentUuids,
                              @JsonProperty(value = "notes", required = true) String notes) {
         this.projectUuid = projectUuid;
-        this.componentUuid = componentUuid;
+        this.componentUuids = componentUuids;
         this.notes = notes;
     }
 
@@ -53,8 +49,8 @@ public class DependencyRequest {
         return projectUuid;
     }
 
-    public String getComponentUuid() {
-        return componentUuid;
+    public String[] getComponentUuids() {
+        return componentUuids;
     }
 
     public String getNotes() {

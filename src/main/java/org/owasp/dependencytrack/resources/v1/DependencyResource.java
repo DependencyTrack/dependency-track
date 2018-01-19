@@ -109,8 +109,7 @@ public class DependencyResource extends AlpineResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Adds a component as a dependency to a project",
-            response = Dependency.class,
+            value = "Adds one or more components as a dependency to a project",
             code = 201
     )
     @ApiResponses(value = {
@@ -121,21 +120,26 @@ public class DependencyResource extends AlpineResource {
     public Response addDependency(DependencyRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(
-                validator.validateProperty(request, "projectUuid"),
-                validator.validateProperty(request, "componentUuid")
+                validator.validateProperty(request, "projectUuid")
         );
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProjectUuid());
-            final Component component = qm.getObjectByUuid(Component.class, request.getComponentUuid());
-            if (project != null && component != null) {
+            if (project != null) {
                 String addedBy = null;
                 if (getAlpineRequest().getPrincipal() != null) {
                     addedBy = getAlpineRequest().getPrincipal().getName();
                 }
-                Dependency dependency = qm.createDependencyIfNotExist(project, component, addedBy, request.getNotes());
-                return Response.status(Response.Status.CREATED).entity(dependency).build();
+                for (String componentUuid : request.getComponentUuids()) {
+                    final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+                    if (component != null) {
+                        qm.createDependencyIfNotExist(project, component, addedBy, request.getNotes());
+                    } else {
+                        return Response.status(Response.Status.NOT_FOUND).entity("A component could not be found.").build();
+                    }
+                }
+                return Response.status(Response.Status.CREATED).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project or component could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
         }
     }
@@ -155,17 +159,22 @@ public class DependencyResource extends AlpineResource {
     public Response removeDependency(DependencyRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(
-                validator.validateProperty(request, "projectUuid"),
-                validator.validateProperty(request, "componentUuid")
+                validator.validateProperty(request, "projectUuid")
         );
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProjectUuid());
-            final Component component = qm.getObjectByUuid(Component.class, request.getComponentUuid());
-            if (project != null && component != null) {
-                qm.removeDependencyIfExist(project, component);
+            if (project != null) {
+                for (String componentUuid : request.getComponentUuids()) {
+                    final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+                    if (component != null) {
+                        qm.removeDependencyIfExist(project, component);
+                    } else {
+                        return Response.status(Response.Status.NOT_FOUND).entity("A component could not be found.").build();
+                    }
+                }
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project or component could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
         }
     }

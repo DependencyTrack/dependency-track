@@ -162,7 +162,7 @@ $(document).ready(function () {
                 $("#dependenciesTable").bootstrapTable("refresh", {silent: true});
             });
         });
-        $('#modalAddDependency').modal("hide");
+        $("#modalAddDependency").modal("hide");
         $("#componentsTable").bootstrapTable("uncheckAll");
         clearInputFields();
     });
@@ -178,14 +178,28 @@ $(document).ready(function () {
         $rest.addDependency(uuid, componentUuids, null, function() {
             $("#dependenciesTable").bootstrapTable("refresh", {silent: true});
         });
-        $('#modalAddDependency').modal("hide");
+        $("#modalAddDependency").modal("hide");
         componentsTable.bootstrapTable("uncheckAll");
         clearInputFields();
     });
 
     // When modal closes, clear out the input fields
     $("#modalAddDependency").on("hidden.bs.modal", function () {
-        //$("#createComponentNameInput").val("");
+        clearInputFields();
+    });
+
+    // Listen for when the button to remove a dependency is clicked
+    $("#removeDependencyButton").on("click", function () {
+        let dependenciesTable = $("#dependenciesTable");
+        let selections = dependenciesTable.bootstrapTable("getSelections");
+        let componentUuids = [];
+        for (let i=0; i<selections.length; i++) {
+            componentUuids[i] = selections[i].uuid;
+        }
+        $rest.removeDependency(uuid, componentUuids, function() {
+            $("#dependenciesTable").bootstrapTable("refresh", {silent: true});
+        });
+        dependenciesTable.bootstrapTable("uncheckAll");
     });
 
     $("#updateProjectButton").on("click", function () {

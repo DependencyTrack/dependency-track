@@ -39,7 +39,7 @@ public class DependencyRequest {
     @JsonCreator
     public DependencyRequest(@JsonProperty(value = "projectUuid", required = true) String projectUuid,
                              @JsonProperty(value = "componentUuids", required = true) String[] componentUuids,
-                             @JsonProperty(value = "notes", required = true) String notes) {
+                             @JsonProperty(value = "notes") String notes) {
         this.projectUuid = projectUuid;
         this.componentUuids = componentUuids;
         this.notes = notes;

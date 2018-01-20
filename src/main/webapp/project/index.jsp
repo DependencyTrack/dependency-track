@@ -80,6 +80,7 @@
             <div id="componentsToolbar">
                 <div class="form-inline" role="form">
                     <button id="addDependencyButton" class="btn btn-default" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
+                    <button id="removeDependencyButton" class="btn btn-default"><span class="fa fa-minus"></span> Remove Dependency</button>
                 </div>
             </div>
             <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
@@ -90,6 +91,7 @@
                    data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
+                    <th data-align="center" data-field="state" data-checkbox="true"></th>
                     <th data-align="left" data-field="componenthref">Component</th>
                     <th data-align="left" data-field="component.version">Version</th>
                     <th data-align="left" data-field="component.group">Group</th>

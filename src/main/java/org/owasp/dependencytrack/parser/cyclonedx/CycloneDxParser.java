@@ -35,13 +35,12 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -94,7 +93,13 @@ public class CycloneDxParser {
     private Bom parse(StreamSource streamSource) throws ParseException {
         try {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            Schema schema = schemaFactory.newSchema(new URL("http://cyclonedx.org/schema/bom/1.0"));
+
+            // Use local copies of schemas rather than resolving from the net. It's faster, and less prone to errors.
+            Source[] schemaFiles = {
+                    new StreamSource(getClass().getClassLoader().getResourceAsStream("schema/cyclonedx/spdx.xsd")),
+                    new StreamSource(getClass().getClassLoader().getResourceAsStream("schema/cyclonedx/bom-1.0.xsd"))
+            };
+            Schema schema = schemaFactory.newSchema(schemaFiles);
 
             // Parse the native bom
             final JAXBContext jaxbContext = JAXBContext.newInstance(Bom.class);
@@ -111,7 +116,7 @@ public class CycloneDxParser {
         } catch (UnmarshalException e) {
             LOGGER.error("Invalid CycloneDX BOM. Unable to parse.", e);
             throw new ParseException(e);
-        } catch (JAXBException | XMLStreamException | SAXException | IOException e) {
+        } catch (JAXBException | XMLStreamException | SAXException e) {
             LOGGER.error("An error occurred parsing CycloneDX BOM", e);
             throw new ParseException(e);
         }

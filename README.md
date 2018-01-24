@@ -138,10 +138,7 @@ Begin by first compiling the software, then by executing Docker-specific command
 mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 docker volume create dependency-track
 docker build -f src/main/docker/Dockerfile -t dependency-track .
-docker run -d -p 8080:8080 \
-  --name dependency-track \
-  -v dependency-track:/data \
-  dependency-track
+docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data dependency-track
 ```
  
  

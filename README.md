@@ -135,9 +135,13 @@ For users leveraging Docker, the process simply wraps the executable WAR inside 
 Begin by first compiling the software, then by executing Docker-specific commands. 
 
 ```shell
-mvn clean package -P embedded-jetty
+mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+docker volume create dependency-track
 docker build -f src/main/docker/Dockerfile -t dependency-track .
-docker run -p 8080:8080 -t dependency-track
+docker run -d -p 8080:8080 \
+  --name dependency-track \
+  -v dependency-track:/data \
+  dependency-track
 ```
  
  

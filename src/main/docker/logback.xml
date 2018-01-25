@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true">
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${user.home}/.dependency-track/dependency-track.log</file>
+        <encoder>
+            <pattern>%date [%marker] %level [%logger] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %level [%logger{0}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SECURITY_CONSOLE" class="ch.qos.logback.core.FileAppender">
+        <file>${user.home}/.dependency-track/dependency-track-audit.log</file>
+        <filter class="org.owasp.security.logging.filter.SecurityMarkerFilter"/>
+        <encoder>
+            <pattern>%date [%marker] %level - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="alpine" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </logger>
+
+    <logger name="org.owasp.dependencytrack" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </logger>
+
+    <logger name="org.owasp.dependencycheck" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="SECURITY_CONSOLE" />
+    </root>
+
+</configuration>

@@ -144,6 +144,7 @@ public final class NvdParser {
                 }
 
                 // Update the vulnerability
+                LOGGER.debug("Synchronizing: " + vulnerability.getVulnId());
                 qm.synchronizeVulnerability(vulnerability, false);
             }
         } catch (Exception e) {

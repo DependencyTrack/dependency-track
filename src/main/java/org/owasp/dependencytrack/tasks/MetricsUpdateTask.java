@@ -70,7 +70,7 @@ public class MetricsUpdateTask implements Subscriber {
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage());
             }
-            LOGGER.info("Metrics update complete");
+            LOGGER.debug("Metrics update complete");
         }
     }
 

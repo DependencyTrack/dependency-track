@@ -53,6 +53,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the SingleThreadedEventService (Used for Dependency-Check analysis)
     private static final SingleThreadedEventService EVENT_SERVICE_ODC = SingleThreadedEventService.getInstance();
 
+    // Starts the SingleThreadedEventService (Used for NVD mirroring)
+    private static final SingleThreadedEventService EVENT_SERVICE_NVD = SingleThreadedEventService.getInstance();
+
     /**
      * {@inheritDoc}
      */
@@ -60,13 +63,13 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
-        EVENT_SERVICE.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
         EVENT_SERVICE.subscribe(NspMirrorEvent.class, NspMirrorTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
 
         EVENT_SERVICE_INDEX.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ODC.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
         EVENT_SERVICE_METRICS.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
+        EVENT_SERVICE_NVD.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -93,5 +96,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
 
         EVENT_SERVICE_METRICS.unsubscribe(MetricsUpdateTask.class);
         EVENT_SERVICE_METRICS.shutdown();
+
+        EVENT_SERVICE_NVD.unsubscribe(NistMirrorTask.class);
+        EVENT_SERVICE_NVD.shutdown();
     }
 }

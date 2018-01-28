@@ -59,7 +59,9 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Default constructor.
      */
-    public QueryManager() { }
+    public QueryManager() {
+        super();
+    }
 
     /**
      * Constructs a new QueryManager.

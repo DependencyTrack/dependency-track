@@ -23,6 +23,13 @@
         </encoder>
     </appender>
 
+    <appender name="EMBEDDED_SERVER" class="ch.qos.logback.core.FileAppender">
+        <file>${user.home}/.dependency-track/server.log</file>
+        <encoder>
+            <pattern>%date [%marker] %level [%logger] %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <logger name="alpine" level="INFO" additivity="false">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
@@ -38,6 +45,10 @@
     <logger name="org.owasp.dependencycheck" level="INFO" additivity="false">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="org.eclipse.jetty" level="INFO" additivity="false">
+        <appender-ref ref="EMBEDDED_SERVER" />
     </logger>
 
     <root level="WARN">

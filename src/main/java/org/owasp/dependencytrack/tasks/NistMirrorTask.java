@@ -22,20 +22,23 @@ import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
 import org.owasp.dependencytrack.parser.nvd.NvdParser;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import org.owasp.dependencytrack.util.HttpClientFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.Date;
@@ -49,7 +52,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class NistMirrorTask implements LoggableSubscriber {
 
-    public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
+    static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
     private static final String CVE_XML_12_MODIFIED_URL = "https://nvd.nist.gov/download/nvdcve-Modified.xml.gz";
     private static final String CVE_XML_20_MODIFIED_URL = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-Modified.xml.gz";
     private static final String CVE_XML_12_BASE_URL = "https://nvd.nist.gov/download/nvdcve-%d.xml.gz";
@@ -120,13 +123,11 @@ public class NistMirrorTask implements LoggableSubscriber {
      */
     private long checkHead(String cveUrl) {
         try {
-            final URL url = new URL(cveUrl);
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.connect();
-            connection.getInputStream();
-            return connection.getContentLengthLong();
-        } catch (IOException e) {
+            HttpClient httpClient = HttpClientFactory.createClient();
+            HttpUriRequest request = new HttpHead(cveUrl);
+            HttpResponse response = httpClient.execute(request);
+            return Long.valueOf(response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
+        } catch (IOException | NumberFormatException | NullPointerException e) {
             LOGGER.error("Failed to determine content length");
         }
         return 0;
@@ -137,18 +138,7 @@ public class NistMirrorTask implements LoggableSubscriber {
      * @param cveUrl the URL contents to download
      */
     private void doDownload(String cveUrl) {
-        BufferedInputStream bis = null;
-        BufferedOutputStream bos = null;
-        File file = null;
-        boolean success = false;
-
-        Proxy proxy = Proxy.NO_PROXY;
-        final String proxyAddr = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS);
-        if (StringUtils.isNotBlank(proxyAddr)) {
-            final Integer proxyPort = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
-            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyAddr, proxyPort));
-        }
-
+        File file;
         try {
             final URL url = new URL(cveUrl);
             String filename = url.getFile();
@@ -164,33 +154,25 @@ public class NistMirrorTask implements LoggableSubscriber {
             }
 
             LOGGER.info("Initiating download of " + url.toExternalForm());
-            final HttpURLConnection connection = (HttpURLConnection)url.openConnection(proxy);
-            if (connection.getResponseCode() == 200) {
+            HttpClient httpClient = HttpClientFactory.createClient();
+            HttpUriRequest request = new HttpGet(cveUrl);
+            HttpResponse response = httpClient.execute(request);
+            StatusLine status = response.getStatusLine();
+            if (status.getStatusCode() == 200) {
                 LOGGER.info("Downloading...");
-                bis = new BufferedInputStream(connection.getInputStream());
                 file = new File(outputDir, filename);
-                bos = new BufferedOutputStream(new FileOutputStream(file));
-
-                int i;
-                while ((i = bis.read()) != -1) {
-                    bos.write(i);
-                }
-                success = true;
-            } else if (connection.getResponseCode() == 403) {
-                LOGGER.warn("Unable to download - HTTP Response 403: " + connection.getResponseMessage());
+                FileUtils.copyInputStreamToFile(response.getEntity().getContent(), file);
+                uncompress(file);
+            } else if (response.getStatusLine().getStatusCode() == 403) {
+                LOGGER.warn("Unable to download - HTTP Response 403: " + status.getReasonPhrase());
                 LOGGER.warn("This may occur if the NVD is throttling connections due to excessive load or repeated " +
                         "connections from the same IP address or as a result of firewall or proxy authentication failures");
             } else {
-                LOGGER.warn("Unable to download - HTTP Response " + connection.getResponseCode() + ": " + connection.getResponseMessage());
+                LOGGER.warn("Unable to download - HTTP Response " + status.getStatusCode() + ": " + status.getReasonPhrase());
             }
+
         } catch (IOException e) {
             LOGGER.error("Download failed : " + e.getLocalizedMessage());
-        } finally {
-            close(bis);
-            close(bos);
-        }
-        if (file != null && success) {
-            uncompress(file);
         }
     }
 

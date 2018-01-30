@@ -68,7 +68,7 @@
     <properties>
         <!-- Dependency Versions -->
         <lib.lucene.version>5.5.5</lib.lucene.version>
-        <lib.dependency-check.version>3.1.0</lib.dependency-check.version>
+        <lib.dependency-check.version>3.1.1</lib.dependency-check.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <lib.spdx-tools.version>2.1.7</lib.spdx-tools.version>
         <!-- build properties -->
@@ -160,6 +160,44 @@
             <groupId>org.spdx</groupId>
             <artifactId>spdx-tools</artifactId>
             <version>${lib.spdx-tools.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.sf.opencsv</groupId>
+                    <artifactId>opencsv</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.spullara.mustache.java</groupId>
+                    <artifactId>compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.jgit</groupId>
+                    <artifactId>org.eclipse.jgit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.jcraft:jsch</groupId>
+                    <artifactId>jsch</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.googlecode.javaewah</groupId>
+                    <artifactId>JavaEWAH</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.thrift</groupId>
+                    <artifactId>libthrift</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-csv</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.jsonld-java</groupId>
+                    <artifactId>jsonld-java</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

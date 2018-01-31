@@ -15,20 +15,17 @@ addons:
 
 before_script:
   - export REPO=sspringett/dependency-track
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
 
 script:
   - mvn clean package
   - mvn package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
-  - docker build -f src/main/docker/Dockerfile .
+  - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 
 after_success:
-  - docker tag $REPO $REPO:$TAG
-  - docker tag $REPO $REPO:travis-$TRAVIS_BUILD_NUMBER
-  - |
-    if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TEST" == "integration-test" ] && [ "$DOCKER_USER" != "" ] && [  "$DOCKER_PASS" != "" ]; then
-      docker login -u "$DOCKER_USER" -p "$DOCKER_PASS";
-      docker push $REPO ;
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
+    docker push $REPO;
     fi
 
 notifications:

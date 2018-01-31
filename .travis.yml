@@ -20,7 +20,7 @@ before_script:
 script:
   - mvn clean package
   - mvn package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
-  - docker build -f src/main/docker/Dockerfile -t stevespringett/dependency-track:3.0.0 -t stevespringett/dependency-track:latest .
+  - docker build -f src/main/docker/Dockerfile .
 
 after_success:
   - docker tag $REPO $REPO:$TAG

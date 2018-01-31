@@ -65,6 +65,23 @@
         </developer>
     </developers>
 
+    <scm>
+        <connection>scm:git:git@github.com:stevespringett/dependency-track.git</connection>
+        <url>https://github.com/stevespringett/dependency-track.git</url>
+        <developerConnection>scm:git:git@github.com:stevespringett/dependency-track.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/stevespringett/dependency-track/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>travis-ci</system>
+        <url>https://travis-ci.org/stevespringett/dependency-track</url>
+    </ciManagement>
+
     <properties>
         <!-- Dependency Versions -->
         <lib.lucene.version>5.5.5</lib.lucene.version>

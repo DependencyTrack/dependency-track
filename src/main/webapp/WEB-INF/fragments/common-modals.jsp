@@ -13,9 +13,9 @@
                             <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
-                            Dependency-Track is a Software Composition Analysis (SCA) platform that allows
-                            organizations to automatically ingest and identify third-party components and any
-                            inherited vulnerabilities from their use.
+                            Dependency-Track is an intelligent Software Composition Analysis (SCA) platform
+                            that allows organizations to identify and reduce risk from the use of third-party
+                            and open source components.
                         </p>
                         <p>
                             <span id="systemAppName"></span> v<span id="systemAppVersion"></span>

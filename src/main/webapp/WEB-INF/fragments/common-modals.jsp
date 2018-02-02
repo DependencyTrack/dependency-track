@@ -27,7 +27,7 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-sm-6 col-md-6">
-                        <a href="https://www.owasp.org/index.php/OWASP_Dependency_Track_Project">
+                        <a href="https://dependencytrack.org/">
                             <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>

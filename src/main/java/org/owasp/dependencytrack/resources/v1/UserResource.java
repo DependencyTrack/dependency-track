@@ -170,6 +170,42 @@ public class UserResource extends AlpineResource {
         return Response.ok().build();
     }
 
+    @POST
+    @Path("self")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates information about the current logged in user.",
+            response = UserPrincipal.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "An invalid payload was submitted or the user is not a managed user."),
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    public Response updateSelf(ManagedUser jsonUser) {
+        if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            try (QueryManager qm = new QueryManager()) {
+                if (super.isLdapUser()) {
+                    final LdapUser user = qm.getLdapUser(getPrincipal().getName());
+                    return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
+                } else if (super.isManagedUser()) {
+                    ManagedUser user = (ManagedUser)super.getPrincipal();
+                    user.setFullname(StringUtils.trimToNull(jsonUser.getFullname()));
+                    user.setEmail(StringUtils.trimToNull(jsonUser.getEmail()));
+                    if (StringUtils.isNotBlank(jsonUser.getPassword()) && StringUtils.isNotBlank(jsonUser.getConfirmPassword())
+                            && jsonUser.getPassword().equals(jsonUser.getConfirmPassword())) {
+                        user.setPassword(String.valueOf(PasswordService.createHash(jsonUser.getPassword().toCharArray())));
+                    }
+                    qm.updateManagedUser(user);
+                    super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "User profile updated: " + user.getUsername());
+                    return Response.ok(user).build();
+                }
+                return Response.status(401).build();
+            }
+        }
+        // Authentication is not enabled, but we need to return a positive response without any principal data.
+        return Response.ok().build();
+    }
+
     @PUT
     @Path("ldap")
     @Consumes(MediaType.APPLICATION_JSON)

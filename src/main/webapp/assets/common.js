@@ -104,6 +104,12 @@ $common.initialize = function initialize() {
             if (!$.sessionStorage.isSet("token")) {
                 $("#nav-logout").css("display", "none");
             }
+
+            // SNAPSHOT release notification
+            if (data.version.includes("SNAPSHOT") && !$.sessionStorage.isSet("snapshot")) {
+                $("#modal-snapshotNotification").modal();
+                $.sessionStorage.set("snapshot", "true");
+            }
         }
     );
 };
@@ -302,6 +308,15 @@ $common.toHtml = function toHtml(string) {
 };
 
 /**
+ * Populates the user profile modal with data from the current logged in user.
+ */
+$common.populateUserProfileData = function populateUserProfileData(data) {
+    $("#profileUsernameInput").val(filterXSS(data.username));
+    $("#profileFullnameInput").val(filterXSS(data.fullname));
+    $("#profileEmailInput").val(filterXSS(data.email));
+};
+
+/**
  * Executed when the DOM is ready for JavaScript to be executed.
  */
 $(document).ready(function () {
@@ -310,8 +325,23 @@ $(document).ready(function () {
     $('[data-toggle="tooltip"]').tooltip();
 
     // Get information about the current logged in user (if available)
-    $rest.getPrincipalSelf($common.initialize);
+    $rest.getPrincipalSelf(
+        function(data) {
+            $common.populateUserProfileData(data);
+            $common.initialize();
+        });
     let contextPath = $rest.contextPath();
+
+    // Listen for the update profile button being pressed
+    $("#updateProfileButton").on("click", function () {
+        let fullname = $("#profileFullnameInput").val();
+        let email = $("#profileEmailInput").val();
+        let password = $("#profilePasswordInput").val();
+        let confirm = $("#profileConfirmPasswordInput").val();
+        $rest.updatePrincipalSelf(fullname, email, password, confirm, function(data) {
+            $common.populateUserProfileData(data);
+        });
+    });
 
     /**
      * Function that adds the 'active' class to one of the buttons in

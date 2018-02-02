@@ -1,9 +1,27 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<div class="modal fade" id="modal-snapshotNotification" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Snapshot Notification</h4>
+            </div>
+            <div class="modal-body">
+                This version of Dependency-Track is a snapshot release that is dynamically generated
+                from continuous integration. It has not undergone extensive testing and likely contains
+                defects, incomplete features and functionality, and may cause data corruption. Do not
+                use on production data.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal-about" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">About</h4>
             </div>
             <div class="modal-body">
@@ -101,14 +119,16 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">Profile</h4>
             </div>
             <div class="modal-body">
-                <h3>MOCKUP: Not yet working</h3>
                 <div class="form-group">
-                    <label class="sr-only" for="profileNameInput">Name</label>
-                    <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="profileNameInput">
+                    <label class="sr-only" for="profileUsernameInput">Username</label>
+                    <input type="text" name="username" required="true" placeholder="Username..." class="form-control" id="profileUsernameInput" disabled="disabled">
+                </div>
+                <div class="form-group">
+                    <label class="sr-only" for="profileFullnameInput">Full Name</label>
+                    <input type="text" name="fullname" required="true" placeholder="Full Name..." class="form-control" id="profileFullnameInput">
                 </div>
                 <div class="form-group">
                     <label class="sr-only" for="profileEmailInput">Email</label>
@@ -124,7 +144,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Update</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="updateProfileButton">Update</button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
             </div>
         </div>
@@ -135,7 +155,6 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">Error</h4>
             </div>
             <div class="modal-body">
@@ -161,7 +180,6 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">Information</h4>
             </div>
             <div class="modal-body">

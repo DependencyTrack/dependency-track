@@ -226,6 +226,31 @@ $rest.getPrincipalSelf = function getPrincipalSelf(successCallback, failCallback
     });
 };
 
+
+/**
+ * Updates user info (if available)
+ */
+$rest.updatePrincipalSelf = function getPrincipalSelf(fullname, email, password, confirmPassword, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_USER_SELF,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_POST,
+        data: JSON.stringify({fullname: fullname, email: email, password: password, confirmPassword: confirmPassword}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
 /**
  * Service called when a project is created.
  */
@@ -1001,15 +1026,14 @@ $rest.createManagedUser = function createManagedUser(username, successCallback, 
 
 /**
  * Service called when a managed user is updated.
- * //todo: complete this service on client and server side
  */
-$rest.updateManagedUser = function updateManagedUser(username, successCallback, failCallback) {
+$rest.updateManagedUser = function updateManagedUser(username, name, email, password, confirm, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_USER_MANAGED,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_POST,
-        data: JSON.stringify({username: username}),
+        data: JSON.stringify({username: username, name: name, email: email, password: password, confirm: confirm}),
         statusCode: {
             200: function(data) {
                 if (successCallback) {

@@ -6,10 +6,22 @@
                 <h4 class="modal-title">Snapshot Notification</h4>
             </div>
             <div class="modal-body">
-                This version of Dependency-Track is a snapshot release that is dynamically generated
-                from continuous integration. It has not undergone extensive testing and likely contains
-                defects, incomplete features and functionality, and may cause data corruption. Do not
-                use on production data.
+                <p>
+                    This version of Dependency-Track is a snapshot release that is dynamically
+                    generated from continuous integration or from manually compiling from a branch.
+                    It is likely beta-quality software and has not undergone extensive testing.
+                    It may contain defects and incomplete features and functionality.
+                </p>
+                <p>
+                    Links to production-quality releases can be found at
+                    <a href="https://dependencytrack.org/">https://dependencytrack.org/</a>
+                </p>
+                <p>
+                    Please consider contributing feedback and pull requests to help improve
+                    Dependency-Track. All contributions are appreciated.
+                    <a href="https://github.com/stevespringett/dependency-track">https://github.com/stevespringett/dependency-track</a>
+                </p>
+                <p><strong>Do not use snapshot releases on production data.</strong></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>

@@ -191,9 +191,12 @@ public class UserResource extends AlpineResource {
                     ManagedUser user = (ManagedUser)super.getPrincipal();
                     user.setFullname(StringUtils.trimToNull(jsonUser.getFullname()));
                     user.setEmail(StringUtils.trimToNull(jsonUser.getEmail()));
-                    if (StringUtils.isNotBlank(jsonUser.getPassword()) && StringUtils.isNotBlank(jsonUser.getConfirmPassword())
-                            && jsonUser.getPassword().equals(jsonUser.getConfirmPassword())) {
-                        user.setPassword(String.valueOf(PasswordService.createHash(jsonUser.getPassword().toCharArray())));
+                    if (StringUtils.isNotBlank(jsonUser.getNewPassword()) && StringUtils.isNotBlank(jsonUser.getConfirmPassword())) {
+                        if (jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
+                            user.setPassword(String.valueOf(PasswordService.createHash(jsonUser.getNewPassword().toCharArray())));
+                        } else {
+                            return Response.status(Response.Status.BAD_REQUEST).entity("Passwords do not match").build();
+                        }
                     }
                     qm.updateManagedUser(user);
                     super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "User profile updated: " + user.getUsername());

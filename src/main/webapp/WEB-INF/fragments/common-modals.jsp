@@ -135,12 +135,12 @@
                     <input type="text" name="email" required="true" placeholder="Email..." class="form-control" id="profileEmailInput">
                 </div>
                 <div class="form-group">
-                    <label class="sr-only" for="profilePasswordInput">Password</label>
-                    <input type="password" name="password" required="true" placeholder="Password..." class="form-control" id="profilePasswordInput">
+                    <label class="sr-only" for="profileNewPasswordInput">New Password</label>
+                    <input type="password" name="newPassword" required="true" placeholder="New Password..." class="form-control" id="profileNewPasswordInput">
                 </div>
                 <div class="form-group">
                     <label class="sr-only" for="profileConfirmPasswordInput">Confirm Password</label>
-                    <input type="password" name="password" required="true" placeholder="Confirm Password..." class="form-control" id="profileConfirmPasswordInput">
+                    <input type="password" name="confirmPassword" required="true" placeholder="Confirm Password..." class="form-control" id="profileConfirmPasswordInput">
                 </div>
             </div>
             <div class="modal-footer">

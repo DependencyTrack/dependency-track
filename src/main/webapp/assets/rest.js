@@ -230,12 +230,12 @@ $rest.getPrincipalSelf = function getPrincipalSelf(successCallback, failCallback
 /**
  * Updates user info (if available)
  */
-$rest.updatePrincipalSelf = function getPrincipalSelf(fullname, email, password, confirmPassword, successCallback, failCallback) {
+$rest.updatePrincipalSelf = function getPrincipalSelf(fullname, email, newPassword, confirmPassword, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_USER_SELF,
         contentType: CONTENT_TYPE_JSON,
         type: METHOD_POST,
-        data: JSON.stringify({fullname: fullname, email: email, password: password, confirmPassword: confirmPassword}),
+        data: JSON.stringify({fullname: fullname, email: email, newPassword: newPassword, confirmPassword: confirmPassword}),
         statusCode: {
             200: function(data) {
                 if (successCallback) {

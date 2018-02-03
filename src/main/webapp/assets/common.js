@@ -314,6 +314,8 @@ $common.populateUserProfileData = function populateUserProfileData(data) {
     $("#profileUsernameInput").val(filterXSS(data.username));
     $("#profileFullnameInput").val(filterXSS(data.fullname));
     $("#profileEmailInput").val(filterXSS(data.email));
+    $("#profileNewPasswordInput").val("");
+    $("#profileConfirmPasswordInput").val("");
 };
 
 /**
@@ -336,9 +338,9 @@ $(document).ready(function () {
     $("#updateProfileButton").on("click", function () {
         let fullname = $("#profileFullnameInput").val();
         let email = $("#profileEmailInput").val();
-        let password = $("#profilePasswordInput").val();
-        let confirm = $("#profileConfirmPasswordInput").val();
-        $rest.updatePrincipalSelf(fullname, email, password, confirm, function(data) {
+        let newPassword = $("#profileNewPasswordInput").val();
+        let confirmPassword = $("#profileConfirmPasswordInput").val();
+        $rest.updatePrincipalSelf(fullname, email, newPassword, confirmPassword, function(data) {
             $common.populateUserProfileData(data);
         });
     });

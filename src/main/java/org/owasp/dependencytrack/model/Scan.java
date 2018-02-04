@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Model class for tracking Dependency-Check scans.
+ * Model class for tracking the importing of Dependency-Check scans.
  *
  * @author Steve Springett
  * @since 3.0.0

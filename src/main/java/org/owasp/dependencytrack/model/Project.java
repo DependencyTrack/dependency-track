@@ -37,6 +37,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -122,6 +123,20 @@ public class Project implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Tag> tags;
 
+    /**
+     * Convenience field which will contain the date of the last entry in the {@link Scan} table
+     */
+    @Persistent
+    @Column(name = "LAST_SCAN_IMPORTED", jdbcType = "TIMESTAMP")
+    private Date lastScanImport;
+
+    /**
+     * Convenience field which will contain the date of the last entry in the {@link Bom} table
+     */
+    @Persistent
+    @Column(name = "LAST_BOM_IMPORTED", jdbcType = "TIMESTAMP")
+    private Date lastBomImport;
+
     public long getId() {
         return id;
     }
@@ -202,4 +217,19 @@ public class Project implements Serializable {
         this.tags = tags;
     }
 
+    public Date getLastScanImport() {
+        return lastScanImport;
+    }
+
+    public void setLastScanImport(Date lastScanImport) {
+        this.lastScanImport = lastScanImport;
+    }
+
+    public Date getLastBomImport() {
+        return lastBomImport;
+    }
+
+    public void setLastBomImport(Date lastBomImport) {
+        this.lastBomImport = lastBomImport;
+    }
 }

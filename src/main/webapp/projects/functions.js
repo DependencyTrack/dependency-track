@@ -27,6 +27,14 @@ function formatProjectsTable(res) {
         let projecturl = "../project/?uuid=" + res[i].uuid;
         res[i].projecthref = "<a href=\"" + projecturl + "\">" + filterXSS(res[i].name) + "</a>";
 
+        if (res[i].hasOwnProperty("lastScanImport")) {
+            res[i].lastScanImportLabel = $common.formatTimestamp(res[i].lastScanImport, true);
+        }
+
+        if (res[i].hasOwnProperty("lastBomImport")) {
+            res[i].lastBomImportLabel = $common.formatTimestamp(res[i].lastBomImport, true);
+        }
+
         $rest.getProjectCurrentMetrics(res[i].uuid, function (data) {
             res[i].vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
             projectsTable.bootstrapTable('updateRow', {

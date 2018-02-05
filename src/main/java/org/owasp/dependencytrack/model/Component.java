@@ -55,6 +55,7 @@ import java.util.UUID;
                 @Persistent(name = "children"),
                 @Persistent(name = "evidence"),
                 @Persistent(name = "scans"),
+                @Persistent(name = "boms"),
                 @Persistent(name = "vulnerabilities"),
         })
 })
@@ -198,6 +199,11 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     @JsonIgnore
     private List<Scan> scans;
+
+    @Persistent
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
+    @JsonIgnore
+    private List<Bom> boms;
 
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
@@ -393,6 +399,14 @@ public class Component implements Serializable {
 
     public void setScans(List<Scan> scans) {
         this.scans = scans;
+    }
+
+    public List<Bom> getBoms() {
+        return boms;
+    }
+
+    public void setBoms(List<Bom> boms) {
+        this.boms = boms;
     }
 
     public List<Vulnerability> getVulnerabilities() {

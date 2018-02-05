@@ -32,6 +32,7 @@ public class ProjectTest extends BaseTest {
         Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, false);
         Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, false);
         Scan scan = qm.createScan(p1, new Date(), new Date());
+        Bom bom = qm.createBom(p1, new Date());
 
         Assert.assertEquals("Example Project 1", p1.getName());
         Assert.assertEquals("Example Project 2", p2.getName());
@@ -47,6 +48,14 @@ public class ProjectTest extends BaseTest {
         Assert.assertNotNull(scan.getUuid());
         Assert.assertNotNull(scan.getExecuted());
         Assert.assertNotNull(scan.getImported());
+
+        Assert.assertNotNull(bom.getProject());
+        Assert.assertEquals("Example Project 1", bom.getProject().getName());
+        Assert.assertEquals("Description 1", bom.getProject().getDescription());
+        Assert.assertEquals("1.0", bom.getProject().getVersion());
+
+        Assert.assertNotNull(bom.getUuid());
+        Assert.assertNotNull(bom.getImported());
 
         qm.close();
     }

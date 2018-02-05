@@ -68,7 +68,8 @@ public class ScanUploadProcessingTask implements Subscriber {
                         : new DependencyCheckParser().parse(scanData);
                 qm = new QueryManager();
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
-                final Scan scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), new Date());
+                final Date date = new Date();
+                final Scan scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), date);
 
                 final List<Component> components = new ArrayList<>();
                 for (Dependency dependency : analysis.getDependencies()) {
@@ -117,6 +118,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                                 .getSource(), evidence.getName(), evidence.getValue());
                     }
                 }
+                qm.updateLastScanImport(project, date);
             } catch (Exception ex) {
                 LOGGER.error("Error while processing scan result");
                 LOGGER.error(ex.getMessage());

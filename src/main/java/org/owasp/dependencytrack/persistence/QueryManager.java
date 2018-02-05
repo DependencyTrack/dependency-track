@@ -24,6 +24,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
+import org.owasp.dependencytrack.model.Bom;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
 import org.owasp.dependencytrack.model.Cwe;
@@ -242,6 +243,28 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Updates the last time a scan was imported.
+     * @param date the date of the last scan import
+     * @return the updated Project
+     */
+    public Project updateLastScanImport(Project p, Date date) {
+        final Project project = getObjectById(Project.class, p.getId());
+        project.setLastScanImport(date);
+        return persist(project);
+    }
+
+    /**
+     * Updates the last time a bom was imported.
+     * @param date the date of the last bom import
+     * @return the updated Project
+     */
+    public Project updateLastBomImport(Project p, Date date) {
+        final Project project = getObjectById(Project.class, p.getId());
+        project.setLastBomImport(date);
+        return persist(project);
+    }
+
+    /**
      * Deletes a Project and all objects dependant on the project.
      * @param project the Project to delete
      */
@@ -258,8 +281,10 @@ public class QueryManager extends AlpineQueryManager {
         deleteMetrics(project);
         deleteDependencies(project);
         deleteScans(project);
+        deleteBoms(project);
         delete(project.getProperties());
         delete(getScans(project));
+        delete(getBoms(project));
         delete(project.getChildren());
         delete(project);
     }
@@ -324,6 +349,52 @@ public class QueryManager extends AlpineQueryManager {
         for (Scan scan: (List<Scan>) query.execute(component)) {
             scan.getComponents().remove(component);
             persist(scan);
+        }
+    }
+
+    /**
+     * Creates a new Bom.
+     * @param project the Project to create a Bom for
+     * @param imported the Date when the bom was imported
+     * @return a new Bom object
+     */
+    public Bom createBom(Project project, Date imported) {
+        final Bom bom = new Bom();
+        bom.setImported(imported);
+        bom.setProject(project);
+        return persist(bom);
+    }
+
+    /**
+     * Returns a list of all Bom for the specified Project.
+     * @param project the Project to retrieve boms for
+     * @return a List of Boms
+     */
+    @SuppressWarnings("unchecked")
+    public List<Bom> getBoms(Project project) {
+        final Query query = pm.newQuery(Bom.class, "project == :project");
+        return (List<Bom>) query.execute(project);
+    }
+
+    /**
+     * Deletes boms belonging to the specified Project.
+     * @param project the Project to delete boms for
+     */
+    public void deleteBoms(Project project) {
+        final Query query = pm.newQuery(Bom.class, "project == :project");
+        query.deletePersistentAll(project);
+    }
+
+    /**
+     * Deletes boms belonging to the specified Component.
+     * @param component the Component to delete boms for
+     */
+    @SuppressWarnings("unchecked")
+    public void deleteBoms(Component component) {
+        final Query query = pm.newQuery(Bom.class, "components.contains(component)");
+        for (Bom bom: (List<Bom>) query.execute(component)) {
+            bom.getComponents().remove(component);
+            persist(bom);
         }
     }
 
@@ -445,6 +516,7 @@ public class QueryManager extends AlpineQueryManager {
         deleteMetrics(component);
         deleteDependencies(component);
         deleteScans(component);
+        deleteBoms(component);
         delete(component);
         commitSearchIndex(commitIndex, Component.class);
     }
@@ -1126,6 +1198,21 @@ public class QueryManager extends AlpineQueryManager {
             pm.currentTransaction().begin();
             scan.getComponents().add(component);
             component.getScans().add(scan);
+            pm.currentTransaction().commit();
+        }
+    }
+
+    /**
+     * Binds the two objects together in a corresponding join table.
+     * @param bom a Bom object
+     * @param component a Component object
+     */
+    public void bind(Bom bom, Component component) {
+        boolean bound = bom.getComponents().stream().anyMatch(b -> b.getId() == bom.getId());
+        if (!bound) {
+            pm.currentTransaction().begin();
+            bom.getComponents().add(component);
+            component.getBoms().add(bom);
             pm.currentTransaction().commit();
         }
     }

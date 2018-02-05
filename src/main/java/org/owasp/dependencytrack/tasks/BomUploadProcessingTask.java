@@ -21,12 +21,14 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.BomUploadEvent;
+import org.owasp.dependencytrack.model.Bom;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.parser.cyclonedx.CycloneDxParser;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
 import org.owasp.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -59,9 +61,12 @@ public class BomUploadProcessingTask implements Subscriber {
                     components = parser.parse(bomBytes);
                 }
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                final Date date = new Date();
+                final Bom bom = qm.createBom(project, date);
                 for (Component component: components) {
-                    processComponent(qm, project, component);
+                    processComponent(qm, bom, project, component);
                 }
+                qm.updateLastBomImport(project, date);
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom");
                 LOGGER.error(ex.getMessage());
@@ -72,7 +77,7 @@ public class BomUploadProcessingTask implements Subscriber {
         }
     }
 
-    private void processComponent(QueryManager qm, Project project, Component component) {
+    private void processComponent(QueryManager qm, Bom bom, Project project, Component component) {
         final ComponentResolver cr = new ComponentResolver(qm);
         final Component resolvedComponent = cr.resolve(component);
         if (resolvedComponent != null) {
@@ -94,13 +99,15 @@ public class BomUploadProcessingTask implements Subscriber {
             resolvedComponent.setResolvedLicense(component.getResolvedLicense());
             qm.persist(resolvedComponent);
             bind(qm, project, resolvedComponent);
+            qm.bind(bom, resolvedComponent);
         } else {
             component = qm.createComponent(component, false);
             bind(qm, project, component);
+            qm.bind(bom, component);
         }
         if (component.getChildren() != null) {
             for (Component child: component.getChildren()) {
-                processComponent(qm, project, child);
+                processComponent(qm, bom, project, child);
             }
         }
     }

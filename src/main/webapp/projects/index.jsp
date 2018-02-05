@@ -119,10 +119,9 @@
                 <thead>
                 <tr>
                     <th data-align="left" data-field="projecthref">Project Name</th>
-                    <th data-align="left" data-field="lastscan">Last Scanned</th>
-                    <th data-align="left" data-field="bomupdated">BOM Updated</th>
-                    <th data-align="left" data-field="subprojects">Sub Projects</th>
-                    <th data-align="left" data-field="versions">Versions</th>
+                    <th data-align="left" data-field="version">Version</th>
+                    <th data-align="left" data-field="lastScanImportLabel">Last Scan Import</th>
+                    <th data-align="left" data-field="lastBomImportLabel">Last BOM Import</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>

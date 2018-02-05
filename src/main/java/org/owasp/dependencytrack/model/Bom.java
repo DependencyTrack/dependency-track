@@ -36,26 +36,21 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Model class for tracking the importing of Dependency-Check scans.
+ * Model class for tracking the importing of bill-of-material documents.
  *
  * @author Steve Springett
  * @since 3.0.0
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Scan implements Serializable {
+public class Bom implements Serializable {
 
-    private static final long serialVersionUID = 3950039972008164729L;
+    private static final long serialVersionUID = -4378439983100141050L;
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
-
-    @Persistent
-    @Column(name = "EXECUTED", jdbcType = "TIMESTAMP", allowsNull = "false")
-    @NotNull
-    private Date executed;
 
     @Persistent
     @Column(name = "IMPORTED", jdbcType = "TIMESTAMP", allowsNull = "false")
@@ -67,14 +62,14 @@ public class Scan implements Serializable {
     @NotNull
     private Project project;
 
-    @Persistent(table = "SCANS_COMPONENTS", mappedBy = "scans")
-    @Join(column = "SCAN_ID")
+    @Persistent(table = "BOMS_COMPONENTS", mappedBy = "boms")
+    @Join(column = "BOM_ID")
     @Element(column = "COMPONENT_ID", dependent = "false")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Component> components;
 
     @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "SCAN_UUID_IDX")
+    @Unique(name = "BOM_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
@@ -85,14 +80,6 @@ public class Scan implements Serializable {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public Date getExecuted() {
-        return executed;
-    }
-
-    public void setExecuted(Date executed) {
-        this.executed = executed;
     }
 
     public Date getImported() {

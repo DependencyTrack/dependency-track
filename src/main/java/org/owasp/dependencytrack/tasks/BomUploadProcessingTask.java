@@ -18,9 +18,11 @@
 package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.BomUploadEvent;
+import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.model.Bom;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Project;
@@ -28,6 +30,7 @@ import org.owasp.dependencytrack.parser.cyclonedx.CycloneDxParser;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
 import org.owasp.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -52,6 +55,7 @@ public class BomUploadProcessingTask implements Subscriber {
             QueryManager qm = new QueryManager();
             try {
                 final List<Component> components;
+                final List<Component> flattenedComponents = new ArrayList<>();
                 final String bomString = new String(bomBytes);
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
                     final CycloneDxParser parser = new CycloneDxParser(qm);
@@ -64,9 +68,10 @@ public class BomUploadProcessingTask implements Subscriber {
                 final Date date = new Date();
                 final Bom bom = qm.createBom(project, date);
                 for (Component component: components) {
-                    processComponent(qm, bom, project, component);
+                    processComponent(qm, bom, project, component, flattenedComponents);
                 }
                 qm.updateLastBomImport(project, date);
+                SingleThreadedEventService.getInstance().publish(new DependencyCheckEvent(flattenedComponents));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom");
                 LOGGER.error(ex.getMessage());
@@ -77,7 +82,7 @@ public class BomUploadProcessingTask implements Subscriber {
         }
     }
 
-    private void processComponent(QueryManager qm, Bom bom, Project project, Component component) {
+    private void processComponent(QueryManager qm, Bom bom, Project project, Component component, List<Component> flattenedComponents) {
         final ComponentResolver cr = new ComponentResolver(qm);
         final Component resolvedComponent = cr.resolve(component);
         if (resolvedComponent != null) {
@@ -100,14 +105,16 @@ public class BomUploadProcessingTask implements Subscriber {
             qm.persist(resolvedComponent);
             bind(qm, project, resolvedComponent);
             qm.bind(bom, resolvedComponent);
+            flattenedComponents.add(resolvedComponent);
         } else {
             component = qm.createComponent(component, false);
             bind(qm, project, component);
             qm.bind(bom, component);
+            flattenedComponents.add(component);
         }
         if (component.getChildren() != null) {
             for (Component child: component.getChildren()) {
-                processComponent(qm, bom, project, child);
+                processComponent(qm, bom, project, child, flattenedComponents);
             }
         }
     }

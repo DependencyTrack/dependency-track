@@ -18,8 +18,10 @@
 package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
+import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
@@ -119,6 +121,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                     }
                 }
                 qm.updateLastScanImport(project, date);
+                SingleThreadedEventService.getInstance().publish(new DependencyCheckEvent(components));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing scan result");
                 LOGGER.error(ex.getMessage());

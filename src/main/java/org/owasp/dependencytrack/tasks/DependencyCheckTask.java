@@ -75,7 +75,7 @@ public class DependencyCheckTask implements Subscriber {
     }
 
     /**
-     * Perfors a Dependency-Check analysis.
+     * Performs a Dependency-Check analysis.
      * @param event a DependencyCheckEvent
      */
     private void performAnalysis(DependencyCheckEvent event) {
@@ -106,7 +106,7 @@ public class DependencyCheckTask implements Subscriber {
     }
 
     /**
-     * Performs an update of the Dependeny-Check data directory only.
+     * Performs an update of the Dependency-Check data directory only.
      */
     private void performUpdateOnly() {
         LOGGER.info("Executing Dependency-Check update-only task");

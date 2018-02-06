@@ -101,19 +101,36 @@ Distributions
 Ready-to-deploy distributions will be available beginning with 3.0.0-beta-1. Dependency-Track
 supports the following three deployment options:
 
+* Docker container
 * Executable WAR
 * Conventional WAR
-* Docker container
 
+Deploying Docker Container
+-------------------
+
+Deploying with docker is the easiest and fastest method of getting started. No prerequisites are required
+other than an modern version of Docker. Dependency-Track uses the following conventions:
+
+
+* The 'latest' tag, which is pulled by default if no tag is specified, will always refer to the latest stable release (3.0.0, 3.0.1, 3.1.0, etc)
+* The 'snapshot' tag will be built and pushed on all CI changes to the master. Use this if you want a "moving target" with all the latest changes.
+* Version tags (3.0.0, 3.0.1, etc) are used to indicate each release
+
+
+```shell
+docker pull owasp/dependency-track:snapshot
+docker volume create dependency-track
+docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
+```
 
 Deploying the Executable WAR
 -------------------
 
-The easiest way to get Dependency-Track setup is to automatically create and deploy an executable WAR.
+Another simple way to get Dependency-Track running quickly is to automatically deploy the executable WAR. This
+method requires Java 8u101 or higher. Simply download `dependency-track-embedded.war` and execute:
 
 ```shell
-mvn clean package -P embedded-jetty
-java -jar target/dependency-track-embedded.war
+java -jar dependency-track-embedded.war
 ```
 
 Deploying the Conventional WAR
@@ -121,28 +138,10 @@ Deploying the Conventional WAR
 
 This is the most difficult to deploy option as it requires an already installed and configured Servlet 
 container such as Apache Tomcat 8.5 and higher, however, it offers the most flexible deployment options.
-
-```shell
-mvn clean package
-```
 Follow the Servlet containers instructions for deploying `dependency-track.war`.
-
- 
-Deploying With Docker
--------------------
-
-For users leveraging Docker, the process simply wraps the executable WAR inside a Docker container.
-Begin by first compiling the software, then by executing Docker-specific commands. 
-
-```shell
-mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
-docker volume create dependency-track
-docker build -f src/main/docker/Dockerfile -t dependency-track .
-docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data dependency-track
-```
  
  
-Compiling
+Compiling From Sources (optional)
 -------------------
 
 To create an executable WAR that is ready to launch (recommended for most users):
@@ -155,6 +154,12 @@ To create a WAR that must be manually deployed to a modern Servlet container (i.
 
 ```shell
 mvn clean package
+```
+
+To create an executable WAR that is ready to be deployed in a Docker container:
+
+```shell
+mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 

@@ -34,7 +34,7 @@ still keeping tabs on component usage and any inherited risk.
 
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
-**NOTICE: Dependency-Track is pre-release beta quality software. v3 will launch in March. The countdown begins...**
+**NOTICE: Dependency-Track is beta-quality software. v3 will launch in March. The countdown begins...**
 
 
 Features

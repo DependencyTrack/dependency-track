@@ -108,7 +108,7 @@ supports the following three deployment options:
 Deploying Docker Container
 -------------------
 
-Deploying with docker is the easiest and fastest method of getting started. No prerequisites are required
+Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required
 other than an modern version of Docker. Dependency-Track uses the following conventions:
 
 
@@ -116,6 +116,14 @@ other than an modern version of Docker. Dependency-Track uses the following conv
 * The 'snapshot' tag will be built and pushed on all CI changes to the master. Use this if you want a "moving target" with all the latest changes.
 * Version tags (3.0.0, 3.0.1, etc) are used to indicate each release
 
+
+```shell
+docker pull owasp/dependency-track
+docker volume create dependency-track
+docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
+```
+
+To run snapshot releases (not recommended for production):
 
 ```shell
 docker pull owasp/dependency-track:snapshot

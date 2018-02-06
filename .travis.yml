@@ -14,7 +14,7 @@ addons:
     branch_pattern: coverity_scan
 
 before_script:
-  - export REPO=sspringett/dependency-track
+  - export REPO=owasp/dependency-track
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
 
 script:

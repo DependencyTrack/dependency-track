@@ -34,8 +34,7 @@ still keeping tabs on component usage and any inherited risk.
 
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
-**NOTICE: Dependency-Track is pre-release alpha quality software. It is expected to be feature complete 
-in January 2018 with betas and release candidates available in Q1.**
+**NOTICE: Dependency-Track is pre-release beta quality software. v3 will launch in March. The countdown begins...**
 
 
 Features
@@ -98,12 +97,11 @@ Viewing an individual license:
 Distributions
 -------------------
 
-Ready-to-deploy distributions will be available beginning with 3.0.0-beta-1. Dependency-Track
-supports the following three deployment options:
+Dependency-Track supports the following three deployment options:
 
-* Docker container
-* Executable WAR
-* Conventional WAR
+* Docker container (continuous snapshots available now)
+* Executable WAR (will be available with 3.0.0)
+* Conventional WAR (will be available with 3.0.0)
 
 Deploying Docker Container
 -------------------

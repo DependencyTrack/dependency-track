@@ -5,11 +5,14 @@ chapter: 1
 order: 5
 ---
 
- Sync your Facebook contacts with ChatApp. Any of your Facebook friends with ChatApp accounts are automatically added to your contact list!
+Dependency-Track uses ~/.dependency-track on UNIX/Linux systems and .dependency-track in current users home
+directory on Windows machines. This directory, referred to as the Dependency-Track Data directory, contains 
+the NIST NVD mirror, embedded database files, application and audit logs, as well as keys used during normal 
+operation, such as validating JWT tokens. It is essential that best practices are followed to secure the 
+.dependency-track directory structure.
 
-> Signing up with Facebook automatically starts syncing contacts.
+The data directory includes:
 
-To sync your contacts:
 
 | Content                    | Purpose                                    |
 | -------------------------- | ------------------------------------------ |

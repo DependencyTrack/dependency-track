@@ -22,6 +22,6 @@ The data directory includes:
 | dependency-track-audit.log | Application audit log                      |
 | index                      | Internal search engine index               |
 | keys                       | Keys used to generate/verify JWT tokens    |
-| nist                       | Full mirrored contents of the NVD          |
+| nist                       | Mirror of the NVD                          |
 | server.log                 | Embedded Jetty server log                  |
-| vulndb                     | Read by Dependency-Track to sync contents  |
+| vulndb                     | Mirror of VulnDB                           |

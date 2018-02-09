@@ -7,28 +7,80 @@ order:
 
 
 ### API Key
+A long randomly generated number used to assert authentication. All REST APIs use API keys for authentication. API keys
+are assigned on a per-team basis. A team may have zero or more API keys assigned.
 
 ### Bill of Material (BOM)
+In supply chains, a bill of material (BOM) defines and describes the contents of what is used in the manufacturing and 
+packaging of the deliverable. In software supply chains, this refers to the contents of all components bundled with the
+software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports two BOM 
+formats: CycloneDX and SPDX.
 
 ### Component
+Dependency-Track defines a component as a standalone entity. A component may be a third-party library, an operating
+system, or a microprocessor.
+
+### CVE
+Common Vulnerabilities and Exposures (CVE&reg;) is a list of common identifiers for publicly known cybersecurity 
+vulnerabilities. Assigned by CVE Numbering Authorities (CNAs) from around the world, use of CVE Entries ensures 
+confidence among parties when used to discuss or share information about a unique software vulnerability, provides 
+a baseline for tool evaluation, and enables data exchange for cybersecurity automation.
+
+### CWE
+Common Weakness Enumeration (CWE) is a taxonomy of software security errors that standardizes and categorizes a 
+common set of weaknesses.
 
 ### CycloneDX
+A lightweight data exchange specification intended to easily identify software components as bill of materials.
+See: <http://cyclonedx.org/>
+
+### Dependency
+Dependency-Track defines a dependency as a project that includes a component. Once a component is assigned to a 
+project, the component becomes a dependency of that project.
 
 ### LDAP User
+An LDAP user is an externally managed user that may (optionally) have the ability to login to Dependency-Track.
 
 ### License
+Refers to how a project or component is licensed. Dependency-Track supports (but does not enforce) the use of SPDX
+license IDs so that license names and terms can be automatically resolved when BOMs are imported or components are added.
 
 ### Managed User
+An internally managed user that has the ability to login to Dependency-Track.
+
+### Package URL (purl)
+A purl or package URL is a lightweight specification that standardizes the ability to reliably identify and locate 
+software packages. A purl is a URL string used to identify and locate a software package in a mostly universal and 
+uniform way across programing languages, package managers, packaging conventions, tools, APIs and databases. 
+See: <https://github.com/package-url/purl-spec>
 
 ### Portfolio
+Dependency-Track defines a portfolio as the sum total of all projects defined in the system. When metrics are run 
+against the portfolio, the aggregate result from all projects are what the portfolio metrics will display.
 
 ### Project
+A project is a high-level categorization and collection of components (dependencies once added) along with sub 
+projects. A project could represent a software application, an environment, a medical or IoT device, or an automobile.
+Vulnerabilities from dependent components and sub projects are reported up to the project level. This is called 
+inherited risk.
 
 ### Scan
+A scan is method by which evidence about a component is gathered and cross-referenced with one or more vulnerability 
+intelligence services in an effort to determine if that component has known vulnerabilities.
 
 ### SPDX
+Software Package Data Exchange (SPDX) provides two complimentary specifications, a bill-of-material specification, and
+a standardized list of open source licenses. The BOM specification relies on either 'tag' or 'rdf' files to document
+software components as bill of materials. In contrast to CycloneDX, the SPDX BOM spec is a heavyweight (and very robust)
+specification. The standardized license list is a lightweight spec that has been adopted across multiple industries 
+and is recommended for use in all software projects. See: <https://spdx.org/>
+
+### Swagger
+A lightweight REST specification that provides a framework to document the use of REST APIs. 
+See: <https://swagger.io/>
 
 ### Team
+A collection of managed and unmanaged (LDAP) users and API keys.
 
 ### Vulnerability
-
+A defect that can potentially lead to a security issue. 

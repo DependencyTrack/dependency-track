@@ -1,0 +1,37 @@
+pre, code, tt {
+	font-family: Inconsolata, Consolas, Courier, "Courier New", "Liberation Mono", monospace;
+	font-size: 0.85em;
+	white-space: pre-wrap;
+	border-radius: 2px;
+	line-height: 1.4;
+	font-weight: 400;
+	background-color: #404145;
+	color: #FAFAFA;
+	border-radius: 2px;
+}
+
+pre {
+	box-sizing: border-box;
+	margin: 0 0 1.75em 0;
+	width: 100%;
+	padding: 10px;
+	font-size: 0.9em;
+	white-space: pre;
+	overflow: auto;
+	border-radius: 3px;
+
+	code, tt {
+		font-size: inherit;
+		white-space: pre-wrap;
+		background: transparent;
+		border: none;
+		padding: 0
+	}
+}
+
+blockquote > code,
+li > code,
+p > code {
+	padding: 4px 6px;
+	white-space: nowrap;
+}

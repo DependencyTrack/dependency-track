@@ -1,0 +1,21 @@
+table {
+	width: 100%;
+	margin-bottom: 1.75em;
+}
+
+tr {
+	border-bottom: 1px solid #EEE;
+}
+
+tr:nth-child(even) {
+	background: #fcfcfc;
+}
+
+td, th {
+	padding: 8px;
+	text-align: left;
+}
+
+th {
+	padding-bottom: 4px;
+}

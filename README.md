@@ -136,7 +136,7 @@ Another simple way to get Dependency-Track running quickly is to automatically d
 method requires Java 8u101 or higher. Simply download `dependency-track-embedded.war` and execute:
 
 ```shell
-java -jar dependency-track-embedded.war
+java -Xmx4G -jar dependency-track-embedded.war
 ```
 
 Deploying the Conventional WAR

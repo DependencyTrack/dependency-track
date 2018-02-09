@@ -9,7 +9,7 @@ VulnDB, a subscription service offered by Risk Based Security, offers a comprehe
 source of vulnerability intelligence.
 
 Organizations that consume VulnDB content benefit from data which has been enhanced, corrected, and made available 
-sooner than most other sources of vulnerability intelligence. As a result, Organizations are able to respond quicker
+sooner than most other sources of vulnerability intelligence. As a result, organizations are able to respond quicker
 and with more confidence to reduce risk.
 
 Dependency-Track can leverage VulnDB by incorporating the entire contents of the VulnDB service. In doing so, VulnDB

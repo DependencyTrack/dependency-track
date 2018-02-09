@@ -4,6 +4,7 @@
 <img src="https://raw.githubusercontent.com/stevespringett/dependency-track/master/src/main/webapp/images/dt.svg" width="300" align="right">
 [![License][license-image]][license-url]
 [![Website](https://img.shields.io/badge/https://-dependencytrack.org-blue.svg)](https://dependencytrack.org/)
+[![Documentation](https://img.shields.io/badge/read-documentation-blue.svg)](https://docs.dependencytrack.org/)
 [![Slack](https://img.shields.io/badge/chat%20on-slack-46BC99.svg)](https://owasp.slack.com/messages/proj-dependency-track)
 [![Join the chat at https://gitter.im/dependency-track/Lobby](https://badges.gitter.im/dependency-track/Lobby.svg)](https://gitter.im/dependency-track/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow)](https://twitter.com/dependencytrack)

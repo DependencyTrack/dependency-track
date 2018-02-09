@@ -10,10 +10,10 @@ source of vulnerability intelligence.
 
 Organizations that consume VulnDB content benefit from data which has been enhanced, corrected, and made available 
 sooner than most other sources of vulnerability intelligence. As a result, Organizations are able to respond quicker
-and with more confidence ion order to reduce risk.
+and with more confidence to reduce risk.
 
 Dependency-Track can leverage VulnDB by incorporating the entire contents of the VulnDB service. In doing so, VulnDB
-data becomes a first-class citizen in Dependency-Track alongside other sources of data.
+data becomes a first-class citizen in Dependency-Track working alongside other sources of data to identify risk.
 
 Credit is provided to VulnDB with visual and textual cues on where the data originated.
 Links back to the original advisory are also provided.

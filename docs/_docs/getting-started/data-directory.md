@@ -5,11 +5,11 @@ chapter: 1
 order: 5
 ---
 
-Dependency-Track uses ~/.dependency-track on UNIX/Linux systems and .dependency-track in current users home
-directory on Windows machines. This directory, referred to as the Dependency-Track Data directory, contains 
+Dependency-Track uses `~/.dependency-track` on UNIX/Linux systems and `.dependency-track` in the current users 
+home directory on Windows machines. This directory, referred to as the *data directory*, contains 
 the NIST NVD mirror, embedded database files, application and audit logs, as well as keys used during normal 
 operation, such as validating JWT tokens. It is essential that best practices are followed to secure the 
-.dependency-track directory structure.
+data directory.
 
 The data directory includes:
 

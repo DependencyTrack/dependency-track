@@ -13,6 +13,7 @@ To setup, navigate to **Jenkins &raquo; System Configuration** and complete the 
 
 ![System Configuration](/images/screenshots/jenkins-global-odt.png)
 
+### Job Config
 Once configured with a valid URL and API key, simply configure a job to publish the artifact.
 
 ![System Configuration](/images/screenshots/jenkins-job-odt-publish.png)

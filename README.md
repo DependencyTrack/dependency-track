@@ -170,38 +170,23 @@ mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker
 ```
 
 
-Configuration
+Documentation
 -------------------
 
-Configuration is performed by editing application.properties. Among the configuration parameters are:
-
-* Independently enforce authentication and authorization
-* Active Directory integration (via LDAP)
-
-Usage
--------------------
-
-**Webapp URL:** http://$HOSTNAME:$PORT/$CONTEXT
-
-**REST API URL:** http://$HOSTNAME:$PORT/$CONTEXT/api
-
-**Swagger URL:** http://$HOSTNAME:$PORT/$CONTEXT/api/swagger.json
-
-
-Data Directory
--------------------
-
-Dependency-Track uses ~/.dependency-track on UNIX/Linux systems and .dependency-track in current users home
-directory on Windows machines. This directory contains the NIST NVD mirror, embedded database files, application
-and audit logs, as well as keys used during normal operation, such as validating JWT tokens. It is essential that
-best practices are followed to secure the .dependency-track directory structure.
+Online documentation is accessible at: <https://docs.dependencytrack.org/>
 
 Community
 -------------------
 
-Gitter: https://gitter.im/dependency-track/Lobby
+* Twitter: <https://twitter.com/dependencytrack>
 
-Google Groups: https://groups.google.com/forum/#!forum/dependency-track
+* YouTube: <https://www.youtube.com/channel/UC8xdttysl3gNAQYvk1J9Efg>
+
+* Gitter: <https://gitter.im/dependency-track/Lobby>
+
+* Slack: <https://owasp.slack.com/messages/proj-dependency-track>
+
+* Google Groups: <https://groups.google.com/forum/#!forum/dependency-track>
 
 
 Support

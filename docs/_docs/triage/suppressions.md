@@ -7,7 +7,7 @@ order: 1
 
 Dependency-Track integrates the same mechanisms as Dependency-Check in identifying vulnerabilities and suppressing them.
 
-Dependency-Track checks for the existence of a global suppression file in the data directory. For example:
+Dependency-Track checks for the existence of a global suppression file.
 
 > ~/.dependency-track/dependency-check/suppressions.xml
 

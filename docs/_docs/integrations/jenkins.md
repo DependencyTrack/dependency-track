@@ -1,7 +1,7 @@
 ---
 title: Jenkins
 category: Integrations
-chapter: 4
+chapter: 5
 order: 3
 ---
 

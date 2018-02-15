@@ -1,8 +1,8 @@
 ---
 title: ThreadFix
 category: Integrations
-chapter: 4
+chapter: 5
 order: 4
 ---
 
-TODO
+ThreadFix includes a *remote provider* for Dependency-Track which facilitates integration. 

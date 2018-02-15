@@ -1,7 +1,7 @@
 ---
 title: Dependency-Check
 category: Integrations
-chapter: 4
+chapter: 5
 order: 2
 ---
 

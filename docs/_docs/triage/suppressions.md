@@ -13,7 +13,7 @@ Dependency-Track checks for the existence of a global suppression file.
 
 If this file exists, it will be used during global analysis. Note: this is a global suppression file. All components 
 defined in the system, regardless of what projects they are a dependency of, will be affected by global suppression. 
-In cases where there are clear false positive, global suppression will result in the vulnerability being suppressed 
+In cases where there are clear false positives, global suppression will result in the vulnerability being suppressed 
 across all projects. In cases where components are identified correctly (true positive) but the vulnerability may not
 affect a specific project due to the way it's used, use of global suppressions are **not recommended**.
 

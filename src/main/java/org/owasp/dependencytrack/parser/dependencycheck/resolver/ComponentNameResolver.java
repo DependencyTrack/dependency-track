@@ -33,11 +33,15 @@ public class ComponentNameResolver extends AbstractStringResolver implements IRe
      */
     public String resolve(Dependency dependency) {
         /*
-         * Attempts to use the filename first, if that is null, then
-         * attempt to resolve the name from the available evidence.
+         * Attempts to use the product evidence first, if that is null, then
+         * return the filename of the component (could be null).
          */
-        final String filename = dependency.getFileName();
-        return (filename != null) ? filename : resolve(dependency, "product", 3);
+        String product = resolve(dependency, "product", 3);
+        if (product != null) {
+            return product;
+        } else {
+            return dependency.getFileName();
+        }
     }
 
 }

@@ -96,12 +96,19 @@ public final class ModelConverter {
         // Add evidence to the dependency
         if (component.getGroup() != null) {
             dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", component.getGroup(), Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "groupid", component.getGroup(), Confidence.HIGHEST);
         }
         if (component.getName() != null) {
             dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "name", component.getName(), Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "artifactid", component.getName(), Confidence.HIGHEST);
         }
         if (component.getVersion() != null) {
             dependency.addEvidence(EvidenceType.VERSION, "dependency-track", "version", component.getVersion(), Confidence.HIGHEST);
+        }
+        // Force 'maven' identifier so that base suppressions (included with Dependency-Check) with gav regex can be interpreted.
+        // Other identifiers may also need to be put into place in the future including 'npm' and 'bintray'.
+        if (component.getGroup() != null && component.getName() != null && component.getVersion() != null) {
+            dependency.addIdentifier("maven", component.getGroup() + ":" + component.getName() + ":" + component.getVersion(), null, Confidence.HIGHEST);
         }
         return dependency;
     }

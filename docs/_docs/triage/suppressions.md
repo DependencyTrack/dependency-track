@@ -19,4 +19,4 @@ affect a specific project due to the way it's used, use of global suppressions a
 
 Refer to the Dependency-Check suppression documentation for further details.
 
-> https://jeremylong.github.io/DependencyCheck/general/suppression.html
+> <https://jeremylong.github.io/DependencyCheck/general/suppression.html>

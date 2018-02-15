@@ -42,6 +42,8 @@ import org.owasp.dependencytrack.model.VulnerabilityMetrics;
 import javax.jdo.FetchPlan;
 import javax.jdo.Query;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -824,6 +826,20 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of all Dependency for the specified Project.
+     * This method if designed NOT to provide paginated results.
+     * @param project the Project to retrieve dependencies of
+     * @return a List of Dependency objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Dependency> getAllDependencies(Project project) {
+        final Query query = pm.newQuery(Dependency.class, "project == :project");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
+        query.setOrdering("component.name asc");
+        return (List<Dependency>)query.execute(project);
+    }
+
+    /**
      * Returns a List of Dependency for the specified Project.
      * @param project the Project to retrieve dependencies of
      * @return a List of Dependency objects
@@ -959,6 +975,18 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of Vulnerability for the specified Component.
+     * This method if designed NOT to provide paginated results.
+     * @param component the Component to retrieve vulnerabilities of
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getAllVulnerabilities(Component component) {
+        final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
+        return (List<Vulnerability>)query.execute(component);
+    }
+
+    /**
      * Returns the number of Vulnerability objects for the specified Project.
      * @param project the Project to retrieve vulnerabilities of
      * @return the total number of vulnerabilities for the project
@@ -975,15 +1003,24 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Returns a List of Vulnerability for the specified Project.
+     * This method is unique and used by third-party integrations
+     * such as ThreadFix for the retrieval of vulnerabilities from
+     * a specific project along with the affected component(s).
      * @param project the Project to retrieve vulnerabilities of
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
     public List<Vulnerability> getVulnerabilities(Project project) {
         final List<Vulnerability> vulnerabilities = new ArrayList<>();
-        final List<Dependency> dependencies = getDependencies(project).getList(Dependency.class);
+        final List<Dependency> dependencies = getAllDependencies(project);
         for (Dependency dependency: dependencies) {
-            vulnerabilities.addAll(getVulnerabilities(dependency.getComponent()).getObjects());
+            final Collection<Vulnerability> componentVulns = pm.detachCopyAll(
+                    getAllVulnerabilities(dependency.getComponent())
+            );
+            for (Vulnerability componentVuln: componentVulns) {
+                componentVuln.setComponents(Arrays.asList(pm.detachCopy(dependency.getComponent())));
+            }
+            vulnerabilities.addAll(componentVulns);
         }
         return vulnerabilities;
     }

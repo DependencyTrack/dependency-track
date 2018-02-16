@@ -40,6 +40,10 @@ public abstract class AbstractStringResolver {
         Evidence best = null;
         final List<Evidence> evidenceList = dependency.getEvidenceCollected();
         for (Evidence evidence: evidenceList) {
+            // The dependency-check report may put in the value "null" for "file" and potentially other types.
+            if (evidence.getValue() == null || "null".equals(evidence.getValue())) {
+                continue;
+            }
             // do not trust configure.in - all kinds of irrelevant stuff in there
             if (evidenceType.equals(evidence.getType()) && !("configure.in".equals(evidence.getSource()))) {
                 if (best == null || (evidence.getConfidenceScore() > best.getConfidenceScore())) {

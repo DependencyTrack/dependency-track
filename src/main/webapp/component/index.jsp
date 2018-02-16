@@ -124,35 +124,95 @@
     </div>
 
     <!-- Modals specific to a component -->
-    <div class="modal fade" id="modalDetails" tabindex="-1" role="dialog">
+    <div class="modal" id="modalDetails" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">Component Details</h4>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="sr-only" for="componentNameInput">Component Name</label>
-                        <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="componentNameInput">
+                <div class="panel with-nav-tabs panel-default tight panel-with-tabbed-modal-body">
+                    <div class="panel-heading">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#generalTab" data-toggle="tab">General</a></li>
+                            <li><a href="#entendedTab" data-toggle="tab">Extended</a></li>
+                            <li><a href="#hashesTab" data-toggle="tab">Hashes</a></li>
+                        </ul>
                     </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="componentVersionInput">Version</label>
-                        <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="componentVersionInput">
-                    </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="componentGroupInput">Group</label>
-                        <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="componentGroupInput">
-                    </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="componentDescriptionInput">Description</label>
-                        <textarea name="description" required="false" placeholder="Description..." class="form-control" id="componentDescriptionInput"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="sr-only" for="componentLicenseSelect">License</label>
-                        <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="componentLicenseSelect">
-                            <option></option>
-                        </select>
+                    <div class="panel-body">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="generalTab">
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentNameInput">Component Name</label>
+                                    <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="componentNameInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentVersionInput">Component Version</label>
+                                    <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="componentVersionInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentGroupInput">Component Group</label>
+                                    <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="componentGroupInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentDescriptionInput">Description</label>
+                                    <textarea name="description" required="false" placeholder="Description..." class="form-control" id="componentDescriptionInput"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentLicenseSelect">License</label>
+                                    <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="componentLicenseSelect">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="entendedTab">
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentFilenameInput">Filename</label>
+                                    <input type="text" name="filename" required="true" placeholder="Filename..." class="form-control" id="componentFilenameInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentClassifierInput">Classifier</label>
+                                    <input type="text" name="classifier" required="true" placeholder="Classifier..." class="form-control" id="componentClassifierInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentPurlInput">Package URL (Purl)</label>
+                                    <input type="text" name="purl" required="false" placeholder="Purl..." class="form-control" id="componentPurlInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentCpeInput">CPE</label>
+                                    <input type="text" name="cpe" required="false" placeholder="CPE..." class="form-control" id="componentCpeInput">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentCopyrightInput">Copyright</label>
+                                    <textarea name="copyright" required="false" placeholder="Copyright..." class="form-control" id="componentCopyrightInput"></textarea>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="hashesTab">
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentMd5Input">MD5</label>
+                                    <input type="text" name="md5" required="true" placeholder="MD5..." class="form-control" id="componentMd5Input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentSha1Input">SHA1</label>
+                                    <input type="text" name="sha1" required="true" placeholder="SHA1..." class="form-control" id="componentSha1Input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentSha256Input">SHA 256</label>
+                                    <input type="text" name="sha256" required="true" placeholder="SHA 256..." class="form-control" id="componentSha256Input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentSha512Input">SHA 512</label>
+                                    <input type="text" name="sha512" required="true" placeholder="SHA 512..." class="form-control" id="componentSha512Input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentSha3256Input">SHA3 256</label>
+                                    <input type="text" name="sha3256" required="true" placeholder="SHA3 256..." class="form-control" id="componentSha3256Input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="sr-only" for="componentSha3512Input">SHA3 512</label>
+                                    <input type="text" name="sha3512" required="true" placeholder="SHA3 512..." class="form-control" id="componentSha3512Input">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

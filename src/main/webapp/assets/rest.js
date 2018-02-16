@@ -390,13 +390,18 @@ $rest.deleteProject = function deleteProject(uuid, successCallback, failCallback
 /**
  * Service called when a component is created.
  */
-$rest.createComponent = function createComponent(name, version, group, description, license, successCallback, failCallback) {
+$rest.createComponent = function createComponent(name, version, group, description, license,
+                                                 filename, classifier, purl, cpe, copyright,
+                                                 md5, sha1, sha256, sha512, sha3_256, sha3_512,
+                                                 successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_COMPONENT,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
-        data: JSON.stringify({name: name, version: version, group:group, description: description, license: license}),
+        data: JSON.stringify({name: name, version: version, group:group, description: description, license: license,
+            filename: filename, classifier: classifier, purl: purl, cpe: cpe, copyright: copyright,
+            md5: md5, sha1: sha1, sha256: sha256, sha512: sha512, sha3_256: sha3_256, sha3_512: sha3_512}),
         statusCode: {
             201: function(data) {
                 if (successCallback) {
@@ -415,13 +420,18 @@ $rest.createComponent = function createComponent(name, version, group, descripti
 /**
  * Service called when a component is updated.
  */
-$rest.updateComponent = function updateComponent(uuid, name, version, group, description, license, successCallback, failCallback) {
+$rest.updateComponent = function updateComponent(uuid, name, version, group, description, license,
+                                                 filename, classifier, purl, cpe, copyright,
+                                                 md5, sha1, sha256, sha512, sha3_256, sha3_512,
+                                                 successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_COMPONENT,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_POST,
-        data: JSON.stringify({uuid: uuid, name: name, version: version, group: group, description: description, license: license}),
+        data: JSON.stringify({uuid: uuid, name: name, version: version, group:group, description: description, license: license,
+            filename: filename, classifier: classifier, purl: purl, cpe: cpe, copyright: copyright,
+            md5: md5, sha1: sha1, sha256: sha256, sha512: sha512, sha3_256: sha3_256, sha3_512: sha3_512}),
         statusCode: {
             200: function(data) {
                 if (successCallback) {

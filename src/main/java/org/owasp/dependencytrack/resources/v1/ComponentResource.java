@@ -148,10 +148,12 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "version"),
                 validator.validateProperty(jsonComponent, "group"),
                 validator.validateProperty(jsonComponent, "description"),
-                validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "license"),
-                validator.validateProperty(jsonComponent, "cpe"),
+                validator.validateProperty(jsonComponent, "filename"),
+                validator.validateProperty(jsonComponent, "classifier"),
                 validator.validateProperty(jsonComponent, "purl"),
+                validator.validateProperty(jsonComponent, "cpe"),
+                validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
                 validator.validateProperty(jsonComponent, "sha256"),
@@ -171,15 +173,18 @@ public class ComponentResource extends AlpineResource {
             component.setName(StringUtils.trimToNull(jsonComponent.getName()));
             component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
             component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
+            component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
             component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
+            component.setClassifier(StringUtils.trimToNull(jsonComponent.getClassifier()));
+            component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
+            component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
+            component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
             component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
             component.setSha1(StringUtils.trimToNull(jsonComponent.getSha1()));
             component.setSha256(StringUtils.trimToNull(jsonComponent.getSha256()));
             component.setSha512(StringUtils.trimToNull(jsonComponent.getSha512()));
             component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
             component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
-            component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
-            component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
             if (resolvedLicense != null) {
                 component.setLicense(null);
                 component.setResolvedLicense(resolvedLicense);
@@ -188,9 +193,6 @@ public class ComponentResource extends AlpineResource {
                 component.setResolvedLicense(null);
             }
             component.setParent(parent);
-            component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
-            component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
-            component.setName(StringUtils.trimToNull(jsonComponent.getName()));
 
             component = qm.createComponent(component, true);
             return Response.status(Response.Status.CREATED).entity(component).build();
@@ -214,12 +216,15 @@ public class ComponentResource extends AlpineResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonComponent, "name"),
-                validator.validateProperty(jsonComponent, "description"),
                 validator.validateProperty(jsonComponent, "version"),
                 validator.validateProperty(jsonComponent, "group"),
-                validator.validateProperty(jsonComponent, "copyright"),
-                validator.validateProperty(jsonComponent, "cpe"),
+                validator.validateProperty(jsonComponent, "description"),
+                validator.validateProperty(jsonComponent, "license"),
+                validator.validateProperty(jsonComponent, "filename"),
+                validator.validateProperty(jsonComponent, "classifier"),
                 validator.validateProperty(jsonComponent, "purl"),
+                validator.validateProperty(jsonComponent, "cpe"),
+                validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
                 validator.validateProperty(jsonComponent, "sha256"),
@@ -235,10 +240,20 @@ public class ComponentResource extends AlpineResource {
                 if (name != null) {
                     component.setName(name);
                 }
-                component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
                 component.setVersion(StringUtils.trimToNull(jsonComponent.getVersion()));
                 component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
+                component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
+                component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
+                component.setClassifier(StringUtils.trimToNull(jsonComponent.getClassifier()));
                 component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
+                component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
+                component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
+                component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
+                component.setSha1(StringUtils.trimToNull(jsonComponent.getSha1()));
+                component.setSha256(StringUtils.trimToNull(jsonComponent.getSha256()));
+                component.setSha512(StringUtils.trimToNull(jsonComponent.getSha512()));
+                component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
+                component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
 
                 final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
                 if (resolvedLicense != null) {

@@ -42,6 +42,19 @@ function populateComponentData(data) {
         $("#componentLicense").empty();
     }
 
+    $("#componentFilenameInput").val(data.filename);
+    $("#componentClassifierInput").val(data.classifier);
+    $("#componentPurlInput").val(data.purl);
+    $("#componentCpeInput").val(data.cpe);
+    $("#componentCopyrightInput").val(data.copyright);
+    $("#componentMd5Input").val(data.md5);
+    $("#componentSha1Input").val(data.sha1);
+    $("#componentSha256Input").val(data.sha256);
+    $("#componentSha512Input").val(data.sha512);
+    $("#componentSha3256Input").val(data.sha3_256);
+    $("#componentSha3512Input").val(data.sha3_512);
+
+
     // Retrieve the list of licenses and determine which one should be selected
     $rest.getLicenses(function (licenseData) {
         let select = $("#componentLicenseSelect");
@@ -111,14 +124,30 @@ $(document).ready(function () {
     $rest.getComponentCurrentMetrics(uuid, populateMetrics);
 
     $("#updateComponentButton").on("click", function () {
-        let name = $("#componentNameInput").val();
-        let version = $("#componentVersionInput").val();
-        let description = $("#componentDescriptionInput").val();
-        let group = $("#componentGroupInput").val();
-        let license = $("#componentLicenseSelect").val();
-        $rest.updateComponent(uuid, name, version, group, description, license, function() {
-            $rest.getComponent(uuid, populateComponentData);
-        });
+        const name = $common.valueWithDefault($("#componentNameInput").val(), null);
+        const version = $common.valueWithDefault($("#componentVersionInput").val(), null);
+        const group = $common.valueWithDefault($("#componentGroupInput").val(), null);
+        const description = $common.valueWithDefault($("#componentDescriptionInput").val(), null);
+        const license = $common.valueWithDefault($("#componentLicenseSelect").val(), null);
+        const filename = $common.valueWithDefault($("#componentFilenameInput").val(), null);
+        const classifier = $common.valueWithDefault($("#componentClassifierInput").val(), null);
+        const purl = $common.valueWithDefault($("#componentPurlInput").val(), null);
+        const cpe = $common.valueWithDefault($("#componentCpeInput").val(), null);
+        const copyright = $common.valueWithDefault($("#componentCopyrightInput").val(), null);
+        const md5 = $common.valueWithDefault($("#componentMd5Input").val(), null);
+        const sha1 = $common.valueWithDefault($("#componentSha1Input").val(), null);
+        const sha256 = $common.valueWithDefault($("#componentSha256Input").val(), null);
+        const sha512 = $common.valueWithDefault($("#componentSha512Input").val(), null);
+        const sha3_256 = $common.valueWithDefault($("#componentSha3256Input").val(), null);
+        const sha3_512 = $common.valueWithDefault($("#componentSha3512Input").val(), null);
+
+        $rest.updateComponent(uuid, name, version, group, description, license,
+            filename, classifier, purl, cpe, copyright,
+            md5, sha1, sha256, sha512, sha3_256, sha3_512,
+            function() {
+                $rest.getComponent(uuid, populateComponentData);
+            }
+        );
     });
 
     $("#deleteComponentButton").on("click", function () {

@@ -160,7 +160,7 @@ public class DependencyCheckTask implements Subscriber {
                 int separator = dependency.getFilePath().indexOf(File.separator);
                 if (separator != 36) {
                     LOGGER.warn("Component cannot be resolved. Missing file separator or invalid component UUID.");
-                    break;
+                    continue;
                 }
                 String uuid = dependency.getFilePath().substring(0, separator);
                 final Component component = qm.getObjectByUuid(Component.class, uuid);

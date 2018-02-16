@@ -156,7 +156,14 @@ public class DependencyCheckTask implements Subscriber {
             final Analysis analysis = new DependencyCheckParser().parse(new File(DC_REPORT_FILE));
             for (org.owasp.dependencytrack.parser.dependencycheck.model.Dependency dependency : analysis.getDependencies()) {
                 // Resolve internally stored component
-                final Component component = qm.getObjectByUuid(Component.class, dependency.getFilePath());
+                // The dependency filePath contains the UUID and the filename of the component - Specified in ModelConverter
+                int separator = dependency.getFilePath().indexOf(File.separator);
+                if (separator != 36) {
+                    LOGGER.warn("Component cannot be resolved. Missing file separator or invalid component UUID.");
+                    break;
+                }
+                String uuid = dependency.getFilePath().substring(0, separator);
+                final Component component = qm.getObjectByUuid(Component.class, uuid);
                 final org.owasp.dependencytrack.parser.dependencycheck.model.Dependency.Vulnerabilities vulnerabilities = dependency.getVulnerabilities();
 
                 // Add vulnerability to an affected component

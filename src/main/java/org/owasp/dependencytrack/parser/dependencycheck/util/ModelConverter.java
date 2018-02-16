@@ -88,10 +88,10 @@ public final class ModelConverter {
         } else if (component.getLicense() != null) {
             dependency.setLicense(component.getLicense());
         }
-        // Set the filepath of the dependency to the UUID of the component.
+        // Set the filepath of the dependency to include the UUID of the component.
         // This will be used later when processing the report.
-        dependency.setFileName(String.valueOf(component.getName()));
-        dependency.setFilePath(String.valueOf(component.getUuid()));
+        dependency.setFileName(String.valueOf(component.getFilename()));
+        dependency.setFilePath(String.valueOf(component.getUuid()) + File.separator + component.getFilename());
 
         // Add evidence to the dependency
         if (component.getGroup() != null) {

@@ -23,7 +23,6 @@ import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.CweResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
-
 import java.io.File;
 import java.math.BigDecimal;
 

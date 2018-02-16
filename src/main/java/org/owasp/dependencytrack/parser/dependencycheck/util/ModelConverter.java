@@ -86,31 +86,34 @@ public final class ModelConverter {
         if (component.getResolvedLicense() != null) {
             dependency.setLicense(component.getResolvedLicense().getName());
         } else if (component.getLicense() != null) {
-            dependency.setLicense(component.getLicense());
+            dependency.setLicense(StringUtils.trimToNull(component.getLicense()));
         }
         // Set the filepath of the dependency to include the UUID of the component.
         // This will be used later when processing the report.
         String fileName = (component.getFilename() != null) ? component.getFilename() : component.getName();
-        dependency.setFileName(String.valueOf(fileName));
-        dependency.setFilePath(String.valueOf(component.getUuid()) + File.separator + fileName);
+        dependency.setFileName(StringUtils.trimToNull(fileName));
+        dependency.setFilePath(component.getUuid() + File.separator + fileName);
 
 
         // Add evidence to the dependency
-        if (component.getGroup() != null) {
-            dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", component.getGroup(), Confidence.HIGHEST);
-            dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "groupid", component.getGroup(), Confidence.HIGHEST);
+        String group = StringUtils.trimToNull(component.getGroup());
+        String name = StringUtils.trimToNull(component.getName());
+        String version = StringUtils.trimToNull(component.getVersion());
+        if (group != null) {
+            dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", group, Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "groupid", group, Confidence.HIGHEST);
         }
-        if (component.getName() != null) {
-            dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "name", component.getName(), Confidence.HIGHEST);
-            dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "artifactid", component.getName(), Confidence.HIGHEST);
+        if (name != null) {
+            dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "name", name, Confidence.HIGHEST);
+            dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "artifactid", name, Confidence.HIGHEST);
         }
-        if (component.getVersion() != null) {
-            dependency.addEvidence(EvidenceType.VERSION, "dependency-track", "version", component.getVersion(), Confidence.HIGHEST);
+        if (version != null) {
+            dependency.addEvidence(EvidenceType.VERSION, "dependency-track", "version", version, Confidence.HIGHEST);
         }
         // Force 'maven' identifier so that base suppressions (included with Dependency-Check) with gav regex can be interpreted.
         // Other identifiers may also need to be put into place in the future including 'npm' and 'bintray'.
-        if (component.getGroup() != null && component.getName() != null && component.getVersion() != null) {
-            dependency.addIdentifier("maven", component.getGroup() + ":" + component.getName() + ":" + component.getVersion(), null, Confidence.HIGHEST);
+        if (group != null && name != null && version != null) {
+            dependency.addIdentifier("maven", group + ":" + name + ":" + version, null, Confidence.HIGHEST);
         }
         return dependency;
     }

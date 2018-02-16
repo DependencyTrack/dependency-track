@@ -90,8 +90,10 @@ public final class ModelConverter {
         }
         // Set the filepath of the dependency to include the UUID of the component.
         // This will be used later when processing the report.
-        dependency.setFileName(String.valueOf(component.getFilename()));
-        dependency.setFilePath(String.valueOf(component.getUuid()) + File.separator + component.getFilename());
+        String fileName = (component.getFilename() != null) ? component.getFilename() : component.getName();
+        dependency.setFileName(String.valueOf(fileName));
+        dependency.setFilePath(String.valueOf(component.getUuid()) + File.separator + fileName);
+
 
         // Add evidence to the dependency
         if (component.getGroup() != null) {

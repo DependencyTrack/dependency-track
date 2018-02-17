@@ -781,7 +781,7 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(Cwe.class);
         query.setOrdering("id asc");
         if (filter != null) {
-            query.setFilter("id == :id || name.toLowerCase().matches(:name)");
+            query.setFilter("cweId == :cweId || name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             return execute(query, filter, filterString);
         }

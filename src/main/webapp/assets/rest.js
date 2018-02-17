@@ -38,11 +38,13 @@ const URL_USER_MANAGED = "api/v1/user/managed";
 const URL_USER_SELF = "api/v1/user/self";
 const URL_PROJECT = "api/v1/project";
 const URL_LICENSE = "api/v1/license";
+const URL_CWE = "api/v1/cwe";
 const URL_COMPONENT = "api/v1/component";
 const URL_DEPENDENCY = "api/v1/dependency";
 const URL_VULNERABILITY = "api/v1/vulnerability";
 const URL_SEARCH = "api/v1/search";
 const URL_METRICS = "api/v1/metrics";
+const URL_CALCULATOR_CVSS = "api/v1/calculator/cvss";
 
 const $rest = function() {
 };
@@ -613,6 +615,73 @@ $rest.getLicenses = function getLicenses(successCallback, failCallback) {
 $rest.getLicense = function getLicense(licenseId, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_LICENSE + "/" + licenseId,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve CVSS (v2/v3) scores (based on the vector passed)
+ */
+$rest.getCvssScores = function getCvssScores(vector, successCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_CALCULATOR_CVSS + "?vector=" + vector,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve all licenses
+ */
+$rest.getCwes = function getCwes(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_CWE + "?offset=0&limit=1000",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve a specific CWE
+ */
+$rest.getCwe = function getCwe(cweId, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_CWE + "/" + cweId,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,

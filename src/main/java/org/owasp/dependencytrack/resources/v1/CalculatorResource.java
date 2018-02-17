@@ -24,7 +24,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import org.apache.commons.lang.StringUtils;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 import javax.ws.rs.GET;
@@ -57,20 +56,13 @@ public class CalculatorResource extends AlpineResource {
     public Response getCvssScores(
             @ApiParam(value = "A valid CVSSv2 or CVSSv3 vector", required = true)
             @QueryParam("vector") String vector) {
-
-        final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";
-        if (StringUtils.trimToNull(vector) == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(invalidVector).build();
-        }
-        Cvss cvss = Cvss.fromVector(vector);
-        if (cvss == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(invalidVector).build();
-        }
-        Score score = cvss.calculateScore();
-        if (score == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(invalidVector).build();
-        } else {
+        try {
+            Cvss cvss = Cvss.fromVector(vector);
+            Score score = cvss.calculateScore();
             return Response.ok(score).build();
+        } catch (NullPointerException e) {
+            final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";
+            return Response.status(Response.Status.BAD_REQUEST).entity(invalidVector).build();
         }
     }
 

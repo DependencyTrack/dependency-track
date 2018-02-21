@@ -1372,6 +1372,37 @@ $rest.removeUserFromTeam = function removeUserFromTeam(username, teamuuid, succe
 };
 
 /**
+ * Service called when a vulnerability is created.
+ */
+$rest.createVulnerability = function createVulnerability(vulnId, title, subTitle, description, recommendation,
+                                                         references, credits, created, published, updated, cweId,
+                                                         cvssV2Vector, cvssV3Vector, vulnerableVersions, patchedVersions,
+                                                         successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_VULNERABILITY,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({vulnId: vulnId, title: title, subTitle: subTitle, description: description,
+            recommendation: recommendation, references: references, credits: credits, created: created,
+            published: published, updated: updated, cwe: {cweId: cweId}, cvssV2Vector: cvssV2Vector,
+            cvssV3Vector: cvssV3Vector, vulnerableVersions: vulnerableVersions, patchedVersions: patchedVersions}),
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

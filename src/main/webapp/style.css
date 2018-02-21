@@ -687,3 +687,11 @@ p {
     color: #00AA00;
     cursor:pointer;
 }
+.preview-feature-label-modal {
+    float: right;
+    background-color: #F59B00;
+    color: #ffffff;
+    font-weight: 900;
+    padding: 4px;
+    margin:0;
+}

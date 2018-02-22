@@ -65,11 +65,26 @@ public class DependencyCheckTask implements Subscriber {
      */
     public void inform(Event e) {
         if (e instanceof DependencyCheckEvent) {
+            setupOdcDirectoryStructure(DC_ROOT_DIR);
+            setupOdcDirectoryStructure(DC_DATA_DIR);
+            setupOdcDirectoryStructure(DC_REPORT_DIR);
             final DependencyCheckEvent event = (DependencyCheckEvent) e;
             if (DependencyCheckEvent.Action.ANALYZE == event.getAction()) {
                 performAnalysis(event);
             } else if (DependencyCheckEvent.Action.UPDATE_ONLY == event.getAction()) {
                 performUpdateOnly();
+            }
+        }
+    }
+
+    /**
+     * Ensures the Dependency-Check directory structure exists.
+     */
+    private void setupOdcDirectoryStructure(String directory) {
+        File dir = new File(directory);
+        if (!dir.exists()) {
+            if (dir.mkdirs()) {
+                LOGGER.info("Dependency-Check directory created successfully: " + directory);
             }
         }
     }

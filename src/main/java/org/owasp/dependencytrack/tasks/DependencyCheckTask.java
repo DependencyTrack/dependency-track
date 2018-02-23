@@ -155,11 +155,11 @@ public class DependencyCheckTask implements Subscriber {
 
         try {
             scanAgent.execute();
+            processResults();
+            LOGGER.info("Dependency-Check analysis complete");
         } catch (ScanAgentException ex) {
             LOGGER.error("An error occurred executing Dependency-Check scan agent: " + ex);
         }
-        LOGGER.info("Dependency-Check analysis complete");
-        processResults();
     }
 
     /**
@@ -231,7 +231,7 @@ public class DependencyCheckTask implements Subscriber {
         scanAgent.setDataDirectory(DC_DATA_DIR);
         scanAgent.setReportOutputDirectory(DC_REPORT_DIR);
         scanAgent.setReportFormat(ReportGenerator.Format.XML);
-        scanAgent.setAutoUpdate(update);
+        scanAgent.setAutoUpdate(true);
         scanAgent.setUpdateOnly(update);
         //scanAgent.setCpeStartsWithFilter("cpe:"); //todo: will be available in 3.1.1
         scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));

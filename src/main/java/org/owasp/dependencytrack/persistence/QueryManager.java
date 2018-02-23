@@ -865,6 +865,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getDependencies(Component component) {
         final Query query = pm.newQuery(Dependency.class, "component == :component");
+        query.setOrdering("id asc");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
         return execute(query, component);
     }
@@ -944,6 +945,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities() {
         final Query query = pm.newQuery(Vulnerability.class);
+        query.setOrdering("id asc");
         if (filter != null) {
             query.setFilter("vulnId.toLowerCase().matches(:vulnId)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
@@ -971,6 +973,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities(Component component) {
         final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
+        query.setOrdering("id asc");
         return execute(query, component);
     }
 

@@ -58,6 +58,7 @@ public class DependencyCheckTask implements Subscriber {
     private static final String DC_DATA_DIR = DC_ROOT_DIR + File.separator + "data";
     private static final String DC_REPORT_DIR = DC_ROOT_DIR + File.separator + "reports";
     private static final String DC_REPORT_FILE = DC_REPORT_DIR + File.separator + "dependency-check-report.xml";
+    private static final String DC_GLOBAL_PROPERTIES = DC_ROOT_DIR + File.separator + "dependency-check.properties";
     private static final String DC_GLOBAL_SUPPRESSION = DC_ROOT_DIR + File.separator + "suppressions.xml";
 
     /**
@@ -147,6 +148,13 @@ public class DependencyCheckTask implements Subscriber {
         LOGGER.info("Analyzing " + dependencies.size() + " component(s)");
         DependencyCheckScanAgent scanAgent = createScanAgent(false);
         scanAgent.setDependencies(dependencies);
+
+        // If a global properties file exists, use it.
+        final File properties = new File(DC_GLOBAL_PROPERTIES);
+        if (properties.exists() && properties.isFile()) {
+            scanAgent.setPropertiesFilePath(properties.getAbsolutePath());
+        }
+
         // If a global suppression file exists, use it.
         final File suppressions = new File(DC_GLOBAL_SUPPRESSION);
         if (suppressions.exists() && suppressions.isFile()) {

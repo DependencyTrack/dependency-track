@@ -10,7 +10,7 @@ database is for quick evaluation, testing, and demonstration of the platform and
 
 > The embedded H2 database is not intended for production use.
 
-To change database settings, edit application.properties found in the Dependency-Track data directory.
+To change database settings, edit `application.properties` found in the Dependency-Track data directory.
 
 The following parameters can be customized:
 * alpine.database.mode

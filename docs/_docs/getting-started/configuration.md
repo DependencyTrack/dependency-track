@@ -14,7 +14,9 @@ Dependency-Track data directory and customize it prior to deploying to productio
 
 
 > The default embedded H2 database is designed to quickly evaluate and experiment with Dependency-Track.
-> Do not use the embedded H2 database in production environments.
+> Do not use the embedded H2 database in production environments. 
+> 
+> See: [Database Support]({{ site.baseurl }}{% link _docs/getting-started/database-support.md %}).
 
 
 To start Dependency-Track using custom configuration, add the system property 

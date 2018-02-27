@@ -17,14 +17,6 @@ Dependency-Track supports the following database servers:
 
 To change database settings, edit `application.properties` found in the Dependency-Track data directory.
 
- 
-The following parameters can be customized:
-* alpine.database.mode
-* alpine.database.url
-* alpine.database.driver
-* alpine.database.driver.path
-* alpine.database.username
-* alpine.database.password
 
 #### Microsoft SQL Server Example
 

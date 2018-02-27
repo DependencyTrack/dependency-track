@@ -61,7 +61,7 @@ public class BomResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permission.SCAN_UPLOAD)
-    public Response uploadScan(BomSubmitRequest request) {
+    public Response uploadBom(BomSubmitRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(
                 validator.validateProperty(request, "project"),

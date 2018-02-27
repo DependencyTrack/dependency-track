@@ -207,10 +207,6 @@
                     <groupId>org.apache.commons</groupId>
                     <artifactId>commons-csv</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>com.github.jsonld-java</groupId>
-                    <artifactId>jsonld-java</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>

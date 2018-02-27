@@ -69,7 +69,7 @@ public class SpdxDocumentParser {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {
             if (spdxString.contains("<rdf:RDF") && spdxString.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns")) {
                 return parse(inputStream, DocumentType.RDF);
-            } else if (spdxString.startsWith("SPDXVersion")) {
+            } else if (spdxString.contains("SPDXVersion:")) {
                 return parse(inputStream, DocumentType.TAG);
             }
         } catch (IOException e) {

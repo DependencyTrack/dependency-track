@@ -10,7 +10,13 @@ database is for quick evaluation, testing, and demonstration of the platform and
 
 > The embedded H2 database is not intended for production use.
 
+Dependency-Track has been tested with and supports the following external database servers:
+* Microsoft SQL Server 2012 and higher
+* MySQL 5.6 and higher
+
+
 To change database settings, edit `application.properties` found in the Dependency-Track data directory.
+
 
 The following parameters can be customized:
 * alpine.database.mode
@@ -19,10 +25,6 @@ The following parameters can be customized:
 * alpine.database.driver.path
 * alpine.database.username
 * alpine.database.password
-
-Dependency-Track has been tested with and supports the following external database servers:
-* Microsoft SQL Server 2012 and higher
-* MySQL 5.6 and higher
 
 #### Microsoft SQL Server Example
 

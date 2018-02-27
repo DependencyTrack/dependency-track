@@ -20,6 +20,20 @@ The following parameters can be customized:
 * alpine.database.username
 * alpine.database.password
 
+Dependency-Track has been tested with and supports the following external database servers:
+* Microsoft SQL Server 2012 and higher
+* MySQL 5.6 and higher
+
+#### Microsoft SQL Server Example
+
+```ini
+alpine.database.mode=external
+alpine.database.url=jdbc:sqlserver://localhost:1433;databaseName=dtrack
+alpine.database.driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+alpine.database.driver.path=~/path/to/sqljdbc4.jar
+alpine.database.username=dtrack
+alpine.database.password=password
+```
 
 #### MySQL Example
 

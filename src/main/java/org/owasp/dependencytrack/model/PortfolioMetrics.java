@@ -92,13 +92,13 @@ public class PortfolioMetrics implements Serializable {
     private double inheritedRiskScore;
 
     @Persistent
-    @Column(name = "FIRST_OCCURRENCE", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_FIRST_OCCURRENCE_IDX")
     private Date firstOccurrence;
 
     @Persistent
-    @Column(name = "LAST_OCCURRENCE", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "LAST_OCCURRENCE", allowsNull = "false")
     @NotNull
     @Index(name = "PORTFOLIOMETRICS_LAST_OCCURRENCE_IDX")
     private Date lastOccurrence;

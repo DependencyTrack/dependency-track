@@ -53,12 +53,12 @@ public class Scan implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "EXECUTED", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "EXECUTED", allowsNull = "false")
     @NotNull
     private Date executed;
 
     @Persistent
-    @Column(name = "IMPORTED", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "IMPORTED", allowsNull = "false")
     @NotNull
     private Date imported;
 

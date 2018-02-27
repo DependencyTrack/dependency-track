@@ -94,7 +94,7 @@ public class Dependency implements Serializable {
     private String addedBy;
 
     @Persistent
-    @Column(name = "ADDED_ON", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "ADDED_ON", allowsNull = "false")
     @NotNull
     private Date addedOn;
 

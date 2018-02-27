@@ -53,7 +53,7 @@ public class Bom implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "IMPORTED", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "IMPORTED", allowsNull = "false")
     @NotNull
     private Date imported;
 

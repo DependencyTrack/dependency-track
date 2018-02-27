@@ -127,14 +127,14 @@ public class Project implements Serializable {
      * Convenience field which will contain the date of the last entry in the {@link Scan} table
      */
     @Persistent
-    @Column(name = "LAST_SCAN_IMPORTED", jdbcType = "TIMESTAMP")
+    @Column(name = "LAST_SCAN_IMPORTED")
     private Date lastScanImport;
 
     /**
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
-    @Column(name = "LAST_BOM_IMPORTED", jdbcType = "TIMESTAMP")
+    @Column(name = "LAST_BOM_IMPORTED")
     private Date lastBomImport;
 
     public long getId() {

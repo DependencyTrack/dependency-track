@@ -50,7 +50,7 @@ public class AnalysisComment implements Serializable {
     private Analysis analysis;
 
     @Persistent
-    @Column(name = "TIMESTAMP", jdbcType = "TIMESTAMP", allowsNull = "false")
+    @Column(name = "TIMESTAMP", allowsNull = "false")
     @NotNull
     private Date timestamp;
 

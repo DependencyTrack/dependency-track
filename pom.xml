@@ -23,7 +23,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -91,6 +91,7 @@
 
     <repositories>
         <!-- Resolve Alpine snapshot releases -->
+        <!--
         <repository>
             <id>ossrh-snapshot</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -99,6 +100,7 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        -->
         <!-- Resolve Dependency-Check snapshot releases -->
         <repository>
             <id>dependency-check.snapshot</id>
@@ -118,7 +120,7 @@
         <dependency>
             <groupId>us.springett</groupId>
             <artifactId>alpine</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <!-- CVSS Calculator -->
         <dependency>

@@ -239,22 +239,6 @@ function updateStats(metrics) {
 }
 
 function createVulnerabilityChart(metrics) {
-    let data = prepareChartData(metrics);
-    nv.addGraph(function() {
-        let chart = nv.models.discreteBarChart()
-            .x(function(d) { return d.label })
-            .y(function(d) { return d.value })
-            .valueFormat(d3.format(".0f"))
-            .color(["#357abd"])
-            .staggerLabels(false)
-            .duration(300)
-        ;
-        chart.yAxis.tickFormat(d3.format(",f"));
-        d3.selectAll("#vulnerabilitychart > *").remove();
-        d3.select("#vulnerabilitychart").append("svg").datum(data).call(chart);
-        nv.utils.windowResize(chart.update);
-        return chart;
-    });
 
     function prepareChartData(metrics) {
         let vulnerabilities = [];
@@ -275,6 +259,23 @@ function createVulnerabilityChart(metrics) {
         ];
     }
 
+    let data = prepareChartData(metrics);
+
+    nv.addGraph(function() {
+        let chart = nv.models.discreteBarChart()
+            .x(function(d) { return d.label })
+            .y(function(d) { return d.value })
+            .valueFormat(d3.format(".0f"))
+            .color(["#357abd"])
+            .staggerLabels(false)
+            .duration(300)
+        ;
+        chart.yAxis.tickFormat(d3.format(",f"));
+        d3.selectAll("#vulnerabilitychart > *").remove();
+        d3.select("#vulnerabilitychart").append("svg").datum(data).call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
 }
 
 function getDashboardData() {

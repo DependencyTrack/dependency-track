@@ -99,27 +99,6 @@ function createPortfolioVulnerabilityChart(metrics) {
 }
 
 function createProjectVulnerabilityChart(metrics) {
-    let data = prepareChartData(metrics);
-
-    nv.addGraph(function() {
-        let chart = nv.models.lineChart()
-            .options({
-                duration: 300,
-                //showLegend: false,
-                useInteractiveGuideline: true
-            })
-        ;
-        chart.legend.vers("furious");
-        chart.xAxis
-            .tickFormat(function(d) { return d3.time.format("%b %d")(new Date(d)); })
-            .staggerLabels(true)
-        ;
-        chart.yAxis.axisLabel("Projects").tickFormat(d3.format("d"));
-        d3.selectAll("#projectchart > *").remove();
-        d3.select("#projectchart").append("svg").datum(data).call(chart);
-        nv.utils.windowResize(chart.update);
-        return chart;
-    });
 
     function prepareChartData(metrics) {
         let projects = [];
@@ -150,9 +129,7 @@ function createProjectVulnerabilityChart(metrics) {
             }
         ];
     }
-}
 
-function createComponentVulnerabilityChart(metrics) {
     let data = prepareChartData(metrics);
 
     nv.addGraph(function() {
@@ -168,12 +145,15 @@ function createComponentVulnerabilityChart(metrics) {
             .tickFormat(function(d) { return d3.time.format("%b %d")(new Date(d)); })
             .staggerLabels(true)
         ;
-        chart.yAxis.axisLabel("Components").tickFormat(d3.format("d"));
-        d3.selectAll("#componentchart > *").remove();
-        d3.select("#componentchart").append("svg").datum(data).call(chart);
+        chart.yAxis.axisLabel("Projects").tickFormat(d3.format("d"));
+        d3.selectAll("#projectchart > *").remove();
+        d3.select("#projectchart").append("svg").datum(data).call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
     });
+}
+
+function createComponentVulnerabilityChart(metrics) {
 
     function prepareChartData(metrics) {
         let components = [];
@@ -204,6 +184,28 @@ function createComponentVulnerabilityChart(metrics) {
             }
         ];
     }
+
+    let data = prepareChartData(metrics);
+
+    nv.addGraph(function() {
+        let chart = nv.models.lineChart()
+            .options({
+                duration: 300,
+                //showLegend: false,
+                useInteractiveGuideline: true
+            })
+        ;
+        chart.legend.vers("furious");
+        chart.xAxis
+            .tickFormat(function(d) { return d3.time.format("%b %d")(new Date(d)); })
+            .staggerLabels(true)
+        ;
+        chart.yAxis.axisLabel("Components").tickFormat(d3.format("d"));
+        d3.selectAll("#componentchart > *").remove();
+        d3.select("#componentchart").append("svg").datum(data).call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
 }
 
 function populateProgressBars(metrics) {

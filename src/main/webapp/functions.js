@@ -19,31 +19,6 @@
 "use strict";
 
 function createPortfolioVulnerabilityChart(metrics) {
-    let data = prepareChartData(metrics);
-
-    function days(num) {
-        return num*60*60*1000*24
-    }
-
-    nv.addGraph(function() {
-        let chart = nv.models.lineChart()
-            .options({
-                duration: 300,
-                //showLegend: false,
-                useInteractiveGuideline: true
-            })
-        ;
-        chart.legend.vers("furious");
-        chart.xAxis
-            .tickFormat(function(d) { return d3.time.format("%b %d")(new Date(d)); })
-            .staggerLabels(true)
-        ;
-        chart.yAxis.axisLabel("Portfolio Vulnerabilities").tickFormat(d3.format("d"));
-        d3.selectAll("#portfoliochart > *").remove();
-        d3.select("#portfoliochart").append("svg").datum(data).call(chart);
-        nv.utils.windowResize(chart.update);
-        return chart;
-    });
 
     function prepareChartData(metrics) {
         let critical = [];
@@ -95,6 +70,32 @@ function createPortfolioVulnerabilityChart(metrics) {
 
         ];
     }
+
+    let data = prepareChartData(metrics);
+
+    function days(num) {
+        return num*60*60*1000*24
+    }
+
+    nv.addGraph(function() {
+        let chart = nv.models.lineChart()
+            .options({
+                duration: 300,
+                //showLegend: false,
+                useInteractiveGuideline: true
+            })
+        ;
+        chart.legend.vers("furious");
+        chart.xAxis
+            .tickFormat(function(d) { return d3.time.format("%b %d")(new Date(d)); })
+            .staggerLabels(true)
+        ;
+        chart.yAxis.axisLabel("Portfolio Vulnerabilities").tickFormat(d3.format("d"));
+        d3.selectAll("#portfoliochart > *").remove();
+        d3.select("#portfoliochart").append("svg").datum(data).call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
 }
 
 function createProjectVulnerabilityChart(metrics) {

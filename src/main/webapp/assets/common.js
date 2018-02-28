@@ -22,6 +22,18 @@ const $common = function() {
 };
 
 /**
+ * Defines JSON characters that need to be escaped when data is used in HTML
+ */
+const __entityMap = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "/": "&#x2F;"
+};
+
+/**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
  * N milliseconds. If `immediate` is passed, trigger the function on the
@@ -434,17 +446,6 @@ $(document).ready(function () {
 
 });
 
-/**
- * Defines JSON characters that need to be escaped when data is used in HTML
- */
-const __entityMap = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-    "/": "&#x2F;"
-};
 
 /**
  * Extends JQuery

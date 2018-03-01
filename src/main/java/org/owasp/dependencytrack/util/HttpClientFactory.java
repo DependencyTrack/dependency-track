@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.util;
 
 import alpine.Config;
+import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthSchemeProvider;
@@ -32,6 +33,8 @@ import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public final class HttpClientFactory {
 
@@ -39,19 +42,35 @@ public final class HttpClientFactory {
     private static final int PROXY_PORT = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD);
+    private static final Logger LOGGER = Logger.getLogger(HttpClientFactory.class);
 
     private HttpClientFactory() { }
 
+    /**
+     * Factory method that create a HttpClient object. This method will attempt to use
+     * proxy settings defined in application.properties first. If they are not set,
+     * this method will attempt to use proxy settings from the environment by looking
+     * for 'https_proxy' and 'http_proxy'.
+     * @return a HttpClient object with optional proxy settings
+     */
     public static HttpClient createClient() {
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
-        if (StringUtils.isNotBlank(PROXY_ADDRESS) && PROXY_PORT > 0) {
-            clientBuilder.setProxy(new HttpHost(PROXY_ADDRESS, PROXY_PORT));
-            if (StringUtils.isNotBlank(PROXY_USERNAME) && StringUtils.isNotBlank(PROXY_PASSWORD)) {
-                credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(PROXY_USERNAME, PROXY_PASSWORD));
+
+        // Attempt to use application specific proxy settings if they exist.
+        // Otherwise, attempt to use environment variables if they exist.
+        ProxyInfo proxyInfo = fromConfig();
+        if (proxyInfo == null) {
+            proxyInfo = fromEnvironment();
+        }
+        if (proxyInfo != null) {
+            clientBuilder.setProxy(new HttpHost(proxyInfo.host, proxyInfo.port));
+            if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
+                credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
             }
         }
+
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
         clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
         Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
@@ -59,6 +78,84 @@ public final class HttpClientFactory {
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         return clientBuilder.build();
+    }
+
+    /**
+     * Creates a ProxyInfo object from the application.properties configuration.
+     * @return a ProxyInfo object, or null if proxy is not configured
+     */
+    private static ProxyInfo fromConfig() {
+        ProxyInfo proxyInfo = null;
+        if (PROXY_ADDRESS != null) {
+            proxyInfo = new ProxyInfo();
+            proxyInfo.host = StringUtils.trimToNull(PROXY_ADDRESS);
+            proxyInfo.port = PROXY_PORT;
+            if (PROXY_USERNAME != null) {
+                proxyInfo.username = StringUtils.trimToNull(PROXY_USERNAME);
+            }
+            if (PROXY_PASSWORD != null) {
+                proxyInfo.password = StringUtils.trimToNull(PROXY_PASSWORD);
+            }
+        }
+        return proxyInfo;
+    }
+
+    /**
+     * Creates a ProxyInfo object from the environment.
+     * @return a ProxyInfo object, or null if proxy is not defined
+     */
+    private static ProxyInfo fromEnvironment() {
+        ProxyInfo proxyInfo = null;
+        try {
+            proxyInfo = buildfromEnvironment(System.getenv("https_proxy"));
+            if (proxyInfo == null) {
+                proxyInfo = buildfromEnvironment(System.getenv("http_proxy"));
+            }
+        } catch (MalformedURLException | SecurityException e) {
+            LOGGER.warn("Could not parse proxy settings from environment", e);
+        }
+        return proxyInfo;
+    }
+
+    /**
+     * Retrieves and parses the https_proxy and http_proxy settings.
+     * @param variable the name of the environment variable
+     * @return a ProxyInfo object, or null if proxy is not defined
+     * @throws MalformedURLException if the URL of the proxy setting cannot be parsed
+     * @throws SecurityException if the environment variable cannot be retrieved
+     */
+    private static ProxyInfo buildfromEnvironment(String variable) throws MalformedURLException, SecurityException {
+        if (variable == null) {
+            return null;
+        }
+        ProxyInfo proxyInfo = null;
+        final String proxy = System.getenv(variable);
+        if (proxy != null) {
+            final URL proxyUrl = new URL(proxy);
+            proxyInfo = new ProxyInfo();
+            proxyInfo.host = proxyUrl.getHost();
+            proxyInfo.port = proxyUrl.getPort();
+            if (proxyUrl.getUserInfo() != null) {
+                final String[] credentials = proxy.split(":");
+                if (credentials.length > 0) {
+                    proxyInfo.username = credentials[0];
+                }
+                if (credentials.length == 2) {
+                    proxyInfo.password = credentials[1];
+                }
+            }
+        }
+        return proxyInfo;
+    }
+
+    /**
+     * A simple holder class for proxy configuration.
+     */
+    private static class ProxyInfo {
+        private String host;
+        private int port;
+        private String username;
+        private String password;
     }
 
 }

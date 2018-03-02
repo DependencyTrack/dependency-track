@@ -35,6 +35,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 public final class HttpClientFactory {
 
@@ -118,7 +119,8 @@ public final class HttpClientFactory {
     }
 
     /**
-     * Retrieves and parses the https_proxy and http_proxy settings.
+     * Retrieves and parses the https_proxy and http_proxy settings. This method ignores the
+     * case of the variables in the environment.
      * @param variable the name of the environment variable
      * @return a ProxyInfo object, or null if proxy is not defined
      * @throws MalformedURLException if the URL of the proxy setting cannot be parsed
@@ -129,7 +131,15 @@ public final class HttpClientFactory {
             return null;
         }
         ProxyInfo proxyInfo = null;
-        final String proxy = System.getenv(variable);
+
+        String proxy = null;
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            if (variable.toUpperCase().equals(entry.getKey().toUpperCase())) {
+                proxy = System.getenv(entry.getKey());
+                break;
+            }
+        }
+
         if (proxy != null) {
             final URL proxyUrl = new URL(proxy);
             proxyInfo = new ProxyInfo();

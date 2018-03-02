@@ -38,6 +38,8 @@ import org.owasp.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import org.owasp.dependencytrack.util.HttpClientFactory;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -242,10 +244,14 @@ public class DependencyCheckTask implements Subscriber {
         scanAgent.setAutoUpdate(true);
         scanAgent.setUpdateOnly(update);
         //scanAgent.setCpeStartsWithFilter("cpe:"); //todo: will be available in 3.1.1
-        scanAgent.setProxyServer(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS));
-        scanAgent.setProxyPort(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PORT));
-        scanAgent.setProxyUsername(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME));
-        scanAgent.setProxyPassword(Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD));
+
+        HttpClientFactory.ProxyInfo proxyInfo = HttpClientFactory.createProxyInfo();
+        if (proxyInfo != null) {
+            scanAgent.setProxyServer(proxyInfo.getHost());
+            scanAgent.setProxyPort(String.valueOf(proxyInfo.getPort()));
+            scanAgent.setProxyUsername(proxyInfo.getUsername());
+            scanAgent.setProxyPassword(proxyInfo.getPassword());
+        }
         try {
             scanAgent.setCveUrl12Base(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-%d.xml.gz");
             scanAgent.setCveUrl20Base(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-2.0-%d.xml.gz");

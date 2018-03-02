@@ -168,9 +168,4 @@ public final class HttpClientFactory {
         private String password;
     }
 
-    public static void main(String[] args) throws Exception {
-        ProxyInfo proxyInfo = buildfromEnvironment("http_proxy");
-        System.out.println(proxyInfo.host);
-    }
-
 }

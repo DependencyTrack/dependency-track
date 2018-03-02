@@ -59,12 +59,8 @@ public final class HttpClientFactory {
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
 
-        // Attempt to use application specific proxy settings if they exist.
-        // Otherwise, attempt to use environment variables if they exist.
-        ProxyInfo proxyInfo = fromConfig();
-        if (proxyInfo == null) {
-            proxyInfo = fromEnvironment();
-        }
+        ProxyInfo proxyInfo = createProxyInfo();
+
         if (proxyInfo != null) {
             clientBuilder.setProxy(new HttpHost(proxyInfo.host, proxyInfo.port));
             if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
@@ -79,6 +75,19 @@ public final class HttpClientFactory {
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         return clientBuilder.build();
+    }
+
+    /**
+     * Attempt to use application specific proxy settings if they exist.
+     * Otherwise, attempt to use environment variables if they exist.
+     * @return ProxyInfo object, or null if proxy is not configured
+     */
+    public static ProxyInfo createProxyInfo() {
+        ProxyInfo proxyInfo = fromConfig();
+        if (proxyInfo == null) {
+            proxyInfo = fromEnvironment();
+        }
+        return proxyInfo;
     }
 
     /**
@@ -161,11 +170,27 @@ public final class HttpClientFactory {
     /**
      * A simple holder class for proxy configuration.
      */
-    private static class ProxyInfo {
+    public static class ProxyInfo {
         private String host;
         private int port;
         private String username;
         private String password;
+
+        public String getHost() {
+            return host;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
     }
 
 }

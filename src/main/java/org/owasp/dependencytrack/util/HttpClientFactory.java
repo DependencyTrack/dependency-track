@@ -146,7 +146,7 @@ public final class HttpClientFactory {
             proxyInfo.host = proxyUrl.getHost();
             proxyInfo.port = proxyUrl.getPort();
             if (proxyUrl.getUserInfo() != null) {
-                final String[] credentials = proxy.split(":");
+                final String[] credentials = proxyUrl.getUserInfo().split(":");
                 if (credentials.length > 0) {
                     proxyInfo.username = credentials[0];
                 }
@@ -166,6 +166,11 @@ public final class HttpClientFactory {
         private int port;
         private String username;
         private String password;
+    }
+
+    public static void main(String[] args) throws Exception {
+        ProxyInfo proxyInfo = buildfromEnvironment("http_proxy");
+        System.out.println(proxyInfo.host);
     }
 
 }

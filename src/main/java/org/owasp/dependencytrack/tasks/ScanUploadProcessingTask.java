@@ -122,9 +122,21 @@ public class ScanUploadProcessingTask implements Subscriber {
 
                     if (dependency.getVulnerabilities() != null && dependency.getVulnerabilities().getVulnerabilities() != null) {
                         for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
-                            //first - check if vuln already exists...
-                            final org.owasp.dependencytrack.model.Vulnerability dtvuln =
-                                    qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD.name(), dcvuln.getName());
+
+                            /*
+                             * Resolve the source of the vulnerability. The source as defined in ODC needs to be
+                             * the same as the source identified in ODT. Defaults to NVD since older versions of
+                             * ODC did not support the 'source' attribute and only used the NVD.
+                             */
+                            Vulnerability.Source source = Vulnerability.Source.NVD;
+                            if (dcvuln.getSource() != null) {
+                                source = Vulnerability.Source.valueOf(dcvuln.getSource().toUpperCase());
+                            }
+
+                            /*
+                             * Check to see if the vulnerability already exists. If so, bind it to the component.
+                             */
+                            final org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByVulnId(source.name(), dcvuln.getName());
                             if (dtvuln != null) {
                                 qm.bind(component, dtvuln);
                             }

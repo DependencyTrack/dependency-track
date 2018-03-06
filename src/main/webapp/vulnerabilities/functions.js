@@ -86,6 +86,12 @@ function updateStats(metric) {
     $("#statInheritedRiskScore").html(metric.inheritedRiskScore);
 }
 
+
+function updateGauge(elmId, score) {
+    $(elmId).html($common.toHtml(score));
+    $(elmId + "Percent").data("easyPieChart").update(score * 10);
+}
+
 /**
  * Returns the value from a CVSSv2 or CVSSv3 button by the buttons 'name'.
  */
@@ -97,34 +103,6 @@ function getCvssButtonValue(name) {
         }
     });
     return value;
-}
-
-/**
- * Retrieves the value of the CVSSv2 buttons and (if complete) performs a calculation.
- */
-function processCvssV2Calculation() {
-    let vector = generateCvssV2Vector();
-    if (vector != null) {
-        $rest.getCvssScores(vector, function(score) {
-            updateGauge("#cvssv2BaseScore", score.baseScore);
-            updateGauge("#cvssv2ImpactScore", score.impactSubScore);
-            updateGauge("#cvssv2ExploitScore", score.exploitabilitySubScore);
-        });
-    }
-}
-
-/**
- * Retrieves the value of the CVSSv3 buttons and (if complete) performs a calculation.
- */
-function processCvssV3Calculation() {
-    let vector = generateCvssV3Vector();
-    if (vector != null) {
-        $rest.getCvssScores(vector, function(score) {
-            updateGauge("#cvssv3BaseScore", score.baseScore);
-            updateGauge("#cvssv3ImpactScore", score.impactSubScore);
-            updateGauge("#cvssv3ExploitScore", score.exploitabilitySubScore);
-        });
-    }
 }
 
 /**
@@ -163,9 +141,32 @@ function generateCvssV3Vector() {
     return null;
 }
 
-function updateGauge(elmId, score) {
-    $(elmId).html($common.toHtml(score));
-    $(elmId + "Percent").data('easyPieChart').update(score * 10);
+/**
+ * Retrieves the value of the CVSSv2 buttons and (if complete) performs a calculation.
+ */
+function processCvssV2Calculation() {
+    let vector = generateCvssV2Vector();
+    if (vector != null) {
+        $rest.getCvssScores(vector, function(score) {
+            updateGauge("#cvssv2BaseScore", score.baseScore);
+            updateGauge("#cvssv2ImpactScore", score.impactSubScore);
+            updateGauge("#cvssv2ExploitScore", score.exploitabilitySubScore);
+        });
+    }
+}
+
+/**
+ * Retrieves the value of the CVSSv3 buttons and (if complete) performs a calculation.
+ */
+function processCvssV3Calculation() {
+    let vector = generateCvssV3Vector();
+    if (vector != null) {
+        $rest.getCvssScores(vector, function(score) {
+            updateGauge("#cvssv3BaseScore", score.baseScore);
+            updateGauge("#cvssv3ImpactScore", score.impactSubScore);
+            updateGauge("#cvssv3ExploitScore", score.exploitabilitySubScore);
+        });
+    }
 }
 
 /**

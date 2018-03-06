@@ -420,6 +420,32 @@ $rest.createComponent = function createComponent(name, version, group, descripti
 };
 
 /**
+ * Service called when a component is created. Same as createComponent but minimal fields. Check usage before changing.
+ */
+$rest.createComponentMinimalFields = function createComponent(name, version, group, description, license,
+                                                 successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_COMPONENT,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({name: name, version: version, group:group, description: description, license: license}),
+        statusCode: {
+            201: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called when a component is updated.
  */
 $rest.updateComponent = function updateComponent(uuid, name, version, group, description, license,

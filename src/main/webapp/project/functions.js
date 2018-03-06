@@ -157,7 +157,7 @@ $(document).ready(function () {
         const group = $("#createComponentGroupInput").val();
         const description = $("#createComponentDescriptionInput").val();
         const licenseId = $("#createComponentLicenseSelect").val();
-        $rest.createComponent(name, version, group, description, licenseId, function(data) {
+        $rest.createComponentMinimalFields(name, version, group, description, licenseId, function(data) {
             $rest.addDependency(uuid, [data.uuid], null, function() {
                 $("#dependenciesTable").bootstrapTable("refresh", {silent: true});
             });

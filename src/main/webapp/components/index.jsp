@@ -182,7 +182,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentPurlInput">Package URL (Purl)</label>
-                                    <input type="text" name="purl" required="false" placeholder="Purl..." class="form-control" id="componentPurlInput">
+                                    <input type="text" name="purl" required="false" placeholder="Package URL (Purl)..." class="form-control" id="componentPurlInput">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentCpeInput">CPE</label>

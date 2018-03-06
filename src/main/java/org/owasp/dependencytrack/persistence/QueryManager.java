@@ -45,7 +45,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -871,6 +873,20 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of Dependency for the specified Component.
+     * This method if designed NOT to provide paginated results.
+     * @param component the Component to retrieve dependencies of
+     * @return a List of Dependency objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Dependency> getAllDependencies(Component component) {
+        final Query query = pm.newQuery(Dependency.class, "component == :component");
+        query.setOrdering("id asc");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
+        return (List<Dependency>)query.execute(component);
+    }
+
+    /**
      * Deletes all dependencies for the specified Project.
      * @param project the Project to delete dependencies of
      */
@@ -1037,10 +1053,14 @@ public class QueryManager extends AlpineQueryManager {
     public List<Project> getProjects(Vulnerability vulnerability) {
         final List<Project> projects = new ArrayList<>();
         for (Component component: vulnerability.getComponents()) {
-            for (Dependency dependency: getDependencies(component).getList(Dependency.class)) {
+            for (Dependency dependency: getAllDependencies(component)) {
                 projects.add(dependency.getProject());
             }
         }
+        // Force removal of duplicates by taking the List and populating a Set and back again.
+        final Set<Project> set = new LinkedHashSet<>(projects);
+        projects.clear();
+        projects.addAll(set);
         return projects;
     }
 

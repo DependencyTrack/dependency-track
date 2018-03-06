@@ -695,3 +695,8 @@ p {
     padding: 4px;
     margin:0;
 }
+
+/* TODO: Temporarily hiding 'View Details' bar on small widgets until a future release when the functionality can be completed */
+.widget-row .col-lg-3 .widget-details-selector {
+    display: none;
+}

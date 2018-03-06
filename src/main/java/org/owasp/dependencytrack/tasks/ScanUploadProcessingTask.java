@@ -97,6 +97,25 @@ public class ScanUploadProcessingTask implements Subscriber {
                         component.setDescription(dependency.getDescription());
                         component.setResolvedLicense(resolvedLicense);
                         component = qm.createComponent(component, false);
+                    } else {
+                        /*
+                         * Account for improvements in evidence identification in ODC and resolution improvements in ODT.
+                         * In cases where values are null, attempt to re-populate specific fields with the same values
+                         * as they would be if the component was newly created.
+                         *
+                         * In the future, it may be desirable to distinguish between user-corrected data and native data.
+                         * (i.e.: component.getName()  vs.  component.getNameCorrected()
+                         * //todo: Determine if this is necessary
+                         */
+                        component.setName((component.getName() != null) ? component.getName() : new ComponentNameResolver().resolve(dependency));
+                        component.setVersion((component.getVersion() != null) ? component.getVersion() : new ComponentVersionResolver().resolve(dependency));
+                        component.setGroup((component.getGroup() != null) ? component.getGroup() : new ComponentGroupResolver().resolve(dependency));
+                        component.setFilename((component.getFilename() != null) ? component.getFilename() : dependency.getFileName());
+                        component.setDescription((component.getDescription() != null) ? component.getDescription() : dependency.getDescription());
+                        if (component.getResolvedLicense() == null) {
+                            component.setResolvedLicense(resolvedLicense);
+                        }
+                        component = qm.updateComponent(component, false);
                     }
 
                     qm.createDependencyIfNotExist(project, component, null, null);

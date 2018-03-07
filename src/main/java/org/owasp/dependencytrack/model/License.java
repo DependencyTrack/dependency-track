@@ -137,7 +137,7 @@ public class License implements Serializable {
      */
     @Persistent(defaultFetchGroup = "true")
     @Serialized
-    @Column(name = "SEEALSO", jdbcType = "BLOB")
+    @Column(name = "SEEALSO", jdbcType = "LONGVARBINARY")
     @JsonProperty(value = "seeAlso")
     @JsonDeserialize(using = TrimmedStringArrayDeserializer.class)
     private String[] seeAlso;

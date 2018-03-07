@@ -195,27 +195,27 @@
                             <div class="tab-pane" id="hashesTab">
                                 <div class="form-group">
                                     <label class="sr-only" for="componentMd5Input">MD5</label>
-                                    <input type="text" name="md5" required="true" placeholder="MD5..." class="form-control" id="componentMd5Input">
+                                    <input type="text" name="md5" pattern="[A-Fa-f0-9]{32}" placeholder="MD5..." class="hash-input form-control" id="componentMd5Input">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentSha1Input">SHA1</label>
-                                    <input type="text" name="sha1" required="true" placeholder="SHA1..." class="form-control" id="componentSha1Input">
+                                    <input type="text" name="sha1" pattern="[A-Fa-f0-9]{40}" placeholder="SHA1..." class="hash-input form-control" id="componentSha1Input">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentSha256Input">SHA 256</label>
-                                    <input type="text" name="sha256" required="true" placeholder="SHA 256..." class="form-control" id="componentSha256Input">
+                                    <input type="text" name="sha256" pattern="[A-Fa-f0-9]{64}" placeholder="SHA 256..." class="hash-input form-control" id="componentSha256Input">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentSha512Input">SHA 512</label>
-                                    <input type="text" name="sha512" required="true" placeholder="SHA 512..." class="form-control" id="componentSha512Input">
+                                    <input type="text" name="sha512" pattern="[A-Fa-f0-9]{128}" placeholder="SHA 512..." class="hash-input form-control" id="componentSha512Input">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentSha3256Input">SHA3 256</label>
-                                    <input type="text" name="sha3256" required="true" placeholder="SHA3 256..." class="form-control" id="componentSha3256Input">
+                                    <input type="text" name="sha3256" pattern="[A-Fa-f0-9]{64}" placeholder="SHA3 256..." class="hash-input form-control" id="componentSha3256Input">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentSha3512Input">SHA3 512</label>
-                                    <input type="text" name="sha3512" required="true" placeholder="SHA3 512..." class="form-control" id="componentSha3512Input">
+                                    <input type="text" name="sha3512" pattern="[A-Fa-f0-9]{128}" placeholder="SHA3 512..." class="hash-input form-control" id="componentSha3512Input">
                                 </div>
                             </div>
                         </div>

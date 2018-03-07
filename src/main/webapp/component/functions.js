@@ -157,4 +157,10 @@ $(document).ready(function () {
             window.location.href = "../components";
         });
     });
+
+    // Restrict characters that can be typed into hash inputs
+    $(".hash-input").keypress( function(e) {
+        return ("acbdefABCDEF0123456789").indexOf(String.fromCharCode(e.which)) >= 0;
+    });
+
 });

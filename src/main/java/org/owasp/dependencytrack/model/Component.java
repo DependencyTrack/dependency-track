@@ -100,9 +100,8 @@ public class Component implements Serializable {
     @Persistent
     @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
     @Index(name = "COMPONENT_CLASSIFIER_IDX")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The classifier may only contain printable characters")
-    private String classifier;
+    @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
+    private Classifier classifier;
 
     @Persistent
     @Column(name = "FILENAME", jdbcType = "VARCHAR")
@@ -249,11 +248,11 @@ public class Component implements Serializable {
         this.version = version;
     }
 
-    public String getClassifier() {
+    public Classifier getClassifier() {
         return classifier;
     }
 
-    public void setClassifier(String classifier) {
+    public void setClassifier(Classifier classifier) {
         this.classifier = classifier;
     }
 

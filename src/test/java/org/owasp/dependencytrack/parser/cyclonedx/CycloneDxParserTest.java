@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.owasp.dependencytrack.BaseTest;
+import org.owasp.dependencytrack.model.Classifier;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.parser.cyclonedx.model.Bom;
 import org.owasp.dependencytrack.persistence.DefaultObjectGenerator;
@@ -52,7 +53,7 @@ public class CycloneDxParserTest extends BaseTest {
             Component c1 = components.get(0);
             Assert.assertEquals("org.example", c1.getGroup());
             Assert.assertEquals("1.0.0", c1.getVersion());
-            Assert.assertEquals("application", c1.getClassifier());
+            Assert.assertEquals(Classifier.APPLICATION, c1.getClassifier());
             Assert.assertEquals("2342c2eaf1feb9a80195dbaddf2ebaa3", c1.getMd5());
             Assert.assertEquals("68b78babe00a053f9e35ec6a2d9080f5b90122b0", c1.getSha1());
             Assert.assertEquals("708f1f53b41f11f02d12a11b1a38d2905d47b099afc71a0f1124ef8582ec7313", c1.getSha256());

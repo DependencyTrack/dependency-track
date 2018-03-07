@@ -43,7 +43,6 @@ function populateComponentData(data) {
     }
 
     $("#componentFilenameInput").val(data.filename);
-    $("#componentClassifierInput").val(data.classifier);
     $("#componentPurlInput").val(data.purl);
     $("#componentCpeInput").val(data.cpe);
     $("#componentCopyrightInput").val(data.copyright);
@@ -67,6 +66,9 @@ function populateComponentData(data) {
         });
         select.selectpicker('refresh');
     });
+
+    // Determine which classifier should be selected
+    $("#componentClassifierInput option[value='" + data.classifier + "']").attr("selected", "selected");
 }
 
 function populateLicenseData(data) {

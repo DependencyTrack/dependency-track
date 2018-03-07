@@ -177,7 +177,7 @@ public class ComponentResource extends AlpineResource {
             component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
             component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
             component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
-            component.setClassifier(StringUtils.trimToNull(jsonComponent.getClassifier()));
+            component.setClassifier(jsonComponent.getClassifier());
             component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
             component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
             component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
@@ -247,7 +247,7 @@ public class ComponentResource extends AlpineResource {
                 component.setGroup(StringUtils.trimToNull(jsonComponent.getGroup()));
                 component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
                 component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
-                component.setClassifier(StringUtils.trimToNull(jsonComponent.getClassifier()));
+                component.setClassifier(jsonComponent.getClassifier());
                 component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
                 component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
                 component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));

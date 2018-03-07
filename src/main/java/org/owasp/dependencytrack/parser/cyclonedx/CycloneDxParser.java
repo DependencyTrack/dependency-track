@@ -21,6 +21,7 @@ package org.owasp.dependencytrack.parser.cyclonedx;
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.exception.ParseException;
+import org.owasp.dependencytrack.model.Classifier;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.parser.cyclonedx.model.Bom;
@@ -141,10 +142,22 @@ public class CycloneDxParser {
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
         component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
         component.setDescription(StringUtils.trimToNull(cycloneDxComponent.getDescription()));
-        component.setClassifier(StringUtils.trimToNull(cycloneDxComponent.getType()));
         component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
         component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
         component.setPurl(StringUtils.trimToNull(cycloneDxComponent.getPurl()));
+
+        final String type = StringUtils.trimToNull(cycloneDxComponent.getType());
+        if ("application".toUpperCase().equals(type.toUpperCase())) {
+            component.setClassifier(Classifier.APPLICATION);
+        } else if ("framework".toUpperCase().equals(type.toUpperCase())) {
+            component.setClassifier(Classifier.FRAMEWORK);
+        } else if ("library".toUpperCase().equals(type.toUpperCase())) {
+            component.setClassifier(Classifier.LIBRARY);
+        } else if ("operating-system".toUpperCase().equals(type.toUpperCase())) {
+            component.setClassifier(Classifier.OPERATING_SYSTEM);
+        } else if ("device".toUpperCase().equals(type.toUpperCase())) {
+            component.setClassifier(Classifier.DEVICE);
+        }
 
         for (Hash hash : cycloneDxComponent.getHashes()) {
             if ("MD5".equalsIgnoreCase(hash.getAlgorithm())) {

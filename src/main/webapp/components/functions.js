@@ -59,7 +59,6 @@ function clearInputFields() {
     $("#componentDescriptionInput").val("");
     $("#componentLicenseSelect").val("");
     $("#componentFilenameInput").val("");
-    $("#componentClassifierInput").val("");
     $("#componentPurlInput").val("");
     $("#componentCpeInput").val("");
     $("#componentCopyrightInput").val("");

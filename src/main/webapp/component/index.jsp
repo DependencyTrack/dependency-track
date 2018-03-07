@@ -170,12 +170,18 @@
                                     <input type="text" name="filename" required="true" placeholder="Filename..." class="form-control" id="componentFilenameInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentClassifierInput">Classifier</label>
-                                    <input type="text" name="classifier" required="true" placeholder="Classifier..." class="form-control" id="componentClassifierInput">
+                                    <select class="form-control" id="componentClassifierInput">
+                                        <option value=""></option>
+                                        <option value="APPLICATION">Application</option>
+                                        <option value="FRAMEWORK">Framework</option>
+                                        <option value="LIBRARY">Library</option>
+                                        <option value="OPERATING_SYSTEM">Operating System</option>
+                                        <option value="DEVICE">Device/Hardware</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentPurlInput">Package URL (Purl)</label>
-                                    <input type="text" name="purl" required="false" placeholder="Purl..." class="form-control" id="componentPurlInput">
+                                    <input type="text" name="purl" required="false" placeholder="Package URL (Purl)..." class="form-control" id="componentPurlInput">
                                 </div>
                                 <div class="form-group">
                                     <label class="sr-only" for="componentCpeInput">CPE</label>

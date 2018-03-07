@@ -13,6 +13,7 @@ database is for quick evaluation, testing, and demonstration of the platform and
 Dependency-Track supports the following database servers:
 * Microsoft SQL Server 2012 and higher
 * MySQL 5.6 and higher
+* PostgreSQL 9.0 and higher
 
 
 To change database settings, edit `application.properties` found in the Dependency-Track data directory.
@@ -39,6 +40,17 @@ alpine.database.mode=external
 alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL=false
 alpine.database.driver=com.mysql.jdbc.Driver
 alpine.database.driver.path=~/path/to/mysql-connector-java-5.1.45-bin.jar
+alpine.database.username=dtrack
+alpine.database.password=password
+```
+
+#### PostgreSQL Example
+
+```ini
+alpine.database.mode=external
+alpine.database.url=jdbc:postgresql://localhost:5432/dtrack
+alpine.database.driver=org.postgresql.Driver
+alpine.database.driver.path=~/path/to/postgresql-42.2.1.jar
 alpine.database.username=dtrack
 alpine.database.password=password
 ```

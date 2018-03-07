@@ -20,7 +20,12 @@ package org.owasp.dependencytrack.model;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.github.packageurl.PackageURL;
+import org.owasp.dependencytrack.persistence.PackageURLStringConverter;
+import org.owasp.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -157,10 +162,12 @@ public class Component implements Serializable {
     @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
-    private String purl;
+    @Convert(PackageURLStringConverter.class)
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
+    private PackageURL purl;
 
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
@@ -329,11 +336,11 @@ public class Component implements Serializable {
         this.cpe = cpe;
     }
 
-    public String getPurl() {
+    public PackageURL getPurl() {
         return purl;
     }
 
-    public void setPurl(String purl) {
+    public void setPurl(PackageURL purl) {
         this.purl = purl;
     }
 

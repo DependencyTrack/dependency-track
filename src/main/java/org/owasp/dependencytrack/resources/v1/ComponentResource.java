@@ -153,7 +153,6 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "license"),
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
-                validator.validateProperty(jsonComponent, "purl"),
                 validator.validateProperty(jsonComponent, "cpe"),
                 validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "md5"),
@@ -178,7 +177,7 @@ public class ComponentResource extends AlpineResource {
             component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
             component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
             component.setClassifier(jsonComponent.getClassifier());
-            component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
+            component.setPurl(jsonComponent.getPurl());
             component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
             component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
             component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
@@ -225,7 +224,6 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "license"),
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
-                validator.validateProperty(jsonComponent, "purl"),
                 validator.validateProperty(jsonComponent, "cpe"),
                 validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "md5"),
@@ -248,7 +246,7 @@ public class ComponentResource extends AlpineResource {
                 component.setDescription(StringUtils.trimToNull(jsonComponent.getDescription()));
                 component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
                 component.setClassifier(jsonComponent.getClassifier());
-                component.setPurl(StringUtils.trimToNull(jsonComponent.getPurl()));
+                component.setPurl(jsonComponent.getPurl());
                 component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
                 component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
                 component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));

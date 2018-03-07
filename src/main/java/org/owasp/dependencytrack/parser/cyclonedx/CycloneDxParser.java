@@ -19,6 +19,8 @@
 package org.owasp.dependencytrack.parser.cyclonedx;
 
 import alpine.logging.Logger;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.exception.ParseException;
 import org.owasp.dependencytrack.model.Classifier;
@@ -144,7 +146,12 @@ public class CycloneDxParser {
         component.setDescription(StringUtils.trimToNull(cycloneDxComponent.getDescription()));
         component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
         component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
-        component.setPurl(StringUtils.trimToNull(cycloneDxComponent.getPurl()));
+
+        try {
+            component.setPurl(new PackageURL(cycloneDxComponent.getPurl()));
+        } catch (MalformedPackageURLException e) {
+            LOGGER.warn("Unable to parse PackageURL: " + cycloneDxComponent.getPurl());
+        }
 
         final String type = StringUtils.trimToNull(cycloneDxComponent.getType());
         if ("application".toUpperCase().equals(type.toUpperCase())) {

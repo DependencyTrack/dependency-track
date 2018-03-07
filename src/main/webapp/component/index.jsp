@@ -171,7 +171,7 @@
                                 </div>
                                 <div class="form-group">
                                     <select class="form-control" id="componentClassifierInput">
-                                        <option value=""></option>
+                                        <option value="" disabled="disabled" selected="selected">Classifier...</option>
                                         <option value="APPLICATION">Application</option>
                                         <option value="FRAMEWORK">Framework</option>
                                         <option value="LIBRARY">Library</option>

@@ -19,7 +19,7 @@
                 </license>
             </licenses>
             <copyright>Copyright Example Inc. All rights reserved.</copyright>
-            <cpe>cpe:2.3:a:example:myapplication:1.0.0</cpe>
+            <cpe>cpe:/a:example:myapplication:1.0.0</cpe>
             <purl>pkg:maven/com.example/myapplication@1.0.0packaging=war</purl>
             <modified>false</modified>
 

@@ -86,6 +86,7 @@ public class BomUploadProcessingTask implements Subscriber {
         final ComponentResolver cr = new ComponentResolver(qm);
         final Component resolvedComponent = cr.resolve(component);
         if (resolvedComponent != null) {
+            final long oid = resolvedComponent.getId();
             resolvedComponent.setName(component.getName());
             resolvedComponent.setGroup(component.getGroup());
             resolvedComponent.setVersion(component.getVersion());
@@ -105,7 +106,8 @@ public class BomUploadProcessingTask implements Subscriber {
             qm.persist(resolvedComponent);
             bind(qm, project, resolvedComponent);
             qm.bind(bom, resolvedComponent);
-            flattenedComponents.add(resolvedComponent);
+            // IMPORTANT: refreshing the object by querying for it again is critical.
+            flattenedComponents.add(qm.getObjectById(Component.class, oid));
         } else {
             component = qm.createComponent(component, false);
             bind(qm, project, component);

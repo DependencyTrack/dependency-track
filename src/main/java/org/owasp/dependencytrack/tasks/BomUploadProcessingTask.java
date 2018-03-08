@@ -110,9 +110,11 @@ public class BomUploadProcessingTask implements Subscriber {
             flattenedComponents.add(qm.getObjectById(Component.class, oid));
         } else {
             component = qm.createComponent(component, false);
+            final long oid = component.getId();
             bind(qm, project, component);
             qm.bind(bom, component);
-            flattenedComponents.add(component);
+            // Refreshing the object by querying for it again is preventative
+            flattenedComponents.add(qm.getObjectById(Component.class, oid));
         }
         if (component.getChildren() != null) {
             for (Component child: component.getChildren()) {

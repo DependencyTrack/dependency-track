@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.1.6.xsd">
+    <scanInfo>
+        <engineVersion>3.1.1</engineVersion>
+        <dataSource>
+            <name>NVD CVE 2002</name>
+            <timestamp>22/02/2018 03:05:25</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2003</name>
+            <timestamp>22/02/2018 03:01:31</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2004</name>
+            <timestamp>21/02/2018 02:25:40</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2005</name>
+            <timestamp>18/01/2018 03:04:42</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2006</name>
+            <timestamp>07/03/2018 02:36:02</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2007</name>
+            <timestamp>06/03/2018 02:58:41</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2008</name>
+            <timestamp>08/03/2018 02:44:01</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2009</name>
+            <timestamp>06/03/2018 02:48:25</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2010</name>
+            <timestamp>06/03/2018 02:44:14</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2011</name>
+            <timestamp>08/03/2018 02:37:52</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2012</name>
+            <timestamp>09/03/2018 02:28:22</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2013</name>
+            <timestamp>07/03/2018 02:30:18</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2014</name>
+            <timestamp>09/03/2018 02:23:31</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2015</name>
+            <timestamp>09/03/2018 02:17:26</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2016</name>
+            <timestamp>08/03/2018 02:18:51</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2017</name>
+            <timestamp>09/03/2018 07:43:29</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE 2018</name>
+            <timestamp>09/03/2018 02:00:57</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE Checked</name>
+            <timestamp>09/03/2018 09:41:31</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>NVD CVE Modified</name>
+            <timestamp>09/03/2018 09:01:09</timestamp>
+        </dataSource>
+        <dataSource>
+            <name>VersionCheckOn</name>
+            <timestamp>1520610091317</timestamp>
+        </dataSource>
+    </scanInfo>
+    <projectInfo>
+        <name>Test Project</name>
+        <version>3.1.1</version>
+        <reportDate>2018-03-09T09:49:24.280-0600</reportDate>
+        <credits>This report contains data retrieved from the National Vulnerability Database: https://nvd.nist.gov and from the Node Security Platform: https://nodesecurity.io</credits>
+    </projectInfo>
+    <dependencies>
+        <dependency isVirtual="false">
+            <fileName>express:1.0.8</fileName>
+            <filePath>/workspace/package.json?express</filePath>
+            <md5>3e60700b719421e41d18bea26cc262d0</md5>
+            <sha1>509ce981327714d2bb061e1b1101dfa0a6106a7b</sha1>
+            <evidenceCollected>
+                <evidence type="vendor" confidence="HIGH">
+                    <source>package.json</source>
+                    <name>name</name>
+                    <value>express</value>
+                </evidence>
+                <evidence type="product" confidence="HIGHEST">
+                    <source>package.json</source>
+                    <name>name</name>
+                    <value>express</value>
+                </evidence>
+                <evidence type="version" confidence="HIGHEST">
+                    <source>package.json</source>
+                    <name>version</name>
+                    <value>1.0.8</value>
+                </evidence>
+            </evidenceCollected>
+            <identifiers>
+                <identifier type="npm" confidence="HIGHEST">
+                    <name>(express:1.0.8)</name>
+                </identifier>
+            </identifiers>
+            <vulnerabilities>
+                <vulnerability source="NSP">
+                    <name>8</name>
+                    <cvssScore>5.4</cvssScore>
+                    <cvssAccessVector></cvssAccessVector>
+                    <cvssAccessComplexity></cvssAccessComplexity>
+                    <cvssAuthenticationr></cvssAuthenticationr>
+                    <cvssConfidentialImpact></cvssConfidentialImpact>
+                    <cvssIntegrityImpact></cvssIntegrityImpact>
+                    <cvssAvailabilityImpact></cvssAvailabilityImpact>
+                    <severity>Medium</severity>
+                    <description>Vulnerable versions of express do not specify a charset field in the content-type header while displaying 400 level response messages. The lack of enforcing user&apos;s browser to set correct charset, could be leveraged by an attacker to perform a cross-site scripting attack, using non-standard encodings, like UTF-7.</description>
+                    <references>
+                        <reference>
+                            <source>NSP</source>
+                            <url>https://nodesecurity.io/advisories/8</url>
+                            <name>Advisory 8: No Charset in Content-Type Header</name>
+                        </reference>
+                    </references>
+                    <vulnerableSoftware>
+                        <software>express:&lt;3.11 || &gt;= 4 &lt;4.5</software>
+                    </vulnerableSoftware>
+                </vulnerability>
+            </vulnerabilities>
+        </dependency>
+        <dependency isVirtual="false">
+            <fileName>connect:0.5.10</fileName>
+            <filePath>/workspace/package.json?connect</filePath>
+            <md5>19f0b620d53e322f9fb2a6f577864d24</md5>
+            <sha1>89ce7c25f5c567eadf4f30b33451bfe10508b780</sha1>
+            <evidenceCollected>
+                <evidence type="vendor" confidence="HIGH">
+                    <source>package.json</source>
+                    <name>name</name>
+                    <value>connect</value>
+                </evidence>
+                <evidence type="product" confidence="HIGHEST">
+                    <source>package.json</source>
+                    <name>name</name>
+                    <value>connect</value>
+                </evidence>
+                <evidence type="version" confidence="HIGHEST">
+                    <source>package.json</source>
+                    <name>version</name>
+                    <value>0.5.10</value>
+                </evidence>
+            </evidenceCollected>
+            <identifiers>
+                <identifier type="npm" confidence="HIGHEST">
+                    <name>(connect:0.5.10)</name>
+                </identifier>
+            </identifiers>
+            <vulnerabilities>
+                <vulnerability source="NSP">
+                    <name>3</name>
+                    <cvssScore>6.5</cvssScore>
+                    <cvssAccessVector></cvssAccessVector>
+                    <cvssAccessComplexity></cvssAccessComplexity>
+                    <cvssAuthenticationr></cvssAuthenticationr>
+                    <cvssConfidentialImpact></cvssConfidentialImpact>
+                    <cvssIntegrityImpact></cvssIntegrityImpact>
+                    <cvssAvailabilityImpact></cvssAvailabilityImpact>
+                    <severity>Medium</severity>
+                    <description>Connect is a stack of middleware that is executed in order in each request.
+
+The &quot;methodOverride&quot; middleware allows the http post to override the method of the request with the value of the &quot;_method&quot; post key or with the header &quot;x-http-method-override&quot;.
+
+Because the user post input was not checked, req.method could contain any kind of value. Because the req.method did not match any common method VERB, connect answered with a 404 page containing the &quot;Cannot [method] [url]&quot; content. The method was not properly encoded for output in the browser.
+
+
+###Example:
+```
+~ curl &quot;localhost:3000&quot; -d &quot;_method=&lt;script src=http://nodesecurity.io/xss.js&gt;&lt;/script&gt;&quot;
+Cannot &lt;SCRIPT SRC=HTTP://NODESECURITY.IO/XSS.JS&gt;&lt;/SCRIPT&gt; /
+```
+
+###Credit:
+[Sergio Arcos](https://twitter.com/martes_trece)
+
+###History
+(2013-06-27) Bug reported:
+https://github.com/senchalabs/connect/issues/831
+
+(2013-06-27) First fix: escape req.method output
+https://github.com/senchalabs/connect/commit/277e5aad6a95d00f55571a9a0e11f2fa190d8135
+
+(2013-06-27) Second fix: whitelist
+https://github.com/senchalabs/connect/commit/126187c4e12162e231b87350740045e5bb06e93a</description>
+                    <references>
+                        <reference>
+                            <source>NSP</source>
+                            <url>https://nodesecurity.io/advisories/3</url>
+                            <name>Advisory 3: methodOverride Middleware Reflected Cross-Site Scripting</name>
+                        </reference>
+                    </references>
+                    <vulnerableSoftware>
+                        <software>connect:&lt;=2.8.0</software>
+                    </vulnerableSoftware>
+                </vulnerability>
+            </vulnerabilities>
+        </dependency>
+    </dependencies>
+</analysis>

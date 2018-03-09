@@ -209,6 +209,8 @@ public class DependencyCheckTask implements Subscriber {
                 // Remove vulnerability from an unaffected component - this could be due to false positive reduction
                 // improvements in newer scanning engines, suppressions being asserted, or corrections made to the
                 // vulnerability data source.
+
+                /* todo: put this logic back in once NSP support is complete #106
                 if (component.getVulnerabilities() != null) {
                     for (Vulnerability internalVuln : component.getVulnerabilities()) {
                         boolean found = false;
@@ -226,6 +228,7 @@ public class DependencyCheckTask implements Subscriber {
                         }
                     }
                 }
+                */
 
                 SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
 

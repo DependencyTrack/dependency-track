@@ -1278,21 +1278,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Binds the two objects together in a corresponding join table.
-     * @param component a Component object
-     * @param vulnerability a Vulnerability object
-     */
-    public void bind(Component component, Vulnerability vulnerability) {
-        boolean bound = vulnerability.getComponents().stream().anyMatch(c -> c.getId() == component.getId());
-        if (!bound) {
-            pm.currentTransaction().begin();
-            vulnerability.getComponents().add(component);
-            component.getVulnerabilities().add(vulnerability);
-            pm.currentTransaction().commit();
-        }
-    }
-
-    /**
      * Commits the Lucene inxex.
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @param clazz the indexable class to commit the index of

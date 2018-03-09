@@ -138,7 +138,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                              */
                             final org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByVulnId(source.name(), dcvuln.getName());
                             if (dtvuln != null) {
-                                qm.bind(component, dtvuln);
+                                qm.addVulnerability(dtvuln, component);
                             }
                         }
                     }

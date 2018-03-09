@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.persistence.PackageURLStringConverter;
 import org.owasp.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 import javax.jdo.annotations.Column;
@@ -349,7 +350,7 @@ public class Component implements Serializable {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = StringUtils.abbreviate(description, 1024);
     }
 
     public String getCopyright() {
@@ -357,7 +358,7 @@ public class Component implements Serializable {
     }
 
     public void setCopyright(String copyright) {
-        this.copyright = copyright;
+        this.copyright = StringUtils.abbreviate(copyright, 1024);
     }
 
     public String getLicense() {

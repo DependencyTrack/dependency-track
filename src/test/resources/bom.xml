@@ -20,7 +20,7 @@
             </licenses>
             <copyright>Copyright Example Inc. All rights reserved.</copyright>
             <cpe>cpe:/a:example:myapplication:1.0.0</cpe>
-            <purl>pkg:maven/com.example/myapplication@1.0.0packaging=war</purl>
+            <purl>pkg:maven/com.example/myapplication@1.0.0?packaging=war</purl>
             <modified>false</modified>
 
             <!-- The application includes the following components -->
@@ -60,7 +60,7 @@
                             <id>Apache-2.0</id>
                         </license>
                     </licenses>
-                    <purl>pkg:maven/com.example/myframework@1.0.0packaging=war</purl>
+                    <purl>pkg:maven/com.example/myframework@1.0.0?packaging=war</purl>
                     <modified>false</modified>
                 </component>
                 <!-- continue adding additional components -->

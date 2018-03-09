@@ -135,24 +135,24 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Create Project</h4>
+                    <span class="modal-title">Create Project</span>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="sr-only" for="createProjectNameInput">Team Name</label>
-                        <input type="text" name="name" required="true" placeholder="Project Name..." class="form-control" id="createProjectNameInput">
+                        <label class="required" for="createProjectNameInput">Project Name</label>
+                        <input type="text" name="name" required="required"  class="form-control required" id="createProjectNameInput">
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="createProjectVersionInput">Team Name</label>
-                        <input type="text" name="version" required="true" placeholder="Version..." class="form-control" id="createProjectVersionInput">
+                        <label for="createProjectVersionInput">Version</label>
+                        <input type="text" name="version" class="form-control" id="createProjectVersionInput">
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="createProjectDescriptionInput">Description</label>
-                        <textarea name="description" required="true" placeholder="Description" class="form-control" id="createProjectDescriptionInput"></textarea>
+                        <label for="createProjectDescriptionInput">Description</label>
+                        <textarea name="description" class="form-control" id="createProjectDescriptionInput"></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="createProjectTagsInput">Tags</label>
-                        <input type="text" name="version" placeholder="Tags, comma separated" class="form-control" data-role="tagsinput" id="createProjectTagsInput">
+                        <label for="createProjectTagsInput">Tags</label>
+                        <input type="text" name="tags" placeholder="Comma separated" class="form-control" data-role="tagsinput" id="createProjectTagsInput">
                     </div>
                 </div>
                 <div class="modal-footer">

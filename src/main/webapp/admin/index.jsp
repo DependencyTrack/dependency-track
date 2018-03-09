@@ -94,12 +94,12 @@
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Create Team</h4>
+                    <span class="modal-title">Create Team</span>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="sr-only" for="createTeamNameInput">Team Name</label>
-                        <input type="text" name="teamname" placeholder="Team Name..." class="form-control" id="createTeamNameInput">
+                        <label class="required" for="createTeamNameInput">Team Name</label>
+                        <input type="text" name="teamname" required="required" class="form-control required" id="createTeamNameInput">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -114,12 +114,12 @@
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Create LDAP User</h4>
+                    <span class="modal-title">Create LDAP User</span>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="sr-only" for="createLdapUserNameInput">Username</label>
-                        <input type="text" name="username" placeholder="LDAP username..." class="form-control" id="createLdapUserNameInput">
+                        <label class="required" for="createLdapUserNameInput">Username</label>
+                        <input type="text" name="username" required="required" class="form-control required" id="createLdapUserNameInput">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -131,15 +131,41 @@
     </div>
 
     <div class="modal fade" id="modalCreateManagedUser" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-md" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Create Managed User</h4>
+                    <span class="modal-title">Create Managed User</span>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="sr-only" for="createManagedUserNameInput">Username</label>
-                        <input type="text" name="username" placeholder="Username..." class="form-control" id="createManagedUserNameInput">
+                <div class="panel-body">
+                    <div class="col-md-12">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required" for="createManagedUserNameInput">Username</label>
+                                <input type="text" name="username" class="form-control required" id="createManagedUserNameInput">
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="createManagedUserFullnameInput">Full Name</label>
+                                <input type="text" name="fullname" class="form-control required" id="createManagedUserFullnameInput">
+                            </div>
+                            <div class="form-group">
+                                <label for="createManagedUserEmailInput">Email</label>
+                                <input type="email" name="email" class="form-control" id="createManagedUserEmailInput">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required" for="createManagedUserPasswordInput">Password</label>
+                                <input type="password" name="password" class="form-control required" id="createManagedUserPasswordInput">
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="createManagedUserConfirmInput">Confirm Password</label>
+                                <input type="password" name="confirmPassword" class="form-control required" id="createManagedUserConfirmInput">
+                            </div>
+                            <div class="form-group">
+                                <label for="createManagedUserSuspendedInput">Suspended</label>
+                                <input type="checkbox" name="suspended" class="form-control" id="createManagedUserSuspendedInput">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -154,7 +180,7 @@
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Assign Team Membership</h4>
+                    <span class="modal-title">Assign Team Membership</span>
                 </div>
                 <div class="modal-body">
                     <table id="teamsMembershipTable" class="table table-hover" data-toggle="table"

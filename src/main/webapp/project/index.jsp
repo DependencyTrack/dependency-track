@@ -108,7 +108,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Add Dependency</h4>
+                    <span class="modal-title">Add Dependency</span>
                 </div>
                     <div class="panel with-nav-tabs panel-default tight panel-with-tabbed-modal-body">
                         <div class="panel-heading">
@@ -143,23 +143,23 @@
                                 <div class="tab-pane" id="fromNewTab">
                                     <div class="modal-body">
                                         <div class="form-group">
-                                            <label class="sr-only" for="createComponentNameInput">Component Name</label>
-                                            <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="createComponentNameInput">
+                                            <label class="required" for="createComponentNameInput">Component Name</label>
+                                            <input type="text" name="name" required="required" class="form-control required" id="createComponentNameInput">
                                         </div>
                                         <div class="form-group">
-                                            <label class="sr-only" for="createComponentVersionInput">Component Version</label>
-                                            <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="createComponentVersionInput">
+                                            <label class="required" for="createComponentVersionInput">Version</label>
+                                            <input type="text" name="version" required="required" class="form-control required" id="createComponentVersionInput">
                                         </div>
                                         <div class="form-group">
-                                            <label class="sr-only" for="createComponentGroupInput">Component Group</label>
-                                            <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="createComponentGroupInput">
+                                            <label for="createComponentGroupInput">Group / Vendor</label>
+                                            <input type="text" name="group" class="form-control" id="createComponentGroupInput">
                                         </div>
                                         <div class="form-group">
-                                            <label class="sr-only" for="createComponentDescriptionInput">Description</label>
-                                            <textarea name="description" required="false" placeholder="Description..." class="form-control" id="createComponentDescriptionInput"></textarea>
+                                            <label for="createComponentDescriptionInput">Description</label>
+                                            <textarea name="description" class="form-control" id="createComponentDescriptionInput"></textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label class="sr-only" for="createComponentLicenseSelect">License</label>
+                                            <label for="createComponentLicenseSelect">License</label>
                                             <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="createComponentLicenseSelect">
                                                 <option></option>
                                             </select>
@@ -182,25 +182,24 @@
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Project Details</h4>
+                    <span class="modal-title">Project Details</span>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="sr-only" for="projectNameInput">Project Name</label>
-                        <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="projectNameInput">
+                        <label class="required" for="projectNameInput">Project Name</label>
+                        <input type="text" name="name" required="required" class="form-control required" id="projectNameInput">
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="projectVersionInput">Version</label>
-                        <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="projectVersionInput">
+                        <label for="projectVersionInput">Version</label>
+                        <input type="text" name="version" class="form-control" id="projectVersionInput">
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="projectDescriptionInput">Description</label>
-                        <textarea name="description" required="false" placeholder="Description..." class="form-control" id="projectDescriptionInput"></textarea>
+                        <label for="projectDescriptionInput">Description</label>
+                        <textarea name="description" class="form-control" id="projectDescriptionInput"></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="sr-only" for="projectTagsInput">Tags</label>
-                        <input type="text" name="tags" placeholder="Tags, comma separated" class="form-control" data-role="tagsinput" id="projectTagsInput">
+                        <label for="projectTagsInput">Tags</label>
+                        <input type="text" name="tags" placeholder="Comma separated" class="form-control" data-role="tagsinput" id="projectTagsInput">
                     </div>
                     <table id="projectPropertiesTable" class="table">
                         <thead>

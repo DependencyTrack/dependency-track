@@ -135,7 +135,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <span class="preview-feature-label-modal" data-toggle="tooltip" data-placement="bottom" title="Preview features provide insight into proposed new functionality in a future release. They are incomplete and are subject to change."><i class="fa fa-eye"></i> Preview Feature</span>
-                    <h4 class="modal-title">Add Vulnerability</h4>
+                    <span class="modal-title">Add Vulnerability</span>
                 </div>
                 <div class="panel with-nav-tabs panel-default tight panel-with-tabbed-modal-body">
                     <div class="panel-heading">
@@ -151,26 +151,23 @@
                         <div class="tab-content">
                             <div class="tab-pane active" id="generalTab">
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityVulnIdInput">Unique Vuln ID</label>
-                                    <input type="text" name="vulnid" required="true" placeholder="Unique Vuln ID..." class="form-control" id="vulnerabilityVulnIdInput">
+                                    <label class="required" for="vulnerabilityVulnIdInput">Unique Vuln ID</label>
+                                    <input type="text" name="vulnid" required="required" class="form-control required" id="vulnerabilityVulnIdInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityTitleInput">Title</label>
-                                    <input type="text" name="title" required="false" placeholder="Title..." class="form-control" id="vulnerabilityTitleInput">
+                                    <label for="vulnerabilityTitleInput">Title</label>
+                                    <input type="text" name="title" class="form-control" id="vulnerabilityTitleInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilitySubtitleInput">Subtitle</label>
-                                    <input type="text" name="subtitle" required="false" placeholder="Subtitle..." class="form-control" id="vulnerabilitySubtitleInput">
+                                    <label for="vulnerabilitySubtitleInput">Subtitle</label>
+                                    <input type="text" name="subtitle" class="form-control" id="vulnerabilitySubtitleInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityCweSelect">CWE</label>
+                                    <label for="vulnerabilityCweSelect">CWE</label>
                                     <select name="cwe" class="selectpicker form-control" title="CWE / Nothing selected..." data-live-search="true" id="vulnerabilityCweSelect">
                                         <option></option>
                                     </select>
                                 </div>
-
-
-
                                 <div class="row form-group">
                                     <label class="col-xs-1 control-label">Created</label>
                                     <div class="col-xs-4">
@@ -198,32 +195,27 @@
                                         </div>
                                     </div>
                                 </div>
-
-
-
-
                             </div>
                             <div class="tab-pane" id="detailsTab">
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityDescriptionInput">Description</label>
-                                    <textarea name="description" rows="5" required="false" placeholder="Description..." class="form-control" id="vulnerabilityDescriptionInput"></textarea>
+                                    <label for="vulnerabilityDescriptionInput">Description</label>
+                                    <textarea name="description" rows="5" class="form-control" id="vulnerabilityDescriptionInput"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityRecommendationInput">Recommendation</label>
-                                    <textarea name="recommendation" rows="5" required="false" placeholder="Recommendation..." class="form-control" id="vulnerabilityRecommendationInput"></textarea>
+                                    <label for="vulnerabilityRecommendationInput">Recommendation</label>
+                                    <textarea name="recommendation" rows="5" class="form-control" id="vulnerabilityRecommendationInput"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityReferencesInput">References</label>
-                                    <textarea name="references" required="false" placeholder="References..." class="form-control" id="vulnerabilityReferencesInput"></textarea>
+                                    <label for="vulnerabilityReferencesInput">References</label>
+                                    <textarea name="references" class="form-control" id="vulnerabilityReferencesInput"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityCreditsInput">Credits</label>
-                                    <input type="text" name="credits" required="false" placeholder="Credits..." class="form-control" id="vulnerabilityCreditsInput">
+                                    <label for="vulnerabilityCreditsInput">Credits</label>
+                                    <input type="text" name="credits" class="form-control" id="vulnerabilityCreditsInput">
                                 </div>
                             </div>
                             <div class="tab-pane" id="cvssv2Tab">
                                 <div class="col-md-12">
-
                                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                         <tr>
                                             <td width="15%">&nbsp;</td>
@@ -248,7 +240,6 @@
                                             <td width="15%">&nbsp;</td>
                                         </tr>
                                     </table>
-
                                     <div class="col-md-6">
                                         <h4>Attack Vector</h4>
                                         <div class="btn-group btn-group-justified" role="group" aria-label="Attack Vector">
@@ -329,7 +320,6 @@
                             </div>
                             <div class="tab-pane" id="cvssv3Tab">
                                 <div class="col-md-12">
-
                                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                         <tr>
                                             <td width="15%">&nbsp;</td>
@@ -354,7 +344,6 @@
                                             <td width="15%">&nbsp;</td>
                                         </tr>
                                     </table>
-
                                     <div class="col-md-6">
                                         <h4>Attack Vector</h4>
                                         <div class="btn-group btn-group-justified" role="group" aria-label="Attack Vector">
@@ -453,12 +442,12 @@
                             </div>
                             <div class="tab-pane" id="versionsTab">
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityVulnerableVersionsInput">Vulnerable Versions</label>
-                                    <textarea name="vulnerableVersions" required="false" placeholder="Vulnerable Versions..." class="form-control" id="vulnerabilityVulnerableVersionsInput"></textarea>
+                                    <label for="vulnerabilityVulnerableVersionsInput">Vulnerable Versions</label>
+                                    <textarea name="vulnerableVersions" class="form-control" id="vulnerabilityVulnerableVersionsInput"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="vulnerabilityPatchedVersionsInput">Recommendation</label>
-                                    <textarea name="patchedVersions" required="false" placeholder="Patched Versions..." class="form-control" id="vulnerabilityPatchedVersionsInput"></textarea>
+                                    <label for="vulnerabilityPatchedVersionsInput">Recommendation</label>
+                                    <textarea name="patchedVersions" class="form-control" id="vulnerabilityPatchedVersionsInput"></textarea>
                                 </div>
                             </div>
                         </div>

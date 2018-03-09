@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Snapshot Notification</h4>
+                <span class="modal-title">Snapshot Notification</span>
             </div>
             <div class="modal-body">
                 <p>
@@ -34,7 +34,7 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">About</h4>
+                <span class="modal-title">About</span>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -92,8 +92,6 @@
                         </ul>
                     </div>
                 </div>
-
-
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -131,28 +129,28 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Profile</h4>
+                <span class="modal-title">Profile</span>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="sr-only" for="profileUsernameInput">Username</label>
-                    <input type="text" name="username" required="true" placeholder="Username..." class="form-control" id="profileUsernameInput" disabled="disabled">
+                    <label for="profileUsernameInput">Username</label>
+                    <input type="text" name="username" class="form-control" id="profileUsernameInput" disabled="disabled">
                 </div>
                 <div class="form-group">
-                    <label class="sr-only" for="profileFullnameInput">Full Name</label>
-                    <input type="text" name="fullname" required="true" placeholder="Full Name..." class="form-control" id="profileFullnameInput">
+                    <label for="profileFullnameInput">Full Name</label>
+                    <input type="text" name="fullname" class="form-control" id="profileFullnameInput">
                 </div>
                 <div class="form-group">
-                    <label class="sr-only" for="profileEmailInput">Email</label>
-                    <input type="text" name="email" required="true" placeholder="Email..." class="form-control" id="profileEmailInput">
+                    <label for="profileEmailInput">Email</label>
+                    <input type="text" name="email" class="form-control" id="profileEmailInput">
                 </div>
                 <div class="form-group">
-                    <label class="sr-only" for="profileNewPasswordInput">New Password</label>
-                    <input type="password" name="newPassword" required="true" placeholder="New Password..." class="form-control" id="profileNewPasswordInput">
+                    <label for="profileNewPasswordInput">New Password</label>
+                    <input type="password" name="newPassword" class="form-control" id="profileNewPasswordInput">
                 </div>
                 <div class="form-group">
-                    <label class="sr-only" for="profileConfirmPasswordInput">Confirm Password</label>
-                    <input type="password" name="confirmPassword" required="true" placeholder="Confirm Password..." class="form-control" id="profileConfirmPasswordInput">
+                    <label for="profileConfirmPasswordInput">Confirm Password</label>
+                    <input type="password" name="confirmPassword" class="form-control" id="profileConfirmPasswordInput">
                 </div>
             </div>
             <div class="modal-footer">
@@ -167,7 +165,7 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Error</h4>
+                <span class="modal-title">Error</span>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -192,7 +190,7 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Information</h4>
+                <span class="modal-title">Information</span>
             </div>
             <div class="modal-body">
                 <div class="row">

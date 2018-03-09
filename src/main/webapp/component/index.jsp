@@ -128,7 +128,7 @@
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Component Details</h4>
+                    <span class="modal-title">Component Details</span>
                 </div>
                 <div class="panel with-nav-tabs panel-default tight panel-with-tabbed-modal-body">
                     <div class="panel-heading">
@@ -142,23 +142,23 @@
                         <div class="tab-content">
                             <div class="tab-pane active" id="generalTab">
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentNameInput">Component Name</label>
-                                    <input type="text" name="name" required="true" placeholder="Name..." class="form-control" id="componentNameInput">
+                                    <label class="required" for="componentNameInput">Component Name</label>
+                                    <input type="text" name="name" required="required" class="form-control required" id="componentNameInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentVersionInput">Component Version</label>
-                                    <input type="text" name="version" required="false" placeholder="Version..." class="form-control" id="componentVersionInput">
+                                    <label class="required" for="componentVersionInput">Version</label>
+                                    <input type="text" name="version" required="required" class="form-control required" id="componentVersionInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentGroupInput">Component Group</label>
-                                    <input type="text" name="group" required="false" placeholder="Group..." class="form-control" id="componentGroupInput">
+                                    <label for="componentGroupInput">Group / Vendor</label>
+                                    <input type="text" name="group" class="form-control" id="componentGroupInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentDescriptionInput">Description</label>
-                                    <textarea name="description" required="false" placeholder="Description..." class="form-control" id="componentDescriptionInput"></textarea>
+                                    <label for="componentDescriptionInput">Description</label>
+                                    <textarea name="description" class="form-control" id="componentDescriptionInput"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentLicenseSelect">License</label>
+                                    <label for="componentLicenseSelect">License</label>
                                     <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="componentLicenseSelect">
                                         <option></option>
                                     </select>
@@ -166,12 +166,13 @@
                             </div>
                             <div class="tab-pane" id="entendedTab">
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentFilenameInput">Filename</label>
-                                    <input type="text" name="filename" required="true" placeholder="Filename..." class="form-control" id="componentFilenameInput">
+                                    <label for="componentFilenameInput">Filename</label>
+                                    <input type="text" name="filename" class="form-control" id="componentFilenameInput">
                                 </div>
                                 <div class="form-group">
+                                    <label for="componentClassifierInput">Classifier</label>
                                     <select class="form-control" id="componentClassifierInput">
-                                        <option value="" disabled="disabled" selected="selected">Classifier...</option>
+                                        <option value="" disabled="disabled" selected="selected">Select...</option>
                                         <option value="APPLICATION">Application</option>
                                         <option value="FRAMEWORK">Framework</option>
                                         <option value="LIBRARY">Library</option>
@@ -180,42 +181,42 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentPurlInput">Package URL (Purl)</label>
-                                    <input type="text" name="purl" required="false" placeholder="Package URL (Purl)..." class="form-control" id="componentPurlInput">
+                                    <label for="componentPurlInput">Package URL (Purl)</label>
+                                    <input type="text" name="purl" class="form-control" id="componentPurlInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentCpeInput">CPE</label>
-                                    <input type="text" name="cpe" required="false" placeholder="CPE..." class="form-control" id="componentCpeInput">
+                                    <label for="componentCpeInput">CPE</label>
+                                    <input type="text" name="cpe" class="form-control" id="componentCpeInput">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentCopyrightInput">Copyright</label>
-                                    <textarea name="copyright" required="false" placeholder="Copyright..." class="form-control" id="componentCopyrightInput"></textarea>
+                                    <label for="componentCopyrightInput">Copyright</label>
+                                    <textarea name="copyright" class="form-control" id="componentCopyrightInput"></textarea>
                                 </div>
                             </div>
                             <div class="tab-pane" id="hashesTab">
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentMd5Input">MD5</label>
-                                    <input type="text" name="md5" pattern="[A-Fa-f0-9]{32}" placeholder="MD5..." class="hash-input form-control" id="componentMd5Input">
+                                    <label for="componentMd5Input">MD5</label>
+                                    <input type="text" name="md5" pattern="[A-Fa-f0-9]{32}" class="hash-input form-control" id="componentMd5Input">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentSha1Input">SHA1</label>
-                                    <input type="text" name="sha1" pattern="[A-Fa-f0-9]{40}" placeholder="SHA1..." class="hash-input form-control" id="componentSha1Input">
+                                    <label for="componentSha1Input">SHA1</label>
+                                    <input type="text" name="sha1" pattern="[A-Fa-f0-9]{40}" class="hash-input form-control" id="componentSha1Input">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentSha256Input">SHA 256</label>
-                                    <input type="text" name="sha256" pattern="[A-Fa-f0-9]{64}" placeholder="SHA 256..." class="hash-input form-control" id="componentSha256Input">
+                                    <label for="componentSha256Input">SHA 256</label>
+                                    <input type="text" name="sha256" pattern="[A-Fa-f0-9]{64}" class="hash-input form-control" id="componentSha256Input">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentSha512Input">SHA 512</label>
-                                    <input type="text" name="sha512" pattern="[A-Fa-f0-9]{128}" placeholder="SHA 512..." class="hash-input form-control" id="componentSha512Input">
+                                    <label for="componentSha512Input">SHA 512</label>
+                                    <input type="text" name="sha512" pattern="[A-Fa-f0-9]{128}" class="hash-input form-control" id="componentSha512Input">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentSha3256Input">SHA3 256</label>
-                                    <input type="text" name="sha3256" pattern="[A-Fa-f0-9]{64}" placeholder="SHA3 256..." class="hash-input form-control" id="componentSha3256Input">
+                                    <label for="componentSha3256Input">SHA3 256</label>
+                                    <input type="text" name="sha3256" pattern="[A-Fa-f0-9]{64}" class="hash-input form-control" id="componentSha3256Input">
                                 </div>
                                 <div class="form-group">
-                                    <label class="sr-only" for="componentSha3512Input">SHA3 512</label>
-                                    <input type="text" name="sha3512" pattern="[A-Fa-f0-9]{128}" placeholder="SHA3 512..." class="hash-input form-control" id="componentSha3512Input">
+                                    <label for="componentSha3512Input">SHA3 512</label>
+                                    <input type="text" name="sha3512" pattern="[A-Fa-f0-9]{128}" class="hash-input form-control" id="componentSha3512Input">
                                 </div>
                             </div>
                         </div>

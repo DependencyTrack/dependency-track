@@ -1,0 +1,106 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
+package org.owasp.dependencytrack.parser.dependencycheck.resolver;
+
+import alpine.logging.Logger;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
+import org.owasp.dependencytrack.parser.dependencycheck.model.Identifier;
+
+/**
+ * Attempts to resolve the PackageURL from high-quality and reliable evidence.
+ *
+ * @author Steve Springett
+ * @since 3.0.0
+ */
+public class PackageURLResolver implements IResolver {
+
+    private static final Logger LOGGER = Logger.getLogger(PackageURLResolver.class);
+
+    /**
+     * {@inheritDoc}
+     */
+    public PackageURL resolve(Dependency dependency) {
+        try {
+            if (dependency.getIdentifiers() != null && dependency.getIdentifiers().getIdentifiers() != null) {
+                for (Identifier identifier : dependency.getIdentifiers().getIdentifiers()) {
+                    if ("maven".equals(identifier.getType())
+                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))) {
+
+                        final GAV gav = parseIdentifier(identifier);
+                        if (dependency.getFileName() != null && dependency.getFileName().contains(".")) {
+                            final String extension = dependency.getFileName().substring(
+                                    dependency.getFileName().lastIndexOf(".") + 1, dependency.getFileName().length()
+                            );
+                            return new PackageURL("pkg:maven/" + gav.group + "/" + gav.artifact + "@" + gav.version + "?type=" + extension);
+                        } else {
+                            return new PackageURL("pkg:maven/" + gav.group + "/" + gav.artifact + "@" + gav.version);
+                        }
+
+                    } else if ("npm".equals(identifier.getType())
+                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))) {
+
+                        final GAV gav = parseIdentifier(identifier);
+                        if (gav.group != null) {
+                            return new PackageURL("pkg:npm/" + gav.group + "/" + gav.artifact + "@" + gav.version);
+                        } else {
+                            return new PackageURL("pkg:npm/" + gav.artifact + "@" + gav.version);
+                        }
+
+                    }
+
+                    // todo: add PHP Composer, NuGet, Rubygems, and other supported types. Pull requests welcome :-)
+                }
+
+            }
+        } catch (MalformedPackageURLException e) {
+            LOGGER.warn("An error occurred while attempting to resolve PackageURL", e);
+        }
+        return null;
+    }
+
+    private GAV parseIdentifier(Identifier identifier) {
+        if (identifier == null || identifier.getName() == null) {
+            return null;
+        }
+        if (identifier.getName().startsWith("(") && identifier.getName().endsWith(")")) {
+            final GAV gav = new GAV();
+            final String[] parts = identifier.getName().substring(1, identifier.getName().length() - 1).split(":");
+            if (parts.length == 2) {
+                gav.artifact = parts[0];
+                gav.version = parts[1];
+            } else if (parts.length == 3) {
+                gav.group = parts[0];
+                gav.artifact = parts[1];
+                gav.version = parts[2];
+            } else {
+                return null; // this is not being accounted for and would likely never happen.
+            }
+            return gav;
+        }
+        return null;
+    }
+
+    private class GAV {
+        private String group = null;
+        private String artifact = null;
+        private String version = null;
+    }
+
+}

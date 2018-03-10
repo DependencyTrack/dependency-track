@@ -37,6 +37,7 @@ import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentNameRe
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentVersionResolver;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.LicenseResolver;
+import org.owasp.dependencytrack.parser.dependencycheck.resolver.PackageURLResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import java.io.File;
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                         component.setName(new ComponentNameResolver().resolve(dependency));
                         component.setVersion(new ComponentVersionResolver().resolve(dependency));
                         component.setGroup(new ComponentGroupResolver().resolve(dependency));
+                        component.setPurl(new PackageURLResolver().resolve(dependency));
                         component.setFilename(dependency.getFileName());
                         component.setMd5(dependency.getMd5());
                         component.setSha1(dependency.getSha1());
@@ -110,6 +112,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                         component.setName((component.getName() != null) ? component.getName() : new ComponentNameResolver().resolve(dependency));
                         component.setVersion((component.getVersion() != null) ? component.getVersion() : new ComponentVersionResolver().resolve(dependency));
                         component.setGroup((component.getGroup() != null) ? component.getGroup() : new ComponentGroupResolver().resolve(dependency));
+                        component.setPurl((component.getPurl() != null) ? component.getPurl() : new PackageURLResolver().resolve(dependency));
                         component.setFilename((component.getFilename() != null) ? component.getFilename() : dependency.getFileName());
                         component.setDescription((component.getDescription() != null) ? component.getDescription() : dependency.getDescription());
                         if (component.getResolvedLicense() == null) {

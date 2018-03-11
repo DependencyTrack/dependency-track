@@ -39,7 +39,6 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.util.HttpClientFactory;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -210,7 +209,7 @@ public class DependencyCheckTask implements Subscriber {
                 // improvements in newer scanning engines, suppressions being asserted, or corrections made to the
                 // vulnerability data source.
 
-                /* todo: put this logic back in once NSP support is complete #106
+                /* todo: put this logic back in once NSP support is complete #106 -- also account for INTERNAL vulnerabilities
                 if (component.getVulnerabilities() != null) {
                     for (Vulnerability internalVuln : component.getVulnerabilities()) {
                         boolean found = false;

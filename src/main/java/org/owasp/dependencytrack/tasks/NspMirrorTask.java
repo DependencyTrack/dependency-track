@@ -17,7 +17,6 @@
  */
 package org.owasp.dependencytrack.tasks;
 
-import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.event.framework.SingleThreadedEventService;
@@ -29,7 +28,6 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
 import org.owasp.dependencytrack.model.Vulnerability;

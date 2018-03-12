@@ -37,8 +37,18 @@ public class BaseAdvisoryParser {
         advisory.setUpdatedAt(object.optString("updated_at", null));
         advisory.setRecommendation(object.optString("recommendation", null));
         advisory.setTitle(object.optString("title", null));
-        //todo: allowed_scopes ??? what is this ???
+
+        /*
+        'module_name' is used in the advisories api
+        'module' is used in the check api
+        try one, then the other
+         */
         advisory.setModuleName(object.optString("module_name", null));
+        if (advisory.getModuleName() == null) {
+            advisory.setModuleName(object.optString("module", null));
+        }
+
+        advisory.setModuleName(object.optString("module", null));
         advisory.setVulnerableVersions(object.optString("vulnerable_versions", null));
         advisory.setPatchedVersions(object.optString("patched_versions", null));
         advisory.setVersion(object.optString("version", null));

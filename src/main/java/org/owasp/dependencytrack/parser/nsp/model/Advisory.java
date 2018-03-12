@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.parser.nsp.model;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * The response from NSP check API will respond with 0 or more advisories. This
@@ -113,6 +114,11 @@ public class Advisory {
      * The name of the author(s)
      */
     private String author;
+
+    /**
+     * The linear part of the dependency-tree that lead to the advisory
+     */
+    private List<String> path;
 
     /**
      * Returns the unique ID of the advisory as issued by Node Security
@@ -431,4 +437,23 @@ public class Advisory {
     public void setAuthor(String author) {
         this.author = author;
     }
+
+    /**
+     * Returns the path of the advisory.
+     *
+     * @return the path of the advisory
+     */
+    public List<String> getPath() {
+        return path;
+    }
+
+    /**
+     * Sets the path of the advisory.
+     *
+     * @param path the path of the advisory
+     */
+    public void setPath(List<String> path) {
+        this.path = path;
+    }
+
 }

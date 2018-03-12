@@ -20,9 +20,9 @@ package org.owasp.dependencytrack.parser.nsp;
 import alpine.logging.Logger;
 import com.mashape.unirest.http.JsonNode;
 import org.json.JSONArray;
-import org.json.JSONObject;
-import org.owasp.dependencytrack.parser.nsp.model.AdvisoryResults;
 import org.owasp.dependencytrack.parser.nsp.model.Advisory;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Parser for Node Security Platform API response.
@@ -30,30 +30,23 @@ import org.owasp.dependencytrack.parser.nsp.model.Advisory;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NspAdvsoriesParser extends BaseAdvisoryParser {
+public class NspCheckParser extends BaseAdvisoryParser {
 
-    private static final Logger LOGGER = Logger.getLogger(NspAdvsoriesParser.class);
+    private static final Logger LOGGER = Logger.getLogger(NspCheckParser.class);
 
     /**
      * Parses the JSON response from the NSP API.
      * @param jsonNode the JSON node to parse
      * @return an AdvisoryResults object
      */
-    public AdvisoryResults parse(JsonNode jsonNode) {
+    public List<Advisory> parse(JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
 
-        final AdvisoryResults advisories = new AdvisoryResults();
-        final JSONObject root = jsonNode.getObject();
-        advisories.setOffset(root.getInt("offset"));
-        advisories.setTotal(root.getInt("total"));
-        advisories.setCount(root.getInt("count"));
-        final JSONArray results = root.getJSONArray("results");
-
-        if (results != null) {
-            for (int i = 0; i < results.length(); i++) {
-                final Advisory advisory = super.parse(results.getJSONObject(i));
-                advisories.add(advisory);
-            }
+        final List<Advisory> advisories = new ArrayList<>();
+        final JSONArray root = jsonNode.getArray();
+        for (int i = 0; i < root.length(); i++) {
+            final Advisory advisory = super.parse(root.getJSONObject(i));
+            advisories.add(advisory);
         }
         return advisories;
     }

@@ -693,6 +693,18 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns vulnerabilities for the specified npm module
+     * @param module the NPM module to query on
+     * @return a list of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
+        final Query query = pm.newQuery(Vulnerability.class, "source == :source && subtitle == :module");
+        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
+        return (List<Vulnerability>) query.execute(Vulnerability.Source.NSP.name(), module);
+    }
+
+    /**
      * Adds a vulnerability to a component.
      * @param vulnerability the vulnerabillity to add
      * @param component the component affected by the vulnerabiity

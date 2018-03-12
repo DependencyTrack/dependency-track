@@ -41,6 +41,7 @@ public class BaseAdvisoryParser {
         advisory.setModuleName(object.optString("module_name", null));
         advisory.setVulnerableVersions(object.optString("vulnerable_versions", null));
         advisory.setPatchedVersions(object.optString("patched_versions", null));
+        advisory.setVersion(object.optString("version", null));
         advisory.setPublishDate(object.optString("publish_date", null));
         advisory.setSlug(object.optString("slug", null));
         advisory.setLegacySlug(object.optString("legacy_slug", null));

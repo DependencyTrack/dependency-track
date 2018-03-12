@@ -96,6 +96,11 @@ public class Advisory {
     private String patchedVersions;
 
     /**
+     * The version of the module submitted for analysis.
+     */
+    private String version;
+
+    /**
      * The title/name of the advisory.
      */
     private String title;
@@ -357,6 +362,24 @@ public class Advisory {
      */
     public void setPatchedVersions(String patchedVersions) {
         this.patchedVersions = patchedVersions;
+    }
+
+    /**
+     * Returns the version of the module submitted for analysis.
+     *
+     * @return the version of the module submitted for analysis
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * Sets the version of the module submitted for analysis.
+     *
+     * @param version the version of the module submitted for analysis
+     */
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     /**

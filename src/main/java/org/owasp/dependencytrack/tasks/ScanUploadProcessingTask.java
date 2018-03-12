@@ -18,11 +18,11 @@
 package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
-import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.EventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
-import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
+import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
@@ -139,7 +139,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                             /*
                              * Check to see if the vulnerability already exists. If so, bind it to the component.
                              */
-                            final org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByVulnId(source.name(), dcvuln.getName());
+                            final org.owasp.dependencytrack.model.Vulnerability dtvuln = qm.getVulnerabilityByVulnId(source, dcvuln.getName());
                             if (dtvuln != null) {
                                 qm.addVulnerability(dtvuln, component);
                             }
@@ -155,7 +155,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                     }
                 }
                 qm.updateLastScanImport(project, date);
-                SingleThreadedEventService.getInstance().publish(new DependencyCheckEvent(components));
+                EventService.getInstance().publish(new VulnerabilityAnalysisEvent(components));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing scan result");
                 LOGGER.error(ex.getMessage());

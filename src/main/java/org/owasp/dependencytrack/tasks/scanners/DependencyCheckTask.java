@@ -15,17 +15,14 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.owasp.dependencytrack.tasks;
+package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import alpine.resources.OrderDirection;
-import alpine.resources.Pagination;
+import com.github.packageurl.PackageURL;
 import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
@@ -52,7 +49,7 @@ import static org.owasp.dependencytrack.tasks.NistMirrorTask.NVD_MIRROR_DIR;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class DependencyCheckTask implements Subscriber {
+public class DependencyCheckTask extends BaseComponentAnalyzerTask implements ScanTask, Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(DependencyCheckTask.class);
     private static final String DC_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "dependency-check";
@@ -72,7 +69,11 @@ public class DependencyCheckTask implements Subscriber {
             setupOdcDirectoryStructure(DC_REPORT_DIR);
             final DependencyCheckEvent event = (DependencyCheckEvent) e;
             if (DependencyCheckEvent.Action.ANALYZE == event.getAction()) {
-                performAnalysis(event);
+                if (event.getComponents().size() > 0) {
+                    analyze(event.getComponents());
+                } else {
+                    super.analyze();
+                }
             } else if (DependencyCheckEvent.Action.UPDATE_ONLY == event.getAction()) {
                 performUpdateOnly();
             }
@@ -88,37 +89,6 @@ public class DependencyCheckTask implements Subscriber {
             if (dir.mkdirs()) {
                 LOGGER.info("Dependency-Check directory created successfully: " + directory);
             }
-        }
-    }
-
-    /**
-     * Performs a Dependency-Check analysis.
-     * @param event a DependencyCheckEvent
-     */
-    private void performAnalysis(DependencyCheckEvent event) {
-        LOGGER.info("Executing Dependency-Check analysis task");
-        if (event.analyzePortfolio()) {
-            LOGGER.info("Analyzing portfolio");
-            final AlpineRequest alpineRequest = new AlpineRequest(
-                    null,
-                    new Pagination(Pagination.Strategy.OFFSET, 0, 1000),
-                    null,
-                    "id",
-                    OrderDirection.ASCENDING
-            );
-
-            try (QueryManager qm = new QueryManager(alpineRequest)) {
-                final long total = qm.getCount(Component.class);
-                long count = 0;
-                while (count < total) {
-                    final PaginatedResult result = qm.getComponents();
-                    analyze(result.getList(Component.class));
-                    count += result.getObjects().size();
-                    qm.advancePagination();
-                }
-            }
-        } else {
-            analyze(event.getComponents());
         }
     }
 
@@ -140,11 +110,19 @@ public class DependencyCheckTask implements Subscriber {
      * Analyzes a list of Components.
      * @param components a list of Components
      */
-    private void analyze(List<Component> components) {
+    public void analyze(List<Component> components) {
+        LOGGER.info("Executing Dependency-Check analysis task");
         // Iterate through the components, create evidence, and create the resulting dependency
         final List<org.owasp.dependencycheck.dependency.Dependency> dependencies = new ArrayList<>();
         for (Component component: components) {
-            dependencies.add(ModelConverter.convert(component));
+
+            // Check to see that Dependency-Check only analyzes ecosystems
+            // and uses analyzers capable of supporting Dependency-Track
+            PackageURL purl = component.getPurl();
+            if (super.shouldAnalyze(purl)) {
+                dependencies.add(ModelConverter.convert(component));
+            }
+
         }
         LOGGER.info("Analyzing " + dependencies.size() + " component(s)");
         DependencyCheckScanAgent scanAgent = createScanAgent(false);

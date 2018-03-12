@@ -22,7 +22,6 @@ import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.tasks.LdapSyncTask;
 import org.owasp.dependencytrack.tasks.BomUploadProcessingTask;
-import org.owasp.dependencytrack.tasks.DependencyCheckTask;
 import org.owasp.dependencytrack.tasks.IndexTask;
 import org.owasp.dependencytrack.tasks.MetricsUpdateTask;
 import org.owasp.dependencytrack.tasks.NistMirrorTask;
@@ -30,6 +29,9 @@ import org.owasp.dependencytrack.tasks.NspMirrorTask;
 import org.owasp.dependencytrack.tasks.ScanUploadProcessingTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
 import org.owasp.dependencytrack.tasks.VulnDbSyncTask;
+import org.owasp.dependencytrack.tasks.VulnerabilityAnalysisTask;
+import org.owasp.dependencytrack.tasks.scanners.DependencyCheckTask;
+import org.owasp.dependencytrack.tasks.scanners.NspAnalysisTask;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -53,6 +55,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the SingleThreadedEventService (Used for Dependency-Check analysis)
     private static final SingleThreadedEventService EVENT_SERVICE_ODC = SingleThreadedEventService.getInstance();
 
+    // Starts the SingleThreadedEventService (Used for Node Security Platform analysis)
+    private static final SingleThreadedEventService EVENT_SERVICE_NSP = SingleThreadedEventService.getInstance();
+
     // Starts the SingleThreadedEventService (Used for NVD mirroring)
     private static final SingleThreadedEventService EVENT_SERVICE_NVD = SingleThreadedEventService.getInstance();
 
@@ -65,9 +70,11 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(NspMirrorEvent.class, NspMirrorTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
+        EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
 
         EVENT_SERVICE_INDEX.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ODC.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
+        EVENT_SERVICE_NSP.subscribe(NspAnalysisEvent.class, NspAnalysisTask.class);
         EVENT_SERVICE_METRICS.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE_NVD.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
 
@@ -83,9 +90,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(ScanUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
-        EVENT_SERVICE.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE.unsubscribe(NspMirrorTask.class);
         EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
+        EVENT_SERVICE.unsubscribe(VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.shutdown();
 
         EVENT_SERVICE_INDEX.unsubscribe(IndexTask.class);
@@ -93,6 +100,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
 
         EVENT_SERVICE_ODC.unsubscribe(DependencyCheckTask.class);
         EVENT_SERVICE_ODC.shutdown();
+
+        EVENT_SERVICE_NSP.unsubscribe(NspAnalysisTask.class);
+        EVENT_SERVICE_NSP.shutdown();
 
         EVENT_SERVICE_METRICS.unsubscribe(MetricsUpdateTask.class);
         EVENT_SERVICE_METRICS.shutdown();

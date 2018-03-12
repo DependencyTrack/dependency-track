@@ -19,11 +19,11 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.event.LdapSyncEvent;
 import alpine.tasks.AlpineTaskScheduler;
-import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
 import org.owasp.dependencytrack.event.VulnDbSyncEvent;
+import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 
 /**
  * A Singleton implementation of {@link AlpineTaskScheduler} that configures scheduled and repeatable tasks.
@@ -62,7 +62,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         // Creates a new event that executes every 6 hours (21600000) after an initial 6 hour delay
         // A long initial delay is due to DependencyCheckEvent being called directly after a successful
         // NistMirrorEvent is processed.
-        scheduleEvent(new DependencyCheckEvent(DependencyCheckEvent.Action.ANALYZE), 21600000, 21600000);
+        scheduleEvent(new VulnerabilityAnalysisEvent(), 21600000, 21600000);
     }
 
     /**

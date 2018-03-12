@@ -15,27 +15,28 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.owasp.dependencytrack.event;
+package org.owasp.dependencytrack.tasks.scanners;
 
 import org.owasp.dependencytrack.model.Component;
 import java.util.List;
 
 /**
- * Defines an event used to start an analysis via Node Security Platform.
+ * An interface that defines vulnerability scanners that are implemented as Subscribers.
  *
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NspAnalysisEvent extends VulnerabilityAnalysisEvent {
+public interface ScanTask {
 
-    public NspAnalysisEvent() { }
+    /**
+     * Analyzes all components in the portfolio.
+     */
+    void analyze();
 
-    public NspAnalysisEvent(Component component) {
-        super(component);
-    }
-
-    public NspAnalysisEvent(List<Component> components) {
-        super(components);
-    }
+    /**
+     * Analyzes only the specified components.
+     * @param componens the components to analyze
+     */
+    void analyze(List<Component> componens);
 
 }

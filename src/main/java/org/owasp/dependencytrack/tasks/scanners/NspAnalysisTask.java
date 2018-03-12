@@ -15,7 +15,7 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.owasp.dependencytrack.tasks;
+package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
@@ -44,7 +44,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NspAnalysisTask implements Subscriber {
+public class NspAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
     private static final String NSP_API_BASE_URL = "https://api.nodesecurity.io/check";
     private static final Logger LOGGER = Logger.getLogger(NspAnalysisTask.class);
@@ -62,7 +62,11 @@ public class NspAnalysisTask implements Subscriber {
             if (javaVersion.getMajor() == 8 && javaVersion.getUpdate() < 101) {
                 LOGGER.error("Unable to perform analysis via Node Security Platform. NSP requires Java 1.8.0_101 or higher.");
             } else {
-                analyze(event.getComponents());
+                if (event.getComponents().size() > 0) {
+                    analyze(event.getComponents());
+                } else {
+                    super.analyze();
+                }
             }
             LOGGER.info("NSP analysis complete");
         }
@@ -72,15 +76,17 @@ public class NspAnalysisTask implements Subscriber {
      * Analyzes a list of Components.
      * @param components a list of Components
      */
-    private void analyze(List<Component> components) {
+    public void analyze(List<Component> components) {
         final List<Component> nspCandidates = new ArrayList<>();
         final JSONObject npmDependencies = new JSONObject();
         for (Component component : components) {
+
             PackageURL purl = component.getPurl();
-            if (purl != null && "npm".equals(purl.getType())) {
+            if (super.shouldAnalyze(purl)) {
                 nspCandidates.add(component);
                 npmDependencies.put(purl.getName(), purl.getVersion());
             }
+
         }
 
         // Build a minimal package.json in memory

@@ -17,9 +17,7 @@
  */
 package org.owasp.dependencytrack.event;
 
-import alpine.event.framework.Event;
 import org.owasp.dependencytrack.model.Component;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,7 +26,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class DependencyCheckEvent implements Event {
+public class DependencyCheckEvent extends VulnerabilityAnalysisEvent {
 
     public enum Action {
         ANALYZE,
@@ -36,31 +34,27 @@ public class DependencyCheckEvent implements Event {
     }
 
     private Action action;
-    private List<Component> components = new ArrayList<>();
+
+    public DependencyCheckEvent() {
+        this.action = Action.ANALYZE;
+    }
 
     public DependencyCheckEvent(Action action) {
         this.action = action;
     }
 
     public DependencyCheckEvent(Component component) {
+        super(component);
         this.action = Action.ANALYZE;
-        this.components.add(component);
     }
 
     public DependencyCheckEvent(List<Component> components) {
+        super(components);
         this.action = Action.ANALYZE;
-        this.components.addAll(components);
     }
 
     public Action getAction() {
         return action;
     }
 
-    public List<Component> getComponents() {
-        return this.components;
-    }
-
-    public boolean analyzePortfolio() {
-        return components.size() == 0;
-    }
 }

@@ -666,19 +666,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a vulnerability by it's name (i.e. CVE-2017-0001)
-     * @param vulnId the name of the vulnerability
-     * @return the matching Vulnerability object, or null if not found
-     */
-    @SuppressWarnings("unchecked")
-    public Vulnerability getVulnerabilityByVulnId(String vulnId) {
-        final Query query = pm.newQuery(Vulnerability.class, "vulnId == :vulnId");
-        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
-        final List<Vulnerability> result = (List<Vulnerability>) query.execute(vulnId);
-        return result.size() == 0 ? null : result.get(0);
-    }
-
-    /**
      * Returns a vulnerability by it's name (i.e. CVE-2017-0001) and source.
      * @param source the source of the vulnerability
      * @param vulnId the name of the vulnerability
@@ -690,6 +677,17 @@ public class QueryManager extends AlpineQueryManager {
         query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
         final List<Vulnerability> result = (List<Vulnerability>) query.execute(source, vulnId);
         return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Returns a vulnerability by it's name (i.e. CVE-2017-0001) and source.
+     * @param source the source of the vulnerability
+     * @param vulnId the name of the vulnerability
+     * @return the matching Vulnerability object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId) {
+        return getVulnerabilityByVulnId(source.name(), vulnId);
     }
 
     /**

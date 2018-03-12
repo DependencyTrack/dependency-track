@@ -86,6 +86,9 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void analyze() {
         Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
         logger.info("Analyzing portfolio");

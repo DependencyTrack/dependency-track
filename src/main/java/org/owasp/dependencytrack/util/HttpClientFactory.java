@@ -245,9 +245,4 @@ public final class HttpClientFactory {
         }
     }
 
-    //todo: remove me
-    public static void main(String[] args) {
-        HttpClient client = createClient();
-        System.out.println("done");
-    }
 }

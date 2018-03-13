@@ -78,6 +78,7 @@ public final class HttpClientFactory {
             }
         }
 
+        clientBuilder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
         clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
         Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
@@ -86,11 +87,6 @@ public final class HttpClientFactory {
                 .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
-
-        if (proxyInfo != null) {
-            clientBuilder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        }
-
         return clientBuilder.build();
     }
 

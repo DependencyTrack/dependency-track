@@ -182,7 +182,7 @@ public final class HttpClientFactory {
     }
 
     /**
-     * Optionally parses usernames if they are NTLM formatted (domain\username).
+     * Optionally parses usernames if they are NTLM formatted.
      * @param proxyInfo The ProxyInfo object to update from the result of parsing
      * @param username The username to parse
      */
@@ -227,4 +227,9 @@ public final class HttpClientFactory {
         }
     }
 
+    //todo: remove me
+    public static void main(String[] args) {
+        HttpClient client = createClient();
+        System.out.println("done");
+    }
 }

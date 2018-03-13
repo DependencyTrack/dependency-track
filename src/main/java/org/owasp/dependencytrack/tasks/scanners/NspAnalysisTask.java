@@ -141,8 +141,8 @@ public class NspAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
                 Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NSP, String.valueOf(advisory.getId()));
                 if (component != null && vulnerabiity != null) {
                     qm.addVulnerability(vulnerabiity, component);
+                    SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
                 }
-                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
             }
         }
     }

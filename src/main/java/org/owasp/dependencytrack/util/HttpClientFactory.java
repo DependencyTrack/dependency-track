@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
@@ -68,7 +69,11 @@ public final class HttpClientFactory {
         if (proxyInfo != null) {
             clientBuilder.setProxy(new HttpHost(proxyInfo.host, proxyInfo.port));
             if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
-                credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
+                if (proxyInfo.domain != null) {
+                    credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(proxyInfo.username, proxyInfo.password, proxyInfo.domain, null));
+                } else {
+                    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
+                }
             }
         }
 
@@ -107,7 +112,7 @@ public final class HttpClientFactory {
             proxyInfo.host = StringUtils.trimToNull(PROXY_ADDRESS);
             proxyInfo.port = PROXY_PORT;
             if (PROXY_USERNAME != null) {
-                proxyInfo.username = StringUtils.trimToNull(PROXY_USERNAME);
+                parseProxyUsername(proxyInfo, PROXY_USERNAME);
             }
             if (PROXY_PASSWORD != null) {
                 proxyInfo.password = StringUtils.trimToNull(PROXY_PASSWORD);
@@ -165,7 +170,8 @@ public final class HttpClientFactory {
             if (proxyUrl.getUserInfo() != null) {
                 final String[] credentials = proxyUrl.getUserInfo().split(":");
                 if (credentials.length > 0) {
-                    proxyInfo.username = URLDecoder.decode(credentials[0], "UTF-8");
+                    String username = URLDecoder.decode(credentials[0], "UTF-8");
+                    parseProxyUsername(proxyInfo, username);
                 }
                 if (credentials.length == 2) {
                     proxyInfo.password = URLDecoder.decode(credentials[1], "UTF-8");
@@ -175,12 +181,23 @@ public final class HttpClientFactory {
         return proxyInfo;
     }
 
+    @SuppressWarnings("deprecation")
+    private static void parseProxyUsername(ProxyInfo proxyInfo, String username) {
+        if (username.contains("\\")) {
+            proxyInfo.domain = username.substring(0, username.indexOf("\\"));
+            proxyInfo.username = username.substring(username.indexOf("\\") + 1);
+        } else {
+            proxyInfo.username = username;
+        }
+    }
+
     /**
      * A simple holder class for proxy configuration.
      */
     public static class ProxyInfo {
         private String host;
         private int port;
+        private String domain;
         private String username;
         private String password;
 
@@ -192,6 +209,10 @@ public final class HttpClientFactory {
             return port;
         }
 
+        public String getDomain() {
+            return domain;
+        }
+
         public String getUsername() {
             return username;
         }
@@ -199,12 +220,6 @@ public final class HttpClientFactory {
         public String getPassword() {
             return password;
         }
-    }
-
-    //todo: remove me
-    public static void main(String[] args) {
-        HttpClient client = createClient();
-        System.out.println("done");
     }
 
 }

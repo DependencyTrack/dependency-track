@@ -24,7 +24,7 @@ docker volume create --name dependency-track
 docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
 ```
 
-#### Runner Docker image behind proxy server
+#### Running container behind proxy server
 
 If running Docker behind a proxy server, specify the proxy settings in the `HTTPS_PROXY` or `HTTP_PROXY` 
 environment variables. Dependency-Track checks for the existence of these variables and attempts to use

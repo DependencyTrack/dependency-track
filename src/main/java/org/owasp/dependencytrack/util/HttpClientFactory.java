@@ -33,8 +33,10 @@ import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Map;
 
 public final class HttpClientFactory {
@@ -121,7 +123,7 @@ public final class HttpClientFactory {
             if (proxyInfo == null) {
                 proxyInfo = buildfromEnvironment("http_proxy");
             }
-        } catch (MalformedURLException | SecurityException e) {
+        } catch (MalformedURLException | SecurityException | UnsupportedEncodingException e) {
             LOGGER.warn("Could not parse proxy settings from environment", e);
         }
         return proxyInfo;
@@ -135,7 +137,9 @@ public final class HttpClientFactory {
      * @throws MalformedURLException if the URL of the proxy setting cannot be parsed
      * @throws SecurityException if the environment variable cannot be retrieved
      */
-    private static ProxyInfo buildfromEnvironment(String variable) throws MalformedURLException, SecurityException {
+    private static ProxyInfo buildfromEnvironment(String variable)
+            throws MalformedURLException, SecurityException, UnsupportedEncodingException {
+
         if (variable == null) {
             return null;
         }
@@ -157,10 +161,10 @@ public final class HttpClientFactory {
             if (proxyUrl.getUserInfo() != null) {
                 final String[] credentials = proxyUrl.getUserInfo().split(":");
                 if (credentials.length > 0) {
-                    proxyInfo.username = credentials[0];
+                    proxyInfo.username = URLDecoder.decode(credentials[0], "UTF-8");
                 }
                 if (credentials.length == 2) {
-                    proxyInfo.password = credentials[1];
+                    proxyInfo.password = URLDecoder.decode(credentials[1], "UTF-8");
                 }
             }
         }
@@ -193,11 +197,10 @@ public final class HttpClientFactory {
         }
     }
 
+    //todo: remove me
     public static void main(String[] args) {
-
         HttpClient client = createClient();
         System.out.println("done");
-
     }
 
 }

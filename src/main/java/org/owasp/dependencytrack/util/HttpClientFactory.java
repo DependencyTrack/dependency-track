@@ -117,9 +117,9 @@ public final class HttpClientFactory {
     private static ProxyInfo fromEnvironment() {
         ProxyInfo proxyInfo = null;
         try {
-            proxyInfo = buildfromEnvironment(System.getenv("https_proxy"));
+            proxyInfo = buildfromEnvironment("https_proxy");
             if (proxyInfo == null) {
-                proxyInfo = buildfromEnvironment(System.getenv("http_proxy"));
+                proxyInfo = buildfromEnvironment("http_proxy");
             }
         } catch (MalformedURLException | SecurityException e) {
             LOGGER.warn("Could not parse proxy settings from environment", e);
@@ -191,6 +191,13 @@ public final class HttpClientFactory {
         public String getPassword() {
             return password;
         }
+    }
+
+    public static void main(String[] args) {
+
+        HttpClient client = createClient();
+        System.out.println("done");
+
     }
 
 }

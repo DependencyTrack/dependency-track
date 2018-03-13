@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.event.framework.Event;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.util.JavaVersion;
@@ -28,6 +29,7 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.json.JSONObject;
+import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.NspAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Vulnerability;
@@ -140,6 +142,7 @@ public class NspAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
                 if (component != null && vulnerabiity != null) {
                     qm.addVulnerability(vulnerabiity, component);
                 }
+                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
             }
         }
     }

@@ -118,7 +118,7 @@ other than an modern version of Docker. Dependency-Track uses the following conv
 
 ```shell
 docker pull owasp/dependency-track
-docker volume create dependency-track
+docker volume create --name dependency-track
 docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
 ```
 
@@ -126,8 +126,8 @@ To run snapshot releases (not recommended for production):
 
 ```shell
 docker pull owasp/dependency-track:snapshot
-docker volume create dependency-track
-docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
+docker volume create --name dependency-track
+docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track:snapshot
 ```
 
 Deploying the Executable WAR

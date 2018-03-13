@@ -40,7 +40,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
-
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;

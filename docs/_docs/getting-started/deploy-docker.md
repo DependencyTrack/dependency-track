@@ -18,11 +18,14 @@ other than an modern version of Docker.
 docker pull owasp/dependency-track
 
 # Creates a dedicated volume where data can be stored outside the container
-docker volume create dependency-track
+docker volume create --name dependency-track
 
 # Run the container
-docker run -d -p 8080:8080 -v dependency-track:/data owasp/dependency-track
+docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
 ```
 
-If running Docker behind a corporate proxy server, specify the proxy settings in the `http_proxy` 
-environment variable.
+#### Runner Docker image behind proxy server
+
+If running Docker behind a proxy server, specify the proxy settings in the `HTTPS_PROXY` or `HTTP_PROXY` 
+environment variables. Dependency-Track checks for the existence of these variables and attempts to use
+them when specified.

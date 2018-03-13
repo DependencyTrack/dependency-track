@@ -181,6 +181,11 @@ public final class HttpClientFactory {
         return proxyInfo;
     }
 
+    /**
+     * Optionally parses usernames if they are NTLM formatted (domain\username).
+     * @param proxyInfo The ProxyInfo object to update from the result of parsing
+     * @param username The username to parse
+     */
     @SuppressWarnings("deprecation")
     private static void parseProxyUsername(ProxyInfo proxyInfo, String username) {
         if (username.contains("\\")) {

@@ -21,6 +21,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.EventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
+import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -88,10 +89,26 @@ public class ScanUploadProcessingTask implements Subscriber {
                     if (component == null) {
                         // Component could not be resolved (was null), so create a new component
                         component = new Component();
-                        component.setName(new ComponentNameResolver().resolve(dependency));
-                        component.setVersion(new ComponentVersionResolver().resolve(dependency));
-                        component.setGroup(new ComponentGroupResolver().resolve(dependency));
-                        component.setPurl(new PackageURLResolver().resolve(dependency));
+
+
+                        // Run PackageURL resolution and use that evidence to populate metadata
+                        final PackageURL purl = new PackageURLResolver().resolve(dependency);
+                        if (purl != null) {
+                            component.setGroup(purl.getNamespace());
+                            component.setName(purl.getName());
+                            component.setVersion(purl.getVersion());
+                            if (purl.getNamespace() == null) {
+                                component.setGroup(new ComponentGroupResolver().resolve(dependency));
+                            }
+                        // If a PackageURL could not be resolved, use the individual metadata resolvers.
+                        } else {
+                            component.setGroup(new ComponentGroupResolver().resolve(dependency));
+                            component.setName(new ComponentNameResolver().resolve(dependency));
+                            component.setVersion(new ComponentVersionResolver().resolve(dependency));
+                        }
+                        component.setPurl(purl);
+
+
                         component.setFilename(dependency.getFileName());
                         component.setMd5(dependency.getMd5());
                         component.setSha1(dependency.getSha1());

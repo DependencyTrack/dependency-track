@@ -166,3 +166,12 @@ alpine.ldap.attribute.mail=mail
 # Refer to https://vulndb.cyberriskanalytics.com/ for information.
 # datasource.vulndb.enabled=false
 ```
+
+#### Proxy Configuration
+
+Proxy support can be configured in one of two ways, using the proxy settings defined
+in `application.properties` or through environment variables. By default, the system
+will attempt to read the `https_proxy` and `http_proxy` environment variables. If one 
+of these are set, Dependency-Track will use them automatically.
+
+Dependency-Track support proxies that require BASIC, DIGEST, and NTLM authentication.

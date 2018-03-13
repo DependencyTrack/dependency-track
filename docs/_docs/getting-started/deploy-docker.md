@@ -23,3 +23,6 @@ docker volume create dependency-track
 # Run the container
 docker run -d -p 8080:8080 -v dependency-track:/data owasp/dependency-track
 ```
+
+If running Docker behind a corporate proxy server, specify the proxy settings in the `http_proxy` 
+environment variable.

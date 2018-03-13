@@ -30,6 +30,8 @@ import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.impl.auth.BasicSchemeFactory;
+import org.apache.http.impl.auth.DigestSchemeFactory;
+import org.apache.http.impl.auth.NTLMSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
@@ -74,6 +76,8 @@ public final class HttpClientFactory {
         clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
         Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
                 .register(AuthSchemes.BASIC, new BasicSchemeFactory())
+                .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
+                .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         return clientBuilder.build();

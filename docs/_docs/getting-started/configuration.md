@@ -174,4 +174,4 @@ in `application.properties` or through environment variables. By default, the sy
 will attempt to read the `https_proxy` and `http_proxy` environment variables. If one 
 of these are set, Dependency-Track will use them automatically.
 
-Dependency-Track support proxies that require BASIC, DIGEST, and NTLM authentication.
+Dependency-Track supports proxies that require BASIC, DIGEST, and NTLM authentication.

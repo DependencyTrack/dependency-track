@@ -30,6 +30,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.auth.DigestSchemeFactory;
 import org.apache.http.impl.auth.NTLMSchemeFactory;
@@ -85,6 +86,11 @@ public final class HttpClientFactory {
                 .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
+
+        if (proxyInfo != null) {
+            clientBuilder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+        }
+
         return clientBuilder.build();
     }
 

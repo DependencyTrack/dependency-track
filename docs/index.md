@@ -16,11 +16,10 @@ components used in all the applications an organization creates or consumes. It 
 vulnerability databases including the [National Vulnerability Database] (NVD), [Node Security Platform] (NSP),
 and [VulnDB] from [Risk Based Security]. Dependency-Track monitors all applications in its portfolio in order
 to proactively identify vulnerabilities in components that are placing your applications at risk. Use of 
-Dependency-Track can play a vital role in an overall Supply Chain Risk Management (SCRM) program by providing 
-many of the recommendations outlined in the [NIST Cybersecurity Framework].
+Dependency-Track can play a vital role in an overall Cyber Supply Chain Risk Management (C-SCRM) program.
 
 Dependency-Track is designed to be used in an automated DevOps environment where [Dependency-Check]
-results or specific BOM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
+results or specific BoM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
 [Dependency-Check Jenkins Plugin] is highly recommended for this purpose and is well suited for use
 in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to accelerate while
 still keeping tabs on component usage and any inherited risk.

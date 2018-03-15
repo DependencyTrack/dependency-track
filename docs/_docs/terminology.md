@@ -10,10 +10,10 @@ order:
 A long randomly generated number used to assert authentication. All REST APIs use API keys for authentication. API keys
 are assigned on a per-team basis. A team may have zero or more API keys assigned.
 
-### Bill of Material (BOM)
-In supply chains, a bill of material (BOM) defines and describes the contents of what is used in the manufacturing and 
+### Bill of Material (BoM)
+In supply chains, a bill of material (BoM) defines and describes the contents of what is used in the manufacturing and 
 packaging of the deliverable. In software supply chains, this refers to the contents of all components bundled with the
-software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports two BOM 
+software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports two BoM 
 formats: CycloneDX and SPDX.
 
 ### Component
@@ -43,7 +43,7 @@ An LDAP user is an externally managed user that may (optionally) have the abilit
 
 ### License
 Refers to how a project or component is licensed. Dependency-Track supports (but does not enforce) the use of SPDX
-license IDs so that license names and terms can be automatically resolved when BOMs are imported or components are added.
+license IDs so that license names and terms can be automatically resolved when BoMs are imported or components are added.
 
 ### Managed User
 An internally managed user that has the ability to login to Dependency-Track.
@@ -70,8 +70,8 @@ intelligence services in an effort to determine if that component has known vuln
 
 ### SPDX
 Software Package Data Exchange (SPDX) provides two complimentary specifications, a bill-of-material specification, and
-a standardized list of open source licenses. The BOM specification relies on either 'tag' or 'rdf' files to document
-software components as bill of materials. In contrast to CycloneDX, the SPDX BOM spec is a heavyweight (and very robust)
+a standardized list of open source licenses. The BoM specification relies on either 'tag' or 'rdf' files to document
+software components as bill of materials. In contrast to CycloneDX, the SPDX BoM spec is a heavyweight (and very robust)
 specification. The standardized license list is a lightweight spec that has been adopted across multiple industries 
 and is recommended for use in all software projects. See: <https://spdx.org/>
 

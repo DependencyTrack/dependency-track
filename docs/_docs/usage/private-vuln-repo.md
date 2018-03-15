@@ -2,7 +2,7 @@
 title: Private Vulnerability Repository
 category: Usage
 chapter: 2
-order: 6
+order: 4
 ---
 
 Dependency-Track has the ability to maintain it's own repository of internally managed vulnerabilities. The private

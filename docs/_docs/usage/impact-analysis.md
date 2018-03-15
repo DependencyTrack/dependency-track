@@ -7,8 +7,8 @@ order: 2
 
 When a vulnerability is published, organizations typically analyze the potential for impact in their environment.
 Dependency-Track can help identify all affected projects across the organization. If the vulnerability is published 
-to a vulnerability datasource Dependency-Track supports (i.e. NVD, NSP, VulnDB, etc), then simply looking up the 
-vulnerability in the platform is all that's required.
+to a datasource Dependency-Track supports (i.e. NVD, NSP, VulnDB, etc), then simply looking up the vulnerability in
+the platform is all that's required.
 
 ![incident response](/images/screenshots/incident-response-vulnerability.png)
 

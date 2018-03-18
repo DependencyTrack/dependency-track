@@ -153,7 +153,7 @@ public class MetricsResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response RefreshPortfolioMetrics() {
         SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
         return Response.ok().build();
@@ -242,7 +242,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response RefreshProjectMetrics(
             @ApiParam(value = "The UUID of the project to refresh metrics on", required = true)
             @PathParam("uuid") String uuid) {
@@ -343,7 +343,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permission.COMPONENT_MANAGE)
     public Response RefreshComponentMetrics(
             @ApiParam(value = "The UUID of the component to refresh metrics on", required = true)
             @PathParam("uuid") String uuid) {

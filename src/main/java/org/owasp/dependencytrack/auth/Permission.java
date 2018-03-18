@@ -27,7 +27,9 @@ import alpine.auth.AlpinePermission;
  */
 public class Permission extends AlpinePermission {
 
+    public static final String BOM_UPLOAD = "BOM_UPLOAD";
     public static final String SCAN_UPLOAD = "SCAN_UPLOAD";
+
     public static final String PROJECT_MANAGE = "PROJECT_MANAGE";
     public static final String PROJECT_VIEW = "PROJECT_VIEW";
 

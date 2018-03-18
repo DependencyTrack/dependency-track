@@ -116,7 +116,7 @@ public class DependencyResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project or component could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response addDependency(DependencyRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(
@@ -155,7 +155,7 @@ public class DependencyResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project or component could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permission.PROJECT_MANAGE)
     public Response removeDependency(DependencyRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(

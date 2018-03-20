@@ -18,5 +18,6 @@
 <script type="text/javascript" src="<c:url value="/assets/showdown/showdown.min.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/showdown/showdown-xss-filter.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/bind.min.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/auth.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/rest.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/common.js"/>"></script>

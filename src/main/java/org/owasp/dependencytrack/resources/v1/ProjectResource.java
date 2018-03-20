@@ -28,7 +28,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang.StringUtils;
-import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -65,7 +65,7 @@ public class ProjectResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjects() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getProjects();
@@ -84,7 +84,7 @@ public class ProjectResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProject(
             @ApiParam(value = "The UUID of the project to retrieve", required = true)
             @PathParam("uuid") String uuid) {
@@ -110,7 +110,7 @@ public class ProjectResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectsByTag(
             @ApiParam(value = "The tag to query on", required = true)
             @PathParam("tag") String tagString) {
@@ -127,7 +127,7 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a new project",
-            notes = "Requires 'manage project' permission. If a parent project exists, the UUID of the parent project is required ",
+            notes = "If a parent project exists, the UUID of the parent project is required ",
             response = Project.class,
             code = 201
     )
@@ -135,7 +135,7 @@ public class ProjectResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 409, message = "A project with the specified name already exists")
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response createProject(Project jsonProject) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -172,7 +172,6 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a project",
-            notes = "Requires 'manage project' permission.",
             response = Project.class
     )
     @ApiResponses(value = {
@@ -180,7 +179,7 @@ public class ProjectResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The UUID of the project could not be found"),
             @ApiResponse(code = 409, message = "A project with the specified name already exists")
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response updateProject(Project jsonProject) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -224,14 +223,13 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a project",
-            notes = "Requires 'manage project' permission.",
             code = 204
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteProject(
             @ApiParam(value = "The UUID of the project to delete", required = true)
             @PathParam("uuid") String uuid) {

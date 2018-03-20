@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.time.DateUtils;
-import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
@@ -67,7 +67,7 @@ public class MetricsResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getVulnerabilityMetrics() {
         try (QueryManager qm = new QueryManager()) {
             final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
@@ -85,7 +85,7 @@ public class MetricsResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioCurrentMetrics() {
         try (QueryManager qm = new QueryManager()) {
             final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
@@ -105,7 +105,7 @@ public class MetricsResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioMetricsSince(
             @ApiParam(value = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
@@ -131,7 +131,7 @@ public class MetricsResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getPortfolioMetricsXDays(
             @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
@@ -153,7 +153,7 @@ public class MetricsResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshPortfolioMetrics() {
         SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
         return Response.ok().build();
@@ -170,7 +170,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectCurrentMetrics(
             @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid) {
@@ -198,7 +198,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectMetricsSince(
             @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid,
@@ -221,7 +221,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectMetricsXDays(
             @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid,
@@ -242,7 +242,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.PROJECT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshProjectMetrics(
             @ApiParam(value = "The UUID of the project to refresh metrics on", required = true)
             @PathParam("uuid") String uuid) {
@@ -268,7 +268,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentCurrentMetrics(
             @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid) {
@@ -296,7 +296,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentMetricsSince(
             @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid,
@@ -322,7 +322,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentMetricsXDays(
             @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid,
@@ -343,7 +343,7 @@ public class MetricsResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshComponentMetrics(
             @ApiParam(value = "The UUID of the component to refresh metrics on", required = true)
             @PathParam("uuid") String uuid) {

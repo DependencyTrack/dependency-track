@@ -94,7 +94,12 @@ $common.isBlank = function isBlank(string) {
  * Called after we have verified that a user is authenticated (if authentication is enabled)
  */
 $common.initialize = function initialize() {
-    //todo: check permissions - populate admin and other navigational things accordingly - add 'data' to param
+    let token = $auth.decodeToken($auth.getToken());
+
+    if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
+        $("#sidebar-admin-button").css("display", "block");
+    }
+
     $rest.getVersion(
         /**
          * @param {Object} data JSON response object
@@ -155,10 +160,60 @@ $("#login-form").submit(function(event) {
         $("#modal-login").modal("hide");
         $common.initialize();
     }, function(data) {
-        // todo: Display invalid username or password somewhere
+        switch (data.responseText) {
+            case "INVALID_CREDENTIALS":
+                $common.displayInfoModal("Invalid username or password");
+                break;
+            case "EXPIRED_CREDENTIALS":
+                $common.displayInfoModal("The supplied credential have expired");
+                break;
+            case "FORCE_PASSWORD_CHANGE":
+                $("#modal-login").modal("hide");
+                $("#modal-forcePasswordChange").modal("show");
+                break;
+            case "SUSPENDED":
+                $common.displayInfoModal("This account has been suspended and is no longer active");
+                break;
+            case "UNMAPPED_ACCOUNT":
+                $common.displayInfoModal("This account does not have access to Dependency-Track");
+                break;
+            default:
+                $common.displayInfoModal("Unable to authenticate. Contact your Dependency-Track administrator");
+        }
     });
     usernameElement.val("");
     passwordElement.val("");
+});
+
+/**
+ * Executed when the change password button is clicked. Prevent the form from actually being
+ * submitted and uses javascript to submit the form info.
+ *
+ * @method $ jQuery selector
+ */
+$("#forcePasswordChange-form").submit(function(event) {
+    event.preventDefault();
+    let usernameElement = $("#forcePasswordChange-username");
+    let username = usernameElement.val();
+    let passwordElement = $("#forcePasswordChange-password");
+    let password = passwordElement.val();
+    let newPasswordElement = $("#forcePasswordChange-newPassword");
+    let newPassword = newPasswordElement.val();
+    let confirmPasswordElement = $("#forcePasswordChange-confirmPassword");
+    let confirmPassword = confirmPasswordElement.val();
+    $("#modal-forcePasswordChange").modal("hide");
+    $rest.forceChangePassword(username, password, newPassword, confirmPassword, function(data) {
+        $common.displayInfoModal("Password successfully changed");
+        $("#modal-forcePasswordChange").modal("hide");
+        $("#modal-login").modal("show");
+    }, function(data) {
+        $("#modal-forcePasswordChange").modal("show");
+        $common.displayInfoModal(data.responseText);
+    });
+    usernameElement.val("");
+    passwordElement.val("");
+    newPasswordElement.val("");
+    confirmPasswordElement.val("");
 });
 
 /**

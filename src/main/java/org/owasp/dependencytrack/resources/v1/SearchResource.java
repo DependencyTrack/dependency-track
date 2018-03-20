@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.search.SearchManager;
 import org.owasp.dependencytrack.search.SearchResult;
 import javax.ws.rs.GET;
@@ -54,7 +54,7 @@ public class SearchResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.PROJECT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response search(@PathParam("query") String query) {
         final SearchManager searchManager = new SearchManager();
         final SearchResult searchResult = searchManager.searchIndices(query, 10);

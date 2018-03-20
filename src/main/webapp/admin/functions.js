@@ -191,6 +191,25 @@ function ldapUserDetailFormatter(index, row) {
                 <span>&nbsp;</span>
             </li>`;
 
+    let permissionsHtml = "";
+    if (!(row.permissions === undefined)) {
+        for (let i = 0; i < row.permissions.length; i++) {
+            permissionsHtml += `
+            <li class="list-group-item" id="container-permission-${row.permissions[i].name}">
+                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermission('${row.permissions[i].name}', '${row.username}')" data-toggle="tooltip" title="Remove Permission">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                <span id="${row.username}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
+            </li>`;
+        }
+    }
+    permissionsHtml += `
+            <li class="list-group-item" id="container-no-permission">
+                <a href="#" id="add-permission-to-${row.username}" data-toggle="modal" data-target="#modalAssignPermission" data-username="${row.username}" title="Add Permission">
+                    <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
+                </a>
+                <span>&nbsp;</span>
+            </li>`;
 
     let template = `
     <div class="col-sm-6 col-md-6">
@@ -201,14 +220,15 @@ function ldapUserDetailFormatter(index, row) {
                 ${teamsHtml}
             </ul>
         </div> 
+        <div class="form-group">
+            <label for="inputPermissions">Permissions</label>
+            <ul class="list-group" id="inputPermissions">
+                ${permissionsHtml}
+            </ul>
+        </div> 
     </div>
     <div class="col-sm-6 col-md-6">
-        <div class="form-group">
-            <label for="inputTeamMembers">Statistics</label>
-            <ul class="list-group" id="inputTeamMembers">
-                Last logon:
-            </ul>
-        </div>
+        <!-- Perhaps other fields here in the future? -->
         <button type="button" class="btn btn-danger pull-right" id="deleteUser-${row.username}" data-user-username="${row.username}">Delete User</button>
     </form>
     </div>
@@ -216,6 +236,9 @@ function ldapUserDetailFormatter(index, row) {
         $("#deleteUser-${row.username}").on("click", deleteLdapUser);
         $("#add-user-${row.username}-to-team").on("click", function () {
             $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
+        });
+        $("#add-permission-to-${row.username}").on("click", function () {
+            $("#assignPermission").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
     </script>
 `;
@@ -251,9 +274,33 @@ function managedUserDetailFormatter(index, row) {
                 <span>&nbsp;</span>
             </li>`;
 
+    let permissionsHtml = "";
+    if (!(row.permissions === undefined)) {
+        for (let i = 0; i < row.permissions.length; i++) {
+            permissionsHtml += `
+            <li class="list-group-item" id="container-permission-${row.permissions[i].name}">
+                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermission('${row.permissions[i].name}', '${row.username}')" data-toggle="tooltip" title="Remove Permission">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                <span id="${row.username}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
+            </li>`;
+        }
+    }
+    permissionsHtml += `
+            <li class="list-group-item" id="container-no-permission">
+                <a href="#" id="add-permission-to-${row.username}" data-toggle="modal" data-target="#modalAssignPermission" data-username="${row.username}" title="Add Permission">
+                    <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
+                </a>
+                <span>&nbsp;</span>
+            </li>`;
+
+
+    let forcePasswordChange = (row.forcePasswordChange ? 'checked=checked' : "");
+    let nonExpiryPassword = (row.nonExpiryPassword ? 'checked=checked' : "");
+    let suspended = (row.suspended ? 'checked=checked' : "");
 
     let template = `
-    <div class="col-sm-6 col-md-6">
+    <div class="col-md-6">
     <form id="form-${row.uuid}">
         <div class="form-group">
             <label for="inputApiKeys">Team Membership</label>
@@ -261,15 +308,34 @@ function managedUserDetailFormatter(index, row) {
                 ${teamsHtml}
             </ul>
         </div> 
-    </div>
-    <div class="col-sm-6 col-md-6">
         <div class="form-group">
-            <label for="inputTeamMembers">Statistics</label>
-            <ul class="list-group" id="inputTeamMembers">
-                Last logon:
+            <label for="inputPermissions">Permissions</label>
+            <ul class="list-group" id="inputPermissions">
+                ${permissionsHtml}
             </ul>
+        </div> 
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
+            <label class="required" for="updateManagedUserFullnameInput">Full Name</label>
+            <input type="text" class="form-control required" value="${row.fullname}" id="updateManagedUserFullnameInput-${row.username}" data-username="${row.username}">
         </div>
-        <button type="button" class="btn btn-danger pull-right" id="deleteUser-${row.username}" data-user-username="${row.username}">Delete User</button>
+        <div class="form-group">
+            <label class="required" for="updateManagedUserEmailInput">Email</label>
+            <input type="email" class="form-control required" value="${row.email}" id="updateManagedUserEmailInput-${row.username}" data-username="${row.username}">
+        </div>              
+        <div class="checkbox inDetailFormatterForm">
+            <label><input type="checkbox" ${forcePasswordChange} id="updateManagedUserForcePasswordChangeInput-${row.username}" data-username="${row.username}"> User must change password at next login</label>
+        </div>
+        <div class="checkbox inDetailFormatterForm">
+            <label><input type="checkbox" ${nonExpiryPassword} id="updateManagedUserNonExpiryPasswordInput-${row.username}" data-username="${row.username}"> Password never expires</label>
+        </div>
+        <div class="checkbox inDetailFormatterForm">
+            <label><input type="checkbox" ${suspended} id="updateManagedUserSuspendedInput-${row.username}" data-username="${row.username}"> Suspended</label>
+        </div>
+        <div class="inDetailFormatterForm">
+            <button type="button" class="btn btn-danger pull-right" id="deleteUser-${row.username}" data-user-username="${row.username}">Delete User</button>
+        </div>
     </form>
     </div>
     <script type="text/javascript">
@@ -277,6 +343,14 @@ function managedUserDetailFormatter(index, row) {
         $("#add-user-${row.username}-to-team").on("click", function () {
             $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
+        $("#add-permission-to-${row.username}").on("click", function () {
+            $("#assignPermission").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
+        });
+        $("#updateManagedUserFullnameInput-${row.username}").keydown($common.debounce(updateManagedUser, 750));
+        $("#updateManagedUserEmailInput-${row.username}").keydown($common.debounce(updateManagedUser, 750));
+        $("#updateManagedUserForcePasswordChangeInput-${row.username}").change($common.debounce(updateManagedUser, 750));
+        $("#updateManagedUserNonExpiryPasswordInput-${row.username}").change($common.debounce(updateManagedUser, 750));
+        $("#updateManagedUserSuspendedInput-${row.username}").change($common.debounce(updateManagedUser, 750));
     </script>
 `;
     html.push(template);
@@ -320,15 +394,54 @@ function deleteTeam() {
 }
 
 /**
+ * Updates a managed user by retrieving field values and calling the REST function for the service.
+ */
+function updateManagedUser() {
+    let username    = $(this).data("username");
+    let fullname    = $("#updateManagedUserFullnameInput-" + username).val();
+    let email       = $("#updateManagedUserEmailInput-" + username).val();
+    let forceChange = $("#updateManagedUserForcePasswordChangeInput-" + username).is(':checked');
+    let nonExpiry   = $("#updateManagedUserNonExpiryPasswordInput-" + username).is(':checked');
+    let suspended   = $("#updateManagedUserSuspendedInput-" + username).is(':checked');
+    $rest.updateManagedUser(username, fullname, email, null, null, forceChange, nonExpiry, suspended, function() {
+        $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
  * Creates a managed user by retrieving field values and calling the REST function for the service.
  */
 function createManagedUser() {
-    const inputField = $("#createManagedUserNameInput");
-    const username = inputField.val();
-    $rest.createManagedUser(username, function() {
+    const usernameField  = $("#createManagedUserNameInput");
+    const fullnameField  = $("#createManagedUserFullnameInput");
+    const emailField     = $("#createManagedUserEmailInput");
+    const passwordField  = $("#createManagedUserPasswordInput");
+    const confirmField   = $("#createManagedUserConfirmInput");
+    const forceChngField = $("#createManagedUserForcePasswordChangeInput");
+    const nonExpiryField = $("#createManagedUserNonExpiryPasswordInput");
+    const suspendedField = $("#createManagedUserSuspendedInput");
+
+    const username    = usernameField.val();
+    const fullname    = fullnameField.val();
+    const email       = emailField.val();
+    const password    = passwordField.val();
+    const confirm     = confirmField.val();
+    const forcechange = forceChngField.is(':checked');
+    const nonexpiry   = nonExpiryField.is(':checked');
+    const suspended   = suspendedField.is(':checked');
+
+    $rest.createManagedUser(username, fullname, email, password, confirm, forcechange, nonexpiry, suspended, function() {
         $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
     });
-    inputField.val("");
+
+    usernameField.val("");
+    fullnameField.val("");
+    emailField.val("");
+    passwordField.val("");
+    confirmField.val("");
+    forceChngField.attr('checked', false);
+    nonExpiryField.attr('checked', false);
+    suspendedField.attr('checked', false);
 }
 
 /**
@@ -434,6 +547,34 @@ function removeTeamMembership(uuid, username) {
 }
 
 /**
+ * Assigns a permission by retrieving field values and calling the REST function for the service.
+ */
+function assignPermission() {
+    const username = $("#assignPermission").attr("data-username");
+    const selections = $("#permissionsTable").bootstrapTable("getAllSelections");
+    for (let i = 0; i < selections.length; i++) {
+        let permissionName = selections[i].name;
+        $rest.assignPermissionToUser(username, permissionName, function (data) {
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+                $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+            }
+        );
+    }
+}
+
+/**
+ * Removes permission by retrieving field values and calling the REST function for the service.
+ */
+function removePermission(permissionName, username) {
+    $rest.removePermissionFromUser(username, permissionName, function (data) {
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
+        $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+        $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
  * Setup events and trigger other stuff when the page is loaded and ready
  */
 $(document).ready(function () {
@@ -452,6 +593,9 @@ $(document).ready(function () {
 
     // Listen for if the button to assign a team to a user is clicked
     $("#assignTeamToUser").on("click", assignTeamToUser);
+
+    // Listen for if the button to assign a permission is clicked
+    $("#assignPermission").on("click", assignPermission);
 
     // When modal closes, clear out the input fields
     $("#modalCreateTeam").on("hidden.bs.modal", function () {

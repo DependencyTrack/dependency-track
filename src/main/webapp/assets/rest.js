@@ -31,11 +31,13 @@ const METHOD_PUT = "PUT";
 const METHOD_DELETE = "DELETE";
 const URL_ABOUT = "api/version";
 const URL_LOGIN = "api/v1/user/login";
+const URL_FORCE_PW_CHANGE = "api/v1/user/forceChangePassword";
 const URL_TEAM = "api/v1/team";
 const URL_USER = "api/v1/user";
 const URL_USER_LDAP = "api/v1/user/ldap";
 const URL_USER_MANAGED = "api/v1/user/managed";
 const URL_USER_SELF = "api/v1/user/self";
+const URL_PERMISSION = "api/v1/permission";
 const URL_PROJECT = "api/v1/project";
 const URL_LICENSE = "api/v1/license";
 const URL_CWE = "api/v1/cwe";
@@ -202,6 +204,45 @@ $rest.login = function login(username, password, successCallback, failCallback) 
                 if (failCallback) {
                     $rest.callbackValidator(failCallback(data));
                 }
+            },
+            403: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Performs a forced password change using the specified username and password to assert authentication along with
+ * the new and confirmed password.
+ */
+$rest.forceChangePassword = function forceChangePassword(username, currentPassword, newPassword, confirmPassword, successCallback, failCallback) {
+    $.ajax({
+        type: METHOD_POST,
+        url: $rest.contextPath() + URL_FORCE_PW_CHANGE,
+        data: ({username: username, password: currentPassword, newPassword: newPassword, confirmPassword: confirmPassword}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            401: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            },
+            403: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            },
+            406: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
             }
         }
     });
@@ -227,7 +268,6 @@ $rest.getPrincipalSelf = function getPrincipalSelf(successCallback, failCallback
         }
     });
 };
-
 
 /**
  * Updates user info (if available)
@@ -1107,13 +1147,13 @@ $rest.deleteTeam = function deleteTeam(uuid, successCallback, failCallback) {
 /**
  * Service called when a managed user is created.
  */
-$rest.createManagedUser = function createManagedUser(username, successCallback, failCallback) {
+$rest.createManagedUser = function createManagedUser(username, fullname, email, newPassword, confirmPassword, forcePasswordChange, nonExpiryPassword, suspended, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_USER_MANAGED,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
-        data: JSON.stringify({username: username}),
+        data: JSON.stringify({username: username, fullname: fullname, email: email, newPassword: newPassword, confirmPassword: confirmPassword, forcePasswordChange: forcePasswordChange, nonExpiryPassword: nonExpiryPassword, suspended: suspended}),
         statusCode: {
             201: function(data) {
                 if (successCallback) {
@@ -1132,13 +1172,13 @@ $rest.createManagedUser = function createManagedUser(username, successCallback, 
 /**
  * Service called when a managed user is updated.
  */
-$rest.updateManagedUser = function updateManagedUser(username, name, email, password, confirm, successCallback, failCallback) {
+$rest.updateManagedUser = function updateManagedUser(username, fullname, email, newPassword, confirmPassword, forcePasswordChange, nonExpiryPassword, suspended, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_USER_MANAGED,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_POST,
-        data: JSON.stringify({username: username, name: name, email: email, password: password, confirm: confirm}),
+        data: JSON.stringify({username: username, fullname: fullname, email: email, newPassword: newPassword, confirmPassword: confirmPassword, forcePasswordChange: forcePasswordChange, nonExpiryPassword: nonExpiryPassword, suspended: suspended}),
         statusCode: {
             200: function(data) {
                 if (successCallback) {
@@ -1373,6 +1413,72 @@ $rest.removeUserFromTeam = function removeUserFromTeam(username, teamuuid, succe
         dataType: DATA_TYPE,
         type: METHOD_DELETE,
         data: JSON.stringify({uuid: teamuuid}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                // The user was not a member of the specified team
+                // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a permission is assigned.
+ */
+$rest.assignPermissionToUser = function assignPermissionToUser(username, permissionName, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_PERMISSION + "/" + permissionName + "/user/" + username,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                // The user is already a member of the specified team
+                // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a permission is un-assigned.
+ */
+$rest.removePermissionFromUser = function removePermissionFromUser(username, permissionName, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_PERMISSION + "/" + permissionName + "/user/" + username,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
         statusCode: {
             200: function (data) {
                 if (successCallback) {

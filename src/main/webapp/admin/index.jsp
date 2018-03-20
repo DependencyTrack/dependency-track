@@ -19,6 +19,7 @@
                         <li class="active"><a href="#teamsTab" data-toggle="tab">Teams</a></li>
                         <li><a href="#ldapUsersTab" data-toggle="tab">LDAP Users</a></li>
                         <li><a href="#managedUsersTab" data-toggle="tab">Managed Users</a></li>
+                        <li><a href="#permissionsTab" data-toggle="tab">Permissions</a></li>
                     </ul>
                 </div>
                 <div class="panel-body tight">
@@ -77,8 +78,21 @@
                                 <thead>
                                 <tr>
                                     <th data-align="left" data-field="username">Username</th>
+                                    <th data-align="left" data-field="fullname">Full Name</th>
                                     <th data-align="left" data-field="email">Email</th>
                                     <th data-align="left" data-field="teamsNum">Teams</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="permissionsTab">
+                            <table class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/permission"/>"
+                                   data-show-columns="true" data-search="true" data-detail-view="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="name">Name</th>
+                                    <th data-align="left" data-field="description">Description</th>
                                 </tr>
                                 </thead>
                             </table>
@@ -148,8 +162,8 @@
                                 <input type="text" name="fullname" class="form-control required" id="createManagedUserFullnameInput">
                             </div>
                             <div class="form-group">
-                                <label for="createManagedUserEmailInput">Email</label>
-                                <input type="email" name="email" class="form-control" id="createManagedUserEmailInput">
+                                <label class="required" for="createManagedUserEmailInput">Email</label>
+                                <input type="email" name="email" class="form-control required" id="createManagedUserEmailInput">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -161,9 +175,14 @@
                                 <label class="required" for="createManagedUserConfirmInput">Confirm Password</label>
                                 <input type="password" name="confirmPassword" class="form-control required" id="createManagedUserConfirmInput">
                             </div>
-                            <div class="form-group">
-                                <label for="createManagedUserSuspendedInput">Suspended</label>
-                                <input type="checkbox" name="suspended" class="form-control" id="createManagedUserSuspendedInput">
+                            <div class="checkbox">
+                                <label><input type="checkbox" name="forcePasswordChange" id="createManagedUserForcePasswordChangeInput"> User must change password at next login</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" name="nonExpiryPassword" id="createManagedUserNonExpiryPasswordInput"> Password never expires</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" name="suspended" id="createManagedUserSuspendedInput"> Suspended</label>
                             </div>
                         </div>
                     </div>
@@ -196,6 +215,32 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal" id="assignTeamToUser" data-username="">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalAssignPermission" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Assign Permission</span>
+                </div>
+                <div class="modal-body">
+                    <table id="permissionsTable" class="table table-hover" data-toggle="table"
+                           data-url="<c:url value="/api/v1/permission"/>"
+                           data-click-to-select="true" data-height="100%">
+                        <thead>
+                        <tr>
+                            <th data-align="middle" data-field="selected" data-checkbox="true"></th>
+                            <th data-align="left" data-field="name">Name</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="assignPermission" data-username="" data-team="">Update</button>
                 </div>
             </div>
         </div>

@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
@@ -60,7 +60,7 @@ public class ScanResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permission.SCAN_UPLOAD)
+    @PermissionRequired(Permissions.Constants.SCAN_UPLOAD)
     public Response uploadScan(ScanSubmitRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(

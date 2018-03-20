@@ -125,6 +125,40 @@
     </div>
 </div>
 
+<div class="modal" id="modal-forcePasswordChange" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="modal-forcePasswordChange-label" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+        <div class="modal-dialog vertical-align-center">
+            <div class="modal-content login-modal-content">
+                <div class="modal-header login-modal-header login-header">
+                    <img src="<c:url value="/images/dt.svg"/>" style="width:200px"/>
+                </div>
+                <div class="modal-body login-modal-body">
+                    <form id="forcePasswordChange-form" role="form" action="" method="post" class="login-form" autocomplete="off">
+                        <h4>Password change required</h4>
+                        <div class="form-group">
+                            <label class="sr-only" for="username">Username</label>
+                            <input type="text" placeholder="Username..." class="form-control" id="forcePasswordChange-username">
+                        </div>
+                        <div class="form-group">
+                            <label class="sr-only" for="forcePasswordChange-password">Current Password</label>
+                            <input type="password" placeholder="Current Password..." class="form-control" id="forcePasswordChange-password">
+                        </div>
+                        <div class="form-group">
+                            <label class="sr-only" for="forcePasswordChange-newPassword">New Password</label>
+                            <input type="password" placeholder="New Password..." class="form-control" id="forcePasswordChange-newPassword">
+                        </div>
+                        <div class="form-group">
+                            <label class="sr-only" for="forcePasswordChange-confirmPassword">Confirm New Password</label>
+                            <input type="password" placeholder="Confirm New Password..." class="form-control" id="forcePasswordChange-confirmPassword">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Change Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal-profile" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
@@ -137,12 +171,12 @@
                     <input type="text" name="username" class="form-control" id="profileUsernameInput" disabled="disabled">
                 </div>
                 <div class="form-group">
-                    <label for="profileFullnameInput">Full Name</label>
-                    <input type="text" name="fullname" class="form-control" id="profileFullnameInput">
+                    <label class="required" for="profileFullnameInput">Full Name</label>
+                    <input type="text" name="fullname" class="form-control required" id="profileFullnameInput">
                 </div>
                 <div class="form-group">
-                    <label for="profileEmailInput">Email</label>
-                    <input type="text" name="email" class="form-control" id="profileEmailInput">
+                    <label class="required" for="profileEmailInput">Email</label>
+                    <input type="text" name="email" class="form-control required" id="profileEmailInput">
                 </div>
                 <div class="form-group">
                     <label for="profileNewPasswordInput">New Password</label>

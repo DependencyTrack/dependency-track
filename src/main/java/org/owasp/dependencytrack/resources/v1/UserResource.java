@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.Config;
+import alpine.auth.AlpineAuthenticationException;
 import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.Authenticator;
 import alpine.auth.JsonWebToken;
@@ -27,6 +28,7 @@ import alpine.auth.PermissionRequired;
 import alpine.logging.Logger;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
+import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
@@ -36,13 +38,12 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
-import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.model.IdentifiableObject;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.owasp.security.logging.SecurityMarkers;
-import javax.naming.AuthenticationException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -79,24 +80,87 @@ public class UserResource extends AlpineResource {
             response = String.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Forbidden")
     })
     @AuthenticationNotRequired
     public Response validateCredentials(@FormParam("username") String username, @FormParam("password") String password) {
         final Authenticator auth = new Authenticator(username, password);
-        try {
+        try (QueryManager qm = new QueryManager()) {
             final Principal principal = auth.authenticate();
-            if (principal != null) {
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
-                final KeyManager km = KeyManager.getInstance();
-                final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
-                final String token = jwt.createToken(principal);
-                return Response.ok(token).build();
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
+            List<Permission> permissions = ((UserPrincipal)principal).getPermissions();
+            final KeyManager km = KeyManager.getInstance();
+            final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
+            final String token = jwt.createToken(principal, permissions);
+            return Response.ok(token).build();
+        } catch (AlpineAuthenticationException e) {
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
+            if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
+                return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).entity(e.getCauseType().name()).build();
             }
-        } catch (AuthenticationException e) {
         }
-        super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
-        return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    @POST
+    @Path("forceChangePassword")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(
+            value = "Asserts login credentials and upon successful authentication, verifies passwords match and changes users password",
+            notes = "Upon a successful login, a JSON Web Token will be returned in the response body. This functionality requires authentication to be enabled.",
+            response = String.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Forbidden")
+    })
+    @AuthenticationNotRequired
+    public Response forceChangePassword(@FormParam("username") String username, @FormParam("password") String password,
+                                        @FormParam("newPassword") String newPassword, @FormParam("confirmPassword") String confirmPassword) {
+        final Authenticator auth = new Authenticator(username, password);
+        Principal principal;
+        try (QueryManager qm = new QueryManager()) {
+            try {
+                principal = auth.authenticate();
+            } catch (AlpineAuthenticationException e) {
+                if (AlpineAuthenticationException.CauseType.FORCE_PASSWORD_CHANGE == e.getCauseType()) {
+                    principal = e.getPrincipal();
+                } else {
+                    throw new AlpineAuthenticationException(e.getCauseType());
+                }
+            }
+            if (principal instanceof ManagedUser) {
+                ManagedUser user = qm.getManagedUser(((ManagedUser) principal).getUsername());
+                if (StringUtils.isNotBlank(newPassword) && StringUtils.isNotBlank(confirmPassword) && newPassword.equals(confirmPassword)) {
+                    if (PasswordService.matches(newPassword.toCharArray(), user)) {
+                        super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Existing password is the same as new password. Password not changed. / username: " + username);
+                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Existing password is the same as new password. Password not changed.").build();
+                    } else {
+                        user.setPassword(String.valueOf(PasswordService.createHash(newPassword.toCharArray())));
+                        user.setForcePasswordChange(false);
+                        qm.updateManagedUser(user);
+                        super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Password successfully changed / username: " + username);
+                        return Response.ok().build();
+                    }
+                } else {
+                    super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "The passwords do not match. Password not changed. / username: " + username);
+                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("The passwords do not match. Password not changed.").build();
+                }
+            } else {
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Changing passwords for non-managed users is not forbidden. Password not changed. / username: " + username);
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Changing passwords for non-managed users is not forbidden. Password not changed.").build();
+            }
+        } catch (AlpineAuthenticationException e) {
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
+            if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
+                return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).entity(e.getCauseType().name()).build();
+            }
+        }
     }
 
     @GET
@@ -104,7 +168,6 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all managed users",
-            notes = "Requires 'manage users' permission.",
             response = ManagedUser.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of managed users")
@@ -112,7 +175,7 @@ public class UserResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.MANAGE_USERS)
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response getManagedUsers() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final long totalCount = qm.getCount(ManagedUser.class);
@@ -126,7 +189,6 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all LDAP users",
-            notes = "Requires 'manage users' permission.",
             response = LdapUser.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of LDAP users")
@@ -134,7 +196,7 @@ public class UserResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.MANAGE_USERS)
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response getLdapUsers() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final long totalCount = qm.getCount(LdapUser.class);
@@ -189,13 +251,19 @@ public class UserResource extends AlpineResource {
                     return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
                 } else if (super.isManagedUser()) {
                     ManagedUser user = (ManagedUser)super.getPrincipal();
+                    if (StringUtils.isBlank(jsonUser.getFullname())) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity("Full name is required.").build();
+                    }
+                    if (StringUtils.isBlank(jsonUser.getEmail())) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity("Email address is required.").build();
+                    }
                     user.setFullname(StringUtils.trimToNull(jsonUser.getFullname()));
                     user.setEmail(StringUtils.trimToNull(jsonUser.getEmail()));
                     if (StringUtils.isNotBlank(jsonUser.getNewPassword()) && StringUtils.isNotBlank(jsonUser.getConfirmPassword())) {
                         if (jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
                             user.setPassword(String.valueOf(PasswordService.createHash(jsonUser.getNewPassword().toCharArray())));
                         } else {
-                            return Response.status(Response.Status.BAD_REQUEST).entity("Passwords do not match").build();
+                            return Response.status(Response.Status.BAD_REQUEST).entity("Passwords do not match.").build();
                         }
                     }
                     qm.updateManagedUser(user);
@@ -215,7 +283,6 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a new user that references an existing LDAP object.",
-            notes = "Requires 'manage users' permission.",
             response = LdapUser.class,
             code = 201
     )
@@ -224,7 +291,7 @@ public class UserResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 409, message = "A user with the same username already exists. Cannot create new user")
     })
-    @PermissionRequired(Permission.MANAGE_USERS)
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response createLdapUser(LdapUser jsonUser) {
         try (QueryManager qm = new QueryManager()) {
             if (StringUtils.isBlank(jsonUser.getUsername())) {
@@ -247,14 +314,13 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a user.",
-            notes = "Requires 'manage users' permission.",
             code = 204
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user could not be found")
     })
-    @PermissionRequired(Permission.MANAGE_USERS)
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteLdapUser(LdapUser jsonUser) {
         try (QueryManager qm = new QueryManager()) {
             final LdapUser user = qm.getLdapUser(jsonUser.getUsername());
@@ -274,28 +340,85 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a new user.",
-            notes = "Requires 'manage users' permission.",
             response = ManagedUser.class,
             code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 400, message = "Username cannot be null or blank."),
+            @ApiResponse(code = 400, message = "Missing required field"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 409, message = "A user with the same username already exists. Cannot create new user")
     })
-    @PermissionRequired(Permission.MANAGE_USERS)
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response createManagedUser(ManagedUser jsonUser) {
         try (QueryManager qm = new QueryManager()) {
+
             if (StringUtils.isBlank(jsonUser.getUsername())) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
             }
+            if (StringUtils.isBlank(jsonUser.getFullname())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("The users full name is missing.").build();
+            }
+            if (StringUtils.isBlank(jsonUser.getEmail())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("The users email address is missing.").build();
+            }
+            if (StringUtils.isBlank(jsonUser.getNewPassword()) || StringUtils.isBlank(jsonUser.getConfirmPassword())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("A password must be set.").build();
+            }
+            if (!jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("The passwords do not match.").build();
+            }
+
             ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
             if (user == null) {
-                user = qm.createManagedUser(jsonUser.getUsername(), String.valueOf(PasswordService.createHash("password".toCharArray()))); // todo password
+                user = qm.createManagedUser(jsonUser.getUsername(), jsonUser.getFullname(), jsonUser.getEmail(),
+                        String.valueOf(PasswordService.createHash(jsonUser.getNewPassword().toCharArray())),
+                        jsonUser.isForcePasswordChange(), jsonUser.isNonExpiryPassword(), jsonUser.isSuspended());
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user created: " + jsonUser.getUsername());
                 return Response.status(Response.Status.CREATED).entity(user).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
+            }
+        }
+    }
+
+    @POST
+    @Path("managed")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates a managed user.",
+            response = ManagedUser.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Missing required field"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The user could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response updateManagedUser(ManagedUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
+            if (user != null) {
+                if (StringUtils.isBlank(jsonUser.getFullname())) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("The users full name is missing.").build();
+                }
+                if (StringUtils.isBlank(jsonUser.getEmail())) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("The users email address is missing.").build();
+                }
+                if (StringUtils.isNotBlank(jsonUser.getNewPassword()) && StringUtils.isNotBlank(jsonUser.getConfirmPassword()) &&
+                        jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
+                    user.setPassword(String.valueOf(PasswordService.createHash(jsonUser.getNewPassword().toCharArray())));
+                }
+                user.setFullname(jsonUser.getFullname());
+                user.setEmail(jsonUser.getEmail());
+                user.setForcePasswordChange(jsonUser.isForcePasswordChange());
+                user.setNonExpiryPassword(jsonUser.isNonExpiryPassword());
+                user.setSuspended(jsonUser.isSuspended());
+                user = qm.updateManagedUser(user);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user updated: " + jsonUser.getUsername());
+                return Response.ok(user).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
             }
         }
     }
@@ -306,14 +429,13 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a user.",
-            notes = "Requires 'manage users' permission.",
             code = 204
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user could not be found")
     })
-    @PermissionRequired(Permission.MANAGE_USERS)
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteManagedUser(ManagedUser jsonUser) {
         try (QueryManager qm = new QueryManager()) {
             final ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
@@ -333,7 +455,6 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds the username to the specified team.",
-            notes = "Requires 'manage users' and 'manage teams' permission.",
             response = UserPrincipal.class
     )
     @ApiResponses(value = {
@@ -341,7 +462,7 @@ public class UserResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user or team could not be found")
     })
-    @PermissionRequired({Permission.MANAGE_USERS, Permission.MANAGE_TEAMS})
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response addTeamToUser(
             @ApiParam(value = "A valid username", required = true)
             @PathParam("username") String username,
@@ -373,7 +494,6 @@ public class UserResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes the username from the specified team.",
-            notes = "Requires 'manage users' and 'manage teams' permission.",
             response = UserPrincipal.class
     )
     @ApiResponses(value = {
@@ -381,7 +501,7 @@ public class UserResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The user or team could not be found")
     })
-    @PermissionRequired({Permission.MANAGE_USERS, Permission.MANAGE_TEAMS})
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response removeTeamFromUser(
             @ApiParam(value = "A valid username", required = true)
             @PathParam("username") String username,

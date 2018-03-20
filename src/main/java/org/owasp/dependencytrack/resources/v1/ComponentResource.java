@@ -31,7 +31,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang.StringUtils;
-import org.owasp.dependencytrack.auth.Permission;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
@@ -69,7 +69,7 @@ public class ComponentResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.COMPONENT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getAllComponents() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponents();
@@ -88,7 +88,7 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByUuid(
             @ApiParam(value = "The UUID of the component to retrieve", required = true)
             @PathParam("uuid") String uuid) {
@@ -113,7 +113,7 @@ public class ComponentResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_VIEW)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByHash(
             @ApiParam(value = "The MD5, SHA-1, SHA-256, SHA-512, SHA3-256, or SHA3-512 hash of the component to retrieve", required = true)
             @PathParam("hash") String hash) {
@@ -135,14 +135,13 @@ public class ComponentResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a new component",
-            notes = "Requires 'manage component' permission.",
             response = Component.class,
             code = 201
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response createComponent(Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -206,14 +205,13 @@ public class ComponentResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a component",
-            notes = "Requires 'manage component' permission.",
             response = Component.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the component could not be found"),
     })
-    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response updateComponent(Component jsonComponent) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -280,14 +278,13 @@ public class ComponentResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a component",
-            notes = "Requires 'manage component' permission.",
             code = 204
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the component could not be found")
     })
-    @PermissionRequired(Permission.COMPONENT_MANAGE)
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteComponent(
             @ApiParam(value = "The UUID of the component to delete", required = true)
             @PathParam("uuid") String uuid) {

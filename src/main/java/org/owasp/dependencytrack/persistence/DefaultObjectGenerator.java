@@ -21,7 +21,9 @@ import alpine.auth.PasswordService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import alpine.model.ManagedUser;
+import alpine.model.Permission;
 import alpine.model.Team;
+import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
@@ -32,6 +34,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +58,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, License.class));
 
         loadDefaultLicenses();
+        loadDefaultPermissions();
         loadDefaultPersonas();
 
         try {
@@ -99,6 +103,21 @@ public class DefaultObjectGenerator implements ServletContextListener {
     }
 
     /**
+     * Loads the default permissions
+     */
+    private void loadDefaultPermissions() {
+        try (QueryManager qm = new QueryManager()) {
+            if (qm.getPermissions().size() > 0) {
+                return;
+            }
+            LOGGER.info("Adding default permissions to datastore.");
+            for (Permissions permission : Permissions.values()) {
+                qm.createPermission(permission.name(), permission.getDescription());
+            }
+        }
+    }
+
+    /**
      * Loads the default users and teams
      */
     private void loadDefaultPersonas() {
@@ -107,10 +126,51 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 return;
             }
             LOGGER.info("Adding default users and teams to datastore.");
-            final ManagedUser admin = qm.createManagedUser("admin", new String(PasswordService.createHash("admin".toCharArray())));
-            final Team defaultTeam = qm.createTeam("Default Team", true);
-            qm.addUserToTeam(admin, defaultTeam);
+            ManagedUser admin = qm.createManagedUser("admin", "Administrator", "admin@localhost",
+                    new String(PasswordService.createHash("admin".toCharArray())), true, true, false);
+
+            final Team sysadmins = qm.createTeam("Administrators", false);
+            final Team managers = qm.createTeam("Portfolio Managers", false);
+            final Team automation = qm.createTeam("Automation", true);
+
+            List<Permission> fullList = qm.getPermissions();
+
+            sysadmins.setPermissions(fullList);
+            managers.setPermissions(getPortfolioManagersPermissions(fullList));
+            automation.setPermissions(getAutomationPermissions(fullList));
+
+            qm.persist(sysadmins);
+            qm.persist(managers);
+            qm.persist(automation);
+
+            qm.addUserToTeam(admin, sysadmins);
+
+            admin = qm.getObjectById(ManagedUser.class, admin.getId());
+            admin.setPermissions(qm.getPermissions());
+            qm.persist(admin);
         }
+    }
+
+    private List<Permission> getPortfolioManagersPermissions(List<Permission> fullList) {
+        List<Permission> permissions = new ArrayList<>();
+        for (Permission permission: fullList) {
+            if (permission.getName().equals(Permissions.Constants.VIEW_PORTFOLIO) ||
+                    permission.getName().equals(Permissions.Constants.PORTFOLIO_MANAGEMENT)) {
+                permissions.add(permission);
+            }
+        }
+        return permissions;
+    }
+
+    private List<Permission> getAutomationPermissions(List<Permission> fullList) {
+        List<Permission> permissions = new ArrayList<>();
+        for (Permission permission: fullList) {
+            if (permission.getName().equals(Permissions.Constants.BOM_UPLOAD) ||
+                    permission.getName().equals(Permissions.Constants.SCAN_UPLOAD)) {
+                permissions.add(permission);
+            }
+        }
+        return permissions;
     }
 
 }

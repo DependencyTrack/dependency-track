@@ -228,7 +228,6 @@ function updateStats(metrics) {
         return;
     }
     let metric = metrics[metrics.length - 1]; //Use the most recent metric
-    console.log(metric.vulnerableProjects);
     $("#projectsAtRisk").html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")));
     $("#statTotalProjects").html(filterXSS($common.valueWithDefault(metric.projects, "0")));
     $("#statVulnerableProjects").html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")));

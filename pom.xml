@@ -86,7 +86,6 @@
         <lib.spdx-tools.version>2.1.7</lib.spdx-tools.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.fortify.sca.findbugs>true</plugin.fortify.sca.findbugs>
     </properties>
 
     <repositories>

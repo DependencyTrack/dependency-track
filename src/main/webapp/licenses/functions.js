@@ -37,13 +37,13 @@ function formatLicensesTable(res) {
 }
 
 function updateStats(metric) {
-    $("#statTotalProjects").html(filterXSS(metric.projects));
-    $("#statVulnerableProjects").html(filterXSS(metric.vulnerableProjects));
-    $("#statTotalComponents").html(filterXSS(metric.components));
-    $("#statVulnerableComponents").html(filterXSS(metric.vulnerableComponents));
-    $("#statPortfolioVulnerabilities").html(filterXSS(metric.vulnerabilities));
+    $("#statTotalProjects").html(metric.projects);
+    $("#statVulnerableProjects").html(metric.vulnerableProjects);
+    $("#statTotalComponents").html(metric.components);
+    $("#statVulnerableComponents").html(metric.vulnerableComponents);
+    $("#statPortfolioVulnerabilities").html(metric.vulnerabilities);
     $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
-    $("#statInheritedRiskScore").html(filterXSS(metric.inheritedRiskScore));
+    $("#statInheritedRiskScore").html(metric.inheritedRiskScore);
 }
 
 /**

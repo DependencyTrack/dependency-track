@@ -84,7 +84,7 @@
                 </div>
             </div>
             <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
-                   data-url="<c:url value="/api/v1/dependency/project/${param['uuid']}"/>" data-response-handler="formatDependenciesTable"
+                   data-url="<c:url value="/api/v1/dependency/project/${e:forUriComponent(param.uuid)}"/>" data-response-handler="formatDependenciesTable"
                    data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                    data-page-size="10" data-page-list="[10, 25, 50, 100]"

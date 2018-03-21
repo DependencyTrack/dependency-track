@@ -87,7 +87,7 @@
                     <div class="tab-content">
                         <div class="tab-pane active" id="vulnerabilitiesTab">
                             <table id="vulnerabilitiesTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/vulnerability/component/${param['uuid']}"/>"
+                                   data-url="<c:url value="/api/v1/vulnerability/component/${e:forUriComponent(param.uuid)}"/>"
                                    data-response-handler="formatVulnerabilitiesTable" data-detail-view="true"
                                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                                    data-page-size="10" data-page-list="[10, 25, 50, 100]"
@@ -104,7 +104,7 @@
                         </div>
                         <div class="tab-pane" id="projectsTab">
                             <table id="projectsTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/dependency/component/${param['uuid']}"/>"
+                                   data-url="<c:url value="/api/v1/dependency/component/${e:forUriComponent(param.uuid)}"/>"
                                    data-response-handler="formatProjectsTable" data-detail-view="true"
                                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                                    data-page-size="10" data-page-list="[10, 25, 50, 100]"

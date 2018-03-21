@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="components">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div class="container-fluid">
+<div id="content-container" class="container-fluid">
     <div class="widget-detail-row main" >
         <div class="col-lg-12 col-md-12">
             <div class="panel widget">
@@ -230,9 +230,8 @@
             </div>
         </div>
     </div>
-
-    <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 </div>
+<jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
 <script type="text/javascript" src="<c:url value="/component/functions.js"/>"></script>
 </body>

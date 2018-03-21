@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="admin">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div class="container-fluid">
+<div id="content-container" class="container-fluid">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Administration</h3>
@@ -245,8 +245,8 @@
             </div>
         </div>
     </div>
-    <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 </div>
+<jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
 <script type="text/javascript" src="<c:url value="/admin/functions.js"/>"></script>
 </body>

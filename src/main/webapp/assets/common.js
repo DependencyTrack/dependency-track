@@ -129,6 +129,19 @@ $common.initialize = function initialize() {
             }
         }
     );
+    $common.unloadSpinner();
+};
+
+$common.loadSpinner = function loadSpinner() {
+    $('#loader').css('display', 'block');
+    $('#navbar-container').css('display', 'none');
+    $('#content-container').css('display', 'none');
+};
+
+$common.unloadSpinner = function unloadSpinner() {
+    $('#loader').css('display', 'none');
+    $('#navbar-container').css('display', 'block');
+    $('#content-container').css('display', 'block');
 };
 
 /**

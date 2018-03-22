@@ -20,6 +20,7 @@ package org.owasp.dependencytrack.resources.v1;
 import alpine.auth.PermissionRequired;
 import alpine.logging.Logger;
 import alpine.model.Permission;
+import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -58,7 +59,6 @@ public class PermissionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all permissions",
-            notes = "Requires 'manage users' permission.",
             response = alpine.model.Permission.class,
             responseContainer = "List"
     )
@@ -79,13 +79,12 @@ public class PermissionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Adds the permission to the specified username.",
-            notes = "Requires 'manage users' permission.",
             response = UserPrincipal.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 304, message = "The user already has the specified permission assigned"),
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The user or team could not be found")
+            @ApiResponse(code = 404, message = "The user could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response addPermissionToUser(
@@ -120,13 +119,12 @@ public class PermissionResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Removes the permission from the user.",
-            notes = "Requires 'manage users' permission.",
             response = UserPrincipal.class
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 304, message = "The user was not a member of the specified team"),
+            @ApiResponse(code = 304, message = "The user already has the specified permission assigned"),
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The user or team could not be found")
+            @ApiResponse(code = 404, message = "The user could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response removePermissionFromUser(
@@ -150,6 +148,87 @@ public class PermissionResource extends AlpineResource {
                 principal = qm.persist(principal);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Removed permission for user: " + principal.getName() + " / permission: " + permission.getName());
                 return Response.ok(principal).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @POST
+    @Path("/{permission}/team/{uuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Adds the permission to the specified username.",
+            notes = "Requires 'manage users' permission.",
+            response = Team.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The team already has the specified permission assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The team could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response addPermissionToTeam(
+            @ApiParam(value = "A valid team uuid", required = true)
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "A valid permission", required = true)
+            @PathParam("permission") String permissionName) {
+        try (QueryManager qm = new QueryManager()) {
+            Team team = qm.getObjectByUuid(Team.class, uuid);
+            if (team == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
+            }
+            Permission permission = qm.getPermission(permissionName);
+            if (permission == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The permission could not be found.").build();
+            }
+            List<Permission> permissions = team.getPermissions();
+            if (permissions != null && !permissions.contains(permission)) {
+                permissions.add(permission);
+                team.setPermissions(permissions);
+                team = qm.persist(team);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Added permission for team: " + team.getName() + " / permission: " + permission.getName());
+                return Response.ok(team).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{permission}/team/{uuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Removes the permission from the team.",
+            response = Team.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The team already has the specified permission assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The team could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response removePermissionFromTeam(
+            @ApiParam(value = "A valid team uuid", required = true)
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "A valid permission", required = true)
+            @PathParam("permission") String permissionName) {
+        try (QueryManager qm = new QueryManager()) {
+            Team team = qm.getObjectByUuid(Team.class, uuid);
+            if (uuid == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
+            }
+            Permission permission = qm.getPermission(permissionName);
+            if (permission == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The permission could not be found.").build();
+            }
+            List<Permission> permissions = team.getPermissions();
+            if (permissions != null && permissions.contains(permission)) {
+                permissions.remove(permission);
+                team.setPermissions(permissions);
+                team = qm.persist(team);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Removed permission for team: " + team.getName() + " / permission: " + permission.getName());
+                return Response.ok(team).build();
             }
             return Response.status(Response.Status.NOT_MODIFIED).build();
         }

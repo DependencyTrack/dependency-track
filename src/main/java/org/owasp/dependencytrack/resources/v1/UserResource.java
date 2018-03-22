@@ -89,7 +89,7 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Principal principal = auth.authenticate();
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
-            List<Permission> permissions = ((UserPrincipal)principal).getPermissions();
+            List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal)principal);
             final KeyManager km = KeyManager.getInstance();
             final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
             final String token = jwt.createToken(principal, permissions);

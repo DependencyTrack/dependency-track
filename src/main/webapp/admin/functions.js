@@ -105,6 +105,25 @@ function teamDetailFormatter(index, row) {
                 <span>&nbsp;</span>
             </li>`;
 
+    let permissionsHtml = "";
+    if (!(row.permissions === undefined)) {
+        for (let i = 0; i < row.permissions.length; i++) {
+            permissionsHtml += `
+            <li class="list-group-item" id="container-permission-${row.permissions[i].name}">
+                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermissionFromTeam('${row.permissions[i].name}', '${row.uuid}')" data-toggle="tooltip" title="Remove Permission">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                <span id="${row.username}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
+            </li>`;
+        }
+    }
+    permissionsHtml += `
+            <li class="list-group-item" id="container-no-permission">
+                <a href="#" id="add-permission-to-${row.uuid}" data-toggle="modal" data-target="#modalAssignPermission" data-uuid="${row.uuid}" title="Add Permission">
+                    <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
+                </a>
+                <span>&nbsp;</span>
+            </li>`;
 
     let membersHtml = "";
     if (!(row.ldapUsers === undefined)) {
@@ -143,6 +162,12 @@ function teamDetailFormatter(index, row) {
                 ${apiKeysHtml}
             </ul>
         </div> 
+        <div class="form-group">
+            <label for="inputPermissions">Permissions</label>
+            <ul class="list-group" id="inputPermissions">
+                ${permissionsHtml}
+            </ul>
+        </div> 
     </div>
     <div class="col-sm-6 col-md-6">
         <div class="form-group">
@@ -157,6 +182,9 @@ function teamDetailFormatter(index, row) {
     <script type="text/javascript">
         $("#inputTeamName-${row.uuid}").keypress($common.debounce(updateTeam, 750));
         $("#deleteTeam-${row.uuid}").on("click", deleteTeam);
+        $("#add-permission-to-${row.uuid}").on("click", function () {
+            $("#assignPermission").attr("data-uuid", $(this).data("uuid")); // Assign the team to the data-uuid attribute of the 'Update' button
+        });
     </script>
 `;
     html.push(template);
@@ -550,16 +578,30 @@ function removeTeamMembership(uuid, username) {
  * Assigns a permission by retrieving field values and calling the REST function for the service.
  */
 function assignPermission() {
-    const username = $("#assignPermission").attr("data-username");
+    const updateButton = $("#assignPermission");
+    const username = updateButton.attr("data-username");
+    const uuid = updateButton.attr("data-uuid");
     const selections = $("#permissionsTable").bootstrapTable("getAllSelections");
-    for (let i = 0; i < selections.length; i++) {
-        let permissionName = selections[i].name;
-        $rest.assignPermissionToUser(username, permissionName, function (data) {
-                $("#teamsTable").bootstrapTable("refresh", {silent: true});
-                $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
-                $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
-            }
-        );
+    if (username) {
+        for (let i = 0; i < selections.length; i++) {
+            let permissionName = selections[i].name;
+            $rest.assignPermissionToUser(username, permissionName, function (data) {
+                    $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                    $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+                    $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+                }
+            );
+        }
+    } else if (uuid) {
+        for (let i = 0; i < selections.length; i++) {
+            let permissionName = selections[i].name;
+            $rest.assignPermissionToTeam(uuid, permissionName, function (data) {
+                    $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                    $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+                    $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+                }
+            );
+        }
     }
 }
 
@@ -568,6 +610,17 @@ function assignPermission() {
  */
 function removePermission(permissionName, username) {
     $rest.removePermissionFromUser(username, permissionName, function (data) {
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
+        $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+        $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
+ * Removes permission by retrieving field values and calling the REST function for the service.
+ */
+function removePermissionFromTeam(permissionName, uuid) {
+    $rest.removePermissionFromTeam(uuid, permissionName, function (data) {
         $("#teamsTable").bootstrapTable("refresh", {silent: true});
         $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
         $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});

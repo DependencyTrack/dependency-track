@@ -1504,6 +1504,72 @@ $rest.removePermissionFromUser = function removePermissionFromUser(username, per
 };
 
 /**
+ * Service called when a permission is assigned.
+ */
+$rest.assignPermissionToTeam = function assignPermissionToTeam(uuid, permissionName, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_PERMISSION + "/" + permissionName + "/team/" + uuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                // The user is already a member of the specified team
+                // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a permission is un-assigned.
+ */
+$rest.removePermissionFromTeam = function removePermissionFromTeam(uuid, permissionName, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_PERMISSION + "/" + permissionName + "/team/" + uuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                // The user was not a member of the specified team
+                // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called when a vulnerability is created.
  */
 $rest.createVulnerability = function createVulnerability(vulnId, title, subTitle, description, recommendation,

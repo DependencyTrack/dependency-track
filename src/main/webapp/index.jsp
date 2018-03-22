@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="dashboard">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-view-portfolio">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Dashboard</h3>
@@ -141,7 +141,7 @@
                                             </tr>
                                             <tr>
                                                 <td>Last Measurement:</td>
-                                                <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
+                                                <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh" class="refresh-metric require-portfolio-management"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
                                             </tr>
                                         </table>
                                     </div>

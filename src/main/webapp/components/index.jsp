@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="components">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-view-portfolio">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Components</h3>
@@ -107,7 +107,7 @@
 
             <div id="componentsToolbar">
                 <div class="form-inline" role="form">
-                    <button id="createComponentButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateComponent"><span class="fa fa-plus"></span> Create Component</button>
+                    <button id="createComponentButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalCreateComponent"><span class="fa fa-plus"></span> Create Component</button>
                 </div>
             </div>
             <table id="componentsTable" class="table table-hover detail-table" data-toggle="table"

@@ -742,6 +742,12 @@ input.required {
 .widget-row .col-lg-3 .widget-details-selector {
     display: none;
 }
+button.require-portfolio-management {
+    display: none;
+}
+.refresh-metric {
+    display: none;
+}
 #content-container {
     display: none;
 }

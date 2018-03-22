@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="admin">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-access-management">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Administration</h3>

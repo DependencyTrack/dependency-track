@@ -98,6 +98,15 @@ $common.initialize = function initialize() {
 
     if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
         $("#sidebar-admin-button").css("display", "block");
+        $("#content-container.require-access-management").css("display", "block");
+    }
+    if ($auth.hasPermission($auth.VIEW_PORTFOLIO, token)) {
+        $("#content-container.require-view-portfolio").css("display", "block");
+    }
+    if ($auth.hasPermission($auth.PORTFOLIO_MANAGEMENT, token)) {
+        $("button.require-portfolio-management").css("display", "inline-block");
+        $(".require-portfolio-management").removeAttr("disabled");
+        $(".refresh-metric.require-portfolio-management").css("display", "inline-block");
     }
 
     $rest.getVersion(
@@ -132,16 +141,9 @@ $common.initialize = function initialize() {
     $common.unloadSpinner();
 };
 
-$common.loadSpinner = function loadSpinner() {
-    $('#loader').css('display', 'block');
-    $('#navbar-container').css('display', 'none');
-    $('#content-container').css('display', 'none');
-};
-
 $common.unloadSpinner = function unloadSpinner() {
     $('#loader').css('display', 'none');
     $('#navbar-container').css('display', 'block');
-    $('#content-container').css('display', 'block');
 };
 
 /**

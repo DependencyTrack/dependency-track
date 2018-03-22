@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="vulnerabilities">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-view-portfolio">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Vulnerabilities</h3>
@@ -107,7 +107,7 @@
 
             <div id="vulnerabilitiesToolbar">
                 <div class="form-inline" role="form">
-                    <button id="createVulnerabilityButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateVulnerability"><span class="fa fa-plus"></span> Add Vulnerability</button>
+                    <button id="createVulnerabilityButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalCreateVulnerability"><span class="fa fa-plus"></span> Add Vulnerability</button>
                 </div>
             </div>
             <table id="vulnerabilityTable" class="table table-hover detail-table" data-toggle="table"

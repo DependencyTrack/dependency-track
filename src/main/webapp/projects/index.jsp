@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="projects">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-view-portfolio">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
             <h3>Projects</h3>
@@ -107,7 +107,7 @@
 
             <div id="projectsToolbar">
                 <div class="form-inline" role="form">
-                    <button id="createProjectButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateProject"><span class="fa fa-plus"></span> Create Project</button>
+                    <button id="createProjectButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalCreateProject"><span class="fa fa-plus"></span> Create Project</button>
                 </div>
             </div>
                 <table id="projectsTable" class="table table-hover detail-table" data-toggle="table"

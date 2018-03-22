@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="components">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-view-portfolio">
     <div class="widget-detail-row main" >
         <div class="col-lg-12 col-md-12">
             <div class="panel widget">
@@ -143,23 +143,23 @@
                             <div class="tab-pane active" id="generalTab">
                                 <div class="form-group">
                                     <label class="required" for="componentNameInput">Component Name</label>
-                                    <input type="text" name="name" required="required" class="form-control required" id="componentNameInput">
+                                    <input type="text" name="name" required="required" class="form-control required require-portfolio-management" disabled="disabled" id="componentNameInput">
                                 </div>
                                 <div class="form-group">
                                     <label class="required" for="componentVersionInput">Version</label>
-                                    <input type="text" name="version" required="required" class="form-control required" id="componentVersionInput">
+                                    <input type="text" name="version" required="required" class="form-control required require-portfolio-management" disabled="disabled" id="componentVersionInput">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentGroupInput">Group / Vendor</label>
-                                    <input type="text" name="group" class="form-control" id="componentGroupInput">
+                                    <input type="text" name="group" class="form-control require-portfolio-management" disabled="disabled" id="componentGroupInput">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentDescriptionInput">Description</label>
-                                    <textarea name="description" class="form-control" id="componentDescriptionInput"></textarea>
+                                    <textarea name="description" class="form-control require-portfolio-management" disabled="disabled" id="componentDescriptionInput"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <label for="componentLicenseSelect">License</label>
-                                    <select name="license" class="selectpicker form-control" title="License / Nothing selected..." data-live-search="true" id="componentLicenseSelect">
+                                    <select name="license" class="selectpicker form-control require-portfolio-management" title="License / Nothing selected..." data-live-search="true" disabled="disabled" id="componentLicenseSelect">
                                         <option></option>
                                     </select>
                                 </div>
@@ -167,11 +167,11 @@
                             <div class="tab-pane" id="entendedTab">
                                 <div class="form-group">
                                     <label for="componentFilenameInput">Filename</label>
-                                    <input type="text" name="filename" class="form-control" id="componentFilenameInput">
+                                    <input type="text" name="filename" class="form-control require-portfolio-management" disabled="disabled" id="componentFilenameInput">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentClassifierInput">Classifier</label>
-                                    <select class="form-control" id="componentClassifierInput">
+                                    <select class="form-control require-portfolio-management" disabled="disabled" id="componentClassifierInput">
                                         <option value="" disabled="disabled" selected="selected">Select...</option>
                                         <option value="APPLICATION">Application</option>
                                         <option value="FRAMEWORK">Framework</option>
@@ -182,49 +182,49 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="componentPurlInput">Package URL (Purl)</label>
-                                    <input type="text" name="purl" class="form-control" id="componentPurlInput">
+                                    <input type="text" name="purl" class="form-control require-portfolio-management" disabled="disabled" id="componentPurlInput">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentCpeInput">CPE</label>
-                                    <input type="text" name="cpe" class="form-control" id="componentCpeInput">
+                                    <input type="text" name="cpe" class="form-control require-portfolio-management" disabled="disabled" id="componentCpeInput">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentCopyrightInput">Copyright</label>
-                                    <textarea name="copyright" class="form-control" id="componentCopyrightInput"></textarea>
+                                    <textarea name="copyright" class="form-control require-portfolio-management" disabled="disabled" id="componentCopyrightInput"></textarea>
                                 </div>
                             </div>
                             <div class="tab-pane" id="hashesTab">
                                 <div class="form-group">
                                     <label for="componentMd5Input">MD5</label>
-                                    <input type="text" name="md5" pattern="[A-Fa-f0-9]{32}" class="hash-input form-control" id="componentMd5Input">
+                                    <input type="text" name="md5" pattern="[A-Fa-f0-9]{32}" class="hash-input form-control require-portfolio-management" disabled="disabled" id="componentMd5Input">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentSha1Input">SHA1</label>
-                                    <input type="text" name="sha1" pattern="[A-Fa-f0-9]{40}" class="hash-input form-control" id="componentSha1Input">
+                                    <input type="text" name="sha1" pattern="[A-Fa-f0-9]{40}" class="hash-input form-control require-portfolio-management" disabled="disabled" id="componentSha1Input">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentSha256Input">SHA 256</label>
-                                    <input type="text" name="sha256" pattern="[A-Fa-f0-9]{64}" class="hash-input form-control" id="componentSha256Input">
+                                    <input type="text" name="sha256" pattern="[A-Fa-f0-9]{64}" class="hash-input form-control require-portfolio-management" disabled="disabled" id="componentSha256Input">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentSha512Input">SHA 512</label>
-                                    <input type="text" name="sha512" pattern="[A-Fa-f0-9]{128}" class="hash-input form-control" id="componentSha512Input">
+                                    <input type="text" name="sha512" pattern="[A-Fa-f0-9]{128}" class="hash-input form-control require-portfolio-management" disabled="disabled" id="componentSha512Input">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentSha3256Input">SHA3 256</label>
-                                    <input type="text" name="sha3256" pattern="[A-Fa-f0-9]{64}" class="hash-input form-control" id="componentSha3256Input">
+                                    <input type="text" name="sha3256" pattern="[A-Fa-f0-9]{64}" class="hash-input form-control require-portfolio-management" disabled="disabled" id="componentSha3256Input">
                                 </div>
                                 <div class="form-group">
                                     <label for="componentSha3512Input">SHA3 512</label>
-                                    <input type="text" name="sha3512" pattern="[A-Fa-f0-9]{128}" class="hash-input form-control" id="componentSha3512Input">
+                                    <input type="text" name="sha3512" pattern="[A-Fa-f0-9]{128}" class="hash-input form-control require-portfolio-management" disabled="disabled" id="componentSha3512Input">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteComponentButton">Delete</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="updateComponentButton">Update</button>
+                    <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteComponentButton">Delete</button>
+                    <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" id="updateComponentButton">Update</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
             </div>

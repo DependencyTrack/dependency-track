@@ -9,7 +9,7 @@
 </head>
 <body data-sidebar="projects">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid">
+<div id="content-container" class="container-fluid require-view-portfolio">
     <div class="widget-detail-row main">
         <div class="col-lg-12 col-md-12">
             <div class="panel widget">
@@ -79,8 +79,8 @@
         <div class="col-sm-12 col-md-12">
             <div id="componentsToolbar">
                 <div class="form-inline" role="form">
-                    <button id="addDependencyButton" class="btn btn-default" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
-                    <button id="removeDependencyButton" class="btn btn-default"><span class="fa fa-minus"></span> Remove Dependency</button>
+                    <button id="addDependencyButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
+                    <button id="removeDependencyButton" class="btn btn-default require-portfolio-management"><span class="fa fa-minus"></span> Remove Dependency</button>
                 </div>
             </div>
             <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
@@ -187,19 +187,19 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="required" for="projectNameInput">Project Name</label>
-                        <input type="text" name="name" required="required" class="form-control required" id="projectNameInput">
+                        <input type="text" name="name" required="required" class="form-control required require-portfolio-management" disabled="disabled" id="projectNameInput">
                     </div>
                     <div class="form-group">
                         <label for="projectVersionInput">Version</label>
-                        <input type="text" name="version" class="form-control" id="projectVersionInput">
+                        <input type="text" name="version" class="form-control require-portfolio-management" disabled="disabled" id="projectVersionInput">
                     </div>
                     <div class="form-group">
                         <label for="projectDescriptionInput">Description</label>
-                        <textarea name="description" class="form-control" id="projectDescriptionInput"></textarea>
+                        <textarea name="description" class="form-control require-portfolio-management" disabled="disabled" id="projectDescriptionInput"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="projectTagsInput">Tags</label>
-                        <input type="text" name="tags" placeholder="Comma separated" class="form-control" data-role="tagsinput" id="projectTagsInput">
+                        <input type="text" name="tags" placeholder="Comma separated" class="form-control require-portfolio-management" disabled="disabled" data-role="tagsinput" id="projectTagsInput">
                     </div>
                     <table id="projectPropertiesTable" class="table">
                         <thead>
@@ -213,8 +213,8 @@
                     </table>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteProjectButton">Delete</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="updateProjectButton">Update</button>
+                    <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectButton">Delete</button>
+                    <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" id="updateProjectButton">Update</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
             </div>

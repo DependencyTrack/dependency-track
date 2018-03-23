@@ -52,7 +52,7 @@ public class CweImporter {
         try (QueryManager qm = new QueryManager();
                 InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.11.xml")) {
 
-            LOGGER.info("Syncing CWEs with datastore");
+            LOGGER.info("Synchronizing CWEs with datastore");
 
             final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -78,7 +78,7 @@ public class CweImporter {
             for (Map.Entry<Integer, String> entry : CWE_MAPPINGS.entrySet()) {
                 qm.createCweIfNotExist(entry.getKey(), entry.getValue().replaceAll("\\\\", "\\\\\\\\"));
             }
-            LOGGER.info("CWE sync complete");
+            LOGGER.info("CWE synchronization complete");
         }
     }
 

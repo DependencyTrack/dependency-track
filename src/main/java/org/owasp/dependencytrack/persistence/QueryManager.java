@@ -589,6 +589,53 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Updates a license.
+     * @param transientLicense the license to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a License object
+     */
+    public License updateLicense(License transientLicense, boolean commitIndex) {
+        final License license;
+        if (transientLicense.getId() > 0) {
+            license = getObjectById(License.class, transientLicense.getId());
+        } else {
+            license = getLicense(transientLicense.getLicenseId());
+        }
+
+        if (license != null) {
+            license.setLicenseId(transientLicense.getLicenseId());
+            license.setName(transientLicense.getName());
+            license.setText(transientLicense.getText());
+            license.setHeader(transientLicense.getHeader());
+            license.setTemplate(transientLicense.getTemplate());
+            license.setOsiApproved(transientLicense.isOsiApproved());
+            license.setDeprecatedLicenseId(transientLicense.isDeprecatedLicenseId());
+            license.setComment(transientLicense.getComment());
+            license.setSeeAlso(transientLicense.getSeeAlso());
+
+            final License result = persist(license);
+            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+            commitSearchIndex(commitIndex, License.class);
+            return result;
+        }
+        return null;
+    }
+
+    /**
+     * Synchronize a License, updating it if it needs updating, or creating it if it doesn't exist.
+     * @param license the License object to synchronize
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a synchronize License object
+     */
+    public License synchronizeLicense(License license, boolean commitIndex) {
+        License result = updateLicense(license, commitIndex);
+        if (result == null) {
+            result = createLicense(license, commitIndex);
+        }
+        return result;
+    }
+
+    /**
      * Creates a new Vulnerability.
      * @param vulnerability the vulnerability to persist
      * @param commitIndex specifies if the search index should be committed (an expensive operation)

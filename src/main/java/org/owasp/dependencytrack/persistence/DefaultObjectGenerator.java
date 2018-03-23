@@ -81,18 +81,14 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     private void loadDefaultLicenses() {
         try (QueryManager qm = new QueryManager()) {
-            if (qm.getLicenses().getTotal() > 0) {
-                return;
-            }
-
-            LOGGER.info("Adding default SPDX license definitions to datastore.");
+            LOGGER.info("Synchronizing SPDX license definitions to datastore.");
 
             final SpdxLicenseDetailParser parser = new SpdxLicenseDetailParser();
             try {
                 final List<License> licenses = parser.getLicenseDefinitions();
                 for (License license : licenses) {
-                    LOGGER.info("Added: " + license.getName());
-                    qm.createLicense(license, false);
+                    LOGGER.info("Synchronizing: " + license.getName());
+                    qm.synchronizeLicense(license, false);
                 }
             } catch (IOException | URISyntaxException e) {
                 LOGGER.error("An error occurred during the parsing SPDX license definitions.");

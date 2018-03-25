@@ -24,6 +24,9 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
+import org.owasp.dependencytrack.model.Analysis;
+import org.owasp.dependencytrack.model.AnalysisComment;
+import org.owasp.dependencytrack.model.AnalysisState;
 import org.owasp.dependencytrack.model.Bom;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
@@ -1119,6 +1122,60 @@ public class QueryManager extends AlpineQueryManager {
         projects.clear();
         projects.addAll(set);
         return projects;
+    }
+
+    /**
+     * Returns a Analysis for the specified Project, Component, and Vulnerability.
+     * @param project the Project
+     * @param component the Component
+     * @param vulnerability the Vulnerability
+     * @return a Analysis object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Analysis getAnalysis(Project project, Component component, Vulnerability vulnerability) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project && component == :component && vulnerability == :vulnerability");
+        final List<Analysis> result = (List<Analysis>) query.execute(project, component, vulnerability);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Documents a new analysis. Creates a new Analysis object if one doesn't already exists and appends
+     * the specified comment along with a timestamp in the AnalysisComment trail.
+     * @param project the Project
+     * @param component the Component
+     * @param vulnerability the Vulnerability
+     * @param comment the comment
+     * @return an Analysis object
+     */
+    public Analysis makeAnalysis(Project project, Component component, Vulnerability vulnerability, AnalysisState analysisState, String comment) {
+        Analysis analysis = getAnalysis(project, component, vulnerability);
+        if (analysis == null) {
+            analysis = new Analysis();
+            analysis.setProject(project);
+            analysis.setComponent(component);
+            analysis.setVulnerability(vulnerability);
+        }
+        analysis.setAnalysisState(analysisState);
+        analysis = persist(analysis);
+        makeAnalysisComment(analysis, comment);
+        return getAnalysis(analysis.getProject(), analysis.getComponent(), analysis.getVulnerability());
+    }
+
+    /**
+     * Adds a new analysis comment to the specified analysis.
+     * @param analysis the analysis object to add a comment to
+     * @param comment the comment to make
+     * @return a new AnalysisComment object
+     */
+    public AnalysisComment makeAnalysisComment(Analysis analysis, String comment) {
+        if (analysis == null || comment == null) {
+            return null;
+        }
+        AnalysisComment analysisComment = new AnalysisComment();
+        analysisComment.setAnalysis(analysis);
+        analysisComment.setTimestamp(new Date());
+        analysisComment.setComment(comment);
+        return persist(analysisComment);
     }
 
     /**

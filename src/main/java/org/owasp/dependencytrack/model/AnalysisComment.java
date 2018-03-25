@@ -47,14 +47,15 @@ public class AnalysisComment implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "ANALYSIS_ID", allowsNull = "false")
     @NotNull
+    @JsonIgnore
     private Analysis analysis;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "TIMESTAMP", allowsNull = "false")
     @NotNull
     private Date timestamp;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "COMMENT", jdbcType = "CLOB", allowsNull = "false")
     @NotNull
     private String comment;

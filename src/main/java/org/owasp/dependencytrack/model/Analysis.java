@@ -28,7 +28,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * The Analysis model tracks human auditing decisions for vulnerabilities found
@@ -47,13 +47,19 @@ public class Analysis implements Serializable {
     private long id;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "DEPENDENCY_ID", allowsNull = "false")
-    @NotNull
-    private Dependency dependency;
+    @Column(name = "PROJECT_ID")
+    @JsonIgnore
+    private Project project;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "COMPONENT_ID")
+    @JsonIgnore
+    private Component component;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "VULNERABILITY_ID", allowsNull = "false")
     @NotNull
+    @JsonIgnore
     private Vulnerability vulnerability;
 
     @Persistent(defaultFetchGroup = "true")
@@ -61,9 +67,9 @@ public class Analysis implements Serializable {
     @NotNull
     private AnalysisState analysisState;
 
-    @Persistent(mappedBy = "analysis")
+    @Persistent(mappedBy = "analysis", defaultFetchGroup = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
-    private Collection<AnalysisComment> analysisComments;
+    private List<AnalysisComment> analysisComments;
 
     public long getId() {
         return id;
@@ -73,12 +79,20 @@ public class Analysis implements Serializable {
         this.id = id;
     }
 
-    public Dependency getDependency() {
-        return dependency;
+    public Project getProject() {
+        return project;
     }
 
-    public void setDependency(Dependency dependency) {
-        this.dependency = dependency;
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    public Component getComponent() {
+        return component;
+    }
+
+    public void setComponent(Component component) {
+        this.component = component;
     }
 
     public Vulnerability getVulnerability() {
@@ -97,11 +111,11 @@ public class Analysis implements Serializable {
         this.analysisState = analysisState;
     }
 
-    public Collection<AnalysisComment> getAnalysisComments() {
+    public List<AnalysisComment> getAnalysisComments() {
         return analysisComments;
     }
 
-    public void setAnalysisComments(Collection<AnalysisComment> analysisComments) {
+    public void setAnalysisComments(List<AnalysisComment> analysisComments) {
         this.analysisComments = analysisComments;
     }
 }

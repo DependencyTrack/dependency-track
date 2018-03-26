@@ -20,3 +20,12 @@ affect a specific project due to the way it's used, use of global suppressions a
 Refer to the Dependency-Check suppression documentation for further details.
 
 > <https://jeremylong.github.io/DependencyCheck/general/suppression.html>
+
+#### Unsupported Scanners
+
+Global suppression only affects vulnerabilities that are identified by Dependency-Check, which is not the exclusive 
+means of vulnerability detection in Dependency-Track. Dependency-Track includes internal scanners in addition to
+supporting Dependency-Check. Vulnerabilities that are not identified by Dependency-Check do not utilize the global
+suppression file.
+
+This feature may be removed in a future release to accommodate a proper triage and analysis workflow.

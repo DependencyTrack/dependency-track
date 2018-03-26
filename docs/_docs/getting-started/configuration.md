@@ -2,7 +2,7 @@
 title: Configuration
 category: Getting Started
 chapter: 1
-order: 4
+order: 5
 ---
 
 The central configuration file `application.properties` resides in the classpath of the WAR by default. 

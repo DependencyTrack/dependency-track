@@ -293,8 +293,6 @@ $common.generateSeverityProgressBar = function generateSeverityProgressBar(criti
     return block;
 };
 
-
-
 /**
  * Given a UNIX timestamp, this function will return a formatted date.
  * i.e. 15 Jan 2017

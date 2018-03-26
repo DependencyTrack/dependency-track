@@ -13,7 +13,8 @@ Upon starting Dependency-Track for the first time, multiple tasks occur includin
 * Initial mirroring of all supported vulnerability datasources (NVD, NSP, etc)
 
 > The initial mirroring may take between 10 - 30 minutes or more. Do not interrupt this process. Wait for the 
-> completion of all mirroring tasks before shutting down the system.
+> completion of all mirroring tasks before shutting down the system. These tasks can be monitored by watching
+> `dependency-track.log`.
 
 #### Default credentials
 

@@ -10,7 +10,7 @@ The process of tracking, managing, and continuously evaluating metrics and risk 
 
 ![components](/images/screenshots/components.png)
 
-> Dependency-Track fulfills much of the guidance laid out in [NIST SP 800-161](https://csrc.nist.gov/publications/detail/sp/800-161/final).
+> Dependency-Track fulfills much of the guidance laid out by [SAFECode](https://www.safecode.org/wp-content/uploads/2017/05/SAFECode_TPC_Whitepaper.pdf).
 
 * Tracks component usage among all projects in the enterprise
 * Adapts to changes in component dependencies used among the various projects

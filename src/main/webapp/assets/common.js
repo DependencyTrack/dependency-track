@@ -300,8 +300,9 @@ $common.generateSeverityProgressBar = function generateSeverityProgressBar(criti
 $common.formatTimestamp = function formatTimestamp(timestamp, includeTime) {
     let date = new Date(timestamp);
     let months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function pad(num) { return num < 10 ? "0" + num : num; }
     if (includeTime) {
-        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear() + " at " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear() + " at " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
     } else {
         return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
     }

@@ -7,7 +7,7 @@
            targetNamespace="http://cyclonedx.org/schema/bom/1.0"
            vc:minVersion="1.0"
            vc:maxVersion="1.1"
-           version="1.0-RC1">
+           version="1.0">
 
     <xs:import namespace="http://cyclonedx.org/schema/spdx" schemaLocation="http://cyclonedx.org/schema/spdx"/>
 
@@ -49,7 +49,7 @@
                         scope will be assumed.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="hashes">
+            <xs:element name="hashes" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:sequence minOccurs="0" maxOccurs="unbounded">
                         <xs:element name="hash" type="bom:hashType"/>

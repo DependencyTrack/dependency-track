@@ -33,7 +33,6 @@ import org.owasp.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -29,6 +29,7 @@ public enum Permissions {
     SCAN_UPLOAD("Allows the ability to upload Dependency-Check XML reports"),
     VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, dependencies, and licenses"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
+    VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities affecting projects in the portfolio"),
     ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys");
 
     private final String description;
@@ -46,6 +47,7 @@ public enum Permissions {
         public static final String SCAN_UPLOAD = "SCAN_UPLOAD";
         public static final String VIEW_PORTFOLIO = "VIEW_PORTFOLIO";
         public static final String PORTFOLIO_MANAGEMENT = "PORTFOLIO_MANAGEMENT";
+        public static final String VULNERABILITY_ANALYSIS = "VULNERABILITY_ANALYSIS";
         public static final String ACCESS_MANAGEMENT = "ACCESS_MANAGEMENT";
     }
 

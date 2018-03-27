@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.owasp.dependencytrack.model.License;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -48,18 +47,19 @@ public class SpdxLicenseDetailParser {
     }
 
     /**
-     * Returns a List of License objects after parsing a directory of json
-     * files.
+     * Returns a List of License objects after parsing a directory of json files.
      */
-    public List<License> getLicenseDefinitions() throws IOException, URISyntaxException {
+    public List<License> getLicenseDefinitions() throws IOException {
         final List<License> licenses = new ArrayList<>();
-        final File dir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()
-                + "/license-list-data/json/details");
-        final File[] files = dir.listFiles();
-        if (files != null) {
-            for (File nextFile : files) {
-                final License license = parse(nextFile.toPath());
-                licenses.add(license);
+        String[] dirs = {"/license-list-data/json/details", "/license-list-data/json/exceptions"};
+        for (String s: dirs) {
+            final File dir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath() + s);
+            final File[] files = dir.listFiles();
+            if (files != null) {
+                for (File nextFile : files) {
+                    final License license = parse(nextFile.toPath());
+                    licenses.add(license);
+                }
             }
         }
         return licenses;

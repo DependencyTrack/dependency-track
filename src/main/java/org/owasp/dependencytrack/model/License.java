@@ -20,6 +20,7 @@ package org.owasp.dependencytrack.model;
 import alpine.json.TrimmedStringArrayDeserializer;
 import alpine.json.TrimmedStringDeserializer;
 import alpine.validation.RegexSequence;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -74,6 +75,7 @@ public class License implements Serializable {
     @Persistent
     @Column(name = "TEXT", jdbcType = "CLOB")
     @JsonProperty(value = "licenseText")
+    @JsonAlias(value = "licenseExceptionText")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String text;
 
@@ -111,6 +113,7 @@ public class License implements Serializable {
     @Column(name = "LICENSEID")
     @Index(name = "LICENSE_LICENSEID_IDX", unique = "true")
     @JsonProperty(value = "licenseId")
+    @JsonAlias(value = "licenseExceptionId")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.STRING_IDENTIFIER, message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")

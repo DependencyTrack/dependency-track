@@ -90,7 +90,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
                     LOGGER.info("Synchronizing: " + license.getName());
                     qm.synchronizeLicense(license, false);
                 }
-            } catch (IOException | URISyntaxException e) {
+            } catch (IOException e) {
                 LOGGER.error("An error occurred during the parsing SPDX license definitions.");
                 LOGGER.error(e.getMessage());
             }

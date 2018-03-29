@@ -26,6 +26,7 @@ import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
@@ -79,7 +80,7 @@ public class Project implements Serializable {
     private long id;
 
     @Persistent
-    @Unique(name = "PROJECT_NAME_IDX")
+    @Index(name = "PROJECT_NAME_IDX")
     @Column(name = "NAME", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
@@ -92,6 +93,7 @@ public class Project implements Serializable {
     private String description;
 
     @Persistent
+    @Index(name = "PROJECT_VERSION_IDX")
     @Column(name = "VERSION", jdbcType = "VARCHAR")
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;

@@ -96,14 +96,15 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a project by it's name.
-     * @param name the name of the Project
+     * Returns a project by it's name and version.
+     * @param name the name of the Project (required)
+     * @param version the version of the Project (or null)
      * @return a Project object, or null if not found
      */
     @SuppressWarnings("unchecked")
-    public Project getProject(String name) {
-        final Query query = pm.newQuery(Project.class, "name == :name");
-        final List<Project> result = (List<Project>) query.execute(name);
+    public Project getProject(String name, String version) {
+        final Query query = pm.newQuery(Project.class, "name == :name && version == :version");
+        final List<Project> result = (List<Project>) query.execute(name, version);
         return result.size() == 0 ? null : result.get(0);
     }
 

@@ -150,10 +150,10 @@ public class ProjectResource extends AlpineResource {
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
                 parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
             }
-            Project project = qm.getProject(jsonProject.getName().trim());
+            Project project = qm.getProject(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()));
             if (project == null) {
                 project = qm.createProject(
-                        jsonProject.getName().trim(),
+                        StringUtils.trimToNull(jsonProject.getName()),
                         StringUtils.trimToNull(jsonProject.getDescription()),
                         StringUtils.trimToNull(jsonProject.getVersion()),
                         jsonProject.getTags(),
@@ -192,10 +192,11 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid());
             if (project != null) {
-                final Project tmpProject = qm.getProject(jsonProject.getName().trim());
+                final String name = StringUtils.trimToNull(jsonProject.getName());
+                final String version = StringUtils.trimToNull(jsonProject.getVersion());
+                final Project tmpProject = qm.getProject(name, version);
                 if (tmpProject == null || (tmpProject.getUuid().equals(project.getUuid()))) {
                     // Name cannot be empty or null - prevent it
-                    String name = StringUtils.trimToNull(jsonProject.getName());
                     if (name != null) {
                         project.setName(name);
                     }
@@ -203,13 +204,13 @@ public class ProjectResource extends AlpineResource {
                             jsonProject.getUuid(),
                             name,
                             StringUtils.trimToNull(jsonProject.getDescription()),
-                            StringUtils.trimToNull(jsonProject.getVersion()),
+                            version,
                             jsonProject.getTags(),
                             StringUtils.trimToNull(jsonProject.getPurl()),
                             true);
                     return Response.ok(project).build();
                 } else {
-                    return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();
+                    return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();
                 }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();

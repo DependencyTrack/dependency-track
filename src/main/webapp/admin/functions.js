@@ -37,10 +37,14 @@ function formatTeamTable(res) {
         } else {
             res[i].apiKeysNum = res[i].apiKeys.length;
         }
-        if (res[i].ldapUsers === undefined) {
-            res[i].membersNum = 0;
-        } else {
-            res[i].membersNum = res[i].ldapUsers.length;
+
+        res[i].membersNum = 0;
+
+        if (res[i].ldapUsers !== undefined) {
+            res[i].membersNum += res[i].ldapUsers.length;
+        }
+        if (res[i].managedUsers !== undefined) {
+            res[i].membersNum += res[i].managedUsers.length;
         }
     }
     return res;

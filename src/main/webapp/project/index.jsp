@@ -87,14 +87,14 @@
                    data-url="<c:url value="/api/v1/dependency/project/${e:forUriComponent(param.uuid)}"/>" data-response-handler="formatDependenciesTable"
                    data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
-                   data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
                    data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
                     <th data-align="center" data-field="state" data-checkbox="true"></th>
-                    <th data-align="left" data-field="componenthref">Component</th>
+                    <th data-align="left" data-field="componenthref" data-sort-name="component.name" data-sortable="true">Component</th>
                     <th data-align="left" data-field="component.version">Version</th>
-                    <th data-align="left" data-field="component.group">Group</th>
+                    <th data-align="left" data-field="component.group" data-sort-name="component.group" data-sortable="true">Group</th>
                     <th data-align="left" data-field="component.license">License</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>

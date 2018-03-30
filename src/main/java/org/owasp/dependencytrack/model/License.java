@@ -63,6 +63,7 @@ public class License implements Serializable {
      */
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
+    @Index(name = "LICENSE_NAME_IDX")
     @JsonProperty(value = "name")
     @NotNull
     @Size(min = 1, max = 255)

@@ -90,12 +90,12 @@
                                    data-url="<c:url value="/api/v1/vulnerability/component/${e:forUriComponent(param.uuid)}"/>"
                                    data-response-handler="formatVulnerabilitiesTable" data-detail-view="true"
                                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
-                                   data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
                                    data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
-                                    <th data-align="left" data-class="tight" data-field="vulnerabilityhref">Name</th>
-                                    <th data-align="left" data-class="tight" data-field="publishedLabel">Published</th>
+                                    <th data-align="left" data-class="tight" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Name</th>
+                                    <th data-align="left" data-class="tight" data-field="publishedLabel" data-sort-name="published" data-sortable="true">Published</th>
                                     <th data-align="left" data-class="expand" data-field="cwefield">CWE</th>
                                     <th data-align="left" data-class="tight" data-field="severityLabel">Severity</th>
                                 </tr>
@@ -107,12 +107,12 @@
                                    data-url="<c:url value="/api/v1/dependency/component/${e:forUriComponent(param.uuid)}"/>"
                                    data-response-handler="formatProjectsTable" data-detail-view="true"
                                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
-                                   data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
                                    data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
-                                    <th data-align="left" data-field="project.projecthref">Name</th>
-                                    <th data-align="left" data-field="project.version">Version</th>
+                                    <th data-align="left" data-field="project.projecthref" data-sort-name="project.name" data-sortable="true">Name</th>
+                                    <th data-align="left" data-field="project.version" data-sortable="true">Version</th>
                                 </tr>
                                 </thead>
                             </table>

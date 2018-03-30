@@ -86,7 +86,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getProjects() {
         final Query query = pm.newQuery(Project.class);
-        query.setOrdering("name asc");
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
@@ -115,7 +117,9 @@ public class QueryManager extends AlpineQueryManager {
      */
     public PaginatedResult getProjects(Tag tag) {
         final Query query = pm.newQuery(Project.class, "tags.contains(:tag)");
-        query.setOrdering("name asc");
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
         return execute(query, tag);
     }
 
@@ -413,7 +417,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getComponents() {
         final Query query = pm.newQuery(Component.class);
-        query.setOrdering("name asc");
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
@@ -558,7 +564,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getLicenses() {
         final Query query = pm.newQuery(License.class);
-        query.setOrdering("name asc");
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:filter) || licenseId.toLowerCase().matches(:filter)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
@@ -842,7 +850,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getCwes() {
         final Query query = pm.newQuery(Cwe.class);
-        query.setOrdering("id asc");
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
         if (filter != null) {
             query.setFilter("cweId == :cweId || name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
@@ -1022,7 +1032,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities() {
         final Query query = pm.newQuery(Vulnerability.class);
-        query.setOrdering("id asc");
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
         if (filter != null) {
             query.setFilter("vulnId.toLowerCase().matches(:vulnId)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
@@ -1050,7 +1062,9 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities(Component component) {
         final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
-        query.setOrdering("id asc");
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
         return execute(query, component);
     }
 

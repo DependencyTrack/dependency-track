@@ -109,12 +109,12 @@
                    data-url="<c:url value="/api/v1/license"/>" data-response-handler="formatLicensesTable"
                    data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
-                   data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
                    data-click-to-select="true" data-height="100%">
                 <thead>
                 <tr>
-                    <th data-align="left" data-field="name">Name</th>
-                    <th data-align="left" data-field="licensehref">SPDX License ID</th>
+                    <th data-align="left" data-field="name" data-sortable="true">Name</th>
+                    <th data-align="left" data-field="licensehref" data-sort-name="licenseId" data-sortable="true">SPDX License ID</th>
                     <th data-align="center" data-field="osiApprovedLabel" data-class="tight">OSI Approved</th>
                 </tr>
                 </thead>

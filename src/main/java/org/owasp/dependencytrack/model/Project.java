@@ -129,6 +129,7 @@ public class Project implements Serializable {
      * Convenience field which will contain the date of the last entry in the {@link Scan} table
      */
     @Persistent
+    @Index(name = "PROJECT_LASTSCANIMPORT_IDX")
     @Column(name = "LAST_SCAN_IMPORTED")
     private Date lastScanImport;
 
@@ -136,6 +137,7 @@ public class Project implements Serializable {
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
+    @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
     @Column(name = "LAST_BOM_IMPORTED")
     private Date lastBomImport;
 

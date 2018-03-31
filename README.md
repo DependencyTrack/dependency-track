@@ -35,7 +35,7 @@ still keeping tabs on component usage and any inherited risk.
 
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
-**NOTICE: Always use official binary releases in production. 
+**NOTICE: Always use official binary releases in production.**
 
 
 Features

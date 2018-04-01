@@ -57,7 +57,6 @@ Features
 
 Screenshots
 -------------------
-The dashboard:
 ![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/dashboard.png)
 
 For more eye-candy, visit <https://dependencytrack.org/>.

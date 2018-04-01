@@ -66,9 +66,9 @@ Distributions
 
 Dependency-Track supports the following three deployment options:
 
-* Docker container (continuous snapshots available now)
-* Executable WAR (will be available with 3.0.0)
-* Conventional WAR (will be available with 3.0.0)
+* Docker container
+* Executable WAR
+* Conventional WAR
 
 Deploying Docker Container
 -------------------

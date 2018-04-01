@@ -55,54 +55,20 @@ Features
 * Flexible authentication supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 
-
-Ecosystem Overview
--------------------
-![alt tag](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/ecosystem.png)
-* Dependency-Check results can be published to SonarQube ([plugin](https://github.com/stevespringett/dependency-check-sonar-plugin))
-* Dependency-Check results can be published to ThreadFix ([plugin](https://plugins.jenkins.io/threadfix))
-* Dependency-Check results can be published to Dependency-Track
-* Software bill-of-materials can be published to Dependency-Track
-* Dependency-Check can use Dependency-Track as a source of evidence
-* Dependency-Track results can be integrated into ThreadFix
-
 Screenshots
 -------------------
-The dashboard:
 ![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/dashboard.png)
 
-
-A list of all projects:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/projects.png)
-
-
-Viewing a list of components that are dependencies of a specific project:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/components.png)
-
-
-Viewing an individual vulnerable component:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerable-component.png)
-
-
-Viewing an individual vulnerability:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerability.png)
-
-
-Viewing all vulnerabilities in the system:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/vulnerabilities.png)
-
-
-Viewing an individual license:
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/license.png)
+For more eye-candy, visit <https://dependencytrack.org/>.
 
 Distributions
 -------------------
 
 Dependency-Track supports the following three deployment options:
 
-* Docker container (continuous snapshots available now)
-* Executable WAR (will be available with 3.0.0)
-* Conventional WAR (will be available with 3.0.0)
+* Docker container
+* Executable WAR
+* Conventional WAR
 
 Deploying Docker Container
 -------------------
@@ -169,6 +135,10 @@ To create an executable WAR that is ready to be deployed in a Docker container:
 mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
+Website
+-------------------
+
+The official Dependency-Track website is accessible at: <https://dependencytrack.org/>
 
 Documentation
 -------------------

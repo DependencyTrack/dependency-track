@@ -98,6 +98,20 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a list of projects by it's name.
+     * @param name the name of the Projects (required)
+     * @return a List of Project objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getProjects(String name) {
+        final Query query = pm.newQuery(Project.class, "name == :name");
+        if (orderBy == null) {
+            query.setOrdering("version desc");
+        }
+        return execute(query, name);
+    }
+
+    /**
      * Returns a project by it's name and version.
      * @param name the name of the Project (required)
      * @param version the version of the Project (or null)

@@ -24,7 +24,9 @@
                                     <span class="name" id="projectTitle"></span>
                                     <span id="projectVersion"></span>
                                 </span>
-                                <br/>Sub Project: 0<br/>
+                                <div class="form-group">
+                                    <select name="version" class="selectpicker form-control" title="Version" data-live-search="true" id="projectVersionSelect"></select>
+                                </div>
                                 <span id="tags"></span>
                             </div>
                         </div>

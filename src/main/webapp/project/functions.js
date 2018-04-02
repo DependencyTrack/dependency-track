@@ -84,6 +84,21 @@ function clearInputFields() {
 }
 
 function populateProjectData(data) {
+
+    // Retrieve the list of project versions and determine which one should be selected
+    $rest.getProjectVersions(data.name, function (versionData) {
+        let select = $("#projectVersionSelect");
+        $.each(versionData, function() {
+            let escapedProjectVersion = filterXSS(this.version);
+            if (this.version === data.version) {
+                select.append($("<option selected=\"selected\"/>").val(this.uuid).text("Version: " + escapedProjectVersion));
+            } else {
+                select.append($("<option />").val(this.uuid).text("Version: " + escapedProjectVersion));
+            }
+        });
+        select.selectpicker('refresh');
+    });
+
     let escapedProjectName = filterXSS(data.name);
     let escapedProjectVersion = filterXSS(data.version);
     let escapedProjectDescription = filterXSS(data.description);
@@ -216,6 +231,11 @@ $(document).ready(function () {
         $rest.deleteProject(uuid, function() {
             window.location.href = "../projects";
         });
+    });
+
+    $("#projectVersionSelect").on("change", function () {
+        let uuid = $("#projectVersionSelect").val();
+        window.location.href = "?uuid=" + uuid;
     });
 
 });

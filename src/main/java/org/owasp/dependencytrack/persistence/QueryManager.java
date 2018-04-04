@@ -1102,7 +1102,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public long getVulnerabilityCount(Project project) {
         long total = 0;
-        final List<Dependency> dependencies = getDependencies(project).getList(Dependency.class);
+        final List<Dependency> dependencies = getAllDependencies(project);
         for (Dependency dependency: dependencies) {
             total += getVulnerabilityCount(dependency.getComponent());
         }

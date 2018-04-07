@@ -53,11 +53,12 @@ function getDashboardData() {
         $chart.createSeverityTrendChart(metrics, "portfoliochart", "Portfolio Vulnerabilities");
         $chart.createAffectedVsTotalTrendChart(metrics, "projectchart", "Projects", "vulnerableProjects", "projects", "Vulnerable Projects", "Total Projects");
         $chart.createAffectedVsTotalTrendChart(metrics, "componentchart", "Components", "vulnerableComponents", "components", "Vulnerable Components", "Total Components");
-        $chart.createVulnerabilityChart(metrics, "vulnerabilitychart", "Vulnerabilities", 10);
         populateProgressBars(metrics);
         updateStats(metrics);
     });
-    $rest.getVulnerabilityMetrics(createVulnerabilityChart);
+    $rest.getVulnerabilityMetrics(function(metrics) {
+        $chart.createVulnerabilityChart(metrics, "vulnerabilitychart", "Vulnerabilities", 10);
+    });
 }
 
 /**

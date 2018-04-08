@@ -58,6 +58,25 @@ function formatComponentsTable(res) {
 }
 
 /**
+ * Called by bootstrap table to format the data in the findings table.
+ */
+function formatFindingsTable(res) {
+    for (let i=0; i<res.length; i++) {
+        let vulnurl = "../vulnerability/?source=" + res[i].source + "&vulnId=" + res[i].vulnId;
+        res[i].vulnerabilityhref = $common.formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
+
+        if (res[i].hasOwnProperty("cwe")) {
+            res[i].cwefield = "CWE-" + res[i].cwe.cweId + " " + res[i].cwe.name;
+        }
+
+        if (res[i].hasOwnProperty("severity")) {
+            res[i].severityLabel = $common.formatSeverityLabel(res[i].severity);
+        }
+    }
+    return res;
+}
+
+/**
  * Given a comma-separated string of tags, creates an
  * array of tag objects.
  */
@@ -91,9 +110,9 @@ function populateProjectData(data) {
         $.each(versionData, function() {
             let escapedProjectVersion = filterXSS(this.version);
             if (this.version === data.version) {
-                select.append($("<option selected=\"selected\"/>").val(this.uuid).text("Version: " + escapedProjectVersion));
+                select.append($("<option selected=\"selected\"/>").val(this.uuid).text(escapedProjectVersion));
             } else {
-                select.append($("<option />").val(this.uuid).text("Version: " + escapedProjectVersion));
+                select.append($("<option />").val(this.uuid).text(escapedProjectVersion));
             }
         });
         select.selectpicker('refresh');
@@ -147,12 +166,27 @@ function populateLicenseData(data) {
     select.selectpicker("refresh");
 }
 
-function populateMetrics(data) {
-    $("#metricCritical").html(data.critical);
-    $("#metricHigh").html(data.high);
-    $("#metricMedium").html(data.medium);
-    $("#metricLow").html(data.low);
-    $("#metricIrs").html(data.inheritedRiskScore);
+function populateMetrics(metric) {
+    $("#metricCritical").html(filterXSS($common.valueWithDefault(metric.critical, "0")));
+    $("#metricHigh").html(filterXSS($common.valueWithDefault(metric.high, "0")));
+    $("#metricMedium").html(filterXSS($common.valueWithDefault(metric.medium, "0")));
+    $("#metricLow").html(filterXSS($common.valueWithDefault(metric.low, "0")));
+    $("#metricIrs").html(filterXSS($common.valueWithDefault(metric.inheritedRiskScore, "0")));
+
+    $("#statTotalComponents").html(filterXSS($common.valueWithDefault(metric.components, "0")));
+    $("#statVulnerableComponents").html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")));
+    $("#statVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
+    $("#statSuppressed").html(filterXSS($common.valueWithDefault(metric.suppressed, "0")));
+    $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
+}
+
+function getTrendData() {
+    let uuid = $.getUrlVar("uuid");
+    d3.selectAll(".nvtooltip").remove();
+    $rest.getProjectMetrics(uuid, 90, function(metrics) {
+        $chart.createSeverityTrendChart(metrics, "projectchart", "Project Vulnerabilities");
+        $chart.createAffectedVsTotalTrendChart(metrics, "componentchart", "Components", "vulnerableComponents", "components", "Vulnerable Components", "Total Components");
+    });
 }
 
 /**
@@ -160,6 +194,12 @@ function populateMetrics(data) {
  */
 $(document).ready(function () {
     let uuid = $.getUrlVar("uuid");
+
+    const token = $auth.decodeToken($auth.getToken());
+    if ($auth.hasPermission($auth.VULNERABILITY_ANALYSIS, token)) {
+        const findingsUrl = $rest.contextPath() + URL_FINDING + "/project/" + uuid;
+        $("#findingsTable").bootstrapTable("refresh", {url: findingsUrl, silent: true});
+    }
 
     $rest.getProject(uuid, populateProjectData);
     $rest.getLicenses(populateLicenseData);
@@ -238,4 +278,13 @@ $(document).ready(function () {
         window.location.href = "?uuid=" + uuid;
     });
 
+    getTrendData();
+
+    // Listen for refresh icon to be triggered
+    $("#refresh").on("click", function() {
+        $rest.refreshProjectMetrics(uuid, function() {
+            $("#statLastMeasurement").html("Refresh triggered");
+            $common.displayInfoModal("A refresh has been requested. The amount of time required to refresh is dependant on the amount of background processing currently being performed and the size of the data-set being refreshed.")
+        });
+    });
 });

@@ -21,11 +21,12 @@
 const $auth = function() {
 };
 
-$auth.BOM_UPLOAD           = "BOM_UPLOAD";
-$auth.SCAN_UPLOAD          = "SCAN_UPLOAD";
-$auth.VIEW_PORTFOLIO       = "VIEW_PORTFOLIO";
-$auth.PORTFOLIO_MANAGEMENT = "PORTFOLIO_MANAGEMENT";
-$auth.ACCESS_MANAGEMENT    = "ACCESS_MANAGEMENT";
+$auth.BOM_UPLOAD             = "BOM_UPLOAD";
+$auth.SCAN_UPLOAD            = "SCAN_UPLOAD";
+$auth.VIEW_PORTFOLIO         = "VIEW_PORTFOLIO";
+$auth.PORTFOLIO_MANAGEMENT   = "PORTFOLIO_MANAGEMENT";
+$auth.ACCESS_MANAGEMENT      = "ACCESS_MANAGEMENT";
+$auth.VULNERABILITY_ANALYSIS = "VULNERABILITY_ANALYSIS";
 
 /**
  * Determines if the current logged in user has a specific permission.

@@ -94,7 +94,7 @@ $common.isBlank = function isBlank(string) {
  * Called after we have verified that a user is authenticated (if authentication is enabled)
  */
 $common.initialize = function initialize() {
-    let token = $auth.decodeToken($auth.getToken());
+    const token = $auth.decodeToken($auth.getToken());
 
     if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
         $("#sidebar-admin-button").css("display", "block");
@@ -107,6 +107,9 @@ $common.initialize = function initialize() {
         $("button.require-portfolio-management").css("display", "inline-block");
         $(".require-portfolio-management").removeAttr("disabled");
         $(".refresh-metric.require-portfolio-management").css("display", "inline-block");
+    }
+    if ($auth.hasPermission($auth.VULNERABILITY_ANALYSIS, token)) {
+        $("li.require-vulnerability-analysis").css("display", "block");
     }
 
     $rest.getVersion(

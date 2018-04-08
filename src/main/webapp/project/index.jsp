@@ -24,8 +24,10 @@
                                     <span class="name" id="projectTitle"></span>
                                     <span id="projectVersion"></span>
                                 </span>
-                                <div class="form-group">
-                                    <select name="version" class="selectpicker form-control" title="Version" data-live-search="true" id="projectVersionSelect"></select>
+                                <div class="form-inline" role="form">
+                                    <div class="form-group">
+                                        <select name="version" class="selectpicker form-control" title="Version" data-live-search="true" data-width="200px" id="projectVersionSelect"></select>
+                                    </div>
                                 </div>
                                 <span id="tags"></span>
                             </div>
@@ -79,29 +81,124 @@
     </div>
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
-            <div id="componentsToolbar">
-                <div class="form-inline" role="form">
-                    <button id="addDependencyButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
-                    <button id="removeDependencyButton" class="btn btn-default require-portfolio-management"><span class="fa fa-minus"></span> Remove Dependency</button>
+            <div class="panel with-nav-tabs panel-default tight">
+                <div class="panel-heading">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#overviewTab" data-toggle="tab"><i class="fa fa-line-chart"></i> Overview</a></li>
+                        <li><a href="#dependenciesTab" data-toggle="tab"><i class="fa fa-cubes"></i> Dependencies</a></li>
+                        <li class="require-vulnerability-analysis"><a href="#auditTab" data-toggle="tab"><i class="fa fa-tasks"></i> Audit</a></li>
+                    </ul>
+                </div>
+                <div class="panel-body tight">
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="overviewTab">
+                            <!-- Left Column -->
+                            <div class="col-lg-8">
+                                <div id="projectchart" style="height:200px"></div>
+                                <div id="componentchart" style="height:200px"></div>
+                            </div>
+                            <!-- Right Column -->
+                            <div class="col-lg-4">
+                                <!-- Statistics -->
+                                <div class="widget-row widget-overview-first">
+                                    <div class="col-sm-12">
+                                        <div class="panel widget">
+                                            <div class="panel-heading">
+                                                <table width="100%" class="table widget-table">
+                                                    <tr>
+                                                        <td>Components:</td>
+                                                        <td><span id="statTotalComponents"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Vulnerable Components:</td>
+                                                        <td><span id="statVulnerableComponents"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Vulnerabilities:</td>
+                                                        <td><span id="statVulnerabilities"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Suppressed:</td>
+                                                        <td><span id="statSuppressed"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Last Measurement:</td>
+                                                        <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh" class="refresh-metric require-portfolio-management"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="dependenciesTab">
+                            <div id="componentsToolbar">
+                                <div class="form-inline" role="form">
+                                    <button id="addDependencyButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
+                                    <button id="removeDependencyButton" class="btn btn-default require-portfolio-management"><span class="fa fa-minus"></span> Remove Dependency</button>
+                                </div>
+                            </div>
+                            <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/dependency/project/${e:forUriComponent(param.uuid)}"/>" data-response-handler="formatDependenciesTable"
+                                   data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
+                                   data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="center" data-field="state" data-checkbox="true"></th>
+                                    <th data-align="left" data-field="componenthref" data-sort-name="component.name" data-sortable="true">Component</th>
+                                    <th data-align="left" data-field="component.version">Version</th>
+                                    <th data-align="left" data-field="component.group" data-sort-name="component.group" data-sortable="true">Group</th>
+                                    <th data-align="left" data-field="component.license">License</th>
+                                    <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane require-vulnerability-analysis" id="auditTab">
+                            <div id="auditToolbar">
+                                <div class="form-inline" role="form">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="fa fa-eye-slash"></span> Analysis <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#">Exploitable</a></li>
+                                        <li><a href="#">In Triage</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#">False Positive</a></li>
+                                        <li><a href="#">Not Affected</a></li>
+                                    </ul>
+                                    <button id="suppressButton" class="btn btn-default" data-toggle="modal"><span class="fa fa-ban"></span> Suppress</button>
+                                </div>
+                            </div>
+                            <table id="findingsTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-response-handler="formatFindingsTable"
+                                   data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-toolbar="#auditToolbar" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="center" data-class="tight" data-field="state" data-checkbox="true"></th>
+                                    <th data-align="left" data-class="tight" data-field="name" data-sortable="true">Component</th>
+                                    <th data-align="left" data-class="tight" data-field="version" data-sortable="true">Version</th>
+                                    <th data-align="left" data-class="tight" data-field="group" data-sortable="true">Group</th>
+                                    <th data-align="left" data-class="tight" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Name</th>
+                                    <th data-align="left" data-class="expand" data-field="cwefield" data-sortable="true">CWE</th>
+                                    <th data-align="left" data-class="tight" data-field="severityLabel" data-sort-name="severityRank" data-sortable="true">Severity</th>
+                                    <th data-align="left" data-class="tight" data-field="state" data-sortable="true">Analysis</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- end of tabs -->
+
+
+                    </div>
                 </div>
             </div>
-            <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
-                   data-url="<c:url value="/api/v1/dependency/project/${e:forUriComponent(param.uuid)}"/>" data-response-handler="formatDependenciesTable"
-                   data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
-                   data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
-                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
-                   data-toolbar="#componentsToolbar" data-click-to-select="true" data-height="100%">
-                <thead>
-                <tr>
-                    <th data-align="center" data-field="state" data-checkbox="true"></th>
-                    <th data-align="left" data-field="componenthref" data-sort-name="component.name" data-sortable="true">Component</th>
-                    <th data-align="left" data-field="component.version">Version</th>
-                    <th data-align="left" data-field="component.group" data-sort-name="component.group" data-sortable="true">Group</th>
-                    <th data-align="left" data-field="component.license">License</th>
-                    <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
-                </tr>
-                </thead>
-            </table>
         </div>
     </div>
 

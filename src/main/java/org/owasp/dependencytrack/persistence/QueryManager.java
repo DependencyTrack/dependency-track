@@ -23,6 +23,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.datanucleus.api.jdo.JDOQuery;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Analysis;
 import org.owasp.dependencytrack.model.AnalysisComment;
@@ -33,6 +34,7 @@ import org.owasp.dependencytrack.model.ComponentMetrics;
 import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Dependency;
 import org.owasp.dependencytrack.model.Evidence;
+import org.owasp.dependencytrack.model.Finding;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
@@ -1208,6 +1210,24 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of Finding objects for the specified project.
+     * @param project the project to retrieve findings for
+     * @return a List of Finding objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Finding> getFindings(Project project) {
+        Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY);
+        query.setParameters(project.getId());
+        List<Object[]> list = query.executeList();
+        List<Finding> findings = new ArrayList<>();
+        for (Object[] o: list) {
+            Finding finding = new Finding(o);
+            findings.add(finding);
+        }
+        return findings;
+    }
+
+    /**
      * Retrieves the current VulnerabilityMetrics
      * @return a VulnerabilityMetrics object
      */
@@ -1283,7 +1303,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<ProjectMetrics> getProjectMetricsSince(Project project, Date since) {
-        final Query query = pm.newQuery(PortfolioMetrics.class, "project == :project && lastOccurrence >= :since");
+        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project && lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
         return (List<ProjectMetrics>)query.execute(project, since);
     }

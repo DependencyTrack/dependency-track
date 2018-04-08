@@ -359,6 +359,9 @@ h4 {
 .widget .panel-footer:hover {
      background: #e0e0e0;
 }
+.widget-overview-first {
+    margin-top: 30px;
+}
 #navbar ul li a, .btn, .btn:focus, .btn.focus, .btn:active:focus, .btn:active.focus,
 .widget .widget-details-selector:focus, .widget .widget-details-selector.focus,
 .widget .widget-details-selector:active:focus, .widget .widget-details-selector.active:focus {
@@ -381,7 +384,6 @@ h4 {
     vertical-align: middle;
 }
 .title-container {
-    float: left;
 }
 .huge {
     font-size: 40px;
@@ -743,6 +745,9 @@ input.required {
     display: none;
 }
 button.require-portfolio-management {
+    display: none;
+}
+.nav>li.require-vulnerability-analysis, div.require-vulnerability-analysis  {
     display: none;
 }
 .refresh-metric {

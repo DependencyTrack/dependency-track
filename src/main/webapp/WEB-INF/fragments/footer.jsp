@@ -21,3 +21,4 @@
 <script type="text/javascript" src="<c:url value="/assets/auth.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/rest.js"/>"></script>
 <script type="text/javascript" src="<c:url value="/assets/common.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/assets/chart.js"/>"></script>

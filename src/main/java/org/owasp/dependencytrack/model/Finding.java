@@ -44,17 +44,19 @@ public class Finding implements Serializable {
             "\"COMPONENT\".\"NAME\", " +
             "\"COMPONENT\".\"GROUP\", " +
             "\"COMPONENT\".\"VERSION\", " +
-            "\"VULNERABILITY\".\"CWE\", " +
             "\"VULNERABILITY\".\"SOURCE\", " +
             "\"VULNERABILITY\".\"VULNID\", " +
             "\"VULNERABILITY\".\"UUID\", " +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\", " +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\", " +
+            "\"CWE\".\"CWEID\" AS \"CWEID\", " +
+            "\"CWE\".\"NAME\" AS \"CWENAME\", " +
             "\"ANALYSIS\".\"STATE\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"DEPENDENCY\" ON (\"COMPONENT\".\"ID\" = \"DEPENDENCY\".\"COMPONENT_ID\") " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"DEPENDENCY\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
+            "LEFT JOIN \"CWE\"  ON (\"VULNERABILITY\".\"CWE\" = \"CWE\".\"ID\") " +
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") " +
             "WHERE \"DEPENDENCY\".\"PROJECT_ID\" = ?";
 
@@ -62,12 +64,13 @@ public class Finding implements Serializable {
     private Object name;
     private Object group;
     private Object version;
-    private Object cwe;
     private Object source;
     private Object vulnId;
     private Object vulnUuid;
     private Object severity;
     private Object severityRank;
+    private Object cweId;
+    private Object cweName;
     private Object state;
 
     /**
@@ -81,16 +84,17 @@ public class Finding implements Serializable {
         this.name = o[1];
         this.group = o[2];
         this.version = o[3];
-        this.cwe = o[4];
-        this.source = o[5];
-        this.vulnId = o[6];
-        this.vulnUuid = o[7];
+        this.source = o[4];
+        this.vulnId = o[5];
+        this.vulnUuid = o[6];
 
-        final Severity severity = VulnerabilityUtil.getSeverity(o[8], o[9]);
+        final Severity severity = VulnerabilityUtil.getSeverity(o[7], o[8]);
         this.severity = severity.name();
         this.severityRank = severity.ordinal();
 
-        this.state = o[10];
+        this.cweId = o[9];
+        this.cweName= o[10];
+        this.state = o[11];
     }
 
     public Object getComponentUuid() {
@@ -107,10 +111,6 @@ public class Finding implements Serializable {
 
     public Object getVersion() {
         return version;
-    }
-
-    public Object getCwe() {
-        return cwe;
     }
 
     public Object getSource() {
@@ -131,6 +131,14 @@ public class Finding implements Serializable {
 
     public Object getSeverityRank() {
         return severityRank;
+    }
+
+    public Object getCweId() {
+        return cweId;
+    }
+
+    public Object getCweName() {
+        return cweName;
     }
 
     public Object getState() {

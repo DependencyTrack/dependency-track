@@ -181,14 +181,14 @@
                                    data-toolbar="#auditToolbar" data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
-                                    <th data-align="center" data-class="tight" data-field="state" data-checkbox="true"></th>
-                                    <th data-align="left" data-class="tight" data-field="name" data-sortable="true">Component</th>
-                                    <th data-align="left" data-class="tight" data-field="version" data-sortable="true">Version</th>
-                                    <th data-align="left" data-class="tight" data-field="group" data-sortable="true">Group</th>
-                                    <th data-align="left" data-class="tight" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Name</th>
+                                    <th data-align="center" data-field="state" data-checkbox="true"></th>
+                                    <th data-align="left" data-field="name" data-sortable="true">Component</th>
+                                    <th data-align="left" data-field="version" data-sortable="true">Version</th>
+                                    <th data-align="left" data-field="group" data-sortable="true">Group</th>
+                                    <th data-align="left" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Vulnerability</th>
                                     <th data-align="left" data-class="expand" data-field="cwefield" data-sortable="true">CWE</th>
-                                    <th data-align="left" data-class="tight" data-field="severityLabel" data-sort-name="severityRank" data-sortable="true">Severity</th>
-                                    <th data-align="left" data-class="tight" data-field="state" data-sortable="true">Analysis</th>
+                                    <th data-align="left" data-field="severityLabel" data-sort-name="severityRank" data-sortable="true">Severity</th>
+                                    <th data-align="left" data-field="state" data-sortable="true">Analysis</th>
                                 </tr>
                                 </thead>
                             </table>

@@ -212,12 +212,15 @@ public class QueryManager extends AlpineQueryManager {
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
-        project.setTags(resolveTags(tags));
         if (parent != null) {
             project.setParent(parent);
         }
         project.setPurl(purl);
         final Project result = persist(project);
+
+        List<Tag> resolvedTags = resolveTags(tags);
+        bind(project, resolvedTags);
+
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
         return result;

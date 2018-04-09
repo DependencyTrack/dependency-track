@@ -1255,7 +1255,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<ProjectMetrics> getProjectMetricsSince(Project project, Date since) {
-        final Query query = pm.newQuery(PortfolioMetrics.class, "project == :project && lastOccurrence >= :since");
+        final Query query = pm.newQuery(ProjectMetrics.class, "project == :project && lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
         return (List<ProjectMetrics>)query.execute(project, since);
     }

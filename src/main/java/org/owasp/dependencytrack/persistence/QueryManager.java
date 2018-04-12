@@ -918,6 +918,45 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Intelligently adds dependencies for components that are not already a dependency
+     * of the specified project and removes the dependency relationship for components
+     * that are not in the list of specified components.
+     * @param project the project to bind components to
+     * @param components the complete list of components that should be dependencies of the project
+     */
+    public void reconcileDependencies(Project project, List<Component> components) {
+        // Holds a list of all Components that are existing dependencies of the specified project
+        final List<Component> existingProjectDependencies = new ArrayList<>();
+        getAllDependencies(project).forEach(item -> existingProjectDependencies.add(item.getComponent()));
+        reconcileDependencies(project, existingProjectDependencies, components);
+    }
+
+    /**
+     * Intelligently adds dependencies for components that are not already a dependency
+     * of the specified project and removes the dependency relationship for components
+     * that are not in the list of specified components.
+     * @param project the project to bind components to
+     * @param existingProjectDependencies the complete list of existing dependent components
+     * @param components the complete list of components that should be dependencies of the project
+     */
+    public void reconcileDependencies(Project project, List<Component> existingProjectDependencies, List<Component> components) {
+        // Removes components as dependencies to the project for all
+        // components not included in the list provided
+        for (Component existingDependency: existingProjectDependencies) {
+            boolean keep = false;
+            for (Component component: components) {
+                if (component.getId() == existingDependency.getId()) {
+                    keep = true;
+                }
+            }
+            if (!keep) {
+                removeDependencyIfExist(project, existingDependency);
+            }
+        }
+        components.forEach(component -> createDependencyIfNotExist(project, component, null, null));
+    }
+
+    /**
      * Returns a List of all Dependency for the specified Project.
      * This method if designed NOT to provide paginated results.
      * @param project the Project to retrieve dependencies of

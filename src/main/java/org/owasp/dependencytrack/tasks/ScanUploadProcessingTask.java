@@ -138,8 +138,6 @@ public class ScanUploadProcessingTask implements Subscriber {
                         component = qm.updateComponent(component, false);
                     }
 
-                    qm.createDependencyIfNotExist(project, component, null, null);
-
                     if (dependency.getVulnerabilities() != null && dependency.getVulnerabilities().getVulnerabilities() != null) {
                         for (org.owasp.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
 
@@ -171,6 +169,8 @@ public class ScanUploadProcessingTask implements Subscriber {
                                 .getSource(), evidence.getName(), evidence.getValue());
                     }
                 }
+
+                qm.reconcileDependencies(project, components);
                 qm.updateLastScanImport(project, date);
                 EventService.getInstance().publish(new VulnerabilityAnalysisEvent(components));
             } catch (Exception ex) {

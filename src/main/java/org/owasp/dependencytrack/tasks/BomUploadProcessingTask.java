@@ -54,8 +54,14 @@ public class BomUploadProcessingTask implements Subscriber {
             final byte[] bomBytes = event.getBom();
             QueryManager qm = new QueryManager();
             try {
+                final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 final List<Component> components;
                 final List<Component> flattenedComponents = new ArrayList<>();
+
+                // Holds a list of all Components that are existing dependencies of the specified project
+                final List<Component> existingProjectDependencies = new ArrayList<>();
+                qm.getAllDependencies(project).forEach(item -> existingProjectDependencies.add(item.getComponent()));
+
                 final String bomString = new String(bomBytes);
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
                     final CycloneDxParser parser = new CycloneDxParser(qm);
@@ -64,12 +70,13 @@ public class BomUploadProcessingTask implements Subscriber {
                     final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
                     components = parser.parse(bomBytes);
                 }
-                final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 final Date date = new Date();
                 final Bom bom = qm.createBom(project, date);
                 for (Component component: components) {
                     processComponent(qm, bom, project, component, flattenedComponents);
                 }
+
+                qm.reconcileDependencies(project, existingProjectDependencies, flattenedComponents);
                 qm.updateLastBomImport(project, date);
                 EventService.getInstance().publish(new VulnerabilityAnalysisEvent(flattenedComponents));
             } catch (Exception ex) {

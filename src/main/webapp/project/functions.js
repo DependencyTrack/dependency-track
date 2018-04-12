@@ -177,7 +177,9 @@ function populateMetrics(metric) {
     $("#statVulnerableComponents").html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")));
     $("#statVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
     $("#statSuppressed").html(filterXSS($common.valueWithDefault(metric.suppressed, "0")));
-    $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
+    if (metric.hasOwnProperty("lastOccurrence")) {
+        $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
+    }
 }
 
 function getTrendData() {

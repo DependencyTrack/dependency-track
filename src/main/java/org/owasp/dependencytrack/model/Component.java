@@ -188,7 +188,7 @@ public class Component implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
 
-    @Persistent(defaultFetchGroup = "true")
+    @Persistent(defaultFetchGroup = "true", cacheable = "false")
     @Column(name = "LICENSE_ID")
     private License resolvedLicense;
 

@@ -865,6 +865,31 @@ public class QueryManager extends AlpineQueryManager {
      * @return a Dependency object
      */
     public Dependency createDependencyIfNotExist(Project project, Component component, String addedBy, String notes) {
+        List<Dependency> dependencies = getDependencies(project, component);
+
+        // Holder for possible duplicate dependencies
+        List<Dependency> duplicates = new ArrayList<>();
+
+        // Holder for an existing Dependency (if present)
+        Dependency existingDependency = null;
+
+        if (dependencies.size() > 0) {
+            // Ensure that only one dependency object exists
+            if (dependencies.size() > 1) {
+                // Iterate through the duplicates and add them to the list of dependencies to be deleted
+                for (int i = 1; i < dependencies.size(); i++) {
+                    duplicates.add(dependencies.get(i));
+                }
+            }
+            // Return the first dependency found - all others will be deleted
+            existingDependency = dependencies.get(0);
+        }
+        delete(duplicates);
+
+        if (existingDependency != null) {
+            return existingDependency;
+        }
+
         Dependency dependency = getDependency(project, component);
         if (dependency != null) {
             return dependency;
@@ -1041,10 +1066,26 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public Dependency getDependency(Project project, Component component) {
+        final List<Dependency> result = getDependencies(project, component);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Returns a List of Dependencies for the specified Project and Component.
+     *
+     * There should NEVER be duplicate dependencies. But this method is intended
+     * to check for them and return the list. This is a private method and should
+     * never be accessed outside the QueryManager.
+     *
+     * @param project the Project the component is part of
+     * @param component the Component
+     * @return a List of Dependency objects, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    private List<Dependency> getDependencies(Project project, Component component) {
         final Query query = pm.newQuery(Dependency.class, "project == :project && component == :component");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
-        final List<Dependency> result = (List<Dependency>) query.execute(project, component);
-        return result.size() == 0 ? null : result.get(0);
+        return (List<Dependency>) query.execute(project, component);
     }
 
     /**

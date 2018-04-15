@@ -174,40 +174,6 @@
             <groupId>org.spdx</groupId>
             <artifactId>spdx-tools</artifactId>
             <version>${lib.spdx-tools.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.sf.opencsv</groupId>
-                    <artifactId>opencsv</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.spullara.mustache.java</groupId>
-                    <artifactId>compiler</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.eclipse.jgit</groupId>
-                    <artifactId>org.eclipse.jgit</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.jcraft:jsch</groupId>
-                    <artifactId>jsch</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.googlecode.javaewah</groupId>
-                    <artifactId>JavaEWAH</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.thrift</groupId>
-                    <artifactId>libthrift</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-csv</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 

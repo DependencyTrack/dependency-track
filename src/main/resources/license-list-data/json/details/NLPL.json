@@ -1,1 +1,11 @@
-{"isDeprecatedLicenseId":false,"licenseText":"NO LIMIT PUBLIC LICENSE\n     Version 0, June 2012\n\nGilles LAMIRAL\nLa Billais\n35580 Baulon\nFrance\n\nNO LIMIT PUBLIC LICENSE\n\nTerms and conditions for copying, distribution, modification\nor anything else.\n\n     0. No limit to do anything with this work and this license.","standardLicenseTemplate":"NO LIMIT PUBLIC LICENSE\n     Version 0, June 2012\n\nGilles LAMIRAL\nLa Billais\n35580 Baulon\nFrance\n\nNO LIMIT PUBLIC LICENSE\n\nTerms and conditions for copying, distribution, modification\nor anything else.\n\n     0. No limit to do anything with this work and this license.","name":"No Limit Public License","licenseId":"NLPL","standardLicenseHeader":"","seeAlso":["https:\/\/fedoraproject.org\/wiki\/Licensing\/NLPL"],"isOsiApproved":false}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "NO LIMIT PUBLIC LICENSE\n\nVersion 0, June 2012 Gilles LAMIRAL\n\nLa Billais\n\n35580 Baulon\n\nFrance NO LIMIT PUBLIC LICENSE\n\nTerms and conditions for copying, distribution, modification or anything else.\n\n   0. No limit to do anything with this work and this license.",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e NO LIMIT PUBLIC LICENSE\n\nVersion 0, June 2012\u003c\u003cendOptional\u003e\u003e\u003c\u003cbeginOptional\u003e\u003e Gilles LAMIRAL\n\nLa Billais\n\n35580 Baulon\n\nFrance\u003c\u003cendOptional\u003e\u003e\u003c\u003cbeginOptional\u003e\u003e NO LIMIT PUBLIC LICENSE\u003c\u003cendOptional\u003e\u003e\n\nTerms and conditions for copying, distribution, modification or anything else.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e No limit to do anything with this work and this license.",
+  "name": "No Limit Public License",
+  "licenseId": "NLPL",
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/NLPL"
+  ],
+  "isOsiApproved": false
+}

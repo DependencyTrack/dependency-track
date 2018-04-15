@@ -1,1 +1,12 @@
-{"isDeprecatedLicenseId":false,"licenseText":"\"THE BEER-WARE LICENSE\" (Revision 42):  <phk@FreeBSD.ORG> wrote this file. As long as you retain this notice you  can do whatever you want with this stuff. If we meet some day, and you think  this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp","standardLicenseTemplate":"\"THE BEER-WARE LICENSE\" (Revision 42):  <phk@FreeBSD.ORG> wrote this file. As long as you retain this notice you  can do whatever you want with this stuff. If we meet some day, and you think  this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp","name":"Beerware License","licenseId":"Beerware","standardLicenseHeader":"","seeAlso":["https:\/\/fedoraproject.org\/wiki\/Licensing\/Beerware"],"isOsiApproved":false}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "\"THE BEER-WARE LICENSE\" (Revision 42):\n\n\u003cphk@FreeBSD.ORG\u003e wrote this file. As long as you retain this notice you can do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp",
+  "standardLicenseTemplate": "\"THE BEER-WARE LICENSE\" (Revision 42):\n\n\u003cphk@FreeBSD.ORG\u003e wrote this file. As long as you retain this notice you can do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp",
+  "name": "Beerware License",
+  "licenseId": "Beerware",
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Beerware",
+    "https://people.freebsd.org/~phk/"
+  ],
+  "isOsiApproved": false
+}

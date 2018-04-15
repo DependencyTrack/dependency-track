@@ -1,1 +1,11 @@
-{"isDeprecatedLicenseId":false,"licenseText":"psfrag.dtx \nCopyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.  \nAll rights are reserved.   \n\nThis system is distributed in the hope that it will be  useful, but WITHOUT ANY WARRANTY; without even the  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don't come complaining to us if you modify this file and it doesn't work! If this file is modified by anyone but the authors, those changes and their authors must be explicitly stated HERE.","standardLicenseTemplate":"psfrag.dtx \nCopyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.  \nAll rights are reserved.   \n\nThis system is distributed in the hope that it will be  useful, but WITHOUT ANY WARRANTY; without even the  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don't come complaining to us if you modify this file and it doesn't work! If this file is modified by anyone but the authors, those changes and their authors must be explicitly stated HERE.","name":"psfrag License","licenseId":"psfrag","standardLicenseHeader":"","seeAlso":["https:\/\/fedoraproject.org\/wiki\/Licensing\/psfrag"],"isOsiApproved":false}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "psfrag.dtx\n\nCopyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.\n\nAll rights are reserved.\n\nThis system is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don\u0027t come complaining to us if you modify this file and it doesn\u0027t work! If this file is modified by anyone but the authors, those changes and their authors must be explicitly stated HERE.",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e psfrag.dtx\u003c\u003cendOptional\u003e\u003e\n\nCopyright (C) 1996 Craig Barratt, Michael C. Grant, and David Carlisle.\n\nAll rights are reserved.\n\nThis system is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Don\u0027t come complaining to us if you modify this file and it doesn\u0027t work! If this file is modified by anyone but the authors, those changes and their authors must be explicitly stated HERE.",
+  "name": "psfrag License",
+  "licenseId": "psfrag",
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/psfrag"
+  ],
+  "isOsiApproved": false
+}

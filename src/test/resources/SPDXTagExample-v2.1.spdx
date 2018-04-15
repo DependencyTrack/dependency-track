@@ -35,9 +35,9 @@ This information was found in the COPYING.txt file in the xyz directory.</text>
 FileType: SOURCE
 FileChecksum: MD5: 624c1abb3664f4b35547e7c73864ad24
 FileChecksum: SHA1: d6a770ba38583ed4bb4525bd96e50461655d2758
-LicenseConcluded: (LGPL-2.0 OR LicenseRef-2)
+LicenseConcluded: (LGPL-2.0-or-later OR LicenseRef-2)
 LicenseInfoInFile: LicenseRef-2
-LicenseInfoInFile: GPL-2.0
+LicenseInfoInFile: GPL-2.0-or-later
 LicenseComments: The concluded license was taken from the package level that the file was included in.
 FileCopyrightText: <text>Copyright 2008-2010 John Smith</text>
 ArtifactOfProjectName: Jena
@@ -72,12 +72,12 @@ PackageChecksum: SHA256: 11b6d3ee554eedf79299905a98f9b9a04e498210b59f15094c916c9
 PackageChecksum: MD5: 624c1abb3664f4b35547e7c73864ad24
 PackageHomePage: http://ftp.gnu.org/gnu/glibc
 PackageSourceInfo: <text>uses glibc-2_11-branch from git://sourceware.org/git/glibc.git.</text>
-PackageLicenseConcluded: (LicenseRef-3 OR LGPL-2.0)
+PackageLicenseConcluded: (LicenseRef-3 OR LGPL-2.0-or-later)
 ## License information from files
-PackageLicenseInfoFromFiles: GPL-2.0
+PackageLicenseInfoFromFiles: GPL-2.0-or-later
 PackageLicenseInfoFromFiles: LicenseRef-1
 PackageLicenseInfoFromFiles: LicenseRef-2
-PackageLicenseDeclared: (LicenseRef-3 AND LGPL-2.0)
+PackageLicenseDeclared: (LicenseRef-3 AND LGPL-2.0-or-later)
 PackageLicenseComments: <text>The license for this project changed with the release of version x.y.  The version of the project included here post-dates the license change.</text>
 PackageCopyrightText: <text>Copyright 2008-2010 John Smith</text>
 PackageSummary: <text>GNU C library.</text>
@@ -154,16 +154,16 @@ SnippetSPDXID: SPDXRef-Snippet
 SnippetFromFileSPDXID: SPDXRef-DoapSource
 SnippetByteRange: 310:420
 SnippetLineRange: 5:23
-SnippetLicenseConcluded: GPL-2.0
+SnippetLicenseConcluded: GPL-2.0-or-later
 SnippetLicenseComments: <text>
 The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.
 </text>
 SnippetCopyrightText: <text> Copyright 2008-2010 John Smith </text>
 SnippetComment: <text>
-This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0.
+This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0-or-later.
 </text>
 SnippetName: from linux kernel
-LicenseInfoInSnippet: GPL-2.0
+LicenseInfoInSnippet: GPL-2.0-or-later
 
 ## Package Without Files
 PackageName: Saxon

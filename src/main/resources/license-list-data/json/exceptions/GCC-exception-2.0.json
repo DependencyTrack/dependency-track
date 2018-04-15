@@ -1,1 +1,10 @@
-{"isDeprecatedLicenseId":false,"licenseExceptionText":"In addition to the permissions in the GNU General Public License, the Free Software Foundation gives you unlimited permission to link the compiled version of this file into combinations with other programs, and to distribute those combinations without any restriction coming from the use of this file. (The General Public License restrictions do apply in other respects; for example, they cover modification of the file, and distribution when not linked into a combine executable.)","name":"GCC Runtime Library exception 2.0","licenseComments":"Typically used with GPL-2.0 or later.  Sometimes also referred to a \"linking exception.\"\n\nThis exception should be used instead of the deprecated http:\/\/spdx.org\/licenses\/GPL-2.0-with-GCC-exception","seeAlso":[""],"licenseExceptionId":"GCC-exception-2.0","example":""}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "In addition to the permissions in the GNU Library General Public License, the Free Software Foundation gives you unlimited permission to link the compiled version of this file into combinations with other programs, and to distribute those programs without any restriction coming from the use of this file. (The General Public License restrictions do apply in other respects; for example, they cover modification of the file, and distribution when not linked into another program .)",
+  "name": "GCC Runtime Library exception 2.0",
+  "licenseComments": "Typically used with GPL-2.0+. Sometimes also referred to a \"linking exception.\"",
+  "seeAlso": [
+    "https://gcc.gnu.org/git/?p\u003dgcc.git;a\u003dblob;f\u003dgcc/libgcc1.c;h\u003d762f5143fc6eed57b6797c82710f3538aa52b40b;hb\u003dcb143a3ce4fb417c68f5fa2691a1b1b1053dfba9#l10"
+  ],
+  "licenseExceptionId": "GCC-exception-2.0"
+}

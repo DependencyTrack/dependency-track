@@ -1,1 +1,12 @@
-{"isDeprecatedLicenseId":false,"licenseText":"Fair License\n\n<Copyright Information>\n\nUsage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.\n\nDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.\n\n[2004, Fair License: rhid.com\/fair (this URL no longer works)]","standardLicenseTemplate":"Fair License\n\n<Copyright Information>\n\nUsage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.\n\nDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.\n\n[2004, Fair License: rhid.com\/fair (this URL no longer works)]","name":"Fair License","licenseId":"Fair","standardLicenseHeader":"","seeAlso":["http:\/\/www.opensource.org\/licenses\/Fair"],"isOsiApproved":true}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Fair License\n\n\u003cCopyright Information\u003e\n\nUsage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.\n\nDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e Fair License\u003c\u003cendOptional\u003e\u003e\n\n\u003cCopyright Information\u003e\n\nUsage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.\n\nDISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.",
+  "name": "Fair License",
+  "licenseId": "Fair",
+  "seeAlso": [
+    "http://fairlicense.org/",
+    "http://www.opensource.org/licenses/Fair"
+  ],
+  "isOsiApproved": true
+}

@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified"
            targetNamespace="http://cyclonedx.org/schema/spdx"
-           version="1.0-M2">
+           version="1.0-3.1">
 
     <xs:simpleType name="licenseId">
         <xs:restriction base="xs:string">
@@ -67,9 +67,14 @@
                     <xs:documentation>Afmparse License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="AGPL-1.0">
+            <xs:enumeration value="AGPL-1.0-only">
                 <xs:annotation>
-                    <xs:documentation>Affero General Public License v1.0</xs:documentation>
+                    <xs:documentation>Affero General Public License v1.0 only</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="AGPL-1.0-or-later">
+                <xs:annotation>
+                    <xs:documentation>Affero General Public License v1.0 or later</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="AGPL-3.0-only">
@@ -309,152 +314,152 @@
             </xs:enumeration>
             <xs:enumeration value="CC-BY-1.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution 1.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution 1.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-2.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution 2.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution 2.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-2.5">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution 2.5</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution 2.5 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-3.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution 3.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution 3.0 Unported</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-4.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution 4.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution 4.0 International</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-1.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial 1.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial 1.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-2.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial 2.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial 2.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-2.5">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial 2.5</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial 2.5 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-3.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial 3.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial 3.0 Unported</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-4.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial 4.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial 4.0 International</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-ND-1.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 1.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 1.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-ND-2.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 2.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 2.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-ND-2.5">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 2.5</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 2.5 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-ND-3.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 3.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 3.0 Unported</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-ND-4.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 4.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial No Derivatives 4.0 International</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-SA-1.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 1.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 1.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-SA-2.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 2.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 2.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-SA-2.5">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 2.5</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 2.5 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-SA-3.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 3.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 3.0 Unported</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-NC-SA-4.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 4.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Non Commercial Share Alike 4.0 International</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-ND-1.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution No Derivatives 1.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution No Derivatives 1.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-ND-2.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution No Derivatives 2.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution No Derivatives 2.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-ND-2.5">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution No Derivatives 2.5</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution No Derivatives 2.5 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-ND-3.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution No Derivatives 3.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution No Derivatives 3.0 Unported</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-ND-4.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution No Derivatives 4.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution No Derivatives 4.0 International</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-SA-1.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Share Alike 1.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Share Alike 1.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-SA-2.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Share Alike 2.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Share Alike 2.0 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-SA-2.5">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Share Alike 2.5</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Share Alike 2.5 Generic</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-SA-3.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Share Alike 3.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Share Alike 3.0 Unported</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC-BY-SA-4.0">
                 <xs:annotation>
-                    <xs:documentation>Creative Commons Attribution Share Alike 4.0</xs:documentation>
+                    <xs:documentation>Creative Commons Attribution Share Alike 4.0 International</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="CC0-1.0">
@@ -967,6 +972,11 @@
                     <xs:documentation>Licence Libre du Québec – Réciprocité forte version 1.1</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="Linux-OpenIB">
+                <xs:annotation>
+                    <xs:documentation>Linux Kernel Variant of OpenIB.org license</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="LPL-1.0">
                 <xs:annotation>
                     <xs:documentation>Lucent Public License Version 1.0</xs:documentation>
@@ -1010,6 +1020,11 @@
             <xs:enumeration value="MirOS">
                 <xs:annotation>
                     <xs:documentation>MirOS License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="MIT-0">
+                <xs:annotation>
+                    <xs:documentation>MIT No Attribution</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="MIT-advertising">
@@ -1717,6 +1732,11 @@
                     <xs:documentation>Zope Public License 2.1</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="AGPL-1.0">
+                <xs:annotation>
+                    <xs:documentation>Affero General Public License v1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="AGPL-3.0">
                 <xs:annotation>
                     <xs:documentation>GNU Affero General Public License v3.0</xs:documentation>
@@ -1819,7 +1839,7 @@
             </xs:enumeration>
             <xs:enumeration value="LGPL-2.1+">
                 <xs:annotation>
-                    <xs:documentation>GNU Library General Public License v2 or later</xs:documentation>
+                    <xs:documentation>GNU Library General Public License v2.1 or later</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="LGPL-2.1">
@@ -1948,6 +1968,11 @@
                     <xs:documentation>Linux Syscall Note</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="LLVM-exception">
+                <xs:annotation>
+                    <xs:documentation>LLVM Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="LZMA-exception">
                 <xs:annotation>
                     <xs:documentation>LZMA exception</xs:documentation>
@@ -1966,6 +1991,11 @@
             <xs:enumeration value="OCCT-exception-1.0">
                 <xs:annotation>
                     <xs:documentation>Open CASCADE Exception 1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="OpenJDK-assembly-exception-1.0">
+                <xs:annotation>
+                    <xs:documentation>OpenJDK Assembly exception 1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="openvpn-openssl-exception">

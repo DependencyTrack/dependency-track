@@ -38,56 +38,6 @@ public class SpdxDocumentParserTest extends BaseTest {
     }
 
     @Test
-    public void testSpdxRdf20() throws Exception {
-        try (QueryManager qm = new QueryManager()) {
-            final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
-            final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXRdfExample-v2.0.rdf"));
-            final List<Component> components = parser.parse(bom);
-            Assert.assertEquals(5, components.size());
-            for (int i = 0; i < components.size(); i++) {
-                final Component component = components.get(i);
-                Assert.assertNotNull(component);
-                if (i == 0) {
-                    validateGlibc(component);
-                } else if (i == 1) {
-                    validateJenaFoo(component);
-                } else if (i == 2) {
-                    validateDoapProject(component);
-                } else if (i == 3) {
-                    validateCommonsLang(component);
-                } else if (i == 5) {
-                    validateJenaFoo(component);
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testSpdxTag20() throws Exception {
-        try (QueryManager qm = new QueryManager()) {
-            final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
-            final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXTagExample-v2.0.spdx"));
-            final List<Component> components = parser.parse(bom);
-            Assert.assertEquals(5, components.size());
-            for (int i = 0; i < components.size(); i++) {
-                final Component component = components.get(i);
-                Assert.assertNotNull(component);
-                if (i == 0) {
-                    validateGlibc(component);
-                } else if (i == 1) {
-                    validateJavaX(component);
-                } else if (i == 2) {
-                    validateJenaSources(component);
-                } else if (i == 3) {
-                    validateCommonsLang(component);
-                } else if (i == 4) {
-                    validateJenaFoo(component);
-                }
-            }
-        }
-    }
-
-    @Test
     public void testSpdxRdf21() throws Exception {
         try (QueryManager qm = new QueryManager()) {
             final SpdxDocumentParser parser = new SpdxDocumentParser(qm);

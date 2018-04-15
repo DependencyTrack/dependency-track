@@ -1,1 +1,11 @@
-{"isDeprecatedLicenseId":false,"licenseText":"1. you can do what you want with it\n2. I refuse any responsibility for the consequences","standardLicenseTemplate":"1. you can do what you want with it\n2. I refuse any responsibility for the consequences","name":"diffmark license","licenseId":"diffmark","standardLicenseHeader":"","seeAlso":["https:\/\/fedoraproject.org\/wiki\/Licensing\/diffmark"],"isOsiApproved":false}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "\n\n   1. you can do what you want with it\n\n   2. I refuse any responsibility for the consequences",
+  "standardLicenseTemplate": "\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e you can do what you want with it\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e I refuse any responsibility for the consequences",
+  "name": "diffmark license",
+  "licenseId": "diffmark",
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/diffmark"
+  ],
+  "isOsiApproved": false
+}

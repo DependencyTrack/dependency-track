@@ -1,1 +1,11 @@
-{"isDeprecatedLicenseId":false,"licenseText":"Copyright (C) 1995-2009 Gerd Neugebauer\n  \ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor  accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose  or works at all, unless he says so in writing.\n  .\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.","standardLicenseTemplate":"Copyright (C) 1995-2009 Gerd Neugebauer\n  \ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor  accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose  or works at all, unless he says so in writing.\n  .\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.","name":"Crossword License","licenseId":"Crossword","standardLicenseHeader":"","seeAlso":["https:\/\/fedoraproject.org\/wiki\/Licensing\/Crossword"],"isOsiApproved":false}
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (C) 1995-2009 Gerd Neugebauer\n\ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose or works at all, unless he says so in writing.\n\n.\n\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e Copyright (C) 1995-2009 Gerd Neugebauer\u003c\u003cendOptional\u003e\u003e\n\ncwpuzzle.dtx is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY. No author or distributor accepts responsibility to anyone for the consequences of using it or for whether it serves any particular purpose or works at all, unless he says so in writing.\n\n.\n\nEveryone is granted permission to copy, modify and redistribute cwpuzzle.dtx, provided this copyright notice is preserved and any modifications are indicated.",
+  "name": "Crossword License",
+  "licenseId": "Crossword",
+  "seeAlso": [
+    "https://fedoraproject.org/wiki/Licensing/Crossword"
+  ],
+  "isOsiApproved": false
+}

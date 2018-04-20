@@ -45,6 +45,7 @@ const URL_CWE = "api/v1/cwe";
 const URL_COMPONENT = "api/v1/component";
 const URL_DEPENDENCY = "api/v1/dependency";
 const URL_VULNERABILITY = "api/v1/vulnerability";
+const URL_ANALYSIS = "api/v1/analysis";
 const URL_SEARCH = "api/v1/search";
 const URL_METRICS = "api/v1/metrics";
 const URL_CALCULATOR_CVSS = "api/v1/calculator/cvss";
@@ -1109,6 +1110,65 @@ $rest.refreshComponentMetrics = function refreshComponentMetrics(uuid, successCa
                 if (failCallback) {
                     $rest.callbackValidator(failCallback(data));
                 }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve analysis decisions
+ */
+$rest.getAnalysis = function getAnalysis(projectUuid, componentUuid, vulnerabilityUuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_ANALYSIS + "?project=" + projectUuid + "&component=" + componentUuid + "&vulnerability=" + vulnerabilityUuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve analysis decisions
+ */
+$rest.makeAnalysis = function makeAnalysis(projectUuid, componentUuid, vulnerabilityUuid, analysisState, comment, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_ANALYSIS,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({project: projectUuid, component: componentUuid, vulnerability: vulnerabilityUuid, analysisState: analysisState, comment: comment}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
             }
         }
     });

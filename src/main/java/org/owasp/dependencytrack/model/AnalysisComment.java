@@ -44,7 +44,7 @@ public class AnalysisComment implements Serializable {
     @JsonIgnore
     private long id;
 
-    @Persistent(defaultFetchGroup = "true")
+    @Persistent(defaultFetchGroup = "true", dependent = "true")
     @Column(name = "ANALYSIS_ID", allowsNull = "false")
     @NotNull
     @JsonIgnore
@@ -59,6 +59,10 @@ public class AnalysisComment implements Serializable {
     @Column(name = "COMMENT", jdbcType = "CLOB", allowsNull = "false")
     @NotNull
     private String comment;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "COMMENTER")
+    private String commenter;
 
     public long getId() {
         return id;
@@ -90,5 +94,13 @@ public class AnalysisComment implements Serializable {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getCommenter() {
+        return commenter;
+    }
+
+    public void setCommenter(String commenter) {
+        this.commenter = commenter;
     }
 }

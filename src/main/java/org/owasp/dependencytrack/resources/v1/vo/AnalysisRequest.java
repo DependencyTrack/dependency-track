@@ -75,7 +75,11 @@ public class AnalysisRequest {
     }
 
     public AnalysisState getAnalysisState() {
-        return analysisState;
+        if (analysisState == null) {
+            return AnalysisState.NOT_SET;
+        } else {
+            return analysisState;
+        }
     }
 
     public String getComment() {

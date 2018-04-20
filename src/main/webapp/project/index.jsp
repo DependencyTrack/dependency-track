@@ -175,13 +175,16 @@
                             </div>
                             <table id="findingsTable" class="table table-hover detail-table" data-toggle="table"
                                    data-response-handler="formatFindingsTable"
-                                   data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
+                                   data-show-refresh="true" data-show-columns="true" data-search="true"
+                                   data-detail-view="true" data-detail-formatter="findingDetailFormatter"
                                    data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
                                    data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
                                    data-toolbar="#auditToolbar" data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
+                                    <!--
                                     <th data-align="center" data-field="state" data-checkbox="true"></th>
+                                    -->
                                     <th data-align="left" data-field="name" data-sortable="true">Component</th>
                                     <th data-align="left" data-field="version" data-sortable="true">Version</th>
                                     <th data-align="left" data-field="group" data-sortable="true">Group</th>

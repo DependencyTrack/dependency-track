@@ -18,7 +18,8 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
-import alpine.model.ApiKey;
+import alpine.model.LdapUser;
+import alpine.model.ManagedUser;
 import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
 import alpine.validation.RegexSequence;
@@ -29,8 +30,10 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.model.Analysis;
+import org.owasp.dependencytrack.model.AnalysisState;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Vulnerability;
@@ -132,21 +135,30 @@ public class AnalysisResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();
             }
 
-            Analysis existing = qm.getAnalysis(project, component, vulnerability);
-            if (existing != null) {
-                if (existing.getAnalysisState() != request.getAnalysisState()) {
+            String commenter = null;
+            if (getPrincipal() instanceof LdapUser || getPrincipal() instanceof ManagedUser) {
+                commenter = ((UserPrincipal) getPrincipal()).getUsername();
+            }
+
+            Analysis analysis = qm.getAnalysis(project, component, vulnerability);
+            if (analysis != null) {
+                if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
                     // The analysis state has changed. Add an additional comment to the trail.
-                    final String message;
-                    if (getPrincipal() instanceof ApiKey) {
-                        message = "An API key changed analysis from " + existing.getAnalysisState() + " to " + request.getAnalysisState();
-                    } else {
-                        message = "User " + ((UserPrincipal)getPrincipal()).getUsername() + "changed analysis from " + existing.getAnalysisState() + " to " + request.getAnalysisState();
-                    }
-                    qm.makeAnalysisComment(existing, message);
+                    final String message = analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
+                    qm.makeAnalysisComment(analysis, message, commenter);
+                    analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState());
+                }
+            } else {
+                analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState());
+                if (AnalysisState.NOT_SET != request.getAnalysisState()) {
+                    final String message = AnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();
+                    qm.makeAnalysisComment(analysis, message, commenter);
                 }
             }
 
-            Analysis analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.getComment());
+            final String comment = StringUtils.trimToNull(request.getComment());
+            qm.makeAnalysisComment(analysis, comment, commenter);
+            analysis = qm.getObjectById(Analysis.class, analysis.getId());
             return Response.ok(analysis).build();
         }
     }

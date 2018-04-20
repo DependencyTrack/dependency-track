@@ -77,6 +77,140 @@ function formatFindingsTable(res) {
 }
 
 /**
+ * Function called by bootstrap table when row is clicked/touched, and
+ * expanded. This function handles the dynamic creation of the expanded
+ * view with simple inline templates.
+ */
+function findingDetailFormatter(index, row) {
+    let projectUuid = $.getUrlVar("uuid");
+    let html = [];
+    let template = `
+    <div class="col-sm-6 col-md-6">
+    <form id="form-${row.uuid}">
+        <div class="form-group" style="display:none" id="group-title-${row.componentUuid}-${row.vulnUuid}">
+            <label for="title-${row.componentUuid}-${row.vulnUuid}">Title</label>
+            <input type="text" class="form-control" disabled="disabled" id="title-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        </div>
+        <div class="form-group" style="display:none" id="group-subtitle-${row.componentUuid}-${row.vulnUuid}">
+            <label for="subtitle-${row.componentUuid}-${row.vulnUuid}">Subtitle</label>
+            <input type="text" class="form-control" disabled="disabled" id="subtitle-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        </div>
+        <div class="form-group" style="display:none" id="group-description-${row.componentUuid}-${row.vulnUuid}">
+            <label for="description-${row.componentUuid}-${row.vulnUuid}">Description</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="description-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+        </div>
+        <div class="form-group" style="display:none" id="group-recommendation-${row.componentUuid}-${row.vulnUuid}">
+            <label for="recommendation-${row.componentUuid}-${row.vulnUuid}">Recommendation</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="recommendation-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+        </div>
+        <div class="form-group" style="display:none" id="group-cvssV2Vector-${row.componentUuid}-${row.vulnUuid}">
+            <label for="cvssV2Vector-${row.componentUuid}-${row.vulnUuid}">CVSSv2 Vector</label>
+            <input type="text" class="form-control" disabled="disabled" id="cvssV2Vector-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        </div>
+        <div class="form-group" style="display:none" id="group-cvssV3Vector-${row.componentUuid}-${row.vulnUuid}">
+            <label for="cvssV3Vector-${row.componentUuid}-${row.vulnUuid}">CVSSv3 Vector</label>
+            <input type="text" class="form-control" disabled="disabled" id="cvssV3Vector-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6">
+        <div class="form-group">
+            <label for="audit-trail-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">Audit Trail</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="audit-trail-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">Comment</label>
+            <textarea class="form-control" rows="3" id="comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+            <div class="pull-right">
+                <button id="addCommentButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" class="btn btn-xs btn-warning"><span class="fa fa-comment-o"></span> Add Comment</button>
+            </div>
+        </div>     
+        <div class="col-xs-6 input-group">
+            <label for="analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">Analysis</label>
+            <select class="form-control" id="analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">
+                <option value="NOT_SET"></option>
+                <option value="EXPLOITABLE">Exploitable</option>
+                <option value="IN_TRIAGE">In Triage</option>
+                <option value="FALSE_POSITIVE">False Positive</option>
+                <option value="NOT_AFFECTED">Not Affected</option>
+            </select>
+            <span class="input-group-btn" style="vertical-align:bottom; padding-left:20px">
+                <button id="suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" class="btn btn-default"><span class="fa fa-ban"></span> Suppress</button>
+            </span>
+        </div>
+    </form>
+    </div>
+    <script type="text/javascript">
+       $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("change", function() {
+           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", this.value, null, function() {
+               updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
+           });
+       });
+       $("#addCommentButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("click", function() {
+           let analysis = $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
+           let comment = $("#comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
+           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, comment, function() {
+               updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
+           });
+       });
+    </script>
+`;
+    html.push(template);
+
+    $rest.getVulnerabilityByUuid(row.vulnUuid, function(vuln) {
+        if (vuln.hasOwnProperty("title")) {
+            $("#group-title-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
+            $("#title-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.title));
+        }
+        if (vuln.hasOwnProperty("subTitle")) {
+            $("#group-subTitle-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
+            $("#subTitle-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.subTitle));
+        }
+        if (vuln.hasOwnProperty("description")) {
+            $("#group-description-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
+            $("#description-" + row.componentUuid + "-" + row.vulnUuid).val(vuln.description);
+        }
+        if (vuln.hasOwnProperty("recommendation")) {
+            $("#group-recommendation-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
+            $("#recommendation-" + row.componentUuid + "-" + row.vulnUuid).val(vuln.recommendation);
+        }
+        if (vuln.hasOwnProperty("cvssV2Vector")) {
+            $("#group-cvssV2Vector-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
+            $("#cvssV2Vector-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.cvssV2Vector));
+        }
+        if (vuln.hasOwnProperty("cvssV3Vector")) {
+            $("#group-cvssV3Vector-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
+            $("#cvssV3Vector-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.cvssV3Vector));
+        }
+    });
+
+    updateAnalysisPanel(projectUuid, row.componentUuid, row.vulnUuid);
+    return html.join("");
+}
+
+function updateAnalysisPanel(projectUuid, componentUuid, vulnUuid) {
+    $rest.getAnalysis(projectUuid, componentUuid, vulnUuid, function(analysis) {
+        if (analysis) {
+            if (analysis.hasOwnProperty("analysisComments")) {
+                let auditTrail = "";
+                for (let i = 0; i < analysis.analysisComments.length; i++) {
+                    if (analysis.analysisComments[i].hasOwnProperty("commenter")) {
+                        auditTrail += analysis.analysisComments[i].commenter + " - ";
+                    }
+                    auditTrail += $common.formatTimestamp(analysis.analysisComments[i].timestamp, true);
+                    auditTrail += "\n";
+                    auditTrail += analysis.analysisComments[i].comment;
+                    auditTrail += "\n\n";
+                }
+                $("#audit-trail-" + projectUuid + "-" + componentUuid + "-" + vulnUuid).val(filterXSS(auditTrail));
+            }
+            if (analysis.hasOwnProperty("analysisState")) {
+                $("#analysis-" + projectUuid + "-" + componentUuid + "-" + vulnUuid).val(analysis.analysisState);
+            }
+        }
+    });
+}
+
+/**
  * Given a comma-separated string of tags, creates an
  * array of tag objects.
  */
@@ -288,5 +422,28 @@ $(document).ready(function () {
             $("#statLastMeasurement").html("Refresh triggered");
             $common.displayInfoModal("A refresh has been requested. The amount of time required to refresh is dependant on the amount of background processing currently being performed and the size of the data-set being refreshed.")
         });
+    });
+
+    const findingsTable = $("#findingsTable");
+    findingsTable.on("click-row.bs.table", function(e, row, $tr) {
+        if ($tr.next().is("tr.detail-view")) {
+            findingsTable.bootstrapTable("collapseRow", $tr.data("index"));
+            findingsTable.expanded = false;
+        } else {
+            findingsTable.bootstrapTable("collapseAllRows");
+            findingsTable.bootstrapTable("expandRow", $tr.data("index"));
+            findingsTable.expanded = true;
+            findingsTable.expandedUuid = row.uuid;
+        }
+    });
+
+    findingsTable.on("load-success.bs.table", function(e, data) {
+        if (findingsTable.expanded === true) {
+            $.each(data, function(i, team) {
+                if (team.uuid === findingsTable.expandedUuid) {
+                    findingsTable.bootstrapTable("expandRow", i);
+                }
+            });
+        }
     });
 });

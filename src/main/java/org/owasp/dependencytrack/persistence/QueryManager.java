@@ -309,6 +309,7 @@ public class QueryManager extends AlpineQueryManager {
         final Project result = pm.getObjectById(Project.class, project.getId());
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
+        deleteAnalysisTrail(project);
         deleteMetrics(project);
         deleteDependencies(project);
         deleteScans(project);
@@ -546,6 +547,7 @@ public class QueryManager extends AlpineQueryManager {
         final Component result = pm.getObjectById(Component.class, component.getId());
         SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
+        deleteAnalysisTrail(component);
         deleteMetrics(component);
         deleteDependencies(component);
         deleteScans(component);
@@ -1258,10 +1260,12 @@ public class QueryManager extends AlpineQueryManager {
      * @param project the Project
      * @param component the Component
      * @param vulnerability the Vulnerability
-     * @param comment the comment
      * @return an Analysis object
      */
-    public Analysis makeAnalysis(Project project, Component component, Vulnerability vulnerability, AnalysisState analysisState, String comment) {
+    public Analysis makeAnalysis(Project project, Component component, Vulnerability vulnerability, AnalysisState analysisState) {
+        if (analysisState == null) {
+            analysisState = AnalysisState.NOT_SET;
+        }
         Analysis analysis = getAnalysis(project, component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
@@ -1271,7 +1275,6 @@ public class QueryManager extends AlpineQueryManager {
         }
         analysis.setAnalysisState(analysisState);
         analysis = persist(analysis);
-        makeAnalysisComment(analysis, comment);
         return getAnalysis(analysis.getProject(), analysis.getComponent(), analysis.getVulnerability());
     }
 
@@ -1279,9 +1282,10 @@ public class QueryManager extends AlpineQueryManager {
      * Adds a new analysis comment to the specified analysis.
      * @param analysis the analysis object to add a comment to
      * @param comment the comment to make
+     * @param commenter the name of the principal who wrote the comment
      * @return a new AnalysisComment object
      */
-    public AnalysisComment makeAnalysisComment(Analysis analysis, String comment) {
+    public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {
         if (analysis == null || comment == null) {
             return null;
         }
@@ -1289,7 +1293,26 @@ public class QueryManager extends AlpineQueryManager {
         analysisComment.setAnalysis(analysis);
         analysisComment.setTimestamp(new Date());
         analysisComment.setComment(comment);
+        analysisComment.setCommenter(commenter);
         return persist(analysisComment);
+    }
+
+    /**
+     * Deleted all analysis and comments associated for the specified Component.
+     * @param component the Component to delete analysis for
+     */
+    public void deleteAnalysisTrail(Component component) {
+        final Query query = pm.newQuery(Analysis.class, "component == :component");
+        query.deletePersistentAll(component);
+    }
+
+    /**
+     * Deleted all analysis and comments associated for the specified Project.
+     * @param project the Project to delete analysis for
+     */
+    public void deleteAnalysisTrail(Project project) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project");
+        query.deletePersistentAll(project);
     }
 
     /**

@@ -158,33 +158,15 @@
                             </table>
                         </div>
                         <div class="tab-pane require-vulnerability-analysis" id="auditTab">
-                            <div id="auditToolbar">
-                                <div class="form-inline" role="form">
-                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="fa fa-eye-slash"></span> Analysis <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="#">Exploitable</a></li>
-                                        <li><a href="#">In Triage</a></li>
-                                        <li role="separator" class="divider"></li>
-                                        <li><a href="#">False Positive</a></li>
-                                        <li><a href="#">Not Affected</a></li>
-                                    </ul>
-                                    <button id="suppressButton" class="btn btn-default" data-toggle="modal"><span class="fa fa-ban"></span> Suppress</button>
-                                </div>
-                            </div>
                             <table id="findingsTable" class="table table-hover detail-table" data-toggle="table"
                                    data-response-handler="formatFindingsTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
                                    data-detail-view="true" data-detail-formatter="findingDetailFormatter"
                                    data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
                                    data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
-                                   data-toolbar="#auditToolbar" data-click-to-select="true" data-height="100%">
+                                   data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
-                                    <!--
-                                    <th data-align="center" data-field="state" data-checkbox="true"></th>
-                                    -->
                                     <th data-align="left" data-field="name" data-sortable="true">Component</th>
                                     <th data-align="left" data-field="version" data-sortable="true">Version</th>
                                     <th data-align="left" data-field="group" data-sortable="true">Group</th>

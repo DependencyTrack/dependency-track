@@ -1147,13 +1147,13 @@ $rest.getAnalysis = function getAnalysis(projectUuid, componentUuid, vulnerabili
 /**
  * Service called to retrieve analysis decisions
  */
-$rest.makeAnalysis = function makeAnalysis(projectUuid, componentUuid, vulnerabilityUuid, analysisState, comment, successCallback, failCallback) {
+$rest.makeAnalysis = function makeAnalysis(projectUuid, componentUuid, vulnerabilityUuid, analysisState, comment, isSuppressed, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_ANALYSIS,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
-        data: JSON.stringify({project: projectUuid, component: componentUuid, vulnerability: vulnerabilityUuid, analysisState: analysisState, comment: comment}),
+        data: JSON.stringify({project: projectUuid, component: componentUuid, vulnerability: vulnerabilityUuid, analysisState: analysisState, comment: comment, isSuppressed: isSuppressed}),
         statusCode: {
             200: function(data) {
                 if (successCallback) {

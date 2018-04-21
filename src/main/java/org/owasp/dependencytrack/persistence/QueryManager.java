@@ -1262,7 +1262,8 @@ public class QueryManager extends AlpineQueryManager {
      * @param vulnerability the Vulnerability
      * @return an Analysis object
      */
-    public Analysis makeAnalysis(Project project, Component component, Vulnerability vulnerability, AnalysisState analysisState) {
+    public Analysis makeAnalysis(Project project, Component component, Vulnerability vulnerability,
+                                 AnalysisState analysisState, Boolean isSuppressed) {
         if (analysisState == null) {
             analysisState = AnalysisState.NOT_SET;
         }
@@ -1272,6 +1273,9 @@ public class QueryManager extends AlpineQueryManager {
             analysis.setProject(project);
             analysis.setComponent(component);
             analysis.setVulnerability(vulnerability);
+        }
+        if (isSuppressed != null) {
+            analysis.setSuppressed(isSuppressed);
         }
         analysis.setAnalysisState(analysisState);
         analysis = persist(analysis);

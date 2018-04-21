@@ -192,6 +192,7 @@
                                     <th data-align="left" data-class="expand" data-field="cwefield" data-sortable="true">CWE</th>
                                     <th data-align="left" data-field="severityLabel" data-sort-name="severityRank" data-sortable="true">Severity</th>
                                     <th data-align="left" data-field="state" data-sortable="true">Analysis</th>
+                                    <th data-align="center" data-field="isSuppressedLabel" data-sortable="true" data-class="tight">Suppressed</th>
                                 </tr>
                                 </thead>
                             </table>

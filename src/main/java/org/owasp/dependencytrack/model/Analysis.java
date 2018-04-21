@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -71,6 +72,11 @@ public class Analysis implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
     private List<AnalysisComment> analysisComments;
 
+    @Persistent
+    @Column(name = "SUPPRESSED")
+    @JsonProperty(value = "isSuppressed")
+    private boolean suppressed;
+
     public long getId() {
         return id;
     }
@@ -117,5 +123,13 @@ public class Analysis implements Serializable {
 
     public void setAnalysisComments(List<AnalysisComment> analysisComments) {
         this.analysisComments = analysisComments;
+    }
+
+    public boolean isSuppressed() {
+        return suppressed;
+    }
+
+    public void setSuppressed(boolean suppressed) {
+        this.suppressed = suppressed;
     }
 }

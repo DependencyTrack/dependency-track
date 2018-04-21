@@ -146,10 +146,14 @@ public class AnalysisResource extends AlpineResource {
                     // The analysis state has changed. Add an additional comment to the trail.
                     final String message = analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
-                    analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState());
+                    analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
+                } else if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
+                    final String message = (request.isSuppressed()) ? "Suppressed" : "Unsuppressed";
+                    qm.makeAnalysisComment(analysis, message, commenter);
+                    analysis = qm.makeAnalysis(project, component, vulnerability, analysis.getAnalysisState(), request.isSuppressed());
                 }
             } else {
-                analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState());
+                analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
                 if (AnalysisState.NOT_SET != request.getAnalysisState()) {
                     final String message = AnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);

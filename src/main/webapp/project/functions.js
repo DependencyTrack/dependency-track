@@ -72,6 +72,12 @@ function formatFindingsTable(res) {
         if (res[i].hasOwnProperty("severity")) {
             res[i].severityLabel = $common.formatSeverityLabel(res[i].severity);
         }
+
+        if (res[i].hasOwnProperty("isSuppressed") && res[i].isSuppressed === true) {
+            res[i].isSuppressedLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        } else {
+            res[i].isSuppressedLabel = '';
+        }
     }
     return res;
 }
@@ -134,21 +140,30 @@ function findingDetailFormatter(index, row) {
                 <option value="NOT_AFFECTED">Not Affected</option>
             </select>
             <span class="input-group-btn" style="vertical-align:bottom; padding-left:20px">
-                <button id="suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" class="btn btn-default"><span class="fa fa-ban"></span> Suppress</button>
+                <input id="suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" type="checkbox" data-toggle="toggle" data-on="<i class='fa fa-eye-slash'></i> Suppressed" data-off="<i class='fa fa-eye'></i> Suppress">
             </span>
         </div>
     </form>
     </div>
     <script type="text/javascript">
+       initializeSuppressButton("#suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}", ${row.isSuppressed});
+       $("#suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("change", function() {
+           let isSuppressed = $("#suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").is(':checked');
+           let analysis = $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
+           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, null, isSuppressed, function() {
+               updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
+           });
+       });
+       
        $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("change", function() {
-           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", this.value, null, function() {
+           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", this.value, null, null, function() {
                updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
            });
        });
        $("#addCommentButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("click", function() {
            let analysis = $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
            let comment = $("#comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
-           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, comment, function() {
+           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, comment, null, function() {
                updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
            });
        });
@@ -187,6 +202,15 @@ function findingDetailFormatter(index, row) {
     return html.join("");
 }
 
+function initializeSuppressButton(selector, defaultValue) {
+    let suppressButton = $(selector);
+    if (defaultValue === true) {
+        suppressButton.bootstrapToggle("on");
+    } else {
+        suppressButton.bootstrapToggle("off");
+    }
+}
+
 function updateAnalysisPanel(projectUuid, componentUuid, vulnUuid) {
     $rest.getAnalysis(projectUuid, componentUuid, vulnUuid, function(analysis) {
         if (analysis) {
@@ -201,10 +225,23 @@ function updateAnalysisPanel(projectUuid, componentUuid, vulnUuid) {
                     auditTrail += analysis.analysisComments[i].comment;
                     auditTrail += "\n\n";
                 }
-                $("#audit-trail-" + projectUuid + "-" + componentUuid + "-" + vulnUuid).val(filterXSS(auditTrail));
+                let textarea = $("#audit-trail-" + projectUuid + "-" + componentUuid + "-" + vulnUuid);
+                textarea.val(filterXSS(auditTrail));
+                textarea.scrollTop(textarea[0].scrollHeight);
             }
             if (analysis.hasOwnProperty("analysisState")) {
                 $("#analysis-" + projectUuid + "-" + componentUuid + "-" + vulnUuid).val(analysis.analysisState);
+            }
+            if (analysis.hasOwnProperty("isSuppressed")) {
+                let suppressButton = $("#suppressButton-" + projectUuid + "-" + componentUuid + "-" + vulnUuid);
+                let isSuppressed = suppressButton.is(':checked');
+                if (isSuppressed !== analysis.isSuppressed) {
+                    if (analysis.isSuppressed) {
+                        suppressButton.bootstrapToggle("on")
+                    } else {
+                        suppressButton.bootstrapToggle("off")
+                    }
+                }
             }
         }
     });

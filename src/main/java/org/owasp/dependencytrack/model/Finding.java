@@ -18,6 +18,7 @@
 package org.owasp.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.owasp.dependencytrack.util.VulnerabilityUtil;
 import java.io.Serializable;
 
@@ -51,7 +52,8 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\", " +
             "\"CWE\".\"CWEID\" AS \"CWEID\", " +
             "\"CWE\".\"NAME\" AS \"CWENAME\", " +
-            "\"ANALYSIS\".\"STATE\" " +
+            "\"ANALYSIS\".\"STATE\", " +
+            "\"ANALYSIS\".\"SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"DEPENDENCY\" ON (\"COMPONENT\".\"ID\" = \"DEPENDENCY\".\"COMPONENT_ID\") " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"DEPENDENCY\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
@@ -72,6 +74,9 @@ public class Finding implements Serializable {
     private Object cweId;
     private Object cweName;
     private Object state;
+
+    @JsonProperty(value = "isSuppressed")
+    private Object suppressed;
 
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
@@ -95,6 +100,7 @@ public class Finding implements Serializable {
         this.cweId = o[9];
         this.cweName= o[10];
         this.state = o[11];
+        this.suppressed = o[12];
     }
 
     public Object getComponentUuid() {
@@ -143,5 +149,9 @@ public class Finding implements Serializable {
 
     public Object getState() {
         return state;
+    }
+
+    public Object isSuppressed() {
+        return suppressed;
     }
 }

@@ -16,10 +16,10 @@
             <div class="panel with-nav-tabs panel-default tight">
                 <div class="panel-heading">
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#teamsTab" data-toggle="tab">Teams</a></li>
-                        <li><a href="#ldapUsersTab" data-toggle="tab">LDAP Users</a></li>
-                        <li><a href="#managedUsersTab" data-toggle="tab">Managed Users</a></li>
-                        <li><a href="#permissionsTab" data-toggle="tab">Permissions</a></li>
+                        <li class="active"><a href="#teamsTab" data-toggle="tab"><i class="fa fa-users" aria-hidden="true"></i> Teams</a></li>
+                        <li><a href="#ldapUsersTab" data-toggle="tab"><i class="fa fa-user" aria-hidden="true"></i> LDAP Users</a></li>
+                        <li><a href="#managedUsersTab" data-toggle="tab"><i class="fa fa-user-circle-o" aria-hidden="true"></i> Managed Users</a></li>
+                        <li><a href="#permissionsTab" data-toggle="tab"><i class="fa fa-lock" aria-hidden="true"></i> Permissions</a></li>
                     </ul>
                 </div>
                 <div class="panel-body tight">

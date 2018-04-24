@@ -40,6 +40,18 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Dependency Chart-->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="panel widget">
+                                <div class="panel-heading">
+                                    <div class="row">
+                                        <div id="dependencychart" style="height:200px"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Component Chart-->
                     <div class="row">
                         <div class="col-sm-12">
@@ -128,6 +140,14 @@
                                                 <td><span id="statVulnerableProjects"></span></td>
                                             </tr>
                                             <tr>
+                                                <td>Dependencies (total):</td>
+                                                <td><span id="statTotalDependencies"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Vulnerable Dependencies:</td>
+                                                <td><span id="statVulnerableDependencies"></span></td>
+                                            </tr>
+                                            <tr>
                                                 <td>Components (total):</td>
                                                 <td><span id="statTotalComponents"></span></td>
                                             </tr>
@@ -138,6 +158,10 @@
                                             <tr>
                                                 <td>Portfolio Vulnerabilities:</td>
                                                 <td><span id="statPortfolioVulnerabilities"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Suppressed:</td>
+                                                <td><span id="statPortfolioSuppressed"></span></td>
                                             </tr>
                                             <tr>
                                                 <td>Last Measurement:</td>

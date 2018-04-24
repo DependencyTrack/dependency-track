@@ -41,9 +41,12 @@ function updateStats(metrics) {
     $("#projectsAtRisk").html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")));
     $("#statTotalProjects").html(filterXSS($common.valueWithDefault(metric.projects, "0")));
     $("#statVulnerableProjects").html(filterXSS($common.valueWithDefault(metric.vulnerableProjects, "0")));
+    $("#statTotalDependencies").html(filterXSS($common.valueWithDefault(metric.dependencies, "0")));
+    $("#statVulnerableDependencies").html(filterXSS($common.valueWithDefault(metric.vulnerableDependencies, "0")));
     $("#statTotalComponents").html(filterXSS($common.valueWithDefault(metric.components, "0")));
     $("#statVulnerableComponents").html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")));
     $("#statPortfolioVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
+    $("#statPortfolioSuppressed").html(filterXSS($common.valueWithDefault(metric.suppressed, "0")));
     $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
 }
 
@@ -52,6 +55,7 @@ function getDashboardData() {
     $rest.getPortfolioMetrics(90, function(metrics) {
         $chart.createSeverityTrendChart(metrics, "portfoliochart", "Portfolio Vulnerabilities");
         $chart.createAffectedVsTotalTrendChart(metrics, "projectchart", "Projects", "vulnerableProjects", "projects", "Vulnerable Projects", "Total Projects");
+        $chart.createAffectedVsTotalTrendChart(metrics, "dependencychart", "Dependencies", "vulnerableDependencies", "dependencies", "Vulnerable Dependencies", "Total Dependencies");
         $chart.createAffectedVsTotalTrendChart(metrics, "componentchart", "Components", "vulnerableComponents", "components", "Vulnerable Components", "Total Components");
         populateProgressBars(metrics);
         updateStats(metrics);
@@ -66,7 +70,6 @@ function getDashboardData() {
  */
 $(document).ready(function () {
     getDashboardData();
-    setInterval(getDashboardData, 30 * 1000); // Refresh dashboard every 30 seconds
 
     // Listen for refresh icon to be triggered
     $("#refresh").on("click", function() {

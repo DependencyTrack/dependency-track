@@ -29,6 +29,7 @@
         <class>org.owasp.dependencytrack.model.ComponentMetrics</class>
         <class>org.owasp.dependencytrack.model.Cwe</class>
         <class>org.owasp.dependencytrack.model.Dependency</class>
+        <class>org.owasp.dependencytrack.model.DependencyMetrics</class>
         <class>org.owasp.dependencytrack.model.Evidence</class>
         <class>org.owasp.dependencytrack.model.License</class>
         <class>org.owasp.dependencytrack.model.PortfolioMetrics</class>

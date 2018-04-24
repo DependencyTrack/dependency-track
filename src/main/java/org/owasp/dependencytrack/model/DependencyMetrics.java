@@ -30,22 +30,32 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * Metrics for the entire application as a whole, not specific to individual
- * components or projects.
+ * Metrics specific for dependencies (project/component relationship).
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 3.1.0
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PortfolioMetrics implements Serializable {
+@Index(name = "DEPENDENCYMETRICS_COMPOSITE_IDX", members = {"project", "component"})
+public class DependencyMetrics implements Serializable {
 
-    private static final long serialVersionUID = -7690624184866776922L;
+    private static final long serialVersionUID = 5231823328085979791L;
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
+
+    @Persistent
+    @Column(name = "PROJECT_ID", allowsNull = "false")
+    @NotNull
+    private Project project;
+
+    @Persistent
+    @Column(name = "COMPONENT_ID", allowsNull = "false")
+    @NotNull
+    private Component component;
 
     @Persistent
     @Column(name = "CRITICAL")
@@ -68,30 +78,6 @@ public class PortfolioMetrics implements Serializable {
     private int vulnerabilities;
 
     @Persistent
-    @Column(name = "PROJECTS")
-    private int projects;
-
-    @Persistent
-    @Column(name = "VULNERABLEPROJECTS")
-    private int vulnerableProjects;
-
-    @Persistent
-    @Column(name = "COMPONENTS")
-    private int components;
-
-    @Persistent
-    @Column(name = "VULNERABLECOMPONENTS")
-    private int vulnerableComponents;
-
-    @Persistent
-    @Column(name = "DEPENDENCIES", allowsNull = "true") // New column, must allow nulls on existing databases
-    private Integer dependencies;
-
-    @Persistent
-    @Column(name = "VULNERABLEDEPENDENCIES", allowsNull = "true") // New column, must allow nulls on existing databases
-    private Integer vulnerableDependencies;
-
-    @Persistent
     @Column(name = "SUPPRESSED")
     private int suppressed;
 
@@ -102,13 +88,13 @@ public class PortfolioMetrics implements Serializable {
     @Persistent
     @Column(name = "FIRST_OCCURRENCE", allowsNull = "false")
     @NotNull
-    @Index(name = "PORTFOLIOMETRICS_FIRST_OCCURRENCE_IDX")
+    @Index(name = "DEPENDENCYMETRICS_FIRST_OCCURRENCE_IDX")
     private Date firstOccurrence;
 
     @Persistent
     @Column(name = "LAST_OCCURRENCE", allowsNull = "false")
     @NotNull
-    @Index(name = "PORTFOLIOMETRICS_LAST_OCCURRENCE_IDX")
+    @Index(name = "DEPENDENCYMETRICS_LAST_OCCURRENCE_IDX")
     private Date lastOccurrence;
 
     public long getId() {
@@ -117,6 +103,22 @@ public class PortfolioMetrics implements Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    public Component getComponent() {
+        return component;
+    }
+
+    public void setComponent(Component component) {
+        this.component = component;
     }
 
     public int getCritical() {
@@ -151,60 +153,12 @@ public class PortfolioMetrics implements Serializable {
         this.low = low;
     }
 
-    public int getVulnerabilities() {
+    public long getVulnerabilities() {
         return vulnerabilities;
     }
 
     public void setVulnerabilities(int vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
-    }
-
-    public int getProjects() {
-        return projects;
-    }
-
-    public void setProjects(int projects) {
-        this.projects = projects;
-    }
-
-    public int getVulnerableProjects() {
-        return vulnerableProjects;
-    }
-
-    public void setVulnerableProjects(int vulnerableProjects) {
-        this.vulnerableProjects = vulnerableProjects;
-    }
-
-    public int getComponents() {
-        return components;
-    }
-
-    public void setComponents(int components) {
-        this.components = components;
-    }
-
-    public int getVulnerableComponents() {
-        return vulnerableComponents;
-    }
-
-    public void setVulnerableComponents(int vulnerableComponents) {
-        this.vulnerableComponents = vulnerableComponents;
-    }
-
-    public int getDependencies() {
-        return dependencies;
-    }
-
-    public void setDependencies(int dependencies) {
-        this.dependencies = dependencies;
-    }
-
-    public int getVulnerableDependencies() {
-        return vulnerableDependencies;
-    }
-
-    public void setVulnerableDependencies(int vulnerableDependencies) {
-        this.vulnerableDependencies = vulnerableDependencies;
     }
 
     public int getSuppressed() {

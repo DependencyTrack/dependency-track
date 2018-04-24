@@ -31,6 +31,8 @@ import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
+import org.owasp.dependencytrack.model.Dependency;
+import org.owasp.dependencytrack.model.DependencyMetrics;
 import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectMetrics;
@@ -289,7 +291,7 @@ public class MetricsResource extends AlpineResource {
     @ApiOperation(
             value = "Returns historical metrics for a specific component from a specific date",
             notes = "Date format must be YYYYMMDD",
-            response = ProjectMetrics.class,
+            response = ComponentMetrics.class,
             responseContainer = "List"
     )
     @ApiResponses(value = {
@@ -358,6 +360,119 @@ public class MetricsResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("/project/{projectUuid}/component/{componentUuid}/current")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns current metrics for a specific dependency",
+            response = DependencyMetrics.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The dependency could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getDependencyCurrentMetrics(
+            @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
+            @PathParam("projectUuid") String projectUuid,
+            @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
+            @PathParam("componentUuid") String componentUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+            final Dependency dependency = qm.getDependency(project, component);
+            if (dependency != null) {
+                final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(dependency);
+                return Response.ok(metrics).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The dependency could not be found.").build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/project/{projectUuid}/component/{componentUuid}/since/{date}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns historical metrics for a specific dependency from a specific date",
+            notes = "Date format must be YYYYMMDD",
+            response = DependencyMetrics.class,
+            responseContainer = "List"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The dependency could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getDependencyMetricsSince(
+            @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
+            @PathParam("projectUuid") String projectUuid,
+            @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
+            @PathParam("componentUuid") String componentUuid,
+            @ApiParam(value = "The start date to retrieve metrics for", required = true)
+            @PathParam("date") String date) {
+
+        Date since = DateUtil.parseShortDate(date);
+        if (since == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The specified date format is incorrect.").build();
+        }
+        return getDependencyMetrics(projectUuid, componentUuid, since);
+    }
+
+    @GET
+    @Path("/project/{projectUuid}/component/{componentUuid}/days/{days}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns X days of historical metrics for a specific dependency",
+            response = DependencyMetrics.class,
+            responseContainer = "List"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The dependency could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getDependencyMetricsXDays(
+            @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
+            @PathParam("projectUuid") String projectUuid,
+            @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
+            @PathParam("componentUuid") String componentUuid,
+            @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
+            @PathParam("days") int days) {
+
+        Date since = DateUtils.addDays(new Date(), -days);
+        return getDependencyMetrics(projectUuid, componentUuid, since);
+    }
+
+    @GET
+    @Path("/project/{projectUuid}/component/{componentUuid}/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Requests a refresh of a specific dependency metrics"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The dependency could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response RefreshDependencyMetrics(
+            @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
+            @PathParam("projectUuid") String projectUuid,
+            @ApiParam(value = "The UUID of the component to retrieve metrics for", required = true)
+            @PathParam("componentUuid") String componentUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+            final Dependency dependency = qm.getDependency(project, component);
+            if (dependency != null) {
+                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(dependency));
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The dependency could not be found.").build();
+            }
+        }
+    }
+
     /**
      * Private method common to retrieving project metrics based on a time period.
      * @param uuid the UUID of the project
@@ -390,6 +505,27 @@ public class MetricsResource extends AlpineResource {
                 return Response.ok(metrics).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+            }
+        }
+    }
+
+    /**
+     * Private method common to retrieving dependency metrics based on a time period.
+     * @param projectUuid the UUID of the project
+     * @param componentUuid the UUID of the component
+     * @param since the Date to start retrieving metrics from
+     * @return a Response object
+     */
+    private Response getDependencyMetrics(String projectUuid, String componentUuid, Date since) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+            final Dependency dependency = qm.getDependency(project, component);
+            if (dependency != null) {
+                final List<DependencyMetrics> metrics = qm.getDependencyMetricsSince(dependency, since);
+                return Response.ok(metrics).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The dependency could not be found.").build();
             }
         }
     }

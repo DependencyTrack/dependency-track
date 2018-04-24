@@ -22,6 +22,7 @@
  * Called by bootstrap table to format the data in the dependencies table.
  */
 function formatDependenciesTable(res) {
+    let projectUuid = $.getUrlVar("uuid");
     let dependenciesTable = $("#dependenciesTable");
     for (let i=0; i<res.length; i++) {
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
@@ -34,7 +35,7 @@ function formatDependenciesTable(res) {
             res[i].component.license = "<a href=\"" + licenseurl + "\">" + filterXSS(res[i].component.resolvedLicense.licenseId) + "</a>";
         }
 
-        $rest.getComponentCurrentMetrics(res[i].component.uuid, function (data) {
+        $rest.getDependencyCurrentMetrics(projectUuid, res[i].component.uuid, function (data) {
             res[i].component.vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
             dependenciesTable.bootstrapTable("updateRow", {
                 index: i,
@@ -152,6 +153,7 @@ function findingDetailFormatter(index, row) {
            let analysis = $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
            $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, null, isSuppressed, function() {
                updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
+               $rest.refreshDependencyMetrics("${projectUuid}", "${row.componentUuid}");
            });
        });
        

@@ -66,7 +66,7 @@ public class FindingResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final long totalCount = qm.getVulnerabilityCount(project);
+                final long totalCount = qm.getVulnerabilityCount(project, true);
                 final List<Finding> findings = qm.getFindings(project);
                 return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
             } else {

@@ -33,6 +33,7 @@ import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ComponentMetrics;
 import org.owasp.dependencytrack.model.Cwe;
 import org.owasp.dependencytrack.model.Dependency;
+import org.owasp.dependencytrack.model.DependencyMetrics;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.Finding;
 import org.owasp.dependencytrack.model.License;
@@ -54,6 +55,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -82,7 +84,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a list of all projets.
+     * Returns a list of all projects.
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")
@@ -97,6 +99,18 @@ public class QueryManager extends AlpineQueryManager {
             return execute(query, filterString);
         }
         return execute(query);
+    }
+
+    /**
+     * Returns a list of all projects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Projects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Project> getAllProjects() {
+        final Query query = pm.newQuery(Project.class);
+        query.setOrdering("name asc");
+        return query.executeResultList(Project.class);
     }
 
     /**
@@ -775,6 +789,8 @@ public class QueryManager extends AlpineQueryManager {
      * @param module the NPM module to query on
      * @return a list of Vulnerability objects
      */
+    /** todo: determine if this is needed and delete */
+    @Deprecated
     @SuppressWarnings("unchecked")
     public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
         final Query query = pm.newQuery(Vulnerability.class, "source == :source && subtitle == :module");
@@ -821,7 +837,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param component The component to check against
      * @return true if vulnerability is associated with the component, false if not
      */
-    public boolean contains(Vulnerability vulnerability, Component component) {
+    private boolean contains(Vulnerability vulnerability, Component component) {
         vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
         component = getObjectById(Component.class, component.getId());
         for (Vulnerability vuln: component.getVulnerabilities()) {
@@ -1117,16 +1133,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns the number of total Vulnerability objects.
-     * @return the total number of vulnerabilities for the component
-     */
-    @SuppressWarnings("unchecked")
-    public long getVulnerabilityCount() {
-        final Query query = pm.newQuery(Vulnerability.class);
-        return getCount(query);
-    }
-
-    /**
      * Returns a List of all Vulnerabilities.
      * @return a List of Vulnerability objects
      */
@@ -1145,14 +1151,13 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns the number of Vulnerability objects for the specified Component.
+     * Returns a List of Vulnerability for the specified Component and excludes suppressed vulnerabilities.
      * @param component the Component to retrieve vulnerabilities of
-     * @return the total number of vulnerabilities for the component
+     * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public long getVulnerabilityCount(Component component) {
-        final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
-        return getCount(query, component);
+    public PaginatedResult getVulnerabilities(Component component) {
+        return getVulnerabilities(component, false);
     }
 
     /**
@@ -1161,12 +1166,24 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getVulnerabilities(Component component) {
-        final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
+    public PaginatedResult getVulnerabilities(Component component, boolean includeSuppressed) {
+        String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
+        final Query query = pm.newQuery(Vulnerability.class, filter);
         if (orderBy == null) {
             query.setOrdering("id asc");
         }
         return execute(query, component);
+    }
+
+    /**
+     * Returns a List of Vulnerability for the specified Component and excludes suppressed vulnerabilities.
+     * This method if designed NOT to provide paginated results.
+     * @param component the Component to retrieve vulnerabilities of
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getAllVulnerabilities(Component component) {
+        return getAllVulnerabilities(component, false);
     }
 
     /**
@@ -1176,9 +1193,41 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public List<Vulnerability> getAllVulnerabilities(Component component) {
-        final Query query = pm.newQuery(Vulnerability.class, "components.contains(:component)");
+    public List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
+        String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
+        final Query query = pm.newQuery(Vulnerability.class, filter);
         return (List<Vulnerability>)query.execute(component);
+    }
+
+    /**
+     * Returns a List of Vulnerability for the specified Dependency and excludes suppressed vulnerabilities.
+     * This method if designed NOT to provide paginated results.
+     * @param dependency the Dependency to retrieve vulnerabilities of
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getAllVulnerabilities(Dependency dependency) {
+        return getAllVulnerabilities(dependency, false);
+    }
+
+    /**
+     * Returns a List of Vulnerability for the specified Dependency.
+     * This method if designed NOT to provide paginated results.
+     * @param dependency the Dependency to retrieve vulnerabilities of
+     * @return a List of Vulnerability objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Vulnerability> getAllVulnerabilities(Dependency dependency, boolean includeSuppressed) {
+        final String filter;
+        if (includeSuppressed) {
+            filter = "components.contains(:component)";
+        } else {
+            filter = "components.contains(:component)" + generateExcludeSuppressed(
+                    dependency.getProject(), dependency.getComponent()
+            );
+        }
+        final Query query = pm.newQuery(Vulnerability.class, filter);
+        return (List<Vulnerability>)query.execute(dependency.getComponent());
     }
 
     /**
@@ -1187,13 +1236,18 @@ public class QueryManager extends AlpineQueryManager {
      * @return the total number of vulnerabilities for the project
      */
     @SuppressWarnings("unchecked")
-    public long getVulnerabilityCount(Project project) {
+    public long getVulnerabilityCount(Project project, boolean includeSuppressed) {
         long total = 0;
+        long suppressed = 0;
         final List<Dependency> dependencies = getAllDependencies(project);
         for (Dependency dependency: dependencies) {
-            total += getVulnerabilityCount(dependency.getComponent());
+            total += getCount(pm.newQuery(Vulnerability.class, "components.contains(:component)"), dependency.getComponent());
+            if (! includeSuppressed) {
+                suppressed += getSuppressedCount(dependency.getComponent()); // account for globally suppressed components
+                suppressed += getSuppressedCount(project, dependency.getComponent()); // account for per-project/component
+            }
         }
-        return total;
+        return total - suppressed;
     }
 
     /**
@@ -1221,6 +1275,89 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns the number of suppressed vulnerabilities for the portfolio.
+     * @return the total number of suppressed vulnerabilities
+     */
+    @SuppressWarnings("unchecked")
+    public long getSuppressedCount() {
+        final Query query = pm.newQuery(Analysis.class, "suppressed == true");
+        return getCount(query);
+    }
+
+    /**
+     * Returns the number of suppressed vulnerabilities for the specified Project
+     * @param project the Project to retrieve suppressed vulnerabilities of
+     * @return the total number of suppressed vulnerabilities for the project / component
+     */
+    @SuppressWarnings("unchecked")
+    public long getSuppressedCount(Project project) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project && suppressed == true");
+        return getCount(query, project);
+    }
+
+    /**
+     * Returns the number of suppressed vulnerabilities for the specified Component.
+     * @param component the Component to retrieve suppressed vulnerabilities of
+     * @return the total number of suppressed vulnerabilities for the component
+     */
+    @SuppressWarnings("unchecked")
+    public long getSuppressedCount(Component component) {
+        final Query query = pm.newQuery(Analysis.class, "project == null && component == :component && suppressed == true");
+        return getCount(query, component);
+    }
+
+    /**
+     * Returns the number of suppressed vulnerabilities for the specified Project / Component.
+     * @param project the Project to retrieve suppressed vulnerabilities of
+     * @param component the Component to retrieve suppressed vulnerabilities of
+     * @return the total number of suppressed vulnerabilities for the project / component
+     */
+    @SuppressWarnings("unchecked")
+    public long getSuppressedCount(Project project, Component component) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project && component == :component && suppressed == true");
+        return getCount(query, project, component);
+    }
+
+    /**
+     * Retrieve a list of all suppressed vulnerabilities for this component, where the suppression
+     * applies to the global component and not specific to the dependency of a project.
+     * @param component the component to query on
+     * @return a partial where clause
+     */
+    @SuppressWarnings("unchecked")
+    private String generateExcludeSuppressed(Component component) {
+        return generateExcludeSuppressed(null, component);
+    }
+
+    /**
+     * Retrieve a list of all suppressed vulnerabilities for this project.
+     * @param project the project to query on
+     * @return a partial where clause
+     */
+    @SuppressWarnings("unchecked")
+    private String generateExcludeSuppressed(Project project) {
+        return generateExcludeSuppressed(project, null);
+    }
+
+    /**
+     * Retrieve a list of all suppressed vulnerabilities for this project/component.
+     * @param component the component to query on
+     * @return a partial where clause
+     */
+    @SuppressWarnings("unchecked")
+    private String generateExcludeSuppressed(Project project, Component component) {
+        // Retrieve a list of all suppressed vulnerabilities
+        final Query analysisQuery = pm.newQuery(Analysis.class, "project == :project && component == :component && suppressed == true");
+        List<Analysis> analysisList = (List<Analysis>)analysisQuery.execute(project, component);
+        // Construct exclude clause based on above results
+        String excludeClause = analysisList.stream().map(analysis -> "id != " + analysis.getVulnerability().getId() + " && ").collect(Collectors.joining());
+        if (StringUtils.trimToNull(excludeClause) != null) {
+            excludeClause = " && (" + excludeClause.substring(0, excludeClause.lastIndexOf(" && ")) + ")";
+        }
+        return excludeClause;
+    }
+
+    /**
      * Returns a List of Projects affected by a specific vulnerability.
      * @param vulnerability the vulnerability to query on
      * @return a List of Projects
@@ -1230,7 +1367,18 @@ public class QueryManager extends AlpineQueryManager {
         final List<Project> projects = new ArrayList<>();
         for (Component component: vulnerability.getComponents()) {
             for (Dependency dependency: getAllDependencies(component)) {
-                projects.add(dependency.getProject());
+                boolean affected = true;
+                Analysis globalAnalysis = getAnalysis(null, component, vulnerability);
+                Analysis projectAnalysis = getAnalysis(dependency.getProject(), component, vulnerability);
+                if (globalAnalysis != null && globalAnalysis.isSuppressed()) {
+                    affected = false;
+                }
+                if (projectAnalysis != null && projectAnalysis.isSuppressed()) {
+                    affected = false;
+                }
+                if (affected) {
+                    projects.add(dependency.getProject());
+                }
             }
         }
         // Force removal of duplicates by taking the List and populating a Set and back again.
@@ -1449,9 +1597,45 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<ComponentMetrics> getComponentMetricsSince(Component component, Date since) {
-        final Query query = pm.newQuery(PortfolioMetrics.class, "component == :component && lastOccurrence >= :since");
+        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component && lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
         return (List<ComponentMetrics>)query.execute(component, since);
+    }
+
+    /**
+     * Retrieves the most recent DependencyMetrics.
+     * @param dependency the Dependency to retrieve metrics for
+     * @return a DependencyMetrics object
+     */
+    @SuppressWarnings("unchecked")
+    public DependencyMetrics getMostRecentDependencyMetrics(Dependency dependency) {
+        final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component");
+        query.setOrdering("lastOccurrence desc");
+        final List<DependencyMetrics> result = execute(query, dependency.getProject(), dependency.getComponent()).getList(DependencyMetrics.class);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Retrieves DependencyMetrics in descending order starting with the most recent.
+     * @param dependency the Dependency to retrieve metrics for
+     * @return a PaginatedResult object
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getDependencyMetrics(Dependency dependency) {
+        final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component");
+        query.setOrdering("lastOccurrence desc");
+        return execute(query, dependency.getProject(), dependency.getComponent());
+    }
+
+    /**
+     * Retrieves DependencyMetrics in ascending order starting with the oldest since the date specified.
+     * @return a List of metrics
+     */
+    @SuppressWarnings("unchecked")
+    public List<DependencyMetrics> getDependencyMetricsSince(Dependency dependency, Date since) {
+        final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component && lastOccurrence >= :since");
+        query.setOrdering("lastOccurrence asc");
+        return (List<DependencyMetrics>)query.execute(dependency.getProject(), dependency.getComponent(), since);
     }
 
     /**

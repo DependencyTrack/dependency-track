@@ -27,6 +27,7 @@ import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.List;
  * @since 3.0.0
  */
 @PersistenceCapable
+@Unique(name="ANALYSIS_COMPOSITE_IDX", members={"project", "component", "vulnerability"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Analysis implements Serializable {
 

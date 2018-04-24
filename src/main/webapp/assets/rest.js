@@ -1044,6 +1044,54 @@ $rest.getComponentMetrics = function getComponentMetrics(uuid, daysBack, success
 };
 
 /**
+ * Service called to retrieve current metrics for a specific dependency
+ */
+$rest.getDependencyCurrentMetrics = function getDependencyCurrentMetrics(projectUuid, componentUuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/project/" + projectUuid + "/component/" + componentUuid + "/current",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve historical metrics for a specific dependency
+ */
+$rest.getDependencyMetrics = function getDependencyMetrics(projectUuid, componentUuid, daysBack, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/project/" + projectUuid + "/component/" + componentUuid + "/days/" + daysBack,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
  * Service called to refresh metrics for the entire portfolio
  */
 $rest.refreshPortfolioMetrics = function refreshPortfolioMetrics(successCallback, failCallback) {
@@ -1073,6 +1121,30 @@ $rest.refreshPortfolioMetrics = function refreshPortfolioMetrics(successCallback
 $rest.refreshProjectMetrics = function refreshProjectMetrics(uuid, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_METRICS + "/project/" + uuid + "/refresh",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to refresh metrics for a specific dependency
+ */
+$rest.refreshDependencyMetrics = function refreshDependencyMetrics(projectUuid, componentUuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_METRICS + "/project/" + projectUuid + "/component/" + componentUuid + "/refresh",
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,

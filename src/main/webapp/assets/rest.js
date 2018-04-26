@@ -1191,8 +1191,14 @@ $rest.refreshComponentMetrics = function refreshComponentMetrics(uuid, successCa
  * Service called to retrieve analysis decisions
  */
 $rest.getAnalysis = function getAnalysis(projectUuid, componentUuid, vulnerabilityUuid, successCallback, failCallback) {
+    let queryString;
+    if (projectUuid == null) {
+        queryString = "?component=" + componentUuid + "&vulnerability=" + vulnerabilityUuid
+    } else {
+        queryString = "?project=" + projectUuid + "&component=" + componentUuid + "&vulnerability=" + vulnerabilityUuid;
+    }
     $.ajax({
-        url: $rest.contextPath() + URL_ANALYSIS + "?project=" + projectUuid + "&component=" + componentUuid + "&vulnerability=" + vulnerabilityUuid,
+        url: $rest.contextPath() + URL_ANALYSIS + queryString,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,
@@ -1220,8 +1226,9 @@ $rest.getAnalysis = function getAnalysis(projectUuid, componentUuid, vulnerabili
  * Service called to retrieve analysis decisions
  */
 $rest.makeAnalysis = function makeAnalysis(projectUuid, componentUuid, vulnerabilityUuid, analysisState, comment, isSuppressed, successCallback, failCallback) {
+    let url = (projectUuid != null) ? URL_ANALYSIS : URL_ANALYSIS + "/global";
     $.ajax({
-        url: $rest.contextPath() + URL_ANALYSIS,
+        url: $rest.contextPath() + url,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
@@ -1799,6 +1806,12 @@ $.ajaxSetup({
     error: function(xhr, textStatus) {
         if(textStatus === "timeout") {
             $common.displayErrorModal(xhr, "The server is not responding. Please try again or contact the administrator.");
+        }
+    },
+    complete: function(xhr, textStatus) {
+        if ($.getUrlVar("debug")) {
+            console.log("Status: " + xhr.status);
+            (xhr.responseJSON) ? console.log(xhr.responseJSON) : console.log(xhr.responseText);
         }
     },
     timeout: 10000,

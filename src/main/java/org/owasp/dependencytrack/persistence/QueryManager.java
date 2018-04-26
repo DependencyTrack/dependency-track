@@ -1319,8 +1319,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Retrieve a list of all suppressed vulnerabilities for this component, where the suppression
-     * applies to the global component and not specific to the dependency of a project.
+     * Generates partial JDOQL statement excluding suppressed vulnerabilities for this component (global).
      * @param component the component to query on
      * @return a partial where clause
      */
@@ -1330,7 +1329,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Retrieve a list of all suppressed vulnerabilities for this project.
+     * Generates partial JDOQL statement excluding suppressed vulnerabilities for this project.
      * @param project the project to query on
      * @return a partial where clause
      */
@@ -1340,14 +1339,16 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Retrieve a list of all suppressed vulnerabilities for this project/component.
+     * Generates partial JDOQL statement excluding suppressed vulnerabilities for this project/component
+     * and for globally suppressed vulnerabilities against the specified component.
      * @param component the component to query on
+     * @param project the project to query on
      * @return a partial where clause
      */
     @SuppressWarnings("unchecked")
     private String generateExcludeSuppressed(Project project, Component component) {
         // Retrieve a list of all suppressed vulnerabilities
-        final Query analysisQuery = pm.newQuery(Analysis.class, "project == :project && component == :component && suppressed == true");
+        final Query analysisQuery = pm.newQuery(Analysis.class, "(project == :project || project == null) && component == :component && suppressed == true");
         List<Analysis> analysisList = (List<Analysis>)analysisQuery.execute(project, component);
         // Construct exclude clause based on above results
         String excludeClause = analysisList.stream().map(analysis -> "id != " + analysis.getVulnerability().getId() + " && ").collect(Collectors.joining());
@@ -1480,7 +1481,12 @@ public class QueryManager extends AlpineQueryManager {
         List<Finding> findings = new ArrayList<>();
         for (Object[] o: list) {
             Finding finding = new Finding(o);
-            findings.add(finding);
+            Component component = getObjectByUuid(Component.class, (String)finding.getComponentUuid());
+            Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnUuid());
+            Analysis analysis = getAnalysis(null, component, vulnerability);
+            if (analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
+                findings.add(finding);
+            }
         }
         return findings;
     }

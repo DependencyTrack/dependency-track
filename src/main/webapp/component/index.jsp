@@ -79,19 +79,55 @@
             <div class="panel with-nav-tabs panel-default tight">
                 <div class="panel-heading">
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#vulnerabilitiesTab" data-toggle="tab">Vulnerabilities</a></li>
-                        <li><a href="#projectsTab" data-toggle="tab">Projects</a></li>
+                        <li class="active"><a href="#overviewTab" data-toggle="tab"><i class="fa fa-line-chart"></i> Overview</a></li>
+                        <li><a href="#vulnerabilitiesTab" data-toggle="tab"><i class="fa fa-shield"></i> Vulnerabilities</a></li>
+                        <li><a href="#projectsTab" data-toggle="tab"><i class="fa fa-sitemap"></i> Projects</a></li>
+                        <li style="float:right; visibility:hidden;" id="globalAuditButtonContainer">
+                            <input id="globalAuditButton" type="checkbox" data-toggle="toggle" data-size="small" data-width="130" data-on="<i class='fa fa-tasks'></i> Audit Mode" data-off="<i class='fa fa-tasks'></i> Audit Mode">
+                        </li>
                     </ul>
                 </div>
                 <div class="panel-body tight">
                     <div class="tab-content">
-                        <div class="tab-pane active" id="vulnerabilitiesTab">
+                        <div class="tab-pane active" id="overviewTab">
+                            <!-- Left Column -->
+                            <div class="col-lg-8">
+                                <div id="componentchart" style="height:200px"></div>
+                            </div>
+                            <!-- Right Column -->
+                            <div class="col-lg-4">
+                                <!-- Statistics -->
+                                <div class="widget-row widget-overview-first">
+                                    <div class="col-sm-12">
+                                        <div class="panel widget">
+                                            <div class="panel-heading">
+                                                <table width="100%" class="table widget-table">
+                                                    <tr>
+                                                        <td>Vulnerabilities:</td>
+                                                        <td><span id="statVulnerabilities"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Suppressed:</td>
+                                                        <td><span id="statSuppressed"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Last Measurement:</td>
+                                                        <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh" class="refresh-metric require-portfolio-management"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="vulnerabilitiesTab">
                             <table id="vulnerabilitiesTable" class="table table-hover detail-table" data-toggle="table"
                                    data-url="<c:url value="/api/v1/vulnerability/component/${e:forUriComponent(param.uuid)}"/>"
-                                   data-response-handler="formatVulnerabilitiesTable" data-detail-view="true"
+                                   data-response-handler="formatVulnerabilitiesTable" data-detail-view="true" data-audit-mode="false"
                                    data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                                    data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
-                                   data-click-to-select="true" data-height="100%">
+                                   data-click-to-select="true" data-detail-formatter="vulnerabilitiesDetailFormatter" data-height="100%">
                                 <thead>
                                 <tr>
                                     <th data-align="left" data-class="tight" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Name</th>

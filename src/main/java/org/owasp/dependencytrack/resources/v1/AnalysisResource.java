@@ -70,21 +70,24 @@ public class AnalysisResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project, component, or vulnerability could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
-    public Response retrieveAnalysis(@ApiParam(value = "The UUID of the project", required = true)
+    public Response retrieveAnalysis(@ApiParam(value = "The UUID of the project")
                                      @QueryParam("project") String projectUuid,
                                      @ApiParam(value = "The UUID of the component", required = true)
                                      @QueryParam("component") String componentUuid,
                                      @ApiParam(value = "The UUID of the vulnerability", required = true)
                                      @QueryParam("vulnerability") String vulnerabilityUuid) {
         failOnValidationError(
-                new ValidationTask(RegexSequence.Pattern.UUID, projectUuid, "Project is not a valid UUID"),
+                new ValidationTask(RegexSequence.Pattern.UUID, projectUuid, "Project is not a valid UUID", false), // this is optional
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, vulnerabilityUuid, "Vulnerability is not a valid UUID")
         );
         try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-            if (project == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            Project project = null;
+            if (StringUtils.trimToNull(projectUuid) != null) {
+                project = qm.getObjectByUuid(Project.class, projectUuid);
+                if (project == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                }
             }
             final Component component = qm.getObjectByUuid(Component.class, componentUuid);
             if (component == null) {
@@ -100,6 +103,23 @@ public class AnalysisResource extends AlpineResource {
         }
     }
 
+    @Path("/global")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Records an analysis decision",
+            response = Analysis.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The component or vulnerability could not be found")
+    })
+    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.VULNERABILITY_ANALYSIS})
+    public Response updateGlobalAnalysis(AnalysisRequest request) {
+        return performAnalysis(request, true);
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -113,6 +133,10 @@ public class AnalysisResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response updateAnalysis(AnalysisRequest request) {
+        return performAnalysis(request, false);
+    }
+
+    private Response performAnalysis(AnalysisRequest request, boolean global) {
         final Validator validator = getValidator();
         failOnValidationError(
                 validator.validateProperty(request, "project"),
@@ -122,8 +146,11 @@ public class AnalysisResource extends AlpineResource {
                 validator.validateProperty(request, "comment")
         );
         try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-            if (project == null) {
+            Project project = null;
+            if (!global) {
+                project = qm.getObjectByUuid(Project.class, request.getProject());
+            }
+            if (!global && project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
             final Component component = qm.getObjectByUuid(Component.class, request.getComponent());

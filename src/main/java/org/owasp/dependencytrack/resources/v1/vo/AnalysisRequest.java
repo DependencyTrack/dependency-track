@@ -32,7 +32,6 @@ import javax.validation.constraints.Pattern;
  */
 public class AnalysisRequest {
 
-    @NotNull
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
     private String project;
 
@@ -52,7 +51,7 @@ public class AnalysisRequest {
     private Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
     @JsonCreator
-    public AnalysisRequest(@JsonProperty(value = "project", required = true) String project,
+    public AnalysisRequest(@JsonProperty(value = "project") String project,
                            @JsonProperty(value = "component", required = true) String component,
                            @JsonProperty(value = "vulnerability", required = true) String vulnerability,
                            @JsonProperty(value = "analysisState") AnalysisState analysisState,

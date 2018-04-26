@@ -108,12 +108,193 @@ function formatProjectsTable(res) {
     return res;
 }
 
-function populateMetrics(data) {
-    $("#metricCritical").html(data.critical);
-    $("#metricHigh").html(data.high);
-    $("#metricMedium").html(data.medium);
-    $("#metricLow").html(data.low);
-    $("#metricIrs").html(data.inheritedRiskScore);
+function populateMetrics(metric) {
+    $("#metricCritical").html(filterXSS($common.valueWithDefault(metric.critical, "0")));
+    $("#metricHigh").html(filterXSS($common.valueWithDefault(metric.high, "0")));
+    $("#metricMedium").html(filterXSS($common.valueWithDefault(metric.medium, "0")));
+    $("#metricLow").html(filterXSS($common.valueWithDefault(metric.low, "0")));
+    $("#metricIrs").html(filterXSS($common.valueWithDefault(metric.inheritedRiskScore, "0")));
+
+    $("#statVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
+    $("#statSuppressed").html(filterXSS($common.valueWithDefault(metric.suppressed, "0")));
+    if (metric.hasOwnProperty("lastOccurrence")) {
+        $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
+    }
+}
+
+function getTrendData() {
+    let uuid = $.getUrlVar("uuid");
+    d3.selectAll(".nvtooltip").remove();
+    $rest.getComponentMetrics(uuid, 90, function(metrics) {
+        $chart.createSeverityTrendChart(metrics, "componentchart", "Component Vulnerabilities");
+    });
+}
+
+/**
+ * Function called by bootstrap table when row is clicked/touched, and
+ * expanded. This function handles the dynamic creation of the expanded
+ * view with simple inline templates.
+ */
+function vulnerabilitiesDetailFormatter(index, row) {
+    let componentUuid = $.getUrlVar("uuid");
+    let vulnUuid = row.uuid;
+    let html = [];
+    let template = `
+    <div class="col-sm-6 col-md-6">
+    <form id="form-${componentUuid}">
+        <div class="form-group" style="display:none" id="group-title-${componentUuid}-${vulnUuid}">
+            <label for="title-${componentUuid}-${vulnUuid}">Title</label>
+            <input type="text" class="form-control" disabled="disabled" id="title-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+        </div>
+        <div class="form-group" style="display:none" id="group-subtitle-${componentUuid}-${vulnUuid}">
+            <label for="subtitle-${componentUuid}-${vulnUuid}">Subtitle</label>
+            <input type="text" class="form-control" disabled="disabled" id="subtitle-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+        </div>
+        <div class="form-group" style="display:none" id="group-description-${componentUuid}-${vulnUuid}">
+            <label for="description-${componentUuid}-${vulnUuid}">Description</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="description-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+        </div>
+        <div class="form-group" style="display:none" id="group-recommendation-${componentUuid}-${vulnUuid}">
+            <label for="recommendation-${componentUuid}-${vulnUuid}">Recommendation</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="recommendation-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+        </div>
+        <div class="form-group" style="display:none" id="group-cvssV2Vector-${componentUuid}-${vulnUuid}">
+            <label for="cvssV2Vector-${componentUuid}-${vulnUuid}">CVSSv2 Vector</label>
+            <input type="text" class="form-control" disabled="disabled" id="cvssV2Vector-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+        </div>
+        <div class="form-group" style="display:none" id="group-cvssV3Vector-${componentUuid}-${vulnUuid}">
+            <label for="cvssV3Vector-${componentUuid}-${vulnUuid}">CVSSv3 Vector</label>
+            <input type="text" class="form-control" disabled="disabled" id="cvssV3Vector-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6">
+        <div class="form-group">
+            <label for="audit-trail-${componentUuid}-${vulnUuid}">Audit Trail</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="audit-trail-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="comment-${componentUuid}-${vulnUuid}">Comment</label>
+            <textarea class="form-control" rows="3" id="comment-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+            <div class="pull-right">
+                <button id="addCommentButton-${componentUuid}-${vulnUuid}" class="btn btn-xs btn-warning"><span class="fa fa-comment-o"></span> Add Comment</button>
+            </div>
+        </div>     
+        <div class="col-xs-6 input-group">
+            <label for="analysis-${componentUuid}-${vulnUuid}">Analysis</label>
+            <select class="form-control" id="analysis-${componentUuid}-${vulnUuid}">
+                <option value="NOT_SET"></option>
+                <option value="EXPLOITABLE">Exploitable</option>
+                <option value="IN_TRIAGE">In Triage</option>
+                <option value="FALSE_POSITIVE">False Positive</option>
+                <option value="NOT_AFFECTED">Not Affected</option>
+            </select>
+            <span class="input-group-btn" style="vertical-align:bottom; padding-left:20px">
+                <input id="suppressButton-${componentUuid}-${vulnUuid}" type="checkbox" data-toggle="toggle" data-on="<i class='fa fa-eye-slash'></i> Suppressed" data-off="<i class='fa fa-eye'></i> Suppress">
+            </span>
+        </div>
+    </form>
+    </div>
+    <script type="text/javascript">
+       initializeSuppressButton("#suppressButton-${componentUuid}-${vulnUuid}", ${row.isSuppressed});
+       $("#suppressButton-${componentUuid}-${vulnUuid}").on("change", function() {
+           let isSuppressed = $("#suppressButton-${componentUuid}-${vulnUuid}").is(':checked');
+           let analysis = $("#analysis-${componentUuid}-${vulnUuid}").val();
+           $rest.makeAnalysis(null, "${componentUuid}", "${vulnUuid}", analysis, null, isSuppressed, function() {
+               updateAnalysisPanel("${componentUuid}", "${vulnUuid}");
+               $rest.refreshComponentMetrics("${componentUuid}");
+           });
+       });
+       
+       $("#analysis-${componentUuid}-${vulnUuid}").on("change", function() {
+           $rest.makeAnalysis(null, "${componentUuid}", "${vulnUuid}", this.value, null, null, function() {
+               updateAnalysisPanel("${componentUuid}", "${vulnUuid}");
+           });
+       });
+       $("#addCommentButton-${componentUuid}-${vulnUuid}").on("click", function() {
+           let analysis = $("#analysis-${componentUuid}-${vulnUuid}").val();
+           let comment = $("#comment-${componentUuid}-${vulnUuid}").val();
+           $rest.makeAnalysis(null, "${componentUuid}", "${vulnUuid}", analysis, comment, null, function() {
+               updateAnalysisPanel("${componentUuid}", "${vulnUuid}");
+           });
+       });
+    </script>
+`;
+    html.push(template);
+
+    $rest.getVulnerabilityByUuid(vulnUuid, function(vuln) {
+        if (vuln.hasOwnProperty("title")) {
+            $("#group-title-" + componentUuid + "-" + vulnUuid).css("display", "block");
+            $("#title-" + componentUuid + "-" + vulnUuid).val(filterXSS(vuln.title));
+        }
+        if (vuln.hasOwnProperty("subTitle")) {
+            $("#group-subTitle-" + componentUuid + "-" + vulnUuid).css("display", "block");
+            $("#subTitle-" + componentUuid + "-" + vulnUuid).val(filterXSS(vuln.subTitle));
+        }
+        if (vuln.hasOwnProperty("description")) {
+            $("#group-description-" + componentUuid + "-" + vulnUuid).css("display", "block");
+            $("#description-" + componentUuid + "-" + vulnUuid).val(vuln.description);
+        }
+        if (vuln.hasOwnProperty("recommendation")) {
+            $("#group-recommendation-" + componentUuid + "-" + vulnUuid).css("display", "block");
+            $("#recommendation-" + componentUuid + "-" + vulnUuid).val(vuln.recommendation);
+        }
+        if (vuln.hasOwnProperty("cvssV2Vector")) {
+            $("#group-cvssV2Vector-" + componentUuid + "-" + vulnUuid).css("display", "block");
+            $("#cvssV2Vector-" + componentUuid + "-" + vulnUuid).val(filterXSS(vuln.cvssV2Vector));
+        }
+        if (vuln.hasOwnProperty("cvssV3Vector")) {
+            $("#group-cvssV3Vector-" + componentUuid + "-" + vulnUuid).css("display", "block");
+            $("#cvssV3Vector-" + componentUuid + "-" + vulnUuid).val(filterXSS(vuln.cvssV3Vector));
+        }
+    });
+
+    updateAnalysisPanel(componentUuid, vulnUuid);
+    return html.join("");
+}
+
+function initializeSuppressButton(selector, defaultValue) {
+    let suppressButton = $(selector);
+    if (defaultValue === true) {
+        suppressButton.bootstrapToggle("on");
+    } else {
+        suppressButton.bootstrapToggle("off");
+    }
+}
+
+function updateAnalysisPanel(componentUuid, vulnUuid) {
+    $rest.getAnalysis(null, componentUuid, vulnUuid, function(analysis) {
+        if (analysis) {
+            if (analysis.hasOwnProperty("analysisComments")) {
+                let auditTrail = "";
+                for (let i = 0; i < analysis.analysisComments.length; i++) {
+                    if (analysis.analysisComments[i].hasOwnProperty("commenter")) {
+                        auditTrail += analysis.analysisComments[i].commenter + " - ";
+                    }
+                    auditTrail += $common.formatTimestamp(analysis.analysisComments[i].timestamp, true);
+                    auditTrail += "\n";
+                    auditTrail += analysis.analysisComments[i].comment;
+                    auditTrail += "\n\n";
+                }
+                let textarea = $("#audit-trail-" + componentUuid + "-" + vulnUuid);
+                textarea.val(filterXSS(auditTrail));
+                textarea.scrollTop(textarea[0].scrollHeight);
+            }
+            if (analysis.hasOwnProperty("analysisState")) {
+                $("#analysis-" + componentUuid + "-" + vulnUuid).val(analysis.analysisState);
+            }
+            if (analysis.hasOwnProperty("isSuppressed")) {
+                let suppressButton = $("#suppressButton-" + componentUuid + "-" + vulnUuid);
+                let isSuppressed = suppressButton.is(':checked');
+                if (isSuppressed !== analysis.isSuppressed) {
+                    if (analysis.isSuppressed) {
+                        suppressButton.bootstrapToggle("on")
+                    } else {
+                        suppressButton.bootstrapToggle("off")
+                    }
+                }
+            }
+        }
+    });
 }
 
 /**
@@ -161,6 +342,61 @@ $(document).ready(function () {
     // Restrict characters that can be typed into hash inputs
     $(".hash-input").keypress( function(e) {
         return ("acbdefABCDEF0123456789").indexOf(String.fromCharCode(e.which)) >= 0;
+    });
+
+    getTrendData();
+
+    // Listen for refresh icon to be triggered
+    $("#refresh").on("click", function() {
+        $rest.refreshComponentMetrics(uuid, function() {
+            $("#statLastMeasurement").html("Refresh triggered");
+            $common.displayInfoModal("A refresh has been requested. The amount of time required to refresh is dependant on the amount of background processing currently being performed and the size of the data-set being refreshed.")
+        });
+    });
+
+    const vulnerabilitiesTable = $("#vulnerabilitiesTable");
+    vulnerabilitiesTable.on("click-row.bs.table", function(e, row, $tr) {
+        if (vulnerabilitiesTable.attr("data-audit-mode") === "false") { // the string value of false
+            vulnerabilitiesTable.bootstrapTable("collapseAllRows");
+            vulnerabilitiesTable.expanded = false;
+            return;
+        }
+        if ($tr.next().is("tr.detail-view")) {
+            vulnerabilitiesTable.bootstrapTable("collapseRow", $tr.data("index"));
+            vulnerabilitiesTable.expanded = false;
+        } else {
+            vulnerabilitiesTable.bootstrapTable("collapseAllRows");
+            vulnerabilitiesTable.bootstrapTable("expandRow", $tr.data("index"));
+            vulnerabilitiesTable.expanded = true;
+            vulnerabilitiesTable.expandedUuid = row.uuid;
+        }
+    });
+
+    vulnerabilitiesTable.on("load-success.bs.table", function(e, data) {
+        if (vulnerabilitiesTable.expanded === true) {
+            $.each(data, function(i, vuln) {
+                if (vuln.uuid === vulnerabilitiesTable.expandedUuid) {
+                    vulnerabilitiesTable.bootstrapTable("expandRow", i);
+                }
+            });
+        }
+    });
+
+    const token = $auth.decodeToken($auth.getToken());
+    if ($auth.hasPermission($auth.PORTFOLIO_MANAGEMENT, token) && $auth.hasPermission($auth.VULNERABILITY_ANALYSIS, token)) {
+        // Only show the 'audit mode' button when viewing the vulnerabilities tab
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            let target = $(e.target).attr("href");
+            if (target === "#vulnerabilitiesTab") {
+                $("#globalAuditButtonContainer").css("visibility", "visible");
+            } else {
+                $("#globalAuditButtonContainer").css("visibility", "hidden");
+            }
+        });
+    }
+
+    $("#globalAuditButton").change(function() {
+        vulnerabilitiesTable.attr("data-audit-mode", $(this).prop("checked"))
     });
 
 });

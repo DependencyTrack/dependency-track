@@ -41,19 +41,19 @@ public class Finding implements Serializable {
      * on ANSI_QUOTES mode being enabled in MySQL. SQL Server works regardless and is just happy to be invited :-)
      */
     public static final String QUERY = "SELECT " +
-            "\"COMPONENT\".\"UUID\", " +
-            "\"COMPONENT\".\"NAME\", " +
-            "\"COMPONENT\".\"GROUP\", " +
-            "\"COMPONENT\".\"VERSION\", " +
-            "\"VULNERABILITY\".\"SOURCE\", " +
-            "\"VULNERABILITY\".\"VULNID\", " +
-            "\"VULNERABILITY\".\"UUID\", " +
-            "\"VULNERABILITY\".\"CVSSV2BASESCORE\", " +
-            "\"VULNERABILITY\".\"CVSSV3BASESCORE\", " +
-            "\"CWE\".\"CWEID\" AS \"CWEID\", " +
-            "\"CWE\".\"NAME\" AS \"CWENAME\", " +
-            "\"ANALYSIS\".\"STATE\", " +
-            "\"ANALYSIS\".\"SUPPRESSED\" " +
+            "\"COMPONENT\".\"UUID\" AS \"COMPONENT_UUID\", " +
+            "\"COMPONENT\".\"NAME\" AS \"COMPONENT_NAME\", " +
+            "\"COMPONENT\".\"GROUP\" AS \"COMPONENT_GROUP\", " +
+            "\"COMPONENT\".\"VERSION\" AS \"COMPONENT_VERSION\", " +
+            "\"VULNERABILITY\".\"SOURCE\" AS \"VULN_SOURCE\", " +
+            "\"VULNERABILITY\".\"VULNID\" AS \"VULN_ID\", " +
+            "\"VULNERABILITY\".\"UUID\" AS \"VULN_UUID\", " +
+            "\"VULNERABILITY\".\"CVSSV2BASESCORE\" AS \"VULN_CVSSV2BASESCORE\", " +
+            "\"VULNERABILITY\".\"CVSSV3BASESCORE\" AS \"VULN_CVSSV3BASESCORE\", " +
+            "\"CWE\".\"CWEID\" AS \"CWE_ID\", " +
+            "\"CWE\".\"NAME\" AS \"CWE_NAME\", " +
+            "\"ANALYSIS\".\"STATE\" AS \"ANALYSIS_STATE\", " +
+            "\"ANALYSIS\".\"SUPPRESSED\" AS \"ANALYSIS_SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"DEPENDENCY\" ON (\"COMPONENT\".\"ID\" = \"DEPENDENCY\".\"COMPONENT_ID\") " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"DEPENDENCY\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +

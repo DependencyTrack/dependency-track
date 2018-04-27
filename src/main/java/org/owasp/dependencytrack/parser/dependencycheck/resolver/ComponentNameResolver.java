@@ -19,6 +19,8 @@ package org.owasp.dependencytrack.parser.dependencycheck.resolver;
 
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 
+import java.io.File;
+
 /**
  * Attempts to resolve the name of the component from evidence
  * available in the specified dependency.
@@ -32,6 +34,15 @@ public class ComponentNameResolver extends AbstractStringResolver implements IRe
      * {@inheritDoc}
      */
     public String resolve(Dependency dependency) {
+        if (dependency.getEvidenceCollected() == null) {
+            if (dependency.getFileName() != null) {
+                return dependency.getFileName();
+            } else if (dependency.getFilePath() != null) {
+                File file = new File(dependency.getFilePath());
+                return file.toPath().getFileName().toString();
+            }
+            return "unknown"; // a 'name' is required in order for a component to be persisted
+        }
         /*
          * Attempts to use the product evidence first, if that is null, then
          * return the filename of the component (could be null).

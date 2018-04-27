@@ -17,10 +17,11 @@
  */
 package org.owasp.dependencytrack.tasks;
 
-import alpine.event.framework.*;
+import alpine.event.framework.Event;
+import alpine.event.framework.EventService;
+import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -55,6 +56,10 @@ public class ScanUploadProcessingTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(ScanUploadProcessingTask.class);
 
+    private Scan scan;
+    private List<Component> components = new ArrayList<>();
+    private QueryManager qm;
+
     /**
      * {@inheritDoc}
      */
@@ -64,7 +69,6 @@ public class ScanUploadProcessingTask implements Subscriber {
 
             final File file = event.getFile();
             final byte[] scanData = event.getScan();
-            QueryManager qm = null;
             try {
                 final Analysis analysis = (file != null)
                         ? new DependencyCheckParser().parse(file)
@@ -72,11 +76,10 @@ public class ScanUploadProcessingTask implements Subscriber {
                 qm = new QueryManager();
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 final Date date = new Date();
-                final Scan scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), date);
+                scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), date);
 
-                final List<Component> components = new ArrayList<>();
                 for (Dependency dependency : analysis.getDependencies()) {
-                    processDependency(scan, components, qm, dependency);
+                    processDependency(dependency);
                 }
 
                 qm.reconcileDependencies(project, components);
@@ -95,7 +98,7 @@ public class ScanUploadProcessingTask implements Subscriber {
         }
     }
 
-    private Component processDependency(Scan scan, List<Component> components, QueryManager qm, Dependency dependency) {
+    private void processDependency(Dependency dependency) {
         // Attempt to resolve component
         final ComponentResolver componentResolver = new ComponentResolver(qm);
         Component component = componentResolver.resolve(dependency);
@@ -182,17 +185,17 @@ public class ScanUploadProcessingTask implements Subscriber {
         components.add(component);
         qm.bind(scan, component);
 
-        for (Evidence evidence : dependency.getEvidenceCollected()) {
-            qm.createEvidence(component, evidence.getType(), evidence.getConfidenceScore(evidence.getConfidenceType()), evidence
-                    .getSource(), evidence.getName(), evidence.getValue());
+        if (dependency.getEvidenceCollected() != null) {
+            for (Evidence evidence : dependency.getEvidenceCollected()) {
+                qm.createEvidence(component, evidence.getType(), evidence.getConfidenceScore(evidence.getConfidenceType()), evidence
+                        .getSource(), evidence.getName(), evidence.getValue());
+            }
         }
 
         if (dependency.getRelatedDependencies() != null) {
             for (Dependency relatedDependency: dependency.getRelatedDependencies()) {
-                processDependency(scan, components, qm, relatedDependency);
+                processDependency(relatedDependency);
             }
         }
-
-        return component;
     }
 }

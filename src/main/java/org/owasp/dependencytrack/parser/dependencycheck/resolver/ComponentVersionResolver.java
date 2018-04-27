@@ -34,6 +34,9 @@ public class ComponentVersionResolver implements IResolver {
      * {@inheritDoc}
      */
     public String resolve(Dependency dependency) {
+        if (dependency.getEvidenceCollected() == null) {
+            return null;
+        }
         Evidence best = null;
         final List<Evidence> evidenceList = dependency.getEvidenceCollected();
         for (Evidence evidence: evidenceList) {

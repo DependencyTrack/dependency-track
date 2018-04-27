@@ -37,6 +37,9 @@ public abstract class AbstractStringResolver {
      * @return the highly confidence evidence, or null if not found or doesn't meet criteria
      */
     protected String resolve(Dependency dependency, String evidenceType, int minConfidenceScore) {
+        if (dependency.getEvidenceCollected() == null) {
+            return null;
+        }
         Evidence best = null;
         final List<Evidence> evidenceList = dependency.getEvidenceCollected();
         for (Evidence evidence: evidenceList) {

@@ -78,7 +78,7 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 qm.reconcileDependencies(project, existingProjectDependencies, flattenedComponents);
                 qm.updateLastBomImport(project, date);
-                EventService.getInstance().publish(new VulnerabilityAnalysisEvent(flattenedComponents));
+                EventService.getInstance().publish(new VulnerabilityAnalysisEvent(flattenedComponents).project(project));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom");
                 LOGGER.error(ex.getMessage());

@@ -102,7 +102,7 @@ public class DependencyCheckParserTest extends BaseTest {
                 Assert.assertEquals(3, dependency.getRelatedDependencies().size());
             }
         }
-        Assert.assertEquals(2, foundCount);
+        Assert.assertEquals(3, foundCount);
     }
 
     @Test

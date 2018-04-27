@@ -42,6 +42,7 @@ public class Dependency extends BaseObject {
     private List<Evidence> evidenceCollected;
     private Identifiers identifiers;
     private Vulnerabilities vulnerabilities;
+    private List<Dependency> relatedDependencies;
 
     public boolean isVirtual() {
         return isVirtual;
@@ -132,6 +133,16 @@ public class Dependency extends BaseObject {
     @XmlElement(name = "vulnerabilities")
     public void setVulnerabilities(Vulnerabilities vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
+    }
+
+    public List<Dependency> getRelatedDependencies() {
+        return relatedDependencies;
+    }
+
+    @XmlElementWrapper(name = "relatedDependencies")
+    @XmlElement(name = "relatedDependency")
+    public void setRelatedDependencies(List<Dependency> dependencies) {
+        this.relatedDependencies = dependencies;
     }
 
     /**

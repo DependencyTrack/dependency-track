@@ -97,6 +97,9 @@ public class DependencyCheckParserTest extends BaseTest {
                 foundCount++;
                 Assert.assertNull(dependency.getVulnerabilities().getVulnerabilities());
                 Assert.assertEquals(1, dependency.getVulnerabilities().getSuppressedVulnerabilities().size());
+            } else if (dependency.getFileName().equals("catalina.jar")) {
+                foundCount++;
+                Assert.assertEquals(3, dependency.getRelatedDependencies().size());
             }
         }
         Assert.assertEquals(2, foundCount);

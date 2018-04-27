@@ -30,6 +30,8 @@ import org.owasp.dependencytrack.parser.cyclonedx.CycloneDxParser;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
 import org.owasp.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.owasp.dependencytrack.persistence.QueryManager;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -62,7 +64,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 final List<Component> existingProjectDependencies = new ArrayList<>();
                 qm.getAllDependencies(project).forEach(item -> existingProjectDependencies.add(item.getComponent()));
 
-                final String bomString = new String(bomBytes);
+                final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
                     final CycloneDxParser parser = new CycloneDxParser(qm);
                     components = parser.convert(parser.parse(bomBytes));

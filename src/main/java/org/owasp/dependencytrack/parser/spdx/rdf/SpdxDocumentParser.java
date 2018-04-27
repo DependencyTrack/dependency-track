@@ -39,6 +39,7 @@ import org.spdx.tools.TagToRDF;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +66,7 @@ public class SpdxDocumentParser {
     }
 
     public List<Component> parse(byte[] spdx) throws ParseException {
-        final String spdxString = new String(spdx);
+        final String spdxString = new String(spdx, StandardCharsets.UTF_8);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {
             if (spdxString.contains("<rdf:RDF") && spdxString.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns")) {
                 return parse(inputStream, DocumentType.RDF);

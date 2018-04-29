@@ -30,7 +30,7 @@ import org.owasp.dependencytrack.parser.cyclonedx.CycloneDxParser;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
 import org.owasp.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.owasp.dependencytrack.persistence.QueryManager;
-
+import org.owasp.dependencytrack.util.CompressUtil;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,7 +53,7 @@ public class BomUploadProcessingTask implements Subscriber {
     public void inform(Event e) {
         if (e instanceof BomUploadEvent) {
             final BomUploadEvent event = (BomUploadEvent) e;
-            final byte[] bomBytes = event.getBom();
+            final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
             QueryManager qm = new QueryManager();
             try {
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());

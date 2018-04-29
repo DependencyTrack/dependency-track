@@ -40,6 +40,7 @@ import org.owasp.dependencytrack.parser.dependencycheck.resolver.ComponentVersio
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.LicenseResolver;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.PackageURLResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import org.owasp.dependencytrack.util.CompressUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -68,7 +69,7 @@ public class ScanUploadProcessingTask implements Subscriber {
             final ScanUploadEvent event = (ScanUploadEvent) e;
 
             final File file = event.getFile();
-            final byte[] scanData = event.getScan();
+            final byte[] scanData = CompressUtil.optionallyDecompress(event.getScan());
             try {
                 final Analysis analysis = (file != null)
                         ? new DependencyCheckParser().parse(file)

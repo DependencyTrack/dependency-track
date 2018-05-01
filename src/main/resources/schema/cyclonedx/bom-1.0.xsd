@@ -7,7 +7,7 @@
            targetNamespace="http://cyclonedx.org/schema/bom/1.0"
            vc:minVersion="1.0"
            vc:maxVersion="1.1"
-           version="1.0">
+           version="1.0.1">
 
     <xs:import namespace="http://cyclonedx.org/schema/spdx" schemaLocation="http://cyclonedx.org/schema/spdx"/>
 
@@ -56,7 +56,7 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
-            <xs:element name="licenses">
+            <xs:element name="licenses" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:sequence minOccurs="1" maxOccurs="unbounded">
                         <xs:element name="license">
@@ -194,7 +194,7 @@
 
     <xs:simpleType name="hashValue">
         <xs:restriction base="xs:token">
-            <xs:pattern value="([a-fA-F0-9]{32})|([a-fA-F0-9]{40})|([a-fA-F0-9]{64})|([a-fA-F0-9]{128})"/>
+            <xs:pattern value="([a-fA-F0-9]{32})|([a-fA-F0-9]{40})|([a-fA-F0-9]{64})|([a-fA-F0-9]{96})|([a-fA-F0-9]{128})"/>
         </xs:restriction>
     </xs:simpleType>
 

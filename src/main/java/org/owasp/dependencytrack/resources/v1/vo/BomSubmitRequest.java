@@ -17,6 +17,7 @@
  */
 package org.owasp.dependencytrack.resources.v1.vo;
 
+import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.NotNull;
@@ -35,18 +36,46 @@ public final class BomSubmitRequest {
     private final String project;
 
     @NotNull
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The project name may only contain printable characters")
+    private final String projectName;
+
+    @NotNull
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The project version may only contain printable characters")
+    private final String projectVersion;
+
+    @NotNull
     @Pattern(regexp = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", message = "The BOM must be Base64 encoded")
     private final String bom;
 
+    private final boolean autoCreate;
+
     @JsonCreator
-    public BomSubmitRequest(@JsonProperty(value = "project", required = true) String project,
-                             @JsonProperty(value = "bom", required = true) String bom) {
+    public BomSubmitRequest(@JsonProperty(value = "project", required = false) String project,
+                            @JsonProperty(value = "projectName", required = false) String projectName,
+                            @JsonProperty(value = "projectVersion", required = false) String projectVersion,
+                            @JsonProperty(value = "autoCreate", required = false) boolean autoCreate,
+                            @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
+        this.projectName = projectName;
+        this.projectVersion = projectVersion;
+        this.autoCreate = autoCreate;
         this.bom = bom;
     }
 
     public String getProject() {
         return project;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public String getProjectVersion() {
+        return projectVersion;
+    }
+
+    public boolean isAutoCreate() {
+        return autoCreate;
     }
 
     public String getBom() {

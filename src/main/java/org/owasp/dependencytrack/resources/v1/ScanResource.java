@@ -31,7 +31,6 @@ import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
-import org.owasp.dependencytrack.resources.v1.vo.ScanSubmitNameVersionRequest;
 import org.owasp.dependencytrack.resources.v1.vo.ScanSubmitRequest;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -66,51 +65,38 @@ public class ScanResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SCAN_UPLOAD)
     public Response uploadScan(ScanSubmitRequest request) {
         final Validator validator = getValidator();
-        failOnValidationError(
-                validator.validateProperty(request, "project"),
-                validator.validateProperty(request, "scan")
-        );
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-            return process(project, request.getScan());
-        }
-    }
-
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Upload Dependency-Check Result",
-            notes = "Expects one or more dependency-check-report.xml schema version 1.3 or higher, and a valid project name and project version. If autoCreate is true, the project with the corresponding name and version will automatically be created if it doesn't exist. This additionally requires PORTFOLIO_MANAGEMENT permission."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The project could not be found")
-    })
-    @PermissionRequired(Permissions.Constants.SCAN_UPLOAD)
-    public Response uploadScan(ScanSubmitNameVersionRequest request) {
-        final Validator validator = getValidator();
-        failOnValidationError(
-                validator.validateProperty(request, "projectName"),
-                validator.validateProperty(request, "projectVersion"),
-                validator.validateProperty(request, "scan")
-        );
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
-            if (project == null && request.isAutoCreate()) {
-                boolean hasPermission = false;
-                if (super.getPrincipal() instanceof UserPrincipal) {
-                    hasPermission = qm.hasPermission((UserPrincipal)getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT, true);
-                } else if (super.getPrincipal() instanceof ApiKey) {
-                    hasPermission = qm.hasPermission((ApiKey)getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT);
-                }
-                if (hasPermission) {
-                    qm.createProject(request.getProjectName(), null, request.getProjectVersion(), null, null, null, true);
-                } else {
-                    return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
-                }
+        if (request.getProject() != null) { // behavior in v3.0.0
+            failOnValidationError(
+                    validator.validateProperty(request, "project"),
+                    validator.validateProperty(request, "scan")
+            );
+            try (QueryManager qm = new QueryManager()) {
+                final Project project = qm.getObjectByUuid(Project.class, request.getProject());
+                return process(project, request.getScan());
             }
-            return process(project, request.getScan());
+        } else { // additional behavior added in v3.1.0
+            failOnValidationError(
+                    validator.validateProperty(request, "projectName"),
+                    validator.validateProperty(request, "projectVersion"),
+                    validator.validateProperty(request, "scan")
+            );
+            try (QueryManager qm = new QueryManager()) {
+                final Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
+                if (project == null && request.isAutoCreate()) {
+                    boolean hasPermission = false;
+                    if (super.getPrincipal() instanceof UserPrincipal) {
+                        hasPermission = qm.hasPermission((UserPrincipal) getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT, true);
+                    } else if (super.getPrincipal() instanceof ApiKey) {
+                        hasPermission = qm.hasPermission((ApiKey) getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT);
+                    }
+                    if (hasPermission) {
+                        qm.createProject(request.getProjectName(), null, request.getProjectVersion(), null, null, null, true);
+                    } else {
+                        return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
+                    }
+                }
+                return process(project, request.getScan());
+            }
         }
     }
 

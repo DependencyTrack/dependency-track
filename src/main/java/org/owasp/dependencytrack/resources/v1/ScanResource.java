@@ -81,16 +81,10 @@ public class ScanResource extends AlpineResource {
                     validator.validateProperty(request, "scan")
             );
             try (QueryManager qm = new QueryManager()) {
-                final Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
+                Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
                 if (project == null && request.isAutoCreate()) {
-                    boolean hasPermission = false;
-                    if (super.getPrincipal() instanceof UserPrincipal) {
-                        hasPermission = qm.hasPermission((UserPrincipal) getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT, true);
-                    } else if (super.getPrincipal() instanceof ApiKey) {
-                        hasPermission = qm.hasPermission((ApiKey) getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT);
-                    }
-                    if (hasPermission) {
-                        qm.createProject(request.getProjectName(), null, request.getProjectVersion(), null, null, null, true);
+                    if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT)) {
+                        project = qm.createProject(request.getProjectName(), null, request.getProjectVersion(), null, null, null, true);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }

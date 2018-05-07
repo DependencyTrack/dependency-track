@@ -56,7 +56,7 @@ public class ScanResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload Dependency-Check Result",
-            notes = "Expects one or more dependency-check-report.xml schema version 1.3 or higher, and a valid project UUID"
+            notes = "Expects one or more dependency-check-report.xml schema version 1.3 or higher, and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT permission."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

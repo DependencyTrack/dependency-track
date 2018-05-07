@@ -19,6 +19,8 @@ package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
 import alpine.event.framework.EventService;
+import alpine.model.ApiKey;
+import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -29,6 +31,7 @@ import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.BomUploadEvent;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import org.owasp.dependencytrack.resources.v1.vo.BomSubmitNameVersionRequest;
 import org.owasp.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -69,13 +72,58 @@ public class BomResource extends AlpineResource {
         );
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-            if (project != null) {
-                final byte[] decoded = Base64.getDecoder().decode(request.getBom());
-                EventService.getInstance().publish(new BomUploadEvent(project.getUuid(), decoded));
-                return Response.ok().build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            return process(project, request.getBom());
+        }
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Upload a supported bil of material format document",
+            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project name and project version"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
+    public Response uploadBom(BomSubmitNameVersionRequest request) {
+        final Validator validator = getValidator();
+        failOnValidationError(
+                validator.validateProperty(request, "projectName"),
+                validator.validateProperty(request, "projectVersion"),
+                validator.validateProperty(request, "bom")
+        );
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
+            if (project == null && request.isAutoCreate()) {
+                boolean hasPermission = false;
+                if (super.getPrincipal() instanceof UserPrincipal) {
+                    hasPermission = qm.hasPermission((UserPrincipal)getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT, true);
+                } else if (super.getPrincipal() instanceof ApiKey) {
+                    hasPermission = qm.hasPermission((ApiKey)getPrincipal(), Permissions.Constants.PORTFOLIO_MANAGEMENT);
+                }
+                if (hasPermission) {
+                    qm.createProject(request.getProjectName(), null, request.getProjectVersion(), null, null, null, true);
+                } else {
+                    return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
+                }
             }
+            return process(project, request.getBom());
+        }
+    }
+
+    /**
+     * Common logic that processes a BoM given a project and encoded payload.
+     */
+    private Response process(Project project, String encodedBomData) {
+        if (project != null) {
+            final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
+            EventService.getInstance().publish(new BomUploadEvent(project.getUuid(), decoded));
+            return Response.ok().build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
         }
     }
 

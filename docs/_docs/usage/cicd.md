@@ -48,3 +48,14 @@ curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
   }'
 ```
 
+### Large Payloads
+In cases where the scan or BoM being uploaded is large, using cURLs capability of specifying a file
+containing a payload may be preferred.
+
+```bash
+curl -X "PUT" "http://dtrack.example.com/api/v1/scan" \
+     -H 'Content-Type: application/json' \
+     -H 'X-API-Key: LPojpCDSsEd4V9Zi6qCWr4KsiF3Konze' \
+     -d @payload.json
+```
+

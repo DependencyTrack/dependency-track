@@ -4,7 +4,6 @@
 title: Dependency-Track
 url: "https://dependencytrack.org"
 baseurl:
-google_analytics_key:
 show_full_navigation: true
 
 # Values for the jekyll-seo-tag gem (https://github.com/jekyll/jekyll-seo-tag)

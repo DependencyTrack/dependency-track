@@ -22,8 +22,6 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Identifier;
-
-import java.util.Map;
 import java.util.TreeMap;
 
 /**

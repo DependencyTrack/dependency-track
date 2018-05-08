@@ -23,6 +23,9 @@ import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Identifier;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Attempts to resolve the PackageURL from high-quality and reliable evidence.
  *
@@ -48,21 +51,17 @@ public class PackageURLResolver implements IResolver {
                             final String extension = dependency.getFileName().substring(
                                     dependency.getFileName().lastIndexOf(".") + 1, dependency.getFileName().length()
                             );
-                            return new PackageURL("pkg:maven/" + gav.group + "/" + gav.artifact + "@" + gav.version + "?type=" + extension);
+                            TreeMap<String, String> qualifiers = new TreeMap<>();
+                            qualifiers.put("type", extension);
+                            return new PackageURL(PackageURL.StandardTypes.MAVEN, gav.group, gav.artifact, gav.version, qualifiers, null);
                         } else {
-                            return new PackageURL("pkg:maven/" + gav.group + "/" + gav.artifact + "@" + gav.version);
+                            return new PackageURL(PackageURL.StandardTypes.MAVEN, gav.group, gav.artifact, gav.version, null, null);
                         }
 
                     } else if ("npm".equals(identifier.getType())
                             && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))) {
-
                         final GAV gav = parseIdentifier(identifier);
-                        if (gav.group != null) {
-                            return new PackageURL("pkg:npm/" + gav.group + "/" + gav.artifact + "@" + gav.version);
-                        } else {
-                            return new PackageURL("pkg:npm/" + gav.artifact + "@" + gav.version);
-                        }
-
+                        return new PackageURL(PackageURL.StandardTypes.NPM, gav.group, gav.artifact, gav.version, null, null);
                     }
 
                     // todo: add PHP Composer, NuGet, Rubygems, and other supported types. Pull requests welcome :-)

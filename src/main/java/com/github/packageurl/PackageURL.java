@@ -390,4 +390,24 @@ public final class PackageURL implements Serializable {
             return input; // this should never occur
         }
     }
+
+    /**
+     * Convenience constants that define PackageURL 'type's.
+     */
+    public static class StandardTypes {
+        public static final String BITBUCKET = "bitbucket";
+        public static final String COMPOSER = "composer";
+        public static final String DEBIAN = "deb";
+        public static final String DOCKER = "docker";
+        public static final String GEM = "gem";
+        public static final String GENERIC = "generic";
+        public static final String GITHUB = "github";
+        public static final String GOLANG = "golang";
+        public static final String MAVEN = "maven";
+        public static final String NPM = "npm";
+        public static final String NUGET = "nuget";
+        public static final String PYPI = "pypi";
+        public static final String RPM = "rpm";
+    }
+
 }

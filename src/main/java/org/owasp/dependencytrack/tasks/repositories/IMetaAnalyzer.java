@@ -73,6 +73,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.GEM.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new GemMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 

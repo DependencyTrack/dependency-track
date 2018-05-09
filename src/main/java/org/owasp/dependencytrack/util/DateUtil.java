@@ -43,6 +43,22 @@ public class DateUtil {
     }
 
     /**
+     * Convenience method that parses a date in yyyyMMddHHmmss format and
+     * returns a Date object. If the parsing fails, null is returned.
+     * @param yyyyMMddHHmmss the date string to parse
+     * @return a Date object
+     * @since 3.1.0
+     */
+    public static Date parseDate(String yyyyMMddHHmmss) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+        try {
+            return format.parse(yyyyMMddHHmmss);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+    /**
      * Convenience method that returns the difference (in days) between
      * two dates.
      * @param start the first date

@@ -131,6 +131,12 @@ alpine.ldap.domain=example.com
 alpine.ldap.basedn=dc=example,dc=com
 
 # Optional
+# Specifies the LDAP security authentication level to use. 
+# Its value is one of the following strings: "none", "simple", "strong".
+# If this property is empty or unspecified, the behaviour is determined by the service provider.
+alpine.ldap.security.auth=simple
+
+# Optional
 # If anonymous access is not permitted, specify a username with limited
 # access to the directory. Just enough to perform searches.
 alpine.ldap.bind.username=

@@ -28,6 +28,7 @@ import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import javax.servlet.ServletContextEvent;
@@ -59,6 +60,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultLicenses();
         loadDefaultPermissions();
         loadDefaultPersonas();
+        loadDefaultRepositories();
 
         try {
             new CweImporter().processCweDefinitions();
@@ -167,6 +169,25 @@ public class DefaultObjectGenerator implements ServletContextListener {
             }
         }
         return permissions;
+    }
+
+    /**
+     * Loads the default repositories
+     */
+    private void loadDefaultRepositories() {
+        try (QueryManager qm = new QueryManager()) {
+            if (qm.getAllRepositories().size() > 0) {
+                return;
+            }
+            LOGGER.info("Adding default repositories to datastore.");
+            qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true);
+            qm.createRepository(RepositoryType.MAVEN, "central", "http://central.maven.org/maven2/", true);
+            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://maven.atlassian.com/content/repositories/atlassian-public/", true);
+            qm.createRepository(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", true);
+            qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true);
+            qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true);
+            qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true);
+        }
     }
 
 }

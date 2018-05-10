@@ -30,6 +30,7 @@ import org.owasp.dependencytrack.tasks.ScanUploadProcessingTask;
 import org.owasp.dependencytrack.tasks.TaskScheduler;
 import org.owasp.dependencytrack.tasks.VulnDbSyncTask;
 import org.owasp.dependencytrack.tasks.VulnerabilityAnalysisTask;
+import org.owasp.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
 import org.owasp.dependencytrack.tasks.scanners.DependencyCheckTask;
 import org.owasp.dependencytrack.tasks.scanners.NspAnalysisTask;
 import javax.servlet.ServletContextEvent;
@@ -61,6 +62,9 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the SingleThreadedEventService (Used for NVD mirroring)
     private static final SingleThreadedEventService EVENT_SERVICE_NVD = SingleThreadedEventService.getInstance();
 
+    // Starts the SingleThreadedEventService (Used for repository meta analysis)
+    private static final SingleThreadedEventService EVENT_SERVICE_REPO_META = SingleThreadedEventService.getInstance();
+
     /**
      * {@inheritDoc}
      */
@@ -77,6 +81,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE_NSP.subscribe(NspAnalysisEvent.class, NspAnalysisTask.class);
         EVENT_SERVICE_METRICS.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE_NVD.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
+        EVENT_SERVICE_REPO_META.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -109,5 +114,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
 
         EVENT_SERVICE_NVD.unsubscribe(NistMirrorTask.class);
         EVENT_SERVICE_NVD.shutdown();
+
+        EVENT_SERVICE_REPO_META.unsubscribe(RepositoryMetaAnalyzerTask.class);
+        EVENT_SERVICE_REPO_META.shutdown();
     }
 }

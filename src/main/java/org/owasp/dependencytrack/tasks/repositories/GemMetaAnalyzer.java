@@ -24,9 +24,8 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.util.HttpClientFactory;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * An IMetaAnalyzer implementation that supports Ruby Gems.
@@ -34,10 +33,15 @@ import java.util.stream.Collectors;
  * @author Steve Springett
  * @since 3.1.0
  */
-public class GemMetaAnalyzer implements IMetaAnalyzer {
+public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(GemMetaAnalyzer.class);
-    private static final String API_URL = "https://rubygems.org/api/v1/versions/%s/latest.json";
+    private static final String DEFAULT_BASE_URL = "https://rubygems.org";
+    private static final String API_URL = "/api/v1/versions/%s/latest.json";
+
+    GemMetaAnalyzer() {
+        this.baseUrl = DEFAULT_BASE_URL;
+    }
 
     /**
      * {@inheritDoc}
@@ -49,8 +53,8 @@ public class GemMetaAnalyzer implements IMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public List<MetaModel> analyze(List<Component> components) {
-        return components.stream().map(this::analyze).collect(Collectors.toList());
+    public RepositoryType supportedRepositoryType() {
+        return RepositoryType.GEM;
     }
 
     /**
@@ -60,7 +64,7 @@ public class GemMetaAnalyzer implements IMetaAnalyzer {
         Unirest.setHttpClient(HttpClientFactory.createClient());
         MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
-            final String url = String.format(API_URL, component.getPurl().getName());
+            final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
             try {
                 HttpResponse<JsonNode> response = Unirest.get(url)
                         .header("accept", "application/json")
@@ -72,7 +76,7 @@ public class GemMetaAnalyzer implements IMetaAnalyzer {
                     }
                 } else {
                     LOGGER.debug("HTTP Status : " + response.getStatus() + " " + response.getStatusText());
-                    LOGGER.debug(" - Repository URL : " + url);
+                    LOGGER.debug(" - RepositoryType URL : " + url);
                     LOGGER.debug(" - Package URL : " + component.getPurl().canonicalize());
                 }
             } catch (UnirestException e) {

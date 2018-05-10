@@ -26,6 +26,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.owasp.dependencycheck.utils.XmlUtils;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.util.DateUtil;
 import org.owasp.dependencytrack.util.HttpClientFactory;
 import org.w3c.dom.Document;
@@ -37,8 +38,6 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * An IMetaAnalyzer implementation that supports Maven repositories (including Maven Central).
@@ -46,10 +45,15 @@ import java.util.stream.Collectors;
  * @author Steve Springett
  * @since 3.1.0
  */
-public class NexusMetaAnalyzer implements IMetaAnalyzer {
+public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
 
-    private static final Logger LOGGER = Logger.getLogger(NexusMetaAnalyzer.class);
-    private static final String REPO_METADATA_URL = "http://central.maven.org/maven2/%s/maven-metadata.xml";
+    private static final Logger LOGGER = Logger.getLogger(MavenMetaAnalyzer.class);
+    private static final String DEFAULT_BASE_URL = "http://central.maven.org/maven2";
+    private static final String REPO_METADATA_URL = "/%s/maven-metadata.xml";
+
+    MavenMetaAnalyzer() {
+        this.baseUrl = DEFAULT_BASE_URL;
+    }
 
     /**
      * {@inheritDoc}
@@ -61,8 +65,8 @@ public class NexusMetaAnalyzer implements IMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public List<MetaModel> analyze(List<Component> components) {
-        return components.stream().map(this::analyze).collect(Collectors.toList());
+    public RepositoryType supportedRepositoryType() {
+        return RepositoryType.MAVEN;
     }
 
     /**
@@ -73,7 +77,7 @@ public class NexusMetaAnalyzer implements IMetaAnalyzer {
         MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName().replaceAll("\\.", "/");
-            final String url = String.format(REPO_METADATA_URL, mavenGavUrl);
+            final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try {
                 HttpUriRequest request = new HttpGet(url);
                 org.apache.http.HttpResponse response = httpClient.execute(request);
@@ -98,7 +102,7 @@ public class NexusMetaAnalyzer implements IMetaAnalyzer {
                     }
                 } else {
                     LOGGER.debug("HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
-                    LOGGER.debug(" - Repository URL : " + url);
+                    LOGGER.debug(" - RepositoryType URL : " + url);
                     LOGGER.debug(" - Package URL : " + component.getPurl().canonicalize());
                 }
 

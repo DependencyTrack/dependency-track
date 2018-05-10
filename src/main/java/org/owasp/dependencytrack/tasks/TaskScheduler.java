@@ -22,6 +22,7 @@ import alpine.tasks.AlpineTaskScheduler;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
+import org.owasp.dependencytrack.event.RepositoryMetaEvent;
 import org.owasp.dependencytrack.event.VulnDbSyncEvent;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 
@@ -63,6 +64,9 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         // A long initial delay is due to DependencyCheckEvent being called directly after a successful
         // NistMirrorEvent is processed.
         scheduleEvent(new VulnerabilityAnalysisEvent(), 21600000, 21600000);
+
+        // Creates a new event that executes every 24 hours (86400000) after an initial 1 hour (3600000) delay
+        scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);
     }
 
     /**

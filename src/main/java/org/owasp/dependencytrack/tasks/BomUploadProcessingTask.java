@@ -19,9 +19,11 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.EventService;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.BomUploadEvent;
+import org.owasp.dependencytrack.event.RepositoryMetaEvent;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Bom;
 import org.owasp.dependencytrack.model.Component;
@@ -119,6 +121,8 @@ public class BomUploadProcessingTask implements Subscriber {
             flattenedComponents.add(qm.getObjectById(Component.class, oid));
         } else {
             component = qm.createComponent(component, false);
+            SingleThreadedEventService.getInstance().publish(new RepositoryMetaEvent(component));
+
             final long oid = component.getId();
             bind(qm, project, component);
             qm.bind(bom, component);

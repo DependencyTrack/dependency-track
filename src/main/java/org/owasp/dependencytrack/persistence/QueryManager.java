@@ -41,6 +41,9 @@ import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectMetrics;
 import org.owasp.dependencytrack.model.ProjectProperty;
+import org.owasp.dependencytrack.model.Repository;
+import org.owasp.dependencytrack.model.RepositoryMetaComponent;
+import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
@@ -1686,6 +1689,144 @@ public class QueryManager extends AlpineQueryManager {
     public void deleteMetrics(Component component) {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.deletePersistentAll(component);
+    }
+
+    /**
+     * Returns a list of all repositories.
+     * @return a List of Repositories
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getRepositories() {
+        final Query query = pm.newQuery(Repository.class);
+        if (orderBy == null) {
+            query.setOrdering("type asc, identifier asc");
+        }
+        if (filter != null) {
+            query.setFilter("identifier.toLowerCase().matches(:identifier)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
+    }
+
+    /**
+     * Returns a list of all repositories
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Repositories
+     */
+    @SuppressWarnings("unchecked")
+    public List<Repository> getAllRepositories() {
+        final Query query = pm.newQuery(Repository.class);
+        query.setOrdering("type asc, identifier asc");
+        return query.executeResultList(Repository.class);
+    }
+
+    /**
+     * Returns a list of repositories by it's type.
+     * @param type the type of repository (required)
+     * @return a List of Repository objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getRepositories(RepositoryType type) {
+        final Query query = pm.newQuery(Repository.class, "type == :type");
+        if (orderBy == null) {
+            query.setOrdering("identifier asc");
+        }
+        return execute(query, type);
+    }
+
+    /**
+     * Returns a list of repositories by it's type in the order in which the repository should be used in resolution.
+     * This method if designed NOT to provide paginated results.
+     * @param type the type of repository (required)
+     * @return a List of Repository objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Repository> getAllRepositoriesOrdered(RepositoryType type) {
+        final Query query = pm.newQuery(Repository.class, "type == :type");
+        query.setOrdering("resolutionOrder asc");
+        return (List<Repository>)query.execute(type);
+    }
+
+    /**
+     * Creates a new Repository.
+     * @param type the type of repository
+     * @param identifier a unique (to the type) identifier for the repo
+     * @param url the URL to the repository
+     * @param enabled if the repo is enabled or not
+     * @return the created Repository
+     */
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled) {
+        int order = 0;
+        List<Repository> existingRepos = getAllRepositoriesOrdered(type);
+        if (existingRepos != null) {
+            for (Repository existing : existingRepos) {
+                if (existing.getResolutionOrder() > order) {
+                    order = existing.getResolutionOrder();
+                }
+            }
+        }
+        final Repository repo = new Repository();
+        repo.setType(type);
+        repo.setIdentifier(identifier);
+        repo.setUrl(url);
+        repo.setResolutionOrder(order + 1);
+        repo.setEnabled(enabled);
+        return persist(repo);
+    }
+
+    /**
+     * Returns a RepositoryMetaComponent object from the specified type, group, and name.
+     * @param repositoryType the type of repository
+     * @param group the group name of the meta component
+     * @param name the name of the meta component
+     * @return a RepositoryMetaComponent object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String group, String name) {
+        final Query query = pm.newQuery(RepositoryMetaComponent.class);
+        query.setFilter("repositoryType == :repositoryType && group == :group && name == :name");
+        final List<RepositoryMetaComponent> result = (List<RepositoryMetaComponent>) query.execute(repositoryType, group, name);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Synchronizes a RepositoryMetaComponent, updating it if it needs updating, or creating it if it doesn't exist.
+     * @param repositoryMetaComponent the RepositoryMetaComponent object to synchronize
+     * @return a synchronized RepositoryMetaComponent object
+     */
+    public RepositoryMetaComponent synchronizeRepositoryMetaComponent(RepositoryMetaComponent repositoryMetaComponent) {
+        RepositoryMetaComponent result = updateRepositoryMetaComponent(repositoryMetaComponent);
+        if (result == null) {
+            result = persist(repositoryMetaComponent);
+        }
+        return result;
+    }
+
+    /**
+     * Updates a RepositoryMetaComponent.
+     * @param transientRepositoryMetaComponent the RepositoryMetaComponent to update
+     * @return a RepositoryMetaComponent object
+     */
+    public RepositoryMetaComponent updateRepositoryMetaComponent(RepositoryMetaComponent transientRepositoryMetaComponent) {
+        final RepositoryMetaComponent metaComponent;
+        if (transientRepositoryMetaComponent.getId() > 0) {
+            metaComponent = getObjectById(RepositoryMetaComponent.class, transientRepositoryMetaComponent.getId());
+        } else {
+            metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
+                    transientRepositoryMetaComponent.getGroup(), transientRepositoryMetaComponent.getName());
+        }
+
+        if (metaComponent != null) {
+            metaComponent.setRepositoryType(transientRepositoryMetaComponent.getRepositoryType());
+            metaComponent.setGroup(transientRepositoryMetaComponent.getGroup());
+            metaComponent.setLastCheck(transientRepositoryMetaComponent.getLastCheck());
+            metaComponent.setLatestVersion(transientRepositoryMetaComponent.getLatestVersion());
+            metaComponent.setName(transientRepositoryMetaComponent.getName());
+            metaComponent.setPublished(transientRepositoryMetaComponent.getPublished());
+            return persist(metaComponent);
+        }
+        return null;
     }
 
     /**

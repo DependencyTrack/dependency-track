@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
 import alpine.event.framework.EventService;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import alpine.validation.RegexSequence;
@@ -32,6 +33,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.auth.Permissions;
+import org.owasp.dependencytrack.event.RepositoryMetaEvent;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.License;
@@ -196,6 +198,7 @@ public class ComponentResource extends AlpineResource {
 
             component = qm.createComponent(component, true);
             EventService.getInstance().publish(new VulnerabilityAnalysisEvent(component));
+            SingleThreadedEventService.getInstance().publish(new RepositoryMetaEvent(component));
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
     }

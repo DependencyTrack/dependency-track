@@ -19,8 +19,7 @@ package org.owasp.dependencytrack.tasks.repositories;
 
 import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.model.Component;
-import java.util.Collections;
-import java.util.List;
+import org.owasp.dependencytrack.model.RepositoryType;
 
 /**
  * Interface that defines Repository Meta Analyzers.
@@ -31,20 +30,26 @@ import java.util.List;
 public interface IMetaAnalyzer {
 
     /**
+     * Sets the base URL for the repository being used. If not specified, IMetaAnalyzer implementations
+     * should fall back to a default value (if one is available).
+     * @param baseUrl the base URL to the repository
+     * @since 3.1.0
+     */
+    void setRepositoryBaseUrl(String baseUrl);
+
+    /**
+     * Returns the type of repositry the analyzer supports.
+     * @since 3.1.0
+     */
+    RepositoryType supportedRepositoryType();
+
+    /**
      * Returns whether or not the analyzer is capable of supporting the ecosystem of the component.
      * @param component the component to analyze
      * @return true if analyzer can be used for this component, false if not
      * @since 3.1.0
      */
     boolean isApplicable(Component component);
-
-    /**
-     * A list of components to analyze.
-     * @param components a list of components
-     * @return a list of MetaModel objects
-     * @since 3.1.0
-     */
-    List<MetaModel> analyze(List<Component> components);
 
     /**
      * The component to analyze.
@@ -64,7 +69,7 @@ public interface IMetaAnalyzer {
     static IMetaAnalyzer build(Component component) {
         if (component.getPurl() != null) {
             if (PackageURL.StandardTypes.MAVEN.equals(component.getPurl().getType())) {
-                IMetaAnalyzer analyzer = new NexusMetaAnalyzer();
+                IMetaAnalyzer analyzer = new MavenMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
@@ -83,13 +88,16 @@ public interface IMetaAnalyzer {
 
         return new IMetaAnalyzer() {
             @Override
+            public void setRepositoryBaseUrl(String baseUrl) {
+            }
+
+            @Override
             public boolean isApplicable(Component component) {
                 return false;
             }
 
-            @Override
-            public List<MetaModel> analyze(List<Component> components) {
-                return Collections.emptyList();
+            public RepositoryType supportedRepositoryType() {
+                return RepositoryType.UNSUPPORTED;
             }
 
             @Override

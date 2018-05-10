@@ -19,9 +19,11 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.EventService;
+import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
+import org.owasp.dependencytrack.event.RepositoryMetaEvent;
 import org.owasp.dependencytrack.event.ScanUploadEvent;
 import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -138,6 +140,7 @@ public class ScanUploadProcessingTask implements Subscriber {
             component.setDescription(dependency.getDescription());
             component.setResolvedLicense(resolvedLicense);
             component = qm.createComponent(component, false);
+            SingleThreadedEventService.getInstance().publish(new RepositoryMetaEvent(component));
         } else {
             /*
              * Account for improvements in evidence identification in ODC and resolution improvements in ODT.

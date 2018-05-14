@@ -10,8 +10,8 @@ truth that provide additional data about the components. For example, Maven Cent
 information about Java and Node components respectively. Likewise, the Node Security Platform provides vulnerability 
 intelligence specific to Node modules.
 
-Dependency-Track has adopted an emerging spec called Package URL that provides a flexible way to apply additional
-metadata to components and their place in various ecosystems.
+Dependency-Track has adopted an emerging spec called [Package URL](https://github.com/package-url/purl-spec) that
+provides a flexible way to represent metadata about components and their place in various ecosystems.
 
 > It's highly recommended that every component being tracked by the system have a valid Package URL. 
 

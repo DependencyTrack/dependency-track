@@ -1680,6 +1680,9 @@ public class QueryManager extends AlpineQueryManager {
     public void deleteMetrics(Project project) {
         final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
         query.deletePersistentAll(project);
+
+        final Query query2 = pm.newQuery(DependencyMetrics.class, "project == :project");
+        query2.deletePersistentAll(project);
     }
 
     /**
@@ -1689,6 +1692,9 @@ public class QueryManager extends AlpineQueryManager {
     public void deleteMetrics(Component component) {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.deletePersistentAll(component);
+
+        final Query query2 = pm.newQuery(DependencyMetrics.class, "component == :component");
+        query2.deletePersistentAll(component);
     }
 
     /**

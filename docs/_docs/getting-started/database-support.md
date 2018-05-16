@@ -32,9 +32,6 @@ alpine.database.password=password
 
 #### MySQL Example
 
-For MySQL, it is necessary to remove 'NO_ZERO_IN_DATE' and 'NO_ZERO_DATE' from the sql-mode prior
-to creating the Dependency-Track database. Refer to the MySQL documentation for details.
-
 ```ini
 alpine.database.mode=external
 alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL=false
@@ -42,6 +39,18 @@ alpine.database.driver=com.mysql.jdbc.Driver
 alpine.database.driver.path=~/path/to/mysql-connector-java-5.1.45-bin.jar
 alpine.database.username=dtrack
 alpine.database.password=password
+```
+
+For MySQL, it is necessary to remove 'NO_ZERO_IN_DATE' and 'NO_ZERO_DATE' from the sql-mode prior
+to creating the Dependency-Track database. It's also necessary to add 'ANSI_QUOTES' to the sql-mode.
+Refer to the MySQL documentation for details.
+
+There are several ways to change this configuration, however the recommended way is to modify the
+MySQL configuration (typically my.ini or similar) with the following:
+
+```ini
+[mysqld] 
+sql_mode="ANSI_QUOTES,STRICT_TRANS_TABLES,ONLY_FULL_GROUP_BY,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
 ```
 
 #### PostgreSQL Example

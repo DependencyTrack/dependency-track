@@ -134,6 +134,8 @@
                                     <th data-align="left" data-class="tight" data-field="publishedLabel" data-sort-name="published" data-sortable="true">Published</th>
                                     <th data-align="left" data-class="expand" data-field="cwefield">CWE</th>
                                     <th data-align="left" data-class="tight" data-field="severityLabel">Severity</th>
+                                    <th data-align="left" data-class="tight" data-field="analysisState" data-visible="false">Analysis</th>
+                                    <th data-align="center" data-class="tight" data-field="isSuppressedLabel" data-visible="false">Suppressed</th>
                                 </tr>
                                 </thead>
                             </table>

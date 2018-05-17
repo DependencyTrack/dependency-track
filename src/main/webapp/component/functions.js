@@ -80,7 +80,14 @@ function populateLicenseData(data) {
 }
 
 function formatVulnerabilitiesTable(res) {
+    const vulnerabilitiesTable = $("#vulnerabilitiesTable");
     for (let i=0; i<res.length; i++) {
+
+        if (vulnerabilitiesTable.attr("data-audit-mode") === "true") {
+            let componentUuid = $.getUrlVar("uuid");
+            $rest.getAnalysis(null, componentUuid, res[i].uuid, updateVulnerabilityRowWithAnalysis(i, res[i]));
+        }
+
         let vulnurl = "../vulnerability/?source=" + res[i].source + "&vulnId=" + res[i].vulnId;
         res[i].vulnerabilityhref = $common.formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
 
@@ -97,6 +104,21 @@ function formatVulnerabilitiesTable(res) {
         }
     }
     return res;
+}
+
+function updateVulnerabilityRowWithAnalysis(rowNumber, rowData) {
+    return function (data) {
+        const vulnerabilitiesTable = $("#vulnerabilitiesTable");
+        if (data.hasOwnProperty("analysisState")) {
+            rowData.analysisState = data.analysisState;
+        }
+        if (data.hasOwnProperty("isSuppressed") && data.isSuppressed === true) {
+            rowData.isSuppressedLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        } else {
+            rowData.isSuppressedLabel = '';
+        }
+        vulnerabilitiesTable.bootstrapTable("updateRow", {index: rowNumber, row: rowData});
+    };
 }
 
 function formatProjectsTable(res) {
@@ -396,7 +418,18 @@ $(document).ready(function () {
     }
 
     $("#globalAuditButton").change(function() {
-        vulnerabilitiesTable.attr("data-audit-mode", $(this).prop("checked"))
+        vulnerabilitiesTable.attr("data-audit-mode", $(this).prop("checked"));
+        if ($(this).prop("checked")) {
+            vulnerabilitiesTable.bootstrapTable("showColumn", "analysisState");
+            vulnerabilitiesTable.bootstrapTable("showColumn", "isSuppressedLabel");
+            //vulnerabilitiesTable.bootstrapTable("refresh", {silent: true});
+        } else {
+            vulnerabilitiesTable.bootstrapTable("hideColumn", "analysisState");
+            vulnerabilitiesTable.bootstrapTable("hideColumn", "isSuppressedLabel");
+        }
+
+        const url = $rest.contextPath() + URL_VULNERABILITY + "/component/" + uuid + "?suppressed=" + $(this).prop("checked");
+        vulnerabilitiesTable.bootstrapTable("refresh", {silent: true, url: url});
     });
 
 });

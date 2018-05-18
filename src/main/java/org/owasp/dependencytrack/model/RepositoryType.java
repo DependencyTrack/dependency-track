@@ -17,6 +17,8 @@
  */
 package org.owasp.dependencytrack.model;
 
+import com.github.packageurl.PackageURL;
+
 /**
  * Defines repository resources.
  *
@@ -28,6 +30,23 @@ public enum RepositoryType {
     MAVEN,
     NPM,
     GEM,
-    UNSUPPORTED
+    UNSUPPORTED;
+
+    /**
+     * Returns a RepositoryType for the specified PackageURL.
+     * @param packageURL a package URL
+     * @return a RepositoryType
+     */
+    public static RepositoryType resolve(PackageURL packageURL) {
+        final String type = packageURL.getType();
+        if (PackageURL.StandardTypes.MAVEN.equals(type)) {
+            return MAVEN;
+        } else if (PackageURL.StandardTypes.NPM.equals(type)) {
+            return NPM;
+        } else if (PackageURL.StandardTypes.GEM.equals(type)) {
+            return GEM;
+        }
+        return UNSUPPORTED;
+    }
 
 }

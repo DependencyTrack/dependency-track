@@ -19,6 +19,8 @@ package org.owasp.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -27,12 +29,14 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.owasp.dependencytrack.model.Repository;
+import org.owasp.dependencytrack.model.RepositoryMetaComponent;
 import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -83,6 +87,37 @@ public class RepositoryResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getRepositories(type);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @GET
+    @Path("/latest")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Attempts to resolve the latest version of the component available in the configured repositories",
+            response = RepositoryMetaComponent.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "The request was successful, but no repositories are configured to support the specified Package URL"),
+            @ApiResponse(code = 400, message = "The specified Package URL is invalid and not in the correct format"),
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    public Response getRepositoryMetaComponent(
+            @ApiParam(value = "The Package URL for the component to query", required = true)
+            @QueryParam("purl") String purl) {
+        try {
+            PackageURL packageURL = new PackageURL(purl);
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+                final RepositoryType type = RepositoryType.resolve(packageURL);
+                if (RepositoryType.UNSUPPORTED == type) {
+                    return Response.noContent().build();
+                }
+                final RepositoryMetaComponent result = qm.getRepositoryMetaComponent(
+                        RepositoryType.resolve(packageURL), packageURL.getNamespace(), packageURL.getName());
+                return Response.ok(result).build();
+            }
+        } catch (MalformedPackageURLException e) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
         }
     }
 

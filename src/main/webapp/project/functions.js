@@ -25,6 +25,11 @@ function formatDependenciesTable(res) {
     let projectUuid = $.getUrlVar("uuid");
     let dependenciesTable = $("#dependenciesTable");
     for (let i=0; i<res.length; i++) {
+
+        if (res[i].component.hasOwnProperty("purl") && res[i].component.hasOwnProperty("version")) {
+            $rest.getLatestFromRepository(res[i].component.purl, updateDependencyRowWithLatest(i, res[i]));
+        }
+
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].component.name)+ "</a>";
         res[i].component.version = filterXSS(res[i].component.version);
@@ -44,6 +49,21 @@ function formatDependenciesTable(res) {
         });
     }
     return res;
+}
+
+function updateDependencyRowWithLatest(rowNumber, rowData) {
+    return function (data) {
+        const dependenciesTable = $("#dependenciesTable");
+        if (data.hasOwnProperty("latestVersion")) {
+            if (data.latestVersion !== rowData.component.version) {
+                rowData.component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Outdated component. Current version is: '+ filterXSS(data.latestVersion) + '"><i class="fa fa-exclamation-triangle status-warning" aria-hidden="true"></i></span> ' + filterXSS(rowData.component.version);
+            } else {
+                rowData.component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Component version is the latest available from the configured repositories"><i class="fa fa-exclamation-triangle status-passed" aria-hidden="true"></i></span> ' + filterXSS(rowData.component.version);
+            }
+            rowData.latestVersion = filterXSS(data.latestVersion);
+        }
+        dependenciesTable.bootstrapTable("updateRow", {index: rowNumber, row: rowData});
+    };
 }
 
 /**
@@ -484,5 +504,10 @@ $(document).ready(function () {
                 }
             });
         }
+    });
+
+    const dependenciesTable = $("#dependenciesTable");
+    dependenciesTable.on("post-body.bs.table", function(e, data) {
+        $('[data-toggle="tooltip"]').tooltip();
     });
 });

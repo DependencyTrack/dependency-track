@@ -84,8 +84,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 // Resolution from repository was successful. Update meta model
                 RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
                 metaComponent.setRepositoryType(repository.getType());
-                metaComponent.setGroup(component.getGroup());
-                metaComponent.setName(component.getName());
+                metaComponent.setNamespace(component.getPurl().getNamespace());
+                metaComponent.setName(component.getPurl().getName());
                 metaComponent.setPublished(model.getPublishedTimestamp());
                 metaComponent.setLatestVersion(model.getLatestVersion());
                 metaComponent.setLastCheck(new Date());

@@ -49,6 +49,7 @@ const URL_ANALYSIS = "api/v1/analysis";
 const URL_SEARCH = "api/v1/search";
 const URL_METRICS = "api/v1/metrics";
 const URL_CALCULATOR_CVSS = "api/v1/calculator/cvss";
+const URL_REPOSITORY = "api/v1/repository";
 
 const $rest = function() {
 };
@@ -1782,6 +1783,41 @@ $rest.createVulnerability = function createVulnerability(vulnId, title, subTitle
             201: function(data) {
                 if (successCallback) {
                     $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve the latest version of a tracked component
+ */
+$rest.getLatestFromRepository = function getProject(packageUrl, successCallback, failCallback) {
+    let queryString = "?purl=" + encodeURIComponent(packageUrl);
+    $.ajax({
+        url: $rest.contextPath() + URL_REPOSITORY + "/latest" + queryString,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            400: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
                 }
             }
         },

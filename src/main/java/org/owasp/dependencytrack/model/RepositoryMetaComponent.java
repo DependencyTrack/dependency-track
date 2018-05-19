@@ -36,7 +36,7 @@ import java.util.Date;
  * @since 3.1.0
  */
 @PersistenceCapable(table = "REPOSITORY_META_COMPONENT")
-@Index(name = "REPOSITORY_META_COMPONENT_COMPOUND_IDX", members = {"repositoryType", "group", "name"}, unique = "true")
+@Index(name = "REPOSITORY_META_COMPONENT_COMPOUND_IDX", members = {"repositoryType", "namespace", "name"}, unique = "true")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RepositoryMetaComponent implements Serializable {
 
@@ -47,29 +47,47 @@ public class RepositoryMetaComponent implements Serializable {
     @JsonIgnore
     private long id;
 
+    /**
+     * This is an indirect representation of a the Package URL "type" field.
+     */
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "REPOSITORY_TYPE", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
     private RepositoryType repositoryType;
 
+    /**
+     * This is a representation of the Package URL "namespace" field.
+     */
     @Persistent
-    @Column(name = "GROUP")
-    private String group;
+    @Column(name = "NAMESPACE")
+    private String namespace;
 
+    /**
+     * This is a representation of the Package URL "name" field.
+     */
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
     @NotNull
     private String name;
 
+    /**
+     * The latest version of the component.
+     */
     @Persistent
     @Column(name = "LATEST_VERSION", allowsNull = "false")
     @NotNull
     private String latestVersion;
 
+    /**
+     * The optional date when the component was last published.
+     */
     @Persistent
     @Column(name = "PUBLISHED")
     private Date published;
 
+    /**
+     * The date in which the last version check of the component was made.
+     */
     @Persistent
     @Column(name = "LAST_CHECK", allowsNull = "false")
     @Index(name = "REPOSITORY_META_COMPONENT_LASTCHECK_IDX")
@@ -93,12 +111,12 @@ public class RepositoryMetaComponent implements Serializable {
         this.repositoryType = repositoryType;
     }
 
-    public String getGroup() {
-        return group;
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setGroup(String group) {
-        this.group = group;
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public String getName() {

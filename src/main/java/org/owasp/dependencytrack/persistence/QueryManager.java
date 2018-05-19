@@ -1784,15 +1784,15 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Returns a RepositoryMetaComponent object from the specified type, group, and name.
      * @param repositoryType the type of repository
-     * @param group the group name of the meta component
-     * @param name the name of the meta component
+     * @param namespace the Package URL namespace of the meta component
+     * @param name the Package URL name of the meta component
      * @return a RepositoryMetaComponent object, or null if not found
      */
     @SuppressWarnings("unchecked")
-    public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String group, String name) {
+    public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {
         final Query query = pm.newQuery(RepositoryMetaComponent.class);
-        query.setFilter("repositoryType == :repositoryType && group == :group && name == :name");
-        final List<RepositoryMetaComponent> result = (List<RepositoryMetaComponent>) query.execute(repositoryType, group, name);
+        query.setFilter("repositoryType == :repositoryType && namespace == :namespace && name == :name");
+        final List<RepositoryMetaComponent> result = (List<RepositoryMetaComponent>) query.execute(repositoryType, namespace, name);
         return result.size() == 0 ? null : result.get(0);
     }
 
@@ -1820,12 +1820,12 @@ public class QueryManager extends AlpineQueryManager {
             metaComponent = getObjectById(RepositoryMetaComponent.class, transientRepositoryMetaComponent.getId());
         } else {
             metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
-                    transientRepositoryMetaComponent.getGroup(), transientRepositoryMetaComponent.getName());
+                    transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());
         }
 
         if (metaComponent != null) {
             metaComponent.setRepositoryType(transientRepositoryMetaComponent.getRepositoryType());
-            metaComponent.setGroup(transientRepositoryMetaComponent.getGroup());
+            metaComponent.setNamespace(transientRepositoryMetaComponent.getNamespace());
             metaComponent.setLastCheck(transientRepositoryMetaComponent.getLastCheck());
             metaComponent.setLatestVersion(transientRepositoryMetaComponent.getLatestVersion());
             metaComponent.setName(transientRepositoryMetaComponent.getName());

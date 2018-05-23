@@ -64,7 +64,15 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
         Unirest.setHttpClient(HttpClientFactory.createClient());
         MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
-            final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
+
+            final String packageName;
+            if (component.getPurl().getNamespace() != null) {
+                packageName = component.getPurl().getNamespace().replace("@", "%40") + "%2F" + component.getPurl().getName();
+            } else {
+                packageName = component.getPurl().getName();
+            }
+
+            final String url = String.format(baseUrl + API_URL, packageName);
             try {
                 HttpResponse<JsonNode> response = Unirest.get(url)
                         .header("accept", "application/json")

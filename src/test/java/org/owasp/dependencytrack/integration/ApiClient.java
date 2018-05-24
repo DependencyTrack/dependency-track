@@ -17,10 +17,10 @@
  */
 package org.owasp.dependencytrack.integration;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
+import io.github.openunirest.http.HttpResponse;
+import io.github.openunirest.http.JsonNode;
+import io.github.openunirest.http.Unirest;
+import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.commons.io.FileUtils;
 import org.datanucleus.util.Base64;
 import org.json.JSONObject;

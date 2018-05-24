@@ -184,9 +184,9 @@ function teamDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $("#inputTeamName-${row.uuid}").keypress($common.debounce(updateTeam, 750));
-        $("#deleteTeam-${row.uuid}").on("click", deleteTeam);
-        $("#add-permission-to-${row.uuid}").on("click", function () {
+        $("#" + $.escapeSelector("inputTeamName-${row.uuid}")).keypress($common.debounce(updateTeam, 750));
+        $("#" + $.escapeSelector("deleteTeam-${row.uuid}")).on("click", deleteTeam);
+        $("#" + $.escapeSelector("add-permission-to-${row.uuid}")).on("click", function () {
             $("#assignPermission").attr("data-uuid", $(this).data("uuid")); // Assign the team to the data-uuid attribute of the 'Update' button
         });
     </script>
@@ -265,11 +265,11 @@ function ldapUserDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $("#deleteUser-${row.username}").on("click", deleteLdapUser);
-        $("#add-user-${row.username}-to-team").on("click", function () {
+        $("#" + $.escapeSelector("deleteUser-${row.username}")).on("click", deleteLdapUser);
+        $("#" + $.escapeSelector("add-user-${row.username}-to-team")).on("click", function () {
             $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
-        $("#add-permission-to-${row.username}").on("click", function () {
+        $("#" + $.escapeSelector("add-permission-to-${row.username}")).on("click", function () {
             $("#assignPermission").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
     </script>
@@ -371,18 +371,18 @@ function managedUserDetailFormatter(index, row) {
     </form>
     </div>
     <script type="text/javascript">
-        $("#deleteUser-${row.username}").on("click", deleteManagedUser);
-        $("#add-user-${row.username}-to-team").on("click", function () {
+        $("#" + $.escapeSelector("deleteUser-${row.username}")).on("click", deleteManagedUser);
+        $("#" + $.escapeSelector("add-user-${row.username}-to-team")).on("click", function () {
             $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
-        $("#add-permission-to-${row.username}").on("click", function () {
+        $("#" + $.escapeSelector("add-permission-to-${row.username}")).on("click", function () {
             $("#assignPermission").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
-        $("#updateManagedUserFullnameInput-${row.username}").keydown($common.debounce(updateManagedUser, 750));
-        $("#updateManagedUserEmailInput-${row.username}").keydown($common.debounce(updateManagedUser, 750));
-        $("#updateManagedUserForcePasswordChangeInput-${row.username}").change($common.debounce(updateManagedUser, 750));
-        $("#updateManagedUserNonExpiryPasswordInput-${row.username}").change($common.debounce(updateManagedUser, 750));
-        $("#updateManagedUserSuspendedInput-${row.username}").change($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserFullnameInput-${row.username}")).keydown($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserEmailInput-${row.username}")).keydown($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserForcePasswordChangeInput-${row.username}")).change($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserNonExpiryPasswordInput-${row.username}")).change($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserSuspendedInput-${row.username}")).change($common.debounce(updateManagedUser, 750));
     </script>
 `;
     html.push(template);
@@ -430,11 +430,11 @@ function deleteTeam() {
  */
 function updateManagedUser() {
     let username    = $(this).data("username");
-    let fullname    = $("#updateManagedUserFullnameInput-" + username).val();
-    let email       = $("#updateManagedUserEmailInput-" + username).val();
-    let forceChange = $("#updateManagedUserForcePasswordChangeInput-" + username).is(':checked');
-    let nonExpiry   = $("#updateManagedUserNonExpiryPasswordInput-" + username).is(':checked');
-    let suspended   = $("#updateManagedUserSuspendedInput-" + username).is(':checked');
+    let fullname    = $("#" + $.escapeSelector("updateManagedUserFullnameInput-" + username)).val();
+    let email       = $("#" + $.escapeSelector("updateManagedUserEmailInput-" + username)).val();
+    let forceChange = $("#" + $.escapeSelector("updateManagedUserForcePasswordChangeInput-" + username)).is(':checked');
+    let nonExpiry   = $("#" + $.escapeSelector("updateManagedUserNonExpiryPasswordInput-" + username)).is(':checked');
+    let suspended   = $("#" + $.escapeSelector("updateManagedUserSuspendedInput-" + username)).is(':checked');
     $rest.updateManagedUser(username, fullname, email, null, null, forceChange, nonExpiry, suspended, function() {
         $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
     });

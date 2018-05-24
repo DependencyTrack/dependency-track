@@ -84,6 +84,7 @@
         <lib.dependency-check.version>3.1.2</lib.dependency-check.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <lib.spdx-tools.version>2.1.12</lib.spdx-tools.version>
+        <lib.unirest.version>2.2.03</lib.unirest.version>
         <!-- build properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>
@@ -168,6 +169,19 @@
             <groupId>us.springett</groupId>
             <artifactId>vulndb-data-mirror</artifactId>
             <version>${lib.vulndb-data-mirror.version}</version>
+            <!-- Exclude transitive version so Dependency-Track can manage independently -->
+            <exclusions>
+                <exclusion>
+                    <groupId>io.github.openunirest</groupId>
+                    <artifactId>unirest-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- Unirest -->
+        <dependency>
+            <groupId>io.github.openunirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>${lib.unirest.version}</version>
         </dependency>
         <!-- SPDX -->
         <dependency>

@@ -18,7 +18,7 @@
 package org.owasp.dependencytrack.parser.nsp;
 
 import alpine.logging.Logger;
-import com.mashape.unirest.http.JsonNode;
+import io.github.openunirest.http.JsonNode;
 import org.json.JSONArray;
 import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import java.util.ArrayList;

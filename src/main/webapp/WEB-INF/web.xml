@@ -104,4 +104,14 @@
         <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>NVD Mirror</servlet-name>
+        <servlet-class>org.owasp.dependencytrack.servlets.NvdMirrorServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NVD Mirror</servlet-name>
+        <url-pattern>/mirror/nvd/*</url-pattern>
+    </servlet-mapping>
+
 </web-app>

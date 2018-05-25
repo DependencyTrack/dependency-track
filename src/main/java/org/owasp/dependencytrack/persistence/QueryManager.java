@@ -1011,6 +1011,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public List<Dependency> getAllDependencies(Project project) {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
+        query.getFetchPlan().setMaxFetchDepth(2);
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
         query.setOrdering("component.name asc");
         return (List<Dependency>)query.execute(project);
@@ -1024,6 +1025,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getDependencies(Project project) {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
+        query.getFetchPlan().setMaxFetchDepth(2);
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
         query.setOrdering("component.name asc");
         if (filter != null) {

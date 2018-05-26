@@ -19,8 +19,7 @@ Links back to the original CVE are also provided.
 ### NVD Mirror
 
 Dependency-Track is not only a consumer of the NVD, but provides mirroring functionality as well. This functionality
-is built into Dependency-Track and does not require further configuration. The mirror will continue to be kept 
-up-to-date on a daily basis.
+is built into Dependency-Track and does not require further configuration. The mirror is automatically updated daily.
 
 > The base URL to the mirror is: http://hostname/mirror/nvd
 
@@ -41,9 +40,9 @@ Dependency-Check can be configured to utilize the NVD mirror provided by Depende
 one of the Dependency-Check implementations (Command Line, Jenkins, Maven, Ant, or Gradle plugin) are highly encouraged 
 to utilize an internal mirror since it has the following advantages:
 
-* Increases performance by decreasing round-trip and large downloads over the public Internet
+* Increases performance by eliminating large downloads over the public Internet
 * Increases build stability by eliminating the reliance on external networks
-* Reduces likelihood of encountering temporary HTTP 429 (too many requests) to the NVD
+* Reduces likelihood of encountering temporary HTTP 429 (too many requests)
 * Demonstrates the organization is good netizens by acknowledging the NVD doesn't have unlimited capacity
 
 Example Dependency-Check configuration:

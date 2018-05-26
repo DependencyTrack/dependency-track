@@ -18,7 +18,6 @@
 package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.event.framework.Event;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.util.JavaVersion;
@@ -142,7 +141,7 @@ public class NspAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
                 if (component != null && vulnerabiity != null) {
                     qm.addVulnerability(vulnerabiity, component);
                 }
-                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
+                Event.dispatch(new MetricsUpdateEvent(component));
             }
         }
     }

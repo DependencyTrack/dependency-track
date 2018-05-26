@@ -18,8 +18,6 @@
 package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
-import alpine.event.framework.EventService;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
@@ -88,7 +86,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                 qm.reconcileDependencies(project, components);
                 qm.updateLastScanImport(project, date);
 
-                EventService.getInstance().publish(new VulnerabilityAnalysisEvent(components).project(project));
+                Event.dispatch(new VulnerabilityAnalysisEvent(components).project(project));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing scan result");
                 LOGGER.error(ex.getMessage());
@@ -140,7 +138,7 @@ public class ScanUploadProcessingTask implements Subscriber {
             component.setDescription(dependency.getDescription());
             component.setResolvedLicense(resolvedLicense);
             component = qm.createComponent(component, false);
-            SingleThreadedEventService.getInstance().publish(new RepositoryMetaEvent(component));
+            Event.dispatch(new RepositoryMetaEvent(component));
         } else {
             /*
              * Account for improvements in evidence identification in ODC and resolution improvements in ODT.

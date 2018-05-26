@@ -18,7 +18,7 @@
 package org.owasp.dependencytrack.persistence;
 
 import alpine.auth.PasswordService;
-import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.Event;
 import alpine.logging.Logger;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
@@ -52,10 +52,10 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     public void contextInitialized(ServletContextEvent event) {
         // Creates empty indexes on startup if indexes do not exist
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Project.class));
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Component.class));
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, License.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Project.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Component.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, License.class));
 
         loadDefaultLicenses();
         loadDefaultPermissions();

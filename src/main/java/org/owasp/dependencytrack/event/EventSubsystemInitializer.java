@@ -47,23 +47,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
     // Starts the EventService
     private static final EventService EVENT_SERVICE = EventService.getInstance();
 
-    // Starts the SingleThreadedEventService (Used for indexing service)
-    private static final SingleThreadedEventService EVENT_SERVICE_INDEX = SingleThreadedEventService.getInstance();
-
-    // Starts the SingleThreadedEventService (Used for Metrics updates)
-    private static final SingleThreadedEventService EVENT_SERVICE_METRICS = SingleThreadedEventService.getInstance();
-
-    // Starts the SingleThreadedEventService (Used for Dependency-Check analysis)
-    private static final SingleThreadedEventService EVENT_SERVICE_ODC = SingleThreadedEventService.getInstance();
-
-    // Starts the SingleThreadedEventService (Used for Node Security Platform analysis)
-    private static final SingleThreadedEventService EVENT_SERVICE_NSP = SingleThreadedEventService.getInstance();
-
-    // Starts the SingleThreadedEventService (Used for NVD mirroring)
-    private static final SingleThreadedEventService EVENT_SERVICE_NVD = SingleThreadedEventService.getInstance();
-
-    // Starts the SingleThreadedEventService (Used for repository meta analysis)
-    private static final SingleThreadedEventService EVENT_SERVICE_REPO_META = SingleThreadedEventService.getInstance();
+    // Starts the SingleThreadedEventService
+    private static final SingleThreadedEventService EVENT_SERVICE_ST = SingleThreadedEventService.getInstance();
 
     /**
      * {@inheritDoc}
@@ -76,12 +61,12 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
         EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
 
-        EVENT_SERVICE_INDEX.subscribe(IndexEvent.class, IndexTask.class);
-        EVENT_SERVICE_ODC.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
-        EVENT_SERVICE_NSP.subscribe(NspAnalysisEvent.class, NspAnalysisTask.class);
-        EVENT_SERVICE_METRICS.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
-        EVENT_SERVICE_NVD.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
-        EVENT_SERVICE_REPO_META.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
+        EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
+        EVENT_SERVICE_ST.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
+        EVENT_SERVICE_ST.subscribe(NspAnalysisEvent.class, NspAnalysisTask.class);
+        EVENT_SERVICE_ST.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
+        EVENT_SERVICE_ST.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
+        EVENT_SERVICE_ST.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -100,22 +85,12 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.shutdown();
 
-        EVENT_SERVICE_INDEX.unsubscribe(IndexTask.class);
-        EVENT_SERVICE_INDEX.shutdown();
-
-        EVENT_SERVICE_ODC.unsubscribe(DependencyCheckTask.class);
-        EVENT_SERVICE_ODC.shutdown();
-
-        EVENT_SERVICE_NSP.unsubscribe(NspAnalysisTask.class);
-        EVENT_SERVICE_NSP.shutdown();
-
-        EVENT_SERVICE_METRICS.unsubscribe(MetricsUpdateTask.class);
-        EVENT_SERVICE_METRICS.shutdown();
-
-        EVENT_SERVICE_NVD.unsubscribe(NistMirrorTask.class);
-        EVENT_SERVICE_NVD.shutdown();
-
-        EVENT_SERVICE_REPO_META.unsubscribe(RepositoryMetaAnalyzerTask.class);
-        EVENT_SERVICE_REPO_META.shutdown();
+        EVENT_SERVICE_ST.unsubscribe(IndexTask.class);
+        EVENT_SERVICE_ST.unsubscribe(DependencyCheckTask.class);
+        EVENT_SERVICE_ST.unsubscribe(NspAnalysisTask.class);
+        EVENT_SERVICE_ST.unsubscribe(MetricsUpdateTask.class);
+        EVENT_SERVICE_ST.unsubscribe(NistMirrorTask.class);
+        EVENT_SERVICE_ST.unsubscribe(RepositoryMetaAnalyzerTask.class);
+        EVENT_SERVICE_ST.shutdown();
     }
 }

@@ -18,7 +18,7 @@
 package org.owasp.dependencytrack.persistence;
 
 import alpine.Config;
-import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.Event;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -258,7 +258,7 @@ public class QueryManager extends AlpineQueryManager {
         List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
 
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -285,7 +285,7 @@ public class QueryManager extends AlpineQueryManager {
         bind(project, resolvedTags);
 
         final Project result = persist(project);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
         return result;
     }
@@ -324,7 +324,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
         deleteAnalysisTrail(project);
         deleteMetrics(project);
@@ -513,7 +513,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -544,7 +544,7 @@ public class QueryManager extends AlpineQueryManager {
         component.setCpe(transientComponent.getCpe());
         component.setPurl(transientComponent.getPurl());
         final Component result = persist(component);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
         return result;
     }
@@ -562,7 +562,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Component result = pm.getObjectById(Component.class, component.getId());
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
 
         deleteAnalysisTrail(component);
         deleteMetrics(component);
@@ -633,7 +633,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public License createLicense(License license, boolean commitIndex) {
         final License result = persist(license);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, License.class);
         return result;
     }
@@ -664,7 +664,7 @@ public class QueryManager extends AlpineQueryManager {
             license.setSeeAlso(transientLicense.getSeeAlso());
 
             final License result = persist(license);
-            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
             commitSearchIndex(commitIndex, License.class);
             return result;
         }
@@ -693,7 +693,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public Vulnerability createVulnerability(Vulnerability vulnerability, boolean commitIndex) {
         final Vulnerability result = persist(vulnerability);
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Vulnerability.class);
         return result;
     }
@@ -739,7 +739,7 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setMatchedCPE(transientVulnerability.getMatchedCPE());
 
             final Vulnerability result = persist(vulnerability);
-            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
             commitSearchIndex(commitIndex, Vulnerability.class);
             return result;
         }
@@ -1896,7 +1896,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void commitSearchIndex(boolean commitIndex, Class clazz) {
         if (commitIndex) {
-            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, clazz));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, clazz));
         }
     }
 

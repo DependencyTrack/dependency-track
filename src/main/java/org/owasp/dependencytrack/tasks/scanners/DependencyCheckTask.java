@@ -19,7 +19,6 @@ package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.Config;
 import alpine.event.framework.Event;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
@@ -207,7 +206,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
                 }
                 */
 
-                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
+                Event.dispatch(new MetricsUpdateEvent(component));
 
             }
         } catch (ParseException e) {

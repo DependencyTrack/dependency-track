@@ -20,7 +20,6 @@ package org.owasp.dependencytrack.tasks;
 import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
@@ -81,7 +80,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                     }
                 }
             }
-            SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
             LOGGER.info("VulnDB mirror synchronization task complete");
         }
     }

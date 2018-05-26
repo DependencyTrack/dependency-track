@@ -18,8 +18,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
-import alpine.event.framework.EventService;
-import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import alpine.validation.RegexSequence;
@@ -197,8 +196,8 @@ public class ComponentResource extends AlpineResource {
             component.setParent(parent);
 
             component = qm.createComponent(component, true);
-            EventService.getInstance().publish(new VulnerabilityAnalysisEvent(component));
-            SingleThreadedEventService.getInstance().publish(new RepositoryMetaEvent(component));
+            Event.dispatch(new VulnerabilityAnalysisEvent(component));
+            Event.dispatch(new RepositoryMetaEvent(component));
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
     }
@@ -267,7 +266,7 @@ public class ComponentResource extends AlpineResource {
                 }
 
                 component = qm.updateComponent(component, true);
-                EventService.getInstance().publish(new VulnerabilityAnalysisEvent(component));
+                Event.dispatch(new VulnerabilityAnalysisEvent(component));
                 return Response.ok(component).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();

@@ -20,7 +20,6 @@ package org.owasp.dependencytrack.tasks;
 import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpHeaders;
@@ -78,7 +77,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             LOGGER.info("NIST mirroring complete");
 
             // Publish a Dependency-Check UPDATE ONLY event to update its data directory.
-            SingleThreadedEventService.getInstance().publish(new DependencyCheckEvent(DependencyCheckEvent.Action.UPDATE_ONLY));
+            Event.dispatch(new DependencyCheckEvent(DependencyCheckEvent.Action.UPDATE_ONLY));
         }
     }
 

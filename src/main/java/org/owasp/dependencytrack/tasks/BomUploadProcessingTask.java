@@ -18,8 +18,6 @@
 package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
-import alpine.event.framework.EventService;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.owasp.dependencytrack.event.BomUploadEvent;
@@ -82,7 +80,7 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 qm.reconcileDependencies(project, existingProjectDependencies, flattenedComponents);
                 qm.updateLastBomImport(project, date);
-                EventService.getInstance().publish(new VulnerabilityAnalysisEvent(flattenedComponents).project(project));
+                Event.dispatch(new VulnerabilityAnalysisEvent(flattenedComponents).project(project));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom");
                 LOGGER.error(ex.getMessage());
@@ -121,7 +119,7 @@ public class BomUploadProcessingTask implements Subscriber {
             flattenedComponents.add(qm.getObjectById(Component.class, oid));
         } else {
             component = qm.createComponent(component, false);
-            SingleThreadedEventService.getInstance().publish(new RepositoryMetaEvent(component));
+            Event.dispatch(new RepositoryMetaEvent(component));
 
             final long oid = component.getId();
             bind(qm, project, component);

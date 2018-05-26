@@ -18,9 +18,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
-import alpine.event.framework.EventService;
-import alpine.model.ApiKey;
-import alpine.model.UserPrincipal;
+import alpine.event.framework.Event;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -100,7 +98,7 @@ public class ScanResource extends AlpineResource {
     private Response process(Project project, String encodedScanData) {
         if (project != null) {
             final byte[] decodedScan = Base64.getDecoder().decode(encodedScanData);
-            EventService.getInstance().publish(new ScanUploadEvent(project.getUuid(), decodedScan));
+            Event.dispatch(new ScanUploadEvent(project.getUuid(), decodedScan));
             return Response.ok().build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();

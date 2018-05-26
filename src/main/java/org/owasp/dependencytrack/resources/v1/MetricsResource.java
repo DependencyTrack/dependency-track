@@ -18,7 +18,7 @@
 package org.owasp.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
-import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.Event;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -157,7 +157,7 @@ public class MetricsResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshPortfolioMetrics() {
-        SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+        Event.dispatch(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
         return Response.ok().build();
     }
 
@@ -251,7 +251,7 @@ public class MetricsResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(project));
+                Event.dispatch(new MetricsUpdateEvent(project));
                 return Response.ok().build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
@@ -352,7 +352,7 @@ public class MetricsResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
-                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(component));
+                Event.dispatch(new MetricsUpdateEvent(component));
                 return Response.ok().build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
@@ -465,7 +465,7 @@ public class MetricsResource extends AlpineResource {
             final Component component = qm.getObjectByUuid(Component.class, componentUuid);
             final Dependency dependency = qm.getDependency(project, component);
             if (dependency != null) {
-                SingleThreadedEventService.getInstance().publish(new MetricsUpdateEvent(dependency));
+                Event.dispatch(new MetricsUpdateEvent(dependency));
                 return Response.ok().build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The dependency could not be found.").build();

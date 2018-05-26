@@ -19,7 +19,6 @@ package org.owasp.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import alpine.util.JavaVersion;
 import alpine.util.SystemUtil;
@@ -117,7 +116,7 @@ public class NspMirrorTask implements LoggableSubscriber {
                 qm.synchronizeVulnerability(mapAdvisoryToVulnerability(advisory), false);
             }
         }
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
     /**

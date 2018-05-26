@@ -17,7 +17,7 @@
  */
 package org.owasp.dependencytrack.parser.nvd;
 
-import alpine.event.framework.SingleThreadedEventService;
+import alpine.event.framework.Event;
 import alpine.logging.Logger;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
@@ -151,7 +151,7 @@ public final class NvdParser {
             LOGGER.error("Error parsing NVD JSON data");
             LOGGER.error(e.getMessage());
         }
-        SingleThreadedEventService.getInstance().publish(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
     private void parseCveImpact(JsonObject cveItem, Vulnerability vuln) {

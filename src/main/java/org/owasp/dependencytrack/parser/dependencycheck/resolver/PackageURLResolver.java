@@ -74,24 +74,27 @@ public class PackageURLResolver implements IResolver {
 
     private GAV parseIdentifier(Identifier identifier) {
         if (identifier == null || identifier.getName() == null) {
-            return null;
+        	throw new IllegalArgumentException("Must specify an identifier with a name");
         }
-        if (identifier.getName().startsWith("(") && identifier.getName().endsWith(")")) {
-            final GAV gav = new GAV();
-            final String[] parts = identifier.getName().substring(1, identifier.getName().length() - 1).split(":");
-            if (parts.length == 2) {
-                gav.artifact = parts[0];
-                gav.version = parts[1];
-            } else if (parts.length == 3) {
-                gav.group = parts[0];
-                gav.artifact = parts[1];
-                gav.version = parts[2];
-            } else {
-                return null; // this is not being accounted for and would likely never happen.
-            }
-            return gav;
+        
+        String name = identifier.getName();
+        if (name.startsWith("(") && name.endsWith(")")) {
+        	name = name.substring(1, name.length()-1);
         }
-        return null;
+        
+        final GAV gav = new GAV();
+        final String[] parts = name.split(":");
+        if (parts.length == 2) {
+            gav.artifact = parts[0];
+            gav.version = parts[1];
+        } else if (parts.length == 3) {
+            gav.group = parts[0];
+            gav.artifact = parts[1];
+            gav.version = parts[2];
+        } else {
+        	throw new IllegalArgumentException("Got bad identifier " + name);
+        }
+        return gav;
     }
 
     private class GAV {
@@ -99,5 +102,4 @@ public class PackageURLResolver implements IResolver {
         private String artifact = null;
         private String version = null;
     }
-
 }

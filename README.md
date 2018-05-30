@@ -8,6 +8,10 @@
 [![Slack](https://img.shields.io/badge/chat%20on-slack-46BC99.svg)](https://owasp.slack.com/messages/proj-dependency-track)
 [![Join the chat at https://gitter.im/dependency-track/Lobby](https://badges.gitter.im/dependency-track/Lobby.svg)](https://gitter.im/dependency-track/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow)](https://twitter.com/dependencytrack)
+[![Downloads](https://img.shields.io/github/downloads/stevespringett/dependency-track/total.svg)](https://github.com/stevespringett/dependency-track/releases)
+[![Latest](https://img.shields.io/github/release/stevespringett/dependency-track.svg)](https://github.com/stevespringett/dependency-track/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/owasp/dependency-track.svg)](https://hub.docker.com/r/owasp/dependency-track/)
+
 
 Dependency-Track
 =========
@@ -192,7 +196,7 @@ the [NOTICES.txt] [notices] file for more information.
   [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
   [Dependency-Check Jenkins Plugin]: https://plugins.jenkins.io/dependency-check-jenkins-plugin
   [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline
-  [CycloneDX]: https://github.com/CycloneDX
+  [CycloneDX]: http://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
   [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt

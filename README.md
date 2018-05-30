@@ -28,7 +28,7 @@ Dependency-Track can play a vital role in an overall [Cyber Supply Chain Risk Ma
 program by fulfilling many of the recommendations laid out by [SAFECode](https://www.safecode.org/wp-content/uploads/2017/05/SAFECode_TPC_Whitepaper.pdf).
 
 Dependency-Track is designed to be used in an automated DevOps environment where [Dependency-Check]
-results or specific BOM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
+results or BoM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
 [Dependency-Check Jenkins Plugin] is highly recommended for this purpose and is well suited for use
 in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to accelerate while
 still keeping tabs on component usage and any inherited risk.
@@ -41,18 +41,21 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 Features
 -------------------
 
-* Dramatically increases visibility into the use of vulnerable components
-* Supports an unlimited number of projects and components
-* Projects can range from applications, operating systems, firmware, to IoT devices
-* Tracks vulnerabilities across entire project portfolio
-* Tracks vulnerabilities by component
-* Easily identify projects that are potentially vulnerable to newly published vulnerabilities
+* Increases visibility into the use of vulnerable and outdated components
+* Flexible data model supporting an unlimited number of projects and components
+* Tracks vulnerabilities and inherited risk
+  * by component
+  * by project
+  * across entire portfolio
+* Tracks usage of out-of-date components
+* Includes a comprehensive auditing workflow for triaging results
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports [CycloneDX] and [SPDX] bill-of-material formats
 * Easy to read metrics for components, projects, and portfolio
+* Provides a reliable mirror of the NVD data feed
 * API-first design facilitates easy integration with other systems
 * API documentation available in Swagger 2.0 (OpenAPI 3 support coming soon)
-* Flexible authentication supports internally managed users, Active Directory/LDAP, and API Keys
+* Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 
 Screenshots

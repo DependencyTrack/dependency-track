@@ -43,7 +43,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
     @SuppressWarnings("unchecked")
     public void inform(Event e) {
         if (e instanceof RepositoryMetaEvent) {
-            LOGGER.info("Analyzing component repository metadata");
+            LOGGER.debug("Analyzing component repository metadata");
             RepositoryMetaEvent event = (RepositoryMetaEvent)e;
             if (event.getComponent() != null) {
                 try (QueryManager qm = new QueryManager()) {
@@ -71,11 +71,12 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     }
                 }
             }
-            LOGGER.info("Component repository metadata analysis complete");
+            LOGGER.debug("Component repository metadata analysis complete");
         }
     }
 
     private void analyze(QueryManager qm, Component component) {
+        LOGGER.debug("Analyzing component: " + component.getUuid());
         IMetaAnalyzer analyzer = IMetaAnalyzer.build(component);
         for (Repository repository: qm.getAllRepositoriesOrdered(analyzer.supportedRepositoryType())) {
             analyzer.setRepositoryBaseUrl(repository.getUrl());

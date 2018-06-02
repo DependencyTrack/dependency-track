@@ -42,7 +42,8 @@ public class PackageURLResolver implements IResolver {
             if (dependency.getIdentifiers() != null && dependency.getIdentifiers().getIdentifiers() != null) {
                 for (Identifier identifier : dependency.getIdentifiers().getIdentifiers()) {
                     if ("maven".equals(identifier.getType())
-                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))) {
+                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))
+                            || identifier == dependency.getIdentifier()) { // account for identifier in related dependency without confidence
 
                         final GAV gav = parseIdentifier(identifier);
                         if (dependency.getFileName() != null && dependency.getFileName().contains(".")) {
@@ -57,7 +58,8 @@ public class PackageURLResolver implements IResolver {
                         }
 
                     } else if ("npm".equals(identifier.getType())
-                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))) {
+                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))
+                            || identifier == dependency.getIdentifier()) { // account for identifier in related dependency without confidence
                         final GAV gav = parseIdentifier(identifier);
                         return new PackageURL(PackageURL.StandardTypes.NPM, gav.group, gav.artifact, gav.version, null, null);
                     }

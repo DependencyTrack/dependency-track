@@ -111,53 +111,11 @@ public class ScanUploadProcessingTask implements Subscriber {
         if (component == null) {
             // Component could not be resolved (was null), so create a new component
             component = new Component();
-
-
-            // Run PackageURL resolution and use that evidence to populate metadata
-            final PackageURL purl = new PackageURLResolver().resolve(dependency);
-            if (purl != null) {
-                component.setGroup(purl.getNamespace());
-                component.setName(purl.getName());
-                component.setVersion(purl.getVersion());
-                if (purl.getNamespace() == null) {
-                    component.setGroup(new ComponentGroupResolver().resolve(dependency));
-                }
-                // If a PackageURL could not be resolved, use the individual metadata resolvers.
-            } else {
-                component.setGroup(new ComponentGroupResolver().resolve(dependency));
-                component.setName(new ComponentNameResolver().resolve(dependency));
-                component.setVersion(new ComponentVersionResolver().resolve(dependency));
-            }
-            component.setPurl(purl);
-
-
-            component.setFilename(dependency.getFileName());
-            component.setMd5(dependency.getMd5());
-            component.setSha1(dependency.getSha1());
-            //todo: update this when ODC support other hash functions
-            component.setDescription(dependency.getDescription());
-            component.setResolvedLicense(resolvedLicense);
+            resolveMetadata(component, dependency, resolvedLicense);
             component = qm.createComponent(component, false);
             Event.dispatch(new RepositoryMetaEvent(component));
         } else {
-            /*
-             * Account for improvements in evidence identification in ODC and resolution improvements in ODT.
-             * In cases where values are null, attempt to re-populate specific fields with the same values
-             * as they would be if the component was newly created.
-             *
-             * In the future, it may be desirable to distinguish between user-corrected data and native data.
-             * (i.e.: component.getName()  vs.  component.getNameCorrected()
-             * //todo: Determine if this is necessary
-             */
-            component.setName((component.getName() != null) ? component.getName() : new ComponentNameResolver().resolve(dependency));
-            component.setVersion((component.getVersion() != null) ? component.getVersion() : new ComponentVersionResolver().resolve(dependency));
-            component.setGroup((component.getGroup() != null) ? component.getGroup() : new ComponentGroupResolver().resolve(dependency));
-            component.setPurl((component.getPurl() != null) ? component.getPurl() : new PackageURLResolver().resolve(dependency));
-            component.setFilename((component.getFilename() != null) ? component.getFilename() : dependency.getFileName());
-            component.setDescription((component.getDescription() != null) ? component.getDescription() : dependency.getDescription());
-            if (component.getResolvedLicense() == null) {
-                component.setResolvedLicense(resolvedLicense);
-            }
+            resolveMetadata(component, dependency, resolvedLicense);
             component = qm.updateComponent(component, false);
         }
 
@@ -199,5 +157,31 @@ public class ScanUploadProcessingTask implements Subscriber {
                 processDependency(relatedDependency);
             }
         }
+    }
+
+    private void resolveMetadata(Component component, Dependency dependency, License resolvedLicense) {
+        // Run PackageURL resolution and use that evidence to populate metadata
+        final PackageURL purl = new PackageURLResolver().resolve(dependency);
+        if (purl != null) {
+            component.setGroup(purl.getNamespace());
+            component.setName(purl.getName());
+            component.setVersion(purl.getVersion());
+            if (purl.getNamespace() == null) {
+                component.setGroup(new ComponentGroupResolver().resolve(dependency));
+            }
+            // If a PackageURL could not be resolved, use the individual metadata resolvers.
+        } else {
+            component.setGroup(new ComponentGroupResolver().resolve(dependency));
+            component.setName(new ComponentNameResolver().resolve(dependency));
+            component.setVersion(new ComponentVersionResolver().resolve(dependency));
+        }
+        component.setPurl(purl);
+
+        component.setFilename(dependency.getFileName());
+        component.setMd5(dependency.getMd5());
+        component.setSha1(dependency.getSha1());
+        //todo: update this when ODC support other hash functions
+        component.setDescription(dependency.getDescription());
+        component.setResolvedLicense(resolvedLicense);
     }
 }

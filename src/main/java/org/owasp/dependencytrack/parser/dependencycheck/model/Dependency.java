@@ -21,6 +21,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,6 +42,7 @@ public class Dependency extends BaseObject {
     private String license;
     private List<Evidence> evidenceCollected;
     private Identifiers identifiers;
+    private Identifier identifier; // Related dependencies only have a single identifier element
     private Vulnerabilities vulnerabilities;
     private List<Dependency> relatedDependencies;
 
@@ -126,6 +128,19 @@ public class Dependency extends BaseObject {
         this.identifiers = identifiers;
     }
 
+    public Identifier getIdentifier() {
+        return identifier;
+    }
+
+    @XmlElement(name = "identifier")
+    public void setIdentifier(Identifier identifier) {
+        if (this.identifiers == null) {
+            this.identifiers = new Identifiers();
+        }
+        this.identifiers.addIdentifier(identifier);
+        this.identifier = identifier;
+    }
+
     public Vulnerabilities getVulnerabilities() {
         return vulnerabilities;
     }
@@ -156,6 +171,13 @@ public class Dependency extends BaseObject {
 
         public List<Identifier> getIdentifiers() {
             return identifiers;
+        }
+
+        public void addIdentifier(Identifier identifier) {
+            if (identifiers == null) {
+                identifiers = new ArrayList<>();
+            }
+            identifiers.add(identifier);
         }
 
         @XmlElement(name = "identifier")

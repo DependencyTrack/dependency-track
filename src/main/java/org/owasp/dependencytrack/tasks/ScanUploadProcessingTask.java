@@ -88,8 +88,7 @@ public class ScanUploadProcessingTask implements Subscriber {
 
                 Event.dispatch(new VulnerabilityAnalysisEvent(components).project(project));
             } catch (Exception ex) {
-                LOGGER.error("Error while processing scan result");
-                LOGGER.error(ex.getMessage());
+                LOGGER.error("Error while processing scan result", ex);
             } finally {
                 if (qm != null) {
                     qm.commitSearchIndex(true, Component.class);

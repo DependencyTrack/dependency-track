@@ -82,8 +82,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 qm.updateLastBomImport(project, date);
                 Event.dispatch(new VulnerabilityAnalysisEvent(flattenedComponents).project(project));
             } catch (Exception ex) {
-                LOGGER.error("Error while processing bom");
-                LOGGER.error(ex.getMessage());
+                LOGGER.error("Error while processing bom", ex);
             } finally {
                 qm.commitSearchIndex(true, Component.class);
                 qm.close();

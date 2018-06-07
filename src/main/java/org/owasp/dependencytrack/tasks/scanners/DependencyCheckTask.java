@@ -100,7 +100,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         try {
             scanAgent.execute();
         } catch (ScanAgentException ex) {
-            LOGGER.error("An error occurred executing Dependency-Check scan agent: " + ex);
+            LOGGER.error("An error occurred executing Dependency-Check scan agent", ex);
         }
         LOGGER.info("Dependency-Check update-only complete");
     }
@@ -144,7 +144,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
             processResults();
             LOGGER.info("Dependency-Check analysis complete");
         } catch (ScanAgentException ex) {
-            LOGGER.error("An error occurred executing Dependency-Check scan agent: " + ex);
+            LOGGER.error("An error occurred executing Dependency-Check scan agent", ex);
         }
     }
 

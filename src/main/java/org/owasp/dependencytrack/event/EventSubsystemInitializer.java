@@ -57,16 +57,16 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(ScanUploadEvent.class, ScanUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
+        EVENT_SERVICE.subscribe(NspAnalysisEvent.class, NspAnalysisTask.class);
         EVENT_SERVICE.subscribe(NspMirrorEvent.class, NspMirrorTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
         EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+        EVENT_SERVICE.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
+        EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ST.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
-        EVENT_SERVICE_ST.subscribe(NspAnalysisEvent.class, NspAnalysisTask.class);
-        EVENT_SERVICE_ST.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE_ST.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
-        EVENT_SERVICE_ST.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
 
         TaskScheduler.getInstance();
     }
@@ -80,17 +80,17 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(ScanUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
+        EVENT_SERVICE.unsubscribe(NspAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(NspMirrorTask.class);
         EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
         EVENT_SERVICE.unsubscribe(VulnerabilityAnalysisTask.class);
+        EVENT_SERVICE.unsubscribe(RepositoryMetaAnalyzerTask.class);
+        EVENT_SERVICE.unsubscribe(MetricsUpdateTask.class);
         EVENT_SERVICE.shutdown();
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);
         EVENT_SERVICE_ST.unsubscribe(DependencyCheckTask.class);
-        EVENT_SERVICE_ST.unsubscribe(NspAnalysisTask.class);
-        EVENT_SERVICE_ST.unsubscribe(MetricsUpdateTask.class);
         EVENT_SERVICE_ST.unsubscribe(NistMirrorTask.class);
-        EVENT_SERVICE_ST.unsubscribe(RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE_ST.shutdown();
     }
 }

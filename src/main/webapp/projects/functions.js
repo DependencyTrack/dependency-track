@@ -57,7 +57,7 @@ function clearInputFields() {
     $("#createProjectNameInput").val("");
     $("#createProjectVersionInput").val("");
     $("#createProjectDescriptionInput").val("");
-    $("#createProjectTagsInput").val("");
+    $("#createProjectTagsInput").tagsinput("removeAll");
 }
 
 function updateStats(metric) {

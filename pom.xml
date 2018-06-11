@@ -81,7 +81,7 @@
     <properties>
         <!-- Dependency Versions -->
         <lib.lucene.version>5.5.5</lib.lucene.version>
-        <lib.dependency-check.version>3.1.2</lib.dependency-check.version>
+        <lib.dependency-check.version>3.2.1</lib.dependency-check.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <lib.spdx-tools.version>2.1.12</lib.spdx-tools.version>
         <lib.unirest.version>2.2.03</lib.unirest.version>

@@ -47,7 +47,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
             RepositoryMetaEvent event = (RepositoryMetaEvent)e;
             if (event.getComponent() != null) {
                 try (QueryManager qm = new QueryManager()) {
-                    analyze(qm, event.getComponent());
+                    // Refreshing the object by querying for it again is preventative
+                    analyze(qm, qm.getObjectById(Component.class, event.getComponent().getId()));
                 }
             } else {
                 final AlpineRequest alpineRequest = new AlpineRequest(

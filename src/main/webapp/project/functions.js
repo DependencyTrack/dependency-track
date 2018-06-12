@@ -87,7 +87,7 @@ function formatFindingsTable(res) {
         res[i].vulnerabilityhref = $common.formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
 
         if (res[i].hasOwnProperty("cweId") && res[i].hasOwnProperty("cweName")) {
-            res[i].cwefield = "CWE-" + res[i].cweId + " " + res[i].cweName;
+            res[i].cwefield = "<div class='truncate-ellipsis'><span>CWE-" + res[i].cweId + " " + res[i].cweName + "</span></div>";
         }
 
         if (res[i].hasOwnProperty("severity")) {

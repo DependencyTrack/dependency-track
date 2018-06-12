@@ -107,6 +107,21 @@ table tr:first-child th {
 .table td.expand, .table th.expand {
     width: 10%;
 }
+.table td.expand-20, .table th.expand-20 {
+    width: 20%;
+}
+/* usage: use outer div/span with class truncate-ellipsis and inner span with content to truncate */
+.truncate-ellipsis {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    white-space: nowrap;
+}
+.truncate-ellipsis > * {
+    display: table-cell;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .modal-dialog {
     margin: 50px auto;
 }

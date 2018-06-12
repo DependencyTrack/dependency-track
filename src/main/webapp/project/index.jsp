@@ -172,7 +172,7 @@
                                     <th data-align="left" data-field="version" data-sortable="true">Version</th>
                                     <th data-align="left" data-field="group" data-sortable="true">Group</th>
                                     <th data-align="left" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Vulnerability</th>
-                                    <th data-align="left" data-class="expand" data-field="cwefield" data-sortable="true">CWE</th>
+                                    <th data-align="left" data-class="expand-20" data-field="cwefield" data-sortable="true">CWE</th>
                                     <th data-align="left" data-field="severityLabel" data-sort-name="severityRank" data-sortable="true">Severity</th>
                                     <th data-align="left" data-field="state" data-sortable="true">Analysis</th>
                                     <th data-align="center" data-field="isSuppressedLabel" data-sortable="true" data-class="tight">Suppressed</th>

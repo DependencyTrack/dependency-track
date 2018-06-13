@@ -203,7 +203,7 @@ function vulnerabilitiesDetailFormatter(index, row) {
         </div>     
         <div class="col-xs-6 input-group">
             <label for="analysis-${componentUuid}-${vulnUuid}">Analysis</label>
-            <select class="form-control" id="analysis-${componentUuid}-${vulnUuid}">
+            <select class="form-control" style="background-color:#ffffff" id="analysis-${componentUuid}-${vulnUuid}">
                 <option value="NOT_SET"></option>
                 <option value="EXPLOITABLE">Exploitable</option>
                 <option value="IN_TRIAGE">In Triage</option>

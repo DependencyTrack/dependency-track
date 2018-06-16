@@ -18,4 +18,4 @@ FireFox extensions can be use to quickly use the Swagger UI Console.
 Prior to using the REST APIs, an API Key must be generated. By default, creating a team will also create a corresponding 
 API key. A team may have multiple keys.
 
-![Teams - API Key](/images/screenshots/teams-apikey.png)
+![Teams - API Key](/images/screenshots/teams.png)

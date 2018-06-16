@@ -66,6 +66,8 @@ Dependency-Track (as of v3.1.0) also provides the ability to determine out-of-da
 of the component and maps it to a corresponding list of repositories that have been configured to support the components 
 ecosystem.
 
+Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories.md %}) for further information.
+
 ### Package URL support in Bill-of-Materials
 
 The CycloneDX BoM specification supports Package URL on a per-component basis. Users of the 

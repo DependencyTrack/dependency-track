@@ -10,6 +10,11 @@ order:
 A long randomly generated number used to assert authentication. All REST APIs use API keys for authentication. API keys
 are assigned on a per-team basis. A team may have zero or more API keys assigned.
 
+### Auditing
+The process of evaluating findings to determine the accuracy of the findings and its impact on the component and 
+affected projects. The auditing process creates an audit trail that captures the thought process and decisions made 
+for each finding.
+
 ### Bill of Material (BoM)
 In supply chains, a bill of material (BoM) defines and describes the contents of what is used in the manufacturing and 
 packaging of the deliverable. In software supply chains, this refers to the contents of all components bundled with the
@@ -63,6 +68,11 @@ A project is a high-level categorization and collection of components (dependenc
 projects. A project could represent a software application, an environment, a medical or IoT device, or an automobile.
 Vulnerabilities from dependent components and sub projects are reported up to the project level. This is called 
 inherited risk.
+
+### Repository
+A service for storing open-source and third-party components and other artifacts. Repositories are typically used in
+software engineering to provide resolved dependencies during build time and are often accompanied with an API for
+programmatic integration. 
 
 ### Scan
 A scan is method by which evidence about a component is gathered and cross-referenced with one or more vulnerability 

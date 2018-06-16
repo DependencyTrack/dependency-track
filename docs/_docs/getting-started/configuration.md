@@ -147,9 +147,21 @@ alpine.ldap.bind.username=
 alpine.ldap.bind.password=
 
 # Optional
+# Specifies how to map the user identifier entered by the user to that passed through to LDAP.
+# If is configured to a non-empty value, the substring %s in this value will be replaced
+# with the entered username.
+# The recommended format of this value depends on your LDAP server(Active Directory, OpenLDAP, etc.).
+# Examples:
+#	 alpine.ldap.auth.username.format=%s
+#	 alpine.ldap.auth.username.format=%s@example.com
+#	 alpine.ldap.auth.username.format=uid=%s,ou=People,dc=example,dc=com
+#	 alpine.ldap.auth.username.format=userPrincipalName=%s,ou=People,dc=example,dc=com
+alpine.ldap.auth.username.format=
+
+# Optional
 # Specifies the Attribute that all queries should use
 # The default attribute is userPrincipalName
-alpine.ldap.attribute.name=
+alpine.ldap.attribute.name=userPrincipalName
 
 # Optional
 # Specifies the LDAP attribute used to store a users email address

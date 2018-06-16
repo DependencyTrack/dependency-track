@@ -1,8 +1,8 @@
 ---
-title: Global Suppression
+title: Dependency-Check Suppression
 category: Triage Results
 chapter: 4
-order: 1
+order: 9
 ---
 
 Dependency-Track integrates the same mechanisms as Dependency-Check in identifying vulnerabilities and suppressing them.
@@ -28,4 +28,4 @@ means of vulnerability detection in Dependency-Track. Dependency-Track includes 
 supporting Dependency-Check. Vulnerabilities that are not identified by Dependency-Check do not utilize the global
 suppression file.
 
-This feature may be removed in a future release to accommodate a proper triage and analysis workflow.
+This feature may be removed in a future release.

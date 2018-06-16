@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/stevespringett/dependency-track.svg?branch=3.0-dev)](https://travis-ci.org/stevespringett/dependency-track) 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1d99b45c27e4d069f94d24bcce8d7e6)](https://www.codacy.com/app/stevespringett/dependency-track?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/DependencyTrack/dependency-track.svg?branch=3.0-dev)](https://travis-ci.org/DependencyTrack/dependency-track) 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1d99b45c27e4d069f94d24bcce8d7e6)](https://www.codacy.com/app/stevespringett/dependency-track?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=stevespringett/dependency-track&amp;utm_campaign=Badge_Grade)
 [![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
 <img src="https://docs.dependencytrack.org/images/dt.svg" width="300" align="right">
 [![License][license-image]][license-url]
@@ -8,8 +8,8 @@
 [![Slack](https://img.shields.io/badge/chat%20on-slack-46BC99.svg)](https://owasp.slack.com/messages/proj-dependency-track)
 [![Join the chat at https://gitter.im/dependency-track/Lobby](https://badges.gitter.im/dependency-track/Lobby.svg)](https://gitter.im/dependency-track/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow)](https://twitter.com/dependencytrack)
-[![Downloads](https://img.shields.io/github/downloads/stevespringett/dependency-track/total.svg)](https://github.com/stevespringett/dependency-track/releases)
-[![Latest](https://img.shields.io/github/release/stevespringett/dependency-track.svg)](https://github.com/stevespringett/dependency-track/releases)
+[![Downloads](https://img.shields.io/github/downloads/DependencyTrack/dependency-track/total.svg)](https://github.com/DependencyTrack/dependency-track/releases)
+[![Latest](https://img.shields.io/github/release/DependencyTrack/dependency-track.svg)](https://github.com/DependencyTrack/dependency-track/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/owasp/dependency-track.svg)](https://hub.docker.com/r/owasp/dependency-track/)
 
 
@@ -200,6 +200,6 @@ the [NOTICES.txt] [notices] file for more information.
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
   [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
-  [Apache License 2.0]: https://github.com/stevespringett/dependency-track/blob/3.0-dev/LICENSE.txt
-  [notices]: https://github.com/stevespringett/dependency-track/blob/master/NOTICES.txt
+  [Apache License 2.0]: https://github.com/DependencyTrack/dependency-track/blob/3.0-dev/LICENSE.txt
+  [notices]: https://github.com/DependencyTrack/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine

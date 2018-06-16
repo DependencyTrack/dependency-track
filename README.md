@@ -198,7 +198,7 @@ the [NOTICES.txt] [notices] file for more information.
   [CycloneDX]: http://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
-  [license-url]: https://github.com/stevespringett/alpine/blob/master/LICENSE.txt
+  [license-url]: https://github.com/DependencyTrack/dependency-track/blob/master/LICENSE.txt
   [Apache License 2.0]: https://github.com/DependencyTrack/dependency-track/blob/3.0-dev/LICENSE.txt
   [notices]: https://github.com/DependencyTrack/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine

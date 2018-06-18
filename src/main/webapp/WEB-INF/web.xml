@@ -29,6 +29,9 @@
         <listener-class>alpine.persistence.PersistenceManagerFactory</listener-class>
     </listener>
     <listener>
+        <listener-class>org.owasp.dependencytrack.upgrade.UpgradeInitializer</listener-class>
+    </listener>
+    <listener>
         <listener-class>org.owasp.dependencytrack.event.EventSubsystemInitializer</listener-class>
     </listener>
     <listener>

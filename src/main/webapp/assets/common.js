@@ -172,11 +172,16 @@ $("#login-form").submit(function(event) {
     let password = passwordElement.val();
     $rest.login(username, password, function(data) {
         $.sessionStorage.set("token", data);
-        $("#navbar-container").css("display", "block");
-        $("#sidebar").css("display", "block");
-        $(".main").css("display", "block");
-        $("#modal-login").modal("hide");
-        $common.initialize();
+        // Hack to fix the loading of content after login as defined in:
+        // https://github.com/DependencyTrack/dependency-track/issues/167
+        // todo: should be removed in the future - especially once the next gen UI (SPA) is available
+        window.location.reload(false); // Reload from browser cache
+
+        //$("#navbar-container").css("display", "block");
+        //$("#sidebar").css("display", "block");
+        //$(".main").css("display", "block");
+        //$("#modal-login").modal("hide");
+        //$common.initialize();
     }, function(data) {
         switch (data.responseText) {
             case "INVALID_CREDENTIALS":

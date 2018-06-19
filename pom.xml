@@ -30,7 +30,7 @@
     <groupId>org.owasp</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>3.1.0</version>
+    <version>3.1.1-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>

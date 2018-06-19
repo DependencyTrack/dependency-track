@@ -18,16 +18,16 @@
 package org.owasp.dependencytrack.upgrade;
 
 import alpine.upgrade.UpgradeItem;
-import org.owasp.dependencytrack.upgrade.upgraders.ODT310;
 import java.util.ArrayList;
 import java.util.List;
 
 class UpgradeItems {
 
-    private static final List<Class<? extends UpgradeItem>> UPGRADE_ITEMS = new ArrayList<>();
-    static {
-        UPGRADE_ITEMS.add(ODT310.class);
-    }
+    private static final List<Class<? extends UpgradeItem>> UPGRADE_ITEMS = new ArrayList<Class<? extends UpgradeItem>>() {{
+
+        add(org.owasp.dependencytrack.upgrade.v310.v310Updater.class);
+
+    }};
 
     static List<Class<? extends UpgradeItem>> getUpgradeItems() {
         return UPGRADE_ITEMS;

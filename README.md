@@ -102,6 +102,16 @@ docker volume create --name dependency-track
 docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track:snapshot
 ```
 
+In the event you want to delete all Dependency-Track images, containers, and volumes, the following statements 
+may be executed. NOTE: This is a destructive operation and cannot be undone.
+
+
+```shell
+docker rmi owasp/dependency-track
+docker rm dependency-track
+docker volume rm dependency-track:/data
+```
+
 Deploying the Executable WAR
 -------------------
 

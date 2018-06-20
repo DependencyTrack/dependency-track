@@ -16,7 +16,7 @@ VERSION=$REPLY
 # Updates the version, commits, builds the war and executable war, and releases those two artifacts to GitHub
 mvn versions:set -DnewVersion=$VERSION
 git commit -m "Preparing to release $VERSION"
-git push origin master
+git push origin 3.1.x
 mvn clean package
 mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 mvn github-release:release

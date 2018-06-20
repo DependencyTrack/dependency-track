@@ -57,9 +57,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, License.class));
 
-        loadDefaultLicenses();
         loadDefaultPermissions();
         loadDefaultPersonas();
+        loadDefaultLicenses();
         loadDefaultRepositories();
 
         try {
@@ -104,12 +104,11 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     private void loadDefaultPermissions() {
         try (QueryManager qm = new QueryManager()) {
-            if (qm.getPermissions().size() > 0) {
-                return;
-            }
-            LOGGER.info("Adding default permissions to datastore.");
+            LOGGER.info("Synchronizing permissions to datastore.");
             for (Permissions permission : Permissions.values()) {
-                qm.createPermission(permission.name(), permission.getDescription());
+                if (qm.getPermission(permission.name()) == null) {
+                    qm.createPermission(permission.name(), permission.getDescription());
+                }
             }
         }
     }

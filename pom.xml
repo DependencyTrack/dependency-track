@@ -62,20 +62,20 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:stevespringett/dependency-track.git</connection>
-        <url>https://github.com/stevespringett/dependency-track.git</url>
-        <developerConnection>scm:git:git@github.com:stevespringett/dependency-track.git</developerConnection>
+        <connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</connection>
+        <url>https://github.com/DependencyTrack/dependency-track.git</url>
+        <developerConnection>scm:git:git@github.com:DependencyTrack/dependency-track.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>github</system>
-        <url>https://github.com/stevespringett/dependency-track/issues</url>
+        <url>https://github.com/DependencyTrack/dependency-track/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>travis-ci</system>
-        <url>https://travis-ci.org/stevespringett/dependency-track</url>
+        <url>https://travis-ci.org/DependencyTrack/dependency-track</url>
     </ciManagement>
 
     <properties>

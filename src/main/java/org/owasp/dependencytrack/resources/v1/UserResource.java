@@ -22,7 +22,7 @@ import alpine.auth.AlpineAuthenticationException;
 import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.Authenticator;
 import alpine.auth.JsonWebToken;
-import alpine.auth.KeyManager;
+import alpine.crypto.KeyManager;
 import alpine.auth.PasswordService;
 import alpine.auth.PermissionRequired;
 import alpine.logging.Logger;

@@ -26,6 +26,7 @@ import alpine.model.Team;
 import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.ConfigPropertyConstants;
 import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.RepositoryType;
@@ -61,6 +62,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultPersonas();
         loadDefaultLicenses();
         loadDefaultRepositories();
+        loadDefaultConfigProperties();
 
         try {
             new CweImporter().processCweDefinitions();
@@ -82,7 +84,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     private void loadDefaultLicenses() {
         try (QueryManager qm = new QueryManager()) {
-            LOGGER.info("Synchronizing SPDX license definitions to datastore.");
+            LOGGER.info("Synchronizing SPDX license definitions to datastore");
 
             final SpdxLicenseDetailParser parser = new SpdxLicenseDetailParser();
             try {
@@ -92,7 +94,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
                     qm.synchronizeLicense(license, false);
                 }
             } catch (IOException e) {
-                LOGGER.error("An error occurred during the parsing SPDX license definitions.");
+                LOGGER.error("An error occurred during the parsing SPDX license definitions");
                 LOGGER.error(e.getMessage());
             }
             qm.commitSearchIndex(License.class);
@@ -104,7 +106,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     private void loadDefaultPermissions() {
         try (QueryManager qm = new QueryManager()) {
-            LOGGER.info("Synchronizing permissions to datastore.");
+            LOGGER.info("Synchronizing permissions to datastore");
             for (Permissions permission : Permissions.values()) {
                 if (qm.getPermission(permission.name()) == null) {
                     qm.createPermission(permission.name(), permission.getDescription());
@@ -121,7 +123,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             if (qm.getManagedUsers().size() > 0 && qm.getTeams().size() > 0) {
                 return;
             }
-            LOGGER.info("Adding default users and teams to datastore.");
+            LOGGER.info("Adding default users and teams to datastore");
             ManagedUser admin = qm.createManagedUser("admin", "Administrator", "admin@localhost",
                     new String(PasswordService.createHash("admin".toCharArray())), true, true, false);
 
@@ -178,7 +180,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             if (qm.getAllRepositories().size() > 0) {
                 return;
             }
-            LOGGER.info("Adding default repositories to datastore.");
+            LOGGER.info("Adding default repositories to datastore");
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true);
             qm.createRepository(RepositoryType.MAVEN, "central", "http://central.maven.org/maven2/", true);
             qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://maven.atlassian.com/content/repositories/atlassian-public/", true);
@@ -186,6 +188,20 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true);
             qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true);
             qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true);
+        }
+    }
+
+    /**
+     * Loads the default ConfigProperty objects
+     */
+    private void loadDefaultConfigProperties() {
+        try (QueryManager qm = new QueryManager()) {
+            LOGGER.info("Synchronizing config properties to datastore");
+            for (ConfigPropertyConstants cpc : ConfigPropertyConstants.values()) {
+                if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
+                    qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), cpc.getDefaultPropertyValue(), cpc.getPropertyType(), cpc.getDescription());
+                }
+            }
         }
     }
 

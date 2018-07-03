@@ -67,6 +67,10 @@ public class ConfigPropertyResource extends AlpineResource {
     public Response getConfigProperties() throws Exception {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<ConfigProperty> configProperties = qm.getConfigProperties();
+            // Detaches the objects and closes the persistence manager so that if/when encrypted string
+            // values are replaced by the placeholder, they are not erroneously persisted to the database.
+            qm.getPersistenceManager().detachCopyAll(configProperties);
+            qm.close();
             for (ConfigProperty configProperty: configProperties) {
                 // Replace the value of encrypted strings with the pre-defined placeholder
                 if (ConfigProperty.PropertyType.ENCRYPTEDSTRING.name().equals(configProperty.getPropertyType())) {

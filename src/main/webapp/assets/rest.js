@@ -50,6 +50,7 @@ const URL_SEARCH = "api/v1/search";
 const URL_METRICS = "api/v1/metrics";
 const URL_CALCULATOR_CVSS = "api/v1/calculator/cvss";
 const URL_REPOSITORY = "api/v1/repository";
+const URL_CONFIG_PROPERTY = "api/v1/configProperty";
 
 const $rest = function() {
 };
@@ -1822,6 +1823,63 @@ $rest.getLatestFromRepository = function getProject(packageUrl, successCallback,
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve config properties
+ */
+$rest.getConfigProperties = function getConfigProperties(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_CONFIG_PROPERTY,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a config property is updated
+ */
+$rest.updateConfigProperty = function updateConfigProperty(groupName, propertyName, propertyValue, successCallback, failCallback) {
+    if ($common.isEmpty(groupName) || $common.isEmpty(propertyName)) {
+        return;
+    }
+    $.ajax({
+        url: $rest.contextPath() + URL_CONFIG_PROPERTY,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({groupName: groupName, propertyName: propertyName, propertyValue: propertyValue}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
             if (failCallback) {
                 $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
             }

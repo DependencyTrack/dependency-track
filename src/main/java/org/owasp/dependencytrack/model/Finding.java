@@ -59,7 +59,7 @@ public class Finding implements Serializable {
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"DEPENDENCY\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "LEFT JOIN \"CWE\"  ON (\"VULNERABILITY\".\"CWE\" = \"CWE\".\"ID\") " +
-            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") " +
+            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"DEPENDENCY\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
             "WHERE \"DEPENDENCY\".\"PROJECT_ID\" = ?";
 
     private Object componentUuid;

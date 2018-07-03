@@ -26,7 +26,7 @@ public enum ConfigPropertyConstants {
     EMAIL_SMTP_FROM_ADDR("email", "smtp.from.address", null, PropertyType.STRING.name(), "The from email address to use to send output SMTP mail"),
     EMAIL_SMTP_SERVER_HOSTNAME("email", "smtp.server.hostname", null, PropertyType.STRING.name(), "The hostname or IP address of the SMTP mail server"),
     EMAIL_SMTP_SERVER_PORT("email", "smtp.server.port", null, PropertyType.INTEGER.name(), "The port the SMTP server listens on"),
-    EMAIL_SMTP_USERNAME("email", "smtp.username", null, PropertyType.ENCRYPTEDSTRING.name(), "The optional username to authenticate with when sending outbound SMTP mail"),
+    EMAIL_SMTP_USERNAME("email", "smtp.username", null, PropertyType.STRING.name(), "The optional username to authenticate with when sending outbound SMTP mail"),
     EMAIL_SMTP_PASSWORD("email", "smtp.password", null, PropertyType.ENCRYPTEDSTRING.name(), "The optional password for the username used for authentication"),
     EMAIL_SMTP_SSLTLS("email", "smtp.ssltls", "false", PropertyType.BOOLEAN.name(), "Flag to enable/disable the use of SSL/TLS when connecting to the SMTP server"),
     EMAIL_SMTP_TRUSTCERT("email", "smtp.trustcert", "false", PropertyType.BOOLEAN.name(), "Flag to enable/disable the trust of the certificate presented by the SMTP server");

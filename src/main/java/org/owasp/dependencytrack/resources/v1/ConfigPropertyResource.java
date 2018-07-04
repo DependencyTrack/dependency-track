@@ -64,6 +64,7 @@ public class ConfigPropertyResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getConfigProperties() throws Exception {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<ConfigProperty> configProperties = qm.getConfigProperties();
@@ -92,7 +93,7 @@ public class ConfigPropertyResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The config property could not be found"),
     })
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateConfigProperty(ConfigProperty json) {
         final Validator validator = super.getValidator();
         failOnValidationError(

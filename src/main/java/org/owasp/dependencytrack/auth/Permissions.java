@@ -30,7 +30,8 @@ public enum Permissions {
     VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, dependencies, and licenses"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
     VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities affecting projects in the portfolio"),
-    ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys");
+    ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys"),
+    SYSTEM_CONFIGURATION("Allows the configuration of the system including notifications, repositories, and email settings");
 
     private final String description;
 
@@ -49,6 +50,7 @@ public enum Permissions {
         public static final String PORTFOLIO_MANAGEMENT = "PORTFOLIO_MANAGEMENT";
         public static final String VULNERABILITY_ANALYSIS = "VULNERABILITY_ANALYSIS";
         public static final String ACCESS_MANAGEMENT = "ACCESS_MANAGEMENT";
+        public static final String SYSTEM_CONFIGURATION = "SYSTEM_CONFIGURATION";
     }
 
 }

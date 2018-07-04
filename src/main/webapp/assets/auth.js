@@ -27,6 +27,7 @@ $auth.VIEW_PORTFOLIO         = "VIEW_PORTFOLIO";
 $auth.PORTFOLIO_MANAGEMENT   = "PORTFOLIO_MANAGEMENT";
 $auth.ACCESS_MANAGEMENT      = "ACCESS_MANAGEMENT";
 $auth.VULNERABILITY_ANALYSIS = "VULNERABILITY_ANALYSIS";
+$auth.SYSTEM_CONFIGURATION   = "SYSTEM_CONFIGURATION";
 
 /**
  * Determines if the current logged in user has a specific permission.

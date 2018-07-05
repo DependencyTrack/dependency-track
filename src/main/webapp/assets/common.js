@@ -91,17 +91,22 @@ $common.isBlank = function isBlank(string) {
 
 //######################################################################################################################
 /**
- * Called after we have verified that a user is authenticated (if authentication is enabled)
+ * Called after we have veri fied that a user is authenticated (if authentication is enabled)
  */
 $common.initialize = function initialize() {
     const token = $auth.decodeToken($auth.getToken());
 
-    if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
-        $("#sidebar-admin-button").css("display", "block");
-        $("#content-container.require-access-management").css("display", "block");
-    }
     if ($auth.hasPermission($auth.VIEW_PORTFOLIO, token)) {
         $("#content-container.require-view-portfolio").css("display", "block");
+    }
+    if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token) || $auth.hasPermission($auth.SYSTEM_CONFIGURATION, token)) {
+        $("#sidebar-admin-button").css("display", "block");
+    }
+    if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
+        $("div.require-access-management").css("display", "block");
+    }
+    if ($auth.hasPermission($auth.SYSTEM_CONFIGURATION, token)) {
+        $("div.require-system-configuration").css("display", "block");
     }
     if ($auth.hasPermission($auth.PORTFOLIO_MANAGEMENT, token)) {
         $("button.require-portfolio-management").css("display", "inline-block");

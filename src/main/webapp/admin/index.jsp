@@ -1,6 +1,11 @@
+<%@page import="alpine.Config" %>
 <%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@taglib prefix="e" uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" %>
+<%!
+    private static final boolean AUTHN_ENABLED = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION);
+    private static final boolean AUTHZ_ENABLED = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,29 +14,146 @@
 </head>
 <body data-sidebar="admin">
 <jsp:include page="/WEB-INF/fragments/navbar.jsp"/>
-<div id="content-container" class="container-fluid require-access-management">
+<div id="content-container" class="container-fluid require-access-management require-system-configuration">
     <div class="content-row main">
         <div class="col-sm-12 col-md-12">
-            <h3>Administration</h3>
-            <div class="panel with-nav-tabs panel-default tight">
-                <div class="panel-heading">
-                    <ul class="nav nav-tabs">
-                        <li class="active"><a href="#teamsTab" data-toggle="tab"><i class="fa fa-users" aria-hidden="true"></i> Teams</a></li>
-                        <li><a href="#ldapUsersTab" data-toggle="tab"><i class="fa fa-user" aria-hidden="true"></i> LDAP Users</a></li>
-                        <li><a href="#managedUsersTab" data-toggle="tab"><i class="fa fa-user-circle-o" aria-hidden="true"></i> Managed Users</a></li>
-                        <li><a href="#permissionsTab" data-toggle="tab"><i class="fa fa-lock" aria-hidden="true"></i> Permissions</a></li>
-                    </ul>
+            <h3 id="admin-title">Administration</h3>
+        </div>
+        <div class="col-xs-6 col-sm-4 col-md-2">
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="panel panel-default require-system-configuration">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingOne">
+                        <div class="panel-title">
+                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                Configuration
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                        <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#generalConfigTab">General</a>
+                            <a data-toggle="tab" class="list-group-item" href="#emailTab">Email</a>
+                            <a data-toggle="tab" class="list-group-item" href="#notificationsTab">Notifications</a>
+                        </div>
+                    </div>
                 </div>
+                <div class="panel panel-default require-system-configuration">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingTwo">
+                        <div class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Repositories
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+                        <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#repositoryNpmTab">NPM</a>
+                            <a data-toggle="tab" class="list-group-item" href="#repositoryMavenTab">Maven</a>
+                            <a data-toggle="tab" class="list-group-item" href="#repositoryRubyGemTab">RubyGems</a>
+                        </div>
+                    </div>
+                </div>
+                <% if(AUTHN_ENABLED) { %>
+                <div class="panel panel-default require-access-management">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingThree">
+                        <div class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Access Management
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                        <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#ldapUsersTab">LDAP Users</a>
+                            <a data-toggle="tab" class="list-group-item" href="#managedUsersTab">Managed Users</a>
+                            <a data-toggle="tab" class="list-group-item" href="#teamsTab">Teams</a>
+                            <a data-toggle="tab" class="list-group-item" href="#permissionsTab">Permissions</a>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+                <!--
+                <div class="panel panel-default">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingFour">
+                        <div class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                Notifications
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseFour" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
+                        <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#slackNotificationsTab">Slack</a>
+                            <a data-toggle="tab" class="list-group-item" href="#microsoftTeamsNotificationsTab">Microsoft Teams</a>
+                            <a data-toggle="tab" class="list-group-item" href="#emailNotificationsTab">Email</a>
+                            <a data-toggle="tab" class="list-group-item" href="#webhooksNotificationsTab">WebHooks</a>
+                        </div>
+                    </div>
+                </div>
+                -->
+
+
+
+            </div>
+        </div>
+        <div class="col-xs-6 col-sm-8 col-md-10">
+            <div class="panel tight">
                 <div class="panel-body tight">
-                    <div class="tab-content">
-                        <div class="tab-pane active" id="teamsTab">
+                    <div class="tab-content admin-content">
+                        <div class="tab-pane admin-form-content active" id="defaultTab">
+                            <!-- We can't default to any specific tab due to not knowing their permissions in advance -->
+                            <!-- Therefore, default to a blank content area and let the user decide where to go -->
+                        </div>
+                        <div class="tab-pane admin-form-content" id="generalConfigTab">
+                            <h3 class="admin-section-title">General Configuration</h3>
+                            <p>This URL is used to construct links back to Dependency-Track from external systems. Email, ChatOps, and WebHook notifications all rely on linking back to Dependency-Track.</p>
+                            <div class="form-group">
+                                <label class="required" for="generalConfigBaseUrlInput">Dependency-Track Base URL</label>
+                                <input type="text" name="Base URL" class="form-control required" id="generalConfigBaseUrlInput" data-group-name="general" data-property-name="base.url">
+                            </div>
+                            <button type="button" class="btn btn-primary btn-config-property" id="updateGeneralConfigButton" data-group-name="general">Update</button>
+                        </div>
+                        <div class="tab-pane admin-form-content" id="emailTab">
+                            <h3 class="admin-section-title">Email Service Configuration</h3>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="emailEnableInput" data-group-name="email" data-property-name="smtp.enabled"> Enable email</label>
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="emailFromInput">From email address</label>
+                                <input type="text" class="form-control required" id="emailFromInput" data-group-name="email" data-property-name="smtp.from.address">
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="emailSmtpServerInput">SMTP server</label>
+                                <input type="text" class="form-control required" id="emailSmtpServerInput" data-group-name="email" data-property-name="smtp.server.hostname">
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="emailSmtpServerPortInput">SMTP server port</label>
+                                <input type="text" class="form-control required" id="emailSmtpServerPortInput" data-group-name="email" data-property-name="smtp.server.port">
+                            </div>
+                            <div class="form-group">
+                                <label for="emailSmtpUsernameInput">SMTP username</label>
+                                <input type="text" class="form-control" autocomplete="off" id="emailSmtpUsernameInput" data-group-name="email" data-property-name="smtp.username">
+                            </div>
+                            <div class="form-group">
+                                <label for="emailSmtpPasswordInput">SMTP password</label>
+                                <input type="password" class="form-control" autocomplete="off" id="emailSmtpPasswordInput" data-group-name="email" data-property-name="smtp.password">
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="emailSmtpSslTlsInput" data-group-name="email" data-property-name="smtp.ssltls"> Enable SSL/TLS encryption</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="emailSmtpTrustCertInput" data-group-name="email" data-property-name="smtp.trustcert"> Trust the certificate provided by the SMTP server</label>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-config-property" id="updateEmailConfigButton" data-group-name="email">Update</button>
+                        </div>
+                        <div class="tab-pane" id="teamsTab">
                             <div id="teamsToolbar">
                                 <div class="form-inline" role="form">
                                     <button id="createTeamButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateTeam"><span class="fa fa-plus"></span> Create Team</button>
                                 </div>
                             </div>
                             <table id="teamsTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/team"/>" data-response-handler="formatTeamTable"
+                                   data-response-handler="formatTeamTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
                                    data-detail-view="true" data-detail-formatter="teamDetailFormatter"
                                    data-toolbar="#teamsToolbar" data-click-to-select="true" data-height="100%">
@@ -51,7 +173,7 @@
                                 </div>
                             </div>
                             <table id="ldapUsersTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/user/ldap"/>" data-response-handler="formatLdapUserTable"
+                                   data-response-handler="formatLdapUserTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
                                    data-detail-view="true" data-detail-formatter="ldapUserDetailFormatter"
                                    data-toolbar="#ldapUsersToolbar" data-click-to-select="true" data-height="100%">
@@ -71,7 +193,7 @@
                                 </div>
                             </div>
                             <table id="managedUsersTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/user/managed"/>" data-response-handler="formatManagedUserTable"
+                                   data-response-handler="formatManagedUserTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
                                    data-detail-view="true" data-detail-formatter="managedUserDetailFormatter"
                                    data-toolbar="#managedUsersToolbar" data-click-to-select="true" data-height="100%">
@@ -86,9 +208,8 @@
                             </table>
                         </div>
                         <div class="tab-pane" id="permissionsTab">
-                            <table class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/permission"/>"
-                                   data-show-columns="true" data-search="true" data-detail-view="true" data-height="100%">
+                            <table id="permissionListingTable" class="table table-hover" data-toggle="table"
+                                   data-height="100%">
                                 <thead>
                                 <tr>
                                     <th data-align="left" data-field="name">Name</th>
@@ -228,7 +349,6 @@
                 </div>
                 <div class="modal-body">
                     <table id="permissionsTable" class="table table-hover" data-toggle="table"
-                           data-url="<c:url value="/api/v1/permission"/>"
                            data-click-to-select="true" data-height="100%">
                         <thead>
                         <tr>

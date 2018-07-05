@@ -44,8 +44,6 @@
         <li id="sidebar-components-button"><a href="<c:url value="/components/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="components" title="Components"><i class="fa fa-cubes"></i><span>Components</span></a></li>
         <li id="sidebar-vulnerabilities-button"><a href="<c:url value="/vulnerabilities/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="vulnerabilities" title="Vulnerabilities"><i class="fa fa-shield"></i><span>Vulnerabilities</span></a></li>
         <li id="sidebar-licenses-button"><a href="<c:url value="/licenses/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="licenses" title="Licenses"><i class="fa fa-balance-scale"></i><span>Licenses</span></a></li>
-        <% if(AUTHZ_ENABLED) { %>
         <li id="sidebar-admin-button" style="display:none"><a href="<c:url value="/admin/"/>" data-toggle="tooltip" data-placement="right" data-sidebar="admin" title="Administration"><i class="fa fa-cogs"></i><span>Administration</span></a></li>
-        <% } %>
     </ul>
 </div>

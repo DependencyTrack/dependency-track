@@ -632,6 +632,19 @@ function removePermissionFromTeam(permissionName, uuid) {
 }
 
 /**
+ * Dynamically populates all of the config properties.
+ */
+function populateConfigProperties(data) {
+    for (let i=0; i<data.length; i++) {
+        let input = $("input[data-group-name='"+ data[i].groupName + "'][data-property-name='" + data[i].propertyName + "']");
+        if ("BOOLEAN" === data[i].propertyType && "true" === data[i].propertyValue) {
+            input.prop("checked", "checked");
+        }
+        input.val(data[i].propertyValue);
+    }
+}
+
+/**
  * Setup events and trigger other stuff when the page is loaded and ready
  */
 $(document).ready(function () {
@@ -741,4 +754,82 @@ $(document).ready(function () {
             });
         }
     });
+
+    let token = $auth.decodeToken($auth.getToken());
+    if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
+        $("#teamsTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_TEAM, silent: true});
+        $("#ldapUsersTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_USER_LDAP, silent: true});
+        $("#managedUsersTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_USER_MANAGED, silent: true});
+        $("#permissionsTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_PERMISSION, silent: true});
+        $("#permissionListingTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_PERMISSION, silent: true});
+    }
+    if ($auth.hasPermission($auth.SYSTEM_CONFIGURATION, token)) {
+        $rest.getConfigProperties(populateConfigProperties);
+    }
+
+    /**
+     * Sets the title of the page based on what menu item was clicked.
+     */
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        let target = $(e.target).attr("href");
+        let adminTitle = $("#admin-title");
+        switch (true) {
+            case target === "#generalConfigTab":
+                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> General');
+                break;
+            case target === "#emailTab":
+                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> Email');
+                break;
+            case target === "#repositoryNpmTab":
+                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> NPM');
+                break;
+            case target === "#repositoryMavenTab":
+                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> Maven');
+                break;
+            case target === "#repositoryRubyGemTab":
+                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> RubyGem');
+                break;
+            case target === "#ldapUsersTab":
+                adminTitle.html('<i class="fa fa-user" aria-hidden="true"></i> LDAP Users');
+                break;
+            case target === "#managedUsersTab":
+                adminTitle.html('<i class="fa fa-user-circle-o" aria-hidden="true"></i> Managed Users');
+                break;
+            case target === "#teamsTab":
+                adminTitle.html('<i class="fa fa-users" aria-hidden="true"></i> Teams');
+                break;
+            case target === "#permissionsTab":
+                adminTitle.html('<i class="fa fa-lock" aria-hidden="true"></i> Permissions');
+                break;
+            default:
+                adminTitle.html('Administration');
+        }
+    });
+
+    /**
+     * Highlights the active item in the admin accordion menu.
+     */
+    $(".list-group .list-group-item").click(function(e) {
+        $(".list-group .list-group-item").removeClass("active");
+        $(e.target).addClass("active");
+    });
+
+    /**
+     * Listen for if the button to update config properties is clicked. This function ensures
+     * that the group-name assigned to the inputs being iterated on matches the group-name of
+     * the button that was clicked.
+     */
+    $(".btn-config-property").on("click", function() {
+        let groupName = $(this).data("group-name");
+        $("input[data-group-name]").each(function() {
+            if (groupName === $(this).data("group-name")) {
+                let propertyValue = $(this).val();
+                if ($(this).attr("type") === "checkbox") {
+                    propertyValue = $(this).is(":checked");
+                }
+                $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);
+            }
+        });
+    });
+
 });

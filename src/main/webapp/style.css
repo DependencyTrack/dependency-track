@@ -73,7 +73,8 @@ body {
     font-weight: 600;
 }
 .table td {
-    white-space: nowrap;
+    /* commented out to wrap permission descriptions */
+    /*white-space: nowrap; */
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -755,6 +756,21 @@ input.required {
 .inDetailFormatterForm label {
     padding-left: 0;
 }
+.admin-form-content {
+    width: 450px;
+}
+.panel-heading .admin-accordion {
+    background-color: #efefed;
+}
+.admin-accordion .panel-title {
+    font-size: 1.125em;
+    font-weight: 600;
+}
+h3.admin-section-title  {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-top: 0;
+}
 /* TODO: Temporarily hiding 'View Details' bar on small widgets until a future release when the functionality can be completed */
 .widget-row .col-lg-3 .widget-details-selector {
     display: none;
@@ -762,7 +778,7 @@ input.required {
 button.require-portfolio-management {
     display: none;
 }
-.nav>li.require-vulnerability-analysis, div.require-vulnerability-analysis  {
+.nav>li.require-vulnerability-analysis, div.require-vulnerability-analysis, div.require-access-management, div.require-system-configuration {
     display: none;
 }
 .refresh-metric {

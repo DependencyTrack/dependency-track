@@ -23,6 +23,7 @@ import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.resources.AlpineResource;
 import alpine.util.BooleanUtil;
+import alpine.util.UuidUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -39,6 +40,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -119,6 +122,19 @@ public class ConfigPropertyResource extends AlpineResource {
                         configProperty.setPropertyValue(json.getPropertyValue());
                     } catch (NumberFormatException e) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected a number and a number was not sent.").build();
+                    }
+                } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.URL) {
+                    try {
+                        new URL(json.getPropertyValue());  // don't actually use it, just see if it's parses without exception
+                        configProperty.setPropertyValue(json.getPropertyValue());
+                    } catch (MalformedURLException e) {
+                        return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected a URL but the URL was malformed.").build();
+                    }
+                } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.UUID) {
+                    if (UuidUtil.isValidUUID(json.getPropertyValue())) {
+                        configProperty.setPropertyValue(json.getPropertyValue());
+                    } else {
+                        return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected a UUID but a valid UUID was not sent.").build();
                     }
                 } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.ENCRYPTEDSTRING) {
                     try {

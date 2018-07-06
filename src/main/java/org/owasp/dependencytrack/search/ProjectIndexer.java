@@ -64,13 +64,18 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         addField(doc, IndexConstants.PROJECT_VERSION, project.getVersion(), Field.Store.YES, false);
         addField(doc, IndexConstants.PROJECT_DESCRIPTION, project.getDescription(), Field.Store.YES, true);
 
+        /*
+        // There's going to potentially be confidential information in the project properties. Do not index.
+
         final StringBuilder sb = new StringBuilder();
         if (project.getProperties() != null) {
             for (ProjectProperty property : project.getProperties()) {
-                sb.append(property.getValue()).append(" ");
+                sb.append(property.getPropertyValue()).append(" ");
             }
         }
+
         addField(doc, IndexConstants.PROJECT_PROPERTIES, sb.toString().trim(), Field.Store.YES, true);
+        */
 
         try {
             getIndexWriter().addDocument(doc);

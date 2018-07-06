@@ -26,6 +26,7 @@ class UpgradeItems {
     private static final List<Class<? extends UpgradeItem>> UPGRADE_ITEMS = new ArrayList<Class<? extends UpgradeItem>>() {{
 
         add(org.owasp.dependencytrack.upgrade.v310.v310Updater.class);
+        add(org.owasp.dependencytrack.upgrade.v320.v320Updater.class);
 
     }};
 

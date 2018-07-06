@@ -21,24 +21,24 @@ import alpine.model.ConfigProperty.PropertyType;
 
 public enum ConfigPropertyConstants {
 
-    GENERAL_BASE_URL("general", "base.url", null, PropertyType.URL.name(), "URL used to construct links back to Dependency-Track from external systems"),
-    EMAIL_SMTP_ENABLED("email", "smtp.enabled", "false", PropertyType.BOOLEAN.name(), "Flag to enable/disable SMTP"),
-    EMAIL_SMTP_FROM_ADDR("email", "smtp.from.address", null, PropertyType.STRING.name(), "The from email address to use to send output SMTP mail"),
-    EMAIL_SMTP_SERVER_HOSTNAME("email", "smtp.server.hostname", null, PropertyType.STRING.name(), "The hostname or IP address of the SMTP mail server"),
-    EMAIL_SMTP_SERVER_PORT("email", "smtp.server.port", null, PropertyType.INTEGER.name(), "The port the SMTP server listens on"),
-    EMAIL_SMTP_USERNAME("email", "smtp.username", null, PropertyType.STRING.name(), "The optional username to authenticate with when sending outbound SMTP mail"),
-    EMAIL_SMTP_PASSWORD("email", "smtp.password", null, PropertyType.ENCRYPTEDSTRING.name(), "The optional password for the username used for authentication"),
-    EMAIL_SMTP_SSLTLS("email", "smtp.ssltls", "false", PropertyType.BOOLEAN.name(), "Flag to enable/disable the use of SSL/TLS when connecting to the SMTP server"),
-    EMAIL_SMTP_TRUSTCERT("email", "smtp.trustcert", "false", PropertyType.BOOLEAN.name(), "Flag to enable/disable the trust of the certificate presented by the SMTP server");
+    GENERAL_BASE_URL("general", "base.url", null, PropertyType.URL, "URL used to construct links back to Dependency-Track from external systems"),
+    EMAIL_SMTP_ENABLED("email", "smtp.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable SMTP"),
+    EMAIL_SMTP_FROM_ADDR("email", "smtp.from.address", null, PropertyType.STRING, "The from email address to use to send output SMTP mail"),
+    EMAIL_SMTP_SERVER_HOSTNAME("email", "smtp.server.hostname", null, PropertyType.STRING, "The hostname or IP address of the SMTP mail server"),
+    EMAIL_SMTP_SERVER_PORT("email", "smtp.server.port", null, PropertyType.INTEGER, "The port the SMTP server listens on"),
+    EMAIL_SMTP_USERNAME("email", "smtp.username", null, PropertyType.STRING, "The optional username to authenticate with when sending outbound SMTP mail"),
+    EMAIL_SMTP_PASSWORD("email", "smtp.password", null, PropertyType.ENCRYPTEDSTRING, "The optional password for the username used for authentication"),
+    EMAIL_SMTP_SSLTLS("email", "smtp.ssltls", "false", PropertyType.BOOLEAN, "Flag to enable/disable the use of SSL/TLS when connecting to the SMTP server"),
+    EMAIL_SMTP_TRUSTCERT("email", "smtp.trustcert", "false", PropertyType.BOOLEAN, "Flag to enable/disable the trust of the certificate presented by the SMTP server");
 
 
     private String groupName;
     private String propertyName;
     private String defaultPropertyValue;
-    private String propertyType;
+    private PropertyType propertyType;
     private String description;
 
-    ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, String propertyType, String description) {
+    ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description) {
         this.groupName = groupName;
         this.propertyName = propertyName;
         this.defaultPropertyValue = defaultPropertyValue;
@@ -58,7 +58,7 @@ public enum ConfigPropertyConstants {
         return defaultPropertyValue;
     }
 
-    public String getPropertyType() {
+    public PropertyType getPropertyType() {
         return propertyType;
     }
 

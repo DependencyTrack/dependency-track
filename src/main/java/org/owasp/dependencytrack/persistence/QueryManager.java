@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.persistence;
 
 import alpine.Config;
 import alpine.event.framework.Event;
+import alpine.model.ConfigProperty;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -341,15 +342,23 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Creates a key/value pair (ProjectProperty) for the specified Project.
      * @param project the Project to create the property for
-     * @param key the key of the property
-     * @param value the value of the property
+     * @param groupName the group name of the property
+     * @param propertyName the name of the property
+     * @param propertyValue the value of the property
+     * @param propertyType the type of property
+     * @param description a description of the property
      * @return the created ProjectProperty object
      */
-    public ProjectProperty createProjectProperty(Project project, String key, String value) {
+    public ProjectProperty createProjectProperty(final Project project, final String groupName, final String propertyName,
+                                                 final String propertyValue, final ConfigProperty.PropertyType propertyType,
+                                                 final String description) {
         final ProjectProperty property = new ProjectProperty();
         property.setProject(project);
-        property.setKey(key);
-        property.setValue(value);
+        property.setGroupName(groupName);
+        property.setPropertyName(propertyName);
+        property.setPropertyValue(propertyValue);
+        property.setPropertyType(propertyType);
+        property.setDescription(description);
         return persist(property);
     }
 

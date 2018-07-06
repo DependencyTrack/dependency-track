@@ -17,18 +17,13 @@
  */
 package org.owasp.dependencytrack.model;
 
-import alpine.validation.RegexSequence;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import alpine.model.ConfigProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Inheritance;
+import javax.jdo.annotations.InheritanceStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
-import java.io.Serializable;
 
 /**
  * User-defined key/value model for individual projects.
@@ -37,41 +32,15 @@ import java.io.Serializable;
  * @since 3.0.0
  */
 @PersistenceCapable(table = "PROJECT_PROPERTY")
+@Inheritance(strategy = InheritanceStrategy.COMPLETE_TABLE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectProperty implements Serializable {
+public class ProjectProperty extends ConfigProperty {
 
-    private static final long serialVersionUID = -821103184547741489L;
-
-    @PrimaryKey
-    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
-    @JsonIgnore
-    private long id;
+    private static final long serialVersionUID = 7394616773695958262L;
 
     @Persistent
     @Column(name = "PROJECT_ID", allowsNull = "false")
     private Project project;
-
-    @Persistent
-    @Column(name = "KEY", allowsNull = "false")
-    @NotNull
-    @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The key may only contain printable characters")
-    private String key;
-
-    @Persistent
-    @Column(name = "VALUE", allowsNull = "false")
-    @NotNull
-    @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The value may only contain printable characters")
-    private String value;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public Project getProject() {
         return project;
@@ -79,22 +48,6 @@ public class ProjectProperty implements Serializable {
 
     public void setProject(Project project) {
         this.project = project;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
     }
 
 }

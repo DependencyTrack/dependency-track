@@ -116,7 +116,7 @@ public class Project implements Serializable {
     private Collection<Project> children;
 
     @Persistent(mappedBy = "project", defaultFetchGroup = "true")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "key ASC"))
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC"))
     private List<ProjectProperty> properties;
 
     @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true", mappedBy = "projects")

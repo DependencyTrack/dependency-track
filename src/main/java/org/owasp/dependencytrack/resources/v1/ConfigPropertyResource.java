@@ -65,7 +65,7 @@ public class ConfigPropertyResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response getConfigProperties() throws Exception {
+    public Response getConfigProperties() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<ConfigProperty> configProperties = qm.getConfigProperties();
             // Detaches the objects and closes the persistence manager so that if/when encrypted string
@@ -74,7 +74,7 @@ public class ConfigPropertyResource extends AlpineResource {
             qm.close();
             for (ConfigProperty configProperty: configProperties) {
                 // Replace the value of encrypted strings with the pre-defined placeholder
-                if (ConfigProperty.PropertyType.ENCRYPTEDSTRING.name().equals(configProperty.getPropertyType())) {
+                if (ConfigProperty.PropertyType.ENCRYPTEDSTRING == configProperty.getPropertyType()) {
                     configProperty.setPropertyValue(ENCRYPTED_PLACEHOLDER);
                 }
             }
@@ -105,22 +105,22 @@ public class ConfigPropertyResource extends AlpineResource {
             ConfigProperty configProperty = qm.getConfigProperty(json.getGroupName(), json.getPropertyName());
             if (configProperty != null) {
 
-                if (configProperty.getPropertyType().equals(ConfigProperty.PropertyType.BOOLEAN.name())) {
+                if (configProperty.getPropertyType() == ConfigProperty.PropertyType.BOOLEAN) {
                     configProperty.setPropertyValue(String.valueOf(BooleanUtil.valueOf(json.getPropertyValue())));
-                } else if (configProperty.getPropertyType().equals(ConfigProperty.PropertyType.INTEGER.name())) {
+                } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.INTEGER) {
                     try {
                         configProperty.setPropertyValue(String.valueOf(Integer.parseInt(json.getPropertyValue())));
                     } catch (NumberFormatException e) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected an integer and an integer was not sent.").build();
                     }
-                } else if (configProperty.getPropertyType().equals(ConfigProperty.PropertyType.NUMBER.name())) {
+                } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.NUMBER) {
                     try {
                         new BigDecimal(json.getPropertyValue());  // don't actually use it, just see if it's parses without exception
                         configProperty.setPropertyValue(json.getPropertyValue());
                     } catch (NumberFormatException e) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected a number and a number was not sent.").build();
                     }
-                } else if (configProperty.getPropertyType().equals(ConfigProperty.PropertyType.ENCRYPTEDSTRING.name())) {
+                } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.ENCRYPTEDSTRING) {
                     try {
                         // Determine if the value of the encrypted property value is that of the placeholder. If so, the value has not been modified and should not be saved.
                         if (ENCRYPTED_PLACEHOLDER.equals(json.getPropertyValue())) {

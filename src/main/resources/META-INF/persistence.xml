@@ -32,6 +32,7 @@
         <class>org.owasp.dependencytrack.model.DependencyMetrics</class>
         <class>org.owasp.dependencytrack.model.Evidence</class>
         <class>org.owasp.dependencytrack.model.License</class>
+        <class>org.owasp.dependencytrack.model.NotificationRule</class>
         <class>org.owasp.dependencytrack.model.PortfolioMetrics</class>
         <class>org.owasp.dependencytrack.model.Project</class>
         <class>org.owasp.dependencytrack.model.ProjectMetrics</class>

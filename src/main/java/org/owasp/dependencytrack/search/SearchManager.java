@@ -18,6 +18,8 @@
 package org.owasp.dependencytrack.search;
 
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -26,6 +28,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,11 +98,32 @@ public class SearchManager {
             }
             searchResult.addResultSet(indexManager.getIndexType().name().toLowerCase(), resultSet);
         } catch (ParseException e) {
-            LOGGER.error("Failed to parse search string.");
+            LOGGER.error("Failed to parse search string", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                    .content("Failed to parse search string. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         } catch (CorruptIndexException e) {
-            LOGGER.error("Corrupted Lucene Index Detected:\n" + e.getMessage());
+            LOGGER.error("Corrupted Lucene index detected", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                    .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         } catch (IOException e) {
-            LOGGER.error("IO Exception searching Lucene Index:\n" + e.getMessage());
+            LOGGER.error("An I/O Exception occurred while searching Lucene index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                    .content("An I/O Exception occurred while searching Lucene index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
 
         indexManager.close();

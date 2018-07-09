@@ -18,10 +18,13 @@
 package org.owasp.dependencytrack.search;
 
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import java.io.IOException;
 
 /**
@@ -65,8 +68,14 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         try {
             getIndexWriter().addDocument(doc);
         } catch (IOException e) {
-            LOGGER.error("Error adding object to index");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("An error occurred while adding a license to the index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.LICENSE_INDEXER)
+                    .content("An error occurred while adding a license to the index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 
@@ -79,8 +88,14 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()));
         } catch (IOException e) {
-            LOGGER.error("Error removing object from index");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("An error occurred while removing a license from the index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.LICENSE_INDEXER)
+                    .content("An error occurred while removing a license from the index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 

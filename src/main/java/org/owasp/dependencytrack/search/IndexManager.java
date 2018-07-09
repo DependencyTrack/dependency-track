@@ -19,6 +19,8 @@ package org.owasp.dependencytrack.search;
 
 import alpine.Config;
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -40,7 +42,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
-import org.apache.lucene.util.Version;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -113,6 +115,13 @@ public abstract class IndexManager implements AutoCloseable {
         if (!indexDir.exists()) {
             if (!indexDir.mkdirs()) {
                 LOGGER.error("Unable to create index directory: " + indexDir.getCanonicalPath());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationConstants.Scope.SYSTEM)
+                        .group(NotificationConstants.Group.FILE_SYSTEM)
+                        .title(NotificationConstants.Title.FILE_SYSTEM_ERROR)
+                        .content("Unable to create index directory: " + indexDir.getCanonicalPath())
+                        .level(NotificationLevel.ERROR)
+                );
             }
         }
         return new SimpleFSDirectory(indexDir.toPath());
@@ -179,8 +188,14 @@ public abstract class IndexManager implements AutoCloseable {
         try {
             getIndexWriter().commit();
         } catch (IOException e) {
-            LOGGER.error("Error committing index");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("Error committing index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                    .content("Error committing index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 
@@ -262,11 +277,23 @@ public abstract class IndexManager implements AutoCloseable {
                 list.add(getIndexSearcher().doc(hit.doc));
             }
         } catch (CorruptIndexException e) {
-            LOGGER.error("Corrupted Lucene Index Detected");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("Corrupted Lucene index detected", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                    .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         } catch (IOException e) {
-            LOGGER.error("IO Exception searching Lucene Index");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("An I/O exception occurred while searching Lucene index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                    .content("An I/O exception occurred while searching Lucene index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
         if (list.size() > 0) {
             return list.get(0); // There should only be one document

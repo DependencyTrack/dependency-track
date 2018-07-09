@@ -18,10 +18,13 @@
 package org.owasp.dependencytrack.search;
 
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import java.io.IOException;
 
 /**
@@ -68,8 +71,14 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         try {
             getIndexWriter().addDocument(doc);
         } catch (IOException e) {
-            LOGGER.error("Error adding object to index");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("An error occurred while adding component to index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.COMPONENT_INDEXER)
+                    .content("An error occurred while adding component to index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 
@@ -82,8 +91,14 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()));
         } catch (IOException e) {
-            LOGGER.error("Error removing object from index");
-            LOGGER.error(e.getMessage());
+            LOGGER.error("An error occurred while removing a component from the index", e);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .title(NotificationConstants.Title.COMPONENT_INDEXER)
+                    .content("An error occurred while removing a component from the index. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 

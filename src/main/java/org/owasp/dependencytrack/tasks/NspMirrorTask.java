@@ -20,6 +20,8 @@ package org.owasp.dependencytrack.tasks;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.util.JavaVersion;
 import alpine.util.SystemUtil;
 import io.github.openunirest.http.HttpResponse;
@@ -30,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.event.NspMirrorEvent;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import org.owasp.dependencytrack.parser.nsp.NspAdvsoriesParser;
 import org.owasp.dependencytrack.parser.nsp.model.Advisory;
 import org.owasp.dependencytrack.parser.nsp.model.AdvisoryResults;
@@ -54,6 +57,8 @@ public class NspMirrorTask implements LoggableSubscriber {
     private static final String NSP_API_BASE_URL = "https://api.nodesecurity.io/advisories";
     private static final Logger LOGGER = Logger.getLogger(NspMirrorTask.class);
 
+    private boolean successful = true;
+
     /**
      * {@inheritDoc}
      */
@@ -70,6 +75,15 @@ public class NspMirrorTask implements LoggableSubscriber {
             }
 
             LOGGER.info("NSP mirroring complete");
+            if (successful) {
+                Notification.dispatch(new Notification()
+                        .scope(NotificationConstants.Scope.SYSTEM)
+                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.NSP_MIRROR)
+                        .content("Mirroring of the Node Security Platform completed successfully")
+                        .level(NotificationLevel.INFORMATIONAL)
+                );
+            }
         }
     }
 
@@ -102,6 +116,14 @@ public class NspMirrorTask implements LoggableSubscriber {
             }
         } catch (UnirestException e) {
             LOGGER.error("An error occurred while retrieving NSP advisory", e);
+            successful = false;
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                    .title(NotificationConstants.Title.NSP_MIRROR)
+                    .content("An error occurred while retrieving NSP advisory. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 

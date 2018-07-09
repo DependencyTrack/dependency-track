@@ -21,6 +21,8 @@ import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -31,6 +33,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.NistMirrorEvent;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import org.owasp.dependencytrack.parser.nvd.NvdParser;
 import org.owasp.dependencytrack.util.HttpClientFactory;
 import java.io.Closeable;
@@ -64,6 +67,7 @@ public class NistMirrorTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NistMirrorTask.class);
 
+    private boolean mirroredWithoutErrors = true;
 
     /**
      * {@inheritDoc}
@@ -98,6 +102,16 @@ public class NistMirrorTask implements LoggableSubscriber {
         doDownload(CVE_XML_12_MODIFIED_URL);
         doDownload(CVE_XML_20_MODIFIED_URL);
         doDownload(CVE_JSON_10_MODIFIED_URL);
+
+        if (mirroredWithoutErrors) {
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                    .title(NotificationConstants.Title.NVD_MIRROR)
+                    .content("Mirroring of the NVD completed successfully")
+                    .level(NotificationLevel.INFORMATIONAL)
+            );
+        }
     }
 
     /**
@@ -163,15 +177,40 @@ public class NistMirrorTask implements LoggableSubscriber {
                 FileUtils.copyInputStreamToFile(response.getEntity().getContent(), file);
                 uncompress(file);
             } else if (response.getStatusLine().getStatusCode() == 403) {
+                mirroredWithoutErrors = false;
+                final String detailMessage = "This may occur if the NVD is throttling connections due to excessive load or repeated " +
+                        "connections from the same IP address or as a result of firewall or proxy authentication failures";
                 LOGGER.warn("Unable to download - HTTP Response 403: " + status.getReasonPhrase());
-                LOGGER.warn("This may occur if the NVD is throttling connections due to excessive load or repeated " +
-                        "connections from the same IP address or as a result of firewall or proxy authentication failures");
+                LOGGER.warn(detailMessage);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationConstants.Scope.SYSTEM)
+                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.NVD_MIRROR)
+                        .content("An error occurred mirroring the contents of the NVD. Check log for details. HTTP Response: " + status.getStatusCode() + ". " + detailMessage)
+                        .level(NotificationLevel.ERROR)
+                );
             } else {
+                mirroredWithoutErrors = false;
                 LOGGER.warn("Unable to download - HTTP Response " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                Notification.dispatch(new Notification()
+                        .scope(NotificationConstants.Scope.SYSTEM)
+                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.NVD_MIRROR)
+                        .content("An error occurred mirroring the contents of the NVD. Check log for details. HTTP Response: " + status.getStatusCode())
+                        .level(NotificationLevel.ERROR)
+                );
             }
 
         } catch (IOException e) {
-            LOGGER.error("Download failed : " + e.getLocalizedMessage());
+            mirroredWithoutErrors = false;
+            LOGGER.error("Download failed : " + e.getMessage());
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.SYSTEM)
+                    .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                    .title(NotificationConstants.Title.NVD_MIRROR)
+                    .content("An error occurred mirroring the contents of the NVD. Check log for details. " + e.getMessage())
+                    .level(NotificationLevel.ERROR)
+            );
         }
     }
 
@@ -195,6 +234,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             final NvdParser parser = new NvdParser();
             parser.parse(uncompressedFile);
         } catch (IOException ex) {
+            mirroredWithoutErrors = false;
             ex.printStackTrace();
         } finally {
             close(gzis);

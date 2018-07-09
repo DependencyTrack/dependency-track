@@ -18,6 +18,8 @@
 package org.owasp.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -27,6 +29,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.owasp.dependencycheck.utils.XmlUtils;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.RepositoryType;
+import org.owasp.dependencytrack.notification.NotificationConstants;
 import org.owasp.dependencytrack.util.DateUtil;
 import org.owasp.dependencytrack.util.HttpClientFactory;
 import org.w3c.dom.Document;
@@ -104,10 +107,24 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                     LOGGER.debug("HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
                     LOGGER.debug(" - RepositoryType URL : " + url);
                     LOGGER.debug(" - Package URL : " + component.getPurl().canonicalize());
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationConstants.Scope.SYSTEM)
+                            .group(NotificationConstants.Group.REPOSITORY)
+                            .title(NotificationConstants.Title.REPO_ERROR)
+                            .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. URL: " + url + " HTTP Status: " + response.getStatusLine().getStatusCode() + ". Check log for details." )
+                            .level(NotificationLevel.ERROR)
+                    );
                 }
 
             } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
                 LOGGER.error("Request failure", e);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationConstants.Scope.SYSTEM)
+                        .group(NotificationConstants.Group.REPOSITORY)
+                        .title(NotificationConstants.Title.REPO_ERROR)
+                        .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. Check log for details. " + e.getMessage())
+                        .level(NotificationLevel.ERROR)
+                );
             }
         }
         return meta;

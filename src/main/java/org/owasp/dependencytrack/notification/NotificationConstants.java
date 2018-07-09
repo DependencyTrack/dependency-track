@@ -50,6 +50,7 @@ public class NotificationConstants {
         public static final String VULNERABILITY_INDEXER = "Vulnerability Indexing Service";
         public static final String CORE_INDEXING_SERVICES = "Core Indexing Services";
         public static final String FILE_SYSTEM_ERROR = "File System Error";
+        public static final String REPO_ERROR = "Repository Error";
     }
 
 }

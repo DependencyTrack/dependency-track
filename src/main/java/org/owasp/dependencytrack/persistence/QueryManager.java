@@ -38,6 +38,7 @@ import org.owasp.dependencytrack.model.DependencyMetrics;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.Finding;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.NotificationRule;
 import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.ProjectMetrics;
@@ -1844,6 +1845,24 @@ public class QueryManager extends AlpineQueryManager {
             return persist(metaComponent);
         }
         return null;
+    }
+
+    /**
+     * Returns a pacinated list of all notification rules.
+     * @return a paginated list of NotificationRules
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getNotificationRules() {
+        final Query query = pm.newQuery(NotificationRule.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
     }
 
     /**

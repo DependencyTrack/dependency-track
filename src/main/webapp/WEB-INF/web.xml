@@ -37,6 +37,9 @@
     <listener>
         <listener-class>org.owasp.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
     </listener>
+    <listener>
+        <listener-class>org.owasp.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>
+    </listener>
 
     <filter>
         <filter-name>WhitelistUrlFilter</filter-name>

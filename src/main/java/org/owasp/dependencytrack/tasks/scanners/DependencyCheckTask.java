@@ -178,6 +178,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
                             // or it might be due to a ODC plugin that uses a vulnerability datasource that ODT does not support.
                             internalVuln = qm.createVulnerability(ModelConverter.convert(qm, vulnerability), true);
                         }
+                        super.analyzeNotificationCriteria(qm, internalVuln, component);
                         qm.addVulnerability(internalVuln, component);
                     }
                 }

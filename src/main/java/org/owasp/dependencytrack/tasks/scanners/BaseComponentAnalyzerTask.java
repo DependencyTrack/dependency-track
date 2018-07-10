@@ -18,13 +18,23 @@
 package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import alpine.resources.OrderDirection;
 import alpine.resources.Pagination;
 import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.Dependency;
+import org.owasp.dependencytrack.model.Project;
+import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.notification.NotificationConstants;
+import org.owasp.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A base class that has logic common or useful to all classes that extend it.
@@ -110,6 +120,29 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
             }
         }
         logger.info("Portfolio analysis complete");
+    }
+
+    protected void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component) {
+        if (!qm.contains(vulnerability, component)) {
+            // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
+            // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
+            // it warrants a Notification be dispatched.
+
+            Set<Project> affectedProjects = new HashSet<>();
+            List<Dependency> dependencies = qm.getAllDependencies(component);
+            for (Dependency dependency : dependencies) {
+                affectedProjects.add(dependency.getProject());
+            }
+
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.PORTFOLIO)
+                    .group(NotificationConstants.Group.NEW_VULNERABILITY)
+                    .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                    .content("A new vulnerability was discovered in the following component:")
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .subject(new NewVulnerabilityIdentified(vulnerability, component, affectedProjects))
+            );
+        }
     }
 
 }

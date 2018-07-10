@@ -139,6 +139,7 @@ public class NspAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
                 Component component = getComponentFromAdvisory(components, advisory);
                 Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NSP, String.valueOf(advisory.getId()));
                 if (component != null && vulnerabiity != null) {
+                    super.analyzeNotificationCriteria(qm, vulnerabiity, component);
                     qm.addVulnerability(vulnerabiity, component);
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));

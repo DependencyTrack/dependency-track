@@ -850,7 +850,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param component The component to check against
      * @return true if vulnerability is associated with the component, false if not
      */
-    private boolean contains(Vulnerability vulnerability, Component component) {
+    public boolean contains(Vulnerability vulnerability, Component component) {
         vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
         component = getObjectById(Component.class, component.getId());
         for (Vulnerability vuln: component.getVulnerabilities()) {

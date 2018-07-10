@@ -108,7 +108,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                     .scope(NotificationConstants.Scope.SYSTEM)
                     .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
                     .title(NotificationConstants.Title.NVD_MIRROR)
-                    .content("Mirroring of the NVD completed successfully")
+                    .content("Mirroring of the National Vulnerability Database completed successfully")
                     .level(NotificationLevel.INFORMATIONAL)
             );
         }
@@ -186,7 +186,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                         .scope(NotificationConstants.Scope.SYSTEM)
                         .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
                         .title(NotificationConstants.Title.NVD_MIRROR)
-                        .content("An error occurred mirroring the contents of the NVD. Check log for details. HTTP Response: " + status.getStatusCode() + ". " + detailMessage)
+                        .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode() + ". " + detailMessage)
                         .level(NotificationLevel.ERROR)
                 );
             } else {
@@ -196,7 +196,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                         .scope(NotificationConstants.Scope.SYSTEM)
                         .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
                         .title(NotificationConstants.Title.NVD_MIRROR)
-                        .content("An error occurred mirroring the contents of the NVD. Check log for details. HTTP Response: " + status.getStatusCode())
+                        .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode())
                         .level(NotificationLevel.ERROR)
                 );
             }
@@ -208,7 +208,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                     .scope(NotificationConstants.Scope.SYSTEM)
                     .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
                     .title(NotificationConstants.Title.NVD_MIRROR)
-                    .content("An error occurred mirroring the contents of the NVD. Check log for details. " + e.getMessage())
+                    .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
             );
         }

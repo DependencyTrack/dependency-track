@@ -127,6 +127,12 @@
             <artifactId>cvss-calculator</artifactId>
             <version>1.1.0</version>
         </dependency>
+        <!-- CPE Parser -->
+        <dependency>
+            <groupId>us.springett</groupId>
+            <artifactId>cpe-parser</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- OWASP Dependency-Check -->
         <dependency>
             <groupId>org.owasp</groupId>

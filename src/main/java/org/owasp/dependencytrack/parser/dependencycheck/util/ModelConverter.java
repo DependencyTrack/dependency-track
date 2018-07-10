@@ -17,12 +17,16 @@
  */
 package org.owasp.dependencytrack.parser.dependencycheck.util;
 
+import alpine.logging.Logger;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencytrack.parser.dependencycheck.resolver.CweResolver;
 import org.owasp.dependencytrack.persistence.QueryManager;
+import us.springett.parsers.cpe.Cpe;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.CpeParsingException;
 import java.io.File;
 import java.math.BigDecimal;
 
@@ -34,6 +38,8 @@ import java.math.BigDecimal;
  * @since 3.0.0
  */
 public final class ModelConverter {
+
+    private static final Logger LOGGER = Logger.getLogger(ModelConverter.class);
 
     /**
      * Private constructor.
@@ -93,11 +99,32 @@ public final class ModelConverter {
         dependency.setFileName(StringUtils.trimToNull(fileName));
         dependency.setFilePath(component.getUuid() + File.separator + fileName);
 
-
         // Add evidence to the dependency
-        String group = StringUtils.trimToNull(component.getGroup());
-        String name = StringUtils.trimToNull(component.getName());
-        String version = StringUtils.trimToNull(component.getVersion());
+        String group = null, name = null, version = null;
+        boolean isCpeUsed = false;
+        if (component.getCpe() != null) {
+            try {
+                final Cpe cpe = CpeParser.parse(component.getCpe());
+                group = cpe.getVendor();
+                name = cpe.getProduct();
+                version = cpe.getVersion();
+                isCpeUsed = true;
+            } catch (CpeParsingException e) {
+                LOGGER.error("An error occurred while parsing CPE: " + component.getCpe(), e);
+            }
+        }
+        if (!isCpeUsed) {
+            if (component.getPurl() != null) {
+                group = component.getPurl().getNamespace();
+                name = component.getPurl().getName();
+                version = component.getPurl().getVersion();
+            } else {
+                group = StringUtils.trimToNull(component.getGroup());
+                name = StringUtils.trimToNull(component.getName());
+                version = StringUtils.trimToNull(component.getVersion());
+            }
+        }
+
         if (group != null) {
             dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", group, Confidence.HIGHEST);
             dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "groupid", group, Confidence.HIGHEST);

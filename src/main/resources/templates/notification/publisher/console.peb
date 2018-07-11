@@ -1,0 +1,8 @@
+--------------------------------------------------------------------------------
+Notification
+  -- timestamp: {{ timestamp }}
+  -- level:     {{ notification.level }}
+  -- scope:     {{ notification.scope }}
+  -- group:     {{ notification.group }}
+  -- title:     {{ notification.title }}
+  -- content:   {{ notification.content }}

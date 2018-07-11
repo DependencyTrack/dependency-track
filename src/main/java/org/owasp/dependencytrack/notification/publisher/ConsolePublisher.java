@@ -19,26 +19,27 @@ package org.owasp.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import com.mitchellbosecke.pebble.PebbleEngine;
+import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import javax.json.JsonObject;
 import java.io.PrintStream;
 
-public class ConsolePublisher implements Publisher {
+public class ConsolePublisher extends AbstractPublisher implements Publisher {
+
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/console.peb");
 
     public void inform(Notification notification, JsonObject config) {
+        final String content = super.prepareTemplate(notification, TEMPLATE);
+        if (content == null) {
+            return;
+        }
         final PrintStream ps;
         if (notification.getLevel() == NotificationLevel.ERROR) {
             ps = System.err;
         } else {
             ps = System.out;
         }
-        ps.println("--------------------------------------------------------------------------------");
-        ps.println("Notification");
-        ps.println(" -- timestamp: " + notification.getTimestamp().toString());
-        ps.println(" -- level:     " + notification.getLevel());
-        ps.println(" -- scope:     " + notification.getScope());
-        ps.println(" -- group:     " + notification.getGroup());
-        ps.println(" -- title:     " + notification.getTitle());
-        ps.println(" -- content:   " + notification.getContent());
+        ps.println(content);
     }
-
 }

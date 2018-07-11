@@ -39,10 +39,17 @@ public class NotificationRouter implements Subscriber {
     public void inform(Notification notification) {
         for (NotificationRule rule: resolveRules(notification)) {
 
-            try (StringReader stringReader = new StringReader(rule.getPublisherConfig());
-                 JsonReader jsonReader = Json.createReader(stringReader)) {
-
-                JsonObject config = jsonReader.readObject();
+            // Not all publishers need configuration (i.e. ConsolePublisher)
+            JsonObject config = null;
+            if (rule.getPublisherConfig() != null) {
+                try (StringReader stringReader = new StringReader(rule.getPublisherConfig());
+                     JsonReader jsonReader = Json.createReader(stringReader)) {
+                    config = jsonReader.readObject();
+                } catch (Exception e) {
+                    LOGGER.error("An error occurred while preparing the configuration for the notification publisher", e);
+                }
+            }
+            try {
                 Class publisherClass = Class.forName(rule.getPublisherClass());
                 Publisher publisher = (Publisher) publisherClass.newInstance();
                 publisher.inform(notification, config);

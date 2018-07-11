@@ -23,15 +23,18 @@ import alpine.mail.SendMail;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.util.BooleanUtil;
+import com.mitchellbosecke.pebble.PebbleEngine;
+import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.owasp.dependencytrack.persistence.QueryManager;
-
 import javax.json.JsonObject;
 
 import static org.owasp.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class SendMailPublisher implements Publisher {
+public class SendMailPublisher extends AbstractPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
+    private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/email.peb");
 
     public void inform(Notification notification, JsonObject config) {
         try (QueryManager qm = new QueryManager()) {
@@ -50,19 +53,16 @@ public class SendMailPublisher implements Publisher {
             final boolean smtpAuth = (smtpUser.getPropertyValue() != null && smtpPass.getPropertyValue() != null);
             final String destination = config.getString("destination");
 
-            final String body =
-                    "Timestamp: " + notification.getTimestamp().toString() + "\n" +
-                            "Level:     " + notification.getLevel() + "\n" +
-                            "Scope:     " + notification.getScope() + "\n" +
-                            "Group:     " + notification.getGroup() + "\n" +
-                            "Title:     " + notification.getTitle() + "\n\n" +
-                            notification.getContent();
+            final String content = super.prepareTemplate(notification, TEMPLATE);
+            if (content == null) {
+                return;
+            }
 
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom.getPropertyValue())
                     .to(destination)
                     .subject("Dependency-Track Notification (" + notification.getLevel() + "): " + notification.getTitle())
-                    .body(body)
+                    .body(content)
                     .host(smtpHostname.getPropertyValue())
                     .port(Integer.valueOf(smtpPort.getPropertyValue()))
                     .username(smtpUser.getPropertyValue())

@@ -19,77 +19,32 @@ package org.owasp.dependencytrack.notification.publisher;
 
 import alpine.logging.Logger;
 import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
+import com.mitchellbosecke.pebble.PebbleEngine;
+import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
-import org.owasp.dependencytrack.notification.NotificationConstants;
 import org.owasp.dependencytrack.util.HttpClientFactory;
 import javax.json.JsonObject;
-import java.time.ZoneId;
 
-public class SlackPublisher implements Publisher {
+public class SlackPublisher extends AbstractPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(SlackPublisher.class);
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().build();
+    private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/slack.peb");
 
     public void inform(Notification notification, JsonObject config) {
-        final long timestamp = notification.getTimestamp().toEpochSecond(
-                ZoneId.systemDefault().getRules()
-                .getOffset(notification.getTimestamp())
-        );
         final String destination = config.getString("destination");
-        final String body;
 
-
-        /*
-         * Construct message body for system notifications.
-         */
-        if (NotificationConstants.Scope.SYSTEM.name().equals(notification.getScope())) {
-            String color = "#c0c0c0";
-            if (notification.getLevel() == NotificationLevel.INFORMATIONAL) {
-                color = "good";
-            } else if (notification.getLevel() == NotificationLevel.WARNING) {
-                color = "warning";
-            } else if (notification.getLevel() == NotificationLevel.ERROR) {
-                color = "danger";
-            }
-            body = "{\n" +
-                    "  \"icon_url\": \"https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png\",\n" +
-                    "  \"username\": \"Dependency-Track\",\n" +
-                    "  \"attachments\": [\n" +
-                    "    {\n" +
-                    "      \"fields\": [\n" +
-                    "        {\n" +
-                    "          \"title\": \"Level\",\n" +
-                    "          \"value\": \"" + notification.getLevel() + "\",\n" +
-                    "        },\n" +
-                    "        {\n" +
-                    "          \"title\": \"Scope\",\n" +
-                    "          \"value\": \"" + notification.getScope() + "\",\n" +
-                    "        },\n" +
-                    "        {\n" +
-                    "          \"title\": \"Group\",\n" +
-                    "          \"value\": \"" + notification.getGroup() + "\",\n" +
-                    "        }\n" +
-                    "      ],\n" +
-                    "      \"color\": \"" + color + "\",\n" +
-                    "      \"ts\": \"" + timestamp + "\",\n" +
-                    "      \"title\": \"" + notification.getTitle() + "\",\n" +
-                    "      \"text\": \"" + notification.getContent() + "\"\n" +
-                    "    }\n" +
-                    "  ]\n" +
-                    "}";
-        } else {
-        /*
-         * Construct message body for portfolio notifications.
-         */
-            body = ""; //todo
+        final String content = super.prepareTemplate(notification, TEMPLATE);
+        if (content == null) {
+            return;
         }
 
         Unirest.setHttpClient(HttpClientFactory.createClient());
         final HttpResponse<JsonNode> response = Unirest.post(destination)
                 .header("accept", "application/json")
-                .body(body)
+                .body(content)
                 .asJson();
 
         if (response.getStatus() != 200) {

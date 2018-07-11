@@ -1,0 +1,42 @@
+{
+	"@type": "MessageCard",
+	"@context": "http://schema.org/extensions",
+	"summary": "{{ title | escape(strategy="js") }}",
+	"title": "{{ title | escape(strategy="js") }}",
+	"sections": [
+		{
+			"activityTitle": "Dependency-Track",
+			"activitySubtitle": "{{ timestamp }}",
+			"activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png",
+			"facts": [
+			{% if notification.scope == "PORTFOLIO" %}
+                {
+                    "name": "VulnID",
+                    "value": "{{ vulnId }}"
+                },
+                {
+                    "name": "Severity",
+                    "value": "{{ severity }}"
+                },
+                {
+                    "name": "Source",
+                    "value": "{{ source }}"
+                },
+            {% endif %}
+                {
+                    "name": "Level",
+                    "value": "{{ notification.level }}"
+                },
+                {
+                    "name": "Scope",
+                    "value": "{{ notification.scope }}"
+                },
+                {
+                    "name": "Group",
+                    "value": "{{ notification.group }}"
+                }
+			],
+			"text": "{{ content | escape(strategy="js") }}"
+		}
+	]
+}

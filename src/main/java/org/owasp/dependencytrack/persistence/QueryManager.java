@@ -38,6 +38,7 @@ import org.owasp.dependencytrack.model.DependencyMetrics;
 import org.owasp.dependencytrack.model.Evidence;
 import org.owasp.dependencytrack.model.Finding;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.NotificationPublisher;
 import org.owasp.dependencytrack.model.NotificationRule;
 import org.owasp.dependencytrack.model.PortfolioMetrics;
 import org.owasp.dependencytrack.model.Project;
@@ -1863,6 +1864,47 @@ public class QueryManager extends AlpineQueryManager {
             return execute(query, filterString);
         }
         return execute(query);
+    }
+
+    /**
+     * Retrieves a NotificationPublisher by its name.
+     * @param name The name of the NotificationPublisher
+     * @return a NotificationPublisher
+     */
+    @SuppressWarnings("unchecked")
+    public NotificationPublisher getNotificationPublisher(final String name) {
+        final Query query = pm.newQuery(NotificationPublisher.class, "name == :name");
+        final List<NotificationPublisher> result = (List<NotificationPublisher>) query.execute(name);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Retrieves a NotificationPublisher by its class.
+     * @param clazz The Class of the NotificationPublisher
+     * @return a NotificationPublisher
+     */
+    @SuppressWarnings("unchecked")
+    public NotificationPublisher getNotificationPublisher(final Class clazz) {
+        final Query query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass");
+        final List<NotificationPublisher> result = (List<NotificationPublisher>) query.execute(clazz.getCanonicalName());
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
+     * Creates a NotificationPublisher object.
+     * @param name The name of the NotificationPublisher
+     * @return a NotificationPublisher
+     */
+    public NotificationPublisher createNotificationPublisher(final String name, final String description, final Class publisherClass, final String templateContent) {
+        pm.currentTransaction().begin();
+        final NotificationPublisher publisher = new NotificationPublisher();
+        publisher.setName(name);
+        publisher.setDescription(description);
+        publisher.setPublisherClass(publisherClass.getCanonicalName());
+        publisher.setTemplate(templateContent);
+        pm.makePersistent(publisher);
+        pm.currentTransaction().commit();
+        return getObjectById(NotificationPublisher.class, publisher.getId());
     }
 
     /**

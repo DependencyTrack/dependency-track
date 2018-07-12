@@ -23,6 +23,7 @@ import alpine.logging.Logger;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
+import org.apache.commons.io.FileUtils;
 import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -31,10 +32,13 @@ import org.owasp.dependencytrack.model.License;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.model.Vulnerability;
+import org.owasp.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.owasp.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +66,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultPersonas();
         loadDefaultLicenses();
         loadDefaultRepositories();
+        loadDefaultNotificicationPublishers();
         loadDefaultConfigProperties();
 
         try {
@@ -200,6 +205,29 @@ public class DefaultObjectGenerator implements ServletContextListener {
             for (ConfigPropertyConstants cpc : ConfigPropertyConstants.values()) {
                 if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
                     qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), cpc.getDefaultPropertyValue(), cpc.getPropertyType(), cpc.getDescription());
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads the default notification publishers
+     */
+    private void loadDefaultNotificicationPublishers() {
+        try (QueryManager qm = new QueryManager()) {
+            LOGGER.info("Synchronizing notification publishers to datastore");
+            for (DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
+                if (qm.getNotificationPublisher(publisher.getPublisherClass()) == null) {
+                    File file = new File(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile());
+                    try {
+                        final String templateContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                        qm.createNotificationPublisher(
+                                publisher.getPublisherName(), publisher.getPublisherDescription(),
+                                publisher.getPublisherClass(), templateContent
+                        );
+                    } catch (IOException e) {
+                        LOGGER.error("An error occurred while adding a default notification publisher", e);
+                    }
                 }
             }
         }

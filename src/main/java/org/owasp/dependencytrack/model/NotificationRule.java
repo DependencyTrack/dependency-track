@@ -94,11 +94,11 @@ public class NotificationRule implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The message may only contain printable characters")
     private String message;
 
-    @Persistent
-    @Column(name = "PUBLISHER_CLASS", length = 1024)
-    private String publisherClass;
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "PUBLISHER")
+    private NotificationPublisher publisher;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "PUBLISHER_CONFIG", jdbcType = "CLOB")
     private String publisherConfig;
 
@@ -181,12 +181,12 @@ public class NotificationRule implements Serializable {
         this.notifyOn = sb.toString();
     }
 
-    public String getPublisherClass() {
-        return publisherClass;
+    public NotificationPublisher getNotificationPublisher() {
+        return publisher;
     }
 
-    public void setPublisherClass(String publisherClass) {
-        this.publisherClass = publisherClass;
+    public void setNotificationPublisher(NotificationPublisher publisher) {
+        this.publisher = publisher;
     }
 
     public String getPublisherConfig() {

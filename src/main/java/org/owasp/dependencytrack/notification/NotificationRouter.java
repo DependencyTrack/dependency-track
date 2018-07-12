@@ -50,7 +50,7 @@ public class NotificationRouter implements Subscriber {
                 }
             }
             try {
-                Class publisherClass = Class.forName(rule.getPublisherClass());
+                Class publisherClass = Class.forName(rule.getNotificationPublisher().getPublisherClass());
                 Publisher publisher = (Publisher) publisherClass.newInstance();
                 publisher.inform(notification, config);
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {

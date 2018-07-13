@@ -55,7 +55,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         if (this.getClass() == DependencyCheckTask.class) {
             return shouldAnalyzeWithDependencyCheck(purl);
         }
-        if (this.getClass() == NspAnalysisTask.class) {
+        if (this.getClass() == NpmAuditAnalysisTask.class) {
             return shouldAnalyzeWithNsp(purl);
         }
         return false;
@@ -81,10 +81,10 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     }
 
     /**
-     * Determines if the {@link NspAnalysisTask} is suitable for analysis based on the PackageURL.
+     * Determines if the {@link NpmAuditAnalysisTask} is suitable for analysis based on the PackageURL.
      *
      * @param purl the PackageURL to analyze
-     * @return true if NspAnalysisTask should analyze, false if not
+     * @return true if NpmAuditAnalysisTask should analyze, false if not
      */
     protected boolean shouldAnalyzeWithNsp(PackageURL purl) {
         if (purl == null) {

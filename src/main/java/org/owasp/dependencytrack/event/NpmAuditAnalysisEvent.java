@@ -21,20 +21,20 @@ import org.owasp.dependencytrack.model.Component;
 import java.util.List;
 
 /**
- * Defines an event used to start an analysis via Node Security Platform.
+ * Defines an event used to start an analysis via NPM Audit API.
  *
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NspAnalysisEvent extends VulnerabilityAnalysisEvent {
+public class NpmAuditAnalysisEvent extends VulnerabilityAnalysisEvent {
 
-    public NspAnalysisEvent() { }
+    public NpmAuditAnalysisEvent() { }
 
-    public NspAnalysisEvent(Component component) {
+    public NpmAuditAnalysisEvent(Component component) {
         super(component);
     }
 
-    public NspAnalysisEvent(List<Component> components) {
+    public NpmAuditAnalysisEvent(List<Component> components) {
         super(components);
     }
 

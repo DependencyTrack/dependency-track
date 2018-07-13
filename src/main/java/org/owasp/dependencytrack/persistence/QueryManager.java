@@ -1068,6 +1068,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<Dependency> getAllDependencies(Component component) {
+        component = getObjectById(Component.class, component.getId());
         final Query query = pm.newQuery(Dependency.class, "component == :component");
         query.setOrdering("id asc");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());

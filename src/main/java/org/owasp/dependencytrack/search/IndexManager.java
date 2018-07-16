@@ -214,16 +214,6 @@ public abstract class IndexManager implements AutoCloseable {
     }
 
     /**
-     * Upon finalization, closes if not already closed.
-     * @throws Throwable the {@code Exception} raised by this method
-     * @since 3.0.0
-     */
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
-
-    /**
      * Adds a Field to a Document.
      * @param doc the Lucene Document to add a field to
      * @param name the name of the field

@@ -37,6 +37,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Defines a Model class for notification configurations.
@@ -82,7 +83,7 @@ public class NotificationRule implements Serializable {
     @Persistent(table = "NOTIFICATIONRULE_PROJECTS", defaultFetchGroup = "true")
     @Join(column = "NOTIFICATIONRULE_ID")
     @Element(column = "PROJECT_ID")
-    private List<Project> projects;
+    private Set<Project> projects;
 
     @Persistent
     @Column(name = "NOTIFY_ON", length = 1024)
@@ -143,11 +144,11 @@ public class NotificationRule implements Serializable {
         this.notificationLevel = notificationLevel;
     }
 
-    public List<Project> getProjects() {
+    public Set<Project> getProjects() {
         return projects;
     }
 
-    public void setProjects(List<Project> projects) {
+    public void setProjects(Set<Project> projects) {
         this.projects = projects;
     }
 

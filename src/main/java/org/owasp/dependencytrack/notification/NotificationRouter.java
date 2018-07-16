@@ -19,9 +19,12 @@ package org.owasp.dependencytrack.notification;
 
 import alpine.logging.Logger;
 import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.notification.Subscriber;
 import org.owasp.dependencytrack.model.NotificationRule;
+import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.notification.publisher.Publisher;
+import org.owasp.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -29,8 +32,10 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class NotificationRouter implements Subscriber {
 
@@ -43,17 +48,21 @@ public class NotificationRouter implements Subscriber {
             JsonObject config = null;
             if (rule.getPublisherConfig() != null) {
                 try (StringReader stringReader = new StringReader(rule.getPublisherConfig());
-                     JsonReader jsonReader = Json.createReader(stringReader)) {
+                     final JsonReader jsonReader = Json.createReader(stringReader)) {
                     config = jsonReader.readObject();
                 } catch (Exception e) {
                     LOGGER.error("An error occurred while preparing the configuration for the notification publisher", e);
                 }
             }
             try {
-                Class publisherClass = Class.forName(rule.getNotificationPublisher().getPublisherClass());
-                Publisher publisher = (Publisher) publisherClass.newInstance();
-                publisher.inform(notification, config);
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                final Class<?> publisherClass = Class.forName(rule.getNotificationPublisher().getPublisherClass());
+                if (Publisher.class.isAssignableFrom(publisherClass)) {
+                    final Publisher publisher = (Publisher)publisherClass.getDeclaredConstructor().newInstance();
+                    publisher.inform(notification, config);
+                } else {
+                    LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
                 LOGGER.error("An error occurred while instantiating a notification publisher", e);
             }
         }
@@ -61,20 +70,59 @@ public class NotificationRouter implements Subscriber {
 
     @SuppressWarnings("unchecked")
     private List<NotificationRule> resolveRules(Notification notification) {
-        List<NotificationRule> rules = new ArrayList<>();
+        final List<NotificationRule> rules = new ArrayList<>();
         if (notification.getScope() == null || notification.getGroup() == null || notification.getLevel() == null) {
             return rules;
         }
         try (QueryManager qm = new QueryManager()) {
-            PersistenceManager pm = qm.getPersistenceManager();
+            final PersistenceManager pm = qm.getPersistenceManager();
             final Query query = pm.newQuery(NotificationRule.class);
 
             StringBuilder sb = new StringBuilder();
+
+
+            //todo: add notifyOn
+
+
+            final NotificationLevel level = notification.getLevel();
+            if (NotificationLevel.INFORMATIONAL == level) {
+                sb.append("(notificationLevel == 'INFORMATIONAL' || notificationLevel == 'WARNING' || notificationLevel == 'ERROR') && ");
+            } else if (NotificationLevel.WARNING == level) {
+                sb.append("(notificationLevel == 'WARNING' || notificationLevel == 'ERROR') && ");
+            } else if (NotificationLevel.ERROR == level) {
+                sb.append("notificationLevel == 'ERROR' && ");
+            }
+
             sb.append("enabled == true && scope == :scope"); //todo: improve this - this only works for testing
             query.setFilter(sb.toString());
+            List<NotificationRule> result = (List<NotificationRule>)query.execute(notification.getScope());
 
-            return (List<NotificationRule>) query.execute(notification.getScope());
+
+            if (NotificationConstants.Scope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerabilityIdentified) {
+                final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
+                final Set<Project> affectedProjects = subject.getAffectedProjects();
+                /*
+                if the rule specified one or more projects as targets, reduce the execution
+                of the notification down to those projects that the rule matches and which
+                also match projects affected by the vulnerability.
+                 */
+                for (NotificationRule rule: result) {
+                    if (rule.getProjects() != null) {
+                        for (Project project: rule.getProjects()) {
+                            for (Project affectedProject: affectedProjects) {
+                                if (affectedProject.getUuid().equals(project.getUuid())) {
+                                    rules.add(rule);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                rules.addAll(result);
+            }
         }
+        return rules;
     }
 
 }

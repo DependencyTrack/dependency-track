@@ -27,7 +27,7 @@ import io.github.openunirest.http.Unirest;
 import org.owasp.dependencytrack.util.HttpClientFactory;
 import javax.json.JsonObject;
 
-public class MsTeamsPublisher extends AbstractPublisher implements Publisher {
+public class MsTeamsPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(MsTeamsPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().build();
@@ -36,7 +36,7 @@ public class MsTeamsPublisher extends AbstractPublisher implements Publisher {
     public void inform(Notification notification, JsonObject config) {
         final String destination = config.getString("destination");
 
-        final String content = super.prepareTemplate(notification, TEMPLATE);
+        final String content = prepareTemplate(notification, TEMPLATE);
         if (content == null) {
             return;
         }

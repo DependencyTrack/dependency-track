@@ -30,7 +30,7 @@ import javax.json.JsonObject;
 
 import static org.owasp.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class SendMailPublisher extends AbstractPublisher implements Publisher {
+public class SendMailPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
@@ -53,7 +53,7 @@ public class SendMailPublisher extends AbstractPublisher implements Publisher {
             final boolean smtpAuth = (smtpUser.getPropertyValue() != null && smtpPass.getPropertyValue() != null);
             final String destination = config.getString("destination");
 
-            final String content = super.prepareTemplate(notification, TEMPLATE);
+            final String content = prepareTemplate(notification, TEMPLATE);
             if (content == null) {
                 return;
             }

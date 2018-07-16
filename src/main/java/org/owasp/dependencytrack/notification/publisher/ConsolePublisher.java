@@ -24,13 +24,13 @@ import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import javax.json.JsonObject;
 import java.io.PrintStream;
 
-public class ConsolePublisher extends AbstractPublisher implements Publisher {
+public class ConsolePublisher implements Publisher {
 
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/console.peb");
 
     public void inform(Notification notification, JsonObject config) {
-        final String content = super.prepareTemplate(notification, TEMPLATE);
+        final String content = prepareTemplate(notification, TEMPLATE);
         if (content == null) {
             return;
         }

@@ -120,4 +120,9 @@
         <url-pattern>/mirror/nvd/*</url-pattern>
     </servlet-mapping>
 
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/WEB-INF/fragments/error.jsp</location>
+    </error-page>
+
 </web-app>

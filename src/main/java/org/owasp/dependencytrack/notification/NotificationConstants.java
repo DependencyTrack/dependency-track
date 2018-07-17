@@ -52,6 +52,7 @@ public class NotificationConstants {
         public static final String FILE_SYSTEM_ERROR = "File System Error";
         public static final String REPO_ERROR = "Repository Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
+        public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";
     }
 
 }

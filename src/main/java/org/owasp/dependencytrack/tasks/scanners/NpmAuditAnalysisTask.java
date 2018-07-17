@@ -34,6 +34,7 @@ import org.owasp.dependencytrack.parser.npm.audit.NpmAuditParser;
 import org.owasp.dependencytrack.parser.npm.audit.model.Advisory;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.util.HttpClientFactory;
+import org.owasp.dependencytrack.util.NotificationUtil;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -149,7 +150,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                 Component component = getComponentFromAdvisory(components, advisory);
                 Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NSP, String.valueOf(advisory.getId()));
                 if (component != null && vulnerabiity != null) {
-                    super.analyzeNotificationCriteria(qm, vulnerabiity, component);
+                    NotificationUtil.analyzeNotificationCriteria(vulnerabiity, component);
                     qm.addVulnerability(vulnerabiity, component);
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));

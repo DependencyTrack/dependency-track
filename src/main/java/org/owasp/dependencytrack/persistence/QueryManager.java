@@ -51,6 +51,8 @@ import org.owasp.dependencytrack.model.Scan;
 import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.model.VulnerabilityMetrics;
+import org.owasp.dependencytrack.util.NotificationUtil;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.Query;
 import java.util.ArrayList;
@@ -958,7 +960,9 @@ public class QueryManager extends AlpineQueryManager {
         dependency.setAddedBy(addedBy);
         dependency.setAddedOn(new Date());
         dependency.setNotes(notes);
-        return persist(dependency);
+        dependency = persist(dependency);
+        NotificationUtil.analyzeNotificationCriteria(this, dependency);
+        return dependency;
     }
 
     /**
@@ -1147,6 +1151,20 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(Dependency.class, "project == :project && component == :component");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
         return (List<Dependency>) query.execute(project, component);
+    }
+
+    /**
+     * Returns a fully refreshed Dependency object with all fetch groups returned.
+     *
+     * @param dependency the dependency to fully refresh
+     * @return a Dependency object, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public Dependency getDependency(Dependency dependency) {
+        final Query query = pm.newQuery(Dependency.class, "id == :id");
+        query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
+        final List<Dependency> result = (List<Dependency>) query.execute(dependency.getId());
+        return result.size() == 0 ? null : result.get(0);
     }
 
     /**

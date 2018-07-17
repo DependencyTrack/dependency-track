@@ -35,6 +35,7 @@ import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.owasp.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.util.HttpClientFactory;
+import org.owasp.dependencytrack.util.NotificationUtil;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -178,7 +179,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
                             // or it might be due to a ODC plugin that uses a vulnerability datasource that ODT does not support.
                             internalVuln = qm.createVulnerability(ModelConverter.convert(qm, vulnerability), true);
                         }
-                        super.analyzeNotificationCriteria(qm, internalVuln, component);
+                        NotificationUtil.analyzeNotificationCriteria(internalVuln, component);
                         qm.addVulnerability(internalVuln, component);
                     }
                 }

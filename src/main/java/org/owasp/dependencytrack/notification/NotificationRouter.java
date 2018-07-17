@@ -25,6 +25,7 @@ import org.owasp.dependencytrack.model.NotificationRule;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.notification.publisher.Publisher;
 import org.owasp.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.owasp.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -108,7 +109,7 @@ public class NotificationRouter implements Subscriber {
                 also match projects affected by the vulnerability.
                  */
                 for (NotificationRule rule: result) {
-                    if (rule.getProjects() != null) {
+                    if (rule.getProjects() != null && rule.getProjects().size() > 0) {
                         for (Project project: rule.getProjects()) {
                             for (Project affectedProject: affectedProjects) {
                                 if (affectedProject.getUuid().equals(project.getUuid())) {
@@ -116,6 +117,27 @@ public class NotificationRouter implements Subscriber {
                                 }
                             }
                         }
+                    } else {
+                        rules.add(rule);
+                    }
+                }
+            } else if (NotificationConstants.Scope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerableDependency) {
+                final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
+                /*
+                if the rule specified one or more projects as targets, reduce the execution
+                of the notification down to those projects that the rule matches and which
+                also match projects affected by the vulnerability.
+                 */
+                for (NotificationRule rule: result) {
+                    if (rule.getProjects() != null && rule.getProjects().size() > 0) {
+                        for (Project project: rule.getProjects()) {
+                            if (project.getUuid().equals(subject.getDependency().getProject().getUuid())) {
+                                rules.add(rule);
+                            }
+                        }
+                    } else {
+                        rules.add(rule);
                     }
                 }
             } else {

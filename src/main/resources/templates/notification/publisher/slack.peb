@@ -9,27 +9,32 @@
                     "title": "VulnID",
                     "value": "{{ vulnId }}"
                 },
-                                {
+                {
                     "title": "Severity",
                     "value": "{{ severity }}"
                 },
-                                {
+                {
                     "title": "Source",
                     "value": "{{ source }}"
                 },
-            {% endif %}
+                {
+                    "title": "Component",
+                    "value": "{{ component }}"
+                }
+            {% else %}
                 {
                     "title": "Level",
                     "value": "{{ notification.level }}"
                 },
-                                {
+                {
                     "title": "Scope",
                     "value": "{{ notification.scope }}"
                 },
-                                {
+                {
                     "title": "Group",
                     "value": "{{ notification.group }}"
                 }
+            {% endif %}
             ],
         {% if notification.scope == "PORTFOLIO" %}
             "color": "warning",
@@ -44,9 +49,6 @@
         {% endif %}
             "ts": "{{ timestampEpochSecond }}",
             "title": "{{ title | escape(strategy="js") }}",
-        {% if notification.scope == "PORTFOLIO" %}
-            "pretext": "A new vulnerability was discovered in the following component:",
-        {% endif %}
             "text": "{{ content | escape(strategy="js") }}"
         }
     ]

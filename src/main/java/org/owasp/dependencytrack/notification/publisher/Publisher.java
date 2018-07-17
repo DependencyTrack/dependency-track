@@ -20,6 +20,7 @@ package org.owasp.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.apache.log4j.Logger;
+import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.notification.NotificationConstants;
 import org.owasp.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import javax.json.JsonObject;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,10 +44,10 @@ public interface Publisher {
         );
         context.put("timestampEpochSecond", epochSecond);
         context.put("timestamp", notification.getTimestamp().toString());
+        context.put("title", notification.getTitle());
         context.put("notification", notification);
         if (NotificationConstants.Scope.SYSTEM.name().equals(notification.getScope())) {
             context.put("content", notification.getContent());
-            context.put("title", notification.getTitle());
         } else if (NotificationConstants.Scope.PORTFOLIO.name().equals(notification.getScope())) {
             final NewVulnerabilityIdentified newVuln = (NewVulnerabilityIdentified) notification.getSubject();
             final String vulnId = newVuln.getVulnerability().getVulnId();
@@ -53,11 +55,26 @@ public interface Publisher {
             if (newVuln.getVulnerability().getDescription() != null) {
                 content = newVuln.getVulnerability().getDescription();
             }
-            context.put("title", newVuln.getComponent().getName());
             context.put("severity", newVuln.getVulnerability().getSeverity().name());
             context.put("source", newVuln.getVulnerability().getSource());
             context.put("vulnId", vulnId);
             context.put("content", content);
+            context.put("affectedProjects", new ArrayList<>(newVuln.getAffectedProjects()));
+
+            final Component component = newVuln.getComponent();
+            if (component.getPurl() != null) {
+                context.put("component", component.getPurl().canonicalize());
+            } else {
+                StringBuilder sb = new StringBuilder();
+                if (component.getGroup() != null) {
+                    sb.append(component.getGroup()).append(" / ");
+                }
+                sb.append(component.getName());
+                if (component.getVersion() != null) {
+                    sb.append(" ").append(component.getVersion());
+                }
+                context.put("component", sb.toString());
+            }
         }
 
         try (Writer writer = new StringWriter()) {

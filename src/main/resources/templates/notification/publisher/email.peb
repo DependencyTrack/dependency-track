@@ -1,8 +1,24 @@
 --------------------------------------------------------------------------------
-Notification
-  -- timestamp: {{ timestamp }}
-  -- level:     {{ notification.level }}
-  -- scope:     {{ notification.scope }}
-  -- group:     {{ notification.group }}
-  -- title:     {{ notification.title }}
-  -- content:   {{ notification.content }}
+{% if notification.scope == "PORTFOLIO" %}
+Vuln ID:   {{ vulnId }}
+Severity:  {{ severity }}
+Source:    {{ source }}
+Component: {{ component }}
+{% else %}
+Level:     {{ notification.level }}
+Scope:     {{ notification.scope }}
+Group:     {{ notification.group }}
+{% endif %}
+--------------------------------------------------------------------------------
+
+{{ content }}
+
+--------------------------------------------------------------------------------
+{% if notification.scope == "PORTFOLIO" %}
+Affected Projects:
+  {% for project in affectedProjects %}
+  {{ project.name }} {{ project.version }}
+  {% endfor %}
+{% endif %}
+
+{{ timestamp }}

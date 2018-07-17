@@ -1,15 +1,15 @@
 {
-	"@type": "MessageCard",
-	"@context": "http://schema.org/extensions",
-	"summary": "{{ title | escape(strategy="js") }}",
-	"title": "{{ title | escape(strategy="js") }}",
-	"sections": [
-		{
-			"activityTitle": "Dependency-Track",
-			"activitySubtitle": "{{ timestamp }}",
-			"activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png",
-			"facts": [
-			{% if notification.scope == "PORTFOLIO" %}
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    "summary": "{{ title | escape(strategy="js") }}",
+    "title": "{{ title | escape(strategy="js") }}",
+    "sections": [
+        {
+            "activityTitle": "Dependency-Track",
+            "activitySubtitle": "{{ timestamp }}",
+            "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png",
+            "facts": [
+            {% if notification.scope == "PORTFOLIO" %}
                 {
                     "name": "VulnID",
                     "value": "{{ vulnId }}"
@@ -22,7 +22,11 @@
                     "name": "Source",
                     "value": "{{ source }}"
                 },
-            {% endif %}
+                {
+                    "name": "Component",
+                    "value": "{{ component }}"
+                }
+            {% else %}
                 {
                     "name": "Level",
                     "value": "{{ notification.level }}"
@@ -35,8 +39,9 @@
                     "name": "Group",
                     "value": "{{ notification.group }}"
                 }
-			],
-			"text": "{{ content | escape(strategy="js") }}"
-		}
-	]
+            {% endif %}
+            ],
+            "text": "{{ content | escape(strategy="js") }}"
+        }
+    ]
 }

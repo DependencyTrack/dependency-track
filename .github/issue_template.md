@@ -4,21 +4,21 @@ The issue may already be reported! Please [search for the issue](../) before cre
 # Issue Details 
 
 
-### Issue Type
+### Issue Type:
   - [ ] defect report
   - [ ] enhancement request
   
   
-### Current Behavior
+### Current Behavior:
 
 
-### Steps to Reproduce (if defect)
+### Steps to Reproduce (if defect):
 
 
-### Expected Behavior
+### Expected Behavior:
 
 
-### Environment
+### Environment:
   
   - Dependency-Track Version:
   - Distribution: [ Docker | Executable WAR | Traditional WAR ]
@@ -27,5 +27,5 @@ The issue may already be reported! Please [search for the issue](../) before cre
   - Browser: 
 
 
-### Other Details
+### Other Details:
 (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links for us to have context, eg. stackoverflow, gitter, etc)

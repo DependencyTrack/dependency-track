@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Identifier;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 /**
  * Attempts to resolve the PackageURL from high-quality and reliable evidence.
@@ -33,6 +34,9 @@ import java.util.TreeMap;
 public class PackageURLResolver implements IResolver {
 
     private static final Logger LOGGER = Logger.getLogger(PackageURLResolver.class);
+
+    // ID_REGEX defined in https://github.com/apache/maven/blob/master/maven-model-builder/src/main/java/org/apache/maven/model/validation/DefaultModelValidator.java
+    private static final Pattern MAVEN_ID_REGEX = Pattern.compile("[A-Za-z0-9_\\-.]+");
 
     /**
      * {@inheritDoc}
@@ -46,6 +50,12 @@ public class PackageURLResolver implements IResolver {
                             || identifier == dependency.getIdentifier()) { // account for identifier in related dependency without confidence
 
                         final GAV gav = parseIdentifier(identifier);
+
+                        if (!MAVEN_ID_REGEX.matcher(gav.group).matches() || !MAVEN_ID_REGEX.matcher(gav.artifact).matches()) {
+                            LOGGER.info("An invalid Maven GAV was identified which does not conform to the Maven specification. Skipping. g:" + gav.group + " a:" + gav.artifact + " v:" + gav.version);
+                            continue;
+                        }
+
                         if (dependency.getFileName() != null && dependency.getFileName().contains(".")) {
                             final String extension = dependency.getFileName().substring(
                                     dependency.getFileName().lastIndexOf(".") + 1, dependency.getFileName().length()

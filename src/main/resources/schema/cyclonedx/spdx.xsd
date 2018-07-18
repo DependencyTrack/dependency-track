@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified"
            targetNamespace="http://cyclonedx.org/schema/spdx"
-           version="1.0-3.1">
+           version="1.0-3.2">
 
     <xs:simpleType name="licenseId">
         <xs:restriction base="xs:string">
@@ -1217,6 +1217,11 @@
                     <xs:documentation>ODC Open Database License v1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="ODC-By-1.0">
+                <xs:annotation>
+                    <xs:documentation>Open Data Commons Attribution License v1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="OFL-1.0">
                 <xs:annotation>
                     <xs:documentation>SIL Open Font License 1.0</xs:documentation>
@@ -1570,6 +1575,16 @@
             <xs:enumeration value="TOSL">
                 <xs:annotation>
                     <xs:documentation>Trusster Open Source License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="TU-Berlin-1.0">
+                <xs:annotation>
+                    <xs:documentation>Technische Universitaet Berlin License 1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="TU-Berlin-2.0">
+                <xs:annotation>
+                    <xs:documentation>Technische Universitaet Berlin License 2.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Unicode-DFS-2015">
@@ -2001,6 +2016,21 @@
             <xs:enumeration value="openvpn-openssl-exception">
                 <xs:annotation>
                     <xs:documentation>OpenVPN OpenSSL Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="PS-or-PDF-font-exception-20170817">
+                <xs:annotation>
+                    <xs:documentation>PS/PDF font exception (2017-08-17)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Qt-GPL-exception-1.0">
+                <xs:annotation>
+                    <xs:documentation>Qt GPL exception 1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Qt-LGPL-exception-1.1">
+                <xs:annotation>
+                    <xs:documentation>Qt LGPL exception 1.1</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Qwt-exception-1.0">

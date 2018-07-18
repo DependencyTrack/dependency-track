@@ -1,9 +1,6 @@
 The issue may already be reported! Please [search for the issue](../) before creating one. Only create issues for bug reports or feature requests. All support inquiries and questions should be posted to [Slack](https://owasp.slack.com/messages/proj-dependency-track) ([invite](https://owasp.herokuapp.com/)), [Gitter](https://gitter.im/dependency-track/Lobby), or [Google Groups](https://groups.google.com/forum/#!forum/dependency-track).
 
 
-# Issue Details 
-
-
 ### Issue Type:
   - [ ] defect report
   - [ ] enhancement request

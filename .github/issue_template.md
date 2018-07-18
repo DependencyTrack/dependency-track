@@ -4,24 +4,21 @@ The issue may already be reported! Please [search for the issue](../) before cre
 # Issue Details 
 
 
-* **I'm submitting a ...**
-  - [ ] bug report
-  - [ ] feature request
+### Issue Type
+  - [ ] defect report
+  - [ ] enhancement request
   
   
-* **What is the current behavior?**
+### Current Behavior
 
 
-* **If the current behavior is a bug, please provide steps to reproduce.**
+### Steps to Reproduce (if defect)
 
 
-* **What is the expected behavior?**
+### Expected Behavior
 
 
-* **What is the use case for changing the behavior?**
-
-
-* **Please tell us about your environment:**
+### Environment
   
   - Dependency-Track Version:
   - Distribution: [ Docker | Executable WAR | Traditional WAR ]
@@ -29,4 +26,6 @@ The issue may already be reported! Please [search for the issue](../) before cre
   - Database Server: [ H2 | MSSQL | MySQL | PostgreSQL ]
   - Browser: 
 
-* **Other information** (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links for us to have context, eg. stackoverflow, gitter, etc)
+
+### Other Details
+(e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links for us to have context, eg. stackoverflow, gitter, etc)

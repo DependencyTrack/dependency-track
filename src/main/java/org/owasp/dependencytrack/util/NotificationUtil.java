@@ -19,6 +19,8 @@ package org.owasp.dependencytrack.util;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import org.owasp.dependencytrack.model.Analysis;
+import org.owasp.dependencytrack.model.AnalysisState;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.Dependency;
 import org.owasp.dependencytrack.model.Project;
@@ -26,8 +28,10 @@ import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.notification.NotificationConstants;
 import org.owasp.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.owasp.dependencytrack.persistence.QueryManager;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class NotificationUtil {
 
@@ -42,7 +46,6 @@ public class NotificationUtil {
             for (Dependency dependency : dependencies) {
                 affectedProjects.add(dependency.getProject());
             }
-
             Notification.dispatch(new Notification()
                     .scope(NotificationConstants.Scope.PORTFOLIO)
                     .group(NotificationConstants.Group.NEW_VULNERABILITY)
@@ -56,7 +59,6 @@ public class NotificationUtil {
     public static void analyzeNotificationCriteria(QueryManager qm, Dependency newDependency) {
         Dependency dependency = qm.getDependency(newDependency);
         List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(dependency);
-
         for (Vulnerability vulnerability: vulnerabilities) {
             Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
             Notification.dispatch(new Notification()
@@ -65,6 +67,32 @@ public class NotificationUtil {
                     .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                     .level(NotificationLevel.INFORMATIONAL)
                     .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
+            );
+        }
+    }
+
+    public static void analyzeNotificationCriteria(QueryManager qm, Analysis analysis, boolean hasChanged) {
+        if (AnalysisState.EXPLOITABLE == analysis.getAnalysisState() && hasChanged) {
+            final NotificationConstants.Group notificationGroup;
+            final Set<Project> affectedProjects = new HashSet<>();
+            if (analysis.getProject() != null) {
+                // This was an analysis decision affecting a single project
+                notificationGroup = NotificationConstants.Group.PROJECT_AUDIT_CHANGE;
+                affectedProjects.add(analysis.getProject());
+            } else {
+                // This was a global analysis decision affecting all projects
+                notificationGroup = NotificationConstants.Group.GLOBAL_AUDIT_CHANGE;
+                List<Dependency> dependencies = qm.getAllDependencies(analysis.getProject());
+                for (Dependency dependency : dependencies) {
+                    affectedProjects.add(dependency.getProject());
+                }
+            }
+            Notification.dispatch(new Notification()
+                    .scope(NotificationConstants.Scope.PORTFOLIO)
+                    .group(notificationGroup)
+                    .title(NotificationConstants.Title.EXPLOITABLE_ANALYSIS_DECISION)
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .subject(new NewVulnerabilityIdentified(analysis.getVulnerability(), analysis.getComponent(), affectedProjects))
             );
         }
     }

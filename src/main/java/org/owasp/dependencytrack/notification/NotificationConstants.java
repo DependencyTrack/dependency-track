@@ -53,6 +53,7 @@ public class NotificationConstants {
         public static final String REPO_ERROR = "Repository Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
         public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";
+        public static final String EXPLOITABLE_ANALYSIS_DECISION = "Exploitable Analysis Decision";
     }
 
 }

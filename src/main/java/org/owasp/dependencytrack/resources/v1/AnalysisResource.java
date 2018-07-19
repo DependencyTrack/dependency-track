@@ -39,6 +39,8 @@ import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.resources.v1.vo.AnalysisRequest;
+import org.owasp.dependencytrack.util.NotificationUtil;
+
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -167,10 +169,12 @@ public class AnalysisResource extends AlpineResource {
                 commenter = ((UserPrincipal) getPrincipal()).getUsername();
             }
 
+            boolean analysisStateChange = false;
             Analysis analysis = qm.getAnalysis(project, component, vulnerability);
             if (analysis != null) {
                 if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
                     // The analysis state has changed. Add an additional comment to the trail.
+                    analysisStateChange = true;
                     final String message = analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
                     analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
@@ -181,6 +185,7 @@ public class AnalysisResource extends AlpineResource {
                 }
             } else {
                 analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
+                analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
                 if (AnalysisState.NOT_SET != request.getAnalysisState()) {
                     final String message = AnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
@@ -190,6 +195,7 @@ public class AnalysisResource extends AlpineResource {
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);
             analysis = qm.getObjectById(Analysis.class, analysis.getId());
+            NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange);
             return Response.ok(analysis).build();
         }
     }

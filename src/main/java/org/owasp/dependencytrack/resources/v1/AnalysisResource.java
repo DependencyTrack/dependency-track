@@ -40,7 +40,6 @@ import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import org.owasp.dependencytrack.resources.v1.vo.AnalysisRequest;
 import org.owasp.dependencytrack.util.NotificationUtil;
-
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;

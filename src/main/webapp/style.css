@@ -73,8 +73,8 @@ body {
     font-weight: 600;
 }
 .table td {
-    /* commented out to wrap permission descriptions */
-    /*white-space: nowrap; */
+    /* todo: comment out to wrap permission descriptions , but breaks global component audit mode formatting */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }

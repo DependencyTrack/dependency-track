@@ -18,7 +18,7 @@ provides a flexible way to represent metadata about components and their place i
 ### Package URL (purl)
 
 Package URL was created to standardize how software package metadata is represented so that packages could universally
-be located irregardless of what vendor, project, or ecosystem the packages belong. Package URL conforms to [RFC-3986](https://tools.ietf.org/html/rfc3986).
+be located regardless of what vendor, project, or ecosystem the packages belong. Package URL conforms to [RFC-3986](https://tools.ietf.org/html/rfc3986).
 
 The syntax of Package URL is:
 ```

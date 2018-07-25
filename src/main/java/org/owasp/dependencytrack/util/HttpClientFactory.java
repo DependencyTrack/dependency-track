@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.util;
 
 import alpine.Config;
 import alpine.logging.Logger;
+import alpine.util.SystemUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthSchemeProvider;
@@ -57,8 +58,22 @@ public final class HttpClientFactory {
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD);
     private static final Logger LOGGER = Logger.getLogger(HttpClientFactory.class);
+    private static final String USER_AGENT;
+    static {
+        USER_AGENT = Config.getInstance().getApplicationName()
+                + " v" + Config.getInstance().getApplicationVersion()
+                + " ("
+                + SystemUtil.getOsArchitecture() + "; "
+                + SystemUtil.getOsName() + "; "
+                + SystemUtil.getOsVersion()
+                + ")";
+    }
 
     private HttpClientFactory() { }
+
+    public static String getUserAgent() {
+        return USER_AGENT;
+    }
 
     /**
      * Factory method that create a HttpClient object. This method will attempt to use

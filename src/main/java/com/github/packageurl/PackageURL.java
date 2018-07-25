@@ -282,20 +282,42 @@ public final class PackageURL implements Serializable {
         if (namespace == null) {
             return null;
         }
-        return urldecode(namespace.toLowerCase());
+        switch (type) {
+            case "bitbucket":
+                namespace = namespace.toLowerCase(); break;
+            case "debian":
+                namespace = namespace.toLowerCase(); break;
+            case "github":
+                namespace = namespace.toLowerCase(); break;
+            case "golang":
+                namespace = namespace.toLowerCase(); break;
+            case "npm":
+                namespace = namespace.toLowerCase(); break;
+            case "rpm":
+                namespace = namespace.toLowerCase(); break;
+        }
+        return urldecode(namespace);
     }
 
     private String validateName(String name) throws MalformedPackageURLException {
         if (name == null) {
             throw new MalformedPackageURLException("The PackageURL name specified is invalid");
         }
-        if ("pypi".equals(type)) {
-            name = name.replaceAll("_", "-");
+        switch (type) {
+            case "bitbucket":
+                name = name.toLowerCase(); break;
+            case "debian":
+                name = name.toLowerCase(); break;
+            case "github":
+                name = name.toLowerCase(); break;
+            case "golang":
+                name = name.toLowerCase(); break;
+            case "npm":
+                name = name.toLowerCase(); break;
+            case "pypi":
+                name = name.replaceAll("_", "-").toLowerCase(); break;
         }
-        if ("nuget".equals(type)) {
-            return name;
-        }
-        return name.toLowerCase();
+        return urldecode(name);
     }
 
     private String validateVersion(String version) {

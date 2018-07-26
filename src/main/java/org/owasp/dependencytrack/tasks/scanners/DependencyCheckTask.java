@@ -81,6 +81,25 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
     }
 
     /**
+     * Determines if Dependency-Check is suitable for analysis based on the PackageURL.
+     * NOTE: Although Dependency-Check is capable of analyzing many different ecosystems,
+     * some analyzers are not fully compatible with the Dependency-Check ScanAgent nor
+     * are they compatible with Dependency-Track.
+     *
+     * @param purl the PackageURL to analyze
+     * @return true if Dependency-Check should analyze, false if not
+     */
+    public boolean shouldAnalyze(PackageURL purl) {
+        if (purl == null) {
+            return true;
+        }
+        if (purl.getType().equalsIgnoreCase("npm")) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Ensures the Dependency-Check directory structure exists.
      */
     private void setupOdcDirectoryStructure(String directory) {
@@ -119,7 +138,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
             // Check to see that Dependency-Check only analyzes ecosystems
             // and uses analyzers capable of supporting Dependency-Track
             PackageURL purl = component.getPurl();
-            if (super.shouldAnalyze(purl)) {
+            if (shouldAnalyze(purl)) {
                 dependencies.add(ModelConverter.convert(component));
             }
 

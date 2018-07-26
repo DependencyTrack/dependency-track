@@ -17,6 +17,7 @@
  */
 package org.owasp.dependencytrack.tasks.scanners;
 
+import com.github.packageurl.PackageURL;
 import org.owasp.dependencytrack.model.Component;
 import java.util.List;
 
@@ -30,13 +31,24 @@ public interface ScanTask {
 
     /**
      * Analyzes all components in the portfolio.
+     * @since 3.0.0
      */
     void analyze();
 
     /**
      * Analyzes only the specified components.
      * @param componens the components to analyze
+     * @since 3.0.0
      */
     void analyze(List<Component> componens);
+
+    /**
+     * Determines if the analyzer is capable of analyzing
+     * a component with the specified PackageURL
+     * @param packageUrl a PackageURL
+     * @return true if the analyzer is capable of analyzing this type, false if not
+     * @since 3.2.0
+     */
+    boolean shouldAnalyze(PackageURL packageUrl);
 
 }

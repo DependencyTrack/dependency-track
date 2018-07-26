@@ -70,6 +70,22 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     }
 
     /**
+     * Determines if the {@link NpmAuditAnalysisTask} is suitable for analysis based on the PackageURL.
+     *
+     * @param purl the PackageURL to analyze
+     * @return true if NpmAuditAnalysisTask should analyze, false if not
+     */
+    public boolean shouldAnalyze(PackageURL purl) {
+        if (purl == null) {
+            return false;
+        }
+        if (purl.getType().equalsIgnoreCase("npm")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Analyzes a list of Components. The NPM Audit API is only capable of analyzing one
      * version of a node module at a time. For example, attempting to analyze three versions
      * of 'serve' for example will result in only the last version in the payload specified
@@ -88,7 +104,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
             while (i.hasNext()) {
                 final Component component = i.next();
                 final PackageURL purl = component.getPurl();
-                if (super.shouldAnalyze(purl)) {
+                if (shouldAnalyze(purl)) {
                     if (!nspCandidates.containsKey(component.getName())) {
                         nspCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());

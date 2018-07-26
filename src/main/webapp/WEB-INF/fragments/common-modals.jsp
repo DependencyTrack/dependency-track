@@ -88,6 +88,7 @@
                         <ul>
                             <li><a href="https://nvd.nist.gov/">National Vulnerability Database</a></li>
                             <li><a href="https://nodesecurity.io/">Node Security Platform</a></li>
+                            <li><a href="https://ossindex.sonatype.org/">Sonatype OSS Index</a></li>
                             <li><a href="https://vulndb.cyberriskanalytics.com">VulnDB</a> (Optional)</li>
                         </ul>
                     </div>

@@ -322,7 +322,7 @@ $common.formatTimestamp = function formatTimestamp(timestamp, includeTime) {
 };
 
 /**
- * Formats and returns a specialized label for a vulnerability source (NVD, NSP, VulnDB, etc).
+ * Formats and returns a specialized label for a vulnerability source (NVD, NSP, VulnDB, OSSIndex etc).
  */
 $common.formatSourceLabel = function formatSourceLabel(source) {
     let sourceClass = "label-source-" + source.toLowerCase();

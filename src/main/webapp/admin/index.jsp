@@ -227,7 +227,7 @@
                                 <input type="password" class="form-control required" autocomplete="off" id="scannerOssIndexApiTokenInput" data-group-name="scanner" data-property-name="ossindex.api.token">
                             </div>
                             <div class="form-group admin-form-content">
-                                <button type="button" class="btn btn-primary btn-config-property" id="updateOssIndexConfigButton" data-group-name="scanners">Update</button>
+                                <button type="button" class="btn btn-primary btn-config-property" id="updateOssIndexConfigButton" data-group-name="scanner">Update</button>
                             </div>
                             <div class="panel panel-default">
                                 <div class="panel-body">

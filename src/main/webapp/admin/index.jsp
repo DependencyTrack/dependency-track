@@ -232,7 +232,7 @@
                             <div class="panel panel-default">
                                 <div class="panel-body">
                                     <p>
-                                        OSS Index is a services provided by Sonatype which identifies vulnerabilities in
+                                        OSS Index is a service provided by Sonatype which identifies vulnerabilities in
                                         third-party components. Dependency-Track integrates natively with the OSS Index
                                         service to provide highly accurate results.
                                     </p>

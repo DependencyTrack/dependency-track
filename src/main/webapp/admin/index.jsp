@@ -49,6 +49,7 @@
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#scannerDependencyCheckTab">Dependency-Check</a>
                             <a data-toggle="tab" class="list-group-item" href="#scannerNpmAuditTab">NPM Audit</a>
+                            <a data-toggle="tab" class="list-group-item" href="#scannerOssIndexTab">Sonatype OSS Index</a>
                         </div>
                     </div>
                 </div>
@@ -206,7 +207,7 @@
                                     <p>
                                         NPM Audit is a cloud service which identifies vulnerabilities in Node Package
                                         Modules. Dependency-Track integrates natively with the NPM Audit service to
-                                        provide results which contain very few false positives.
+                                        provide highly accurate results.
                                     </p>
                                     <p>
                                         Use of this analyzer requires a valid PackageURL for the components being analyzed.
@@ -215,6 +216,35 @@
                                 <div class="panel-footer">
                                     References:<br/>
                                     <a href="https://www.npmjs.com/">NPM, Inc.</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="scannerOssIndexTab" data-admin-title="OSS Index">
+                            <h3 class="admin-section-title">Sonatype OSS Index Configuration</h3>
+                            <div class="checkbox">
+                                <input id="scannerOssIndexToggleButton" class="scannerToggleButton" type="checkbox" data-toggle="toggle" data-size="small" data-width="130" data-group-name="scanner" data-property-name="ossindex.enabled" data-on="<i class='fa fa-power-off'></i> Enabled" data-off="<i class='fa fa-power-off'></i> Disabled">
+                            </div>
+                            <div class="form-group admin-form-content">
+                                <label class="required" for="scannerOssIndexApiTokenInput">API Token</label>
+                                <input type="password" class="form-control required" autocomplete="off" id="scannerOssIndexApiTokenInput" data-group-name="scanner" data-property-name="ossindex.api.token">
+                            </div>
+                            <div class="form-group admin-form-content">
+                                <button type="button" class="btn btn-primary btn-config-property" id="updateOssIndexConfigButton" data-group-name="scanners">Update</button>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <p>
+                                        OSS Index is a services provided by Sonatype which identifies vulnerabilities in
+                                        third-party components. Dependency-Track integrates natively with the OSS Index
+                                        service to provide highly accurate results.
+                                    </p>
+                                    <p>
+                                        Use of this analyzer requires a valid PackageURL for the components being analyzed.
+                                    </p>
+                                </div>
+                                <div class="panel-footer">
+                                    References:<br/>
+                                    <a href="https://ossindex.sonatype.org/">Sonatype OSS Index</a>
                                 </div>
                             </div>
                         </div>

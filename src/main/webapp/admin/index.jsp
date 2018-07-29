@@ -171,12 +171,10 @@
                                 <div class="panel-body">
                                     <p>
                                         OWASP Dependency-Check is a utility designed to discover vulnerabilities in
-                                        third-party dependencies. Dependency-Check uses evidence-based analysis to
-                                        discover known, publicly disclosed vulnerabilities. Using evidence provided by
-                                        Dependency-Track, Dependency-Check will perform fuzzy matching on its sources
-                                        of vulnerability intelligence (such as the NVD) and present results based on
-                                        confidence. Dependency-Track currently accepts confidence of medium or higher
-                                        while rejecting the rest.
+                                        third-party components. Dependency-Check uses evidence-based analysis and
+                                        performs fuzzy matching against the NVD to present results based on confidence.
+                                        Dependency-Track has native integration with Dependency-Check and accepts
+                                        results with medium confidence or higher while rejecting lower confidence results.
                                     </p>
                                     <p>
                                         Evidence-based analysis will lead to false positives, however, the technique can

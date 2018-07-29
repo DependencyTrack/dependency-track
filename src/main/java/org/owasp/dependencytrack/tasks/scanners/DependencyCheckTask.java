@@ -29,6 +29,7 @@ import org.owasp.dependencytrack.event.DependencyCheckEvent;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.exception.ParseException;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.ConfigPropertyConstants;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.owasp.dependencytrack.parser.dependencycheck.model.Analysis;
@@ -64,6 +65,9 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
      */
     public void inform(Event e) {
         if (e instanceof DependencyCheckEvent) {
+            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_DEPENDENCYCHECK_ENABLED)) {
+                return;
+            }
             setupOdcDirectoryStructure(DC_ROOT_DIR);
             setupOdcDirectoryStructure(DC_DATA_DIR);
             setupOdcDirectoryStructure(DC_REPORT_DIR);

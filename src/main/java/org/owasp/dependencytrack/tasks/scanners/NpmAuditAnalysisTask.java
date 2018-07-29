@@ -29,6 +29,7 @@ import org.json.JSONObject;
 import org.owasp.dependencytrack.event.MetricsUpdateEvent;
 import org.owasp.dependencytrack.event.NpmAuditAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.ConfigPropertyConstants;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.parser.npm.audit.NpmAuditParser;
 import org.owasp.dependencytrack.parser.npm.audit.model.Advisory;
@@ -58,6 +59,9 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      */
     public void inform(Event e) {
         if (e instanceof NpmAuditAnalysisEvent) {
+            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_NPMAUDIT_ENABLED)) {
+                return;
+            }
             final NpmAuditAnalysisEvent event = (NpmAuditAnalysisEvent)e;
             LOGGER.info("Starting Node Audit analysis task");
             if (event.getComponents().size() > 0) {

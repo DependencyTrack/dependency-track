@@ -30,6 +30,7 @@ import io.github.openunirest.http.exceptions.UnirestException;
 import org.json.JSONObject;
 import org.owasp.dependencytrack.event.OssIndexAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.ConfigPropertyConstants;
 import org.owasp.dependencytrack.parser.ossindex.OssIndexParser;
 import org.owasp.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.owasp.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
@@ -58,6 +59,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      */
     public void inform(Event e) {
         if (e instanceof OssIndexAnalysisEvent) {
+            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED)) {
+                return;
+            }
             final OssIndexAnalysisEvent event = (OssIndexAnalysisEvent)e;
             LOGGER.info("Starting Sonatype OSS Index analysis task");
             if (event.getComponents().size() > 0) {

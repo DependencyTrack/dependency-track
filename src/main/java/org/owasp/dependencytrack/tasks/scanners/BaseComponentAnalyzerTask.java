@@ -18,11 +18,14 @@
 package org.owasp.dependencytrack.tasks.scanners;
 
 import alpine.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import alpine.resources.OrderDirection;
 import alpine.resources.Pagination;
+import alpine.util.BooleanUtil;
 import org.owasp.dependencytrack.model.Component;
+import org.owasp.dependencytrack.model.ConfigPropertyConstants;
 import org.owasp.dependencytrack.persistence.QueryManager;
 
 /**
@@ -49,6 +52,18 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     protected BaseComponentAnalyzerTask(int paginationLimit, int throttleSeconds) {
         this.paginationLimit = paginationLimit;
         this.throttleDelay = throttleSeconds > 0 ? throttleSeconds * 1000 : 0;
+    }
+
+    protected boolean isEnabled(ConfigPropertyConstants configPropertyConstants) {
+        try (QueryManager qm = new QueryManager()) {
+            ConfigProperty property = qm.getConfigProperty(
+                    configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName()
+            );
+            if (ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
+                return BooleanUtil.valueOf(property.getPropertyValue());
+            }
+            return false;
+        }
     }
 
     /**

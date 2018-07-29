@@ -17,9 +17,11 @@
  */
 package org.owasp.dependencytrack.tasks.scanners;
 
+import alpine.crypto.DataEncryption;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.util.Pageable;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -27,6 +29,7 @@ import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
 import io.github.openunirest.http.exceptions.UnirestException;
+import org.apache.http.HttpHeaders;
 import org.json.JSONObject;
 import org.owasp.dependencytrack.event.OssIndexAnalysisEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -49,6 +52,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
 
     private static final String API_BASE_URL = "https://ossindex.net/api/v3/component-report";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
+    private String apiToken;
 
     public OssIndexAnalysisTask() {
         super(100, 5);
@@ -61,6 +65,22 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
         if (e instanceof OssIndexAnalysisEvent) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED)) {
                 return;
+            }
+            try (QueryManager qm = new QueryManager()) {
+                ConfigProperty property = qm.getConfigProperty(
+                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
+                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
+                );
+                if (property == null || property.getPropertyValue() == null) {
+                    LOGGER.warn("An API Token has not been specified for use with OSS Index. Skipping");
+                    return;
+                }
+                try {
+                    apiToken = DataEncryption.decryptAsString(property.getPropertyValue());
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurred decrypting the OSS Index API Token. Skipping", ex);
+                    return;
+                }
             }
             final OssIndexAnalysisEvent event = (OssIndexAnalysisEvent)e;
             LOGGER.info("Starting Sonatype OSS Index analysis task");
@@ -123,9 +143,10 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
     private List<ComponentReport> submit(JSONObject payload) throws UnirestException {
         Unirest.setHttpClient(HttpClientFactory.createClient());
         final HttpResponse<JsonNode> jsonResponse = Unirest.post(API_BASE_URL)
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("User-Agent", HttpClientFactory.getUserAgent())
+                .header(HttpHeaders.ACCEPT, "application/json")
+                .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                .header(HttpHeaders.USER_AGENT, HttpClientFactory.getUserAgent())
+                .header(HttpHeaders.AUTHORIZATION, apiToken)
                 .body(payload)
                 .asJson();
         if (jsonResponse.getStatus() == 200) {

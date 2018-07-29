@@ -41,28 +41,43 @@
                     <div class="panel-heading admin-accordion" role="tab" id="headingTwo">
                         <div class="panel-title">
                             <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                Repositories
+                                Scanners
                             </a>
                         </div>
                     </div>
                     <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
                         <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#scannerDependencyCheckTab">Dependency-Check</a>
+                            <a data-toggle="tab" class="list-group-item" href="#scannerNpmAuditTab">NPM Audit</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default require-system-configuration">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingThree">
+                        <div class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Repositories
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                        <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#repositoryNpmTab">NPM</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryMavenTab">Maven</a>
-                            <a data-toggle="tab" class="list-group-item" href="#repositoryRubyGemTab">RubyGems</a>
+                            <a data-toggle="tab" class="list-group-item" href="#repositoryGemTab">Gem</a>
                         </div>
                     </div>
                 </div>
                 <% if(AUTHN_ENABLED) { %>
                 <div class="panel panel-default require-access-management">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingThree">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingFour">
                         <div class="panel-title">
-                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
                                 Access Management
                             </a>
                         </div>
                     </div>
-                    <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                    <div id="collapseFour" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#ldapUsersTab">LDAP Users</a>
                             <a data-toggle="tab" class="list-group-item" href="#managedUsersTab">Managed Users</a>
@@ -74,14 +89,14 @@
                 <% } %>
                 <!--
                 <div class="panel panel-default">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingFour">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingFive">
                         <div class="panel-title">
-                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
                                 Notifications
                             </a>
                         </div>
                     </div>
-                    <div id="collapseFour" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
+                    <div id="collapseFive" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFive">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#slackNotificationsTab">Slack</a>
                             <a data-toggle="tab" class="list-group-item" href="#microsoftTeamsNotificationsTab">Microsoft Teams</a>
@@ -104,7 +119,7 @@
                             <!-- We can't default to any specific tab due to not knowing their permissions in advance -->
                             <!-- Therefore, default to a blank content area and let the user decide where to go -->
                         </div>
-                        <div class="tab-pane admin-form-content" id="generalConfigTab">
+                        <div class="tab-pane admin-form-content" id="generalConfigTab" data-admin-title="General">
                             <h3 class="admin-section-title">General Configuration</h3>
                             <p>This URL is used to construct links back to Dependency-Track from external systems. Email, ChatOps, and WebHook notifications all rely on linking back to Dependency-Track.</p>
                             <div class="form-group">
@@ -113,7 +128,7 @@
                             </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateGeneralConfigButton" data-group-name="general">Update</button>
                         </div>
-                        <div class="tab-pane admin-form-content" id="emailTab">
+                        <div class="tab-pane admin-form-content" id="emailTab" data-admin-title="Email">
                             <h3 class="admin-section-title">Email Service Configuration</h3>
                             <div class="checkbox">
                                 <label><input type="checkbox" id="emailEnableInput" data-group-name="email" data-property-name="smtp.enabled"> Enable email</label>
@@ -146,7 +161,112 @@
                             </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateEmailConfigButton" data-group-name="email">Update</button>
                         </div>
-                        <div class="tab-pane" id="teamsTab">
+                        <div class="tab-pane" id="scannerDependencyCheckTab" data-admin-title="Dependency-Check">
+                            <h3 class="admin-section-title">Dependency-Check Configuration</h3>
+                            <div class="checkbox">
+                                <input id="scannerDependencyCheckToggleButton" class="scannerToggleButton" type="checkbox" data-toggle="toggle" data-size="small" data-width="130" data-group-name="scanner" data-property-name="dependencycheck.enabled" data-on="<i class='fa fa-power-off'></i> Enabled" data-off="<i class='fa fa-power-off'></i> Disabled">
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <p>
+                                        OWASP Dependency-Check is a utility designed to discover vulnerabilities in
+                                        third-party dependencies. Dependency-Check uses evidence-based analysis to
+                                        discover known, publicly disclosed vulnerabilities. Using evidence provided by
+                                        Dependency-Track, Dependency-Check will perform fuzzy matching on its sources
+                                        of vulnerability intelligence (such as the NVD) and present results based on
+                                        confidence. Dependency-Track currently accepts confidence of medium or higher
+                                        while rejecting the rest.
+                                    </p>
+                                    <p>
+                                        Evidence-based analysis will lead to false positives, however, the technique can
+                                        also be utilized to discover potential issues with an applications environment.
+                                        For example, falsely identified vulnerabilities in a database driver may reveal
+                                        the use of a vulnerable database server.
+                                    </p>
+                                    <p>
+                                        Note: Due to the file-based approach that Dependency-Check natively uses,
+                                        not all Dependency-Check analyzers are enabled. Most notably, NPM analysis
+                                        is disabled. Organizations utilizing Node.js are encouraged to use the native
+                                        NPM Audit analyzer in Dependency-Track.
+                                    </p>
+                                </div>
+                                <div class="panel-footer">
+                                    References:<br/>
+                                    <a href="https://www.owasp.org/index.php/OWASP_Dependency_Check">OWASP Dependency-Check Project</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="scannerNpmAuditTab" data-admin-title="NPM Audit">
+                            <h3 class="admin-section-title">NPM Audit Configuration</h3>
+                            <div class="checkbox">
+                                <input id="scannerNpmAuditToggleButton" class="scannerToggleButton" type="checkbox" data-toggle="toggle" data-size="small" data-width="130" data-group-name="scanner" data-property-name="npmaudit.enabled" data-on="<i class='fa fa-power-off'></i> Enabled" data-off="<i class='fa fa-power-off'></i> Disabled">
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <p>
+                                        NPM Audit is a cloud service which identifies vulnerabilities in Node Package
+                                        Modules. Dependency-Track integrates natively with the NPM Audit service to
+                                        provide results which contain very few false positives.
+                                    </p>
+                                    <p>
+                                        Use of this analyzer requires a valid PackageURL for the components being analyzed.
+                                    </p>
+                                </div>
+                                <div class="panel-footer">
+                                    References:<br/>
+                                    <a href="https://www.npmjs.com/">NPM, Inc.</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="repositoryNpmTab" data-admin-title="NPM Repositories">
+                            <table id="repositoryNpmTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/repository/NPM?orderBy=resolutionOrder&sort=asc"/>"
+                                   data-response-handler="formatRepositoryTable"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="identifier">Identifier</th>
+                                    <th data-align="left" data-field="url">URL</th>
+                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="repositoryMavenTab" data-admin-title="Maven Repositories">
+                            <table id="repositoryMavenTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/repository/MAVEN?orderBy=resolutionOrder&sort=asc"/>"
+                                   data-response-handler="formatRepositoryTable"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="identifier">Identifier</th>
+                                    <th data-align="left" data-field="url">URL</th>
+                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="repositoryGemTab" data-admin-title="Gem Repositories">
+                            <table id="repositoryGemTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/repository/GEM?orderBy=resolutionOrder&sort=asc"/>"
+                                   data-response-handler="formatRepositoryTable"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="identifier">Identifier</th>
+                                    <th data-align="left" data-field="url">URL</th>
+                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="teamsTab" data-admin-title="Teams">
                             <div id="teamsToolbar">
                                 <div class="form-inline" role="form">
                                     <button id="createTeamButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateTeam"><span class="fa fa-plus"></span> Create Team</button>
@@ -166,7 +286,7 @@
                                 </thead>
                             </table>
                         </div>
-                        <div class="tab-pane" id="ldapUsersTab">
+                        <div class="tab-pane" id="ldapUsersTab" data-admin-title="LDAP Users">
                             <div id="ldapUsersToolbar">
                                 <div class="form-inline" role="form">
                                     <button id="createLdapUserButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateLdapUser"><span class="fa fa-plus"></span> Create User</button>
@@ -186,7 +306,7 @@
                                 </thead>
                             </table>
                         </div>
-                        <div class="tab-pane" id="managedUsersTab">
+                        <div class="tab-pane" id="managedUsersTab" data-admin-title="Managed Users">
                             <div id="managedUsersToolbar">
                                 <div class="form-inline" role="form">
                                     <button id="createManagedUserButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateManagedUser"><span class="fa fa-plus"></span> Create User</button>
@@ -207,7 +327,7 @@
                                 </thead>
                             </table>
                         </div>
-                        <div class="tab-pane" id="permissionsTab">
+                        <div class="tab-pane" id="permissionsTab" data-admin-title="Permissions">
                             <table id="permissionListingTable" class="table table-hover" data-toggle="table"
                                    data-height="100%">
                                 <thead>

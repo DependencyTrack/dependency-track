@@ -18,6 +18,20 @@
 
 "use strict";
 
+/**
+ * Called by bootstrap table to format the data in the team table.
+ */
+function formatRepositoryTable(res) {
+    for (let i=0; i<res.length; i++) {
+        if (res[i].enabled === true) {
+            res[i].enabledLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        } else {
+            res[i].enabledLabel = '';
+        }
+    }
+    return res;
+}
+
 function teamData(data) {
     if (data === undefined) {
        return JSON.parse(sessionStorage["teamData"]);
@@ -639,6 +653,9 @@ function populateConfigProperties(data) {
         let input = $("input[data-group-name='"+ data[i].groupName + "'][data-property-name='" + data[i].propertyName + "']");
         if ("BOOLEAN" === data[i].propertyType && "true" === data[i].propertyValue) {
             input.prop("checked", "checked");
+            if (input.attr("data-toggle") === "toggle") {
+                input.bootstrapToggle('on')
+            }
         }
         input.val(data[i].propertyValue);
     }
@@ -772,37 +789,12 @@ $(document).ready(function () {
      */
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         let target = $(e.target).attr("href");
-        let adminTitle = $("#admin-title");
-        switch (true) {
-            case target === "#generalConfigTab":
-                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> General');
-                break;
-            case target === "#emailTab":
-                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> Email');
-                break;
-            case target === "#repositoryNpmTab":
-                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> NPM');
-                break;
-            case target === "#repositoryMavenTab":
-                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> Maven');
-                break;
-            case target === "#repositoryRubyGemTab":
-                adminTitle.html('<i class="fa fa-cog" aria-hidden="true"></i> RubyGem');
-                break;
-            case target === "#ldapUsersTab":
-                adminTitle.html('<i class="fa fa-user" aria-hidden="true"></i> LDAP Users');
-                break;
-            case target === "#managedUsersTab":
-                adminTitle.html('<i class="fa fa-user-circle-o" aria-hidden="true"></i> Managed Users');
-                break;
-            case target === "#teamsTab":
-                adminTitle.html('<i class="fa fa-users" aria-hidden="true"></i> Teams');
-                break;
-            case target === "#permissionsTab":
-                adminTitle.html('<i class="fa fa-lock" aria-hidden="true"></i> Permissions');
-                break;
-            default:
-                adminTitle.html('Administration');
+        let adminTitleElement = $("#admin-title");
+        let adminTitleString = $(target).attr("data-admin-title");
+        if (adminTitleString) {
+            adminTitleElement.html('<i class="fa fa-cog" aria-hidden="true"></i> ' + adminTitleString);
+        } else {
+            adminTitleElement.html('<i class="fa fa-cog" aria-hidden="true"></i> Administration');
         }
     });
 
@@ -830,6 +822,11 @@ $(document).ready(function () {
                 $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);
             }
         });
+    });
+
+    $(".scannerToggleButton").change(function() {
+        let propertyValue = $(this).is(":checked");
+        $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);
     });
 
 });

@@ -203,7 +203,7 @@
                             <div class="panel panel-default">
                                 <div class="panel-body">
                                     <p>
-                                        NPM Audit is a cloud service which identifies vulnerabilities in Node Package
+                                        NPM Audit is a cloud service which identifies vulnerabilities in Node.js
                                         Modules. Dependency-Track integrates natively with the NPM Audit service to
                                         provide highly accurate results.
                                     </p>

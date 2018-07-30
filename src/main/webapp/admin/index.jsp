@@ -223,6 +223,10 @@
                                 <input id="scannerOssIndexToggleButton" class="scannerToggleButton" type="checkbox" data-toggle="toggle" data-size="small" data-width="130" data-group-name="scanner" data-property-name="ossindex.enabled" data-on="<i class='fa fa-power-off'></i> Enabled" data-off="<i class='fa fa-power-off'></i> Disabled">
                             </div>
                             <div class="form-group admin-form-content">
+                                <label class="required" for="scannerOssIndexApiUsernameInput">API Username</label>
+                                <input type="text" class="form-control required" autocomplete="off" id="scannerOssIndexApiUsernameInput" data-group-name="scanner" data-property-name="ossindex.api.username">
+                            </div>
+                            <div class="form-group admin-form-content">
                                 <label class="required" for="scannerOssIndexApiTokenInput">API Token</label>
                                 <input type="password" class="form-control required" autocomplete="off" id="scannerOssIndexApiTokenInput" data-group-name="scanner" data-property-name="ossindex.api.token">
                             </div>

@@ -33,6 +33,7 @@ public enum ConfigPropertyConstants {
     SCANNER_DEPENDENCYCHECK_ENABLED("scanner", "dependencycheck.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable OWASP Dependency-Check"),
     SCANNER_NPMAUDIT_ENABLED("scanner", "npmaudit.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable NPM Audit"),
     SCANNER_OSSINDEX_ENABLED("scanner", "ossindex.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Sonatype OSS Index"),
+    SCANNER_OSSINDEX_API_USERNAME("scanner", "ossindex.api.username", null, PropertyType.STRING, "The API username used for OSS Index authentication"),
     SCANNER_OSSINDEX_API_TOKEN("scanner", "ossindex.api.token", null, PropertyType.ENCRYPTEDSTRING, "The API token used for OSS Index authentication");
 
     private String groupName;

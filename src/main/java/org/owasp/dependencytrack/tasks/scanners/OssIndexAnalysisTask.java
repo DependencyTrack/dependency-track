@@ -52,6 +52,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
 
     private static final String API_BASE_URL = "https://ossindex.net/api/v3/component-report";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
+    private String apiUsername;
     private String apiToken;
 
     public OssIndexAnalysisTask() {
@@ -67,16 +68,25 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                 return;
             }
             try (QueryManager qm = new QueryManager()) {
-                ConfigProperty property = qm.getConfigProperty(
+                ConfigProperty apiUsernameProperty = qm.getConfigProperty(
+                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
+                        ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getPropertyName()
+                );
+                ConfigProperty apiTokenProperty = qm.getConfigProperty(
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
                 );
-                if (property == null || property.getPropertyValue() == null) {
+                if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null) {
+                    LOGGER.warn("An API username has not been specified for use with OSS Index. Skipping");
+                    return;
+                }
+                if (apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
                     LOGGER.warn("An API Token has not been specified for use with OSS Index. Skipping");
                     return;
                 }
                 try {
-                    apiToken = DataEncryption.decryptAsString(property.getPropertyValue());
+                    apiUsername = apiUsernameProperty.getPropertyValue();
+                    apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the OSS Index API Token. Skipping", ex);
                     return;
@@ -146,7 +156,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                 .header(HttpHeaders.ACCEPT, "application/json")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .header(HttpHeaders.USER_AGENT, HttpClientFactory.getUserAgent())
-                .header(HttpHeaders.AUTHORIZATION, apiToken)
+                .basicAuth(apiUsername, apiToken)
                 .body(payload)
                 .asJson();
         if (jsonResponse.getStatus() == 200) {

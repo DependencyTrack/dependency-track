@@ -29,6 +29,8 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -118,6 +120,7 @@ public final class HttpClientFactory {
                 .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
+        clientBuilder.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
         return clientBuilder.build();
     }
 

@@ -125,8 +125,8 @@ public class ConfigPropertyResource extends AlpineResource {
                     }
                 } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.URL) {
                     try {
-                        new URL(json.getPropertyValue());  // don't actually use it, just see if it's parses without exception
-                        configProperty.setPropertyValue(json.getPropertyValue());
+                        URL url = new URL(json.getPropertyValue());
+                        configProperty.setPropertyValue(url.toExternalForm());
                     } catch (MalformedURLException e) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected a URL but the URL was malformed.").build();
                     }

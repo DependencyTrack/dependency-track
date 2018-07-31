@@ -52,7 +52,6 @@ import org.owasp.dependencytrack.model.Tag;
 import org.owasp.dependencytrack.model.Vulnerability;
 import org.owasp.dependencytrack.model.VulnerabilityMetrics;
 import org.owasp.dependencytrack.util.NotificationUtil;
-
 import javax.jdo.FetchPlan;
 import javax.jdo.Query;
 import java.util.ArrayList;
@@ -1903,9 +1902,19 @@ public class QueryManager extends AlpineQueryManager {
      * @return a NotificationPublisher
      */
     @SuppressWarnings("unchecked")
-    public NotificationPublisher getNotificationPublisher(final Class clazz) {
-        final Query query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass");
-        final List<NotificationPublisher> result = (List<NotificationPublisher>) query.execute(clazz.getCanonicalName());
+    public NotificationPublisher getDefaultNotificationPublisher(final Class clazz) {
+        return getDefaultNotificationPublisher(clazz.getCanonicalName());
+    }
+
+    /**
+     * Retrieves a NotificationPublisher by its class.
+     * @param clazz The Class of the NotificationPublisher
+     * @return a NotificationPublisher
+     */
+    @SuppressWarnings("unchecked")
+    public NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
+        final Query query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass && defaultPublisher == true");
+        final List<NotificationPublisher> result = (List<NotificationPublisher>) query.execute(clazz);
         return result.size() == 0 ? null : result.get(0);
     }
 
@@ -1914,16 +1923,43 @@ public class QueryManager extends AlpineQueryManager {
      * @param name The name of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    public NotificationPublisher createNotificationPublisher(final String name, final String description, final Class publisherClass, final String templateContent) {
+    public NotificationPublisher createNotificationPublisher(final String name, final String description,
+                                                             final Class publisherClass, final String templateContent,
+                                                             final String templateMimeType, final boolean defaultPublisher) {
         pm.currentTransaction().begin();
         final NotificationPublisher publisher = new NotificationPublisher();
         publisher.setName(name);
         publisher.setDescription(description);
         publisher.setPublisherClass(publisherClass.getCanonicalName());
         publisher.setTemplate(templateContent);
+        publisher.setTemplateMimeType(templateMimeType);
+        publisher.setDefaultPublisher(defaultPublisher);
         pm.makePersistent(publisher);
         pm.currentTransaction().commit();
         return getObjectById(NotificationPublisher.class, publisher.getId());
+    }
+
+    /**
+     * Updates a NotificationPublisher.
+     * @return a NotificationPublisher object
+     */
+    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
+        NotificationPublisher publisher = null;
+        if (transientPublisher.getId() > 0) {
+            publisher = getObjectById(NotificationPublisher.class, transientPublisher.getId());
+        } else if (transientPublisher.isDefaultPublisher()) {
+            publisher = getDefaultNotificationPublisher(transientPublisher.getPublisherClass());
+        }
+        if (publisher != null) {
+            publisher.setName(transientPublisher.getName());
+            publisher.setDescription(transientPublisher.getDescription());
+            publisher.setPublisherClass(transientPublisher.getPublisherClass());
+            publisher.setTemplate(transientPublisher.getTemplate());
+            publisher.setTemplateMimeType(transientPublisher.getTemplateMimeType());
+            publisher.setDefaultPublisher(transientPublisher.isDefaultPublisher());
+            return persist(publisher);
+        }
+        return null;
     }
 
     /**

@@ -29,6 +29,7 @@ import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
 import org.owasp.dependencytrack.model.ConfigPropertyConstants;
 import org.owasp.dependencytrack.model.License;
+import org.owasp.dependencytrack.model.NotificationPublisher;
 import org.owasp.dependencytrack.model.Project;
 import org.owasp.dependencytrack.model.RepositoryType;
 import org.owasp.dependencytrack.model.Vulnerability;
@@ -217,17 +218,27 @@ public class DefaultObjectGenerator implements ServletContextListener {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
             for (DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
-                if (qm.getNotificationPublisher(publisher.getPublisherClass()) == null) {
-                    File file = new File(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile());
-                    try {
-                        final String templateContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                File file = new File(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile());
+                try {
+                    final String templateContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                    final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher.getPublisherClass());
+                    if (existingPublisher == null) {
                         qm.createNotificationPublisher(
                                 publisher.getPublisherName(), publisher.getPublisherDescription(),
-                                publisher.getPublisherClass(), templateContent
+                                publisher.getPublisherClass(), templateContent, publisher.getTemplateMimeType(),
+                                publisher.isDefaultPublisher()
                         );
-                    } catch (IOException e) {
-                        LOGGER.error("An error occurred while adding a default notification publisher", e);
+                    } else {
+                        existingPublisher.setName(publisher.getPublisherName());
+                        existingPublisher.setDescription(publisher.getPublisherDescription());
+                        existingPublisher.setPublisherClass(publisher.getPublisherClass().getCanonicalName());
+                        existingPublisher.setTemplate(templateContent);
+                        existingPublisher.setTemplateMimeType(publisher.getTemplateMimeType());
+                        existingPublisher.setDefaultPublisher(publisher.isDefaultPublisher());
+                        qm.updateNotificationPublisher(existingPublisher);
                     }
+                } catch (IOException e) {
+                    LOGGER.error("An error occurred while synchronizing a default notification publisher", e);
                 }
             }
         }

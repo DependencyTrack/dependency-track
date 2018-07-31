@@ -71,6 +71,16 @@ public class NotificationPublisher implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String template;
 
+    @Persistent
+    @Column(name = "TEMPLATE_MIME_TYPE", allowsNull = "false")
+    @NotNull
+    @Size(min = 1, max = 255)
+    private String templateMimeType;
+
+    @Persistent
+    @Column(name = "DEFAULT_PUBLISHER")
+    private boolean defaultPublisher;
+
     public long getId() {
         return id;
     }
@@ -79,11 +89,12 @@ public class NotificationPublisher implements Serializable {
         this.id = id;
     }
 
+    @NotNull
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -95,11 +106,12 @@ public class NotificationPublisher implements Serializable {
         this.description = description;
     }
 
+    @NotNull
     public String getPublisherClass() {
         return publisherClass;
     }
 
-    public void setPublisherClass(String publisherClass) {
+    public void setPublisherClass(@NotNull String publisherClass) {
         this.publisherClass = publisherClass;
     }
 
@@ -109,5 +121,22 @@ public class NotificationPublisher implements Serializable {
 
     public void setTemplate(String template) {
         this.template = template;
+    }
+
+    @NotNull
+    public String getTemplateMimeType() {
+        return templateMimeType;
+    }
+
+    public void setTemplateMimeType(@NotNull String templateMimeType) {
+        this.templateMimeType = templateMimeType;
+    }
+
+    public boolean isDefaultPublisher() {
+        return defaultPublisher;
+    }
+
+    public void setDefaultPublisher(boolean defaultPublisher) {
+        this.defaultPublisher = defaultPublisher;
     }
 }

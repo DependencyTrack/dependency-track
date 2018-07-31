@@ -17,23 +17,29 @@
  */
 package org.owasp.dependencytrack.notification.publisher;
 
+import javax.ws.rs.core.MediaType;
+
 public enum DefaultNotificationPublishers {
 
-    SLACK("Slack", "Publishes notifications to a Slack channel", SlackPublisher.class, "/templates/notification/publisher/slack.peb"),
-    MS_TEAMS("Microsoft Teams", "Publishes notifications to a Microsoft Teams channel", MsTeamsPublisher.class, "/templates/notification/publisher/msteams.peb"),
-    EMAIL("Email", "Sends notifications to an email address", SendMailPublisher.class, "/templates/notification/publisher/email.peb"),
-    CONSOLE("Console", "Displays notifications on the system console", ConsolePublisher.class, "/templates/notification/publisher/console.peb");
+    SLACK("Slack", "Publishes notifications to a Slack channel", SlackPublisher.class, "/templates/notification/publisher/slack.peb", MediaType.APPLICATION_JSON, true),
+    MS_TEAMS("Microsoft Teams", "Publishes notifications to a Microsoft Teams channel", MsTeamsPublisher.class, "/templates/notification/publisher/msteams.peb", MediaType.APPLICATION_JSON, true),
+    EMAIL("Email", "Sends notifications to an email address", SendMailPublisher.class, "/templates/notification/publisher/email.peb", MediaType.TEXT_PLAIN, true),
+    CONSOLE("Console", "Displays notifications on the system console", ConsolePublisher.class, "/templates/notification/publisher/console.peb", MediaType.TEXT_PLAIN, true);
 
     private String name;
     private String description;
     private Class publisherClass;
     private String templateFile;
+    private String templateMimeType;
+    private boolean defaultPublisher;
 
-    DefaultNotificationPublishers(String name, String description, Class publisherClass, String templateFile) {
+    DefaultNotificationPublishers(String name, String description, Class publisherClass, String templateFile, String templateMimeType, boolean defaultPublisher) {
         this.name = name;
         this.description = description;
         this.publisherClass = publisherClass;
         this.templateFile = templateFile;
+        this.templateMimeType = templateMimeType;
+        this.defaultPublisher = defaultPublisher;
     }
 
     public String getPublisherName() {
@@ -50,5 +56,13 @@ public enum DefaultNotificationPublishers {
 
     public String getPublisherTemplateFile() {
         return templateFile;
+    }
+
+    public String getTemplateMimeType() {
+        return templateMimeType;
+    }
+
+    public boolean isDefaultPublisher() {
+        return defaultPublisher;
     }
 }

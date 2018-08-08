@@ -19,7 +19,7 @@
                 <p>
                     Please consider contributing feedback and pull requests to help improve
                     Dependency-Track. All contributions are appreciated.
-                    <a href="https://github.com/stevespringett/dependency-track">https://github.com/stevespringett/dependency-track</a>
+                    <a href="https://github.com/DependencyTrack/dependency-track">https://github.com/DependencyTrack/dependency-track</a>
                 </p>
                 <p><strong>Do not use snapshot releases on production data.</strong></p>
             </div>

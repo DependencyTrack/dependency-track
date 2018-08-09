@@ -28,8 +28,8 @@ import java.sql.SQLException;
 public class v310Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v310Updater.class);
-    private static final String STMT_1 = "UPDATE PORTFOLIOMETRICS SET DEPENDENCIES = 0 WHERE DEPENDENCIES IS NULL";
-    private static final String STMT_2 = "UPDATE PORTFOLIOMETRICS SET VULNERABLEDEPENDENCIES = 0 WHERE VULNERABLEDEPENDENCIES IS NULL";
+    private static final String STMT_1 = "UPDATE \"PORTFOLIOMETRICS\" SET \"DEPENDENCIES\" = 0 WHERE \"DEPENDENCIES\" IS NULL";
+    private static final String STMT_2 = "UPDATE \"PORTFOLIOMETRICS\" SET \"VULNERABLEDEPENDENCIES\" = 0 WHERE \"VULNERABLEDEPENDENCIES\" IS NULL";
 
     public String getSchemaVersion() {
         return "3.1.0";

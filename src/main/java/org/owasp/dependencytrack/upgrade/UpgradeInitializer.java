@@ -20,6 +20,7 @@ package org.owasp.dependencytrack.upgrade;
 import alpine.logging.Logger;
 import alpine.upgrade.UpgradeException;
 import alpine.upgrade.UpgradeExecutor;
+import alpine.util.JavaVersion;
 import org.owasp.dependencytrack.persistence.QueryManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -32,6 +33,11 @@ public class UpgradeInitializer implements ServletContextListener {
      * {@inheritDoc}
      */
     public void contextInitialized(ServletContextEvent event) {
+        final JavaVersion javaVersion = new JavaVersion();
+        if (javaVersion.getMajor() != 8 || javaVersion.getUpdate() < 161) {
+            throw new RuntimeException("Dependency-Track requires Java 8 with a minimum update of 162 or higher");
+        }
+
         QueryManager qm = new QueryManager();
         UpgradeExecutor executor = new UpgradeExecutor(qm);
 

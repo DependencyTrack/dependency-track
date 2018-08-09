@@ -609,6 +609,11 @@ h4 {
 .pagination-info {
     margin-left: 8px;
 }
+.formattedTemplateContent {
+    font-size: 1.0em;
+    font-family: monospace;
+    white-space: pre;
+}
 .formattedLicenseContent {
     font-size: 1.12em;
     font-family: monospace;

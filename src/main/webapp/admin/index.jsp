@@ -22,30 +22,29 @@
         <div class="col-xs-6 col-sm-4 col-md-2">
             <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
                 <div class="panel panel-default require-system-configuration">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingOne">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingConfiguration">
                         <div class="panel-title">
-                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseConfiguration" aria-expanded="true" aria-controls="collapseConfiguration">
                                 Configuration
                             </a>
                         </div>
                     </div>
-                    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                    <div id="collapseConfiguration" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingConfiguration">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#generalConfigTab">General</a>
                             <a data-toggle="tab" class="list-group-item" href="#emailTab">Email</a>
-                            <a data-toggle="tab" class="list-group-item" href="#notificationsTab">Notifications</a>
                         </div>
                     </div>
                 </div>
                 <div class="panel panel-default require-system-configuration">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingTwo">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingScanners">
                         <div class="panel-title">
-                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseScanners" aria-expanded="false" aria-controls="collapseScanners">
                                 Scanners
                             </a>
                         </div>
                     </div>
-                    <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+                    <div id="collapseScanners" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingScanners">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#scannerDependencyCheckTab">Dependency-Check</a>
                             <a data-toggle="tab" class="list-group-item" href="#scannerNpmAuditTab">NPM Audit</a>
@@ -54,14 +53,14 @@
                     </div>
                 </div>
                 <div class="panel panel-default require-system-configuration">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingThree">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingRepositories">
                         <div class="panel-title">
-                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseRepositories" aria-expanded="false" aria-controls="collapseRepositories">
                                 Repositories
                             </a>
                         </div>
                     </div>
-                    <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                    <div id="collapseRepositories" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingRepositories">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#repositoryNpmTab">NPM</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryMavenTab">Maven</a>
@@ -69,16 +68,31 @@
                         </div>
                     </div>
                 </div>
+                <div class="panel panel-default require-system-configuration">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingNotifications">
+                        <div class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseNotifications" aria-expanded="false" aria-controls="collapseNotifications">
+                                Notifications
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseNotifications" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingNotifications">
+                        <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#notificationAlertTab">Alerts</a>
+                            <a data-toggle="tab" class="list-group-item" href="#notificationTemplateTab">Templates</a>
+                        </div>
+                    </div>
+                </div>
                 <% if(AUTHN_ENABLED) { %>
                 <div class="panel panel-default require-access-management">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingFour">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingAccessManagement">
                         <div class="panel-title">
-                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseAccessManagement" aria-expanded="false" aria-controls="collapseAccessManagement">
                                 Access Management
                             </a>
                         </div>
                     </div>
-                    <div id="collapseFour" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
+                    <div id="collapseAccessManagement" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingAccessManagement">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#ldapUsersTab">LDAP Users</a>
                             <a data-toggle="tab" class="list-group-item" href="#managedUsersTab">Managed Users</a>
@@ -88,28 +102,6 @@
                     </div>
                 </div>
                 <% } %>
-                <!--
-                <div class="panel panel-default">
-                    <div class="panel-heading admin-accordion" role="tab" id="headingFive">
-                        <div class="panel-title">
-                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                                Notifications
-                            </a>
-                        </div>
-                    </div>
-                    <div id="collapseFive" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFive">
-                        <div class="list-group">
-                            <a data-toggle="tab" class="list-group-item" href="#slackNotificationsTab">Slack</a>
-                            <a data-toggle="tab" class="list-group-item" href="#microsoftTeamsNotificationsTab">Microsoft Teams</a>
-                            <a data-toggle="tab" class="list-group-item" href="#emailNotificationsTab">Email</a>
-                            <a data-toggle="tab" class="list-group-item" href="#webhooksNotificationsTab">WebHooks</a>
-                        </div>
-                    </div>
-                </div>
-                -->
-
-
-
             </div>
         </div>
         <div class="col-xs-6 col-sm-8 col-md-10">
@@ -294,6 +286,39 @@
                                     <th data-align="left" data-field="identifier">Identifier</th>
                                     <th data-align="left" data-field="url">URL</th>
                                     <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="notificationAlertTab" data-admin-title="Alerts">
+                            <table id="notificationAlertTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/notification/rule"/>"
+                                   data-response-handler="formatRepositoryTable"
+                                   data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="name">Name</th>
+                                    <th data-align="left" data-field="notificationPublisher.name">Publisher</th>
+                                    <th data-align="left" data-field="notificationLevel">Notification Level</th>
+                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="notificationTemplateTab" data-admin-title="Templates">
+                            <table id="notificationTemplateTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/notification/publisher"/>"
+                                   data-response-handler="formatNotificationTemplateTable"
+                                   data-detail-view="true" data-detail-formatter="notificationTemplateDetailFormatter"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="name">Name</th>
+                                    <th data-align="center" data-field="defaultPublisherLabel" data-class="tight">Default</th>
                                 </tr>
                                 </thead>
                             </table>

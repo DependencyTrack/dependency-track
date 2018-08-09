@@ -19,7 +19,7 @@
 "use strict";
 
 /**
- * Called by bootstrap table to format the data in the team table.
+ * Called by bootstrap table to format the data in the repository table.
  */
 function formatRepositoryTable(res) {
     for (let i=0; i<res.length; i++) {
@@ -27,6 +27,20 @@ function formatRepositoryTable(res) {
             res[i].enabledLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
         } else {
             res[i].enabledLabel = '';
+        }
+    }
+    return res;
+}
+
+/**
+ * Called by bootstrap table to format the data in the templates table.
+ */
+function formatNotificationTemplateTable(res) {
+    for (let i=0; i<res.length; i++) {
+        if (res[i].defaultPublisher === true) {
+            res[i].defaultPublisherLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        } else {
+            res[i].defaultPublisherLabel = '';
         }
     }
     return res;
@@ -90,6 +104,46 @@ function formatManagedUserTable(res) {
         }
     }
     return res;
+}
+
+/**
+ * Function called by bootstrap table when row is clicked/touched, and
+ * expanded. This function handles the dynamic creation of the expanded
+ * view with simple inline templates.
+ */
+function notificationTemplateDetailFormatter(index, row) {
+    let html = [];
+
+    let template = `
+    <form id="form-${row.uuid}">
+    <div class="col-md-6">
+        <div class="form-group">
+            <label class="required" for="updateNotificationTemplateNameInput">Name</label>
+            <input type="text" class="form-control required" disabled="disabled" value="${row.name}" id="updateNotificationTemplateNameInput-${row.uuid}">
+        </div>
+        <div class="form-group">
+            <label class="required" for="updateNotificationTemplatePublisherClassInput">Publisher Class</label>
+            <input type="email" class="form-control required" disabled="disabled" value="${row.publisherClass}" id="updateNotificationTemplatePublisherClassInput-${row.uuid}">
+        </div>   
+        <div class="form-group">
+            <label class="required" for="updateNotificationTemplateDescriptionInput">Description</label>
+            <textarea class="form-control" disabled="disabled" rows="4" id="updateNotificationTemplateDescriptionInput-${row.uuid}">${row.description}</textarea>
+        </div>   
+    </div>
+        <div class="col-md-6">
+        <div class="form-group">
+            <label class="required" for="updateNotificationTemplateMimetypeInput">Template Mimetype</label>
+            <input type="text" class="form-control required" disabled="disabled" value="${row.templateMimeType}" id="updateNotificationTemplateMimetypeInput-${row.uuid}">
+        </div>
+        <div class="form-group">
+            <label class="required" for="updateNotificationTemplateTemplateInput">Template</label>
+            <textarea class="form-control formattedTemplateContent" disabled="disabled" rows="10" wrap="off" id="updateNotificationTemplateTemplateInput-${row.uuid}">${row.template}</textarea>
+        </div>   
+    </div>
+    </form>
+`;
+    html.push(template);
+    return html.join("");
 }
 
 /**
@@ -700,6 +754,19 @@ $(document).ready(function () {
     $("#modalAssignTeamToUser").on("show.bs.modal", function () {
         teamsMembershipTable.bootstrapTable("load", teamData());
         teamsMembershipTable.bootstrapTable("refresh", {silent: true});
+    });
+
+    const notificationTemplateTable = $("#notificationTemplateTable");
+    notificationTemplateTable.on("click-row.bs.table", function(e, row, $tr) {
+        if ($tr.next().is("tr.detail-view")) {
+            notificationTemplateTable.bootstrapTable("collapseRow", $tr.data("index"));
+            notificationTemplateTable.expanded = false;
+        } else {
+            notificationTemplateTable.bootstrapTable("collapseAllRows");
+            notificationTemplateTable.bootstrapTable("expandRow", $tr.data("index"));
+            notificationTemplateTable.expanded = true;
+            notificationTemplateTable.expandedUuid = row.uuid;
+        }
     });
 
     const teamTable = $("#teamsTable");

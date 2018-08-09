@@ -19,17 +19,20 @@ package org.owasp.dependencytrack.model;
 
 import alpine.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.FetchGroup;
+import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Defines a Model class for notification publisher definitions.
@@ -38,48 +41,71 @@ import java.io.Serializable;
  * @since 3.2.0
  */
 @PersistenceCapable
+@FetchGroups({
+        @FetchGroup(name = "ALL", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "description"),
+                @Persistent(name = "publisherClass"),
+                @Persistent(name = "template"),
+                @Persistent(name = "templateMimeType"),
+                @Persistent(name = "defaultPublisher"),
+                @Persistent(name = "uuid"),
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationPublisher implements Serializable {
 
     private static final long serialVersionUID = -1274494967231181534L;
+
+    /**
+     * Defines JDO fetch groups for this class.
+     */
+    public enum FetchGroup {
+        ALL
+    }
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "NAME", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
     private String name;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "DESCRIPTION")
     @Size(min = 0, max = 1024)
     private String description;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "PUBLISHER_CLASS", length = 1024, allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 1024)
     private String publisherClass;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "false")
     @Column(name = "TEMPLATE", jdbcType = "CLOB")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String template;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "TEMPLATE_MIME_TYPE", allowsNull = "false")
     @NotNull
     @Size(min = 1, max = 255)
     private String templateMimeType;
 
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "DEFAULT_PUBLISHER")
     private boolean defaultPublisher;
+
+    @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
+    @Unique(name = "NOTIFICATIONPUBLISHER_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
+    @NotNull
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -138,5 +164,14 @@ public class NotificationPublisher implements Serializable {
 
     public void setDefaultPublisher(boolean defaultPublisher) {
         this.defaultPublisher = defaultPublisher;
+    }
+
+    @NotNull
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(@NotNull UUID uuid) {
+        this.uuid = uuid;
     }
 }

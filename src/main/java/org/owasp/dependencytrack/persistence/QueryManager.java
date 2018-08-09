@@ -1867,7 +1867,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a pacinated list of all notification rules.
+     * Returns a paginated list of all notification rules.
      * @return a paginated list of NotificationRules
      */
     @SuppressWarnings("unchecked")
@@ -1882,6 +1882,19 @@ public class QueryManager extends AlpineQueryManager {
             return execute(query, filterString);
         }
         return execute(query);
+    }
+
+    /**
+     * Retrieves all NotificationPublishers.
+     * This method if designed NOT to provide paginated results.
+     * @return list of all NotificationPublisher objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<NotificationPublisher> getAllNotificationPublishers() {
+        final Query query = pm.newQuery(NotificationPublisher.class);
+        query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
+        query.setOrdering("name asc");
+        return (List<NotificationPublisher>)query.execute();
     }
 
     /**

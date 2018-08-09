@@ -1,55 +1,55 @@
 {
-    "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png",
-    "username": "Dependency-Track",
-    "attachments": [
-        {
-            "fields": [
-            {% if notification.scope == "PORTFOLIO" %}
-                {
-                    "title": "VulnID",
-                    "value": "{{ vulnId }}"
-                },
-                {
-                    "title": "Severity",
-                    "value": "{{ severity }}"
-                },
-                {
-                    "title": "Source",
-                    "value": "{{ source }}"
-                },
-                {
-                    "title": "Component",
-                    "value": "{{ component }}"
-                }
-            {% else %}
-                {
-                    "title": "Level",
-                    "value": "{{ notification.level }}"
-                },
-                {
-                    "title": "Scope",
-                    "value": "{{ notification.scope }}"
-                },
-                {
-                    "title": "Group",
-                    "value": "{{ notification.group }}"
-                }
-            {% endif %}
-            ],
+  "icon_url": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png",
+  "username": "Dependency-Track",
+  "attachments": [
+    {
+      "fields": [
         {% if notification.scope == "PORTFOLIO" %}
-            "color": "warning",
-        {% else %}
-            {% if notification.level == "INFORMATIONAL" %}
-            "color": "#36a64f",
-            {% elseif notification.level == "WARNING" %}
-            "color": "warning",
-            {% elseif notification.level == "ERROR" %}
-            "color": "danger",
-            {% endif %}
-        {% endif %}
-            "ts": "{{ timestampEpochSecond }}",
-            "title": "{{ title | escape(strategy="js") }}",
-            "text": "{{ content | escape(strategy="js") }}"
+        {
+          "title": "VulnID",
+          "value": "{{ vulnId }}"
+        },
+        {
+          "title": "Severity",
+          "value": "{{ severity }}"
+        },
+        {
+          "title": "Source",
+          "value": "{{ source }}"
+        },
+        {
+          "title": "Component",
+          "value": "{{ component }}"
         }
-    ]
+        {% else %}
+        {
+          "title": "Level",
+          "value": "{{ notification.level }}"
+        },
+        {
+          "title": "Scope",
+          "value": "{{ notification.scope }}"
+        },
+        {
+          "title": "Group",
+          "value": "{{ notification.group }}"
+        }
+        {% endif %}
+      ],
+      {% if notification.scope == "PORTFOLIO" %}
+      "color": "warning",
+      {% else %}
+      {% if notification.level == "INFORMATIONAL" %}
+      "color": "#36a64f",
+      {% elseif notification.level == "WARNING" %}
+      "color": "warning",
+      {% elseif notification.level == "ERROR" %}
+      "color": "danger",
+      {% endif %}
+      {% endif %}
+      "ts": "{{ timestampEpochSecond }}",
+      "title": "{{ title | escape(strategy="js") }}",
+      "text": "{{ content | escape(strategy="js") }}"
+    }
+  ]
 }

@@ -24,6 +24,7 @@ import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import org.apache.commons.io.FileUtils;
+import org.owasp.dependencytrack.RequirementsVerifier;
 import org.owasp.dependencytrack.auth.Permissions;
 import org.owasp.dependencytrack.event.IndexEvent;
 import org.owasp.dependencytrack.model.Component;
@@ -57,6 +58,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
      * {@inheritDoc}
      */
     public void contextInitialized(ServletContextEvent event) {
+        if (RequirementsVerifier.failedValidation()) {
+            return;
+        }
         // Creates empty indexes on startup if indexes do not exist
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Project.class));
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Component.class));

@@ -19,6 +19,7 @@ package org.owasp.dependencytrack.notification;
 
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
+import org.owasp.dependencytrack.RequirementsVerifier;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -37,6 +38,9 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
      * {@inheritDoc}
      */
     public void contextInitialized(ServletContextEvent event) {
+        if (RequirementsVerifier.failedValidation()) {
+            return;
+        }
         NOTIFICATION_SERVICE.subscribe(new Subscription(NotificationRouter.class));
     }
 

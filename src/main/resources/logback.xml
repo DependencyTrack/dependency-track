@@ -34,7 +34,7 @@
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
-    <logger name="org.owasp.dependencytrack" level="INFO" additivity="false">
+    <logger name="org.dependencytrack" level="INFO" additivity="false">
         <appender-ref ref="FILE" />
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>

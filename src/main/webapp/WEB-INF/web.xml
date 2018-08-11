@@ -23,7 +23,7 @@
          version="3.1">
 
     <listener>
-        <listener-class>org.owasp.dependencytrack.RequirementsVerifier</listener-class>
+        <listener-class>org.dependencytrack.RequirementsVerifier</listener-class>
     </listener>
     <listener>
         <listener-class>alpine.persistence.PersistenceInitializer</listener-class>
@@ -32,16 +32,16 @@
         <listener-class>alpine.persistence.PersistenceManagerFactory</listener-class>
     </listener>
     <listener>
-        <listener-class>org.owasp.dependencytrack.upgrade.UpgradeInitializer</listener-class>
+        <listener-class>org.dependencytrack.upgrade.UpgradeInitializer</listener-class>
     </listener>
     <listener>
-        <listener-class>org.owasp.dependencytrack.event.EventSubsystemInitializer</listener-class>
+        <listener-class>org.dependencytrack.event.EventSubsystemInitializer</listener-class>
     </listener>
     <listener>
-        <listener-class>org.owasp.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
+        <listener-class>org.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
     </listener>
     <listener>
-        <listener-class>org.owasp.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>
+        <listener-class>org.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>
     </listener>
 
     <filter>
@@ -92,7 +92,7 @@
         <servlet-class>alpine.AlpineServlet</servlet-class>
         <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>io.swagger.jaxrs.listing,alpine.filters,org.owasp.dependencytrack.resources,org.owasp.dependencytrack.filters</param-value>
+            <param-value>io.swagger.jaxrs.listing,alpine.filters,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
         </init-param>
         <init-param>
             <param-name>jersey.config.server.provider.classnames</param-name>
@@ -115,7 +115,7 @@
 
     <servlet>
         <servlet-name>NVD Mirror</servlet-name>
-        <servlet-class>org.owasp.dependencytrack.servlets.NvdMirrorServlet</servlet-class>
+        <servlet-class>org.dependencytrack.servlets.NvdMirrorServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>

@@ -15,16 +15,16 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.owasp.dependencytrack.tasks;
+package org.dependencytrack.tasks;
 
 import alpine.event.LdapSyncEvent;
 import alpine.tasks.AlpineTaskScheduler;
-import org.owasp.dependencytrack.event.MetricsUpdateEvent;
-import org.owasp.dependencytrack.event.NistMirrorEvent;
-import org.owasp.dependencytrack.event.NspMirrorEvent;
-import org.owasp.dependencytrack.event.RepositoryMetaEvent;
-import org.owasp.dependencytrack.event.VulnDbSyncEvent;
-import org.owasp.dependencytrack.event.VulnerabilityAnalysisEvent;
+import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.event.NspMirrorEvent;
+import org.dependencytrack.event.RepositoryMetaEvent;
+import org.dependencytrack.event.VulnDbSyncEvent;
+import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 
 /**
  * A Singleton implementation of {@link AlpineTaskScheduler} that configures scheduled and repeatable tasks.

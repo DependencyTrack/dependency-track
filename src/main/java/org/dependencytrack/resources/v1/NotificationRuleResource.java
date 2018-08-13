@@ -62,7 +62,7 @@ public class NotificationRuleResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllNotificationRules() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getNotificationRules();
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }

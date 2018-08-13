@@ -1877,7 +1877,7 @@ public class QueryManager extends AlpineQueryManager {
             query.setOrdering("name asc");
         }
         if (filter != null) {
-            query.setFilter("name.toLowerCase().matches(:name)");
+            query.setFilter("name.toLowerCase().matches(:name) || publisher.name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             return execute(query, filterString);
         }

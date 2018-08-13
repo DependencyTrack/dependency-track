@@ -38,13 +38,13 @@ public class SendMailPublisher implements Publisher {
 
     public void inform(Notification notification, JsonObject config) {
         if (config == null) {
-            LOGGER.debug("No configuration found. Skipping notification.");
+            LOGGER.warn("No configuration found. Skipping notification.");
             return;
         }
         final String destination = config.getString("destination");
         final String content = prepareTemplate(notification, TEMPLATE);
         if (destination == null || content == null) {
-            LOGGER.debug("A destination or template was not found. Skipping notification");
+            LOGGER.warn("A destination or template was not found. Skipping notification");
             return;
         }
 

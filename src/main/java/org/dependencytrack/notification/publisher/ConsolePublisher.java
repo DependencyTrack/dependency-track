@@ -34,7 +34,7 @@ public class ConsolePublisher implements Publisher {
     public void inform(Notification notification, JsonObject config) {
         final String content = prepareTemplate(notification, TEMPLATE);
         if (content == null) {
-            LOGGER.debug("A template was not found. Skipping notification");
+            LOGGER.warn("A template was not found. Skipping notification");
             return;
         }
         final PrintStream ps;

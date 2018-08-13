@@ -56,7 +56,12 @@ import java.util.Map;
 public final class HttpClientFactory {
 
     private static final String PROXY_ADDRESS = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS);
-    private static final int PROXY_PORT = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
+    private static int PROXY_PORT;
+    static {
+        if (PROXY_ADDRESS != null) {
+            PROXY_PORT = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_PROXY_PORT);
+        }
+    }
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD);
     private static final Logger LOGGER = Logger.getLogger(HttpClientFactory.class);

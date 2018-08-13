@@ -17,6 +17,7 @@
  */
 package org.dependencytrack.notification.publisher;
 
+import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import com.mitchellbosecke.pebble.PebbleEngine;
@@ -26,12 +27,14 @@ import java.io.PrintStream;
 
 public class ConsolePublisher implements Publisher {
 
+    private static final Logger LOGGER = Logger.getLogger(ConsolePublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/console.peb");
 
     public void inform(Notification notification, JsonObject config) {
         final String content = prepareTemplate(notification, TEMPLATE);
         if (content == null) {
+            LOGGER.debug("A template was not found. Skipping notification");
             return;
         }
         final PrintStream ps;

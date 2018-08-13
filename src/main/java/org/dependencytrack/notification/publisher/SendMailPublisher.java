@@ -37,6 +37,17 @@ public class SendMailPublisher implements Publisher {
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/email.peb");
 
     public void inform(Notification notification, JsonObject config) {
+        if (config == null) {
+            LOGGER.debug("No configuration found. Skipping notification.");
+            return;
+        }
+        final String destination = config.getString("destination");
+        final String content = prepareTemplate(notification, TEMPLATE);
+        if (destination == null || content == null) {
+            LOGGER.debug("A destination or template was not found. Skipping notification");
+            return;
+        }
+
         try (QueryManager qm = new QueryManager()) {
             ConfigProperty smtpEnabled = qm.getConfigProperty(EMAIL_SMTP_ENABLED.getGroupName(), EMAIL_SMTP_ENABLED.getPropertyName());
             ConfigProperty smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(), EMAIL_SMTP_FROM_ADDR.getPropertyName());
@@ -51,13 +62,6 @@ public class SendMailPublisher implements Publisher {
                 return; // smtp is not enabled
             }
             final boolean smtpAuth = (smtpUser.getPropertyValue() != null && smtpPass.getPropertyValue() != null);
-            final String destination = config.getString("destination");
-
-            final String content = prepareTemplate(notification, TEMPLATE);
-            if (content == null) {
-                return;
-            }
-
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom.getPropertyValue())
                     .to(destination)

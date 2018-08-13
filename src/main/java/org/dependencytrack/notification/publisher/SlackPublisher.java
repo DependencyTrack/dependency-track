@@ -34,10 +34,14 @@ public class SlackPublisher implements Publisher {
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/slack.peb");
 
     public void inform(Notification notification, JsonObject config) {
+        if (config == null) {
+            LOGGER.debug("No configuration found. Skipping notification.");
+            return;
+        }
         final String destination = config.getString("destination");
-
         final String content = prepareTemplate(notification, TEMPLATE);
-        if (content == null) {
+        if (destination == null || content == null) {
+            LOGGER.debug("A destination or template was not found. Skipping notification");
             return;
         }
 

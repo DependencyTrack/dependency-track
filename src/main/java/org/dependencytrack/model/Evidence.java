@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.commons.lang3.StringUtils;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -103,7 +104,7 @@ public class Evidence implements Serializable {
     }
 
     public void setType(String type) {
-        this.type = type;
+        this.type = StringUtils.abbreviate(type, 255);
     }
 
     public int getConfidence() {
@@ -119,7 +120,7 @@ public class Evidence implements Serializable {
     }
 
     public void setSource(String source) {
-        this.source = source;
+        this.source = StringUtils.abbreviate(source, 255);
     }
 
     public String getName() {
@@ -127,7 +128,7 @@ public class Evidence implements Serializable {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.abbreviate(name, 255);
     }
 
     public String getValue() {
@@ -135,7 +136,7 @@ public class Evidence implements Serializable {
     }
 
     public void setValue(String value) {
-        this.value = value;
+        this.value = StringUtils.abbreviate(value, 4096);
     }
 
     public Component getComponent() {

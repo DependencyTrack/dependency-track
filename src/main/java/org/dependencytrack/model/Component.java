@@ -238,7 +238,7 @@ public class Component implements Serializable {
     }
 
     public void setGroup(String group) {
-        this.group = group;
+        this.group = StringUtils.abbreviate(group, 255);
     }
 
     public String getName() {
@@ -246,7 +246,7 @@ public class Component implements Serializable {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.abbreviate(name, 255);
     }
 
     public String getVersion() {
@@ -254,7 +254,7 @@ public class Component implements Serializable {
     }
 
     public void setVersion(String version) {
-        this.version = version;
+        this.version = StringUtils.abbreviate(version, 255);
     }
 
     public Classifier getClassifier() {
@@ -270,7 +270,7 @@ public class Component implements Serializable {
     }
 
     public void setFilename(String filename) {
-        this.filename = filename;
+        this.filename = StringUtils.abbreviate(filename, 255);
     }
 
     public String getExtension() {
@@ -278,7 +278,7 @@ public class Component implements Serializable {
     }
 
     public void setExtension(String extension) {
-        this.extension = extension;
+        this.extension = StringUtils.abbreviate(extension, 255);
     }
 
     public String getMd5() {
@@ -334,7 +334,7 @@ public class Component implements Serializable {
     }
 
     public void setCpe(String cpe) {
-        this.cpe = cpe;
+        this.cpe = StringUtils.abbreviate(cpe, 255);
     }
 
     public PackageURL getPurl() {
@@ -366,7 +366,7 @@ public class Component implements Serializable {
     }
 
     public void setLicense(String license) {
-        this.license = license;
+        this.license = StringUtils.abbreviate(license, 255);
     }
 
     public License getResolvedLicense() {

@@ -85,6 +85,7 @@
         <lib.cvss-calculator.version>1.1.0</lib.cvss-calculator.version>
         <lib.dependency-check.version>3.2.1</lib.dependency-check.version>
         <lib.lucene.version>5.5.5</lib.lucene.version>
+        <lib.packageurl.version>1.0.0-SNAPSHOT</lib.packageurl.version>
         <lib.pebble.version>3.0.1</lib.pebble.version>
         <lib.spdx-tools.version>2.1.12</lib.spdx-tools.version>
         <lib.unirest.version>2.2.03</lib.unirest.version>
@@ -95,7 +96,7 @@
     </properties>
 
     <repositories>
-        <!-- Resolve Alpine snapshot releases -->
+        <!-- Resolve snapshot releases -->
         <repository>
             <id>ossrh-snapshot</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -148,6 +149,12 @@
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-utils</artifactId>
             <version>${lib.dependency-check.version}</version>
+        </dependency>
+        <!-- Package URL -->
+        <dependency>
+            <groupId>com.github.package-url</groupId>
+            <artifactId>packageurl-java</artifactId>
+            <version>${lib.packageurl.version}</version>
         </dependency>
         <!-- Lucene / Overrides the Lucene version included with Dependency-Check -->
         <dependency>

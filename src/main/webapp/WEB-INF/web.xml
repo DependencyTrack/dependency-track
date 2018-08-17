@@ -129,7 +129,7 @@
     </error-page>
 
     <session-config>
-        <session-timeout>1</session-timeout>
+        <session-timeout>30</session-timeout>
         <cookie-config>
             <name>DEPENDENCY-TRACK_JSESSIONID</name>
             <http-only>true</http-only>

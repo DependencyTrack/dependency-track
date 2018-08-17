@@ -128,4 +128,15 @@
         <location>/WEB-INF/fragments/error.jsp</location>
     </error-page>
 
+    <session-config>
+        <session-timeout>1</session-timeout>
+        <cookie-config>
+            <name>DEPENDENCY-TRACK_JSESSIONID</name>
+            <http-only>true</http-only>
+            <!-- <secure>true</secure> -->
+            <max-age>0</max-age>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+
 </web-app>

@@ -83,10 +83,6 @@ public class NotificationRouter implements Subscriber {
 
             StringBuilder sb = new StringBuilder();
 
-
-            //todo: add notification Group checking
-
-
             final NotificationLevel level = notification.getLevel();
             if (NotificationLevel.INFORMATIONAL == level) {
                 sb.append("(notificationLevel == 'INFORMATIONAL' || notificationLevel == 'WARNING' || notificationLevel == 'ERROR') && ");
@@ -111,16 +107,18 @@ public class NotificationRouter implements Subscriber {
                 also match projects affected by the vulnerability.
                  */
                 for (NotificationRule rule: result) {
-                    if (rule.getProjects() != null && rule.getProjects().size() > 0) {
-                        for (Project project: rule.getProjects()) {
-                            for (Project affectedProject: affectedProjects) {
-                                if (affectedProject.getUuid().equals(project.getUuid())) {
-                                    rules.add(rule);
+                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                        if (rule.getProjects() != null && rule.getProjects().size() > 0) {
+                            for (Project project : rule.getProjects()) {
+                                for (Project affectedProject : affectedProjects) {
+                                    if (affectedProject.getUuid().equals(project.getUuid())) {
+                                        rules.add(rule);
+                                    }
                                 }
                             }
+                        } else {
+                            rules.add(rule);
                         }
-                    } else {
-                        rules.add(rule);
                     }
                 }
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
@@ -132,18 +130,24 @@ public class NotificationRouter implements Subscriber {
                 also match projects affected by the vulnerability.
                  */
                 for (NotificationRule rule: result) {
-                    if (rule.getProjects() != null && rule.getProjects().size() > 0) {
-                        for (Project project: rule.getProjects()) {
-                            if (project.getUuid().equals(subject.getDependency().getProject().getUuid())) {
-                                rules.add(rule);
+                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                        if (rule.getProjects() != null && rule.getProjects().size() > 0) {
+                            for (Project project : rule.getProjects()) {
+                                if (project.getUuid().equals(subject.getDependency().getProject().getUuid())) {
+                                    rules.add(rule);
+                                }
                             }
+                        } else {
+                            rules.add(rule);
                         }
-                    } else {
-                        rules.add(rule);
                     }
                 }
             } else {
-                rules.addAll(result);
+                for (NotificationRule rule: result) {
+                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                        rules.add(rule);
+                    }
+                }
             }
         }
         return rules;

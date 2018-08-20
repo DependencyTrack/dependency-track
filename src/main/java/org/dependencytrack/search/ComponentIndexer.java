@@ -25,6 +25,9 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+
 import java.io.IOException;
 
 /**
@@ -73,8 +76,8 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         } catch (IOException e) {
             LOGGER.error("An error occurred while adding component to index", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.COMPONENT_INDEXER)
                     .content("An error occurred while adding component to index. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
@@ -93,8 +96,8 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
         } catch (IOException e) {
             LOGGER.error("An error occurred while removing a component from the index", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.COMPONENT_INDEXER)
                     .content("An error occurred while removing a component from the index. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)

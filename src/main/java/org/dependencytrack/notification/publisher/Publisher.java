@@ -21,7 +21,7 @@ import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.apache.log4j.Logger;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import javax.json.JsonObject;
 import java.io.IOException;
@@ -46,9 +46,9 @@ public interface Publisher {
         context.put("timestamp", notification.getTimestamp().toString());
         context.put("title", notification.getTitle());
         context.put("notification", notification);
-        if (NotificationConstants.Scope.SYSTEM.name().equals(notification.getScope())) {
+        if (NotificationScope.SYSTEM.name().equals(notification.getScope())) {
             context.put("content", notification.getContent());
-        } else if (NotificationConstants.Scope.PORTFOLIO.name().equals(notification.getScope())) {
+        } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
             final NewVulnerabilityIdentified newVuln = (NewVulnerabilityIdentified) notification.getSubject();
             final String vulnId = newVuln.getVulnerability().getVulnId();
             String content = (newVuln.getVulnerability().getTitle() != null) ? vulnId + ": " + newVuln.getVulnerability().getTitle() : vulnId;

@@ -29,6 +29,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -100,8 +102,8 @@ public class SearchManager {
         } catch (ParseException e) {
             LOGGER.error("Failed to parse search string", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
                     .content("Failed to parse search string. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
@@ -109,8 +111,8 @@ public class SearchManager {
         } catch (CorruptIndexException e) {
             LOGGER.error("Corrupted Lucene index detected", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
                     .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
@@ -118,8 +120,8 @@ public class SearchManager {
         } catch (IOException e) {
             LOGGER.error("An I/O Exception occurred while searching Lucene index", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
                     .content("An I/O Exception occurred while searching Lucene index. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)

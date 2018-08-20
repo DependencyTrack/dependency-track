@@ -33,6 +33,8 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NspMirrorEvent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nsp.NspAdvsoriesParser;
 import org.dependencytrack.parser.nsp.model.Advisory;
 import org.dependencytrack.parser.nsp.model.AdvisoryResults;
@@ -77,8 +79,8 @@ public class NspMirrorTask implements LoggableSubscriber {
             LOGGER.info("NSP mirroring complete");
             if (successful) {
                 Notification.dispatch(new Notification()
-                        .scope(NotificationConstants.Scope.SYSTEM)
-                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
                         .title(NotificationConstants.Title.NSP_MIRROR)
                         .content("Mirroring of the Node Security Platform completed successfully")
                         .level(NotificationLevel.INFORMATIONAL)
@@ -118,8 +120,8 @@ public class NspMirrorTask implements LoggableSubscriber {
             LOGGER.error("An error occurred while retrieving NSP advisory", e);
             successful = false;
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.DATASOURCE_MIRRORING)
                     .title(NotificationConstants.Title.NSP_MIRROR)
                     .content("An error occurred while retrieving NSP advisory. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)

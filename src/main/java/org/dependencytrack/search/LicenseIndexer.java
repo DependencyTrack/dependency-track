@@ -25,6 +25,8 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.License;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import java.io.IOException;
 
 /**
@@ -70,8 +72,8 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         } catch (IOException e) {
             LOGGER.error("An error occurred while adding a license to the index", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.LICENSE_INDEXER)
                     .content("An error occurred while adding a license to the index. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
@@ -90,8 +92,8 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         } catch (IOException e) {
             LOGGER.error("An error occurred while removing a license from the index", e);
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.INDEXING_SERVICE)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.INDEXING_SERVICE)
                     .title(NotificationConstants.Title.LICENSE_INDEXER)
                     .content("An error occurred while removing a license from the index. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)

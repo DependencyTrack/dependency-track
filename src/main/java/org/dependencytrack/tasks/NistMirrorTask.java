@@ -34,6 +34,8 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.event.DependencyCheckEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.util.HttpClientFactory;
 import java.io.Closeable;
@@ -105,8 +107,8 @@ public class NistMirrorTask implements LoggableSubscriber {
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.DATASOURCE_MIRRORING)
                     .title(NotificationConstants.Title.NVD_MIRROR)
                     .content("Mirroring of the National Vulnerability Database completed successfully")
                     .level(NotificationLevel.INFORMATIONAL)
@@ -183,8 +185,8 @@ public class NistMirrorTask implements LoggableSubscriber {
                 LOGGER.warn("Unable to download - HTTP Response 403: " + status.getReasonPhrase());
                 LOGGER.warn(detailMessage);
                 Notification.dispatch(new Notification()
-                        .scope(NotificationConstants.Scope.SYSTEM)
-                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
                         .title(NotificationConstants.Title.NVD_MIRROR)
                         .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode() + ". " + detailMessage)
                         .level(NotificationLevel.ERROR)
@@ -193,8 +195,8 @@ public class NistMirrorTask implements LoggableSubscriber {
                 mirroredWithoutErrors = false;
                 LOGGER.warn("Unable to download - HTTP Response " + status.getStatusCode() + ": " + status.getReasonPhrase());
                 Notification.dispatch(new Notification()
-                        .scope(NotificationConstants.Scope.SYSTEM)
-                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
                         .title(NotificationConstants.Title.NVD_MIRROR)
                         .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode())
                         .level(NotificationLevel.ERROR)
@@ -205,8 +207,8 @@ public class NistMirrorTask implements LoggableSubscriber {
             mirroredWithoutErrors = false;
             LOGGER.error("Download failed : " + e.getMessage());
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.SYSTEM)
-                    .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                    .scope(NotificationScope.SYSTEM)
+                    .group(NotificationGroup.DATASOURCE_MIRRORING)
                     .title(NotificationConstants.Title.NVD_MIRROR)
                     .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)

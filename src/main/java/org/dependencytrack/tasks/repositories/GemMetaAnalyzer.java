@@ -28,6 +28,8 @@ import io.github.openunirest.http.exceptions.UnirestException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.HttpClientFactory;
 
 /**
@@ -82,8 +84,8 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
                     LOGGER.debug(" - RepositoryType URL : " + url);
                     LOGGER.debug(" - Package URL : " + component.getPurl().canonicalize());
                     Notification.dispatch(new Notification()
-                            .scope(NotificationConstants.Scope.SYSTEM)
-                            .group(NotificationConstants.Group.REPOSITORY)
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.REPOSITORY)
                             .title(NotificationConstants.Title.REPO_ERROR)
                             .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. URL: " + url + " HTTP Status: " + response.getStatus() + ". Check log for details." )
                             .level(NotificationLevel.ERROR)
@@ -92,8 +94,8 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
             } catch (UnirestException e) {
                 LOGGER.error("Request failure", e);
                 Notification.dispatch(new Notification()
-                        .scope(NotificationConstants.Scope.SYSTEM)
-                        .group(NotificationConstants.Group.REPOSITORY)
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.REPOSITORY)
                         .title(NotificationConstants.Title.REPO_ERROR)
                         .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. Check log for details. " + e.getMessage())
                         .level(NotificationLevel.ERROR)

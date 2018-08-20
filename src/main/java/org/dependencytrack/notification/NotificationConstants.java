@@ -19,27 +19,6 @@ package org.dependencytrack.notification;
 
 public class NotificationConstants {
 
-    public enum Scope {
-        SYSTEM,
-        PORTFOLIO
-    }
-
-    public enum Group {
-        // System Groups
-        DATASOURCE_MIRRORING,
-        REPOSITORY,
-        INDEXING_SERVICE,
-        FILE_SYSTEM,
-
-        // Portfolio Groups
-        NEW_VULNERABILITY,
-        NEW_OUTDATED_COMPONENT,
-        FIXED_VULNERABILITY,
-        FIXED_OUTDATED,
-        GLOBAL_AUDIT_CHANGE,
-        PROJECT_AUDIT_CHANGE
-    }
-
     public static class Title {
         public static final String NVD_MIRROR = "NVD Mirroring";
         public static final String NSP_MIRROR = "NSP Mirroring";

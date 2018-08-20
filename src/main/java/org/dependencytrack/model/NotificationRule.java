@@ -15,7 +15,6 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-
 package org.dependencytrack.model;
 
 import alpine.notification.NotificationLevel;
@@ -23,7 +22,8 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -36,8 +36,10 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Defines a Model class for notification configurations.
@@ -72,9 +74,9 @@ public class NotificationRule implements Serializable {
     private boolean enabled;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "SCOPE", allowsNull = "false")
+    @Column(name = "SCOPE", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
-    private String scope;
+    private NotificationScope scope;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "NOTIFICATION_LEVEL", jdbcType = "VARCHAR")
@@ -112,11 +114,12 @@ public class NotificationRule implements Serializable {
         this.id = id;
     }
 
+    @NotNull
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
@@ -128,11 +131,12 @@ public class NotificationRule implements Serializable {
         this.enabled = enabled;
     }
 
-    public String getScope() {
+    @NotNull
+    public NotificationScope getScope() {
         return scope;
     }
 
-    public void setScope(String scope) {
+    public void setScope(@NotNull NotificationScope scope) {
         this.scope = scope;
     }
 
@@ -140,7 +144,7 @@ public class NotificationRule implements Serializable {
         return notificationLevel;
     }
 
-    public void setNotificationType(NotificationLevel notificationLevel) {
+    public void setNotificationLevel(NotificationLevel notificationLevel) {
         this.notificationLevel = notificationLevel;
     }
 
@@ -160,33 +164,35 @@ public class NotificationRule implements Serializable {
         this.message = message;
     }
 
-    public List<NotificationConstants.Group> getNotifyOn() {
-        List<NotificationConstants.Group> result = new ArrayList<>();
+    public Set<NotificationGroup> getNotifyOn() {
+        Set<NotificationGroup> result = new TreeSet<>();
         if (notifyOn != null) {
             String[] groups = notifyOn.split(",");
             for (String s: groups) {
-                result.add(NotificationConstants.Group.valueOf(s));
+                result.add(NotificationGroup.valueOf(s.trim()));
             }
         }
         return result;
     }
 
-    public void setNotifyOn(List<NotificationConstants.Group> groups) {
+    public void setNotifyOn(Set<NotificationGroup> groups) {
         StringBuilder sb = new StringBuilder();
-        for (int i=0; i<groups.size(); i++) {
-            sb.append(groups.get(i));
-            if (i+1 < groups.size()) {
+        List<NotificationGroup> list = new ArrayList<>(groups);
+        Collections.sort(list);
+        for (int i=0; i<list.size(); i++) {
+            sb.append(list.get(i));
+            if (i+1 < list.size()) {
                 sb.append(",");
             }
         }
         this.notifyOn = sb.toString();
     }
 
-    public NotificationPublisher getNotificationPublisher() {
+    public NotificationPublisher getPublisher() {
         return publisher;
     }
 
-    public void setNotificationPublisher(NotificationPublisher publisher) {
+    public void setPublisher(NotificationPublisher publisher) {
         this.publisher = publisher;
     }
 

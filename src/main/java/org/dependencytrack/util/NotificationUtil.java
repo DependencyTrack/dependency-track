@@ -26,6 +26,8 @@ import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.persistence.QueryManager;
 import java.util.Collections;
@@ -47,8 +49,8 @@ public class NotificationUtil {
                 affectedProjects.add(dependency.getProject());
             }
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.PORTFOLIO)
-                    .group(NotificationConstants.Group.NEW_VULNERABILITY)
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.NEW_VULNERABILITY)
                     .title(NotificationConstants.Title.NEW_VULNERABILITY)
                     .level(NotificationLevel.INFORMATIONAL)
                     .subject(new NewVulnerabilityIdentified(vulnerability, component, affectedProjects))
@@ -62,8 +64,8 @@ public class NotificationUtil {
         for (Vulnerability vulnerability: vulnerabilities) {
             Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.PORTFOLIO)
-                    .group(NotificationConstants.Group.NEW_VULNERABILITY)
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.NEW_VULNERABILITY)
                     .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                     .level(NotificationLevel.INFORMATIONAL)
                     .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
@@ -73,22 +75,22 @@ public class NotificationUtil {
 
     public static void analyzeNotificationCriteria(QueryManager qm, Analysis analysis, boolean hasChanged) {
         if (AnalysisState.EXPLOITABLE == analysis.getAnalysisState() && hasChanged) {
-            final NotificationConstants.Group notificationGroup;
+            final NotificationGroup notificationGroup;
             final Set<Project> affectedProjects = new HashSet<>();
             if (analysis.getProject() != null) {
                 // This was an analysis decision affecting a single project
-                notificationGroup = NotificationConstants.Group.PROJECT_AUDIT_CHANGE;
+                notificationGroup = NotificationGroup.PROJECT_AUDIT_CHANGE;
                 affectedProjects.add(analysis.getProject());
             } else {
                 // This was a global analysis decision affecting all projects
-                notificationGroup = NotificationConstants.Group.GLOBAL_AUDIT_CHANGE;
+                notificationGroup = NotificationGroup.GLOBAL_AUDIT_CHANGE;
                 List<Dependency> dependencies = qm.getAllDependencies(analysis.getProject());
                 for (Dependency dependency : dependencies) {
                     affectedProjects.add(dependency.getProject());
                 }
             }
             Notification.dispatch(new Notification()
-                    .scope(NotificationConstants.Scope.PORTFOLIO)
+                    .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
                     .title(NotificationConstants.Title.EXPLOITABLE_ANALYSIS_DECISION)
                     .level(NotificationLevel.INFORMATIONAL)

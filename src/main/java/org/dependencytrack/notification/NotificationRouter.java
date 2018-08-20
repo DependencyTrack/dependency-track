@@ -56,7 +56,7 @@ public class NotificationRouter implements Subscriber {
                 }
             }
             try {
-                final Class<?> publisherClass = Class.forName(rule.getNotificationPublisher().getPublisherClass());
+                final Class<?> publisherClass = Class.forName(rule.getPublisher().getPublisherClass());
                 if (Publisher.class.isAssignableFrom(publisherClass)) {
                     final Publisher publisher = (Publisher)publisherClass.getDeclaredConstructor().newInstance();
                     publisher.inform(notification, config);
@@ -71,7 +71,9 @@ public class NotificationRouter implements Subscriber {
 
     @SuppressWarnings("unchecked")
     private List<NotificationRule> resolveRules(Notification notification) {
+        // The notification rules to process for this specific notification
         final List<NotificationRule> rules = new ArrayList<>();
+
         if (notification.getScope() == null || notification.getGroup() == null || notification.getLevel() == null) {
             return rules;
         }
@@ -82,7 +84,7 @@ public class NotificationRouter implements Subscriber {
             StringBuilder sb = new StringBuilder();
 
 
-            //todo: add notifyOn
+            //todo: add notification Group checking
 
 
             final NotificationLevel level = notification.getLevel();
@@ -96,10 +98,10 @@ public class NotificationRouter implements Subscriber {
 
             sb.append("enabled == true && scope == :scope"); //todo: improve this - this only works for testing
             query.setFilter(sb.toString());
-            List<NotificationRule> result = (List<NotificationRule>)query.execute(notification.getScope());
+            List<NotificationRule> result = (List<NotificationRule>)query.execute(NotificationScope.valueOf(notification.getScope()));
 
 
-            if (NotificationConstants.Scope.PORTFOLIO.name().equals(notification.getScope())
+            if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerabilityIdentified) {
                 final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
                 final Set<Project> affectedProjects = subject.getAffectedProjects();
@@ -121,7 +123,7 @@ public class NotificationRouter implements Subscriber {
                         rules.add(rule);
                     }
                 }
-            } else if (NotificationConstants.Scope.PORTFOLIO.name().equals(notification.getScope())
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerableDependency) {
                 final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
                 /*

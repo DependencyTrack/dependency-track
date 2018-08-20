@@ -29,6 +29,8 @@ import org.dependencytrack.event.VulnDbSyncEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -84,8 +86,8 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                         LOGGER.error("An error occurred while parsing VulnDB payload: " + file.getName(), ex);
                         successful = false;
                         Notification.dispatch(new Notification()
-                                .scope(NotificationConstants.Scope.SYSTEM)
-                                .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                                .scope(NotificationScope.SYSTEM)
+                                .group(NotificationGroup.DATASOURCE_MIRRORING)
                                 .title(NotificationConstants.Title.VULNDB_MIRROR)
                                 .content("An error occurred parsing VulnDB payload. Check log for details. " + ex.getMessage())
                                 .level(NotificationLevel.ERROR)
@@ -97,8 +99,8 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             LOGGER.info("VulnDB mirror synchronization task complete");
             if (successful) {
                 Notification.dispatch(new Notification()
-                        .scope(NotificationConstants.Scope.SYSTEM)
-                        .group(NotificationConstants.Group.DATASOURCE_MIRRORING)
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
                         .title(NotificationConstants.Title.VULNDB_MIRROR)
                         .content("Mirroring of VulnDB completed successfully")
                         .level(NotificationLevel.INFORMATIONAL)

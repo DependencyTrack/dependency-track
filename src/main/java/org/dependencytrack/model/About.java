@@ -18,7 +18,6 @@
 package org.dependencytrack.model;
 
 import alpine.Config;
-import org.owasp.dependencycheck.utils.Settings;
 import javax.inject.Singleton;
 import java.io.Serializable;
 
@@ -36,14 +35,10 @@ public class About implements Serializable {
     private static final String APPLICATION = Config.getInstance().getApplicationName();
     private static final String VERSION = Config.getInstance().getApplicationVersion();
     private static final String TIMESTAMP = Config.getInstance().getApplicationBuildTimestamp();
-    private static String DC_APPLICATION;
-    private static String DC_VERSION;
 
-    static {
-        Settings settings = new Settings();
-        DC_APPLICATION = settings.getString(Settings.KEYS.APPLICATION_NAME);
-        DC_VERSION = settings.getString(Settings.KEYS.APPLICATION_VERSION);
-    }
+    private static final String FRAMEWORK_NAME = Config.getInstance().getFrameworkName();
+    private static final String FRAMEWORK_VERSION = Config.getInstance().getFrameworkVersion();
+    private static final String FRAMEWORK_TIMESTAMP = Config.getInstance().getFrameworkBuildTimestamp();
 
 
     public String getApplication() {
@@ -58,18 +53,22 @@ public class About implements Serializable {
         return TIMESTAMP;
     }
 
-    public DependencyCheck getDependencyCheck() {
-        return new DependencyCheck();
+    public Framework getFramework() {
+        return new Framework();
     }
 
-    private static class DependencyCheck {
+    private static class Framework {
 
-        public String getApplication() {
-            return DC_APPLICATION;
+        public String getName() {
+            return FRAMEWORK_NAME;
         }
 
         public String getVersion() {
-            return DC_VERSION;
+            return FRAMEWORK_VERSION;
+        }
+
+        public String getTimestamp() {
+            return FRAMEWORK_TIMESTAMP;
         }
     }
 

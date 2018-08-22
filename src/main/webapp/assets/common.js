@@ -123,8 +123,9 @@ $common.initialize = function initialize() {
          * @param data.application the name of the application
          * @param data.version the version of the application
          * @param data.timestamp the timestamp in which the application was built
-         * @param data.dependencyCheck.application the name of Dependency-Check
-         * @param data.dependencyCheck.version the version of Dependency-Check
+         * @param data.framework.name the name of the framework
+         * @param data.framework.version the version of the framework
+         * @param data.framework.timestamp in which the framework was built
          * @method $ jQuery selector
          */
         function onVersionSuccess(data) {
@@ -132,8 +133,9 @@ $common.initialize = function initialize() {
             $("#systemAppName").html(data.application);
             $("#systemAppVersion").html(data.version);
             $("#systemAppTimestamp").html(data.timestamp);
-            $("#dcAppName").html(data.dependencyCheck.application);
-            $("#dcAppVersion").html(data.dependencyCheck.version);
+            $("#systemFrameworkName").html(data.framework.name);
+            $("#systemFrameworkVersion").html(data.framework.version);
+            $("#systemFrameworkTimestamp").html(data.framework.timestamp);
 
             if (!$.sessionStorage.isSet("token")) {
                 $("#nav-logout").css("display", "none");

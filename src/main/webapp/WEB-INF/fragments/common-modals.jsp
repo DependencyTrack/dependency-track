@@ -50,51 +50,47 @@
                         <p>
                             <span id="systemAppName"></span> v<span id="systemAppVersion"></span>
                         </p>
-                        <p>
-                            Copyright &copy; Steve Springett. All Rights Reserved.
-                        </p>
                     </div>
-                    <div class="col-sm-6 col-md-6">
-                        <a href="https://www.owasp.org/index.php/OWASP_Dependency_Check">
-                            <img src="<c:url value="/images/dc.svg"/>" style="width:200px; margin-bottom:20px">
-                        </a>
-                        <p>
-                            Dependency-Check is a Software Composition Analysis (SCA) utility that uses
-                            evidence-based analysis to identify project dependencies and determines if they contain
-                            publicly disclosed vulnerabilities.
-                        <p>
-                            <span id="dcAppName"></span> v<span id="dcAppVersion"></span>
-                        </p>
-                        <p>
-                            Copyright &copy; Jeremy Long. All Rights Reserved.
-                        </p>
-                    </div>
-                </div>
-                <div class="row" style="border-bottom: 1px solid #e5e5e5; margin: 10px 0 10px 0; padding: 0;">
-                    <h4>Credits</h4>
-                </div>
-                <div class="row">
                     <div class="col-sm-6 col-md-6">
                         <a href="https://github.com/stevespringett/Alpine">
                             <img src="<c:url value="/images/Alpine.svg"/>" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
-                            An opinionated scaffolding library that jump-starts Java projects with an API-first
-                            design, secure defaults, and minimal dependencies.
+                            Alpine is an opinionated scaffolding framework that jump-starts Java projects with
+                            an API-first design, secure defaults, and minimal dependencies to aid in the creation
+                            of performant, thin-server applications.
+                        </p>
+                        <p>
+                            <span id="systemFrameworkName"></span> v<span id="systemFrameworkVersion"></span>
                         </p>
                     </div>
+                </div>
+                <div class="row" style="border-bottom: 1px solid #e5e5e5; margin: 10px 0 10px 0; padding: 0;"></div>
+                <div class="row">
                     <div class="col-sm-6 col-md-6">
-                        <h4>Datasource providers</h4>
-                        <ul>
-                            <li><a href="https://nvd.nist.gov/">National Vulnerability Database</a></li>
-                            <li><a href="https://nodesecurity.io/">Node Security Platform</a></li>
-                            <li><a href="https://ossindex.sonatype.org/">Sonatype OSS Index</a></li>
-                            <li><a href="https://vulndb.cyberriskanalytics.com">VulnDB</a> (Optional)</li>
+                        <h4>Community Resources</h4>
+                        <ul class="fa-ul">
+                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://dependencytrack.org/">Website</a></li>
+                            <li><i class="fa-li fa fa-book" aria-hidden="true"></i><a href="https://docs.dependencytrack.org/">Documentation</a></li>
+                            <li><i class="fa-li fa fa-github" aria-hidden="true"></i><a href="https://github.com/DependencyTrack">GitHub</a></li>
+                            <li><i class="fa-li fa fa-slack" aria-hidden="true"></i><a href="https://owasp.slack.com/messages/proj-dependency-track">Slack</a> (<a href="https://owasp.herokuapp.com/">invite</a>)</li>
+                            <li><i class="fa-li fa fa-twitter" aria-hidden="true"></i><a href="https://twitter.com/dependencytrack">Twitter</a></li>
+                            <li><i class="fa-li fa fa-youtube-play" aria-hidden="true"></i><a href="https://www.youtube.com/channel/UC8xdttysl3gNAQYvk1J9Efg">YouTube</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                        <h4>Datasource Providers</h4>
+                        <ul class="fa-ul">
+                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://nvd.nist.gov/">National Vulnerability Database</a></li>
+                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://nodesecurity.io/">Node Security Platform</a></li>
+                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://ossindex.sonatype.org/">Sonatype OSS Index</a></li>
+                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://vulndb.cyberriskanalytics.com">VulnDB</a> (Optional)</li>
                         </ul>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
+                <div style="text-align:center;margin-bottom:-25px;">Copyright &copy; Steve Springett. All Rights Reserved.</div>
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
             </div>
         </div>

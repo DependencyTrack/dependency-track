@@ -133,9 +133,11 @@ $common.initialize = function initialize() {
             $("#systemAppName").html(data.application);
             $("#systemAppVersion").html(data.version);
             $("#systemAppTimestamp").html(data.timestamp);
+            $("#systemAppBuildId").html(data.uuid);
             $("#systemFrameworkName").html(data.framework.name);
             $("#systemFrameworkVersion").html(data.framework.version);
             $("#systemFrameworkTimestamp").html(data.framework.timestamp);
+            $("#systemFrameworkBuildId").html(data.framework.uuid);
 
             if (!$.sessionStorage.isSet("token")) {
                 $("#nav-logout").css("display", "none");

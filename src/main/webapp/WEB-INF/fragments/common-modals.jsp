@@ -50,6 +50,9 @@
                         <p>
                             <span id="systemAppName"></span> v<span id="systemAppVersion"></span>
                         </p>
+                        <p>
+                            Build ID: <span id="systemAppBuildId"></span>
+                        </p>
                     </div>
                     <div class="col-sm-6 col-md-6">
                         <a href="https://github.com/stevespringett/Alpine">
@@ -62,6 +65,9 @@
                         </p>
                         <p>
                             <span id="systemFrameworkName"></span> v<span id="systemFrameworkVersion"></span>
+                        <p>
+                            Build ID: <span id="systemFrameworkBuildId"></span>
+                        </p>
                         </p>
                     </div>
                 </div>

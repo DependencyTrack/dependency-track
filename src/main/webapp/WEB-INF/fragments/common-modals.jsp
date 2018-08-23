@@ -65,9 +65,9 @@
                         </p>
                         <p>
                             <span id="systemFrameworkName"></span> v<span id="systemFrameworkVersion"></span>
+                        </p>
                         <p>
                             Build ID: <span id="systemFrameworkBuildId"></span>
-                        </p>
                         </p>
                     </div>
                 </div>

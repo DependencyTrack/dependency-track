@@ -17,43 +17,18 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.logging.Logger;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import org.dependencytrack.util.HttpClientFactory;
 import javax.json.JsonObject;
 
-public class SlackPublisher implements Publisher {
+public class SlackPublisher extends AbstractWebhookPublisher implements Publisher {
 
-    private static final Logger LOGGER = Logger.getLogger(SlackPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/slack.peb");
 
     public void inform(Notification notification, JsonObject config) {
-        if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification.");
-            return;
-        }
-        final String destination = config.getString("destination");
-        final String content = prepareTemplate(notification, TEMPLATE);
-        if (destination == null || content == null) {
-            LOGGER.warn("A destination or template was not found. Skipping notification");
-            return;
-        }
-
-        Unirest.setHttpClient(HttpClientFactory.createClient());
-        final HttpResponse<JsonNode> response = Unirest.post(destination)
-                .header("accept", "application/json")
-                .body(content)
-                .asJson();
-
-        if (response.getStatus() != 200) {
-            LOGGER.error("An error was encountered publishing notification to Slack: " + response.getStatusText());
-        }
+        publish(DefaultNotificationPublishers.SLACK.getPublisherName(), TEMPLATE, notification, config);
     }
 
 }

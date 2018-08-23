@@ -92,7 +92,7 @@
         <servlet-class>alpine.AlpineServlet</servlet-class>
         <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>io.swagger.jaxrs.listing,alpine.filters,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
+            <param-value>io.swagger.jaxrs.listing,alpine.filters,alpine.resources,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
         </init-param>
         <init-param>
             <param-name>jersey.config.server.provider.classnames</param-name>

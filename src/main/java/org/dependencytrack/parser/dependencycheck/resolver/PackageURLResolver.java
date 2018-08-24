@@ -55,17 +55,8 @@ public class PackageURLResolver implements IResolver {
                             LOGGER.info("An invalid Maven GAV was identified which does not conform to the Maven specification. Skipping. g:" + gav.group + " a:" + gav.artifact + " v:" + gav.version);
                             continue;
                         }
-
-                        if (dependency.getFileName() != null && dependency.getFileName().contains(".")) {
-                            final String extension = dependency.getFileName().substring(
-                                    dependency.getFileName().lastIndexOf(".") + 1, dependency.getFileName().length()
-                            );
-                            TreeMap<String, String> qualifiers = new TreeMap<>();
-                            qualifiers.put("type", extension);
-                            return new PackageURL(PackageURL.StandardTypes.MAVEN, gav.group, gav.artifact, gav.version, qualifiers, null);
-                        } else {
-                            return new PackageURL(PackageURL.StandardTypes.MAVEN, gav.group, gav.artifact, gav.version, null, null);
-                        }
+                        // No longer using qualifiers as they cannot be predicted reliably from dependency-check
+                        return new PackageURL(PackageURL.StandardTypes.MAVEN, gav.group, gav.artifact, gav.version, null, null);
 
                     } else if ("npm".equals(identifier.getType())
                             && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))

@@ -1,0 +1,11 @@
+{
+  "notification": {
+    "level": "{{ notification.level }}",
+    "scope": "{{ notification.scope }}",
+    "group": "{{ notification.group }}",
+    "timestamp": "{{ notification.timestamp }}",
+    "title": "{{ title | escape(strategy="js") }}",
+    "content": "{{ content | escape(strategy="js") }}",
+    "subject": {{ subject | raw }}
+  }
+}

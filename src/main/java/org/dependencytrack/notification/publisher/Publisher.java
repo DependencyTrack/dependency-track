@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.util.NotificationUtil;
 import javax.json.JsonObject;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -55,6 +56,7 @@ public interface Publisher {
             if (newVuln.getVulnerability().getDescription() != null) {
                 content = newVuln.getVulnerability().getDescription();
             }
+            context.put("subject", NotificationUtil.toJson(newVuln));
             context.put("severity", newVuln.getVulnerability().getSeverity().name());
             context.put("source", newVuln.getVulnerability().getSource());
             context.put("vulnId", vulnId);

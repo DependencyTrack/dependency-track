@@ -31,6 +31,7 @@ import javax.jdo.annotations.Join;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 /**
  * Defines a Model class for notification configurations.
@@ -105,6 +107,11 @@ public class NotificationRule implements Serializable {
     @Column(name = "PUBLISHER_CONFIG", jdbcType = "CLOB")
     private String publisherConfig;
 
+    @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
+    @Unique(name = "NOTIFICATIONRULE_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
+    @NotNull
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -202,5 +209,14 @@ public class NotificationRule implements Serializable {
 
     public void setPublisherConfig(String publisherConfig) {
         this.publisherConfig = publisherConfig;
+    }
+
+    @NotNull
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(@NotNull UUID uuid) {
+        this.uuid = uuid;
     }
 }

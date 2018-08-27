@@ -90,12 +90,17 @@ public final class NvdParser {
                 // CVE Description
                 final JsonObject descO = cve.getJsonObject("description");
                 final JsonArray desc1 = descO.getJsonArray("description_data");
+                final StringBuilder descriptionBuilder = new StringBuilder();
                 for (int j = 0; j < desc1.size(); j++) {
                     final JsonObject desc2 = desc1.getJsonObject(j);
                     if ("en".equals(desc2.getString("lang"))) {
-                        vulnerability.setDescription(desc2.getString("value"));
+                        descriptionBuilder.append(desc2.getString("value"));
+                        if (j < desc1.size() - 1) {
+                            descriptionBuilder.append("\n\n");
+                        }
                     }
                 }
+                vulnerability.setDescription(descriptionBuilder.toString());
 
                 // CVE Impact
                 parseCveImpact(cveItem, vulnerability);

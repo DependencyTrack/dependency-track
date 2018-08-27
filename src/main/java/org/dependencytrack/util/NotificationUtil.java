@@ -30,6 +30,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.persistence.QueryManager;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -74,6 +75,15 @@ public class NotificationUtil {
                     .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                     .level(NotificationLevel.INFORMATIONAL)
                     .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
+            );
+        }
+        if (vulnerabilities.size() > 0) {
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)
+                    .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .subject(new NewVulnerableDependency(dependency, vulnerabilities))
             );
         }
     }

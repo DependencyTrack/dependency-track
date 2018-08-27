@@ -27,6 +27,7 @@ public enum NotificationGroup {
 
     // Portfolio Groups
     NEW_VULNERABILITY,
+    NEW_VULNERABLE_DEPENDENCY,
     //NEW_OUTDATED_COMPONENT,
     //FIXED_VULNERABILITY,
     //FIXED_OUTDATED,

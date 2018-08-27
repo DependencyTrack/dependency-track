@@ -236,4 +236,18 @@ public class Project implements Serializable {
     public void setLastBomImport(Date lastBomImport) {
         this.lastBomImport = lastBomImport;
     }
+
+    @Override
+    public String toString() {
+        if (getPurl() != null) {
+            return getPurl();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append(getName());
+            if (getVersion() != null) {
+                sb.append(" : ").append(getVersion());
+            }
+            return sb.toString();
+        }
+    }
 }

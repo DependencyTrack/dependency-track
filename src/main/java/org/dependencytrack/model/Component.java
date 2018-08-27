@@ -440,4 +440,21 @@ public class Component implements Serializable {
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
+
+    @Override
+    public String toString() {
+        if (getPurl() != null) {
+            return getPurl().canonicalize();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            if (getGroup() != null) {
+                sb.append(getGroup()).append(" : ");
+            }
+            sb.append(getName());
+            if (getVersion() != null) {
+                sb.append(" : ").append(getVersion());
+            }
+            return sb.toString();
+        }
+    }
 }

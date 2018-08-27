@@ -192,7 +192,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
                 final org.dependencytrack.parser.dependencycheck.model.Dependency.Vulnerabilities vulnerabilities = dependency.getVulnerabilities();
 
                 // Add vulnerability to an affected component
-                if (vulnerabilities != null) {
+                if (vulnerabilities != null && vulnerabilities.getVulnerabilities() != null) {
                     for (org.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities.getVulnerabilities()) {
                         // Resolve internally stored vulnerability
                         Vulnerability internalVuln = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getName());

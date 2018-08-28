@@ -20,11 +20,13 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import org.dependencytrack.notification.JsonEscapingStrategy;
+
 import javax.json.JsonObject;
 
 public class MsTeamsPublisher extends AbstractWebhookPublisher implements Publisher {
 
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().build();
+    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().addEscapingStrategy("json", new JsonEscapingStrategy()).build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/msteams.peb");
 
     public void inform(Notification notification, JsonObject config) {

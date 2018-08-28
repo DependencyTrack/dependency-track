@@ -3,42 +3,52 @@
   "username": "Dependency-Track",
   "attachments": [
     {
+    {% if notification.group == "NEW_VULNERABILITY" %}
       "fields": [
-        {% if notification.scope == "PORTFOLIO" %}
         {
           "title": "VulnID",
-          "value": "{{ vulnId }}"
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
         },
         {
           "title": "Severity",
-          "value": "{{ severity }}"
+          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
         },
         {
           "title": "Source",
-          "value": "{{ source }}"
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
         },
         {
           "title": "Component",
-          "value": "{{ component }}"
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
         }
-        {% else %}
+      ],
+      {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+      "fields": [
+        {
+          "title": "Project",
+          "value": "{{ subject.dependency.project.toString | escape(strategy="json") }}"
+        },
+        {
+          "title": "Component",
+          "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% else %}
+      "fields": [
         {
           "title": "Level",
-          "value": "{{ notification.level }}"
+          "value": "{{ notification.level | escape(strategy="json") }}"
         },
         {
           "title": "Scope",
-          "value": "{{ notification.scope }}"
+          "value": "{{ notification.scope | escape(strategy="json") }}"
         },
         {
           "title": "Group",
-          "value": "{{ notification.group }}"
+          "value": "{{ notification.group | escape(strategy="json") }}"
         }
-        {% endif %}
       ],
-      {% if notification.scope == "PORTFOLIO" %}
-      "color": "warning",
-      {% else %}
+      {% endif %}
       {% if notification.level == "INFORMATIONAL" %}
       "color": "#36a64f",
       {% elseif notification.level == "WARNING" %}
@@ -46,10 +56,9 @@
       {% elseif notification.level == "ERROR" %}
       "color": "danger",
       {% endif %}
-      {% endif %}
       "ts": "{{ timestampEpochSecond }}",
-      "title": "{{ title | escape(strategy="js") }}",
-      "text": "{{ content | escape(strategy="js") }}"
+      "title": "{{ notification.title | escape(strategy="json") }}",
+      "text": "{{ notification.content | escape(strategy="json") }}"
     }
   ]
 }

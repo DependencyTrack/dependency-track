@@ -20,16 +20,15 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.apache.log4j.Logger;
-import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.util.NotificationUtil;
 import javax.json.JsonObject;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,37 +44,17 @@ public interface Publisher {
         );
         context.put("timestampEpochSecond", epochSecond);
         context.put("timestamp", notification.getTimestamp().toString());
-        context.put("title", notification.getTitle());
         context.put("notification", notification);
-        if (NotificationScope.SYSTEM.name().equals(notification.getScope())) {
-            context.put("content", notification.getContent());
-        } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
-            final NewVulnerabilityIdentified newVuln = (NewVulnerabilityIdentified) notification.getSubject();
-            final String vulnId = newVuln.getVulnerability().getVulnId();
-            String content = (newVuln.getVulnerability().getTitle() != null) ? vulnId + ": " + newVuln.getVulnerability().getTitle() : vulnId;
-            if (newVuln.getVulnerability().getDescription() != null) {
-                content = newVuln.getVulnerability().getDescription();
-            }
-            context.put("subject", NotificationUtil.toJson(newVuln));
-            context.put("severity", newVuln.getVulnerability().getSeverity().name());
-            context.put("source", newVuln.getVulnerability().getSource());
-            context.put("vulnId", vulnId);
-            context.put("content", content);
-            context.put("affectedProjects", new ArrayList<>(newVuln.getAffectedProjects()));
 
-            final Component component = newVuln.getComponent();
-            if (component.getPurl() != null) {
-                context.put("component", component.getPurl().canonicalize());
-            } else {
-                StringBuilder sb = new StringBuilder();
-                if (component.getGroup() != null) {
-                    sb.append(component.getGroup()).append(" / ");
-                }
-                sb.append(component.getName());
-                if (component.getVersion() != null) {
-                    sb.append(" ").append(component.getVersion());
-                }
-                context.put("component", sb.toString());
+        if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
+            if (notification.getSubject() instanceof NewVulnerabilityIdentified) {
+                final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
+                context.put("subject", subject);
+                context.put("subjectJson", NotificationUtil.toJson(subject));
+            } else if (notification.getSubject() instanceof NewVulnerableDependency) {
+                final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
+                context.put("subject", subject);
+                context.put("subjectJson", NotificationUtil.toJson(subject));
             }
         }
 

@@ -1,47 +1,59 @@
 {
   "@type": "MessageCard",
   "@context": "http://schema.org/extensions",
-  "summary": "{{ title | escape(strategy="js") }}",
-  "title": "{{ title | escape(strategy="js") }}",
+  "summary": "{{ notification.title | escape(strategy="json") }}",
+  "title": "{{ notification.title | escape(strategy="json") }}",
   "sections": [
     {
       "activityTitle": "Dependency-Track",
       "activitySubtitle": "{{ timestamp }}",
       "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-icon-centered-blue-background-500px.png",
+      {% if notification.group == "NEW_VULNERABILITY" %}
       "facts": [
-        {% if notification.scope == "PORTFOLIO" %}
         {
           "name": "VulnID",
-          "value": "{{ vulnId }}"
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
         },
         {
           "name": "Severity",
-          "value": "{{ severity }}"
+          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
         },
         {
           "name": "Source",
-          "value": "{{ source }}"
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
         },
         {
           "name": "Component",
-          "value": "{{ component }}"
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
         }
-        {% else %}
+      ],
+      {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+      "facts": [
+        {
+          "name": "Project",
+          "value": "{{ subject.dependency.project.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
+        }
+     {% else %}
+      "facts": [
         {
           "name": "Level",
-          "value": "{{ notification.level }}"
+          "value": "{{ notification.level | escape(strategy="json") }}"
         },
         {
           "name": "Scope",
-          "value": "{{ notification.scope }}"
+          "value": "{{ notification.scope | escape(strategy="json") }}"
         },
         {
           "name": "Group",
-          "value": "{{ notification.group }}"
+          "value": "{{ notification.group | escape(strategy="json") }}"
         }
-        {% endif %}
       ],
-      "text": "{{ content | escape(strategy="js") }}"
+      {% endif %}
+      "text": "{{ notification.content | escape(strategy="json") }}"
     }
   ]
 }

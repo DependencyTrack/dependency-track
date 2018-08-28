@@ -1,11 +1,11 @@
 {
   "notification": {
-    "level": "{{ notification.level }}",
-    "scope": "{{ notification.scope }}",
-    "group": "{{ notification.group }}",
+    "level": "{{ notification.level | escape(strategy="json") }}",
+    "scope": "{{ notification.scope | escape(strategy="json") }}",
+    "group": "{{ notification.group | escape(strategy="json") }}",
     "timestamp": "{{ notification.timestamp }}",
-    "title": "{{ title | escape(strategy="js") }}",
-    "content": "{{ content | escape(strategy="js") }}",
-    "subject": {{ subject | raw }}
+    "title": "{{ notification.title | escape(strategy="json") }}",
+    "content": "{{ notification.content | escape(strategy="json") }}",
+    "subject": {{ subjectJson | raw }}
   }
 }

@@ -49,6 +49,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
 
         if (response.getStatus() < 200 || response.getStatus() > 299) {
             logger.error("An error was encountered publishing notification to " + publisherName + ": " + response.getStatusText());
+            logger.debug(content);
         }
     }
 }

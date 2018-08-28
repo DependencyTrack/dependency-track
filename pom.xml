@@ -86,7 +86,7 @@
         <lib.dependency-check.version>3.2.1</lib.dependency-check.version>
         <lib.lucene.version>5.5.5</lib.lucene.version>
         <lib.packageurl.version>1.0.0-SNAPSHOT</lib.packageurl.version>
-        <lib.pebble.version>3.0.2</lib.pebble.version>
+        <lib.pebble.version>3.0.4-SNAPSHOT</lib.pebble.version>
         <lib.spdx-tools.version>2.1.12</lib.spdx-tools.version>
         <lib.unirest.version>2.2.10</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>

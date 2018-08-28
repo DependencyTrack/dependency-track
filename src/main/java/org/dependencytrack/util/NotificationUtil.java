@@ -44,29 +44,36 @@ import java.util.Set;
 public class NotificationUtil {
 
     public static void analyzeNotificationCriteria(Vulnerability vulnerability, Component component) {
-        QueryManager qm = new QueryManager();
-        if (!qm.contains(vulnerability, component)) {
-            // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
-            // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
-            // it warrants a Notification be dispatched.
-            Set<Project> affectedProjects = new HashSet<>();
-            List<Dependency> dependencies = qm.getAllDependencies(component);
-            for (Dependency dependency : dependencies) {
-                affectedProjects.add(dependency.getProject());
+        try (QueryManager qm = new QueryManager()) {
+            if (!qm.contains(vulnerability, component)) {
+                // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
+                // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
+                // it warrants a Notification be dispatched.
+                Set<Project> affectedProjects = new HashSet<>();
+                List<Dependency> dependencies = qm.detach(qm.getAllDependencies(component));
+                for (Dependency dependency : dependencies) {
+                    affectedProjects.add(dependency.getProject());
+                }
+
+                vulnerability = qm.detach(Vulnerability.class, vulnerability.getId());
+                component = qm.detach(Component.class, component.getId());
+
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.PORTFOLIO)
+                        .group(NotificationGroup.NEW_VULNERABILITY)
+                        .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content(generateNotificationContent(vulnerability))
+                        .subject(new NewVulnerabilityIdentified(vulnerability, component, affectedProjects))
+                );
             }
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(NotificationGroup.NEW_VULNERABILITY)
-                    .title(NotificationConstants.Title.NEW_VULNERABILITY)
-                    .level(NotificationLevel.INFORMATIONAL)
-                    .subject(new NewVulnerabilityIdentified(vulnerability, component, affectedProjects))
-            );
         }
     }
 
     public static void analyzeNotificationCriteria(QueryManager qm, Dependency newDependency) {
         Dependency dependency = qm.getDependency(newDependency);
-        List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(dependency);
+        List<Vulnerability> vulnerabilities = qm.detach(qm.getAllVulnerabilities(dependency));
+        dependency = qm.detach(Dependency.class, dependency.getId());
         for (Vulnerability vulnerability: vulnerabilities) {
             Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
             Notification.dispatch(new Notification()
@@ -74,6 +81,7 @@ public class NotificationUtil {
                     .group(NotificationGroup.NEW_VULNERABILITY)
                     .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                     .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(vulnerability))
                     .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
             );
         }
@@ -83,6 +91,7 @@ public class NotificationUtil {
                     .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)
                     .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                     .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(dependency, vulnerabilities))
                     .subject(new NewVulnerableDependency(dependency, vulnerabilities))
             );
         }
@@ -101,9 +110,10 @@ public class NotificationUtil {
                 notificationGroup = NotificationGroup.GLOBAL_AUDIT_CHANGE;
                 List<Dependency> dependencies = qm.getAllDependencies(analysis.getProject());
                 for (Dependency dependency : dependencies) {
-                    affectedProjects.add(dependency.getProject());
+                    affectedProjects.add(qm.detach(Project.class, dependency.getProject().getId()));
                 }
             }
+            analysis = qm.detach(Analysis.class, analysis.getId());
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
@@ -191,4 +201,41 @@ public class NotificationUtil {
         return builder.build();
     }
 
+    public static JsonObject toJson(NewVulnerableDependency vo) {
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getDependency().getProject() != null) {
+            builder.add("project", toJson(vo.getDependency().getProject()));
+        }
+        if (vo.getDependency().getComponent() != null) {
+            builder.add("component", toJson(vo.getDependency().getComponent()));
+        }
+        if (vo.getVulnerabilities() != null && vo.getVulnerabilities().size() > 0) {
+            JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
+            for (Vulnerability vulnerability : vo.getVulnerabilities()) {
+                vulnsBuilder.add(toJson(vulnerability));
+            }
+            builder.add("vulnerabilities", vulnsBuilder.build());
+        }
+        return builder.build();
+    }
+
+    private static String generateNotificationContent(Vulnerability vulnerability) {
+        final String content;
+        if (vulnerability.getDescription() != null) {
+            content = vulnerability.getDescription();
+        } else {
+            content = (vulnerability.getTitle() != null) ? vulnerability.getVulnId() + ": " +vulnerability.getTitle() : vulnerability.getVulnId();
+        }
+        return content;
+    }
+
+    private static String generateNotificationContent(Dependency dependency, List<Vulnerability> vulnerabilities) {
+        final String content;
+        if (vulnerabilities.size() == 1) {
+            content = "A dependency was introduced that contains 1 known vulnerability";
+        } else {
+            content = "A dependency was introduced that contains " + vulnerabilities.size() + " known vulnerabilities";
+        }
+        return content;
+    }
 }

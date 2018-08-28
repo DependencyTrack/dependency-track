@@ -37,7 +37,8 @@
           "name": "Component",
           "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
         }
-     {% else %}
+      ],
+      {% else %}
       "facts": [
         {
           "name": "Level",

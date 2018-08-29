@@ -121,6 +121,9 @@ public class NotificationUtil {
                     case EXPLOITABLE:
                         title = NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE;
                         break;
+                    case IN_TRIAGE:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_IN_TRIAGE;
+                        break;
                     case NOT_AFFECTED:
                         title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED;
                         break;

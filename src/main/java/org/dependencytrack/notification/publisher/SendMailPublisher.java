@@ -65,7 +65,7 @@ public class SendMailPublisher implements Publisher {
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom.getPropertyValue())
                     .to(destination)
-                    .subject("Dependency-Track: " + notification.getTitle())
+                    .subject("[Dependency-Track] " + notification.getTitle())
                     .body(content)
                     .host(smtpHostname.getPropertyValue())
                     .port(Integer.valueOf(smtpPort.getPropertyValue()))

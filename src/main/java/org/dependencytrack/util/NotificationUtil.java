@@ -20,7 +20,6 @@ package org.dependencytrack.util;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
@@ -29,6 +28,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.persistence.QueryManager;
@@ -97,8 +97,9 @@ public class NotificationUtil {
         }
     }
 
-    public static void analyzeNotificationCriteria(QueryManager qm, Analysis analysis, boolean hasChanged) {
-        if (AnalysisState.EXPLOITABLE == analysis.getAnalysisState() && hasChanged) {
+    public static void analyzeNotificationCriteria(QueryManager qm, Analysis analysis,
+                                                   boolean analysisStateChange, boolean suppressionChange) {
+        if (analysisStateChange || suppressionChange) {
             final NotificationGroup notificationGroup;
             final Set<Project> affectedProjects = new HashSet<>();
             if (analysis.getProject() != null) {
@@ -113,13 +114,40 @@ public class NotificationUtil {
                     affectedProjects.add(qm.detach(Project.class, dependency.getProject().getId()));
                 }
             }
+
+            String title = null;
+            if (analysisStateChange) {
+                switch (analysis.getAnalysisState()) {
+                    case EXPLOITABLE:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE;
+                        break;
+                    case NOT_AFFECTED:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED;
+                        break;
+                    case FALSE_POSITIVE:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_FALSE_POSITIVE;
+                        break;
+                    case NOT_SET:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET;
+                        break;
+                }
+            } else if (suppressionChange) {
+                if (analysis.isSuppressed()) {
+                    title = NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED;
+                } else {
+                    title = NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED;
+                }
+            }
+
             analysis = qm.detach(Analysis.class, analysis.getId());
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
-                    .title(NotificationConstants.Title.EXPLOITABLE_ANALYSIS_DECISION)
+                    .title(title)
                     .level(NotificationLevel.INFORMATIONAL)
-                    .subject(new NewVulnerabilityIdentified(analysis.getVulnerability(), analysis.getComponent(), affectedProjects))
+                    .content(generateNotificationContent(analysis))
+                    .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
+                            analysis.getComponent(), affectedProjects, analysis))
             );
         }
     }
@@ -183,6 +211,18 @@ public class NotificationUtil {
         return vulnerabilityBuilder.build();
     }
 
+    public static JsonObject toJson(Analysis analysis) {
+        JsonObjectBuilder analysisBuilder = Json.createObjectBuilder();
+        analysisBuilder.add("suppressed", analysis.isSuppressed());
+        JsonUtil.add(analysisBuilder, "state", analysis.getAnalysisState());
+        if (analysis.getProject() != null) {
+            JsonUtil.add(analysisBuilder, "project", analysis.getProject().getUuid().toString());
+        }
+        JsonUtil.add(analysisBuilder, "component", analysis.getComponent().getUuid().toString());
+        JsonUtil.add(analysisBuilder, "vulnerability", analysis.getVulnerability().getUuid().toString());
+        return analysisBuilder.build();
+    }
+
     public static JsonObject toJson(NewVulnerabilityIdentified vo) {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
@@ -219,6 +259,27 @@ public class NotificationUtil {
         return builder.build();
     }
 
+    public static JsonObject toJson(AnalysisDecisionChange vo) {
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getComponent() != null) {
+            builder.add("component", toJson(vo.getComponent()));
+        }
+        if (vo.getVulnerability() != null) {
+            builder.add("vulnerability", toJson(vo.getVulnerability()));
+        }
+        if (vo.getAnalysis() != null) {
+            builder.add("analysis", toJson(vo.getAnalysis()));
+        }
+        if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
+            JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (Project project: vo.getAffectedProjects()) {
+                projectsBuilder.add(toJson(project));
+            }
+            builder.add("affectedProjects", projectsBuilder.build());
+        }
+        return builder.build();
+    }
+
     private static String generateNotificationContent(Vulnerability vulnerability) {
         final String content;
         if (vulnerability.getDescription() != null) {
@@ -235,6 +296,16 @@ public class NotificationUtil {
             content = "A dependency was introduced that contains 1 known vulnerability";
         } else {
             content = "A dependency was introduced that contains " + vulnerabilities.size() + " known vulnerabilities";
+        }
+        return content;
+    }
+
+    private static String generateNotificationContent(Analysis analysis) {
+        final String content;
+        if (analysis.getProject() != null) {
+            content = "An analysis decision was made to a finding affecting a project";
+        } else {
+            content = "An analysis decision was made to a finding on a component affecting all projects that have a dependency on the component";
         }
         return content;
     }

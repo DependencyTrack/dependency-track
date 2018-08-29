@@ -169,6 +169,7 @@ public class AnalysisResource extends AlpineResource {
             }
 
             boolean analysisStateChange = false;
+            boolean suppressionChange = false;
             Analysis analysis = qm.getAnalysis(project, component, vulnerability);
             if (analysis != null) {
                 if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
@@ -178,6 +179,7 @@ public class AnalysisResource extends AlpineResource {
                     qm.makeAnalysisComment(analysis, message, commenter);
                     analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
                 } else if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
+                    suppressionChange = true;
                     final String message = (request.isSuppressed()) ? "Suppressed" : "Unsuppressed";
                     qm.makeAnalysisComment(analysis, message, commenter);
                     analysis = qm.makeAnalysis(project, component, vulnerability, analysis.getAnalysisState(), request.isSuppressed());
@@ -194,7 +196,7 @@ public class AnalysisResource extends AlpineResource {
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);
             analysis = qm.getObjectById(Analysis.class, analysis.getId());
-            NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange);
+            NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange, suppressionChange);
             return Response.ok(analysis).build();
         }
     }

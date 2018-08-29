@@ -32,7 +32,12 @@ public class NotificationConstants {
         public static final String REPO_ERROR = "Repository Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
         public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";
-        public static final String EXPLOITABLE_ANALYSIS_DECISION = "Exploitable Analysis Decision";
+        public static final String ANALYSIS_DECISION_EXPLOITABLE = "Analysis Decision: Exploitable";
+        public static final String ANALYSIS_DECISION_FALSE_POSITIVE = "Analysis Decision: False Positive";
+        public static final String ANALYSIS_DECISION_NOT_AFFECTED = "Analysis Decision: Not Affected";
+        public static final String ANALYSIS_DECISION_NOT_SET = "Analysis Decision: Marking Finding as NOT SET";
+        public static final String ANALYSIS_DECISION_SUPPRESSED = "Analysis Decision: Finding Suppressed";
+        public static final String ANALYSIS_DECISION_UNSUPPRESSED = "Analysis Decision: Finding UnSuppressed";
     }
 
 }

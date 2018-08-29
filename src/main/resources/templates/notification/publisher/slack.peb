@@ -33,6 +33,72 @@
           "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
         }
       ],
+      {% elseif notification.group == "GLOBAL_AUDIT_CHANGE" %}
+      "fields": [
+        {
+          "title": "Analysis Type",
+          "value": "Global Component Analysis"
+        },
+        {
+          "title": "Analysis State",
+          "value": "{{ subject.analysis.analysisState | escape(strategy="json") }}"
+        },
+        {
+          "title": "Suppressed",
+          "value": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
+        },
+        {
+          "title": "VulnID",
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+        },
+        {
+          "title": "Severity",
+          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
+        },
+        {
+          "title": "Source",
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+        },
+        {
+          "title": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
+      "fields": [
+        {
+          "title": "Analysis Type",
+          "value": "Project Analysis"
+        },
+        {
+          "title": "Analysis State",
+          "value": "{{ subject.analysis.analysisState | escape(strategy="json") }}"
+        },
+        {
+          "title": "Suppressed",
+          "value": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
+        },
+        {
+          "title": "VulnID",
+          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
+        },
+        {
+          "title": "Severity",
+          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
+        },
+        {
+          "title": "Source",
+          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+        },
+        {
+          "title": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        },
+        {
+          "title": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        }
+      ],
       {% else %}
       "fields": [
         {

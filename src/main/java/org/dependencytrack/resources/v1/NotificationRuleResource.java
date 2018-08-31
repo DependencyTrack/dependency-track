@@ -27,10 +27,17 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import org.apache.commons.lang.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.persistence.QueryManager;
+import javax.validation.Validator;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -65,6 +72,98 @@ public class NotificationRuleResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getNotificationRules();
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates a new notification rule",
+            response = NotificationRule.class,
+            code = 201
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the notification publisher could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response createNotificationRule(NotificationRule jsonRule) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonRule, "name")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            NotificationPublisher publisher = null;
+            if (jsonRule.getPublisher() != null) {
+                publisher =qm.getObjectByUuid(NotificationPublisher.class, jsonRule.getPublisher().getUuid());
+            }
+            if (publisher == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification publisher could not be found.").build();
+            }
+            final NotificationRule rule = qm.createNotificationRule(
+                    StringUtils.trimToNull(jsonRule.getName()),
+                    jsonRule.getScope(),
+                    jsonRule.getNotificationLevel(),
+                    publisher
+            );
+            return Response.status(Response.Status.CREATED).entity(rule).build();
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the notification rule could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response updateNotificationRule(NotificationRule jsonRule) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonRule, "name"),
+                validator.validateProperty(jsonRule, "publisherConfig")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, jsonRule.getUuid());
+            if (rule != null) {
+                jsonRule.setName(StringUtils.trimToNull(jsonRule.getName()));
+                rule = qm.updateNotificationRule(jsonRule);
+                return Response.ok(rule).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Deletes a notification rule",
+            code = 204
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the notification rule could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response deleteNotificationRule(NotificationRule jsonRule) {
+        try (QueryManager qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, jsonRule.getUuid());
+            if (rule != null) {
+                qm.delete(rule);
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
+            }
         }
     }
 }

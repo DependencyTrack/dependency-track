@@ -183,6 +183,10 @@ public class NotificationRule implements Serializable {
     }
 
     public void setNotifyOn(Set<NotificationGroup> groups) {
+        if (groups == null || groups.size() == 0) {
+            this.notifyOn = null;
+            return;
+        }
         StringBuilder sb = new StringBuilder();
         List<NotificationGroup> list = new ArrayList<>(groups);
         Collections.sort(list);

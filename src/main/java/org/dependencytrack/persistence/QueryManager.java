@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
+import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -51,6 +52,7 @@ import org.dependencytrack.model.Scan;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityMetrics;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
 import javax.jdo.FetchPlan;
 import javax.jdo.Query;
@@ -1864,6 +1866,38 @@ public class QueryManager extends AlpineQueryManager {
             return persist(metaComponent);
         }
         return null;
+    }
+
+    /**
+     * Creates a new NotificationRule.
+     * @param name the name of the rule
+     * @param scope the scope
+     * @param level the level
+     * @param publisher the publisher
+     * @return a new NotificationRule
+     */
+    public NotificationRule createNotificationRule(String name, NotificationScope scope, NotificationLevel level, NotificationPublisher publisher) {
+        final NotificationRule rule = new NotificationRule();
+        rule.setName(name);
+        rule.setScope(scope);
+        rule.setNotificationLevel(level);
+        rule.setPublisher(publisher);
+        rule.setEnabled(true);
+        return persist(rule);
+    }
+
+    /**
+     * Updated an existing NotificationRule.
+     * @param transientRule the rule to update
+     * @return a NotificationRule
+     */
+    public NotificationRule updateNotificationRule(NotificationRule transientRule) {
+        final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
+        rule.setName(transientRule.getName());
+        rule.setNotificationLevel(transientRule.getNotificationLevel());
+        rule.setPublisherConfig(transientRule.getPublisherConfig());
+        rule.setNotifyOn(transientRule.getNotifyOn());
+        return persist(rule);
     }
 
     /**

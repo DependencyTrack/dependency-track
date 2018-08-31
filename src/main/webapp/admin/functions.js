@@ -111,6 +111,181 @@ function formatManagedUserTable(res) {
  * expanded. This function handles the dynamic creation of the expanded
  * view with simple inline templates.
  */
+function notificationAlertDetailFormatter(index, row) {
+    let html = [];
+
+    let datasourceMirroringChecked = (row.notifyOn.includes("DATASOURCE_MIRRORING") ? 'checked=checked' : "");
+    let filesystemChecked = (row.notifyOn.includes("FILE_SYSTEM") ? 'checked=checked' : "");
+    let indexingServiceChecked = (row.notifyOn.includes("INDEXING_SERVICE") ? 'checked=checked' : "");
+    let repositoryChecked = (row.notifyOn.includes("REPOSITORY") ? 'checked=checked' : "");
+    let newVulnerabilityChecked = (row.notifyOn.includes("NEW_VULNERABILITY") ? 'checked=checked' : "");
+    let newVulnDependencyChecked = (row.notifyOn.includes("NEW_VULNERABLE_DEPENDENCY") ? 'checked=checked' : "");
+    let globalAuditChangeChecked = (row.notifyOn.includes("GLOBAL_AUDIT_CHANGE") ? 'checked=checked' : "");
+    let projectAuditChangeChecked = (row.notifyOn.includes("PROJECT_AUDIT_CHANGE") ? 'checked=checked' : "");
+
+    let levelInfoSelected = (row.notificationLevel === "INFORMATIONAL") ? 'selected=selected' : "";
+    let levelWarnSelected = (row.notificationLevel === "WARNING") ? 'selected=selected' : "";
+    let levelErrorSelected = (row.notificationLevel === "ERROR") ? 'selected=selected' : "";
+
+    let destination = "";
+    if (row.hasOwnProperty("publisherConfig")) {
+        let publisherConfig = JSON.parse(row.publisherConfig);
+        destination = publisherConfig.destination;
+    }
+
+    let destinationDisabled = "";
+    let destinationEnabledCss = "required";
+    if (row.publisher.publisherClass === "org.dependencytrack.notification.publisher.ConsolePublisher") {
+        destinationDisabled = 'disabled="disabled"';
+        destinationEnabledCss = "";
+    }
+
+    let notifyOnOption;
+    if (row.scope === "SYSTEM") {
+        notifyOnOption = `
+            <ul class="list-group checked-list-box">
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${datasourceMirroringChecked} id="updateNotificationAlertGroupDatasourceMirroringInput-${row.uuid}" data-uuid="${row.uuid}"> DATASOURCE_MIRRORING</label></li>
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${filesystemChecked} id="updateNotificationAlertGroupFileSystemInput-${row.uuid}" data-uuid="${row.uuid}"> FILE_SYSTEM</label></li>
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${indexingServiceChecked} id="updateNotificationAlertGroupIndexingServiceInput-${row.uuid}" data-uuid="${row.uuid}"> INDEXING_SERVICE</label></li>
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${repositoryChecked} id="updateNotificationAlertGroupRepositoryInput-${row.uuid}" data-uuid="${row.uuid}"> REPOSITORY</label></li>
+            </ul>
+        `;
+    } else if (row.scope === "PORTFOLIO") {
+        notifyOnOption = `
+            <ul class="list-group checked-list-box">
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${newVulnerabilityChecked} id="updateNotificationAlertGroupNewVulnerabilityInput-${row.uuid}" data-uuid="${row.uuid}"> NEW_VULNERABILITY</label></li>
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${newVulnDependencyChecked} id="updateNotificationAlertGroupNewVulnerableDependencyInput-${row.uuid}" data-uuid="${row.uuid}"> NEW_VULNERABLE_DEPENDENCY</label></li>
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${globalAuditChangeChecked} id="updateNotificationAlertGroupGlobalAuditChangeInput-${row.uuid}" data-uuid="${row.uuid}"> GLOBAL_AUDIT_CHANGE</label></li>
+                <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${projectAuditChangeChecked} id="updateNotificationAlertGroupProjectAuditChangeInput-${row.uuid}" data-uuid="${row.uuid}"> PROJECT_AUDIT_CHANGE</label></li>
+            </ul>
+        `;
+    }
+
+    let template = `
+    <form id="form-${row.uuid}">
+    <div class="col-md-6">
+        <div class="form-group">
+            <label class="required" for="updateNotificationAlertNameInput-${row.uuid}">Name</label>
+            <input type="text" class="form-control required" value="${row.name}" id="updateNotificationAlertNameInput-${row.uuid}" data-uuid="${row.uuid}">
+        </div>
+        <div class="form-group">
+            <label for="updateNotificationAlertPublisherInput-${row.uuid}">Publisher</label>
+            <input type="text" class="form-control" disabled="disabled" value="${row.publisher.publisherClass}" id="updateNotificationAlertPublisherInput-${row.uuid}" data-uuid="${row.uuid}">
+        </div>   
+        <div class="form-group">
+            <label for="updateNotificationAlertNotificationLevelInput-${row.uuid}">Notification Level</label>
+            <select class="form-control" id="updateNotificationAlertNotificationLevelInput-${row.uuid}" data-uuid="${row.uuid}">
+                <option value="INFORMATIONAL" ${levelInfoSelected}>INFORMATIONAL</option>
+                <option value="WARNING" ${levelWarnSelected}>WARNING</option>
+                <option value="ERROR" ${levelErrorSelected}>ERROR</option>
+            </select>    
+        </div>   
+        <div class="form-group">
+            <label class="${destinationEnabledCss}" for="updateNotificationAlertDestinationInput-${row.uuid}">Destination</label>
+            <input type="text" class="form-control ${destinationEnabledCss}" ${destinationDisabled} value="${destination}" id="updateNotificationAlertDestinationInput-${row.uuid}" data-uuid="${row.uuid}">
+        </div>   
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
+            <label for="updateNotificationAlertScopeInput-${row.uuid}">Scope</label>
+            <input type="text" class="form-control" disabled="disabled" value="${row.scope}" id="updateNotificationAlertScopeInput-${row.uuid}" data-uuid="${row.uuid}">
+        </div>  
+        <div class="form-group">
+            <label for="updateNotificationAlertGroup">Notify On</label> 
+            ${notifyOnOption}
+        </div>
+        <button type="button" class="btn btn-danger pull-right" id="deleteNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}">Delete Alert</button>
+    </div>
+    </form>
+    <script type="text/javascript">
+        if ("${row.scope}" === "SYSTEM") {
+            $("#" + $.escapeSelector("updateNotificationAlertGroupDatasourceMirroringInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
+            $("#" + $.escapeSelector("updateNotificationAlertGroupFileSystemInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
+            $("#" + $.escapeSelector("updateNotificationAlertGroupIndexingServiceInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
+            $("#" + $.escapeSelector("updateNotificationAlertGroupRepositoryInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));
+        } else if ("${row.scope}" === "PORTFOLIO") {
+            $("#" + $.escapeSelector("updateNotificationAlertGroupNewVulnerabilityInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
+            $("#" + $.escapeSelector("updateNotificationAlertGroupNewVulnerableDependencyInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
+            $("#" + $.escapeSelector("updateNotificationAlertGroupGlobalAuditChangeInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
+            $("#" + $.escapeSelector("updateNotificationAlertGroupProjectAuditChangeInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));                        
+        }
+        $("#" + $.escapeSelector("updateNotificationAlertNameInput-${row.uuid}")).keydown($common.debounce(updateNotificationRule, 750));
+        $("#" + $.escapeSelector("updateNotificationAlertNotificationLevelInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));
+        $("#" + $.escapeSelector("updateNotificationAlertDestinationInput-${row.uuid}")).keydown($common.debounce(updateNotificationRule, 750));
+        $("#" + $.escapeSelector("deleteNotificatiomAlert-${row.uuid}")).on("click", deleteNotificationRule);
+    </script>
+`;
+    html.push(template);
+    return html.join("");
+}
+
+/**
+ * Creates a notification alert by retrieving field values and calling the REST function for the service.
+ */
+function createNotificationRule() {
+    let nameField = $("#createNotificationAlertNameInput");
+    let name = nameField.val();
+    let scope = $("#createNotificationAlertScopeInput").val();
+    let level = $("#createNotificationAlertNotificationLevelInput").val();
+    let publisher = $("#createNotificationAlertPublisherInput").val();
+    $rest.createNotificationRule(name, scope, level, publisher, function() {
+        $("#notificationAlertTable").bootstrapTable("refresh", {silent: true});
+    });
+    nameField.val("");
+}
+
+/**
+ * Updates a managed user by retrieving field values and calling the REST function for the service.
+ */
+function updateNotificationRule() {
+    let uuid                = $(this).data("uuid");
+    let name                = $("#" + $.escapeSelector("updateNotificationAlertNameInput-" + uuid)).val();
+    let level               = $("#" + $.escapeSelector("updateNotificationAlertNotificationLevelInput-" + uuid)).val();
+    let destination         = $("#" + $.escapeSelector("updateNotificationAlertDestinationInput-" + uuid)).val();
+
+    let datasourceMirroring = $("#" + $.escapeSelector("updateNotificationAlertGroupDatasourceMirroringInput-" + uuid)).is(':checked');
+    let filesystem          = $("#" + $.escapeSelector("updateNotificationAlertGroupFileSystemInput-" + uuid)).is(':checked');
+    let indexingService     = $("#" + $.escapeSelector("updateNotificationAlertGroupIndexingServiceInput-" + uuid)).is(':checked');
+    let repository          = $("#" + $.escapeSelector("updateNotificationAlertGroupRepositoryInput-" + uuid)).is(':checked');
+    let newVulnerability    = $("#" + $.escapeSelector("updateNotificationAlertGroupNewVulnerabilityInput-" + uuid)).is(':checked');
+    let newVulnDependency   = $("#" + $.escapeSelector("updateNotificationAlertGroupNewVulnerableDependencyInput-" + uuid)).is(':checked');
+    let globalAuditChange   = $("#" + $.escapeSelector("updateNotificationAlertGroupGlobalAuditChangeInput-" + uuid)).is(':checked');
+    let projectAuditChange  = $("#" + $.escapeSelector("updateNotificationAlertGroupProjectAuditChangeInput-" + uuid)).is(':checked');
+
+    let publisherConfig = (destination != null) ? JSON.stringify({ destination: destination }) : null;
+    let notifyOn = [];
+    if (datasourceMirroring) { notifyOn.push("DATASOURCE_MIRRORING"); }
+    if (filesystem) { notifyOn.push("FILE_SYSTEM"); }
+    if (indexingService) { notifyOn.push("INDEXING_SERVICE"); }
+    if (repository) { notifyOn.push("REPOSITORY"); }
+    if (newVulnerability) { notifyOn.push("NEW_VULNERABILITY"); }
+    if (newVulnDependency) { notifyOn.push("NEW_VULNERABLE_DEPENDENCY"); }
+    if (globalAuditChange) { notifyOn.push("GLOBAL_AUDIT_CHANGE"); }
+    if (projectAuditChange) { notifyOn.push("PROJECT_AUDIT_CHANGE"); }
+
+    $rest.updateNotificationRule(uuid, name, level, publisherConfig, notifyOn, function() {
+        $("#notificationAlertTable").bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
+ * Deletes a team by retrieving field values and calling the REST function for the service.
+ */
+function deleteNotificationRule() {
+    const ruleUuid = $(this).data("uuid");
+    $rest.deleteNotificationRule(ruleUuid, function() {
+        let table = $('#notificationAlertTable');
+        table.expanded = false;
+        table.bootstrapTable("collapseAllRows");
+        table.bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
+ * Function called by bootstrap table when row is clicked/touched, and
+ * expanded. This function handles the dynamic creation of the expanded
+ * view with simple inline templates.
+ */
 function notificationTemplateDetailFormatter(index, row) {
     let html = [];
 
@@ -723,6 +898,9 @@ $(document).ready(function () {
     // Initialize all tooltips
     $('[data-toggle="tooltip"]').tooltip();
 
+    // Listen for if the button to create a notification alert is clicked
+    $("#createNotificationAlertCreateButton").on("click", createNotificationRule);
+
     // Listen for if the button to create a team is clicked
     $("#createTeamCreateButton").on("click", createTeam);
 
@@ -756,6 +934,29 @@ $(document).ready(function () {
         teamsMembershipTable.bootstrapTable("refresh", {silent: true});
     });
 
+    const notificationAlertTable = $("#notificationAlertTable");
+    notificationAlertTable.on("click-row.bs.table", function(e, row, $tr) {
+        if ($tr.next().is("tr.detail-view")) {
+            notificationAlertTable.bootstrapTable("collapseRow", $tr.data("index"));
+            notificationAlertTable.expanded = false;
+        } else {
+            notificationAlertTable.bootstrapTable("collapseAllRows");
+            notificationAlertTable.bootstrapTable("expandRow", $tr.data("index"));
+            notificationAlertTable.expanded = true;
+            notificationAlertTable.expandedUuid = row.uuid;
+        }
+    });
+
+    notificationAlertTable.on("load-success.bs.table", function(e, data) {
+        if (notificationAlertTable.expanded === true) {
+            $.each(data, function(i, rule) {
+                if (rule.uuid === notificationAlertTable.expandedUuid) {
+                    notificationAlertTable.bootstrapTable("expandRow", i);
+                }
+            });
+        }
+    });
+
     const notificationTemplateTable = $("#notificationTemplateTable");
     notificationTemplateTable.on("click-row.bs.table", function(e, row, $tr) {
         if ($tr.next().is("tr.detail-view")) {
@@ -766,6 +967,21 @@ $(document).ready(function () {
             notificationTemplateTable.bootstrapTable("expandRow", $tr.data("index"));
             notificationTemplateTable.expanded = true;
             notificationTemplateTable.expandedUuid = row.uuid;
+        }
+    });
+
+    notificationTemplateTable.on("load-success.bs.table", function(e, data) {
+        let publisherSelectInput = $("#createNotificationAlertPublisherInput");
+        publisherSelectInput.html("");
+        $.each(data, function(i, publisher) {
+            publisherSelectInput.append($("<option/>", { value: publisher.uuid, text: publisher.name }));
+        });
+        if (notificationTemplateTable.expanded === true) {
+            $.each(data, function(i, publisher) {
+                if (publisher.uuid === notificationTemplateTable.expandedUuid) {
+                    notificationTemplateTable.bootstrapTable("expandRow", i);
+                }
+            });
         }
     });
 

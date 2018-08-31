@@ -165,8 +165,7 @@
                                         OWASP Dependency-Check is a utility designed to discover vulnerabilities in
                                         third-party components. Dependency-Check uses evidence-based analysis and
                                         performs fuzzy matching against the NVD to present results based on confidence.
-                                        Dependency-Track has native integration with Dependency-Check and accepts
-                                        results with medium confidence or higher while rejecting lower confidence results.
+                                        Dependency-Track has native integration with Dependency-Check.
                                     </p>
                                     <p>
                                         Evidence-based analysis will lead to false positives, however, the technique can
@@ -291,18 +290,22 @@
                             </table>
                         </div>
                         <div class="tab-pane" id="notificationAlertTab" data-admin-title="Alerts">
+                            <div id="notificationAlertToolbar">
+                                <div class="form-inline" role="form">
+                                    <button id="createNotificationAlertButton" class="btn btn-default" data-toggle="modal" data-target="#modalCreateNotificationAlert"><span class="fa fa-plus"></span> Create Alert</button>
+                                </div>
+                            </div>
                             <table id="notificationAlertTable" class="table table-hover detail-table" data-toggle="table"
                                    data-url="<c:url value="/api/v1/notification/rule"/>"
-                                   data-response-handler="formatRepositoryTable"
-                                   data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
-                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
-                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                   data-show-refresh="true" data-show-columns="true" data-search="true"
+                                   data-detail-view="true" data-detail-formatter="notificationAlertDetailFormatter"
+                                   data-toolbar="#notificationAlertToolbar" data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
                                     <th data-align="left" data-field="name">Name</th>
-                                    <th data-align="left" data-field="notificationPublisher.name">Publisher</th>
+                                    <th data-align="left" data-field="publisher.name">Publisher</th>
+                                    <th data-align="left" data-field="scope">Scope</th>
                                     <th data-align="left" data-field="notificationLevel">Notification Level</th>
-                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
                                 </tr>
                                 </thead>
                             </table>
@@ -402,6 +405,45 @@
     </div>
 
     <!-- Modals specific to administration -->
+    <div class="modal fade" id="modalCreateNotificationAlert" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Create Alert</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="required" for="createNotificationAlertNameInput">Name</label>
+                        <input type="text" required="required" class="form-control required" id="createNotificationAlertNameInput">
+                    </div>
+                    <div class="form-group">
+                        <label for="createNotificationAlertScopeInput">Scope</label>
+                        <select class="form-control" id="createNotificationAlertScopeInput">
+                            <option value="SYSTEM">SYSTEM</option>
+                            <option value="PORTFOLIO">PORTFOLIO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="createNotificationAlertNotificationLevelInput">Notification Level</label>
+                        <select class="form-control" id="createNotificationAlertNotificationLevelInput">
+                            <option value="INFORMATIONAL">INFORMATIONAL</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="createNotificationAlertPublisherInput">Publisher</label>
+                        <select class="form-control" id="createNotificationAlertPublisherInput"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createNotificationAlertCreateButton">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="modalCreateTeam" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">

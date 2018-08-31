@@ -51,6 +51,8 @@ const URL_METRICS = "api/v1/metrics";
 const URL_CALCULATOR_CVSS = "api/v1/calculator/cvss";
 const URL_REPOSITORY = "api/v1/repository";
 const URL_CONFIG_PROPERTY = "api/v1/configProperty";
+const URL_NOTIFICATION_PUBLISHER = "api/v1/notification/publisher";
+const URL_NOTIFICATION_RULE = "api/v1/notification/rule";
 
 const $rest = function() {
 };
@@ -1880,6 +1882,101 @@ $rest.updateConfigProperty = function updateConfigProperty(groupName, propertyNa
             }
         },
         error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a notification rule is created
+ */
+$rest.createNotificationRule = function createNotificationRule(name, scope, level, publisherUuid, successCallback, failCallback) {
+    if ($common.isEmpty(name)) {
+        return;
+    }
+    $.ajax({
+        url: $rest.contextPath() + URL_NOTIFICATION_RULE,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({name: name, scope: scope, notificationLevel: level, publisher: { uuid: publisherUuid } }),
+        statusCode: {
+            201: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a notification rule is updated
+ */
+$rest.updateNotificationRule = function updateNotificationRule(uuid, name, level, publisherConfig, notifyOn, successCallback, failCallback) {
+    if ($common.isEmpty(name)) {
+        return;
+    }
+    $.ajax({
+        url: $rest.contextPath() + URL_NOTIFICATION_RULE,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({uuid: uuid, name: name, notificationLevel: level, publisherConfig: publisherConfig, notifyOn: notifyOn}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a notification rule is deleted
+ */
+$rest.deleteNotificationRule = function deleteNotificationRule(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_NOTIFICATION_RULE,
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        data: JSON.stringify({uuid: uuid}),
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
             if (failCallback) {
                 $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
             }

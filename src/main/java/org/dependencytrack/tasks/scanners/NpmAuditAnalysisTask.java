@@ -100,7 +100,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @param components a list of Components
      */
     public void analyze(List<Component> components) {
-        CopyOnWriteArrayList<Component> copy = new CopyOnWriteArrayList<>(components);
+        final CopyOnWriteArrayList<Component> copy = new CopyOnWriteArrayList<>(components);
         while (copy.size() > 0) {
             final Map<String, Component> nspCandidates = new HashMap<>();
             final JSONObject npmRequires = new JSONObject();

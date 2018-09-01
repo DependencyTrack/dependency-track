@@ -30,6 +30,8 @@ import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
 import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Vulnerability;
 import org.json.JSONObject;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
@@ -39,6 +41,11 @@ import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
+import us.springett.cvss.Cvss;
+import us.springett.cvss.CvssV2;
+import us.springett.cvss.CvssV3;
+import us.springett.cvss.Score;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -180,15 +187,81 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                         Found the component
                          */
                         for (ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
-                            /*
-                            TODO: Parse reportedVuln, lookup vuln in db, add vuln to component, set source to ODDINDEX
-                            TODO: https://github.com/sonatype/ossindex-public/issues/1
-                             */
+                            if (reportedVuln.getCve() != null) {
+                                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
+                                        Vulnerability.Source.NVD, reportedVuln.getCve());
+                                if (vulnerability != null) {
+                                    qm.addVulnerability(vulnerability, component);
+                                } else {
+                                    /*
+                                    The vulnerability reported by OSS Index is not in Dependency-Track yet. This could be
+                                    due to timing issue or the vuln reported may be in a reserved state and not available
+                                    through traditional feeds, or it may not be an issue in the NVD at all and is specific
+                                    to OSS Index as the source. Regardless, the vuln needs to be added to the database.
+                                     */
+                                    vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), true);
+                                    qm.addVulnerability(vulnerability, component);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Generates a Dependency-Track vulnerability object from a Sonatype OSS ComponentReportVulnerability object.
+     */
+    private Vulnerability generateVulnerability(QueryManager qm, ComponentReportVulnerability reportedVuln) {
+        final Vulnerability vulnerability = new Vulnerability();
+        if (reportedVuln.getCve() != null) {
+            vulnerability.setSource(Vulnerability.Source.NVD);
+            vulnerability.setVulnId(reportedVuln.getCve());
+        } else {
+            vulnerability.setSource(Vulnerability.Source.OSSINDEX);
+            vulnerability.setVulnId(reportedVuln.getId());
+            vulnerability.setTitle(reportedVuln.getTitle());
+        }
+        vulnerability.setDescription(reportedVuln.getDescription());
+
+        if (reportedVuln.getCwe() != null) {
+            try {
+                if (reportedVuln.getCwe().startsWith("CWE-")) {
+                    final String cweId = reportedVuln.getCwe().substring(4);
+                    final Cwe cwe = qm.getCweById(Integer.parseInt(cweId));
+                    vulnerability.setCwe(cwe);
+                } else {
+                    final Cwe cwe = qm.getCweById(Integer.parseInt(reportedVuln.getCwe()));
+                    vulnerability.setCwe(cwe);
+                }
+            } catch (NumberFormatException e) {
+                LOGGER.error("An error occurred parsing the CWE ID of " + reportedVuln.getId());
+            }
+        }
+
+        if (reportedVuln.getReference() != null) {
+            vulnerability.setReferences("* [" + reportedVuln.getReference() + "](" + reportedVuln.getReference() + ")");
+        }
+
+        if (reportedVuln.getCvssVector() != null) {
+            final Cvss cvss = Cvss.fromVector(reportedVuln.getCvssVector());
+            if (cvss != null) {
+                final Score score = cvss.calculateScore();
+                if (cvss instanceof CvssV2) {
+                    vulnerability.setCvssV2BaseScore(new BigDecimal(score.getBaseScore()));
+                    vulnerability.setCvssV2ImpactSubScore(new BigDecimal(score.getImpactSubScore()));
+                    vulnerability.setCvssV2ExploitabilitySubScore(new BigDecimal(score.getExploitabilitySubScore()));
+                    vulnerability.setCvssV2Vector(cvss.getVector());
+                } else if (cvss instanceof CvssV3) {
+                    vulnerability.setCvssV3BaseScore(new BigDecimal(score.getBaseScore()));
+                    vulnerability.setCvssV3ImpactSubScore(new BigDecimal(score.getImpactSubScore()));
+                    vulnerability.setCvssV3ExploitabilitySubScore(new BigDecimal(score.getExploitabilitySubScore()));
+                    vulnerability.setCvssV3Vector(cvss.getVector());
+                }
+            }
+        }
+        return vulnerability;
     }
 
     /**

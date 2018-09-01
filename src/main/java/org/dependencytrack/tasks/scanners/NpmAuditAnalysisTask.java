@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Subscriber task that performs an analysis of component using NPM Audit API.
@@ -99,12 +100,13 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @param components a list of Components
      */
     public void analyze(List<Component> components) {
-        while (components.size() > 0) {
+        CopyOnWriteArrayList<Component> copy = new CopyOnWriteArrayList<>(components);
+        while (copy.size() > 0) {
             final Map<String, Component> nspCandidates = new HashMap<>();
             final JSONObject npmRequires = new JSONObject();
             final JSONObject npmDependencies = new JSONObject();
 
-            Iterator<Component> i = components.iterator();
+            Iterator<Component> i = copy.iterator();
             while (i.hasNext()) {
                 final Component component = i.next();
                 final PackageURL purl = component.getPurl();
@@ -113,10 +115,10 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                         nspCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());
                         npmDependencies.put(purl.getName(), new JSONObject().put("version", purl.getVersion()));
-                        components.remove(component);
+                        copy.remove(component);
                     }
                 } else {
-                    components.remove(component);
+                    copy.remove(component);
                 }
 
                 // Build a minimal package-lock.json in memory

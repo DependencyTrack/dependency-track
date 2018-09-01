@@ -69,6 +69,7 @@ public class OssIndexParser {
             vulnerability.setCvssScore(vulnObject.optNumber("cvssScore", null));
             vulnerability.setCvssVector(vulnObject.optString("cvssVector", null));
             vulnerability.setCwe(vulnObject.optString("cwe", null));
+            vulnerability.setCve(vulnObject.optString("cve", null));
             vulnerability.setReference(vulnObject.optString("reference", null));
             componentReport.addVulnerability(vulnerability);
         }

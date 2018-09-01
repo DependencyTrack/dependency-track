@@ -30,8 +30,10 @@ import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
 import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.util.NotificationUtil;
 import org.json.JSONObject;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
@@ -191,19 +193,31 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
                                 if (vulnerability != null) {
+                                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                                     qm.addVulnerability(vulnerability, component);
                                 } else {
                                     /*
                                     The vulnerability reported by OSS Index is not in Dependency-Track yet. This could be
                                     due to timing issue or the vuln reported may be in a reserved state and not available
-                                    through traditional feeds, or it may not be an issue in the NVD at all and is specific
-                                    to OSS Index as the source. Regardless, the vuln needs to be added to the database.
+                                    through traditional feeds. Regardless, the vuln needs to be added to the database.
                                      */
-                                    vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), true);
+                                    vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
+                                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                                     qm.addVulnerability(vulnerability, component);
                                 }
+                            } else {
+                                /*
+                                The vulnerability is not from the NVD. Set the source to OSSINDEX
+                                 */
+                                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.OSSINDEX, reportedVuln.getId());
+                                if (vulnerability == null) {
+                                    vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
+                                }
+                                NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                                qm.addVulnerability(vulnerability, component);
                             }
                         }
+                        Event.dispatch(new MetricsUpdateEvent(component));
                     }
                 }
             }

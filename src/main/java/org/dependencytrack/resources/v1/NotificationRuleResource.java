@@ -33,6 +33,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -195,6 +196,9 @@ public class NotificationRuleResource extends AlpineResource {
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
             }
+            if (rule.getScope() != NotificationScope.PORTFOLIO) {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Project limitations are only possible on notification rules with PORTFOLIO scope.").build();
+            }
             Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
@@ -232,6 +236,9 @@ public class NotificationRuleResource extends AlpineResource {
             NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            if (rule.getScope() != NotificationScope.PORTFOLIO) {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Project limitations are only possible on notification rules with PORTFOLIO scope.").build();
             }
             Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {

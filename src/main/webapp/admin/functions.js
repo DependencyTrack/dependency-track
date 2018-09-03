@@ -162,8 +162,10 @@ function notificationAlertDetailFormatter(index, row) {
         destinationEnabledCss = "";
     }
 
+    let expandNotificatiomAlertClass = "";
     let notifyOnOption;
     if (row.scope === "SYSTEM") {
+        expandNotificatiomAlertClass = "hidden";
         notifyOnOption = `
             <ul class="list-group checked-list-box">
                 <li class="list-group-item"><label style="font-weight:400"><input type="checkbox" ${datasourceMirroringChecked} id="updateNotificationAlertGroupDatasourceMirroringInput-${row.uuid}" data-uuid="${row.uuid}"> DATASOURCE_MIRRORING</label></li>
@@ -243,7 +245,7 @@ function notificationAlertDetailFormatter(index, row) {
             ${notifyOnOption}
         </div>
         <div style="text-align:right">
-            <button type="button" class="btn btn-default" id="expandNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}"><i class="fa fa-chevron-down" id="limitToProjectsArrow-${row.uuid}" aria-hidden="true"></i> Limit To</button>
+            <button type="button" class="btn btn-default ${expandNotificatiomAlertClass}" id="expandNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}"><i class="fa fa-chevron-down" id="limitToProjectsArrow-${row.uuid}" aria-hidden="true"></i> Limit To</button>
             <button type="button" class="btn btn-danger" id="deleteNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}">Delete Alert</button>
         </div>
     </div>

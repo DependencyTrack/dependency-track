@@ -26,8 +26,10 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Join;
+import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -87,7 +89,8 @@ public class NotificationRule implements Serializable {
     @Persistent(table = "NOTIFICATIONRULE_PROJECTS", defaultFetchGroup = "true")
     @Join(column = "NOTIFICATIONRULE_ID")
     @Element(column = "PROJECT_ID")
-    private Set<Project> projects;
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
+    private List<Project> projects;
 
     @Persistent
     @Column(name = "NOTIFY_ON", length = 1024)
@@ -155,11 +158,11 @@ public class NotificationRule implements Serializable {
         this.notificationLevel = notificationLevel;
     }
 
-    public Set<Project> getProjects() {
+    public List<Project> getProjects() {
         return projects;
     }
 
-    public void setProjects(Set<Project> projects) {
+    public void setProjects(List<Project> projects) {
         this.projects = projects;
     }
 

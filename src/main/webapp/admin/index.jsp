@@ -296,7 +296,7 @@
                                 </div>
                             </div>
                             <table id="notificationAlertTable" class="table table-hover detail-table" data-toggle="table"
-                                   data-url="<c:url value="/api/v1/notification/rule"/>"
+                                   data-url="<c:url value="/api/v1/notification/rule"/>" data-project-view="false"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
                                    data-detail-view="true" data-detail-formatter="notificationAlertDetailFormatter"
                                    data-toolbar="#notificationAlertToolbar" data-click-to-select="true" data-height="100%">
@@ -584,6 +584,34 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalNotificationRuleAddProject" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Add Project</span>
+                </div>
+                <div class="modal-body">
+                    <table id="notificationRuleProjectTable" class="table table-hover" data-toggle="table"
+                           data-search="true" data-click-to-select="true" data-page-size="5"
+                           data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true">
+                        <thead>
+                        <tr>
+                            <th data-align="middle" data-field="selected" data-checkbox="true"></th>
+                            <th data-align="left" data-field="name">Name</th>
+                            <th data-align="left" data-field="version">Version</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="notificationRuleAddProjectButton" data-rule-uuid="">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>

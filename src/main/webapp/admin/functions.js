@@ -107,6 +107,28 @@ function formatManagedUserTable(res) {
 }
 
 /**
+ * Assigns a permission by retrieving field values and calling the REST function for the service.
+ */
+function addProjectToRule() {
+    const updateButton = $("#notificationRuleAddProjectButton");
+    const ruleUuid = updateButton.attr("data-rule-uuid");
+    const selections = $("#notificationRuleProjectTable").bootstrapTable("getAllSelections");
+    for (let i = 0; i < selections.length; i++) {
+        let projectUuid = selections[i].uuid;
+        $rest.addProjectToNotificationRule(ruleUuid, projectUuid, function () {
+            $("#notificationAlertTable").bootstrapTable("refresh", {silent: true});
+            $("#notificationRuleProjectTable").bootstrapTable("refresh", {silent: true});
+        });
+    }
+}
+
+function removeProjectFromRule(ruleUuid, projectUuid) {
+    $rest.removeProjectFromNotificationRule(ruleUuid, projectUuid, function () {
+        $("#container-rule-" + ruleUuid + "-project-" + projectUuid).remove();
+    });
+}
+
+/**
  * Function called by bootstrap table when row is clicked/touched, and
  * expanded. This function handles the dynamic creation of the expanded
  * view with simple inline templates.
@@ -161,6 +183,26 @@ function notificationAlertDetailFormatter(index, row) {
         `;
     }
 
+    let limitToProjectsHtml = "";
+    if (!(row.projects === undefined)) {
+        for (let i = 0; i < row.projects.length; i++) {
+            limitToProjectsHtml += `
+            <li class="list-group-item" id="container-rule-${row.uuid}-project-${row.projects[i].uuid}">
+                <a href="#" id="delete-${row.projects[i].uuid}" onclick="removeProjectFromRule('${row.uuid}', '${row.projects[i].uuid}')" data-toggle="tooltip" title="Remove Project">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                <span id="${row.uuid}-limit-to-project-${row.projects[i].uuid}">${row.projects[i].name} ${row.projects[i].version}</span>
+            </li>`;
+        }
+    }
+    limitToProjectsHtml += `
+            <li class="list-group-item" id="container-no-limit-to-project">
+                <a href="#" id="add-project-to-limit-to-${row.uuid}" data-toggle="modal" data-target="#modalNotificationRuleAddProject" data-rule="${row.uuid}" title="Add Project">
+                    <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
+                </a>
+                <span>&nbsp;</span>
+            </li>`;
+
     let template = `
     <form id="form-${row.uuid}">
     <div class="col-md-6">
@@ -183,7 +225,13 @@ function notificationAlertDetailFormatter(index, row) {
         <div class="form-group">
             <label class="${destinationEnabledCss}" for="updateNotificationAlertDestinationInput-${row.uuid}">Destination</label>
             <input type="text" class="form-control ${destinationEnabledCss}" ${destinationDisabled} value="${destination}" id="updateNotificationAlertDestinationInput-${row.uuid}" data-uuid="${row.uuid}">
-        </div>   
+        </div>  
+        <div id="limitToProjectsTable-${row.uuid}" class="form-group hidden">
+            <label for="limitToProjects">Limit to Projects</label>
+            <ul class="list-group" id="limitToProjects">
+                ${limitToProjectsHtml}
+            </ul>
+        </div>  
     </div>
     <div class="col-md-6">
         <div class="form-group">
@@ -194,10 +242,27 @@ function notificationAlertDetailFormatter(index, row) {
             <label for="updateNotificationAlertGroup">Notify On</label> 
             ${notifyOnOption}
         </div>
-        <button type="button" class="btn btn-danger pull-right" id="deleteNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}">Delete Alert</button>
+        <div style="text-align:right">
+            <button type="button" class="btn btn-default" id="expandNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}"><i class="fa fa-chevron-down" id="limitToProjectsArrow-${row.uuid}" aria-hidden="true"></i> Limit To</button>
+            <button type="button" class="btn btn-danger" id="deleteNotificatiomAlert-${row.uuid}" data-uuid="${row.uuid}">Delete Alert</button>
+        </div>
     </div>
     </form>
     <script type="text/javascript">
+        function toggleLimitProjectVisibility() {
+            let table = $("#notificationAlertTable");
+            let elm = $("#limitToProjectsTable-${row.uuid}");
+            let arrow = $("#limitToProjectsArrow-${row.uuid}");
+            if (elm.hasClass("hidden")) {
+                elm.removeClass("hidden");
+                arrow.removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                table.attr("data-project-view", "true");
+            } else {
+                elm.addClass("hidden");
+                arrow.removeClass("fa-chevron-up").addClass("fa-chevron-down");
+                table.attr("data-project-view", "false");
+            }
+        }
         if ("${row.scope}" === "SYSTEM") {
             $("#" + $.escapeSelector("updateNotificationAlertGroupDatasourceMirroringInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
             $("#" + $.escapeSelector("updateNotificationAlertGroupFileSystemInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));            
@@ -212,7 +277,11 @@ function notificationAlertDetailFormatter(index, row) {
         $("#" + $.escapeSelector("updateNotificationAlertNameInput-${row.uuid}")).keydown($common.debounce(updateNotificationRule, 750));
         $("#" + $.escapeSelector("updateNotificationAlertNotificationLevelInput-${row.uuid}")).change($common.debounce(updateNotificationRule, 750));
         $("#" + $.escapeSelector("updateNotificationAlertDestinationInput-${row.uuid}")).keydown($common.debounce(updateNotificationRule, 750));
+        $("#" + $.escapeSelector("expandNotificatiomAlert-${row.uuid}")).on("click", toggleLimitProjectVisibility);
         $("#" + $.escapeSelector("deleteNotificatiomAlert-${row.uuid}")).on("click", deleteNotificationRule);
+        $("#" + $.escapeSelector("add-project-to-limit-to-${row.uuid}")).on("click", function () {
+            $("#notificationRuleAddProjectButton").attr("data-rule-uuid", "${row.uuid}"); // Assign the uuid of the rule to the data-rule-uuid attribute of the 'Update' button
+        });
     </script>
 `;
     html.push(template);
@@ -901,6 +970,9 @@ $(document).ready(function () {
     // Listen for if the button to create a notification alert is clicked
     $("#createNotificationAlertCreateButton").on("click", createNotificationRule);
 
+    // Listen for if the button to add a project to a notification alert is clicked
+    $("#notificationRuleAddProjectButton").on("click", addProjectToRule);
+
     // Listen for if the button to create a team is clicked
     $("#createTeamCreateButton").on("click", createTeam);
 
@@ -952,6 +1024,11 @@ $(document).ready(function () {
             $.each(data, function(i, rule) {
                 if (rule.uuid === notificationAlertTable.expandedUuid) {
                     notificationAlertTable.bootstrapTable("expandRow", i);
+                    let limitToExpanded = notificationAlertTable.attr("data-project-view");
+                    if (limitToExpanded === "true") {
+                        $("#limitToProjectsTable-" + rule.uuid).removeClass("hidden");
+                        $("#limitToProjectsArrow-" + rule.uuid).removeClass("fa-chevron-down").addClass("fa-chevron-up");
+                    }
                 }
             });
         }
@@ -1065,6 +1142,9 @@ $(document).ready(function () {
     }
     if ($auth.hasPermission($auth.SYSTEM_CONFIGURATION, token)) {
         $rest.getConfigProperties(populateConfigProperties);
+    }
+    if ($auth.hasPermission($auth.VIEW_PORTFOLIO, token)) {
+        $("#notificationRuleProjectTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_PROJECT, silent: true});
     }
 
     /**

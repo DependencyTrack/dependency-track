@@ -1985,6 +1985,74 @@ $rest.deleteNotificationRule = function deleteNotificationRule(uuid, successCall
 };
 
 /**
+ * Service called when a project is added to a notification rule
+ */
+$rest.addProjectToNotificationRule = function addProjectToNotificationRule(ruleUuid, projectUuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_NOTIFICATION_RULE + "/" + ruleUuid + "/project/" + projectUuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a project is removed from a notification rule
+ */
+$rest.removeProjectFromNotificationRule = function removeProjectFromNotificationRule(ruleUuid, projectUuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_NOTIFICATION_RULE + "/" + ruleUuid + "/project/" + projectUuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            304: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Generic handler for all AJAX requests
  */
 $.ajaxSetup({

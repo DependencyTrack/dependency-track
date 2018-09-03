@@ -23,6 +23,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
@@ -31,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -39,9 +41,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * JAX-RS resources for processing notification rules.
@@ -164,6 +168,82 @@ public class NotificationRuleResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
             }
+        }
+    }
+
+    @POST
+    @Path("/{ruleUuid}/project/{projectUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Adds a project to a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The rule already has the specified project assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The notification rule or project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response addProjectToRule(
+            @ApiParam(value = "The UUID of the rule to add a project to", required = true)
+            @PathParam("ruleUuid") String ruleUuid,
+            @ApiParam(value = "The UUID of the project to add to the rule", required = true)
+            @PathParam("projectUuid") String projectUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            List<Project> projects = rule.getProjects();
+            if (projects != null && !projects.contains(project)) {
+                rule.getProjects().add(project);
+                qm.persist(rule);
+                return Response.ok(rule).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{ruleUuid}/project/{projectUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Removes a project from a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The rule does not have the specified project assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The notification rule or project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response removeProjectFromRule(
+            @ApiParam(value = "The UUID of the rule to remove the project from", required = true)
+            @PathParam("ruleUuid") String ruleUuid,
+            @ApiParam(value = "The UUID of the project to remove from the rule", required = true)
+            @PathParam("projectUuid") String projectUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            List<Project> projects = rule.getProjects();
+            if (projects != null && projects.contains(project)) {
+                rule.getProjects().remove(project);
+                qm.persist(rule);
+                return Response.ok(rule).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
         }
     }
 }

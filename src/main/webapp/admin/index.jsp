@@ -3,6 +3,8 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@taglib prefix="e" uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" %>
 <%!
+    private static final String BUILD_ID = Config.getInstance().getApplicationBuildUuid();
+    private static final String VERSION_PARAM = "?v=" + BUILD_ID;
     private static final boolean AUTHN_ENABLED = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION);
     private static final boolean AUTHZ_ENABLED = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
 %>
@@ -615,6 +617,6 @@
 </div>
 <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
-<script type="text/javascript" src="<c:url value="/admin/functions.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/admin/functions.js"/><%=VERSION_PARAM%>"></script>
 </body>
 </html>

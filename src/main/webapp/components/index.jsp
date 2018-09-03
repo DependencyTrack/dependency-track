@@ -1,6 +1,11 @@
+<%@page import="alpine.Config" %>
 <%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@taglib prefix="e" uri="https://www.owasp.org/index.php/OWASP_Java_Encoder_Project" %>
+<%!
+    private static final String BUILD_ID = Config.getInstance().getApplicationBuildUuid();
+    private static final String VERSION_PARAM = "?v=" + BUILD_ID;
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -239,6 +244,6 @@
 </div>
 <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>
-<script type="text/javascript" src="<c:url value="/components/functions.js"/>"></script>
+<script type="text/javascript" src="<c:url value="/components/functions.js"/><%=VERSION_PARAM%>"></script>
 </body>
 </html>

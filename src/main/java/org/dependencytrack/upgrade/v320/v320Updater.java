@@ -20,8 +20,10 @@ package org.dependencytrack.upgrade.v320;
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
+import alpine.upgrade.UpgradeMetaProcessor;
 import alpine.util.DbUtil;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 public class v320Updater extends AbstractUpgradeItem {
 
@@ -35,5 +37,20 @@ public class v320Updater extends AbstractUpgradeItem {
         LOGGER.info("Dropping old/unused columns");
         DbUtil.dropColumn(connection, "PROJECT_PROPERTY", "KEY");
         DbUtil.dropColumn(connection, "PROJECT_PROPERTY", "VALUE");
+    }
+
+    /**
+     * Overriding due to an issue with Dependency-Track 3.1.x and PostgreSQL upgrade framework incompatability.
+     */
+    public boolean shouldUpgrade(AlpineQueryManager queryManager, Connection connection) {
+        try {
+            UpgradeMetaProcessor ump = new UpgradeMetaProcessor(connection);
+            if (!ump.hasUpgradeRan(this.getClass())) {
+                return true;
+            }
+        } catch (SQLException e) {
+            LOGGER.error("Error determining if upgrade should execute", e);
+        }
+        return false;
     }
 }

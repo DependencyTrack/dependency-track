@@ -33,10 +33,14 @@ public class v320Updater extends AbstractUpgradeItem {
         return "3.2.0";
     }
 
-    public void executeUpgrade(AlpineQueryManager qm, Connection connection) {
+    public void executeUpgrade(AlpineQueryManager qm, Connection connection) throws SQLException {
         LOGGER.info("Dropping old/unused columns");
-        DbUtil.dropColumn(connection, "PROJECT_PROPERTY", "KEY");
-        DbUtil.dropColumn(connection, "PROJECT_PROPERTY", "VALUE");
+        if (DbUtil.columnExists(connection, "PROJECT_PROPERTY", "KEY")) {
+            DbUtil.dropColumn(connection, "PROJECT_PROPERTY", "KEY");
+        }
+        if (DbUtil.columnExists(connection, "PROJECT_PROPERTY", "VALUE")) {
+            DbUtil.dropColumn(connection, "PROJECT_PROPERTY", "VALUE");
+        }
     }
 
     /**

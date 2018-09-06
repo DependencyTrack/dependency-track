@@ -299,6 +299,7 @@
                             </div>
                             <table id="notificationAlertTable" class="table table-hover detail-table" data-toggle="table"
                                    data-url="<c:url value="/api/v1/notification/rule"/>" data-project-view="false"
+                                   data-response-handler="formatNotificationAlertTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
                                    data-detail-view="true" data-detail-formatter="notificationAlertDetailFormatter"
                                    data-toolbar="#notificationAlertToolbar" data-click-to-select="true" data-height="100%">
@@ -596,6 +597,7 @@
                 <div class="modal-body">
                     <table id="notificationRuleProjectTable" class="table table-hover" data-toggle="table"
                            data-search="true" data-click-to-select="true" data-page-size="5"
+                           data-response-handler="formatNotificationRuleProjectTable"
                            data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true">
                         <thead>
                         <tr>

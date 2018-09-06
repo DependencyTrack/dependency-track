@@ -33,6 +33,19 @@ function formatRepositoryTable(res) {
 }
 
 /**
+ * Called by bootstrap table to format the data in the notification alert table.
+ */
+function formatNotificationAlertTable(res) {
+    for (let i=0; i<res.length; i++) {
+        res[i].name = filterXSS(res[i].name);
+        if (res[i].hasOwnProperty("publisheer") && res[i].publisher.hasOwnProperty("name")) {
+            res[i].publisher.name = filterXSS(res[i].publisher.name);
+        }
+    }
+    return res;
+}
+
+/**
  * Called by bootstrap table to format the data in the templates table.
  */
 function formatNotificationTemplateTable(res) {
@@ -42,6 +55,18 @@ function formatNotificationTemplateTable(res) {
         } else {
             res[i].defaultPublisherLabel = '';
         }
+        res[i].name = filterXSS(res[i].name);
+    }
+    return res;
+}
+
+/**
+ * Called by bootstrap table to format the data in the notification rule project table.
+ */
+function formatNotificationRuleProjectTable(res) {
+    for (let i=0; i<res.length; i++) {
+        res[i].name = filterXSS(res[i].name);
+        res[i].version = filterXSS(res[i].version);
     }
     return res;
 }
@@ -74,6 +99,7 @@ function formatTeamTable(res) {
         if (res[i].managedUsers !== undefined) {
             res[i].membersNum += res[i].managedUsers.length;
         }
+        res[i].name = filterXSS(res[i].name);
     }
     return res;
 }
@@ -88,6 +114,8 @@ function formatLdapUserTable(res) {
         } else {
             res[i].teamsNum = res[i].teams.length;
         }
+        res[i].username = filterXSS(res[i].username);
+        res[i].dn = filterXSS(res[i].dn);
     }
     return res;
 }
@@ -102,6 +130,9 @@ function formatManagedUserTable(res) {
         } else {
             res[i].teamsNum = res[i].teams.length;
         }
+        res[i].username = filterXSS(res[i].username);
+        res[i].fullname = filterXSS(res[i].fullname);
+        res[i].email = filterXSS(res[i].email);
     }
     return res;
 }

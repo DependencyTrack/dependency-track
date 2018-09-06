@@ -26,6 +26,7 @@ function formatProjectsTable(res) {
     for (let i=0; i<res.length; i++) {
         let projecturl = "../project/?uuid=" + res[i].uuid;
         res[i].projecthref = "<a href=\"" + projecturl + "\">" + filterXSS(res[i].name) + "</a>";
+        res[i].version = filterXSS(res[i].version);
 
         if (res[i].hasOwnProperty("lastScanImport")) {
             res[i].lastScanImportLabel = $common.formatTimestamp(res[i].lastScanImport, true);

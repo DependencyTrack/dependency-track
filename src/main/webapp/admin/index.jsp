@@ -172,8 +172,6 @@
                                     <p>
                                         Evidence-based analysis will lead to false positives, however, the technique can
                                         also be utilized to discover potential issues with an applications environment.
-                                        For example, falsely identified vulnerabilities in a database driver may reveal
-                                        the use of a vulnerable database server.
                                     </p>
                                     <p>
                                         Note: Due to the file-based approach that Dependency-Check natively uses,

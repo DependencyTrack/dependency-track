@@ -22,8 +22,6 @@ import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.util.JavaVersion;
-import alpine.util.SystemUtil;
 import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
@@ -67,15 +65,7 @@ public class NspMirrorTask implements LoggableSubscriber {
     public void inform(Event e) {
         if (e instanceof NspMirrorEvent) {
             LOGGER.info("Starting NSP mirroring task");
-
-            //todo: remove this check when Java 9 is eventually a requirement
-            JavaVersion javaVersion = SystemUtil.getJavaVersion();
-            if (javaVersion.getMajor() == 8 && javaVersion.getUpdate() < 101) {
-                LOGGER.error("Unable to mirror contents of Node Security Platform. NSP requires Java 1.8.0_101 or higher.");
-            } else {
-                getAdvisories();
-            }
-
+            getAdvisories();
             LOGGER.info("NSP mirroring complete");
             if (successful) {
                 Notification.dispatch(new Notification()

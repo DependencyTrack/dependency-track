@@ -123,6 +123,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         DependencyCheckScanAgent scanAgent = createScanAgent(true);
         try {
             scanAgent.execute();
+            scanAgent.setDependencies(new ArrayList<>());
         } catch (ScanAgentException ex) {
             LOGGER.error("An error occurred executing Dependency-Check scan agent", ex);
         }

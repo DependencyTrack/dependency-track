@@ -40,6 +40,9 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 
 **NOTICE: Always use official binary releases in production.**
 
+Ecosystem Overview
+-------------------
+
 ![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/integrations.png)
 
 Features

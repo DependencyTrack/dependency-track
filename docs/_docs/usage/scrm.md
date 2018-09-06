@@ -31,6 +31,20 @@ The process of tracking, managing, and continuously evaluating metrics and risk 
 organizations entire portfolio
 * Identifies out-of-date components where the version used is not the latest available
 
+#### Known Vulnerability Detection
+
+Dependency-Track employs several methods of vulnerability identification including:
+
+| Scanner | Description |
+| ------|---------------|
+| Dependency-Check | OWASP Dependency-Check is a utility designed to discover vulnerabilities in third-party components. Dependency-Check uses evidence-based analysis and performs fuzzy matching against the NVD to present results based on confidence. Dependency-Track has native integration with Dependency-Check.|
+| NPM Audit | NPM Audit is a service which identifies vulnerabilities in Node.js Modules. Dependency-Track integrates natively with the NPM Audit service to provide highly accurate results.|
+| OSS Index | OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components. Dependency-Track integrates natively with the OSS Index service to provide highly accurate results.|
+
+Each of the scanners above can be enabled or disabled independently from one another.
+
+![configure scanners](/images/screenshots/scanners-configure.png)
+
 #### Outdated Component Risk
 
 Components with known vulnerabilities used in a supply chain represent significant risk to projects that have

@@ -14,7 +14,7 @@ both recognize the risk of [using components with known vulnerabilities](https:/
 Dependency-Track is a Software Composition Analysis (SCA) platform that keeps track of all third-party 
 components used in all the applications an organization creates or consumes. It integrates with multiple
 vulnerability databases including the [National Vulnerability Database] (NVD), [Node Security Platform] (NSP),
-and [VulnDB] from [Risk Based Security]. Dependency-Track monitors all applications in its portfolio in order
+[Sonatype OSS Index], and [VulnDB] from [Risk Based Security]. Dependency-Track monitors all applications in its portfolio in order
 to proactively identify vulnerabilities in components that are placing your applications at risk. Use of 
 Dependency-Track can play a vital role in an overall [Cyber Supply Chain Risk Management](https://csrc.nist.gov/Projects/Supply-Chain-Risk-Management) (C-SCRM) 
 program by fulfilling many of the recommendations laid out by [SAFECode](https://www.safecode.org/wp-content/uploads/2017/05/SAFECode_TPC_Whitepaper.pdf).
@@ -37,6 +37,7 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
   * across entire portfolio
 * Tracks usage of out-of-date components
 * Includes a comprehensive auditing workflow for triaging results
+* Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports [CycloneDX] and [SPDX] bill-of-material formats
 * Easy to read metrics for components, projects, and portfolio
@@ -49,6 +50,7 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 [OWASP Top Ten]: https://www.owasp.org/index.php/Category:OWASP_Top_Ten_Project
 [National Vulnerability Database]: https://nvd.nist.gov
 [Node Security Platform]: https://nodesecurity.io
+[Sonatype OSS Index]: https://ossindex.sonatype.org
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com
 [NIST Cybersecurity Framework]: https://www.nist.gov/cybersecurity-framework

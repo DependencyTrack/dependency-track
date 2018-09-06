@@ -40,6 +40,7 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 
 **NOTICE: Always use official binary releases in production.**
 
+![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/integrations.png)
 
 Features
 -------------------
@@ -61,8 +62,6 @@ Features
 * API documentation available in Swagger 2.0 (OpenAPI 3 support coming soon)
 * Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
-
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/integrations.png)
 
 Screenshots
 -------------------

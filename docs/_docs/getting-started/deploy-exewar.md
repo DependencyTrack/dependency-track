@@ -11,7 +11,7 @@ configured, executable WARs fast-track this process by bundling a Servlet contai
 execute the bundled application.
 
 The Dependency-Track executable WAR is delivered ready-to-run. To use the executable WAR, the only requirement 
-is to have Java 8u101 (or higher) installed and execute:
+is to have Java 8u162 (or higher) installed and execute:
 
 ### Requirements
 

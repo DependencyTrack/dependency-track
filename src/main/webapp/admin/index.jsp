@@ -116,7 +116,7 @@
                         </div>
                         <div class="tab-pane admin-form-content" id="generalConfigTab" data-admin-title="General">
                             <h3 class="admin-section-title">General Configuration</h3>
-                            <p>This URL is used to construct links back to Dependency-Track from external systems. Email, ChatOps, and WebHook notifications all rely on linking back to Dependency-Track.</p>
+                            <p>This URL is used to construct links back to Dependency-Track from external systems.</p>
                             <div class="form-group">
                                 <label class="required" for="generalConfigBaseUrlInput">Dependency-Track Base URL</label>
                                 <input type="text" name="Base URL" class="form-control required" id="generalConfigBaseUrlInput" data-group-name="general" data-property-name="base.url">

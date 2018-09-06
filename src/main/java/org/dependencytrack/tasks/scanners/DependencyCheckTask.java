@@ -260,8 +260,8 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         try {
             scanAgent.setCveUrl12Base(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-%d.xml.gz");
             scanAgent.setCveUrl20Base(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-2.0-%d.xml.gz");
-            scanAgent.setCveUrl12Modified(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-Modified.xml.gz");
-            scanAgent.setCveUrl20Modified(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-2.0-Modified.xml.gz");
+            scanAgent.setCveUrl12Modified(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-modified.xml.gz");
+            scanAgent.setCveUrl20Modified(new File(NVD_MIRROR_DIR + File.separator).toURI().toURL().toExternalForm() + "nvdcve-2.0-modified.xml.gz");
         } catch (MalformedURLException e) {
             LOGGER.error("The local file URL Dependency-Check is using to retrieve the NVD mirrored contents is invalid", e);
         }

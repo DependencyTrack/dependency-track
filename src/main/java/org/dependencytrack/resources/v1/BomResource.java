@@ -28,7 +28,6 @@ import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
-import org.dependencytrack.event.ScanUploadEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
@@ -113,8 +112,8 @@ public class BomResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permissions.Constants.SCAN_UPLOAD)
-    public Response uploadScan(@FormDataParam("project") String projectUuid,
+    @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
+    public Response uploadBom(@FormDataParam("project") String projectUuid,
                                @DefaultValue("false") @FormDataParam("autoCreate") boolean autoCreate,
                                @FormDataParam("projectName") String projectName,
                                @FormDataParam("projectVersion") String projectVersion,
@@ -165,7 +164,7 @@ public class BomResource extends AlpineResource {
                     final byte[] content = IOUtils.toByteArray(bodyPartEntity.getInputStream());
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
-                    Event.dispatch(new ScanUploadEvent(project.getUuid(), content));
+                    Event.dispatch(new BomUploadEvent(project.getUuid(), content));
                 } catch (IOException e) {
                     return Response.status(Response.Status.BAD_REQUEST).build();
                 }

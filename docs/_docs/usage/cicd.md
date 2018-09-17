@@ -14,7 +14,7 @@ application assembly is being generated.
 > ingestion of files as well as changes to the components via REST or from the user interface. All 
 > components in Dependency-Track, regardless of changes, are automatically analyzed on a daily basis.
 
-The [Dependency-Check Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) is the 
+The [Dependency-Track Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) is the 
 recommended method for publishing CycloneDX BoMs or Dependency-Check XML reports to Dependency-Track in 
 a Jenkins environment.
 

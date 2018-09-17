@@ -30,11 +30,10 @@ to proactively identify vulnerabilities in components that are placing your appl
 Dependency-Track can play a vital role in an overall [Cyber Supply Chain Risk Management](https://csrc.nist.gov/Projects/Supply-Chain-Risk-Management) (C-SCRM) 
 program by fulfilling many of the recommendations laid out by [SAFECode](https://www.safecode.org/wp-content/uploads/2017/05/SAFECode_TPC_Whitepaper.pdf).
 
-Dependency-Track is designed to be used in an automated DevOps environment where [Dependency-Check]
-results or BoM (Bill of Material) formats are automatically ingested during CI/CD. Use of the 
-[Dependency-Check Jenkins Plugin] is highly recommended for this purpose and is well suited for use
-in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to accelerate while
-still keeping tabs on component usage and any inherited risk.
+Dependency-Track is designed to be used in an automated DevOps environment where BoM (bill-of-material) formats are 
+automatically ingested during CI/CD. Use of the [Dependency-Track Jenkins Plugin] is highly recommended for this purpose 
+and is well suited for use in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to 
+accelerate while still keeping tabs on component usage and any inherited risk.
 
 Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
 
@@ -58,7 +57,7 @@ Features
 * Includes a comprehensive auditing workflow for triaging results
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
-* Supports [CycloneDX] and [SPDX] bill-of-material formats
+* Supports [CycloneDX] and [SPDX] bill-of-material and [Dependency-Check] XML
 * Easy to read metrics for components, projects, and portfolio
 * Provides a reliable mirror of the NVD data feed
 * API-first design facilitates easy integration with other systems
@@ -209,7 +208,7 @@ the [NOTICES.txt] [notices] file for more information.
   [OWASP Top Ten]: https://www.owasp.org/index.php/Category:OWASP_Top_Ten_Project
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
   [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
-  [Dependency-Check Jenkins Plugin]: https://plugins.jenkins.io/dependency-check-jenkins-plugin
+  [Dependency-Track Jenkins Plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Track+Plugin
   [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline
   [CycloneDX]: http://cyclonedx.org
   [SPDX]: https://spdx.org

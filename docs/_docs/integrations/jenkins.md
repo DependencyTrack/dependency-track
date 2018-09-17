@@ -5,8 +5,8 @@ chapter: 5
 order: 3
 ---
 
-The [Dependency-Check Jenkins plugin] includes a publisher which can be configured to push Dependency-Check 
-XML reports or CycloneDX and SPDX bill-of-material documents to Dependency-Track.
+The [Dependency-Track Jenkins plugin] can publish CycloneDX or SPDX bill-of-material formats, or Dependency-Check XML 
+reports, to Dependency-Track.
 
 ### Global Config
 To setup, navigate to **Jenkins &raquo; System Configuration** and complete the Dependency-Track section.
@@ -27,4 +27,4 @@ automatically populated with a list of projects.
   * Dependency-Check Scan Result (XML)
   * Software Bill of Material (CycloneDX or SPDX) 
 
-[Dependency-Check Jenkins plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Check+Plugin
+[Dependency-Track Jenkins plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Track+Plugin

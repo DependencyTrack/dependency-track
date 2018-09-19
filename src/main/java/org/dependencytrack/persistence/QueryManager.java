@@ -480,6 +480,18 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a list of all components.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Components
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> getAllComponents() {
+        final Query query = pm.newQuery(Component.class);
+        query.setOrdering("id asc");
+        return query.executeResultList(Component.class);
+    }
+
+    /**
      * Returns a Component by its hash. Supports MD5, SHA-1, SHA-256, SHA-512, SHA3-256, and SHA3-512 hashes.
      * @param hash the hash of the component to retrieve
      * @return a Component, or null if not found

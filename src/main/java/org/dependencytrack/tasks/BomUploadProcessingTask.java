@@ -20,13 +20,14 @@ package org.dependencytrack.tasks;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
+import org.cyclonedx.BomParser;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.parser.cyclonedx.CycloneDxParser;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
 import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.dependencytrack.persistence.QueryManager;
@@ -66,8 +67,8 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
-                    final CycloneDxParser parser = new CycloneDxParser(qm);
-                    components = parser.convert(parser.parse(bomBytes));
+                    final BomParser parser = new BomParser();
+                    components = ModelConverter.convert(qm, parser.parse(bomBytes));
                 } else {
                     final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
                     components = parser.parse(bomBytes);

@@ -19,16 +19,22 @@ package org.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
 import alpine.event.framework.Event;
+import alpine.logging.Logger;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
+import org.cyclonedx.BomGenerator;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
@@ -38,15 +44,22 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing bill-of-material (bom) documents.
@@ -57,6 +70,101 @@ import java.util.List;
 @Path("/v1/bom")
 @Api(value = "bom", authorizations = @Authorization(value = "X-Api-Key"))
 public class BomResource extends AlpineResource {
+
+    private static final Logger LOGGER = Logger.getLogger(BomResource.class);
+
+    @GET
+    @Path("/cyclonedx/project/{uuid}")
+    @Produces(MediaType.APPLICATION_XML)
+    @ApiOperation(
+            value = "Returns dependency metadata for a project in CycloneDX format",
+            response = String.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response exportProjectAsCycloneDx (
+            @ApiParam(value = "The UUID of the project to export", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            final List<Dependency> dependencies = qm.getAllDependencies(project);
+            final List<Component> components = dependencies.stream().map(Dependency::getComponent).collect(Collectors.toList());
+            final Set<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toSet());
+            try {
+                final BomGenerator bomGenerator = new BomGenerator(cycloneComponents);
+                bomGenerator.generate();
+                return Response.ok(bomGenerator.toXmlString()).build();
+            } catch (ParserConfigurationException | TransformerException e) {
+                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/cyclonedx/components")
+    @Produces(MediaType.APPLICATION_XML)
+    @ApiOperation(
+            value = "Returns dependency metadata for all components in CycloneDX format",
+            response = String.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response exportComponentsAsCycloneDx () {
+        try (QueryManager qm = new QueryManager()) {
+            final List<Component> components = qm.getAllComponents();
+            final Set<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toSet());
+            try {
+                final BomGenerator bomGenerator = new BomGenerator(cycloneComponents);
+                bomGenerator.generate();
+                return Response.ok(bomGenerator.toXmlString()).build();
+            } catch (ParserConfigurationException | TransformerException e) {
+                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/cyclonedx/component/{uuid}")
+    @Produces(MediaType.APPLICATION_XML)
+    @ApiOperation(
+            value = "Returns dependency metadata for all components in CycloneDX format",
+            response = String.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The component could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response exportComponentAsCycloneDx (
+            @ApiParam(value = "The UUID of the project to export", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Component component = qm.getObjectByUuid(Component.class, uuid);
+            if (component == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+            }
+            try {
+                final Set<org.cyclonedx.model.Component> cycloneComponents = new HashSet<>();
+                cycloneComponents.add(ModelConverter.convert(qm, component));
+                final BomGenerator bomGenerator = new BomGenerator(cycloneComponents);
+                bomGenerator.generate();
+                return Response.ok(bomGenerator.toXmlString()).build();
+            } catch (ParserConfigurationException | TransformerException e) {
+                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)

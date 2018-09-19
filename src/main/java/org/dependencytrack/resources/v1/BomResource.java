@@ -137,7 +137,7 @@ public class BomResource extends AlpineResource {
     @Path("/cyclonedx/component/{uuid}")
     @Produces(MediaType.APPLICATION_XML)
     @ApiOperation(
-            value = "Returns dependency metadata for all components in CycloneDX format",
+            value = "Returns dependency metadata for a specific component in CycloneDX format",
             response = String.class
     )
     @ApiResponses(value = {

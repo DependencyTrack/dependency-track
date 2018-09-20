@@ -3,6 +3,8 @@ title: NPM Public Advisories
 category: Datasources
 chapter: 3
 order: 2
+redirect_from:
+  - /datasources/nsp/
 ---
 
 NPM public advisories contains a number of Javascript vulnerabilities, specific to the Node.js 

@@ -2,7 +2,7 @@
 # Site
 
 title: Dependency-Track
-url: "https://dependencytrack.org"
+url: "https://docs.dependencytrack.org"
 baseurl:
 show_full_navigation: true
 

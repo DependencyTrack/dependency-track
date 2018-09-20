@@ -7,7 +7,7 @@ order: 4
 
 Components often belong to one or more ecosystems. These ecosystems typically have one or more sources of 
 truth that provide additional data about the components. For example, Maven Central and the NPM repository provide 
-information about Java and Node components respectively. Likewise, the Node Security Platform provides vulnerability 
+information about Java and Node components respectively. Likewise, NPM public advisories provides vulnerability 
 intelligence specific to Node modules.
 
 Dependency-Track has adopted an emerging spec called [Package URL](https://github.com/package-url/purl-spec) that

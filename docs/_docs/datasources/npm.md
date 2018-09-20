@@ -14,5 +14,5 @@ Dependency-Track integrates with NPM using it's public advisory API. In doing so
 to create a mirror of all NPM advisory data. The mirror is kept up-to-date on a daily basis, or upon the restarting
 of the Dependency-Track instance.
 
-Credit is provided to the NPM with visual and textual cues on where the data originated.
+Credit is provided to NPM with visual and textual cues on where the data originated.
 Links back to the original NPM advisories are also provided.

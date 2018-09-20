@@ -22,7 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.FileUtils;
-import org.dependencytrack.parser.dependencycheck.resolver.CweResolver;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
@@ -55,7 +55,11 @@ public final class ModelConverter {
                                                                   org.dependencytrack.parser.dependencycheck.model.Vulnerability parserVuln) {
 
         final org.dependencytrack.model.Vulnerability persistable = new org.dependencytrack.model.Vulnerability();
-        persistable.setSource(parserVuln.getSource());
+        if (parserVuln.getSource().equals("NSP")) {
+            persistable.setSource("NPM");
+        } else {
+            persistable.setSource(parserVuln.getSource());
+        }
         persistable.setVulnId(parserVuln.getName());
 
         persistable.setCwe(new CweResolver(qm).resolve(parserVuln.getCwe()));

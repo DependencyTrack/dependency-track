@@ -25,14 +25,14 @@ import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
 import io.github.openunirest.http.exceptions.UnirestException;
+import org.dependencytrack.parser.npm.NpmAuditParser;
 import org.json.JSONObject;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NpmAuditAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.parser.npm.audit.NpmAuditParser;
-import org.dependencytrack.parser.npm.audit.model.Advisory;
+import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
 import org.dependencytrack.util.NotificationUtil;
@@ -102,7 +102,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     public void analyze(List<Component> components) {
         final CopyOnWriteArrayList<Component> copy = new CopyOnWriteArrayList<>(components);
         while (copy.size() > 0) {
-            final Map<String, Component> nspCandidates = new HashMap<>();
+            final Map<String, Component> npmCandidates = new HashMap<>();
             final JSONObject npmRequires = new JSONObject();
             final JSONObject npmDependencies = new JSONObject();
 
@@ -111,8 +111,8 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                 final Component component = i.next();
                 final PackageURL purl = component.getPurl();
                 if (shouldAnalyze(purl)) {
-                    if (!nspCandidates.containsKey(component.getName())) {
-                        nspCandidates.put(component.getName(), component);
+                    if (!npmCandidates.containsKey(component.getName())) {
+                        npmCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());
                         npmDependencies.put(purl.getName(), new JSONObject().put("version", purl.getVersion()));
                         copy.remove(component);
@@ -131,17 +131,17 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                 try {
                     // Submit the package-lock.json to Node Audit API for analysis and process results
                     final List<Advisory> advisories = submit(packageJson);
-                    processResults(new ArrayList<>(nspCandidates.values()), advisories);
+                    processResults(new ArrayList<>(npmCandidates.values()), advisories);
                 } catch (UnirestException e) {
                     LOGGER.error("An error occurred while analyzing", e);
                 }
-                LOGGER.info("Analyzing " + nspCandidates.size() + " component(s)");
+                LOGGER.info("Analyzing " + npmCandidates.size() + " component(s)");
             }
         }
     }
 
     /**
-     * Submits the payload to the NSP service
+     * Submits the payload to the NPM service
      */
     private List<Advisory> submit(JSONObject payload) throws UnirestException {
         Unirest.setHttpClient(HttpClientFactory.createClient());
@@ -163,14 +163,14 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     }
 
     /**
-     * Processes NSP results.
+     * Processes NPM results.
      */
     private void processResults(List<Component> components, List<Advisory> advisories) {
-        LOGGER.info("Processing NSP advisories");
+        LOGGER.info("Processing NPM advisories");
         try (QueryManager qm = new QueryManager()) {
             for (Advisory advisory: advisories) {
                 Component component = getComponentFromAdvisory(components, advisory);
-                Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NSP, String.valueOf(advisory.getId()));
+                Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
                 if (component != null && vulnerabiity != null) {
                     NotificationUtil.analyzeNotificationCriteria(vulnerabiity, component);
                     qm.addVulnerability(vulnerabiity, component);

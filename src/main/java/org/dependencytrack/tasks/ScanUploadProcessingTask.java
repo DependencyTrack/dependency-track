@@ -128,7 +128,13 @@ public class ScanUploadProcessingTask implements Subscriber {
                  */
                 Vulnerability.Source source = Vulnerability.Source.NVD;
                 if (dcvuln.getSource() != null) {
-                    source = Vulnerability.Source.valueOf(dcvuln.getSource().toUpperCase());
+                    // NPM purchased and shutdown NSP. Need to support older ODC versions with NSP source
+                    // values in addition to modern versions with NPM specified as the source.
+                    if (dcvuln.getSource().equals("NSP")) {
+                        source = Vulnerability.Source.NPM;
+                    } else {
+                        source = Vulnerability.Source.valueOf(dcvuln.getSource().toUpperCase());
+                    }
                 }
 
                 /*

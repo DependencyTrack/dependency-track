@@ -28,34 +28,33 @@ import io.github.openunirest.http.Unirest;
 import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.event.NspMirrorEvent;
+import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.parser.nsp.NspAdvsoriesParser;
-import org.dependencytrack.parser.nsp.model.Advisory;
-import org.dependencytrack.parser.nsp.model.AdvisoryResults;
+import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.parser.npm.NpmAdvisoriesParser;
+import org.dependencytrack.parser.npm.model.Advisory;
+import org.dependencytrack.parser.npm.model.AdvisoryResults;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.CvssV2;
-import us.springett.cvss.CvssV3;
-import us.springett.cvss.Score;
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
 /**
- * Subscriber task that performs a mirror of the Node Security Platform public advisories.
+ * Subscriber task that performs a mirror of NPM public advisories.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 3.2.1
  */
-public class NspMirrorTask implements LoggableSubscriber {
+public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
 
-    private static final String NSP_API_BASE_URL = "https://api.nodesecurity.io/advisories";
-    private static final Logger LOGGER = Logger.getLogger(NspMirrorTask.class);
+    private static final String NPM_BASE_URL = "https://registry.npmjs.org";
+    private static final String NPM_ADVISORY_START = "/-/npm/v1/security/advisories";
+    private static final Logger LOGGER = Logger.getLogger(NpmAdvisoryMirrorTask.class);
 
     private boolean successful = true;
 
@@ -63,16 +62,16 @@ public class NspMirrorTask implements LoggableSubscriber {
      * {@inheritDoc}
      */
     public void inform(Event e) {
-        if (e instanceof NspMirrorEvent) {
-            LOGGER.info("Starting NSP mirroring task");
+        if (e instanceof NpmAdvisoryMirrorEvent) {
+            LOGGER.info("Starting NPM advisory mirroring task");
             getAdvisories();
-            LOGGER.info("NSP mirroring complete");
+            LOGGER.info("NPM advisory mirroring complete");
             if (successful) {
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.SYSTEM)
                         .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.NSP_MIRROR)
-                        .content("Mirroring of the Node Security Platform completed successfully")
+                        .title(NotificationConstants.Title.NPM_ADVISORY_MIRROR)
+                        .content("Mirroring of the NPM Advisory data completed successfully")
                         .level(NotificationLevel.INFORMATIONAL)
                 );
             }
@@ -80,40 +79,40 @@ public class NspMirrorTask implements LoggableSubscriber {
     }
 
     /**
-     * Performs an incremental mirror (using pagination) of the NSP public advisory database.
+     * Performs an incremental mirror (using pagination) of the NPM public advisory database.
      */
     private void getAdvisories() {
         final Date currentDate = new Date();
-        LOGGER.info("Retrieving NSP advisories at " + currentDate);
+        LOGGER.info("Retrieving NPM advisories at " + currentDate);
 
         try {
             Unirest.setHttpClient(HttpClientFactory.createClient());
 
             boolean more = true;
-            int offset = 0;
+
+            String url = NPM_BASE_URL + NPM_ADVISORY_START;
             while (more) {
-                LOGGER.info("Retrieving NSP advisories from " + NSP_API_BASE_URL);
-                final HttpResponse<JsonNode> jsonResponse = Unirest.get(NSP_API_BASE_URL)
+                LOGGER.info("Retrieving NPM advisories from " + url);
+                final HttpResponse<JsonNode> jsonResponse = Unirest.get(url)
                         .header("accept", "application/json")
-                        .queryString("offset", offset)
                         .asJson();
 
                 if (jsonResponse.getStatus() == 200) {
-                    final NspAdvsoriesParser parser = new NspAdvsoriesParser();
+                    final NpmAdvisoriesParser parser = new NpmAdvisoriesParser();
                     final AdvisoryResults results = parser.parse(jsonResponse.getBody());
                     updateDatasource(results);
-                    more = results.getCount() + results.getOffset() != results.getTotal();
-                    offset += results.getCount();
+                    more = results.getNext() != null;
+                    url = NPM_BASE_URL + results.getNext();
                 }
             }
         } catch (UnirestException e) {
-            LOGGER.error("An error occurred while retrieving NSP advisory", e);
+            LOGGER.error("An error occurred while retrieving NPM advisory", e);
             successful = false;
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.SYSTEM)
                     .group(NotificationGroup.DATASOURCE_MIRRORING)
-                    .title(NotificationConstants.Title.NSP_MIRROR)
-                    .content("An error occurred while retrieving NSP advisory. Check log for details. " + e.getMessage())
+                    .title(NotificationConstants.Title.NPM_ADVISORY_MIRROR)
+                    .content("An error occurred while retrieving NPM advisory. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
             );
         }
@@ -124,62 +123,65 @@ public class NspMirrorTask implements LoggableSubscriber {
      * @param results the results to synchronize
      */
     private void updateDatasource(AdvisoryResults results) {
-        LOGGER.info("Updating datasource with NSP advisories");
+        LOGGER.info("Updating datasource with NPM advisories");
         try (QueryManager qm = new QueryManager()) {
             for (Advisory advisory: results.getAdvisories()) {
-                qm.synchronizeVulnerability(mapAdvisoryToVulnerability(advisory), false);
+                qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
             }
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
     /**
-     * Helper method that maps an NSP advisory object to a Dependency-Track vulnerability object.
-     * @param advisory the NSP advisory to map
+     * Helper method that maps an NPM advisory object to a Dependency-Track vulnerability object.
+     * @param advisory the NPM advisory to map
      * @return a Dependency-Track Vulnerability object
      */
-    private Vulnerability mapAdvisoryToVulnerability(Advisory advisory) {
+    private Vulnerability mapAdvisoryToVulnerability(QueryManager qm, Advisory advisory) {
         final Vulnerability vuln = new Vulnerability();
-        vuln.setSource(Vulnerability.Source.NSP);
+        vuln.setSource(Vulnerability.Source.NPM);
         vuln.setVulnId(String.valueOf(advisory.getId()));
         vuln.setDescription(advisory.getOverview());
         vuln.setTitle(advisory.getTitle());
         vuln.setSubTitle(advisory.getModuleName());
 
-        if (StringUtils.isNotBlank(advisory.getCreatedAt())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getCreatedAt());
+        if (StringUtils.isNotBlank(advisory.getCreated())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getCreated());
             vuln.setCreated(Date.from(odt.toInstant()));
+            vuln.setPublished(Date.from(odt.toInstant())); // Advisory does not have published, use created instead.
         }
-        if (StringUtils.isNotBlank(advisory.getPublishDate())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getPublishDate());
-            vuln.setPublished(Date.from(odt.toInstant()));
-        }
-        if (StringUtils.isNotBlank(advisory.getUpdatedAt())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getUpdatedAt());
+        if (StringUtils.isNotBlank(advisory.getUpdated())) {
+            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getUpdated());
             vuln.setUpdated(Date.from(odt.toInstant()));
         }
 
-        final Cvss cvss = Cvss.fromVector(advisory.getCvssVector());
-        if (cvss != null) {
-            final Score score = cvss.calculateScore();
-            if (cvss instanceof CvssV2) {
-                vuln.setCvssV2Vector(cvss.getVector());
-                vuln.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
-                vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
-                vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
-            } else if (cvss instanceof CvssV3) {
-                vuln.setCvssV3Vector(cvss.getVector());
-                vuln.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
-                vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
-                vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
-            }
-        }
-
-        vuln.setCredits(advisory.getAuthor());
+        vuln.setCredits(advisory.getFoundBy());
         vuln.setRecommendation(advisory.getRecommendation());
         vuln.setReferences(advisory.getReferences());
         vuln.setVulnerableVersions(advisory.getVulnerableVersions());
         vuln.setPatchedVersions(advisory.getPatchedVersions());
+
+        if (advisory.getCwe() != null) {
+            CweResolver cweResolver = new CweResolver(qm);
+            Cwe cwe = cweResolver.resolve(advisory.getCwe());
+            vuln.setCwe(cwe);
+        }
+
+        if (advisory.getSeverity() != null) {
+            if (advisory.getSeverity().equalsIgnoreCase("Critical")) {
+                vuln.setSeverity(Severity.CRITICAL);
+            } else if (advisory.getSeverity().equalsIgnoreCase("High")) {
+                vuln.setSeverity(Severity.HIGH);
+            } else if (advisory.getSeverity().equalsIgnoreCase("Moderate")) {
+                vuln.setSeverity(Severity.MEDIUM);
+            } else if (advisory.getSeverity().equalsIgnoreCase("Low")) {
+                vuln.setSeverity(Severity.LOW);
+            } else {
+                vuln.setSeverity(Severity.UNASSIGNED);
+            }
+        } else {
+            vuln.setSeverity(Severity.UNASSIGNED);
+        }
 
         return vuln;
     }

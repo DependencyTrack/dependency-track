@@ -15,15 +15,15 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.dependencycheck.resolver;
+package org.dependencytrack.parser.common.resolver;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.persistence.QueryManager;
 
 /**
- * Attempts to resolve an existing Dependency-Track CWE from a
- * Dependency-Check Vulnerability.
+ * Attempts to resolve an internal CWE object from a string
+ * representation of a CWE.
  *
  * @author Steve Springett
  * @since 3.0.0
@@ -42,19 +42,20 @@ public class CweResolver {
      */
     public Cwe resolve(String cweString) {
         if (StringUtils.isNotBlank(cweString)) {
+            final String string = cweString.trim();
             String lookupString = "";
-            if (cweString.startsWith("CWE-") && cweString.contains(" ")) {
+            if (string.startsWith("CWE-") && string.contains(" ")) {
                 // This is likely to be in the following format:
                 // CWE-264 Permissions, Privileges, and Access Controls
-                lookupString = cweString.substring(4, cweString.indexOf(" "));
-            } else if (cweString.startsWith("CWE-") && cweString.length() < 9) {
+                lookupString = string.substring(4, string.indexOf(" "));
+            } else if (string.startsWith("CWE-") && string.length() < 9) {
                 // This is likely to be in the following format:
                 // CWE-264
-                lookupString = cweString.substring(4, cweString.length());
-            } else if (cweString.length() < 5) {
+                lookupString = string.substring(4, string.length());
+            } else if (string.length() < 5) {
                 // This is likely to be in the following format:
                 // 264
-                lookupString = cweString;
+                lookupString = string;
             }
 
             try {

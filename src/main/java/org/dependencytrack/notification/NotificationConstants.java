@@ -21,7 +21,7 @@ public class NotificationConstants {
 
     public static class Title {
         public static final String NVD_MIRROR = "NVD Mirroring";
-        public static final String NSP_MIRROR = "NSP Mirroring";
+        public static final String NPM_ADVISORY_MIRROR = "NPM Advisory Mirroring";
         public static final String VULNDB_MIRROR = "VulnDB Mirroring";
         public static final String COMPONENT_INDEXER = "Component Indexing Service";
         public static final String LICENSE_INDEXER = "License Indexing Service";

@@ -15,12 +15,12 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.npm.audit.model;
+package org.dependencytrack.parser.npm.model;
 
 /**
  * The response from NPM Audit API will respond with 0 or more advisories. This
  * class defines the Advisory objects returned. This class is adapted from the
- * original NSP version of the same class.
+ * original NPM version of the same class.
  *
  * @author Steve Springett
  * @since 3.2.0

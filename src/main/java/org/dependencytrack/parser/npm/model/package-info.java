@@ -15,16 +15,8 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.event;
-
-import alpine.event.framework.Event;
 
 /**
- * Defines an event used to start a mirror of Node Security Platform.
- *
- * @author Steve Springett
- * @since 3.0.0
+ * Package contains model classes used by the NPM parser.
  */
-public class NspMirrorEvent implements Event {
-
-}
+package org.dependencytrack.parser.npm.model;

@@ -15,7 +15,7 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.nsp.model;
+package org.dependencytrack.parser.npm.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,29 +24,29 @@ import java.util.List;
  * Defines the top-level JSON node containing results and counts.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 3.2.1
  */
 public class AdvisoryResults {
 
-    private int offset;
-    private int count;
+    private String next;
+    private String previous;
     private int total;
     private final List<Advisory> advisoryList = new ArrayList<>();
 
-    public int getOffset() {
-        return offset;
+    public String getNext() {
+        return next;
     }
 
-    public void setOffset(int offset) {
-        this.offset = offset;
+    public void setNext(String next) {
+        this.next = next;
     }
 
-    public int getCount() {
-        return count;
+    public String getPrevious() {
+        return previous;
     }
 
-    public void setCount(int count) {
-        this.count = count;
+    public void setPrevious(String previous) {
+        this.previous = previous;
     }
 
     public int getTotal() {

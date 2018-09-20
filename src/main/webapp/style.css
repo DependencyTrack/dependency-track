@@ -282,13 +282,13 @@ h4 {
     overflow-y: scroll;
 }
 .severity-critical, .status-failed {
-    color: #d43f3a;
+    color: #dc0000;
 }
 .severity-high {
-    color: #d4663a;
+    color: #fd8c00;
 }
 .severity-medium, .status-warning {
-    color: #fdc431;
+    color: #fdc500;
 }
 .severity-low, .status-passed {
     color: #4cae4c;
@@ -296,14 +296,17 @@ h4 {
 .severity-info {
     color: #357abd;
 }
+.severity-unassigned {
+    color: #c0c0c0;
+}
 .severity-critical-bg, .status-failed-bg {
-    background: #d43f3a none;
+    background: #dc0000 none;
 }
 .severity-high-bg {
-    background: #d4663a none;
+    background: #fd8c00 none;
 }
 .severity-medium-bg, .status-warning-bg {
-    background: #fdc431 none;
+    background: #fdc500 none;
 }
 .severity-low-bg, .status-passed-bg {
     background: #4cae4c none;
@@ -329,7 +332,7 @@ h4 {
     background-color: #AECEE5;
     border: 1px solid #5C9CCB;
 }
-.label-source-nsp {
+.label-source-npm {
     font-weight: normal;
     color: #222222;
     background-color: #B4AFE4;

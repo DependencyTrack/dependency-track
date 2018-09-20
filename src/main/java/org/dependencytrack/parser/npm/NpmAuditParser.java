@@ -15,40 +15,40 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.nsp;
+package org.dependencytrack.parser.npm;
 
 import alpine.logging.Logger;
 import io.github.openunirest.http.JsonNode;
-import org.json.JSONArray;
-import org.dependencytrack.parser.nsp.model.Advisory;
+import org.dependencytrack.parser.npm.model.Advisory;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Parser for Node Security Platform API response.
+ * Parser for NPM Advisory objects returned from the NPM Audit API.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 3.2.1
  */
-public class NspCheckParser extends BaseAdvisoryParser {
+public class NpmAuditParser extends BaseAdvisoryParser {
 
-    private static final Logger LOGGER = Logger.getLogger(NspCheckParser.class);
+    private static final Logger LOGGER = Logger.getLogger(NpmAuditParser.class);
 
     /**
-     * Parses the JSON response from the NSP API.
+     * Parses the JSON response from the NPM Audit API.
+     *
      * @param jsonNode the JSON node to parse
      * @return an AdvisoryResults object
+     * @
      */
     public List<Advisory> parse(JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
-
-        final List<Advisory> advisories = new ArrayList<>();
-        final JSONArray root = jsonNode.getArray();
-        for (int i = 0; i < root.length(); i++) {
-            final Advisory advisory = super.parse(root.getJSONObject(i));
+        List<Advisory> advisories = new ArrayList<>();
+        JSONObject jsonAdvisories = jsonNode.getObject().getJSONObject("advisories");
+        for (String key : jsonAdvisories.keySet()) {
+            Advisory advisory = super.parse(jsonAdvisories.getJSONObject(key));
             advisories.add(advisory);
         }
         return advisories;
     }
-
 }

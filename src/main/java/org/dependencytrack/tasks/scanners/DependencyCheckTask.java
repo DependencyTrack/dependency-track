@@ -211,7 +211,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
                 // improvements in newer scanning engines, suppressions being asserted, or corrections made to the
                 // vulnerability data source.
 
-                /* todo: put this logic back in once NSP support is complete #106 -- also account for INTERNAL vulnerabilities
+                /* todo: put this logic back in once NPM support is complete #106 -- also account for INTERNAL vulnerabilities
                 if (component.getVulnerabilities() != null) {
                     for (Vulnerability internalVuln : component.getVulnerabilities()) {
                         boolean found = false;

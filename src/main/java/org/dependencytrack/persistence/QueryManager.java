@@ -752,6 +752,7 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setSubTitle(transientVulnerability.getSubTitle());
             vulnerability.setReferences(transientVulnerability.getReferences());
             vulnerability.setRecommendation(transientVulnerability.getRecommendation());
+            vulnerability.setSeverity(transientVulnerability.getSeverity());
             vulnerability.setCwe(transientVulnerability.getCwe());
             vulnerability.setCvssV2Vector(transientVulnerability.getCvssV2Vector());
             vulnerability.setCvssV2BaseScore(transientVulnerability.getCvssV2BaseScore());
@@ -824,7 +825,7 @@ public class QueryManager extends AlpineQueryManager {
     public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
         final Query query = pm.newQuery(Vulnerability.class, "source == :source && subtitle == :module");
         query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
-        return (List<Vulnerability>) query.execute(Vulnerability.Source.NSP.name(), module);
+        return (List<Vulnerability>) query.execute(Vulnerability.Source.NPM.name(), module);
     }
 
     /**

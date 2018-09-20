@@ -15,24 +15,16 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.upgrade;
+package org.dependencytrack.event;
 
-import alpine.upgrade.UpgradeItem;
-import java.util.ArrayList;
-import java.util.List;
+import alpine.event.framework.Event;
 
-class UpgradeItems {
-
-    private static final List<Class<? extends UpgradeItem>> UPGRADE_ITEMS = new ArrayList<Class<? extends UpgradeItem>>() {{
-
-        add(org.dependencytrack.upgrade.v310.v310Updater.class);
-        add(org.dependencytrack.upgrade.v320.v320Updater.class);
-        add(org.dependencytrack.upgrade.v321.v321Updater.class);
-
-    }};
-
-    static List<Class<? extends UpgradeItem>> getUpgradeItems() {
-        return UPGRADE_ITEMS;
-    }
+/**
+ * Defines an event used to start a mirror of NPM Advisories.
+ *
+ * @author Steve Springett
+ * @since 3.2.1
+ */
+public class NpmAdvisoryMirrorEvent implements Event {
 
 }

@@ -48,6 +48,7 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"SOURCE\" AS \"VULN_SOURCE\", " +
             "\"VULNERABILITY\".\"VULNID\" AS \"VULN_ID\", " +
             "\"VULNERABILITY\".\"UUID\" AS \"VULN_UUID\", " +
+            "\"VULNERABILITY\".\"SEVERITY\" AS \"VULN_SEVERITY\", " +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\" AS \"VULN_CVSSV2BASESCORE\", " +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\" AS \"VULN_CVSSV3BASESCORE\", " +
             "\"CWE\".\"CWEID\" AS \"CWE_ID\", " +
@@ -93,14 +94,14 @@ public class Finding implements Serializable {
         this.vulnId = o[5];
         this.vulnUuid = o[6];
 
-        final Severity severity = VulnerabilityUtil.getSeverity(o[7], o[8]);
+        final Severity severity = VulnerabilityUtil.getSeverity(o[7], o[8], o[9]);
         this.severity = severity.name();
         this.severityRank = severity.ordinal();
 
-        this.cweId = o[9];
-        this.cweName= o[10];
-        this.state = o[11];
-        this.suppressed = o[12];
+        this.cweId = o[10];
+        this.cweName= o[11];
+        this.state = o[12];
+        this.suppressed = o[13];
     }
 
     public Object getComponentUuid() {

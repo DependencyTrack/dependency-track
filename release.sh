@@ -22,8 +22,12 @@ NEXT_SNAPSHOT_VERSION=$NEXT_VERSION-SNAPSHOT
 
 # Updates the version, commits, builds the war and executable war, and releases those two artifacts to GitHub
 mvn versions:set -DnewVersion=$RELEASE_VERSION
-git commit -m "Preparing to release $RELEASE_VERSION"
-git push origin HEAD
+if [ -d ".git" ]; then
+    git commit -m "Preparing to release $RELEASE_VERSION"
+    git push origin HEAD
+elif [ -d ".svn" ]; then
+    svn commit -m "Preparing to release $RELEASE_VERSION"
+fi
 mvn clean package
 mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 mvn github-release:release
@@ -41,8 +45,12 @@ docker push $REPO
 
 # Version bump to prepare next snapshot
 mvn versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION
-git commit -m "Prepare for next development iteration: $NEXT_SNAPSHOT_VERSION"
-git push origin HEAD
+if [ -d ".git" ]; then
+    git commit -m "Prepare for next development iteration: $NEXT_SNAPSHOT_VERSION"
+    git push origin HEAD
+elif [ -d ".svn" ]; then
+    svn commit -m "Prepare for next development iteration: $NEXT_SNAPSHOT_VERSION"
+fi
 
 
 else

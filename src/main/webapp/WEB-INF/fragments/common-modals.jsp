@@ -88,7 +88,7 @@
                         <h4>Datasource Providers</h4>
                         <ul class="fa-ul">
                             <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://nvd.nist.gov/">National Vulnerability Database</a></li>
-                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://nodesecurity.io/">Node Security Platform</a></li>
+                            <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://www.npmjs.com/advisories">NPM Public Advisories</a></li>
                             <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://ossindex.sonatype.org/">Sonatype OSS Index</a></li>
                             <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://vulndb.cyberriskanalytics.com">VulnDB</a> (Optional)</li>
                         </ul>

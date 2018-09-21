@@ -2,7 +2,7 @@
 # This script (for macOS) will release Dependency-Track
 
 read -p "Are you sure you want to release (yes/no)? "
-if ( [ "$REPLY" == "yes" ] ) then]
+if ( [ "$REPLY" == "yes" ] ) then
 
 
 export JAVA_HOME=`/usr/libexec/java_home -v 1.8`

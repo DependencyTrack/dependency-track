@@ -100,27 +100,29 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @param components a list of Components
      */
     public void analyze(List<Component> components) {
-        final CopyOnWriteArrayList<Component> copy = new CopyOnWriteArrayList<>(components);
-        while (copy.size() > 0) {
+        final CopyOnWriteArrayList<Component> backlog = new CopyOnWriteArrayList<>(components);
+        final Iterator<Component> backlogIterator = backlog.iterator();
+        while (backlog.size() > 0) {
             final Map<String, Component> npmCandidates = new HashMap<>();
             final JSONObject npmRequires = new JSONObject();
             final JSONObject npmDependencies = new JSONObject();
 
-            Iterator<Component> i = copy.iterator();
-            while (i.hasNext()) {
-                final Component component = i.next();
+            while (backlogIterator.hasNext()) {
+                final Component component = backlogIterator.next();
                 final PackageURL purl = component.getPurl();
                 if (shouldAnalyze(purl)) {
                     if (!npmCandidates.containsKey(component.getName())) {
                         npmCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());
                         npmDependencies.put(purl.getName(), new JSONObject().put("version", purl.getVersion()));
-                        copy.remove(component);
+                        backlog.remove(component);
                     }
                 } else {
-                    copy.remove(component);
+                    backlog.remove(component);
                 }
+            }
 
+            if (npmRequires.length() > 0) {
                 // Build a minimal package-lock.json in memory
                 final JSONObject packageJson = new JSONObject();
                 packageJson.put("name", "test-package");

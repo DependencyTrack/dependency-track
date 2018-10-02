@@ -264,6 +264,38 @@
                             <includes>
                                 <include>dependency-track.war</include>
                                 <include>dependency-track-embedded.war</include>
+                                <include>checksums.xml</include>
+                            </includes>
+                        </fileSet>
+                    </fileSets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.nicoulaj.maven.plugins</groupId>
+                <artifactId>checksum-maven-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>files</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <csvSummary>false</csvSummary>
+                    <individualFiles>false</individualFiles>
+                    <xmlSummary>true</xmlSummary>
+                    <algorithms>
+                        <algorithm>SHA-1</algorithm>
+                        <algorithm>SHA-256</algorithm>
+                        <algorithm>SHA-512</algorithm>
+                    </algorithms>
+                    <fileSets>
+                        <fileSet>
+                            <directory>${project.build.directory}</directory>
+                            <includes>
+                                <include>*.war</include>
                             </includes>
                         </fileSet>
                     </fileSets>

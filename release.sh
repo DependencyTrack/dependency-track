@@ -19,6 +19,7 @@ git commit -m "Preparing to release $VERSION"
 git push origin master
 mvn clean package
 mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn net.nicoulaj.maven.plugins:checksum-maven-plugin:files
 mvn github-release:release
 
 

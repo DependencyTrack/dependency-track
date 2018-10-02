@@ -30,7 +30,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>3.2.2-SNAPSHOT</version>
+    <version>3.2.2</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>

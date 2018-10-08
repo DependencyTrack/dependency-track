@@ -17,7 +17,7 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.AbstractChainableEvent;
 import java.io.File;
 import java.util.UUID;
 
@@ -27,7 +27,7 @@ import java.util.UUID;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class BomUploadEvent implements Event {
+public class BomUploadEvent extends AbstractChainableEvent {
 
     private UUID projectUuid;
     private File file;

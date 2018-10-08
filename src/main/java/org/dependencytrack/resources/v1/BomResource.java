@@ -56,9 +56,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -248,14 +250,34 @@ public class BomResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("/token/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
+            notes = "This endpoint is intended to be used in conjunction with uploading a supported BoM document. Upon upload, a token will be returned. The token can then be queried using this endpoint to determine if any tasks (such as vulnerability analysis) is being performed on the BoM. A value of true indicates processing is occurring. A value of false indicates that no processing is occurring for the specified token. However, a value of false also does not confirm the token is valid, only that no processing is associated with the specified token."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
+    public Response isTokenBeingProcessed (
+            @ApiParam(value = "The UUID of the token to query", required = true)
+            @PathParam("uuid") String uuid) {
+
+        boolean value = Event.isEventBeingProcessed(UUID.fromString(uuid));
+        return Response.ok(Collections.singletonMap("processing", value)).build();
+    }
+
     /**
      * Common logic that processes a BoM given a project and encoded payload.
      */
     private Response process(Project project, String encodedBomData) {
         if (project != null) {
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
-            Event.dispatch(new BomUploadEvent(project.getUuid(), decoded));
-            return Response.ok().build();
+            final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), decoded);
+            Event.dispatch(bomUploadEvent);
+            return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
         }

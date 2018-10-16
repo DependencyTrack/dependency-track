@@ -68,6 +68,9 @@ public class LdapResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response retrieveLdapGroups () {
+        if (!LdapConnectionWrapper.LDAP_CONFIGURED) {
+            return Response.ok().build();
+        }
         final LdapConnectionWrapper ldap = new LdapConnectionWrapper();
         DirContext dirContext = null;
         try {

@@ -53,6 +53,8 @@ const URL_REPOSITORY = "api/v1/repository";
 const URL_CONFIG_PROPERTY = "api/v1/configProperty";
 const URL_NOTIFICATION_PUBLISHER = "api/v1/notification/publisher";
 const URL_NOTIFICATION_RULE = "api/v1/notification/rule";
+const URL_LDAP_GROUPS = "api/v1/ldap/groups";
+const URL_LDAP_MAPPING = "api/v1/ldap/mapping";
 
 const $rest = function() {
 };
@@ -1751,6 +1753,69 @@ $rest.removePermissionFromTeam = function removePermissionFromTeam(uuid, permiss
             304: function (data) {
                 // The user was not a member of the specified team
                 // Intentionally left blank
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when an LDAP group is mapped to a team.
+ */
+$rest.addLdapMappingToTeam = function addLdapMappingToTeam(uuid, dn, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_LDAP_MAPPING,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({team: uuid, dn: dn}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            },
+            409: function (data) {
+                // A mapping with the same team and dn already exists
+                // Intentionally left blank
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when an LDAP group is unmapped from a team.
+ */
+$rest.removeLdapMappingFromTeam = function removeLdapMappingFromTeam(uuid, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_LDAP_MAPPING + "/" + uuid,
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_DELETE,
+        statusCode: {
+            204: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
             },
             404: function (data) {
                 if (failCallback) {

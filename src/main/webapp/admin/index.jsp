@@ -614,6 +614,33 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalMappedTeamAddLdapGroup" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Add LDAP Group Mapping</span>
+                </div>
+                <div class="modal-body">
+                    <table id="mappedTeamLdapGroupTable" class="table table-hover" data-toggle="table"
+                           data-search="true" data-click-to-select="true" data-page-size="5" data-page-list="[5, 10, 25, 50, 100]"
+                           data-response-handler="formatMappedTeamLdapGroupTable"
+                           data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true">
+                        <thead>
+                        <tr>
+                            <th data-align="middle" data-field="selected" data-checkbox="true"></th>
+                            <th data-align="left" data-field="dn">Distinguished Name (DN)</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="addLdapMappingToTeamButton">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>

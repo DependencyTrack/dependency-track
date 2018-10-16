@@ -71,6 +71,17 @@ function formatNotificationRuleProjectTable(res) {
     return res;
 }
 
+/**
+ * Called by bootstrap table to format the data in the mapped team/ldap-group table.
+ */
+function formatMappedTeamLdapGroupTable(res) {
+    let resObj = []; // res is an array of strings. We need to return an array of simple objects with a 'dn' property.
+    for (let i=0; i<res.length; i++) {
+        resObj[i] = {dn: filterXSS(res[i])};
+    }
+    return resObj;
+}
+
 function teamData(data) {
     if (data === undefined) {
        return JSON.parse(sessionStorage["teamData"]);
@@ -498,6 +509,26 @@ function teamDetailFormatter(index, row) {
         }
     }
 
+    let mappedLdapGroupsHtml = "";
+    if (!(row.mappedLdapGroups === undefined)) {
+        for (let i = 0; i < row.mappedLdapGroups.length; i++) {
+            mappedLdapGroupsHtml += `
+            <li class="list-group-item" id="container-ldapgroup-${row.mappedLdapGroups[i].uuid}-team-${row.uuid}">
+                <a href="#" id="delete-${row.mappedLdapGroups[i].uuid}" onclick="removeLdapMappingFromTeam('${row.mappedLdapGroups[i].uuid}')" data-toggle="tooltip" title="Remove Mapping">
+                    <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
+                </a>
+                <span id="${row.uuid}-ldap-group-mapping-${row.mappedLdapGroups[i].uuid}" class="truncate-ellipsis-inline"><span>${row.mappedLdapGroups[i].dn}</span></span>
+            </li>`;
+        }
+    }
+    mappedLdapGroupsHtml += `
+            <li class="list-group-item" id="container-no-ldapgroup-mapping">
+                <a href="#" id="add-ldap-group-mapping-to-${row.uuid}" data-toggle="modal" data-target="#modalMappedTeamAddLdapGroup" data-uuid="${row.uuid}" title="Add Mapping">
+                    <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
+                </a>
+                <span>&nbsp;</span>
+            </li>`;
+
     let template = `
     <div class="col-sm-6 col-md-6">
     <form id="form-${row.uuid}">
@@ -517,6 +548,12 @@ function teamDetailFormatter(index, row) {
                 ${permissionsHtml}
             </ul>
         </div> 
+        <div class="form-group">
+            <label for="inputMappedLdapGroups">Mapped LDAP Groups</label>
+            <ul class="list-group" id="mappedLdapGroups">
+                ${mappedLdapGroupsHtml}
+            </ul>
+        </div> 
     </div>
     <div class="col-sm-6 col-md-6">
         <div class="form-group">
@@ -533,6 +570,9 @@ function teamDetailFormatter(index, row) {
         $("#" + $.escapeSelector("deleteTeam-${row.uuid}")).on("click", deleteTeam);
         $("#" + $.escapeSelector("add-permission-to-${row.uuid}")).on("click", function () {
             $("#assignPermission").attr("data-uuid", $(this).data("uuid")); // Assign the team to the data-uuid attribute of the 'Update' button
+        });
+        $("#" + $.escapeSelector("add-ldap-group-mapping-to-${row.uuid}")).on("click", function () {
+            $("#addLdapMappingToTeamButton").attr("data-uuid", $(this).data("uuid")); // Assign the uuid of the team to the data-team-uuid attribute of the 'Update' button
         });
     </script>
 `;
@@ -899,7 +939,8 @@ function deleteApiKey(apikey) {
  */
 function assignTeamToUser() {
     const username = $("#assignTeamToUser").attr("data-username");
-    const selections = $("#teamsMembershipTable").bootstrapTable("getAllSelections");
+    const table = $("#teamsMembershipTable");
+    const selections = table.bootstrapTable("getAllSelections");
     for (let i = 0; i < selections.length; i++) {
         let uuid = selections[i].uuid;
         $rest.assignUserToTeam(username, uuid, function (data) {
@@ -909,6 +950,7 @@ function assignTeamToUser() {
             }
         );
     }
+    table.bootstrapTable("uncheckAll");
 }
 
 /**
@@ -930,7 +972,8 @@ function assignPermission() {
     const updateButton = $("#assignPermission");
     const username = updateButton.attr("data-username");
     const uuid = updateButton.attr("data-uuid");
-    const selections = $("#permissionsTable").bootstrapTable("getAllSelections");
+    const table = $("#permissionsTable");
+    const selections = table.bootstrapTable("getAllSelections");
     if (username) {
         for (let i = 0; i < selections.length; i++) {
             let permissionName = selections[i].name;
@@ -952,6 +995,7 @@ function assignPermission() {
             );
         }
     }
+    table.bootstrapTable("uncheckAll");
 }
 
 /**
@@ -970,6 +1014,37 @@ function removePermission(permissionName, username) {
  */
 function removePermissionFromTeam(permissionName, uuid) {
     $rest.removePermissionFromTeam(uuid, permissionName, function (data) {
+        $("#teamsTable").bootstrapTable("refresh", {silent: true});
+        $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+        $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+    });
+}
+
+/**
+ * Adds an LDAP mapping to a team by retrieving field values and calling the REST function for the service.
+ */
+function addLdapMappingToTeam() {
+    const updateButton = $("#addLdapMappingToTeamButton");
+    const uuid = updateButton.attr("data-uuid");
+    const table = $("#mappedTeamLdapGroupTable");
+    const selections = table.bootstrapTable("getAllSelections");
+    for (let i = 0; i < selections.length; i++) {
+        let dn = selections[i].dn;
+        $rest.addLdapMappingToTeam(uuid, dn, function (data) {
+                $("#teamsTable").bootstrapTable("refresh", {silent: true});
+                $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
+                $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
+            }
+        );
+    }
+    table.bootstrapTable("uncheckAll");
+}
+
+/**
+ * Removes an LDAP mapping from a team by retrieving field values and calling the REST function for the service.
+ */
+function removeLdapMappingFromTeam(uuid) {
+    $rest.removeLdapMappingFromTeam(uuid, function (data) {
         $("#teamsTable").bootstrapTable("refresh", {silent: true});
         $("#managedUsersTable").bootstrapTable("refresh", {silent: true});
         $("#ldapUsersTable").bootstrapTable("refresh", {silent: true});
@@ -1020,6 +1095,9 @@ $(document).ready(function () {
 
     // Listen for if the button to assign a permission is clicked
     $("#assignPermission").on("click", assignPermission);
+
+    // Listen for if the button to add an LDAP mapping is clicked
+    $("#addLdapMappingToTeamButton").on("click", addLdapMappingToTeam);
 
     // When modal closes, clear out the input fields
     $("#modalCreateTeam").on("hidden.bs.modal", function () {
@@ -1178,6 +1256,9 @@ $(document).ready(function () {
     }
     if ($auth.hasPermission($auth.VIEW_PORTFOLIO, token)) {
         $("#notificationRuleProjectTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_PROJECT, silent: true});
+    }
+    if ($auth.hasPermission($auth.ACCESS_MANAGEMENT, token)) {
+        $("#mappedTeamLdapGroupTable").bootstrapTable("refresh", {url: $rest.contextPath() + URL_LDAP_GROUPS, silent: true});
     }
 
     /**

@@ -419,6 +419,20 @@ $common.populateUserProfileData = function populateUserProfileData(data) {
 };
 
 /**
+ * Encodes the supplied data in Base64 and returns the encoded string.
+ */
+$common.base64Encode = function base64Encode(data) {
+    return btoa(data);
+};
+
+/**
+ * Decodes the supplied Base64 encoded data and returns the decoded string.
+ */
+$common.base64Decode = function base64Encode(data) {
+    return atob(data);
+};
+
+/**
  * Executed when the DOM is ready for JavaScript to be executed.
  */
 $(document).ready(function () {

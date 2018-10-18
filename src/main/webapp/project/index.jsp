@@ -142,6 +142,7 @@
                                 <div class="form-inline" role="form">
                                     <button id="addDependencyButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
                                     <button id="removeDependencyButton" class="btn btn-default require-portfolio-management"><span class="fa fa-minus"></span> Remove Dependency</button>
+                                    <button id="uploadBomDisplayModalButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalUploadBom"><span class="fa fa-upload"></span> Upload BoM</button>
                                 </div>
                             </div>
                             <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"
@@ -310,6 +311,34 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalUploadBom" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Upload BoM</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <div class="input-group input-file">
+			                <span class="input-group-btn">
+        		                <button class="btn btn-default btn-choose" type="button">Choose</button>
+    		                </span>
+                            <input type="text" class="form-control" placeholder="Choose a CycloneDX or SPDX BoM..."/>
+                            <span class="input-group-btn">
+       			                <button class="btn btn-warning btn-reset" type="button">Reset</button>
+    		                </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="uploadBomButton">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 <jsp:include page="/WEB-INF/fragments/common-modals.jsp"/>
 <jsp:include page="/WEB-INF/fragments/footer.jsp"/>

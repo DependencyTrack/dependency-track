@@ -24,4 +24,5 @@
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/font-awesome/css/font-awesome.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/radar-chart.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/nv.d3.min.css"/><%=VERSION_PARAM%>">
+<link rel="stylesheet" type="text/css" href="<c:url value="/assets/toastr/toastr.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/style.css"/><%=VERSION_PARAM%>">

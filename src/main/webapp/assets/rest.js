@@ -22,6 +22,7 @@
  * Constants
  */
 const CONTENT_TYPE_JSON = "application/json";
+const ENCODE_MULTIPART_FORM_DATA = "multipart/form-data";
 //const CONTENT_TYPE_TEXT = "text/plain";
 //const TOTAL_COUNT_HEADER = "X-Total-Count";
 const DATA_TYPE = "json";
@@ -55,6 +56,7 @@ const URL_NOTIFICATION_PUBLISHER = "api/v1/notification/publisher";
 const URL_NOTIFICATION_RULE = "api/v1/notification/rule";
 const URL_LDAP_GROUPS = "api/v1/ldap/groups";
 const URL_LDAP_MAPPING = "api/v1/ldap/mapping";
+const URL_BOM = "api/v1/bom";
 
 const $rest = function() {
 };
@@ -2101,6 +2103,39 @@ $rest.removeProjectFromNotificationRule = function removeProjectFromNotification
             304: function (data) {
                 if (failCallback) {
                     $rest.callbackValidator(failCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a BoM is uploaded to a project.
+ */
+$rest.uploadBom = function uploadBom(data, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_BOM,
+        //contentType: CONTENT_TYPE_JSON,
+        type: METHOD_POST,
+        enctype: ENCODE_MULTIPART_FORM_DATA,
+        data: data,
+        processData: false,
+        contentType: false,
+        cache: false,
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
                 }
             },
             404: function (data) {

@@ -510,4 +510,24 @@ $(document).ready(function () {
     dependenciesTable.on("post-body.bs.table", function(e, data) {
         $('[data-toggle="tooltip"]').tooltip();
     });
+
+    $common.bootstrapInputFile("uploadBomFileInput");
+    const uploadBomButton = $("#uploadBomButton");
+    uploadBomButton.on("click", function() {
+        let uploadBomFileInput = document.querySelector("#uploadBomFileInput");
+        let data = new FormData();
+        data.set("project", uuid);
+        data.set('bom', uploadBomFileInput.files[0]);
+        $rest.uploadBom(data,
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.success("BoM upload successful");
+                toastr.info("BoM queued for processing");
+            },
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.warning("An unexpected error occurred while uploading. Check server logs for details.");
+            });
+    });
+
 });

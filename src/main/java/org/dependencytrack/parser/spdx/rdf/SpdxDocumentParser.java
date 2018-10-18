@@ -65,6 +65,15 @@ public class SpdxDocumentParser {
         this.qm = qm;
     }
 
+    public static boolean isSupportedSpdxFormat(final String spdxString) {
+        if (spdxString.contains("<rdf:RDF") && spdxString.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns")) {
+            return true;
+        } else if (spdxString.contains("SPDXVersion:")) {
+            return true;
+        }
+        return false;
+    }
+
     public List<Component> parse(byte[] spdx) throws ParseException {
         final String spdxString = new String(spdx, StandardCharsets.UTF_8);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {

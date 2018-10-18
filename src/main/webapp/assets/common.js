@@ -432,6 +432,52 @@ $common.base64Decode = function base64Encode(data) {
     return atob(data);
 };
 
+$common.bootstrapInputFile = function bootstrapInputFile(id) {
+    $(".input-file").before(
+        function() {
+            if ( ! $(this).prev().hasClass('input-ghost') ) {
+                var element = $("<input id='" + id + "' type='file' class='input-ghost' style='visibility:hidden; height:0'>");
+                element.attr("name",$(this).attr("name"));
+                element.change(function() {
+                    element.next(element).find('input').val((element.val()).split('\\').pop());
+                });
+                $(this).find("button.btn-choose").click(function() {
+                    element.click();
+                });
+                $(this).find("button.btn-reset").click(function() {
+                    element.val(null);
+                    $(this).parents(".input-file").find('input').val('');
+                });
+                $(this).find('input').css("cursor","pointer");
+                $(this).find('input').mousedown(function() {
+                    $(this).parents('.input-file').prev().click();
+                    return false;
+                });
+                return element;
+            }
+        }
+    );
+};
+
+$common.toastrOptions =
+    {
+        "closeButton": true,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": false,
+        "positionClass": "toast-top-right",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "300",
+        "hideDuration": "1000",
+        "timeOut": "5000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+    };
+
 /**
  * Executed when the DOM is ready for JavaScript to be executed.
  */

@@ -27,3 +27,4 @@
 <script type="text/javascript" src="<c:url value="/assets/rest.js"/><%=VERSION_PARAM%>"></script>
 <script type="text/javascript" src="<c:url value="/assets/common.js"/><%=VERSION_PARAM%>"></script>
 <script type="text/javascript" src="<c:url value="/assets/chart.js"/><%=VERSION_PARAM%>"></script>
+<script type="text/javascript" src="<c:url value="/assets/toastr/toastr.min.js"/><%=VERSION_PARAM%>"></script>

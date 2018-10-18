@@ -69,9 +69,12 @@ public class BomUploadProcessingTask implements Subscriber {
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
                     final BomParser parser = new BomParser();
                     components = ModelConverter.convert(qm, parser.parse(bomBytes));
-                } else {
+                } else if (SpdxDocumentParser.isSupportedSpdxFormat(bomString)) {
                     final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
                     components = parser.parse(bomBytes);
+                } else {
+                    LOGGER.warn("The BoM uploaded is not in a supported format. Supported formats include CycloneDX, SPDX RDF, and SPDX Tag");
+                    return;
                 }
                 final Date date = new Date();
                 final Bom bom = qm.createBom(project, date);

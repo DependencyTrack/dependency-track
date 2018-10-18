@@ -294,7 +294,9 @@ public class BomResource extends AlpineResource {
                     final byte[] content = IOUtils.toByteArray(bodyPartEntity.getInputStream());
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
-                    Event.dispatch(new BomUploadEvent(project.getUuid(), content));
+                    final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), content);
+                    Event.dispatch(bomUploadEvent);
+                    return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
                 } catch (IOException e) {
                     return Response.status(Response.Status.BAD_REQUEST).build();
                 }

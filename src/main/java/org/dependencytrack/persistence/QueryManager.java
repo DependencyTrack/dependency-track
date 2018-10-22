@@ -1324,6 +1324,50 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns the number of audited findings for the portfolio.
+     * @return the total number of analysis decisions
+     */
+    @SuppressWarnings("unchecked")
+    public long getAuditedCount() {
+        final Query query = pm.newQuery(Analysis.class, "analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        return getCount(query, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
+    }
+
+    /**
+     * Returns the number of audited findings for the specified Project.
+     * @param project the Project to retrieve audit counts for
+     * @return the total number of analysis decisions for the project
+     */
+    @SuppressWarnings("unchecked")
+    public long getAuditedCount(Project project) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        return getCount(query, project, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
+    }
+
+    /**
+     * Returns the number of audited findings for the specified Component.
+     * @param component the Component to retrieve audit counts for
+     * @return the total number of analysis decisions for the component
+     */
+    @SuppressWarnings("unchecked")
+    public long getAuditedCount(Component component) {
+        final Query query = pm.newQuery(Analysis.class, "project == null && component == :component && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        return getCount(query, component, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
+    }
+
+    /**
+     * Returns the number of audited findings for the specified Project / Component.
+     * @param project the Project to retrieve audit counts for
+     * @param component the Component to retrieve audit counts for
+     * @return the total number of analysis decisions for the project / component
+     */
+    @SuppressWarnings("unchecked")
+    public long getAuditedCount(Project project, Component component) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project && component == :component && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        return getCount(query, project, component, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
+    }
+
+    /**
      * Returns the number of suppressed vulnerabilities for the portfolio.
      * @return the total number of suppressed vulnerabilities
      */
@@ -1336,7 +1380,7 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Returns the number of suppressed vulnerabilities for the specified Project
      * @param project the Project to retrieve suppressed vulnerabilities of
-     * @return the total number of suppressed vulnerabilities for the project / component
+     * @return the total number of suppressed vulnerabilities for the project
      */
     @SuppressWarnings("unchecked")
     public long getSuppressedCount(Project project) {

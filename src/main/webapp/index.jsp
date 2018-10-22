@@ -45,6 +45,18 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Auditing Chart-->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="panel widget">
+                                <div class="panel-heading">
+                                    <div class="row">
+                                        <div id="auditchart" style="height:200px"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Dependency Chart-->
                     <div class="row">
                         <div class="col-sm-12">
@@ -137,39 +149,47 @@
                                     <div class="row">
                                         <table width="100%" class="table widget-table">
                                             <tr>
-                                                <td>Projects (total):</td>
+                                                <td>Projects (total)</td>
                                                 <td><span id="statTotalProjects"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Vulnerable Projects:</td>
+                                                <td>Vulnerable Projects</td>
                                                 <td><span id="statVulnerableProjects"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Dependencies (total):</td>
+                                                <td>Dependencies (total)</td>
                                                 <td><span id="statTotalDependencies"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Vulnerable Dependencies:</td>
+                                                <td>Vulnerable Dependencies</td>
                                                 <td><span id="statVulnerableDependencies"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Components (total):</td>
+                                                <td>Components (total)</td>
                                                 <td><span id="statTotalComponents"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Vulnerable Components:</td>
+                                                <td>Vulnerable Components</td>
                                                 <td><span id="statVulnerableComponents"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Portfolio Vulnerabilities:</td>
+                                                <td>Portfolio Vulnerabilities</td>
                                                 <td><span id="statPortfolioVulnerabilities"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Suppressed:</td>
+                                                <td>Findings Audited</td>
+                                                <td><span id="statFindingsAudited"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Findings Audited %</td>
+                                                <td><span id="statFindingsAuditedPercent"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Suppressed</td>
                                                 <td><span id="statPortfolioSuppressed"></span></td>
                                             </tr>
                                             <tr>
-                                                <td>Last Measurement:</td>
+                                                <td>Last Measurement</td>
                                                 <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh" class="refresh-metric require-portfolio-management"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
                                             </tr>
                                         </table>

@@ -100,6 +100,7 @@
                             <!-- Left Column -->
                             <div class="col-lg-8">
                                 <div id="projectchart" style="height:200px"></div>
+                                <div id="auditchart" style="height:200px"></div>
                                 <div id="componentchart" style="height:200px"></div>
                             </div>
                             <!-- Right Column -->
@@ -111,23 +112,31 @@
                                             <div class="panel-heading">
                                                 <table width="100%" class="table widget-table">
                                                     <tr>
-                                                        <td>Components:</td>
+                                                        <td>Components</td>
                                                         <td><span id="statTotalComponents"></span></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Vulnerable Components:</td>
+                                                        <td>Vulnerable Components</td>
                                                         <td><span id="statVulnerableComponents"></span></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Vulnerabilities:</td>
+                                                        <td>Vulnerabilities</td>
                                                         <td><span id="statVulnerabilities"></span></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Suppressed:</td>
+                                                        <td>Findings Audited</td>
+                                                        <td><span id="statFindingsAudited"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Findings Audited %</td>
+                                                        <td><span id="statFindingsAuditedPercent"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Suppressed</td>
                                                         <td><span id="statSuppressed"></span></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Last Measurement:</td>
+                                                        <td>Last Measurement</td>
                                                         <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh" class="refresh-metric require-portfolio-management"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
                                                     </tr>
                                                 </table>

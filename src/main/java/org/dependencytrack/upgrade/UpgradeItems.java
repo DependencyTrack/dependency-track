@@ -28,6 +28,7 @@ class UpgradeItems {
         add(org.dependencytrack.upgrade.v310.v310Updater.class);
         add(org.dependencytrack.upgrade.v320.v320Updater.class);
         add(org.dependencytrack.upgrade.v321.v321Updater.class);
+        add(org.dependencytrack.upgrade.v330.v330Updater.class);
 
     }};
 

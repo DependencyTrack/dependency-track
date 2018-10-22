@@ -45,6 +45,12 @@ function updateStats(metrics) {
     $("#statVulnerableDependencies").html(filterXSS($common.valueWithDefault(metric.vulnerableDependencies, "0")));
     $("#statTotalComponents").html(filterXSS($common.valueWithDefault(metric.components, "0")));
     $("#statVulnerableComponents").html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")));
+
+    let findingsTotal = $common.valueWithDefault(metric.findingsTotal, "0");
+    let findingsAudited = $common.valueWithDefault(metric.findingsAudited, "0");
+    $("#statFindingsAudited").html(filterXSS(findingsAudited));
+    $("#statFindingsAuditedPercent").html(filterXSS($common.calcProgressPercentLabel(findingsTotal, findingsAudited)));
+
     $("#statPortfolioVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
     $("#statPortfolioSuppressed").html(filterXSS($common.valueWithDefault(metric.suppressed, "0")));
     $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
@@ -55,6 +61,7 @@ function getDashboardData() {
     $rest.getPortfolioMetrics(90, function(metrics) {
         $chart.createSeverityTrendChart(metrics, "portfoliochart", "Portfolio Vulnerabilities");
         $chart.createAffectedVsTotalTrendChart(metrics, "projectchart", "Projects", "vulnerableProjects", "projects", "Vulnerable Projects", "Total Projects");
+        $chart.createSinglePointPercentageTrendChart(metrics, "auditchart", "Auditing Progress", "findingsTotal", "findingsAudited", "Findings Audited %");
         $chart.createAffectedVsTotalTrendChart(metrics, "dependencychart", "Dependencies", "vulnerableDependencies", "dependencies", "Vulnerable Dependencies", "Total Dependencies");
         $chart.createAffectedVsTotalTrendChart(metrics, "componentchart", "Components", "vulnerableComponents", "components", "Vulnerable Components", "Total Components");
         populateProgressBars(metrics);

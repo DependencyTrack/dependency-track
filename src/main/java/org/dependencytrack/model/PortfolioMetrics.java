@@ -96,6 +96,18 @@ public class PortfolioMetrics implements Serializable {
     private int suppressed;
 
     @Persistent
+    @Column(name = "FINDINGS_TOTAL", allowsNull = "true") // New column, must allow nulls on existing databases)
+    private Integer findingsTotal;
+
+    @Persistent
+    @Column(name = "FINDINGS_AUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
+    private Integer findingsAudited;
+
+    @Persistent
+    @Column(name = "FINDINGS_UNAUDITED", allowsNull = "true") // New column, must allow nulls on existing databases)
+    private Integer findingsUnaudited;
+
+    @Persistent
     @Column(name = "RISKSCORE")
     private double inheritedRiskScore;
 
@@ -213,6 +225,30 @@ public class PortfolioMetrics implements Serializable {
 
     public void setSuppressed(int suppressed) {
         this.suppressed = suppressed;
+    }
+
+    public int getFindingsTotal() {
+        return findingsTotal;
+    }
+
+    public void setFindingsTotal(int findingsTotal) {
+        this.findingsTotal = findingsTotal;
+    }
+
+    public int getFindingsAudited() {
+        return findingsAudited;
+    }
+
+    public void setFindingsAudited(int findingsAudited) {
+        this.findingsAudited = findingsAudited;
+    }
+
+    public int getFindingsUnaudited() {
+        return findingsUnaudited;
+    }
+
+    public void setFindingsUnaudited(int findingsUnaudited) {
+        this.findingsUnaudited = findingsUnaudited;
     }
 
     public double getInheritedRiskScore() {

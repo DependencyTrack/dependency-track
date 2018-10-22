@@ -108,15 +108,15 @@
                                             <div class="panel-heading">
                                                 <table width="100%" class="table widget-table">
                                                     <tr>
-                                                        <td>Vulnerabilities:</td>
+                                                        <td>Vulnerabilities</td>
                                                         <td><span id="statVulnerabilities"></span></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Suppressed:</td>
+                                                        <td>Suppressed</td>
                                                         <td><span id="statSuppressed"></span></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>Last Measurement:</td>
+                                                        <td>Last Measurement</td>
                                                         <td><span id="statLastMeasurement"></span>&nbsp;&nbsp;<span id="refresh" class="refresh-metric require-portfolio-management"><i class="fa fa-refresh" aria-hidden="true"></i></span></td>
                                                     </tr>
                                                 </table>

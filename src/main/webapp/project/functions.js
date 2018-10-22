@@ -369,6 +369,12 @@ function populateMetrics(metric) {
     $("#statTotalComponents").html(filterXSS($common.valueWithDefault(metric.components, "0")));
     $("#statVulnerableComponents").html(filterXSS($common.valueWithDefault(metric.vulnerableComponents, "0")));
     $("#statVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));
+
+    let findingsTotal = $common.valueWithDefault(metric.findingsTotal, "0");
+    let findingsAudited = $common.valueWithDefault(metric.findingsAudited, "0");
+    $("#statFindingsAudited").html(filterXSS(findingsAudited));
+    $("#statFindingsAuditedPercent").html(filterXSS($common.calcProgressPercentLabel(findingsTotal, findingsAudited)));
+
     $("#statSuppressed").html(filterXSS($common.valueWithDefault(metric.suppressed, "0")));
     if (metric.hasOwnProperty("lastOccurrence")) {
         $("#statLastMeasurement").html(filterXSS($common.formatTimestamp(metric.lastOccurrence, true)));
@@ -380,6 +386,7 @@ function getTrendData() {
     d3.selectAll(".nvtooltip").remove();
     $rest.getProjectMetrics(uuid, 90, function(metrics) {
         $chart.createSeverityTrendChart(metrics, "projectchart", "Project Vulnerabilities");
+        $chart.createSinglePointPercentageTrendChart(metrics, "auditchart", "Auditing Progress", "findingsTotal", "findingsAudited", "Findings Audited %");
         $chart.createAffectedVsTotalTrendChart(metrics, "componentchart", "Components", "vulnerableComponents", "components", "Vulnerable Components", "Total Components");
     });
 }

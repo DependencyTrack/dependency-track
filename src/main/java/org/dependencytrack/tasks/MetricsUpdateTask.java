@@ -153,6 +153,12 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
+        // For the time being finding and vulnerability counts are the same.
+        // However, vulns may be defined as 'confirmed' in a future release.
+        portfolioCounters.findingsTotal = portfolioCounters.chmlTotal();
+        portfolioCounters.findingsAudited = toIntExact(qm.getAuditedCount());
+        portfolioCounters.findingsUnaudited = portfolioCounters.findingsTotal - portfolioCounters.findingsAudited;
+
         // Query for an existing PortfolioMetrics
         final PortfolioMetrics last = qm.getMostRecentPortfolioMetrics();
         if (last != null && last.getCritical() == portfolioCounters.critical && last.getHigh() == portfolioCounters.high
@@ -164,6 +170,9 @@ public class MetricsUpdateTask implements Subscriber {
                 && last.getDependencies() == portfolioCounters.dependencies
                 && last.getVulnerableDependencies() == portfolioCounters.vulnerableDependencies
                 && last.getSuppressed() == portfolioCounters.suppressions
+                && last.getFindingsTotal() == portfolioCounters.findingsTotal
+                && last.getFindingsAudited() == portfolioCounters.findingsAudited
+                && last.getFindingsUnaudited() == portfolioCounters.findingsUnaudited
                 && last.getProjects() == portfolioCounters.projects
                 && last.getVulnerableProjects() == portfolioCounters.vulnerableProjects) {
 
@@ -182,6 +191,9 @@ public class MetricsUpdateTask implements Subscriber {
             portfolioMetrics.setDependencies(portfolioCounters.dependencies);
             portfolioMetrics.setVulnerableDependencies(portfolioCounters.vulnerableDependencies);
             portfolioMetrics.setSuppressed(portfolioCounters.suppressions);
+            portfolioMetrics.setFindingsTotal(portfolioCounters.findingsTotal);
+            portfolioMetrics.setFindingsAudited(portfolioCounters.findingsAudited);
+            portfolioMetrics.setFindingsUnaudited(portfolioCounters.findingsUnaudited);
             portfolioMetrics.setProjects(portfolioCounters.projects);
             portfolioMetrics.setVulnerableProjects(portfolioCounters.vulnerableProjects);
             portfolioMetrics.setInheritedRiskScore(
@@ -240,12 +252,21 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
+        // For the time being finding and vulnerability counts are the same.
+        // However, vulns may be defined as 'confirmed' in a future release.
+        counters.findingsTotal = counters.chmlTotal();
+        counters.findingsAudited = toIntExact(qm.getAuditedCount(project));
+        counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
+
         // Query for an existing ProjectMetrics
         final ProjectMetrics last = qm.getMostRecentProjectMetrics(project);
         if (last != null && last.getCritical() == counters.critical && last.getHigh() == counters.high
                 && last.getMedium() == counters.medium && last.getLow() == counters.low
                 && last.getVulnerabilities() == counters.vulnerabilities
                 && last.getSuppressed() == counters.suppressions
+                && last.getFindingsTotal() == counters.findingsTotal
+                && last.getFindingsAudited() == counters.findingsAudited
+                && last.getFindingsUnaudited() == counters.findingsUnaudited
                 && last.getInheritedRiskScore() == counters.getInheritedRiskScore()
                 && last.getComponents() == counters.dependencies // at a project level, the field is actually 'components'
                 && last.getVulnerableComponents() == counters.vulnerableDependencies) {
@@ -264,6 +285,9 @@ public class MetricsUpdateTask implements Subscriber {
             projectMetrics.setComponents(counters.dependencies);
             projectMetrics.setVulnerableComponents(counters.vulnerableDependencies);
             projectMetrics.setSuppressed(counters.suppressions);
+            projectMetrics.setFindingsTotal(counters.findingsTotal);
+            projectMetrics.setFindingsAudited(counters.findingsAudited);
+            projectMetrics.setFindingsUnaudited(counters.findingsUnaudited);
             projectMetrics.setInheritedRiskScore(counters.getInheritedRiskScore());
             projectMetrics.setFirstOccurrence(measuredAt);
             projectMetrics.setLastOccurrence(measuredAt);
@@ -290,12 +314,21 @@ public class MetricsUpdateTask implements Subscriber {
         }
         counters.suppressions = toIntExact(qm.getSuppressedCount(component));
 
+        // For the time being finding and vulnerability counts are the same.
+        // However, vulns may be defined as 'confirmed' in a future release.
+        counters.findingsTotal = counters.chmlTotal();
+        counters.findingsAudited = toIntExact(qm.getAuditedCount(component));
+        counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
+
         // Query for an existing ComponentMetrics
         final ComponentMetrics last = qm.getMostRecentComponentMetrics(component);
         if (last != null && last.getCritical() == counters.critical && last.getHigh() == counters.high
                 && last.getMedium() == counters.medium && last.getLow() == counters.low
                 && last.getVulnerabilities() == counters.chmlTotal()
                 && last.getSuppressed() == counters.suppressions
+                && last.getFindingsTotal() == counters.findingsTotal
+                && last.getFindingsAudited() == counters.findingsAudited
+                && last.getFindingsUnaudited() == counters.findingsUnaudited
                 && last.getInheritedRiskScore() == counters.getInheritedRiskScore()) {
 
             // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
@@ -310,6 +343,9 @@ public class MetricsUpdateTask implements Subscriber {
             componentMetrics.setLow(counters.low);
             componentMetrics.setVulnerabilities(counters.chmlTotal());
             componentMetrics.setSuppressed(counters.suppressions);
+            componentMetrics.setFindingsTotal(counters.findingsTotal);
+            componentMetrics.setFindingsAudited(counters.findingsAudited);
+            componentMetrics.setFindingsUnaudited(counters.findingsUnaudited);
             componentMetrics.setInheritedRiskScore(counters.getInheritedRiskScore());
             componentMetrics.setFirstOccurrence(measuredAt);
             componentMetrics.setLastOccurrence(measuredAt);
@@ -339,12 +375,21 @@ public class MetricsUpdateTask implements Subscriber {
         }
         counters.suppressions = toIntExact(qm.getSuppressedCount(project, component));
 
+        // For the time being finding and vulnerability counts are the same.
+        // However, vulns may be defined as 'confirmed' in a future release.
+        counters.findingsTotal = counters.chmlTotal();
+        counters.findingsAudited = toIntExact(qm.getAuditedCount(project, component));
+        counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
+
         // Query for an existing DependencyMetrics
         final DependencyMetrics last = qm.getMostRecentDependencyMetrics(dependency);
         if (last != null && last.getCritical() == counters.critical && last.getHigh() == counters.high
                 && last.getMedium() == counters.medium && last.getLow() == counters.low
                 && last.getVulnerabilities() == counters.chmlTotal()
                 && last.getSuppressed() == counters.suppressions
+                && last.getFindingsTotal() == counters.findingsTotal
+                && last.getFindingsAudited() == counters.findingsAudited
+                && last.getFindingsUnaudited() == counters.findingsUnaudited
                 && last.getInheritedRiskScore() == counters.getInheritedRiskScore()) {
 
             // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
@@ -360,6 +405,9 @@ public class MetricsUpdateTask implements Subscriber {
             dependencyMetrics.setLow(counters.low);
             dependencyMetrics.setVulnerabilities(counters.chmlTotal());
             dependencyMetrics.setSuppressed(counters.suppressions);
+            dependencyMetrics.setFindingsTotal(counters.findingsTotal);
+            dependencyMetrics.setFindingsAudited(counters.findingsAudited);
+            dependencyMetrics.setFindingsUnaudited(counters.findingsUnaudited);
             dependencyMetrics.setInheritedRiskScore(counters.getInheritedRiskScore());
             dependencyMetrics.setFirstOccurrence(measuredAt);
             dependencyMetrics.setLastOccurrence(measuredAt);
@@ -447,7 +495,9 @@ public class MetricsUpdateTask implements Subscriber {
     private class MetricCounters {
 
         private int critical, high, medium, low;
-        private int projects, vulnerableProjects, components, vulnerableComponents, dependencies, vulnerableDependencies, vulnerabilities, suppressions;
+        private int projects, vulnerableProjects, components, vulnerableComponents, dependencies,
+                vulnerableDependencies, vulnerabilities, suppressions, findingsTotal, findingsAudited,
+                findingsUnaudited;
 
         /**
          * Increments critical, high, medium, low counters based on the specified severity.

@@ -161,6 +161,57 @@ $chart.createAffectedVsTotalTrendChart = function createAffectedVsTotalTrendChar
 };
 
 /**
+ * Creates a line chart with two lines - a total number of something, and an affected number of something.
+ */
+$chart.createSinglePointPercentageTrendChart = function createSinglePointTrendChart(metrics, divId, title, totalField, completedField, label) {
+    function prepareChartData(metrics) {
+        let totalArray = [];
+        for (let i = 0; i < metrics.length; i++) {
+            let total = eval("metrics[i]." + totalField);
+            let completed = eval("metrics[i]." + completedField);
+            let percentage = $common.calcProgressPercent(total, completed);
+            console.log(percentage);
+            totalArray.push({x: new Date(metrics[i].firstOccurrence), y: percentage});
+
+            if (i === metrics.length - 1) {
+                totalArray.push({x: new Date(metrics[i].lastOccurrence), y: percentage});
+            }
+        }
+        return [
+            {
+                area: true,
+                values: totalArray,
+                key: label,
+                color: "#357abd",
+                fillOpacity: .1
+            }
+        ];
+    }
+
+    let data = prepareChartData(metrics);
+
+    nv.addGraph(function() {
+        let chart = nv.models.lineChart().forceY([0,100])
+            .options({
+                duration: 300,
+                //showLegend: false,
+                useInteractiveGuideline: true
+            })
+        ;
+        chart.legend.vers("furious");
+        chart.xAxis
+            .tickFormat(function(d) { return d3.time.format("%b %d")(new Date(d)); })
+            .staggerLabels(true)
+        ;
+        chart.yAxis.axisLabel(title);
+        d3.selectAll("#" + divId + " > *").remove();
+        d3.select("#" + divId).append("svg").datum(data).call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+};
+
+/**
  * Creates a bar chart that graphs the total number of vulnerabilities for the past x years.
  */
 $chart.createVulnerabilityChart = function createVulnerabilityChart(metrics, divId, title, years) {

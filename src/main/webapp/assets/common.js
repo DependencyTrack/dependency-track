@@ -459,6 +459,27 @@ $common.bootstrapInputFile = function bootstrapInputFile(id) {
     );
 };
 
+/**
+ * Given a total number of something and a lower number that is completed,
+ * function will return a percentage rounded to the tenth decimal place.
+ */
+$common.calcProgressPercent = function calcProgressPercent(total, completed) {
+    if (total > 0) {
+        if (completed === 0) {
+            return 0;
+        } else {
+            let percentage = (completed / total) * 100;
+            return Math.round(percentage * 10) / 10;
+        }
+    }
+    return 0; // the absence of work does not imply progress.
+};
+
+$common.calcProgressPercentLabel = function calcProgressPercentLabel(total, completed) {
+    let progress = $common.calcProgressPercent(total, completed);
+    return progress + "%";
+};
+
 $common.toastrOptions =
     {
         "closeButton": true,

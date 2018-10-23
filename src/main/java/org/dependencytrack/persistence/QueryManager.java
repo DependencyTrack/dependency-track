@@ -24,6 +24,8 @@ import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -294,6 +296,95 @@ public class QueryManager extends AlpineQueryManager {
         Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Project.class);
         return result;
+    }
+
+    public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
+                         boolean includeDependencies, boolean includeAuditHistory) {
+        final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
+        if (source == null) {
+            return null;
+        }
+        Project project = new Project();
+        project.setName(source.getName());
+        project.setDescription(source.getDescription());
+        project.setVersion(newVersion);
+        if (project.getPurl() != null && newVersion != null) {
+            try {
+                final PackageURL sourcePurl = new PackageURL(project.getPurl());
+                final PackageURL purl = new PackageURL(
+                        sourcePurl.getType(),
+                        sourcePurl.getNamespace(),
+                        sourcePurl.getName(),
+                        newVersion, null, null
+                );
+                project.setPurl(purl.canonicalize());
+            } catch (MalformedPackageURLException e) {
+                // throw it away
+            }
+        }
+        project.setParent(source.getParent());
+        project = persist(project);
+
+        if (includeTags && source.getTags() != null) {
+            bind(project, source.getTags());
+        }
+        if (includeProperties && source.getProperties() != null) {
+            for (ProjectProperty sourceProperty: source.getProperties()) {
+                final ProjectProperty property = new ProjectProperty();
+                property.setProject(project);
+                property.setPropertyType(sourceProperty.getPropertyType());
+                property.setGroupName(sourceProperty.getGroupName());
+                property.setPropertyName(sourceProperty.getPropertyName());
+                property.setPropertyValue(sourceProperty.getPropertyValue());
+                property.setDescription(sourceProperty.getDescription());
+                persist(property);
+            }
+        }
+
+        if (includeDependencies) {
+            final List<Dependency> sourceDependencies = getAllDependencies(source);
+            if (sourceDependencies != null) {
+                for (Dependency sourceDependency: sourceDependencies) {
+                    final Dependency dependency = new Dependency();
+                    dependency.setProject(project);
+                    dependency.setComponent(sourceDependency.getComponent());
+                    dependency.setAddedBy(sourceDependency.getAddedBy());
+                    dependency.setAddedOn(sourceDependency.getAddedOn());
+                    dependency.setNotes(sourceDependency.getNotes());
+                    persist(dependency);
+                }
+            }
+        }
+
+        if (includeAuditHistory) {
+            List<Analysis> analyses = getAnalyses(source);
+            if (analyses != null) {
+                for (Analysis sourceAnalysis: analyses) {
+                    Analysis analysis = new Analysis();
+                    analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
+                    analysis.setProject(project);
+                    analysis.setComponent(sourceAnalysis.getComponent());
+                    analysis.setVulnerability(sourceAnalysis.getVulnerability());
+                    analysis.setSuppressed(sourceAnalysis.isSuppressed());
+                    analysis = persist(analysis);
+                    if (sourceAnalysis.getAnalysisComments() != null) {
+                        for (AnalysisComment sourceComment: sourceAnalysis.getAnalysisComments()) {
+                            final AnalysisComment analysisComment = new AnalysisComment();
+                            analysisComment.setAnalysis(analysis);
+                            analysisComment.setTimestamp(sourceComment.getTimestamp());
+                            analysisComment.setComment(sourceComment.getComment());
+                            analysisComment.setCommenter(sourceComment.getCommenter());
+                            persist(analysisComment);
+                        }
+                    }
+                }
+            }
+        }
+
+        project = getObjectById(Project.class, project.getId());
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(project)));
+        commitSearchIndex(true, Project.class);
+        return project;
     }
 
     /**
@@ -1480,6 +1571,17 @@ public class QueryManager extends AlpineQueryManager {
         projects.clear();
         projects.addAll(set);
         return projects;
+    }
+
+    /**
+     * Returns a List Analysis for the specified Project.
+     * @param project the Project
+     * @return a List of Analysis objects, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public List<Analysis> getAnalyses(Project project) {
+        final Query query = pm.newQuery(Analysis.class, "project == :project");
+        return (List<Analysis>) query.execute(project);
     }
 
     /**

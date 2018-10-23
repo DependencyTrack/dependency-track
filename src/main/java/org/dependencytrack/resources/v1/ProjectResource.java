@@ -18,6 +18,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
+import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -29,9 +30,11 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.CloneProjectEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -247,4 +250,33 @@ public class ProjectResource extends AlpineResource {
         }
     }
 
+    @PUT
+    @Path("/clone")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Clones a project",
+            response = Project.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response cloneProject(CloneProjectRequest jsonRequest) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonRequest, "project"),
+                validator.validateProperty(jsonRequest, "version")
+        );
+        try (QueryManager qm = new QueryManager()) {
+            final Project sourceProject = qm.getObjectByUuid(Project.class, jsonRequest.getProject(), Project.FetchGroup.ALL.name());
+            if (sourceProject != null) {
+                Event.dispatch(new CloneProjectEvent(jsonRequest));
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
+            }
+        }
+    }
 }

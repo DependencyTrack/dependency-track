@@ -469,6 +469,36 @@ $rest.deleteProject = function deleteProject(uuid, successCallback, failCallback
 };
 
 /**
+ * Service called when a project is cloned.
+ */
+$rest.cloneProject = function cloneProject(uuid, version, includeTags, includeProperties, includeDependencies,
+                                           includeAuditHistory, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_PROJECT + "/clone",
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_PUT,
+        data: JSON.stringify({project: uuid, version: version, includeTags: includeTags, includeProperties: includeProperties, includeDependencies: includeDependencies, includeAuditHistory: includeAuditHistory}),
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called when a component is created.
  */
 $rest.createComponent = function createComponent(name, version, group, description, license,

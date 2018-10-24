@@ -314,7 +314,40 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectButton">Delete</button>
+                    <button type="button" class="btn btn-warning require-portfolio-management" data-dismiss="modal" data-toggle="modal" data-target="#modalCloneProject">Add Version</button>
                     <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" id="updateProjectButton">Update</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCloneProject" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Add Version</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="projectVersionInput">Version</label>
+                        <input type="text" name="version" class="form-control require-portfolio-management" disabled="disabled" id="cloneProjectVersionInput">
+                    </div>
+                    <div class="checkbox">
+                        <label><input type="checkbox" checked="checked" id="cloneProjectIncludeTagsInput"> Include tags</label>
+                    </div>
+                    <div class="checkbox">
+                        <label><input type="checkbox" checked="checked" id="cloneProjectIncludePropertiesInput"> Include properties</label>
+                    </div>
+                    <div class="checkbox">
+                        <label><input type="checkbox" checked="checked" id="cloneProjectIncludeDependenciesInput"> Include dependencies</label>
+                    </div>
+                    <div class="checkbox">
+                        <label><input type="checkbox" checked="checked" id="cloneProjectIncludeAuditHistoryInput"> Include audit history</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" id="cloneProjectButton">Create</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
             </div>

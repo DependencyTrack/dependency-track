@@ -475,6 +475,23 @@ $(document).ready(function () {
         });
     });
 
+    $("#cloneProjectButton").on("click", function () {
+        let version = $("#cloneProjectVersionInput").val();
+        let includeTags = $("#cloneProjectIncludeTagsInput").is(':checked');
+        let includeProperties = $("#cloneProjectIncludePropertiesInput").is(':checked');
+        let includeDependencies = $("#cloneProjectIncludeDependenciesInput").is(':checked');
+        let includeAuditHistory = $("#cloneProjectIncludeAuditHistoryInput").is(':checked');
+        $rest.cloneProject(uuid, version, includeTags, includeProperties, includeDependencies, includeAuditHistory,
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.success("The project is being created with the cloning options specified");
+            },
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.warning("An unexpected error occurred while adding a new project version. Check log for details.");
+            });
+    });
+
     $("#projectVersionSelect").on("change", function () {
         let uuid = $("#projectVersionSelect").val();
         window.location.href = "?uuid=" + uuid;

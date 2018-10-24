@@ -102,12 +102,18 @@ public class QueryManager extends AlpineQueryManager {
     public PaginatedResult getProjects() {
         final Query query = pm.newQuery(Project.class);
         if (orderBy == null) {
-            query.setOrdering("name asc");
+            query.setOrdering("name asc, version desc");
         }
         if (filter != null) {
-            query.setFilter("name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
+            final Tag tag = getTagByName(filter.trim());
+            if (tag != null) {
+                query.setFilter("name.toLowerCase().matches(:name) || tags.contains(:tag)");
+                return execute(query, filterString, tag);
+            } else {
+                query.setFilter("name.toLowerCase().matches(:name)");
+                return execute(query, filterString);
+            }
         }
         return execute(query);
     }

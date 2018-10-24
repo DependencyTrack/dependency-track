@@ -325,9 +325,13 @@ public class QueryManager extends AlpineQueryManager {
         project.setParent(source.getParent());
         project = persist(project);
 
-        if (includeTags && source.getTags() != null) {
-            bind(project, source.getTags());
+        if (includeTags) {
+            for (Tag tag: source.getTags()) {
+                tag.getProjects().add(project);
+                persist(tag);
+            }
         }
+
         if (includeProperties && source.getProperties() != null) {
             for (ProjectProperty sourceProperty: source.getProperties()) {
                 final ProjectProperty property = new ProjectProperty();

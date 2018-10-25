@@ -50,23 +50,23 @@ alpine.worker.threads=0
 alpine.worker.thread.multiplier=4
 
 # Required
-# Defines the path to the data directory. This directory will hold logs,
-# keys, and any database or index files along with application-specific
-# files or directories.
+# Defines the path to the data directory. This directory will hold logs, keys,
+# and any database or index files along with application-specific files or 
+# directories.
 alpine.data.directory=~/.dependency-track
 
 # Required
-# Defines the interval (in seconds) to log general heath information.
-# If value equals 0, watchdog logging will be disabled.
+# Defines the interval (in seconds) to log general heath information. If value
+# equals 0, watchdog logging will be disabled.
 alpine.watchdog.logging.interval=0
 
 # Required
 # Defines the database mode of operation. Valid choices are:
 # 'server', 'embedded', and 'external'.
-# In server mode, the database will listen for connections from remote
-# hosts. In embedded mode, the system will be more secure and slightly
-# faster. External mode should be used when utilizing an external
-# database server (i.e. mysql, postgresql, etc).
+# In server mode, the database will listen for connections from remote hosts.
+# In embedded mode, the system will be more secure and slightly faster. 
+# External mode should be used when utilizing an external database server 
+# (i.e. mysql, postgresql, etc).
 alpine.database.mode=embedded
 
 # Optional
@@ -94,16 +94,15 @@ alpine.database.username=sa
 # alpine.database.password=
 
 # Optional
-# When authentication is enforced, API keys are required for automation,
-# and the user interface will prevent anonymous access by prompting for login
+# When authentication is enforced, API keys are required for automation, and
+# the user interface will prevent anonymous access by prompting for login
 # credentials.
 alpine.enforce.authentication=true
 
 # Optional
-# When authorization is enforced, team membership for both API keys and
-# user accounts are restricted to what the team itself has access to.
-# To enforce authorization, the enforce.authentication property (above)
-# must be true.
+# When authorization is enforced, team membership for both API keys and user
+# accounts are restricted to what the team itself has access to. To enforce 
+# authorization, the enforce.authentication property (above) must be true.
 alpine.enforce.authorization=true
 
 # Required
@@ -119,53 +118,99 @@ alpine.ldap.enabled=false
 
 # Optional
 # Specifies the LDAP server URL
+# Example (Microsoft Active Directory):
+#    alpine.ldap.server.url=ldap://ldap.example.com:3268
+#    alpine.ldap.server.url=ldaps://ldap.example.com:3269
+# Example (ApacheDS, Fedora 389 Directory, NetIQ/Novell eDirectory, etc):
+#    alpine.ldap.server.url=ldap://ldap.example.com:389
+#    alpine.ldap.server.url=ldaps://ldap.example.com:636
 alpine.ldap.server.url=ldap://ldap.example.com:389
-
-# Optional
-# Specifies the LDAP server domain. This is normally appended to the end of the
-# username to form the userPrincipalName
-alpine.ldap.domain=example.com
 
 # Optional
 # Specifies the base DN that all queries should search from
 alpine.ldap.basedn=dc=example,dc=com
 
 # Optional
-# Specifies the LDAP security authentication level to use. 
-# Its value is one of the following strings: "none", "simple", "strong".
-# If this property is empty or unspecified, the behaviour is determined by the service provider.
+# Specifies the LDAP security authentication level to use. Its value is one of
+# the following strings: "none", "simple", "strong". If this property is empty
+# or unspecified, the behaviour is determined by the service provider.
 alpine.ldap.security.auth=simple
 
 # Optional
-# If anonymous access is not permitted, specify a username with limited
-# access to the directory. Just enough to perform searches.
+# If anonymous access is not permitted, specify a username with limited access
+# to the directory, just enough to perform searches. This should be the fully
+# qualified DN of the user.
 alpine.ldap.bind.username=
 
 # Optional
-# If anonymous access is not permitted, specify a password for the
-# username used to bind.
+# If anonymous access is not permitted, specify a password for the username
+# used to bind.
 alpine.ldap.bind.password=
 
 # Optional
-# Specifies how to map the user identifier entered by the user to that passed through to LDAP.
-# If is configured to a non-empty value, the substring %s in this value will be replaced
-# with the entered username.
-# The recommended format of this value depends on your LDAP server(Active Directory, OpenLDAP, etc.).
-# Examples:
-#	 alpine.ldap.auth.username.format=%s
-#	 alpine.ldap.auth.username.format=%s@example.com
-#	 alpine.ldap.auth.username.format=uid=%s,ou=People,dc=example,dc=com
-#	 alpine.ldap.auth.username.format=userPrincipalName=%s,ou=People,dc=example,dc=com
-alpine.ldap.auth.username.format=
+# Specifies if the username entered during login needs to be formatted prior
+# to asserting credentials against the directory. For Active Directory, the
+# userPrincipal attribute typically ends with the domain, whereas the
+# samAccountName attribute and other directory server implementations do not.
+# The %s variable will be substitued with the username asserted during login.
+# Example (Microsoft Active Directory):
+#    alpine.ldap.auth.username.format=%s@example.com
+# Example (ApacheDS, Fedora 389 Directory, NetIQ/Novell eDirectory, etc):
+#    alpine.ldap.auth.username.format=%s
+alpine.ldap.auth.username.format=%s@example.com
 
 # Optional
-# Specifies the Attribute that all queries should use
-# The default attribute is userPrincipalName
+# Specifies the Attribute that identifies a users ID
+# Example (Microsoft Active Directory):
+#    alpine.ldap.attribute.name=userPrincipalName
+# Example (ApacheDS, Fedora 389 Directory, NetIQ/Novell eDirectory, etc):
+#    alpine.ldap.attribute.name=uid
 alpine.ldap.attribute.name=userPrincipalName
 
 # Optional
 # Specifies the LDAP attribute used to store a users email address
 alpine.ldap.attribute.mail=mail
+
+# Optional
+# Specifies the LDAP search filter used to retrieve all groups from the
+# directory.
+# Example (Microsoft Active Directory):
+#    alpine.ldap.groups.filter=(&(objectClass=group)(objectCategory=Group))
+# Example (ApacheDS, Fedora 389 Directory, NetIQ/Novell eDirectory, etc):
+#    alpine.ldap.groups.filter=(&(objectClass=groupOfUniqueNames))
+alpine.ldap.groups.filter=(&(objectClass=group)(objectCategory=Group))
+
+# Optional
+# Specifies the LDAP search filter to use to query a user and retrieve a list
+# of groups the user is a member of. The {USER_DN} variable will be substituted
+# with the actual value of the users DN at runtime.
+# Example (Microsoft Active Directory):
+#    alpine.ldap.user.groups.filter=(&(objectClass=group)(objectCategory=Group)(member={USER_DN}))
+# Example (Microsoft Active Directory - with nested group support):
+#    alpine.ldap.user.groups.filter=(member:1.2.840.113556.1.4.1941:={USER_DN})
+# Example (ApacheDS, Fedora 389 Directory, NetIQ/Novell eDirectory, etc):
+#    alpine.ldap.user.groups.filter=(&(objectClass=groupOfUniqueNames)(uniqueMember={USER_DN}))
+alpine.ldap.user.groups.filter=(member:1.2.840.113556.1.4.1941:={USER_DN})
+
+# Optional
+# Specifies if mapped LDAP accounts are automatically created upon successful
+# authentication. When a user logs in with valid credentials but an account has
+# not been previously provisioned, an authentication failure will be returned.
+# This allows admins to control specifically which ldap users can access the
+# system and which users cannot. When this value is set to true, a local ldap
+# user will be created and mapped to the ldap account automatically. This
+# automatic provisioning only affects authentication, not authorization.
+alpine.ldap.user.provisioning=false
+
+# Optional
+# This option will ensure that team memberships for LDAP users are dynamic and
+# synchronized with membership of LDAP groups. When a team is mapped to an LDAP
+# group, all local LDAP users will automatically be assigned to the team if
+# they are a member of the group the team is mapped to. If the user is later
+# removed from the LDAP group, they will also be removed from the team. This
+# option provides the ability to dynamically control user permissions via an
+# external directory.
+alpine.ldap.team.synchronization=false
 
 # Optional
 # HTTP proxy. If the address is set, then the port must be set too.

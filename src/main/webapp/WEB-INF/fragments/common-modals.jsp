@@ -79,7 +79,7 @@
                             <li><i class="fa-li fa fa-link" aria-hidden="true"></i><a href="https://dependencytrack.org/">Website</a></li>
                             <li><i class="fa-li fa fa-book" aria-hidden="true"></i><a href="https://docs.dependencytrack.org/">Documentation</a></li>
                             <li><i class="fa-li fa fa-github" aria-hidden="true"></i><a href="https://github.com/DependencyTrack">GitHub</a></li>
-                            <li><i class="fa-li fa fa-slack" aria-hidden="true"></i><a href="https://owasp.slack.com/messages/proj-dependency-track">Slack</a> (<a href="https://owasp.herokuapp.com/">invite</a>)</li>
+                            <li><i class="fa-li fa fa-slack" aria-hidden="true"></i><a href="https://owasp.slack.com/messages/proj-dependency-track">Slack</a> (<a href="https://join.slack.com/t/owasp/shared_invite/enQtNDI5MzgxMDQ2MTAwLTEyNzIzYWQ2NDZiMGIwNmJhYzYxZDJiNTM0ZmZiZmJlY2EwZmMwYjAyNmJjNzQxNzMyMWY4OTk3ZTQ0MzFhMDY">invite</a>)</li>
                             <li><i class="fa-li fa fa-twitter" aria-hidden="true"></i><a href="https://twitter.com/dependencytrack">Twitter</a></li>
                             <li><i class="fa-li fa fa-youtube-play" aria-hidden="true"></i><a href="https://www.youtube.com/channel/UC8xdttysl3gNAQYvk1J9Efg">YouTube</a></li>
                         </ul>

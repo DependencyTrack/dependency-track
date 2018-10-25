@@ -148,7 +148,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.0.0
      */
     protected IndexWriter getIndexWriter() throws IOException {
-        if (iwriter == null) {
+        if (iwriter == null || !iwriter.isOpen()) {
             openIndex();
         }
         return iwriter;
@@ -208,7 +208,9 @@ public abstract class IndexManager implements AutoCloseable {
     public void close() {
         if (iwriter != null) {
             try {
-                iwriter.close();
+                if (iwriter.isOpen()) {
+                    iwriter.close();
+                }
             } catch (IOException e) {
                 // do nothing...
             }

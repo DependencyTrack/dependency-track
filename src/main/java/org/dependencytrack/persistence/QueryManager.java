@@ -1414,7 +1414,7 @@ public class QueryManager extends AlpineQueryManager {
         final List<Dependency> dependencies = getAllDependencies(project);
         for (Dependency dependency: dependencies) {
             final Collection<Vulnerability> componentVulns = pm.detachCopyAll(
-                    getAllVulnerabilities(dependency.getComponent())
+                    getAllVulnerabilities(dependency)
             );
             for (Vulnerability componentVuln: componentVulns) {
                 componentVuln.setComponents(Arrays.asList(pm.detachCopy(dependency.getComponent())));

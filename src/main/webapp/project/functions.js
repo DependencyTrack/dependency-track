@@ -83,22 +83,35 @@ function formatComponentsTable(res) {
  */
 function formatFindingsTable(res) {
     for (let i=0; i<res.length; i++) {
-        let vulnurl = "../vulnerability/?source=" + res[i].source + "&vulnId=" + res[i].vulnId;
-        res[i].vulnerabilityhref = $common.formatSourceLabel(res[i].source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnId) + "</a>";
+        let vulnurl = "../vulnerability/?source=" + res[i].vulnerability.source + "&vulnId=" + res[i].vulnerability.vulnId;
+        res[i].vulnerability.href = $common.formatSourceLabel(res[i].vulnerability.source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnerability.vulnId) + "</a>";
 
-        if (res[i].hasOwnProperty("cweId") && res[i].hasOwnProperty("cweName")) {
-            res[i].cwefield = "<div class='truncate-ellipsis'><span>CWE-" + res[i].cweId + " " + res[i].cweName + "</span></div>";
-        }
-
-        if (res[i].hasOwnProperty("severity")) {
-            res[i].severityLabel = $common.formatSeverityLabel(res[i].severity);
-        }
-
-        if (res[i].hasOwnProperty("isSuppressed") && res[i].isSuppressed === true) {
-            res[i].isSuppressedLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        if (res[i].vulnerability.hasOwnProperty("cweId") && res[i].vulnerability.hasOwnProperty("cweName")) {
+            res[i].vulnerability.cwefield = "<div class='truncate-ellipsis'><span>CWE-" + res[i].vulnerability.cweId + " " + res[i].vulnerability.cweName + "</span></div>";
         } else {
-            res[i].isSuppressedLabel = '';
+            res[i].vulnerability.cwefield = "";
         }
+
+        if (res[i].vulnerability.hasOwnProperty("severity")) {
+            res[i].vulnerability.severityLabel = $common.formatSeverityLabel(res[i].vulnerability.severity);
+        }
+
+        if (res[i].analysis.hasOwnProperty("isSuppressed") && res[i].analysis.isSuppressed === true) {
+            res[i].analysis.isSuppressedLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        } else {
+            res[i].analysis.isSuppressedLabel = '';
+        }
+
+        if (!res[i].component.hasOwnProperty("group")) {
+            res[i].component.group = "";
+        }
+        if (!res[i].component.hasOwnProperty("version")) {
+            res[i].component.version = "";
+        }
+        if (!res[i].analysis.hasOwnProperty("state")) {
+            res[i].analysis.state = "";
+        }
+
     }
     return res;
 }
@@ -114,46 +127,46 @@ function findingDetailFormatter(index, row) {
     let template = `
     <div class="col-sm-6 col-md-6">
     <form id="form-${row.uuid}">
-        <div class="form-group" style="display:none" id="group-title-${row.componentUuid}-${row.vulnUuid}">
-            <label for="title-${row.componentUuid}-${row.vulnUuid}">Title</label>
-            <input type="text" class="form-control" disabled="disabled" id="title-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        <div class="form-group" style="display:none" id="group-title-${row.component.uuid}-${row.vulnerability.uuid}">
+            <label for="title-${row.component.uuid}-${row.vulnerability.uuid}">Title</label>
+            <input type="text" class="form-control" disabled="disabled" id="title-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
-        <div class="form-group" style="display:none" id="group-subtitle-${row.componentUuid}-${row.vulnUuid}">
-            <label for="subtitle-${row.componentUuid}-${row.vulnUuid}">Subtitle</label>
-            <input type="text" class="form-control" disabled="disabled" id="subtitle-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        <div class="form-group" style="display:none" id="group-subtitle-${row.component.uuid}-${row.vulnerability.uuid}">
+            <label for="subtitle-${row.component.uuid}-${row.vulnerability.uuid}">Subtitle</label>
+            <input type="text" class="form-control" disabled="disabled" id="subtitle-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
-        <div class="form-group" style="display:none" id="group-description-${row.componentUuid}-${row.vulnUuid}">
-            <label for="description-${row.componentUuid}-${row.vulnUuid}">Description</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="description-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+        <div class="form-group" style="display:none" id="group-description-${row.component.uuid}-${row.vulnerability.uuid}">
+            <label for="description-${row.component.uuid}-${row.vulnerability.uuid}">Description</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="description-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
         </div>
-        <div class="form-group" style="display:none" id="group-recommendation-${row.componentUuid}-${row.vulnUuid}">
-            <label for="recommendation-${row.componentUuid}-${row.vulnUuid}">Recommendation</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="recommendation-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+        <div class="form-group" style="display:none" id="group-recommendation-${row.component.uuid}-${row.vulnerability.uuid}">
+            <label for="recommendation-${row.component.uuid}-${row.vulnerability.uuid}">Recommendation</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="recommendation-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
         </div>
-        <div class="form-group" style="display:none" id="group-cvssV2Vector-${row.componentUuid}-${row.vulnUuid}">
-            <label for="cvssV2Vector-${row.componentUuid}-${row.vulnUuid}">CVSSv2 Vector</label>
-            <input type="text" class="form-control" disabled="disabled" id="cvssV2Vector-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        <div class="form-group" style="display:none" id="group-cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}">
+            <label for="cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}">CVSSv2 Vector</label>
+            <input type="text" class="form-control" disabled="disabled" id="cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
-        <div class="form-group" style="display:none" id="group-cvssV3Vector-${row.componentUuid}-${row.vulnUuid}">
-            <label for="cvssV3Vector-${row.componentUuid}-${row.vulnUuid}">CVSSv3 Vector</label>
-            <input type="text" class="form-control" disabled="disabled" id="cvssV3Vector-${row.componentUuid}-${row.vulnUuid}" value="" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}">
+        <div class="form-group" style="display:none" id="group-cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}">
+            <label for="cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}">CVSSv3 Vector</label>
+            <input type="text" class="form-control" disabled="disabled" id="cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
     </div>
     <div class="col-sm-6 col-md-6">
         <div class="form-group">
-            <label for="audit-trail-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">Audit Trail</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="audit-trail-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+            <label for="audit-trail-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}">Audit Trail</label>
+            <textarea class="form-control" disabled="disabled" rows="7" id="audit-trail-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
         </div>
         <div class="form-group">
-            <label for="comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">Comment</label>
-            <textarea class="form-control" rows="3" id="comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" data-component-uuid="${row.componentUuid}" data-vuln-uuid="${row.vulnUuid}"></textarea>
+            <label for="comment-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}">Comment</label>
+            <textarea class="form-control" rows="3" id="comment-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
             <div class="pull-right">
-                <button id="addCommentButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" class="btn btn-xs btn-warning"><span class="fa fa-comment-o"></span> Add Comment</button>
+                <button id="addCommentButton-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}" class="btn btn-xs btn-warning"><span class="fa fa-comment-o"></span> Add Comment</button>
             </div>
         </div>     
         <div class="col-xs-6 input-group">
-            <label for="analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">Analysis</label>
-            <select class="form-control" style="background-color:#ffffff" id="analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}">
+            <label for="analysis-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}">Analysis</label>
+            <select class="form-control" style="background-color:#ffffff" id="analysis-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}">
                 <option value="NOT_SET"></option>
                 <option value="EXPLOITABLE">Exploitable</option>
                 <option value="IN_TRIAGE">In Triage</option>
@@ -161,66 +174,67 @@ function findingDetailFormatter(index, row) {
                 <option value="NOT_AFFECTED">Not Affected</option>
             </select>
             <span class="input-group-btn" style="vertical-align:bottom; padding-left:20px">
-                <input id="suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}" type="checkbox" data-toggle="toggle" data-on="<i class='fa fa-eye-slash'></i> Suppressed" data-off="<i class='fa fa-eye'></i> Suppress">
+                <input id="suppressButton-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}" type="checkbox" data-toggle="toggle" data-on="<i class='fa fa-eye-slash'></i> Suppressed" data-off="<i class='fa fa-eye'></i> Suppress">
             </span>
         </div>
     </form>
     </div>
     <script type="text/javascript">
-       initializeSuppressButton("#suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}", ${row.isSuppressed});
-       $("#suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("change", function() {
-           let isSuppressed = $("#suppressButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").is(':checked');
-           let analysis = $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
-           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, null, isSuppressed, function() {
-               updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
-               $rest.refreshDependencyMetrics("${projectUuid}", "${row.componentUuid}");
+       initializeSuppressButton("#suppressButton-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}", ${row.analysis.isSuppressed});
+       $("#suppressButton-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").on("change", function() {
+           let isSuppressed = $("#suppressButton-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").is(':checked');
+           let analysis = $("#analysis-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").val();
+           $rest.makeAnalysis("${projectUuid}", "${row.component.uuid}", "${row.vulnerability.uuid}", analysis, null, isSuppressed, function() {
+               updateAnalysisPanel("${projectUuid}", "${row.component.uuid}", "${row.vulnerability.uuid}");
+               $rest.refreshDependencyMetrics("${projectUuid}", "${row.component.uuid}");
            });
        });
        
-       $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("change", function() {
-           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", this.value, null, null, function() {
-               updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
+       $("#analysis-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").on("change", function() {
+           $rest.makeAnalysis("${projectUuid}", "${row.component.uuid}", "${row.vulnerability.uuid}", this.value, null, null, function() {
+               updateAnalysisPanel("${projectUuid}", "${row.component.uuid}", "${row.vulnerability.uuid}");
            });
        });
-       $("#addCommentButton-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").on("click", function() {
-           let analysis = $("#analysis-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
-           let comment = $("#comment-${projectUuid}-${row.componentUuid}-${row.vulnUuid}").val();
-           $rest.makeAnalysis("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}", analysis, comment, null, function() {
-               updateAnalysisPanel("${projectUuid}", "${row.componentUuid}", "${row.vulnUuid}");
+       $("#addCommentButton-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").on("click", function() {
+           let analysis = $("#analysis-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").val();
+           let comment = $("#comment-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").val();
+           $rest.makeAnalysis("${projectUuid}", "${row.component.uuid}", "${row.vulnerability.uuid}", analysis, comment, null, function() {
+               $("#comment-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}").val("");
+               updateAnalysisPanel("${projectUuid}", "${row.component.uuid}", "${row.vulnerability.uuid}");
            });
        });
     </script>
 `;
     html.push(template);
 
-    $rest.getVulnerabilityByUuid(row.vulnUuid, function(vuln) {
+    $rest.getVulnerabilityByUuid(row.vulnerability.uuid, function(vuln) {
         if (vuln.hasOwnProperty("title")) {
-            $("#group-title-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
-            $("#title-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.title));
+            $("#group-title-" + row.component.uuid + "-" + row.vulnerability.uuid).css("display", "block");
+            $("#title-" + row.component.uuid + "-" + row.vulnerability.uuid).val(filterXSS(vuln.title));
         }
         if (vuln.hasOwnProperty("subTitle")) {
-            $("#group-subTitle-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
-            $("#subTitle-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.subTitle));
+            $("#group-subTitle-" + row.component.uuid + "-" + row.vulnerability.uuid).css("display", "block");
+            $("#subTitle-" + row.component.uuid + "-" + row.vulnerability.uuid).val(filterXSS(vuln.subTitle));
         }
         if (vuln.hasOwnProperty("description")) {
-            $("#group-description-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
-            $("#description-" + row.componentUuid + "-" + row.vulnUuid).val(vuln.description);
+            $("#group-description-" + row.component.uuid + "-" + row.vulnerability.uuid).css("display", "block");
+            $("#description-" + row.component.uuid + "-" + row.vulnerability.uuid).val(vuln.description);
         }
         if (vuln.hasOwnProperty("recommendation")) {
-            $("#group-recommendation-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
-            $("#recommendation-" + row.componentUuid + "-" + row.vulnUuid).val(vuln.recommendation);
+            $("#group-recommendation-" + row.component.uuid + "-" + row.vulnerability.uuid).css("display", "block");
+            $("#recommendation-" + row.component.uuid + "-" + row.vulnerability.uuid).val(vuln.recommendation);
         }
         if (vuln.hasOwnProperty("cvssV2Vector")) {
-            $("#group-cvssV2Vector-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
-            $("#cvssV2Vector-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.cvssV2Vector));
+            $("#group-cvssV2Vector-" + row.component.uuid + "-" + row.vulnerability.uuid).css("display", "block");
+            $("#cvssV2Vector-" + row.component.uuid + "-" + row.vulnerability.uuid).val(filterXSS(vuln.cvssV2Vector));
         }
         if (vuln.hasOwnProperty("cvssV3Vector")) {
-            $("#group-cvssV3Vector-" + row.componentUuid + "-" + row.vulnUuid).css("display", "block");
-            $("#cvssV3Vector-" + row.componentUuid + "-" + row.vulnUuid).val(filterXSS(vuln.cvssV3Vector));
+            $("#group-cvssV3Vector-" + row.component.uuid + "-" + row.vulnerability.uuid).css("display", "block");
+            $("#cvssV3Vector-" + row.component.uuid + "-" + row.vulnerability.uuid).val(filterXSS(vuln.cvssV3Vector));
         }
     });
 
-    updateAnalysisPanel(projectUuid, row.componentUuid, row.vulnUuid);
+    updateAnalysisPanel(projectUuid, row.component.uuid, row.vulnerability.uuid);
     return html.join("");
 }
 
@@ -516,7 +530,7 @@ $(document).ready(function () {
             findingsTable.bootstrapTable("collapseAllRows");
             findingsTable.bootstrapTable("expandRow", $tr.data("index"));
             findingsTable.expanded = true;
-            findingsTable.expandedUuid = row.uuid;
+            findingsTable.expandedUuid = row.matrix;
         }
     });
 

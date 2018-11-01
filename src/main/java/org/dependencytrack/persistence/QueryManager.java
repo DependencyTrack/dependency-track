@@ -1685,11 +1685,14 @@ public class QueryManager extends AlpineQueryManager {
         List<Object[]> list = query.executeList();
         List<Finding> findings = new ArrayList<>();
         for (Object[] o: list) {
-            Finding finding = new Finding(o);
-            Component component = getObjectByUuid(Component.class, (String)finding.getComponentUuid());
-            Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnUuid());
+            Finding finding = new Finding(project.getUuid(), o);
+            Component component = getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
+            Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
             Analysis analysis = getAnalysis(null, component, vulnerability);
             if (analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
+                // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
+                finding.getVulnerability().put("description", vulnerability.getDescription());
+                finding.getVulnerability().put("recommendation", vulnerability.getRecommendation());
                 findings.add(finding);
             }
         }

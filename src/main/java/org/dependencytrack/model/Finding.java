@@ -18,9 +18,11 @@
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.dependencytrack.util.VulnerabilityUtil;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.UUID;
 
 /**
  * The Finding object is a metadata/value object that combines data from multiple tables. The object can
@@ -45,9 +47,14 @@ public class Finding implements Serializable {
             "\"COMPONENT\".\"NAME\" AS \"COMPONENT_NAME\", " +
             "\"COMPONENT\".\"GROUP\" AS \"COMPONENT_GROUP\", " +
             "\"COMPONENT\".\"VERSION\" AS \"COMPONENT_VERSION\", " +
+            "\"COMPONENT\".\"PURL\" AS \"COMPONENT_PURL\", " +
+            "\"VULNERABILITY\".\"UUID\" AS \"VULN_UUID\", " +
             "\"VULNERABILITY\".\"SOURCE\" AS \"VULN_SOURCE\", " +
             "\"VULNERABILITY\".\"VULNID\" AS \"VULN_ID\", " +
-            "\"VULNERABILITY\".\"UUID\" AS \"VULN_UUID\", " +
+            "\"VULNERABILITY\".\"TITLE\" AS \"VULN_TITLE\", " +
+            "\"VULNERABILITY\".\"SUBTITLE\" AS \"VULN_SUBTITLE\", " +
+            "\"VULNERABILITY\".\"DESCRIPTION\" AS \"VULN_DESCRIPTION\", " +
+            "\"VULNERABILITY\".\"RECOMMENDATION\" AS \"VULN_RECOMMENDATION\", " +
             "\"VULNERABILITY\".\"SEVERITY\" AS \"VULN_SEVERITY\", " +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\" AS \"VULN_CVSSV2BASESCORE\", " +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\" AS \"VULN_CVSSV3BASESCORE\", " +
@@ -63,21 +70,10 @@ public class Finding implements Serializable {
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"DEPENDENCY\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
             "WHERE \"DEPENDENCY\".\"PROJECT_ID\" = ?";
 
-    private Object componentUuid;
-    private Object name;
-    private Object group;
-    private Object version;
-    private Object source;
-    private Object vulnId;
-    private Object vulnUuid;
-    private Object severity;
-    private Object severityRank;
-    private Object cweId;
-    private Object cweName;
-    private Object state;
-
-    @JsonProperty(value = "isSuppressed")
-    private Object suppressed;
+    private UUID project;
+    private HashMap<String, Object> component = new LinkedHashMap<>();
+    private HashMap<String, Object> vulnerability = new LinkedHashMap<>();
+    private HashMap<String, Object> analysis = new LinkedHashMap<>();
 
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
@@ -85,74 +81,59 @@ public class Finding implements Serializable {
      * of the columns being queried in {@link #QUERY}.
      * @param o An array of values specific to an individual row returned from {@link #QUERY}
      */
-    public Finding(Object[] o) {
-        this.componentUuid = o[0];
-        this.name = o[1];
-        this.group = o[2];
-        this.version = o[3];
-        this.source = o[4];
-        this.vulnId = o[5];
-        this.vulnUuid = o[6];
+    public Finding(UUID project, Object[] o) {
+        this.project = project;
+        optValue(component, "uuid", o[0]);
+        optValue(component, "name", o[1]);
+        optValue(component, "group", o[2]);
+        optValue(component, "version", o[3]);
+        optValue(component, "purl", o[4]);
 
-        final Severity severity = VulnerabilityUtil.getSeverity(o[7], o[8], o[9]);
-        this.severity = severity.name();
-        this.severityRank = severity.ordinal();
+        optValue(vulnerability, "uuid", o[5]);
+        optValue(vulnerability, "source", o[6]);
+        optValue(vulnerability, "vulnId", o[7]);
+        optValue(vulnerability, "title", o[8]);
+        optValue(vulnerability, "subtitle", o[9]);
+        //optValue(vulnerability, "description", o[10]); // CLOB - handle this in QueryManager
+        //optValue(vulnerability, "recommendation", o[11]); // CLOB - handle this in QueryManager
+        final Severity severity = VulnerabilityUtil.getSeverity(o[12], o[13], o[14]);
+        optValue(vulnerability, "severity", severity.name());
+        optValue(vulnerability, "severityRank", severity.ordinal());
+        optValue(vulnerability, "cweId", o[15]);
+        optValue(vulnerability, "cweName", o[16]);
 
-        this.cweId = o[10];
-        this.cweName= o[11];
-        this.state = o[12];
-        this.suppressed = o[13];
+        optValue(analysis, "state", o[17]);
+        optValue(analysis, "isSuppressed", o[18], false);
     }
 
-    public Object getComponentUuid() {
-        return componentUuid;
+    public HashMap getComponent() {
+        return component;
     }
 
-    public Object getName() {
-        return name;
+    public HashMap getVulnerability() {
+        return vulnerability;
     }
 
-    public Object getGroup() {
-        return group;
+    public HashMap getAnalysis() {
+        return analysis;
     }
 
-    public Object getVersion() {
-        return version;
+    private void optValue(HashMap<String, Object> map, String key, Object value, boolean defaultValue) {
+        if (value == null) {
+            map.put(key, defaultValue);
+        } else {
+            map.put(key, value);
+        }
     }
 
-    public Object getSource() {
-        return source;
+    private void optValue(HashMap<String, Object> map, String key, Object value) {
+        if (value != null) {
+            map.put(key, value);
+        }
     }
 
-    public Object getVulnId() {
-        return vulnId;
+    public String getMatrix() {
+        return project.toString() + ":" + component.get("uuid") + ":" + vulnerability.get("uuid");
     }
 
-    public Object getVulnUuid() {
-        return vulnUuid;
-    }
-
-    public Object getSeverity() {
-        return severity;
-    }
-
-    public Object getSeverityRank() {
-        return severityRank;
-    }
-
-    public Object getCweId() {
-        return cweId;
-    }
-
-    public Object getCweName() {
-        return cweName;
-    }
-
-    public Object getState() {
-        return state;
-    }
-
-    public Object isSuppressed() {
-        return suppressed;
-    }
 }

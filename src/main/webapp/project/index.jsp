@@ -183,14 +183,14 @@
                                    data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
-                                    <th data-align="left" data-field="name" data-sortable="true">Component</th>
-                                    <th data-align="left" data-field="version" data-sortable="true">Version</th>
-                                    <th data-align="left" data-field="group" data-sortable="true">Group</th>
-                                    <th data-align="left" data-field="vulnerabilityhref" data-sort-name="vulnId" data-sortable="true">Vulnerability</th>
-                                    <th data-align="left" data-class="expand-20" data-field="cwefield" data-sortable="true">CWE</th>
-                                    <th data-align="left" data-field="severityLabel" data-sort-name="severityRank" data-sortable="true">Severity</th>
-                                    <th data-align="left" data-field="state" data-sortable="true">Analysis</th>
-                                    <th data-align="center" data-field="isSuppressedLabel" data-sortable="true" data-class="tight">Suppressed</th>
+                                    <th data-align="left" data-field="component.name" data-sortable="true">Component</th>
+                                    <th data-align="left" data-field="component.version" data-sortable="true">Version</th>
+                                    <th data-align="left" data-field="component.group" data-sortable="true">Group</th>
+                                    <th data-align="left" data-field="vulnerability.href" data-sort-name="vulnerability.vulnId" data-sortable="true">Vulnerability</th>
+                                    <th data-align="left" data-class="expand-20" data-field="vulnerability.cwefield" data-sortable="true">CWE</th>
+                                    <th data-align="left" data-field="vulnerability.severityLabel" data-sort-name="vulnerability.severityRank" data-sortable="true">Severity</th>
+                                    <th data-align="left" data-field="analysis.state" data-sortable="true">Analysis</th>
+                                    <th data-align="center" data-field="analysis.isSuppressedLabel" data-sortable="true" data-class="tight">Suppressed</th>
                                 </tr>
                                 </thead>
                             </table>

@@ -22,7 +22,6 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.dependencytrack.parser.dependencycheck.model.Identifier;
-import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
@@ -45,12 +44,8 @@ public class PackageURLResolver implements IResolver {
         try {
             if (dependency.getIdentifiers() != null && dependency.getIdentifiers().getIdentifiers() != null) {
                 for (Identifier identifier : dependency.getIdentifiers().getIdentifiers()) {
-                    if ("maven".equals(identifier.getType())
-                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))
-                            || identifier == dependency.getIdentifier()) { // account for identifier in related dependency without confidence
-
+                    if (useIdentifier("maven", dependency, identifier)) {
                         final GAV gav = parseIdentifier(identifier);
-
                         if (!MAVEN_ID_REGEX.matcher(gav.group).matches() || !MAVEN_ID_REGEX.matcher(gav.artifact).matches()) {
                             LOGGER.info("An invalid Maven GAV was identified which does not conform to the Maven specification. Skipping. g:" + gav.group + " a:" + gav.artifact + " v:" + gav.version);
                             continue;
@@ -58,9 +53,7 @@ public class PackageURLResolver implements IResolver {
                         // No longer using qualifiers as they cannot be predicted reliably from dependency-check
                         return new PackageURL(PackageURL.StandardTypes.MAVEN, gav.group, gav.artifact, gav.version, null, null);
 
-                    } else if ("npm".equals(identifier.getType())
-                            && ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))
-                            || identifier == dependency.getIdentifier()) { // account for identifier in related dependency without confidence
+                    } else if (useIdentifier("npm", dependency, identifier)) {
                         final GAV gav = parseIdentifier(identifier);
                         return new PackageURL(PackageURL.StandardTypes.NPM, gav.group, gav.artifact, gav.version, null, null);
                     }
@@ -73,6 +66,18 @@ public class PackageURLResolver implements IResolver {
             LOGGER.warn("An error occurred while attempting to resolve PackageURL", e);
         }
         return null;
+    }
+
+    private boolean useIdentifier(String type, Dependency dependency, Identifier identifier) {
+        if (type == null || !type.equals(identifier.getType())) {
+            return false;
+        }
+        return  // Confidence is specified and it's HIGHEST or HIGH
+                (identifier.getConfidence() != null &&
+                ("HIGHEST".equals(identifier.getConfidence()) || "HIGH".equals(identifier.getConfidence()))) ||
+                // Confidence is not specified (likely a related dependency)
+                (identifier.getConfidence() == null &&
+                        identifier == dependency.getIdentifier());
     }
 
     private GAV parseIdentifier(Identifier identifier) {

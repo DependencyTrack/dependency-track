@@ -137,15 +137,19 @@ public class ConfigPropertyResource extends AlpineResource {
                         return Response.status(Response.Status.BAD_REQUEST).entity("The config property expected a UUID but a valid UUID was not sent.").build();
                     }
                 } else if (configProperty.getPropertyType() == ConfigProperty.PropertyType.ENCRYPTEDSTRING) {
-                    try {
-                        // Determine if the value of the encrypted property value is that of the placeholder. If so, the value has not been modified and should not be saved.
-                        if (ENCRYPTED_PLACEHOLDER.equals(json.getPropertyValue())) {
-                            return Response.notModified().build();
+                    if (json.getPropertyValue() == null) {
+                        configProperty.setPropertyValue(null);
+                    } else {
+                        try {
+                            // Determine if the value of the encrypted property value is that of the placeholder. If so, the value has not been modified and should not be saved.
+                            if (ENCRYPTED_PLACEHOLDER.equals(json.getPropertyValue())) {
+                                return Response.notModified().build();
+                            }
+                            configProperty.setPropertyValue(DataEncryption.encryptAsString(json.getPropertyValue()));
+                        } catch (Exception e) {
+                            LOGGER.error("An error occurred while encrypting config property value", e);
+                            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while encrypting config property value. Check log for details.").build();
                         }
-                        configProperty.setPropertyValue(DataEncryption.encryptAsString(json.getPropertyValue()));
-                    } catch (Exception e) {
-                        LOGGER.error("An error occurred while encrypting config property value", e);
-                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while encrypting config property value. Check log for details.").build();
                     }
                 } else {
                     configProperty.setPropertyValue(json.getPropertyValue());

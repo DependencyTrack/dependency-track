@@ -1960,6 +1960,9 @@ $rest.updateConfigProperty = function updateConfigProperty(groupName, propertyNa
     if ($common.isEmpty(groupName) || $common.isEmpty(propertyName)) {
         return;
     }
+    if (propertyValue === '') {
+        propertyValue = null;
+    }
     $.ajax({
         url: $rest.contextPath() + URL_CONFIG_PROPERTY,
         contentType: CONTENT_TYPE_JSON,

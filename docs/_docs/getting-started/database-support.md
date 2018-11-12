@@ -12,7 +12,7 @@ database is for quick evaluation, testing, and demonstration of the platform and
 
 Dependency-Track supports the following database servers:
 * Microsoft SQL Server 2012 and higher
-* MySQL 5.6 and higher
+* MySQL 5.6 and 5.7
 * PostgreSQL 9.0 and higher
 
 
@@ -52,6 +52,9 @@ MySQL configuration (typically my.ini or similar) with the following:
 [mysqld] 
 sql_mode="ANSI_QUOTES,STRICT_TRANS_TABLES,ONLY_FULL_GROUP_BY,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
 ```
+
+MySQL will erroneously report index key length violations ("Specified key was too long"), when infact the multi-byte
+key length is lower than the actual value. If UTF-8 support is required, do not use MySQL.
 
 #### PostgreSQL Example
 

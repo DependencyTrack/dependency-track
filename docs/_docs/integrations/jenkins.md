@@ -55,4 +55,4 @@ The following permission should be assigned to the API key configured above.
 
 [CycloneDX]: https://cyclonedx.org
 [SPDX]: https://spdx.org
-[Dependency-Track Jenkins plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Track+Plugin
+[Dependency-Track Jenkins plugin]: https://plugins.jenkins.io/dependency-track

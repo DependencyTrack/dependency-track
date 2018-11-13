@@ -54,7 +54,7 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 [Risk Based Security]: https://www.riskbasedsecurity.com
 [NIST Cybersecurity Framework]: https://www.nist.gov/cybersecurity-framework
 [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
-[Dependency-Track Jenkins Plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Track+Plugin
+[Dependency-Track Jenkins Plugin]: https://plugins.jenkins.io/dependency-track
 [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline
 [CycloneDX]: http://cyclonedx.org
 [SPDX]: https://spdx.org/

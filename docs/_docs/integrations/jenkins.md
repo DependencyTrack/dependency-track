@@ -41,6 +41,18 @@ To setup, navigate to **Jenkins &raquo; System Configuration** and complete the 
 
 ![System Configuration](/images/screenshots/jenkins-global-odt.png)
 
+### Permissions
+The following permission should be assigned to the API key configured above.
+
+| Permission | Description |
+| ------|-------------|
+| BOM_UPLOAD | Allows the uploading of CycloneDX and SPDX BoMs |
+| SCAN_UPLOAD | Allows the uploading of Dependency-Check XML reports |
+| VIEW_PORTFOLIO | Allows the plugin to list the projects in the dropdown |
+| VULNERABILITY_ANALYSIS | Allows access to the findings API for trending and results (synchronous mode only) |
+| PROJECT_CREATION_UPLOAD | Allows the dynamic creation of projects (if enabled by the plugin) |
+
+
 [CycloneDX]: https://cyclonedx.org
 [SPDX]: https://spdx.org
 [Dependency-Track Jenkins plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Track+Plugin

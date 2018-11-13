@@ -41,7 +41,8 @@ docker rmi $REPO:latest
 docker rmi $REPO:$RELEASE_VERSION
 docker build -f src/main/docker/Dockerfile -t $REPO:$RELEASE_VERSION -t $REPO:latest .
 docker login
-docker push $REPO
+docker push $REPO:latest
+docker push $REPO:$RELEASE_VERSION
 
 
 # Version bump to prepare next snapshot

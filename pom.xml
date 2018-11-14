@@ -84,7 +84,7 @@
         <lib.cpe-parser.version>1.0.0</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.1.0</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>1.1.0-SNAPSHOT</lib.cyclonedx-java.version>
-        <lib.dependency-check.version>3.2.1</lib.dependency-check.version>
+        <lib.dependency-check.version>3.3.2</lib.dependency-check.version>
         <lib.lucene.version>5.5.5</lib.lucene.version>
         <lib.packageurl.version>1.0.0-SNAPSHOT</lib.packageurl.version>
         <lib.pebble.version>3.0.4-SNAPSHOT</lib.pebble.version>

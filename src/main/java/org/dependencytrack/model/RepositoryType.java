@@ -31,6 +31,7 @@ public enum RepositoryType {
     NPM,
     GEM,
     PYPI,
+    NUGET,
     UNSUPPORTED;
 
     /**
@@ -48,6 +49,8 @@ public enum RepositoryType {
             return GEM;
         } else if (PackageURL.StandardTypes.PYPI.equals(type)) {
             return PYPI;
+        } else if (PackageURL.StandardTypes.NUGET.equals(type)) {
+            return NUGET;
         }
         return UNSUPPORTED;
     }

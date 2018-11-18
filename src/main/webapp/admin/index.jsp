@@ -67,6 +67,7 @@
                             <a data-toggle="tab" class="list-group-item" href="#repositoryGemTab">Gem</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryMavenTab">Maven</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryNpmTab">NPM</a>
+                            <a data-toggle="tab" class="list-group-item" href="#repositoryNugetTab">NuGet</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryPythonTab">Python</a>
                         </div>
                     </div>
@@ -293,6 +294,22 @@
                         <div class="tab-pane" id="repositoryPythonTab" data-admin-title="Python Repositories">
                             <table id="repositoryPythonTable" class="table table-hover detail-table" data-toggle="table"
                                    data-url="<c:url value="/api/v1/repository/PYPI?orderBy=resolutionOrder&sort=asc"/>"
+                                   data-response-handler="formatRepositoryTable"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="identifier">Identifier</th>
+                                    <th data-align="left" data-field="url">URL</th>
+                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="repositoryNugetTab" data-admin-title="NuGet Repositories">
+                            <table id="repositoryNugetTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/repository/NUGET?orderBy=resolutionOrder&sort=asc"/>"
                                    data-response-handler="formatRepositoryTable"
                                    data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
                                    data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"

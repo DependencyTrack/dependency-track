@@ -17,7 +17,14 @@
  */
 package org.dependencytrack.tasks.repositories;
 
+import alpine.logging.Logger;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 
 /**
  * Base abstract class that all IMetaAnalyzer implementations should likely extend.
@@ -41,6 +48,30 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
         this.baseUrl = baseUrl;
+    }
+
+    public void handleUnexpectedHttpResponse(Logger logger, String url, int statusCode, String statusText, Component component) {
+        logger.debug("HTTP Status : " + statusCode + " " + statusText);
+        logger.debug(" - RepositoryType URL : " + url);
+        logger.debug(" - Package URL : " + component.getPurl().canonicalize());
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.REPOSITORY)
+                .title(NotificationConstants.Title.REPO_ERROR)
+                .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. URL: " + url + " HTTP Status: " + statusCode + ". Check log for details." )
+                .level(NotificationLevel.ERROR)
+        );
+    }
+
+    public void handleRequestException(Logger logger, Exception e) {
+        logger.error("Request failure", e);
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.REPOSITORY)
+                .title(NotificationConstants.Title.REPO_ERROR)
+                .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. Check log for details. " + e.getMessage())
+                .level(NotificationLevel.ERROR)
+        );
     }
 
 }

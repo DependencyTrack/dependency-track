@@ -18,8 +18,6 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
-import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import com.github.packageurl.PackageURL;
 import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
@@ -27,9 +25,6 @@ import io.github.openunirest.http.Unirest;
 import io.github.openunirest.http.exceptions.UnirestException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.HttpClientFactory;
 
 /**
@@ -88,26 +83,10 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
                         meta.setLatestVersion(latest);
                     }
                 } else {
-                    LOGGER.debug("HTTP Status : " + response.getStatus() + " " + response.getStatusText());
-                    LOGGER.debug(" - RepositoryType URL : " + url);
-                    LOGGER.debug(" - Package URL : " + component.getPurl().canonicalize());
-                    Notification.dispatch(new Notification()
-                            .scope(NotificationScope.SYSTEM)
-                            .group(NotificationGroup.REPOSITORY)
-                            .title(NotificationConstants.Title.REPO_ERROR)
-                            .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. URL: " + url + " HTTP Status: " + response.getStatus() + ". Check log for details." )
-                            .level(NotificationLevel.ERROR)
-                    );
+                    handleUnexpectedHttpResponse(LOGGER, url, response.getStatus(), response.getStatusText(), component);
                 }
             } catch (UnirestException e) {
-                LOGGER.error("Request failure", e);
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.REPOSITORY)
-                        .title(NotificationConstants.Title.REPO_ERROR)
-                        .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. Check log for details. " + e.getMessage())
-                        .level(NotificationLevel.ERROR)
-                );
+                handleRequestException(LOGGER, e);
             }
         }
         return meta;

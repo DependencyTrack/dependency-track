@@ -30,6 +30,7 @@ public enum RepositoryType {
     MAVEN,
     NPM,
     GEM,
+    PYPI,
     UNSUPPORTED;
 
     /**
@@ -45,6 +46,8 @@ public enum RepositoryType {
             return NPM;
         } else if (PackageURL.StandardTypes.GEM.equals(type)) {
             return GEM;
+        } else if (PackageURL.StandardTypes.PYPI.equals(type)) {
+            return PYPI;
         }
         return UNSUPPORTED;
     }

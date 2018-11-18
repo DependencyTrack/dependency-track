@@ -1960,6 +1960,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Determins if the repository exists in the database.
+     * @param type the type of repository (required)
+     * @param identifier the repository identifier
+     * @return true if object exists, false if not
+     */
+    @SuppressWarnings("unchecked")
+    public boolean repositoryExist(RepositoryType type, String identifier) {
+        final Query query = pm.newQuery(Repository.class, "type == :type && identifier == :identifier");
+        List<Repository> result = (List<Repository>)query.execute(type, identifier);
+        return result.size() > 0;
+    }
+
+    /**
      * Creates a new Repository.
      * @param type the type of repository
      * @param identifier a unique (to the type) identifier for the repo
@@ -1968,6 +1981,9 @@ public class QueryManager extends AlpineQueryManager {
      * @return the created Repository
      */
     public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled) {
+        if (repositoryExist(type, identifier)) {
+            return null;
+        }
         int order = 0;
         List<Repository> existingRepos = getAllRepositoriesOrdered(type);
         if (existingRepos != null) {

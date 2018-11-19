@@ -1990,6 +1990,29 @@ $rest.updateConfigProperty = function updateConfigProperty(groupName, propertyNa
 };
 
 /**
+ * Service called to test SMTP publisher configuration
+ */
+$rest.testSmtpPublisherConfig = function testSmtpPublisherConfig(emailAddress, successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_NOTIFICATION_PUBLISHER + "/test/smtp",
+        type: METHOD_POST,
+        data: {destination: emailAddress},
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called when a notification rule is created
  */
 $rest.createNotificationRule = function createNotificationRule(name, scope, level, publisherUuid, successCallback, failCallback) {

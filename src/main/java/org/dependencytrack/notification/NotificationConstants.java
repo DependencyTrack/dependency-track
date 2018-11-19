@@ -20,6 +20,7 @@ package org.dependencytrack.notification;
 public class NotificationConstants {
 
     public static class Title {
+        public static final String NOTIFICATION_TEST = "Notification Test";
         public static final String NVD_MIRROR = "NVD Mirroring";
         public static final String NPM_ADVISORY_MIRROR = "NPM Advisory Mirroring";
         public static final String VULNDB_MIRROR = "VulnDB Mirroring";

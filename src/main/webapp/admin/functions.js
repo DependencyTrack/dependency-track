@@ -1301,6 +1301,20 @@ $(document).ready(function () {
         });
     });
 
+    $("#testEmailConfigButton").on("click", function() {
+        let emailAddress = $("#testEmailAddress").val();
+        $rest.testSmtpPublisherConfig(emailAddress,
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.success("A test notification has been queued");
+            },
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.warning("An error occurred requesting a test notification. Check server logs for details");
+            }
+        );
+    });
+
     $(".scannerToggleButton").change(function() {
         let propertyValue = $(this).is(":checked");
         $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);

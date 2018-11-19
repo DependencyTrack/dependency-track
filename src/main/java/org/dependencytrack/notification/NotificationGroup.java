@@ -20,6 +20,7 @@ package org.dependencytrack.notification;
 public enum NotificationGroup {
 
     // System Groups
+    CONFIGURATION,
     DATASOURCE_MIRRORING,
     REPOSITORY,
     INDEXING_SERVICE,

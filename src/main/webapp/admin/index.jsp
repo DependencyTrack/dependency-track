@@ -156,6 +156,7 @@
                             <div class="checkbox">
                                 <label><input type="checkbox" id="emailSmtpTrustCertInput" data-group-name="email" data-property-name="smtp.trustcert"> Trust the certificate provided by the SMTP server</label>
                             </div>
+                            <button type="button" class="btn btn-default btn-config-property" data-group-name="email" data-toggle="modal" data-target="#modalEmailTestConfiguration">Test Configuration</button>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateEmailConfigButton" data-group-name="email">Update</button>
                         </div>
                         <div class="tab-pane" id="scannerDependencyCheckTab" data-admin-title="Dependency-Check">
@@ -670,6 +671,26 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal" id="addLdapMappingToTeamButton">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEmailTestConfiguration" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Email Configuration Test</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="required" for="testEmailAddress">Email Address</label>
+                        <input type="text" name="testEmailAddress" required="required" class="form-control required" id="testEmailAddress">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="testEmailConfigButton">Test Configuration</button>
                 </div>
             </div>
         </div>

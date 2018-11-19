@@ -15,7 +15,6 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-
 package org.dependencytrack.tasks.repositories;
 
 import com.github.packageurl.PackageURL;

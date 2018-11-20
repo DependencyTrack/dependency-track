@@ -8,7 +8,7 @@
 [![Slack](https://img.shields.io/badge/chat%20on-slack-46BC99.svg)](https://owasp.slack.com/messages/proj-dependency-track)
 [![Join the chat at https://gitter.im/dependency-track/Lobby](https://badges.gitter.im/dependency-track/Lobby.svg)](https://gitter.im/dependency-track/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![YouTube Subscribe](https://img.shields.io/badge/youtube-subscribe-%23c4302b.svg)](https://www.youtube.com/channel/UC8xdttysl3gNAQYvk1J9Efg)
-[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow)](https://twitter.com/dependencytrack)
+[![Twitter](https://img.shields.io/twitter/follow/dependencytrack.svg?label=Follow&style=social)](https://twitter.com/dependencytrack)
 [![Downloads](https://img.shields.io/github/downloads/DependencyTrack/dependency-track/total.svg)](https://github.com/DependencyTrack/dependency-track/releases)
 [![Latest](https://img.shields.io/github/release/DependencyTrack/dependency-track.svg)](https://github.com/DependencyTrack/dependency-track/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/owasp/dependency-track.svg)](https://hub.docker.com/r/owasp/dependency-track/)

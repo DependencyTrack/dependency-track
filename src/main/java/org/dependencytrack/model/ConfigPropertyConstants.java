@@ -38,7 +38,7 @@ public enum ConfigPropertyConstants {
     FORTIFY_SSC_ENABLED("vulnerabilityManagement", "fortify.ssc.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Fortify SSC integration"),
     FORTIFY_SSC_SYNC_CADENCE("vulnerabilityManagement", "fortify.ssc.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Fortify SSC"),
     FORTIFY_SSC_URL("vulnerabilityManagement", "fortify.ssc.url", null, PropertyType.URL, "Base URL to Fortify SSC"),
-    FORTIFY_SSC_USERNAME("vulnerabilityManagement", "fortify.ssc.username", null, PropertyType.ENCRYPTEDSTRING, "The username to authenticate to Fortify SSC with"),
+    FORTIFY_SSC_USERNAME("vulnerabilityManagement", "fortify.ssc.username", null, PropertyType.STRING, "The username to authenticate to Fortify SSC with"),
     FORTIFY_SSC_PASSWORD("vulnerabilityManagement", "fortify.ssc.password", null, PropertyType.ENCRYPTEDSTRING, "The password to use when authenticating to Fortify SSC");
 
     private String groupName;

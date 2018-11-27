@@ -6,6 +6,7 @@
   "name": "Imlib2 License",
   "licenseId": "Imlib2",
   "seeAlso": [
+    "http://trac.enlightenment.org/e/browser/trunk/imlib2/COPYING",
     "https://git.enlightenment.org/legacy/imlib2.git/tree/COPYING"
   ],
   "isOsiApproved": false

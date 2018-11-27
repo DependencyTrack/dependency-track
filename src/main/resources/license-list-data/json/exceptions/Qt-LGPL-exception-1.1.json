@@ -1,0 +1,10 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "The Qt Company Qt LGPL Exception version 1.1\n\nAs an additional permission to the GNU Lesser General Public License version 2.1, the object code form of a \"work that uses the Library\" may incorporate material from a header file that is part of the Library. You may distribute such object code under terms of your choice, provided that:\n\n   (i) the header files of the Library have not been modified; and\n\n   (ii) the incorporated material is limited to numerical parameters, data structure layouts, accessors, macros, inline functions and templates; and\n\n   (iii) you comply with the terms of Section 6 of the GNU Lesser General Public License version 2.1.\n\nMoreover, you may apply this exception to a modified version of the Library, provided that such modification does not involve copying material from the Library into the modified Library\u0027s header files unless such material is limited to\n\n   (i) numerical parameters;\n\n   (ii) data structure layouts;\n\n   (iii) accessors; and\n\n   (iv) small macros, templates and inline functions of five lines or less in length.\n\nFurthermore, you are not required to apply this additional permission to a modified version of the Library.",
+  "name": "Qt LGPL exception 1.1",
+  "licenseComments": "Used with the LGPL-2.1, which is mentioned explicitly in the exception text.",
+  "seeAlso": [
+    "http://code.qt.io/cgit/qt/qtbase.git/tree/LGPL_EXCEPTION.txt"
+  ],
+  "licenseExceptionId": "Qt-LGPL-exception-1.1"
+}

@@ -93,8 +93,12 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty enabledProperty = qm.getConfigProperty(
                     enabledConstraint.getGroupName(), enabledConstraint.getPropertyName());
-            boolean isEnabled = BooleanUtil.valueOf(enabledProperty.getPropertyValue());
-            if (!isEnabled) {
+            if (enabledProperty != null && enabledProperty.getPropertyValue() != null) {
+                boolean isEnabled = BooleanUtil.valueOf(enabledProperty.getPropertyValue());
+                if (!isEnabled) {
+                    return;
+                }
+            } else {
                 return;
             }
             final ConfigProperty property = qm.getConfigProperty(constraint.getGroupName(), constraint.getPropertyName());

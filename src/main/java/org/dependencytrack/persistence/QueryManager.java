@@ -469,6 +469,20 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a ProjectProperty with the specified groupName and propertyName.
+     * @param project the project the property belongs to
+     * @param groupName the group name of the config property
+     * @param propertyName the name of the property
+     * @return a ProjectProperty object
+     */
+    @SuppressWarnings("unchecked")
+    public ProjectProperty getProjectProperty(final Project project, final String groupName, final String propertyName) {
+        Query query = this.pm.newQuery(ProjectProperty.class, "project == :project && groupName == :groupName && propertyName == :propertyName");
+        List<ProjectProperty> result = (List)query.execute(project, groupName, propertyName);
+        return result.size() == 0 ? null : result.get(0);
+    }
+
+    /**
      * Creates a new Scan.
      * @param project the Project to create a Scan for
      * @param executed the Date when the scan was executed

@@ -77,7 +77,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);
 
         // Configurable tasks
-        scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CYCLE, new FortifySscUploadEvent());
+        scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEvent());
     }
 
     /**

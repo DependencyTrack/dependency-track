@@ -18,13 +18,21 @@
 package org.dependencytrack.tasks;
 
 import alpine.event.LdapSyncEvent;
+import alpine.event.framework.Event;
+import alpine.model.ConfigProperty;
 import alpine.tasks.AlpineTaskScheduler;
+import alpine.util.BooleanUtil;
+import org.dependencytrack.event.FortifySscUploadEvent;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.persistence.QueryManager;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
 /**
  * A Singleton implementation of {@link AlpineTaskScheduler} that configures scheduled and repeatable tasks.
@@ -67,6 +75,9 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 hour (3600000) delay
         scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);
+
+        // Configurable tasks
+        scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CYCLE, new FortifySscUploadEvent());
     }
 
     /**
@@ -77,4 +88,20 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         return INSTANCE;
     }
 
+    private void scheduleConfigurableTask(long initialDelay, ConfigPropertyConstants enabledConstraint,
+                                          ConfigPropertyConstants constraint, Event event) {
+        try (QueryManager qm = new QueryManager()) {
+            final ConfigProperty enabledProperty = qm.getConfigProperty(
+                    enabledConstraint.getGroupName(), enabledConstraint.getPropertyName());
+            boolean isEnabled = BooleanUtil.valueOf(enabledProperty.getPropertyValue());
+            if (!isEnabled) {
+                return;
+            }
+            final ConfigProperty property = qm.getConfigProperty(constraint.getGroupName(), constraint.getPropertyName());
+            if (property != null && property.getPropertyValue() != null) {
+                final Integer minutes = Integer.valueOf(property.getPropertyValue());
+                scheduleEvent(event, initialDelay, minutes * 60 * 1000);
+            }
+        }
+    }
 }

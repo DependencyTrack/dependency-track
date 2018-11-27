@@ -39,7 +39,10 @@ public enum ConfigPropertyConstants {
     FORTIFY_SSC_SYNC_CADENCE("vulnerabilityManagement", "fortify.ssc.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Fortify SSC"),
     FORTIFY_SSC_URL("vulnerabilityManagement", "fortify.ssc.url", null, PropertyType.URL, "Base URL to Fortify SSC"),
     FORTIFY_SSC_USERNAME("vulnerabilityManagement", "fortify.ssc.username", null, PropertyType.STRING, "The username to authenticate to Fortify SSC with"),
-    FORTIFY_SSC_PASSWORD("vulnerabilityManagement", "fortify.ssc.password", null, PropertyType.ENCRYPTEDSTRING, "The password to use when authenticating to Fortify SSC");
+    FORTIFY_SSC_PASSWORD("vulnerabilityManagement", "fortify.ssc.password", null, PropertyType.ENCRYPTEDSTRING, "The password to use when authenticating to Fortify SSC"),
+    KENNA_ENABLED("vulnerabilityManagement", "kenna.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Kenna Security integration"),
+    KENNA_SYNC_CADENCE("vulnerabilityManagement", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
+    KENNA_TOKEN("vulnerabilityManagement", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security");
 
     private String groupName;
     private String propertyName;

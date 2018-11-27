@@ -35,14 +35,14 @@ public enum ConfigPropertyConstants {
     SCANNER_OSSINDEX_ENABLED("scanner", "ossindex.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Sonatype OSS Index"),
     SCANNER_OSSINDEX_API_USERNAME("scanner", "ossindex.api.username", null, PropertyType.STRING, "The API username used for OSS Index authentication"),
     SCANNER_OSSINDEX_API_TOKEN("scanner", "ossindex.api.token", null, PropertyType.ENCRYPTEDSTRING, "The API token used for OSS Index authentication"),
-    FORTIFY_SSC_ENABLED("vulnerabilityManagement", "fortify.ssc.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Fortify SSC integration"),
-    FORTIFY_SSC_SYNC_CADENCE("vulnerabilityManagement", "fortify.ssc.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Fortify SSC"),
-    FORTIFY_SSC_URL("vulnerabilityManagement", "fortify.ssc.url", null, PropertyType.URL, "Base URL to Fortify SSC"),
-    FORTIFY_SSC_USERNAME("vulnerabilityManagement", "fortify.ssc.username", null, PropertyType.STRING, "The username to authenticate to Fortify SSC with"),
-    FORTIFY_SSC_PASSWORD("vulnerabilityManagement", "fortify.ssc.password", null, PropertyType.ENCRYPTEDSTRING, "The password to use when authenticating to Fortify SSC"),
-    KENNA_ENABLED("vulnerabilityManagement", "kenna.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Kenna Security integration"),
-    KENNA_SYNC_CADENCE("vulnerabilityManagement", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
-    KENNA_TOKEN("vulnerabilityManagement", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security");
+    FORTIFY_SSC_ENABLED("integrations", "fortify.ssc.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Fortify SSC integration"),
+    FORTIFY_SSC_SYNC_CADENCE("integrations", "fortify.ssc.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Fortify SSC"),
+    FORTIFY_SSC_URL("integrations", "fortify.ssc.url", null, PropertyType.URL, "Base URL to Fortify SSC"),
+    FORTIFY_SSC_USERNAME("integrations", "fortify.ssc.username", null, PropertyType.STRING, "The username to authenticate to Fortify SSC with"),
+    FORTIFY_SSC_PASSWORD("integrations", "fortify.ssc.password", null, PropertyType.ENCRYPTEDSTRING, "The password to use when authenticating to Fortify SSC"),
+    KENNA_ENABLED("integrations", "kenna.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Kenna Security integration"),
+    KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
+    KENNA_TOKEN("integrations", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security");
 
     private String groupName;
     private String propertyName;

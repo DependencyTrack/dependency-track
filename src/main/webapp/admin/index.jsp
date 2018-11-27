@@ -87,6 +87,23 @@
                         </div>
                     </div>
                 </div>
+                <div class="panel panel-default require-system-configuration">
+                    <div class="panel-heading admin-accordion" role="tab" id="headingIntegrations">
+                        <div class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseIntegrations" aria-expanded="false" aria-controls="collapseIntegrations">
+                                Integrations
+                            </a>
+                        </div>
+                    </div>
+                    <div id="collapseIntegrations" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingIntegrations">
+                        <div class="list-group">
+                            <a data-toggle="tab" class="list-group-item" href="#integrationsFortifySscTab">Fortify SSC</a>
+                            <a data-toggle="tab" class="list-group-item" href="#integrationsKennaSecurityTab">Kenna Security</a>
+                            <a data-toggle="tab" class="list-group-item" href="#integrationsThreadFixTab">ThreadFix</a>
+                        </div>
+                    </div>
+                </div>
+
                 <% if(AUTHN_ENABLED) { %>
                 <div class="panel panel-default require-access-management">
                     <div class="panel-heading admin-accordion" role="tab" id="headingAccessManagement">
@@ -361,6 +378,53 @@
                                 </tr>
                                 </thead>
                             </table>
+                        </div>
+                        <div class="tab-pane admin-form-content" id="integrationsFortifySscTab" data-admin-title="Integrations">
+                            <h3 class="admin-section-title">Fortify SSC Configuration</h3>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="integrationsSscEnableInput" data-group-name="integrations" data-property-name="fortify.ssc.enabled"> Enable Fortify SSC Integration</label>
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="integrationsSscSyncCadenceInput">Synchronization Cadence (in minutes)</label>
+                                <input type="number" min="10" max="99999" name="Base URL" class="form-control required" id="integrationsSscSyncCadenceInput" data-group-name="integrations" data-property-name="fortify.ssc.sync.cadence">
+                                <br/>Restarting Dependency-Track is required for cadence changes to take effect
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="integrationsSscBaseUrlInput">Fortify SSC URL</label>
+                                <input type="text" class="form-control required" id="integrationsSscBaseUrlInput" data-group-name="integrations" data-property-name="fortify.ssc.url">
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="integrationsSscUsernameInput">Username</label>
+                                <input type="text" class="form-control required" id="integrationsSscUsernameInput" data-group-name="integrations" data-property-name="fortify.ssc.username">
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="integrationsSscPasswordInput">Password</label>
+                                <input type="password" class="form-control required" id="integrationsSscPasswordInput" data-group-name="integrations" data-property-name="fortify.ssc.password">
+                            </div>
+                            <button type="button" class="btn btn-primary btn-config-property" id="integrationsFortifyUpdateButton" data-group-name="integrations">Update</button>
+                        </div>
+                        <div class="tab-pane admin-form-content" id="integrationsKennaSecurityTab" data-admin-title="Integrations">
+                            <h3 class="admin-section-title">Kenna Security Configuration</h3>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="integrationsKennaSecurityEnableInput" data-group-name="integrations" data-property-name="kenna.enabled"> Enable Kenna Security Integration</label>
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="integrationsKennaSecuritySyncCadenceInput">Synchronization Cadence (in minutes)</label>
+                                <input type="number" min="10" max="99999" name="Base URL" class="form-control required" id="integrationsKennaSecuritySyncCadenceInput" data-group-name="integrations" data-property-name="kenna.sync.cadence">
+                                <br/>Restarting Dependency-Track is required for cadence changes to take effect
+                            </div>
+                            <div class="form-group">
+                                <label class="required" for="integrationsKennaSecurityTokenInput">Token</label>
+                                <input type="password" class="form-control required" id="integrationsKennaSecurityTokenInput" data-group-name="integrations" data-property-name="kenna.token">
+                            </div>
+                            <button type="button" class="btn btn-primary btn-config-property" id="integrationsKennaSecurityUpdateButton" data-group-name="integrations">Update</button>
+                        </div>
+                        <div class="tab-pane admin-form-content" id="integrationsThreadFixTab" data-admin-title="Integrations">
+                            <h3 class="admin-section-title">ThreadFix Configuration</h3>
+                            <p>Support for Dependency-Track is included with ThreadFix. To configure ThreadFix
+                               integration, refer to the official ThreadFix documentation or the Dependency-Track
+                               documentation on configuring <a href="https://docs.dependencytrack.org/integrations/threadfix/">ThreadFix integration</a>.
+                            </p>
                         </div>
                         <div class="tab-pane" id="teamsTab" data-admin-title="Teams">
                             <div id="teamsToolbar">

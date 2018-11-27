@@ -22,7 +22,18 @@ import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
-import org.dependencytrack.tasks.*;
+import org.dependencytrack.tasks.BomUploadProcessingTask;
+import org.dependencytrack.tasks.CloneProjectTask;
+import org.dependencytrack.tasks.FortifySscUploadTask;
+import org.dependencytrack.tasks.IndexTask;
+import org.dependencytrack.tasks.KennaSecurityUploadTask;
+import org.dependencytrack.tasks.MetricsUpdateTask;
+import org.dependencytrack.tasks.NistMirrorTask;
+import org.dependencytrack.tasks.NpmAdvisoryMirrorTask;
+import org.dependencytrack.tasks.ScanUploadProcessingTask;
+import org.dependencytrack.tasks.TaskScheduler;
+import org.dependencytrack.tasks.VulnDbSyncTask;
+import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
 import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
 import org.dependencytrack.tasks.scanners.DependencyCheckTask;
 import org.dependencytrack.tasks.scanners.NpmAuditAnalysisTask;
@@ -63,6 +74,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE.subscribe(CloneProjectEvent.class, CloneProjectTask.class);
         EVENT_SERVICE.subscribe(FortifySscUploadEvent.class, FortifySscUploadTask.class);
+        EVENT_SERVICE.subscribe(KennaSecurityUploadEvent.class, KennaSecurityUploadTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ST.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
@@ -89,6 +101,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(MetricsUpdateTask.class);
         EVENT_SERVICE.unsubscribe(CloneProjectTask.class);
         EVENT_SERVICE.unsubscribe(FortifySscUploadTask.class);
+        EVENT_SERVICE.unsubscribe(KennaSecurityUploadTask.class);
         EVENT_SERVICE.shutdown();
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);

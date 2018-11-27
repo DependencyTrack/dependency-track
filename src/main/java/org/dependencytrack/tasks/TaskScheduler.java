@@ -22,13 +22,7 @@ import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
 import alpine.tasks.AlpineTaskScheduler;
 import alpine.util.BooleanUtil;
-import org.dependencytrack.event.FortifySscUploadEvent;
-import org.dependencytrack.event.MetricsUpdateEvent;
-import org.dependencytrack.event.NistMirrorEvent;
-import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
-import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnDbSyncEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
+import org.dependencytrack.event.*;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -78,6 +72,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
         // Configurable tasks
         scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEvent());
+        scheduleConfigurableTask(300000, KENNA_ENABLED, KENNA_SYNC_CADENCE, new KennaSecurityUploadEvent());
     }
 
     /**

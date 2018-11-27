@@ -98,7 +98,7 @@ $(document).ready(function () {
     $rest.getPortfolioCurrentMetrics(function(metrics) {
         updateStats(metrics);
     });
-    $rest.getLicenses(populateLicenseData);
+    $rest.getLicensesConcise(populateLicenseData);
 
     // Listen for if the button to create a project is clicked
     $("#componentCreateButton").on("click", function() {

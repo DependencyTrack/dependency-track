@@ -743,6 +743,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getLicenses() {
         final Query query = pm.newQuery(License.class);
+        query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
@@ -755,6 +756,21 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a concise List of all Licenses.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of License objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<License> getAllLicensesConcise() {
+        final Query query = pm.newQuery(License.class);
+        query.getFetchPlan().addGroup(License.FetchGroup.CONCISE.name());
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        return (List<License>)query.execute();
+    }
+
+    /**
      * Returns a License object from the specified SPDX license ID.
      * @param licenseId the SPDX license ID to retrieve
      * @return a License object, or null if not found
@@ -762,6 +778,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public License getLicense(String licenseId) {
         final Query query = pm.newQuery(License.class, "licenseId == :licenseId");
+        query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
         final List<License> result = (List<License>) query.execute(licenseId);
         return result.size() == 0 ? null : result.get(0);
     }

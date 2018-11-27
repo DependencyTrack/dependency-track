@@ -55,7 +55,7 @@ function populateComponentData(data) {
 
 
     // Retrieve the list of licenses and determine which one should be selected
-    $rest.getLicenses(function (licenseData) {
+    $rest.getLicensesConcise(function (licenseData) {
         let select = $("#componentLicenseSelect");
         $.each(licenseData, function() {
             if (data.resolvedLicense && data.resolvedLicense.licenseId && this.licenseId === data.resolvedLicense.licenseId) {

@@ -42,6 +42,7 @@ const URL_PERMISSION = "api/v1/permission";
 const URL_PROJECT = "api/v1/project";
 const URL_FINDING = "api/v1/finding";
 const URL_LICENSE = "api/v1/license";
+const URL_LICENSE_CONCISE = "api/v1/license/concise";
 const URL_CWE = "api/v1/cwe";
 const URL_COMPONENT = "api/v1/component";
 const URL_DEPENDENCY = "api/v1/dependency";
@@ -726,6 +727,30 @@ $rest.removeDependency = function removeDependency(projectUuid, componentUuids, 
 $rest.getLicenses = function getLicenses(successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_LICENSE + "?offset=0&limit=1000",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_GET,
+        statusCode: {
+            200: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function(data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Service called to retrieve all licenses (concise listing)
+ */
+$rest.getLicensesConcise = function getLicensesConcise(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_LICENSE_CONCISE,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,
@@ -2229,7 +2254,7 @@ $.ajaxSetup({
             (xhr.responseJSON) ? console.log(xhr.responseJSON) : console.log(xhr.responseText);
         }
     },
-    timeout: 10000,
+    timeout: 60000,
     statusCode: {
         /**
          * @method $ jQuery selector

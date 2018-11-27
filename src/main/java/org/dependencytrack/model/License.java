@@ -26,14 +26,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Index;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Serialized;
-import javax.jdo.annotations.Unique;
+
+import javax.jdo.annotations.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -47,9 +41,36 @@ import java.util.UUID;
  * @since 3.0.0
  */
 @PersistenceCapable
+@FetchGroups({
+        @FetchGroup(name = "ALL", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "text"),
+                @Persistent(name = "template"),
+                @Persistent(name = "header"),
+                @Persistent(name = "comment"),
+                @Persistent(name = "licenseId"),
+                @Persistent(name = "osiApproved"),
+                @Persistent(name = "deprecatedLicenseId"),
+                @Persistent(name = "seeAlso"),
+                @Persistent(name = "uuid"),
+        }),
+        @FetchGroup(name = "CONCISE", members = {
+                @Persistent(name = "name"),
+                @Persistent(name = "licenseId"),
+                @Persistent(name = "osiApproved"),
+        })
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class License implements Serializable {
+
+    /**
+     * Defines names of JDO fetch groups for this class.
+     */
+    public enum FetchGroup {
+        ALL,
+        CONCISE
+    }
 
     private static final long serialVersionUID = -1707920279688859358L;
 
@@ -61,7 +82,7 @@ public class License implements Serializable {
     /**
      * The String representation of the license name (i.e. Apache License 2.0).
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "NAME", allowsNull = "false")
     @Index(name = "LICENSE_NAME_IDX")
     @JsonProperty(value = "name")
@@ -73,7 +94,7 @@ public class License implements Serializable {
     /**
      * The contents of the license.
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "false")
     @Column(name = "TEXT", jdbcType = "CLOB")
     @JsonProperty(value = "licenseText")
     @JsonAlias(value = "licenseExceptionText")
@@ -83,7 +104,7 @@ public class License implements Serializable {
     /**
      * The standard license template typically used for the creation of the license text.
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "false")
     @Column(name = "TEMPLATE", jdbcType = "CLOB")
     @JsonProperty(value = "standardLicenseTemplate")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -92,7 +113,7 @@ public class License implements Serializable {
     /**
      * The standard license header typically added to the top of source code.
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "false")
     @Column(name = "HEADER", jdbcType = "CLOB")
     @JsonProperty(value = "standardLicenseHeader")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -101,7 +122,7 @@ public class License implements Serializable {
     /**
      * A comment about the license. Typically includes release date, etc.
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "false")
     @Column(name = "COMMENT", jdbcType = "CLOB")
     @JsonProperty(value = "licenseComments")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -110,7 +131,7 @@ public class License implements Serializable {
     /**
      * The SPDX defined licenseId (i.e. Apache-2.0).
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "LICENSEID")
     @Index(name = "LICENSE_LICENSEID_IDX", unique = "true")
     @JsonProperty(value = "licenseId")
@@ -123,7 +144,7 @@ public class License implements Serializable {
     /**
      * Identifies if the license is approved by the OSI.
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "ISOSIAPPROVED")
     @JsonProperty(value = "isOsiApproved")
     private boolean osiApproved;
@@ -131,7 +152,7 @@ public class License implements Serializable {
     /**
      * Identifies if the licenseId has been deprecated by SPDX
      */
-    @Persistent
+    @Persistent(defaultFetchGroup = "false")
     @Column(name = "ISDEPRECATED")
     @JsonProperty(value = "isDeprecatedLicenseId")
     private boolean deprecatedLicenseId;
@@ -139,14 +160,14 @@ public class License implements Serializable {
     /**
      * The seeAlso field - may contain URLs to the original license info.
      */
-    @Persistent(defaultFetchGroup = "true")
+    @Persistent(defaultFetchGroup = "false")
     @Serialized
     @Column(name = "SEEALSO", jdbcType = "LONGVARBINARY")
     @JsonProperty(value = "seeAlso")
     @JsonDeserialize(using = TrimmedStringArrayDeserializer.class)
     private String[] seeAlso;
 
-    @Persistent(customValueStrategy = "uuid")
+    @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "LICENSE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull

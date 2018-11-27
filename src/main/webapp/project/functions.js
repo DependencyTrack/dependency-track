@@ -418,7 +418,7 @@ $(document).ready(function () {
     }
 
     $rest.getProject(uuid, populateProjectData);
-    $rest.getLicenses(populateLicenseData);
+    $rest.getLicensesConcise(populateLicenseData);
     $rest.getProjectCurrentMetrics(uuid, populateMetrics);
 
     // Listen for when the button to add a dependency from a new component is clicked

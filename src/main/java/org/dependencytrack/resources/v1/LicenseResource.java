@@ -34,6 +34,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * JAX-RS resources for processing licenses.
@@ -48,7 +49,7 @@ public class LicenseResource extends AlpineResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns a list of all licenses",
+            value = "Returns a list of all licenses with complete metadata for each license",
             response = License.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of licenses")
@@ -60,6 +61,25 @@ public class LicenseResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getLicenses();
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @GET
+    @Path("/concise")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a concise listing of all licenses",
+            response = License.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of licenses")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    public Response getLicenseListing() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final List<License> result = qm.getAllLicensesConcise();
+            return Response.ok(result).header(TOTAL_COUNT_HEADER, result.size()).build();
         }
     }
 

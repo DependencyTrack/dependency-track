@@ -17,14 +17,17 @@
  */
 package org.dependencytrack.util;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class DateUtil {
 
-    private DateUtil() { }
+    private DateUtil() {
+    }
 
     /**
      * Convenience method that parses a date in yyyyMMdd format and
@@ -62,7 +65,7 @@ public class DateUtil {
      * Convenience method that returns the difference (in days) between
      * two dates.
      * @param start the first date
-     * @param end the second date
+     * @param end   the second date
      * @return the difference in days
      * @since 3.0.0
      */
@@ -71,4 +74,17 @@ public class DateUtil {
         return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
     }
 
+
+    /**
+     * Formats a Date object into ISO 8601 format.
+     * @param date the Date object to convert
+     * @return a String representation of an ISO 8601 date
+     * @since 3.4.0
+     */
+    public static String toISO8601(Date date) {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        df.setTimeZone(tz);
+        return df.format(date);
+    }
 }

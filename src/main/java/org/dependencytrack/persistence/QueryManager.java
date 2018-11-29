@@ -817,6 +817,7 @@ public class QueryManager extends AlpineQueryManager {
             license.setHeader(transientLicense.getHeader());
             license.setTemplate(transientLicense.getTemplate());
             license.setOsiApproved(transientLicense.isOsiApproved());
+            license.setFsfLibre(transientLicense.isFsfLibre());
             license.setDeprecatedLicenseId(transientLicense.isDeprecatedLicenseId());
             license.setComment(transientLicense.getComment());
             license.setSeeAlso(transientLicense.getSeeAlso());

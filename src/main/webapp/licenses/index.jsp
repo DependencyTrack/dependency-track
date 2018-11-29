@@ -121,6 +121,7 @@
                     <th data-align="left" data-field="name" data-sortable="true">Name</th>
                     <th data-align="left" data-field="licensehref" data-sort-name="licenseId" data-sortable="true">SPDX License ID</th>
                     <th data-align="center" data-field="osiApprovedLabel" data-class="tight">OSI Approved</th>
+                    <th data-align="center" data-field="fsfLibreLabel" data-class="tight">FSF Libre</th>
                 </tr>
                 </thead>
             </table>

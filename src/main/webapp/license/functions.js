@@ -26,6 +26,7 @@ function populateLicenseData(data) {
         standardLicenseHeader: ".headerText",
         licenseId: ".licenseId",
         isOsiApproved: ".isOsiApproved",
+        isFsfLibre: ".isFsfLibre",
         isDeprecatedLicenseId: ".isDeprecatedLicenseId",
         licenseComments: ".licenseComments",
         seeAlso: {

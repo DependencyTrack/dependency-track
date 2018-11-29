@@ -30,6 +30,12 @@ function formatLicensesTable(res) {
             res[i].osiApprovedLabel = '';
         }
 
+        if (res[i].isFsfLibre === true) {
+            res[i].fsfLibreLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
+        } else {
+            res[i].fsfLibreLabel = '';
+        }
+
         let licenseurl = "../license/?licenseId=" + res[i].licenseId;
         res[i].licensehref = "<a href=\"" + licenseurl + "\">" + res[i].licenseId + "</a>";
     }

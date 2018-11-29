@@ -58,6 +58,7 @@ import java.util.UUID;
                 @Persistent(name = "comment"),
                 @Persistent(name = "licenseId"),
                 @Persistent(name = "osiApproved"),
+                @Persistent(name = "fsfLibre"),
                 @Persistent(name = "deprecatedLicenseId"),
                 @Persistent(name = "seeAlso"),
                 @Persistent(name = "uuid"),
@@ -66,6 +67,7 @@ import java.util.UUID;
                 @Persistent(name = "name"),
                 @Persistent(name = "licenseId"),
                 @Persistent(name = "osiApproved"),
+                @Persistent(name = "fsfLibre"),
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -158,6 +160,14 @@ public class License implements Serializable {
     private boolean osiApproved;
 
     /**
+     * Identifies if the license is FSF Libre.
+     */
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "FSFLIBRE", allowsNull = "true") // New column, must allow nulls on existing databases
+    @JsonProperty(value = "isFsfLibre")
+    private boolean fsfLibre;
+
+    /**
      * Identifies if the licenseId has been deprecated by SPDX
      */
     @Persistent(defaultFetchGroup = "false")
@@ -243,6 +253,14 @@ public class License implements Serializable {
 
     public void setOsiApproved(boolean osiApproved) {
         this.osiApproved = osiApproved;
+    }
+
+    public boolean isFsfLibre() {
+        return fsfLibre;
+    }
+
+    public void setFsfLibre(boolean fsfLibre) {
+        this.fsfLibre = fsfLibre;
     }
 
     public boolean isDeprecatedLicenseId() {

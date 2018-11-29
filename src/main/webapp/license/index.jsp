@@ -45,6 +45,10 @@
                                     <td class="isOsiApproved"></td>
                                 </tr>
                                 <tr>
+                                    <td>FSF Libre:</td>
+                                    <td class="isFsfLibre"></td>
+                                </tr>
+                                <tr>
                                     <td>Deprecated:</td>
                                     <td class="isDeprecatedLicenseId"></td>
                                 </tr>

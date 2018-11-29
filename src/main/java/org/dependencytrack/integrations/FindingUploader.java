@@ -20,7 +20,7 @@ package org.dependencytrack.integrations;
 import java.io.InputStream;
 import java.util.UUID;
 
-public interface FindingsUploader {
+public interface FindingUploader {
 
     boolean isEnabled();
 

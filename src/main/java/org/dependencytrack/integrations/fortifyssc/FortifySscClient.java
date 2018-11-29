@@ -66,7 +66,7 @@ public class FortifySscClient {
         final HttpResponse<String> response = Unirest.post(baseURL + "/upload/resultFileUpload.html")
                 .header("accept", "application/xml")
                 .queryString(params)
-                .field("file", findingsJson, "findings.json")
+                .field("files[]", findingsJson, "findings.json")
                 .asString();
         if (response.getStatus() != 200) {
             LOGGER.warn("Fortify SSC Client did not receive expected response while attempting to upload "

@@ -20,7 +20,7 @@ package org.dependencytrack.integrations.fortifyssc;
 import alpine.crypto.DataEncryption;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
-import org.dependencytrack.integrations.FindingsUploader;
+import org.dependencytrack.integrations.FindingUploader;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.persistence.QueryManager;
@@ -30,7 +30,7 @@ import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class FortifySscUploader implements FindingsUploader {
+public class FortifySscUploader implements FindingUploader {
 
     private static final Logger LOGGER = Logger.getLogger(FortifySscUploader.class);
     private static final String APPID_PROPERTY = "fortify.ssc.applicationId";

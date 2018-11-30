@@ -17,15 +17,18 @@
  */
 package org.dependencytrack.integrations;
 
-import java.io.InputStream;
-import java.util.UUID;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.Project;
+import java.util.List;
 
 public interface FindingUploader {
 
     boolean isEnabled();
 
-    boolean isProjectConfigured(UUID projectUuid);
+    boolean isProjectConfigured(Project project);
 
-    void upload(UUID projectUuid, InputStream findingsJson);
+    Object process(Project project, List<Finding> findings);
+
+    void upload(Project project, Object payload);
 
 }

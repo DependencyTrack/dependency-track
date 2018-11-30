@@ -20,13 +20,18 @@ package org.dependencytrack.integrations.fortifyssc;
 import alpine.crypto.DataEncryption;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
+import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.integrations.FindingUploader;
+import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
+
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.UUID;
+import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
@@ -42,12 +47,11 @@ public class FortifySscUploader implements FindingUploader {
                 return true;
             }
         }
-            return false;
+        return false;
     }
 
-    public boolean isProjectConfigured(UUID projectUuid) {
+    public boolean isProjectConfigured(Project project) {
         try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
             if (applicationId != null && applicationId.getPropertyValue() != null) {
                 return true;
@@ -56,12 +60,16 @@ public class FortifySscUploader implements FindingUploader {
         return false;
     }
 
-    public void upload(UUID projectUuid, InputStream findingsJson) {
+    public InputStream process(Project project, List<Finding> findings) {
+        final JSONObject fpf = new FindingPackagingFormat(project.getUuid(), findings).getDocument();
+        return new ByteArrayInputStream(fpf.toString(2).getBytes());
+    }
+
+    public void upload(Project project, Object payload) {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
             final ConfigProperty username = qm.getConfigProperty(FORTIFY_SSC_USERNAME.getGroupName(), FORTIFY_SSC_USERNAME.getPropertyName());
             final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
             try {
                 final FortifySscClient client = new FortifySscClient(new URL(sscUrl.getPropertyValue()));
@@ -69,7 +77,7 @@ public class FortifySscUploader implements FindingUploader {
                         DataEncryption.decryptAsString(username.getPropertyValue()),
                         DataEncryption.decryptAsString(password.getPropertyValue()));
                 if (token != null) {
-                    client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), findingsJson);
+                    client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), (InputStream)payload);
                 }
             } catch (Exception e) {
                 LOGGER.error("An error occurred attempting to upload findings to Fortify Software Security Center", e);

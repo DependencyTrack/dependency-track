@@ -17,7 +17,7 @@
  */
 package org.dependencytrack.event;
 
-import org.dependencytrack.model.Project;
+import java.util.UUID;
 
 public class FortifySscUploadEvent extends VulnerabilityManagementUploadEvent {
 
@@ -25,7 +25,7 @@ public class FortifySscUploadEvent extends VulnerabilityManagementUploadEvent {
         super();
     }
 
-    public FortifySscUploadEvent(Project project) {
-        super(project);
+    public FortifySscUploadEvent(UUID projectUuid) {
+        super(projectUuid);
     }
 }

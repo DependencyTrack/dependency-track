@@ -35,7 +35,7 @@ FPF's are json files and have the following sections:
     "baseUrl": "http://dtrack.example.org"
   },
   "project" : {
-    "uuid": "122a83b7-ab3b-49fe-a39e-ac9698385bb2",
+    "uuid": "ca4f2da9-0fad-4a13-92d7-f627f3168a56",
     "name": "Acme Example",
     "version": "1.0",
     "description": "A sample application"

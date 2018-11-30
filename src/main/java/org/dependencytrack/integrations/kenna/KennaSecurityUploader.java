@@ -20,16 +20,17 @@ package org.dependencytrack.integrations.kenna;
 import alpine.crypto.DataEncryption;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
-import org.dependencytrack.integrations.FindingsUploader;
+import org.dependencytrack.integrations.FindingUploader;
+import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.persistence.QueryManager;
 import java.io.InputStream;
-import java.util.UUID;
+import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class KennaSecurityUploader implements FindingsUploader {
+public class KennaSecurityUploader implements FindingUploader {
 
     private static final Logger LOGGER = Logger.getLogger(KennaSecurityUploader.class);
     private static final String ASSET_ID_PROPERTY = "kenna.asset.id";
@@ -45,9 +46,8 @@ public class KennaSecurityUploader implements FindingsUploader {
         return false;
     }
 
-    public boolean isProjectConfigured(UUID projectUuid) {
+    public boolean isProjectConfigured(Project project) {
         try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final ProjectProperty applicationId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_ID_PROPERTY);
             if (applicationId != null && applicationId.getPropertyValue() != null) {
                 return true;
@@ -56,10 +56,13 @@ public class KennaSecurityUploader implements FindingsUploader {
         return false;
     }
 
-    public void upload(UUID projectUuid, InputStream findingsJson) {
+    public InputStream process(Project project, List<Finding> findings) {
+        return null; // TODO
+    }
+
+    public void upload(Project project, Object payload) {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final ProjectProperty assetId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_ID_PROPERTY);
             try {
                 final String token = DataEncryption.decryptAsString(tokenProperty.getPropertyValue());

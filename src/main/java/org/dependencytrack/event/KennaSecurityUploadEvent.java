@@ -17,7 +17,7 @@
  */
 package org.dependencytrack.event;
 
-import org.dependencytrack.model.Project;
+import java.util.UUID;
 
 public class KennaSecurityUploadEvent extends VulnerabilityManagementUploadEvent {
 
@@ -25,7 +25,7 @@ public class KennaSecurityUploadEvent extends VulnerabilityManagementUploadEvent
         super();
     }
 
-    public KennaSecurityUploadEvent(Project project) {
-        super(project);
+    public KennaSecurityUploadEvent(UUID projectUuid) {
+        super(projectUuid);
     }
 }

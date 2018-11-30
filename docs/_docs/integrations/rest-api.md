@@ -2,7 +2,7 @@
 title: REST API
 category: Integrations
 chapter: 5
-order: 5
+order: 7
 ---
 
 Dependency-Track is built using a *thin server architecture* and an *API-first design*. API's are simply at the heart

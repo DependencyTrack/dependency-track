@@ -456,7 +456,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return the created ProjectProperty object
      */
     public ProjectProperty createProjectProperty(final Project project, final String groupName, final String propertyName,
-                                                 final String propertyValue, final ConfigProperty.PropertyType propertyType,
+                                                 final String propertyValue, final ProjectProperty.PropertyType propertyType,
                                                  final String description) {
         final ProjectProperty property = new ProjectProperty();
         property.setProject(project);

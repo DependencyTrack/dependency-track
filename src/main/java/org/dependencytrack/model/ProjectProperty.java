@@ -17,6 +17,7 @@
  */
 package org.dependencytrack.model;
 
+import alpine.model.IConfigProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
@@ -39,20 +40,9 @@ import java.io.Serializable;
 @PersistenceCapable(table = "PROJECT_PROPERTY")
 @Unique(name="PROJECT_PROPERTY_KEYS_IDX", members={"project", "groupName", "propertyName"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectProperty implements Serializable {
+public class ProjectProperty implements IConfigProperty, Serializable {
 
     private static final long serialVersionUID = 7394616773695958262L;
-
-    public enum PropertyType {
-        BOOLEAN,
-        INTEGER,
-        NUMBER,
-        STRING,
-        ENCRYPTEDSTRING,
-        TIMESTAMP,
-        URL,
-        UUID
-    }
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -149,6 +139,5 @@ public class ProjectProperty implements Serializable {
     public void setDescription(String description) {
         this.description = description;
     }
-
 
 }

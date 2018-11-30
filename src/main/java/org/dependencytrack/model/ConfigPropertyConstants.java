@@ -17,7 +17,7 @@
  */
 package org.dependencytrack.model;
 
-import alpine.model.ConfigProperty.PropertyType;
+import alpine.model.IConfigProperty.PropertyType;
 
 public enum ConfigPropertyConstants {
 

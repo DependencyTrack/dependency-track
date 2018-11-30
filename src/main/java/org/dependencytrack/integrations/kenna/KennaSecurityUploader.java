@@ -27,6 +27,7 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.persistence.QueryManager;
 import java.io.InputStream;
 import java.util.List;
+import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
@@ -39,15 +40,16 @@ public class KennaSecurityUploader implements FindingUploader {
     public boolean isEnabled() {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(KENNA_ENABLED.getGroupName(), KENNA_ENABLED.getPropertyName());
-            if (enabled != null && !Boolean.valueOf(enabled.getPropertyValue())) {
+            if (enabled != null && Boolean.valueOf(enabled.getPropertyValue())) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean isProjectConfigured(Project project) {
+    public boolean isProjectConfigured(UUID projectUuid) {
         try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final ProjectProperty applicationId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_ID_PROPERTY);
             if (applicationId != null && applicationId.getPropertyValue() != null) {
                 return true;
@@ -56,12 +58,13 @@ public class KennaSecurityUploader implements FindingUploader {
         return false;
     }
 
-    public InputStream process(Project project, List<Finding> findings) {
+    public InputStream process(UUID projectUuid, List<Finding> findings) {
         return null; // TODO
     }
 
-    public void upload(Project project, Object payload) {
+    public void upload(UUID projectUuid, Object payload) {
         try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
             final ProjectProperty assetId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_ID_PROPERTY);
             try {

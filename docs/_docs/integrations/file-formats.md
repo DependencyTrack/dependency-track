@@ -58,8 +58,8 @@ FPF's are json files and have the following sections:
       "severityRank": 3,
       "cweId": 400,
       "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
-      "description": "Affected versions of `timespan` are vulnerable to a regular expression denial of service when parsing dates.\n\nThe amplification for this vulnerability is significant, with 50,000 characters resulting in the event loop being blocked for around 10 seconds.",
-      "recommendation": "No direct patch is available for this vulnerability.\n\nCurrently, the best available solution is to use a functionally equivalent alternative package.\n\nIt is also sufficient to ensure that user input is not being passed into `timespan`, or that the maximum length of such user input is drastically reduced. Limiting the input length to 150 characters should be sufficient in most cases."
+      "description": "Affected versions of `timespan`...",
+      "recommendation": "No direct patch is available..."
     },
     "analysis": {
       "state": "NOT_SET",
@@ -84,7 +84,7 @@ FPF's are json files and have the following sections:
       "severityRank": 3,
       "cweId": 400,
       "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
-      "description": "Versions of `uglify-js` prior to 2.6.0 are affected by a regular expression denial of service vulnerability when malicious inputs are passed into the `parse()` method.\n\n\n### Proof of Concept\n\n```\nvar u = require('uglify-js');\nvar genstr = function (len, chr) {\n    var result = \"\";\n    for (i=0; i<=len; i++) {\n        result = result + chr;\n    }\n\n    return result;\n}\n\nu.parse(\"var a = \" + genstr(process.argv[2], \"1\") + \".1ee7;\");\n```\n\n### Results\n```\n$ time node test.js 10000\nreal\t0m1.091s\nuser\t0m1.047s\nsys\t0m0.039s\n\n$ time node test.js 80000\nreal\t0m6.486s\nuser\t0m6.229s\nsys\t0m0.094s\n```",
+      "description": "Versions of `uglify-js` prior to...",
       "recommendation": "Update to version 2.6.0 or later."
     },
     "analysis": {

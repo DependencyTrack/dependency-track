@@ -24,7 +24,7 @@ Requirements:
 
 #### Per-project configuration
 Dependency-Track includes the ability to specify configuration properties on a per-project basis. 
-This feature is used to map projects in Dependency-Track to applications/assets in Kenna
+This feature is used to map projects in Dependency-Track to applications/assets in Kenna.
 
 | Attribute      | Value                             |
 | ---------------| --------------------------------- |

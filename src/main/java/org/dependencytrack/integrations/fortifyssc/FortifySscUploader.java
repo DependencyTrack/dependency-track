@@ -20,6 +20,7 @@ package org.dependencytrack.integrations.fortifyssc;
 import alpine.crypto.DataEncryption;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
+import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.integrations.FindingUploader;
 import org.dependencytrack.model.Finding;
@@ -35,10 +36,18 @@ import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class FortifySscUploader implements FindingUploader {
+public class FortifySscUploader extends AbstractIntegrationPoint implements FindingUploader {
 
     private static final Logger LOGGER = Logger.getLogger(FortifySscUploader.class);
     private static final String APPID_PROPERTY = "fortify.ssc.applicationId";
+
+    public String name() {
+        return "Fortify SSC";
+    }
+
+    public String description() {
+        return "Pushes Dependency-Track findings to Software Security Center";
+    }
 
     public boolean isEnabled() {
         try (QueryManager qm = new QueryManager()) {
@@ -74,7 +83,7 @@ public class FortifySscUploader implements FindingUploader {
             final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());
             final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
             try {
-                final FortifySscClient client = new FortifySscClient(new URL(sscUrl.getPropertyValue()));
+                final FortifySscClient client = new FortifySscClient(this, new URL(sscUrl.getPropertyValue()));
                 final String token = client.generateOneTimeUploadToken(
                         username.getPropertyValue(),
                         DataEncryption.decryptAsString(password.getPropertyValue()));
@@ -83,6 +92,7 @@ public class FortifySscUploader implements FindingUploader {
                 }
             } catch (Exception e) {
                 LOGGER.error("An error occurred attempting to upload findings to Fortify Software Security Center", e);
+                handleException(LOGGER, e);
             }
         }
     }

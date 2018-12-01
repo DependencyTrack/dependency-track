@@ -21,7 +21,7 @@ import org.dependencytrack.model.Finding;
 import java.util.List;
 import java.util.UUID;
 
-public interface FindingUploader {
+public interface FindingUploader extends IntegrationPoint {
 
     boolean isEnabled();
 

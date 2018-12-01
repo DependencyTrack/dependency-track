@@ -21,6 +21,7 @@ import alpine.logging.Logger;
 import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
+import io.github.openunirest.request.HttpRequestWithBody;
 import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONObject;
 import java.io.InputStream;
@@ -30,16 +31,19 @@ import java.util.HashMap;
 public class FortifySscClient {
 
     private static final Logger LOGGER = Logger.getLogger(FortifySscClient.class);
+    private final FortifySscUploader uploader;
     private final URL baseURL;
 
-    public FortifySscClient(final URL baseURL) {
+    public FortifySscClient(FortifySscUploader uploader, final URL baseURL) {
+        this.uploader = uploader;
         this.baseURL = baseURL;
     }
 
     public String generateOneTimeUploadToken(final String username, final String password) {
         Unirest.setHttpClient(HttpClientFactory.createClient());
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
-        final HttpResponse<JsonNode> response = Unirest.post(baseURL + "/api/v1/fileTokens")
+        final HttpRequestWithBody request = Unirest.post(baseURL + "/api/v1/fileTokens");
+        final HttpResponse<JsonNode> response = request
                 .header("Content-Type", "application/json")
                 .basicAuth(username, password)
                 .body(payload)
@@ -53,6 +57,7 @@ public class FortifySscClient {
             LOGGER.warn("Fortify SSC Client did not receive expected response while attempting to generate a "
                     + "one-time-use fileupload token. HTTP response code: "
                     + response.getStatus() + " - " + response.getStatusText());
+            uploader.handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
         }
         return null;
     }
@@ -63,7 +68,8 @@ public class FortifySscClient {
         params.put("engineType", "DEPENDENCY_TRACK");
         params.put("mat", token);
         params.put("entityId", applicationVersion);
-        final HttpResponse<String> response = Unirest.post(baseURL + "/upload/resultFileUpload.html")
+        final HttpRequestWithBody request = Unirest.post(baseURL + "/upload/resultFileUpload.html");
+        final HttpResponse<String> response = request
                 .header("accept", "application/xml")
                 .queryString(params)
                 .field("files[]", findingsJson, "findings.json")
@@ -72,7 +78,7 @@ public class FortifySscClient {
             LOGGER.warn("Fortify SSC Client did not receive expected response while attempting to upload "
                     + "Dependency-Track findings. HTTP response code: "
                     + response.getStatus() + " - " + response.getStatusText());
-
+            uploader.handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
         }
     }
 

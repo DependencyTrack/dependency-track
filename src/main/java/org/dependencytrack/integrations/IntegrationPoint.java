@@ -15,25 +15,18 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.notification;
+package org.dependencytrack.integrations;
 
-public enum NotificationGroup {
+public interface IntegrationPoint {
 
-    // System Groups
-    CONFIGURATION,
-    DATASOURCE_MIRRORING,
-    REPOSITORY,
-    INTEGRATION,
-    INDEXING_SERVICE,
-    FILE_SYSTEM,
+    /**
+     * The name of the integration point.
+     */
+    String name();
 
-    // Portfolio Groups
-    NEW_VULNERABILITY,
-    NEW_VULNERABLE_DEPENDENCY,
-    //NEW_OUTDATED_COMPONENT,
-    //FIXED_VULNERABILITY,
-    //FIXED_OUTDATED,
-    GLOBAL_AUDIT_CHANGE,
-    PROJECT_AUDIT_CHANGE
+    /**
+     * A description of the integration point.
+     */
+    String description();
 
 }

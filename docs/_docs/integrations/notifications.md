@@ -2,7 +2,7 @@
 title: Notifications
 category: Integrations
 chapter: 5
-order: 2
+order: 6
 ---
 
 Dependency-Track includes a robust and configurable notification framework capable of alerting users or systems

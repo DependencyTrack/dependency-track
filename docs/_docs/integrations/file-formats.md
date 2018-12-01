@@ -2,7 +2,7 @@
 title: File Formats
 category: Integrations
 chapter: 5
-order: 7
+order: 2
 ---
 
 Dependency-Track has an *API-first design*. API's are simply at the heart of the platform. However, there are 

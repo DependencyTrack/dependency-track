@@ -2,7 +2,7 @@
 title: Jenkins
 category: Integrations
 chapter: 5
-order: 3
+order: 4
 ---
 
 The [Dependency-Track Jenkins plugin] aids in publishing [CycloneDX] and [SPDX] Bill-of-Material (BoM) documents as 

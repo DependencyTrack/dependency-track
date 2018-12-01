@@ -2,7 +2,7 @@
 title: Fortify SSC
 category: Integrations
 chapter: 5
-order: 6
+order: 3
 ---
 
 Dependency-Track can automatically publish results to Fortify Software Security Center (SSC) providing a 

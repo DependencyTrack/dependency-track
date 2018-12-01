@@ -20,6 +20,7 @@ package org.dependencytrack.integrations.kenna;
 import alpine.crypto.DataEncryption;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
+import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
@@ -31,11 +32,19 @@ import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class KennaSecurityUploader implements FindingUploader {
+public class KennaSecurityUploader extends AbstractIntegrationPoint implements FindingUploader {
 
     private static final Logger LOGGER = Logger.getLogger(KennaSecurityUploader.class);
     private static final String ASSET_ID_PROPERTY = "kenna.asset.id";
     private static final String API_ROOT = "https://api.kennasecurity.com";
+
+    public String name() {
+        return "Kenna Security";
+    }
+
+    public String description() {
+        return "Pushes Dependency-Track findings to Kenna Security";
+    }
 
     public boolean isEnabled() {
         try (QueryManager qm = new QueryManager()) {

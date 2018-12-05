@@ -2201,7 +2201,7 @@ $rest.removeProjectFromNotificationRule = function removeProjectFromNotification
 };
 
 /**
- * Service called when a BoM is uploaded to a project.
+ * Service called when a BOM is uploaded to a project.
  */
 $rest.uploadBom = function uploadBom(data, successCallback, failCallback) {
     $.ajax({

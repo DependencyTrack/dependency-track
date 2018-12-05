@@ -19,7 +19,7 @@ The issue may already be reported! Please [search for the issue](../) before cre
   
   - Dependency-Track Version:
   - Distribution: [ Docker | Executable WAR | Traditional WAR ]
-  - BoM Format & Version:
+  - BOM Format & Version:
   - Database Server: [ H2 | MSSQL | MySQL | PostgreSQL ]
   - Browser: 
 

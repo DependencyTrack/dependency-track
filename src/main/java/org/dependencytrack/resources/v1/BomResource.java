@@ -255,7 +255,7 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
-            notes = "This endpoint is intended to be used in conjunction with uploading a supported BoM document. Upon upload, a token will be returned. The token can then be queried using this endpoint to determine if any tasks (such as vulnerability analysis) is being performed on the BoM. A value of true indicates processing is occurring. A value of false indicates that no processing is occurring for the specified token. However, a value of false also does not confirm the token is valid, only that no processing is associated with the specified token."
+            notes = "This endpoint is intended to be used in conjunction with uploading a supported BOM document. Upon upload, a token will be returned. The token can then be queried using this endpoint to determine if any tasks (such as vulnerability analysis) is being performed on the BOM. A value of true indicates processing is occurring. A value of false indicates that no processing is occurring for the specified token. However, a value of false also does not confirm the token is valid, only that no processing is associated with the specified token."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -270,7 +270,7 @@ public class BomResource extends AlpineResource {
     }
 
     /**
-     * Common logic that processes a BoM given a project and encoded payload.
+     * Common logic that processes a BOM given a project and encoded payload.
      */
     private Response process(Project project, String encodedBomData) {
         if (project != null) {
@@ -284,7 +284,7 @@ public class BomResource extends AlpineResource {
     }
 
     /**
-     * Common logic that processes a BoM given a project and list of multi-party form objects containing decoded payloads.
+     * Common logic that processes a BOM given a project and list of multi-party form objects containing decoded payloads.
      */
     private Response process(Project project, List<FormDataBodyPart> artifactParts) {
         for (FormDataBodyPart artifactPart: artifactParts) {

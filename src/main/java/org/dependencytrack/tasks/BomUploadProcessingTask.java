@@ -73,7 +73,7 @@ public class BomUploadProcessingTask implements Subscriber {
                     final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
                     components = parser.parse(bomBytes);
                 } else {
-                    LOGGER.warn("The BoM uploaded is not in a supported format. Supported formats include CycloneDX, SPDX RDF, and SPDX Tag");
+                    LOGGER.warn("The BOM uploaded is not in a supported format. Supported formats include CycloneDX, SPDX RDF, and SPDX Tag");
                     return;
                 }
                 final Date date = new Date();

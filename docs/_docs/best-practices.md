@@ -27,7 +27,7 @@ ensure the format is version 2.2 or higher and contains valid PackageURLs for ea
 
 ### Generating and Obtaining BOMs
 * When developing software, generate BOMs during Continuous Integration (CI)
-* When using Jenkins, use the [Dependency-Track Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) with synchronous publishing mode enabled
+* If using Jenkins, use the [Dependency-Track Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) with synchronous publishing mode enabled
 * Contractually require BOMs ([CycloneDX](https://cyclonedx.org) or [SPDX](https://spdx.org)) from vendors
 * Generate or acquire BOMs from commercial-off-the-shelf (COTS) software
 

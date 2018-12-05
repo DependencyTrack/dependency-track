@@ -70,13 +70,13 @@ Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories
 
 ### Package URL support in Bill-of-Materials
 
-The CycloneDX BoM specification supports Package URL on a per-component basis. Users of the 
+The CycloneDX BOM specification supports Package URL on a per-component basis. Users of the 
 [CycloneDX Maven plugin](https://github.com/CycloneDX/cyclonedx-maven-plugin) or
 [CycloneDX Node module](https://github.com/CycloneDX/cyclonedx-node-module) will automatically have valid Package URLs 
-for every component in the resulting BoM. 
+for every component in the resulting BOM. 
 
 When importing dependency-check-report.xml, Dependency-Track will attempt to automatically generate Package URLs for 
 every component identified. Support is currently limited to Maven and npm.
 
-When importing SPDX BoM documents, Package URL identification cannot be automatically determined, although support 
+When importing SPDX BOM documents, Package URL identification cannot be automatically determined, although support 
 for Package URL may be coming to the SPDX specification in a future release.

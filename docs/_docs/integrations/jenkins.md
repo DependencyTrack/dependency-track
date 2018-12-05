@@ -5,13 +5,13 @@ chapter: 5
 order: 4
 ---
 
-The [Dependency-Track Jenkins plugin] aids in publishing [CycloneDX] and [SPDX] Bill-of-Material (BoM) documents as 
+The [Dependency-Track Jenkins plugin] aids in publishing [CycloneDX] and [SPDX] Bill-of-Material (BOM) documents as 
 well as Dependency-Check XML reports to the Dependency-Track platform.
 
-Publishing BoMs can be performed asynchronously or synchronously.
+Publishing BOMs can be performed asynchronously or synchronously.
 
-> Asynchronous publishing simply uploads the BoM to Dependency-Track and the job continues. Synchronous publishing
-waits for Dependency-Track to process the BoM after being uploaded. Synchronous publishing has the benefit of 
+> Asynchronous publishing simply uploads the BOM to Dependency-Track and the job continues. Synchronous publishing
+waits for Dependency-Track to process the BOM after being uploaded. Synchronous publishing has the benefit of 
 displaying interactive job trends and per build findings.
 
 ![Job Trending](/images/screenshots/jenkins-job-trend.png)
@@ -31,7 +31,7 @@ automatically populated with a list of projects.
   * Software Bill of Material (CycloneDX or SPDX) 
   * Dependency-Check Scan Result (XML)
   
-* **Synchronous mode**: Uploads a BoM to Dependency-Track and waits for Dependency-Track to process and return results.
+* **Synchronous mode**: Uploads a BOM to Dependency-Track and waits for Dependency-Track to process and return results.
 The results returned are identical to the auditable findings but exclude findings that have previously been suppressed. 
 Analysis decisions and vulnerability details are included in the response. Synchronous mode is possible with 
 Dependency-Track v3.3.1 and higher.
@@ -46,7 +46,7 @@ The following permission should be assigned to the API key configured above.
 
 | Permission | Description |
 | ------|-------------|
-| BOM_UPLOAD | Allows the uploading of CycloneDX and SPDX BoMs |
+| BOM_UPLOAD | Allows the uploading of CycloneDX and SPDX BOMs |
 | SCAN_UPLOAD | Allows the uploading of Dependency-Check XML reports |
 | VIEW_PORTFOLIO | Allows the plugin to list the projects in the dropdown |
 | VULNERABILITY_ANALYSIS | Allows access to the findings API for trending and results (synchronous mode only) |

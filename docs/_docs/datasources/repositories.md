@@ -38,7 +38,7 @@ across multiple ecosystems. Dependency-Track relies on Package URL (purl) to ide
 to, the metadata about the component, and uses that data to query the various repositories capable of supporting the 
 components ecosystem.
 
-Package URL is natively supported in the [CycloneDX](http://cyclonedx.org/) BoM specification. By using CycloneDX as a 
+Package URL is natively supported in the [CycloneDX](http://cyclonedx.org/) BOM specification. By using CycloneDX as a 
 means to populate project dependencies, organizations benefit from the many use-cases Package URL provides, including
 leveraging repositories to identify outdated components.
 

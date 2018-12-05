@@ -32,7 +32,7 @@ in its portfolio in order to proactively identify vulnerabilities in components 
 applications at risk. Use of Dependency-Track can play a vital role in an overall [Cyber Supply Chain Risk Management](https://csrc.nist.gov/Projects/Supply-Chain-Risk-Management) (C-SCRM) 
 program by fulfilling many of the recommendations laid out by [SAFECode](https://www.safecode.org/wp-content/uploads/2017/05/SAFECode_TPC_Whitepaper.pdf).
 
-Dependency-Track is designed to be used in an automated DevOps environment where BoM (bill-of-material) formats are 
+Dependency-Track is designed to be used in an automated DevOps environment where BOM (bill-of-material) formats are 
 automatically ingested during CI/CD. Use of the [Dependency-Track Jenkins Plugin] is highly recommended for this purpose 
 and is well suited for use in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to 
 accelerate while still keeping tabs on component usage and any inherited risk.

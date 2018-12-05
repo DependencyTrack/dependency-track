@@ -25,14 +25,14 @@ package org.dependencytrack.auth;
  */
 public enum Permissions {
 
-    BOM_UPLOAD("Allows the ability to upload CycloneDX and SPDX Bill-of-Material (BoM) documents"),
+    BOM_UPLOAD("Allows the ability to upload CycloneDX and SPDX Bill-of-Material (BOM) documents"),
     SCAN_UPLOAD("Allows the ability to upload Dependency-Check XML reports"),
     VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, dependencies, and licenses"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
     VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities affecting projects in the portfolio"),
     ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys"),
     SYSTEM_CONFIGURATION("Allows the configuration of the system including notifications, repositories, and email settings"),
-    PROJECT_CREATION_UPLOAD("Provides the ability to optionally create project (if non-existent) on BoM or scan upload");
+    PROJECT_CREATION_UPLOAD("Provides the ability to optionally create project (if non-existent) on BOM or scan upload");
 
     private final String description;
 

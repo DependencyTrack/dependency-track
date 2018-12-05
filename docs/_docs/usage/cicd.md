@@ -5,8 +5,8 @@ chapter: 2
 order: 1
 ---
 
-Dependency-Track can ingest CycloneDX BoMs or Dependency-Check XML reports as part of a CI/CD pipeline. The 
-generation of CycloneDX BoMs or Dependency-Check reports often occur during CI or when the final
+Dependency-Track can ingest CycloneDX BOMs or Dependency-Check XML reports as part of a CI/CD pipeline. The 
+generation of CycloneDX BOMs or Dependency-Check reports often occur during CI or when the final
 application assembly is being generated. 
 
 > Dependency-Track continuously monitors components for known vulnerabilities. When components are added or 
@@ -15,7 +15,7 @@ application assembly is being generated.
 > components in Dependency-Track, regardless of changes, are automatically analyzed on a daily basis.
 
 The [Dependency-Track Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) is the 
-recommended method for publishing CycloneDX BoMs or Dependency-Check XML reports to Dependency-Track in 
+recommended method for publishing CycloneDX BOMs or Dependency-Check XML reports to Dependency-Track in 
 a Jenkins environment.
 
 For other environments, cURL (or similar) is all that's required. 
@@ -34,8 +34,8 @@ curl -X "PUT" "http://dtrack.example.com/api/v1/scan" \
   }'
 ```
 
-#### CycloneDX or SPDX BoM
-To publish CycloneDX or SPDX BoMs, use a valid API Key and project UUID. Finally, Base64 encode the 
+#### CycloneDX or SPDX BOM
+To publish CycloneDX or SPDX BOMs, use a valid API Key and project UUID. Finally, Base64 encode the 
 bom and insert the resulting text into the 'bom' field.
 
 ```bash
@@ -49,7 +49,7 @@ curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
 ```
 
 #### Large Payloads
-In cases where the scan or BoM being uploaded is large, using cURLs capability of specifying a file
+In cases where the scan or BOM being uploaded is large, using cURLs capability of specifying a file
 containing a payload may be preferred.
 
 ```bash

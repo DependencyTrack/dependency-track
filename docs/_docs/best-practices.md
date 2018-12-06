@@ -38,7 +38,7 @@ compliance, regulatory, legal, or economic reasons.
 
 ### Scanners
 * Enable OSSIndex
-* Evaluate if Dependency-Check should be disabled
+* Evaluate if Dependency-Check should be enabled or disabled
 * Ensure all other scanners are enabled
 
 #### Summary

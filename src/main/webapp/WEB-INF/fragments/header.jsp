@@ -20,6 +20,7 @@
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-tagsinput/bootstrap-tagsinput.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-select/css/bootstrap-select.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap-daterangepicker/daterangepicker.css"/><%=VERSION_PARAM%>">
+<link rel="stylesheet" type="text/css" href="<c:url value="/assets/bootstrap3-editable/css/bootstrap-editable.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/fonts/opensans/opensans.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/font-awesome/css/font-awesome.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/radar-chart.css"/><%=VERSION_PARAM%>">

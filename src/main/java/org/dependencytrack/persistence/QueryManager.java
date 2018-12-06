@@ -483,6 +483,18 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of ProjectProperty's for the specified project.
+     * @param project the project the property belongs to
+     * @return a List ProjectProperty objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<ProjectProperty> getProjectProperties(final Project project) {
+        Query query = this.pm.newQuery(ProjectProperty.class, "project == :project");
+        query.setOrdering("groupName asc, propertyName asc");
+        return (List)query.execute(project);
+    }
+
+    /**
      * Creates a new Scan.
      * @param project the Project to create a Scan for
      * @param executed the Date when the scan was executed

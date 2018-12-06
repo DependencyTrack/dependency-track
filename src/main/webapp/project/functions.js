@@ -416,6 +416,18 @@ $(document).ready(function () {
         const findingsUrl = $rest.contextPath() + URL_FINDING + "/project/" + uuid;
         $("#findingsTable").bootstrapTable("refresh", {url: findingsUrl, silent: true});
     }
+    if ($auth.hasPermission($auth.PORTFOLIO_MANAGEMENT, token)) {
+        const propertiesUrl = $rest.contextPath() + URL_PROJECT + "/" + uuid + "/property";
+        const projectPropertiesTable = $("#projectPropertiesTable");
+        projectPropertiesTable.bootstrapTable("refresh", {url: propertiesUrl, silent: true});
+        projectPropertiesTable.on("editable-save.bs.table", function(e, field, row, oldValue) {
+            if (row.propertyValue !== oldValue) {
+                $rest.updateProjectProperty(uuid, row.groupName, row.propertyName, row.propertyValue, function() {
+                    projectPropertiesTable.bootstrapTable("refresh", {silent: true});
+                });
+            }
+        });
+    }
 
     $rest.getProject(uuid, populateProjectData);
     $rest.getLicensesConcise(populateLicenseData);
@@ -559,8 +571,8 @@ $(document).ready(function () {
         $rest.uploadBom(data,
             function(data) {
                 toastr.options = $common.toastrOptions;
-                toastr.success("BoM upload successful");
-                toastr.info("BoM queued for processing");
+                toastr.success("BOM upload successful");
+                toastr.info("BOM queued for processing");
             },
             function(data) {
                 toastr.options = $common.toastrOptions;

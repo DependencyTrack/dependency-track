@@ -1955,6 +1955,42 @@ $rest.getLatestFromRepository = function getProject(packageUrl, successCallback,
 };
 
 /**
+ * Service called when a project property is updated
+ */
+$rest.updateProjectProperty = function updateProjectProperty(projectUuid, groupName, propertyName, propertyValue, successCallback, failCallback) {
+    if ($common.isEmpty(projectUuid) || $common.isEmpty(groupName) || $common.isEmpty(propertyName)) {
+        return;
+    }
+    if (propertyValue === '') {
+        propertyValue = null;
+    }
+    $.ajax({
+        url: $rest.contextPath() + URL_PROJECT + "/" + projectUuid + "/property",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_POST,
+        data: JSON.stringify({groupName: groupName, propertyName: propertyName, propertyValue: propertyValue}),
+        statusCode: {
+            200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called to retrieve config properties
  */
 $rest.getConfigProperties = function getConfigProperties(successCallback, failCallback) {

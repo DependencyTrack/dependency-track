@@ -301,19 +301,10 @@
                         <label for="projectTagsInput">Tags</label>
                         <input type="text" name="tags" placeholder="Comma separated" class="form-control require-portfolio-management" disabled="disabled" data-role="tagsinput" id="projectTagsInput">
                     </div>
-                    <table id="projectPropertiesTable" class="table">
-                        <thead>
-                            <tr>
-                                <th>Key</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="projectPropertiesTableData">
-                        </tbody>
-                    </table>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectButton">Delete</button>
+                    <button type="button" class="btn btn-default require-portfolio-management" data-dismiss="modal" data-toggle="modal" data-target="#modalProjectProperties">Properties</button>
                     <button type="button" class="btn btn-warning require-portfolio-management" data-dismiss="modal" data-toggle="modal" data-target="#modalCloneProject">Add Version</button>
                     <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" id="updateProjectButton">Update</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -376,6 +367,38 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal" id="uploadBomButton">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalProjectProperties" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Project Properties</span>
+                </div>
+                <div class="modal-body">
+                    <table id="projectPropertiesTable" class="table table-hover detail-table" data-toggle="table"
+                           data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
+                           data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                           data-silent-sort="false" data-page-size="10" data-height="100%">
+                        <thead>
+                        <tr>
+                            <th data-align="center" data-field="state" data-checkbox="true"></th>
+                            <th data-field="groupName">Group</th>
+                            <th data-field="propertyName">Name</th>
+                            <th data-field="propertyValue" data-editable="true">Value</th>
+                            <th data-field="propertyType">Type</th>
+                            <th data-field="description" data-visible="false">Description</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectPropertiesButton">Delete</button>
+                    <button type="button" class="btn btn-primary require-portfolio-management" data-toggle="modal" data-target="#modalAddProjectProperty">Add Property</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

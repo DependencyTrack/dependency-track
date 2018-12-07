@@ -305,7 +305,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectButton">Delete</button>
                     <button type="button" class="btn btn-default require-portfolio-management" data-dismiss="modal" data-toggle="modal" data-target="#modalProjectProperties">Properties</button>
-                    <button type="button" class="btn btn-warning require-portfolio-management" data-dismiss="modal" data-toggle="modal" data-target="#modalCloneProject">Add Version</button>
+                    <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" data-toggle="modal" data-target="#modalCloneProject">Add Version</button>
                     <button type="button" class="btn btn-primary require-portfolio-management" data-dismiss="modal" id="updateProjectButton">Update</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
@@ -382,7 +382,7 @@
                     <table id="projectPropertiesTable" class="table table-hover detail-table" data-toggle="table"
                            data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                            data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
-                           data-silent-sort="false" data-page-size="10" data-height="100%">
+                           data-silent-sort="false" data-page-size="5" data-height="100%">
                         <thead>
                         <tr>
                             <th data-align="center" data-field="state" data-checkbox="true"></th>
@@ -396,9 +396,54 @@
                     </table>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectPropertiesButton">Delete</button>
-                    <button type="button" class="btn btn-primary require-portfolio-management" data-toggle="modal" data-target="#modalAddProjectProperty">Add Property</button>
+                    <button type="button" class="btn btn-danger require-portfolio-management" id="deleteProjectPropertyButton">Delete</button>
+                    <button type="button" class="btn btn-primary require-portfolio-management" data-toggle="modal" data-target="#modalCreateProjectProperty">Create Property</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modalCreateProjectProperty" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">Create Project Property</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="required" for="createProjectPropertyGroupNameInput">Group Name</label>
+                        <input type="text" required="required" class="form-control required" id="createProjectPropertyGroupNameInput" maxlength="255">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="createProjectPropertyNameInput">Property Name</label>
+                        <input type="text" required="required" class="form-control required" id="createProjectPropertyNameInput" maxlength="255">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="createProjectPropertyValueInput">Property Value</label>
+                        <input type="text" required="required" class="form-control required" id="createProjectPropertyValueInput" maxlength="255">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="createProjectPropertyTypeInput">Property Type</label>
+                        <select required="required" class="form-control required" id="createProjectPropertyTypeInput">
+                            <option value="BOOLEAN">BOOLEAN</option>
+                            <option value="INTEGER">INTEGER</option>
+                            <option value="NUMBER">NUMBER</option>
+                            <option value="STRING">STRING</option>
+                            <option value="ENCRYPTEDSTRING">ENCRYPTEDSTRING</option>
+                            <option value="TIMESTAMP">TIMESTAMP</option>
+                            <option value="URL">URL</option>
+                            <option value="UUID">UUID</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="createProjectPropertyDescriptionInput">Description</label>
+                        <input type="text" class="form-control" id="createProjectPropertyDescriptionInput" maxlength="255">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="createProjectPropertyCreateButton">Create</button>
                 </div>
             </div>
         </div>

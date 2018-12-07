@@ -1955,6 +1955,42 @@ $rest.getLatestFromRepository = function getProject(packageUrl, successCallback,
 };
 
 /**
+ * Service called when a project property is created
+ */
+$rest.addProjectProperty = function addProjectProperty(projectUuid, groupName, propertyName, propertyValue, propertyType, description, successCallback, failCallback) {
+    if ($common.isEmpty(projectUuid) || $common.isEmpty(groupName) || $common.isEmpty(propertyName)) {
+        return;
+    }
+    if (propertyValue === '') {
+        propertyValue = null;
+    }
+    $.ajax({
+        url: $rest.contextPath() + URL_PROJECT + "/" + projectUuid + "/property",
+        contentType: CONTENT_TYPE_JSON,
+        dataType: DATA_TYPE,
+        type: METHOD_PUT,
+        data: JSON.stringify({groupName: groupName, propertyName: propertyName, propertyValue: propertyValue, propertyType: propertyType, description: description}),
+        statusCode: {
+            201: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
  * Service called when a project property is updated
  */
 $rest.updateProjectProperty = function updateProjectProperty(projectUuid, groupName, propertyName, propertyValue, successCallback, failCallback) {
@@ -1972,6 +2008,38 @@ $rest.updateProjectProperty = function updateProjectProperty(projectUuid, groupN
         data: JSON.stringify({groupName: groupName, propertyName: propertyName, propertyValue: propertyValue}),
         statusCode: {
             200: function (data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            },
+            404: function (data) {
+                if (failCallback) {
+                    $rest.callbackValidator(failCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError){
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    });
+};
+
+/**
+ * Service called when a project property is deleted
+ */
+$rest.deleteProjectProperty = function deleteProjectProperty(projectUuid, groupName, propertyName, successCallback, failCallback) {
+    if ($common.isEmpty(projectUuid) || $common.isEmpty(groupName) || $common.isEmpty(propertyName)) {
+        return;
+    }
+    $.ajax({
+        url: $rest.contextPath() + URL_PROJECT + "/" + projectUuid + "/property",
+        contentType: CONTENT_TYPE_JSON,
+        type: METHOD_DELETE,
+        data: JSON.stringify({groupName: groupName, propertyName: propertyName}),
+        statusCode: {
+            204: function (data) {
                 if (successCallback) {
                     $rest.callbackValidator(successCallback(data));
                 }

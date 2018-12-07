@@ -766,7 +766,7 @@ label.required:after {
     color: #d62728;
     content:" *";
 }
-input.required {
+input.required, select.required, textarea.required {
     border-color: #ffd700;
 }
 .inDetailFormatterForm input[type=checkbox] {

@@ -63,7 +63,8 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
             responseContainer = "List"
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response getProperties(
@@ -100,6 +101,7 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found"),
             @ApiResponse(code = 409, message = "A property with the specified project/group/name combination already exists")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -191,8 +193,7 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(json, "groupName"),
-                validator.validateProperty(json, "propertyName"),
-                validator.validateProperty(json, "propertyValue")
+                validator.validateProperty(json, "propertyName")
         );
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);

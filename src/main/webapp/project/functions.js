@@ -580,4 +580,36 @@ $(document).ready(function () {
             });
     });
 
+    // Listen for if the button to create a project property is clicked
+    $("#createProjectPropertyCreateButton").on("click", function() {
+        let groupName = $("#createProjectPropertyGroupNameInput").val();
+        let propertyName = $("#createProjectPropertyNameInput").val();
+        let propertyValue = $("#createProjectPropertyValueInput").val();
+        let propertyType = $("#createProjectPropertyTypeInput").val();
+        let description = $("#createProjectPropertyDescriptionInput").val();
+        $rest.addProjectProperty(uuid, groupName, propertyName, propertyValue, propertyType, description, function() {
+            $("#projectPropertiesTable").bootstrapTable("refresh", {silent: true});
+        });
+    });
+
+    // When modal closes, clear out the input fields
+    $("#modalCreateProjectProperty").on("hidden.bs.modal", function() {
+        $("#createProjectPropertyGroupNameInput").val("");
+        $("#createProjectPropertyNameInput").val("");
+        $("#createProjectPropertyValueInput").val("");
+        $("#createProjectPropertyDescriptionInput").val("");
+    });
+
+    // Listen for when the button to remove a project property is clicked
+    $("#deleteProjectPropertyButton").on("click", function () {
+        let projectPropertiesTable = $("#projectPropertiesTable");
+        let selections = projectPropertiesTable.bootstrapTable("getSelections");
+        for (let i=0; i<selections.length; i++) {
+            $rest.deleteProjectProperty(uuid, selections[i].groupName, selections[i].propertyName, function() {
+                projectPropertiesTable.bootstrapTable("refresh", {silent: true});
+            });
+        }
+        projectPropertiesTable.bootstrapTable("uncheckAll");
+    });
+
 });

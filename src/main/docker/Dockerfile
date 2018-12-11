@@ -5,6 +5,7 @@ LABEL vendor="OWASP"
 # Arguments that can be passed at build time
 ARG APP_DIR=/opt/owasp/dependency-track
 ARG DATA_DIR=/data
+ARG EXT_LIB_DIR=/data/extlib
 ARG USER=dtrack
 
 # Environment variables that can be passed at runtime
@@ -23,6 +24,14 @@ USER ${USER}
 COPY ./target/dependency-track-embedded.war ${APP_DIR}
 
 VOLUME ${DATA_DIR}
+
+# Create an external library directory
+RUN mkdir -p ${EXT_LIB_DIR}
+
+# Download optional JDBC drivers to the external library directory
+RUN wget http://central.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar -P ${EXT_LIB_DIR}
+RUN wget http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar -P ${EXT_LIB_DIR}
+RUN wget http://central.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar -P ${EXT_LIB_DIR}
 
 EXPOSE 8080
 

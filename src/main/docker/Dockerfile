@@ -5,7 +5,7 @@ LABEL vendor="OWASP"
 # Arguments that can be passed at build time
 ARG APP_DIR=/opt/owasp/dependency-track
 ARG DATA_DIR=/data
-ARG EXT_LIB_DIR=${APP_DIR}/extlib
+ARG EXT_LIB_DIR=/extlib
 ARG USER=dtrack
 
 # Environment variables that can be passed at runtime

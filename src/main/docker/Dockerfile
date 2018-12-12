@@ -5,7 +5,7 @@ LABEL vendor="OWASP"
 # Arguments that can be passed at build time
 ARG APP_DIR=/opt/owasp/dependency-track
 ARG DATA_DIR=/data
-ARG EXT_LIB_DIR=/data/extlib
+ARG EXT_LIB_DIR=${APP_DIR}/extlib
 ARG USER=dtrack
 
 # Environment variables that can be passed at runtime
@@ -13,6 +13,9 @@ ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForH
 
 # Create the application directory where Dependency-Track will be installed
 RUN mkdir -p ${APP_DIR}
+
+# Create the external library directory
+RUN mkdir -p ${EXT_LIB_DIR}
 
 # Create a user and assign home directory to a non-standard path
 RUN adduser -h ${DATA_DIR} -s bash -D ${USER}
@@ -24,9 +27,6 @@ USER ${USER}
 COPY ./target/dependency-track-embedded.war ${APP_DIR}
 
 VOLUME ${DATA_DIR}
-
-# Create an external library directory
-RUN mkdir -p ${EXT_LIB_DIR}
 
 # Download optional JDBC drivers to the external library directory
 ADD http://central.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar ${EXT_LIB_DIR}

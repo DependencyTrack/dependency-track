@@ -32,7 +32,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
-import java.util.UUID;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
@@ -41,59 +40,69 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Find
     private static final Logger LOGGER = Logger.getLogger(FortifySscUploader.class);
     private static final String APPID_PROPERTY = "fortify.ssc.applicationId";
 
+    private QueryManager qm;
+
+    @Override
+    public void setQueryManager(QueryManager qm) {
+        this.qm = qm;
+    }
+
+    @Override
     public String name() {
         return "Fortify SSC";
     }
 
+    @Override
     public String description() {
         return "Pushes Dependency-Track findings to Software Security Center";
     }
 
+    @Override
     public boolean isEnabled() {
-        try (QueryManager qm = new QueryManager()) {
-            final ConfigProperty enabled = qm.getConfigProperty(FORTIFY_SSC_ENABLED.getGroupName(), FORTIFY_SSC_ENABLED.getPropertyName());
-            if (enabled != null && Boolean.valueOf(enabled.getPropertyValue())) {
-                return true;
-            }
+        final ConfigProperty enabled = qm.getConfigProperty(FORTIFY_SSC_ENABLED.getGroupName(), FORTIFY_SSC_ENABLED.getPropertyName());
+        if (enabled != null && Boolean.valueOf(enabled.getPropertyValue())) {
+            return true;
         }
         return false;
     }
 
-    public boolean isProjectConfigured(UUID projectUuid) {
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-            final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
-            if (applicationId != null && applicationId.getPropertyValue() != null) {
-                return true;
-            }
+    @Override
+    public boolean isProjectConfigured(Project project) {
+        final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
+        if (applicationId != null && applicationId.getPropertyValue() != null) {
+            return true;
         }
         return false;
     }
 
-    public InputStream process(UUID projectUuid, List<Finding> findings) {
-        final JSONObject fpf = new FindingPackagingFormat(projectUuid, findings).getDocument();
+    @Override
+    public InputStream process(Project project, List<Finding> findings) {
+        final JSONObject fpf = new FindingPackagingFormat(project.getUuid(), findings).getDocument();
         return new ByteArrayInputStream(fpf.toString(2).getBytes());
     }
 
-    public void upload(UUID projectUuid, Object payload) {
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-            final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
-            final ConfigProperty username = qm.getConfigProperty(FORTIFY_SSC_USERNAME.getGroupName(), FORTIFY_SSC_USERNAME.getPropertyName());
-            final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());
-            final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
-            try {
-                final FortifySscClient client = new FortifySscClient(this, new URL(sscUrl.getPropertyValue()));
-                final String token = client.generateOneTimeUploadToken(
-                        username.getPropertyValue(),
-                        DataEncryption.decryptAsString(password.getPropertyValue()));
-                if (token != null) {
-                    client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), (InputStream)payload);
-                }
-            } catch (Exception e) {
-                LOGGER.error("An error occurred attempting to upload findings to Fortify Software Security Center", e);
-                handleException(LOGGER, e);
+    @Override
+    public void upload(Project project, Object payload) {
+        final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
+        final ConfigProperty username = qm.getConfigProperty(FORTIFY_SSC_USERNAME.getGroupName(), FORTIFY_SSC_USERNAME.getPropertyName());
+        final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());
+        final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
+        try {
+            final FortifySscClient client = new FortifySscClient(this, new URL(sscUrl.getPropertyValue()));
+            final String token = client.generateOneTimeUploadToken(
+                    username.getPropertyValue(),
+                    DataEncryption.decryptAsString(password.getPropertyValue()));
+            if (token != null) {
+                client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), (InputStream)payload);
             }
+        } catch (Exception e) {
+            LOGGER.error("An error occurred attempting to upload findings to Fortify Software Security Center", e);
+            handleException(LOGGER, e);
         }
+    }
+
+    @Override
+    public void complete() {
+        // nothing to do
     }
 }

@@ -18,17 +18,22 @@
 package org.dependencytrack.integrations;
 
 import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.QueryManager;
 import java.util.List;
-import java.util.UUID;
 
 public interface FindingUploader extends IntegrationPoint {
 
+    void setQueryManager(QueryManager qm);
+
     boolean isEnabled();
 
-    boolean isProjectConfigured(UUID projectUuid);
+    boolean isProjectConfigured(Project project);
 
-    Object process(UUID projectUuid, List<Finding> findings);
+    Object process(Project project, List<Finding> findings);
 
-    void upload(UUID projectUuid, Object payload);
+    void upload(Project project, Object payload);
+
+    void complete();
 
 }

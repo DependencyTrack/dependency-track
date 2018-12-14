@@ -401,7 +401,7 @@
                                 <label class="required" for="integrationsSscPasswordInput">Password</label>
                                 <input type="password" class="form-control required" id="integrationsSscPasswordInput" data-group-name="integrations" data-property-name="fortify.ssc.password">
                             </div>
-                            <button type="button" class="btn btn-primary btn-config-property" id="integrationsFortifyUpdateButton" data-group-name="integrations">Update</button>
+                            <button type="button" class="btn btn-primary btn-config-property" id="integrationsFortifyUpdateButton" data-group-name="integrations" data-property-scope="fortify">Update</button>
                         </div>
                         <div class="tab-pane admin-form-content" id="integrationsKennaSecurityTab" data-admin-title="Integrations">
                             <h3 class="admin-section-title">Kenna Security Configuration</h3>
@@ -417,7 +417,7 @@
                                 <label class="required" for="integrationsKennaSecurityTokenInput">Token</label>
                                 <input type="password" class="form-control required" id="integrationsKennaSecurityTokenInput" data-group-name="integrations" data-property-name="kenna.token">
                             </div>
-                            <button type="button" class="btn btn-primary btn-config-property" id="integrationsKennaSecurityUpdateButton" data-group-name="integrations">Update</button>
+                            <button type="button" class="btn btn-primary btn-config-property" id="integrationsKennaSecurityUpdateButton" data-group-name="integrations" data-property-scope="kenna">Update</button>
                         </div>
                         <div class="tab-pane admin-form-content" id="integrationsThreadFixTab" data-admin-title="Integrations">
                             <h3 class="admin-section-title">ThreadFix Configuration</h3>

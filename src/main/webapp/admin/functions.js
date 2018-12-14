@@ -1290,13 +1290,16 @@ $(document).ready(function () {
      */
     $(".btn-config-property").on("click", function() {
         let groupName = $(this).data("group-name");
+        let scope = $(this).data("property-scope");
         $("input[data-group-name]").each(function() {
             if (groupName === $(this).data("group-name")) {
-                let propertyValue = $(this).val();
-                if ($(this).attr("type") === "checkbox") {
-                    propertyValue = $(this).is(":checked");
+                if (scope === null || $(this).data("property-name").startsWith(scope)) {
+                    let propertyValue = $(this).val();
+                    if ($(this).attr("type") === "checkbox") {
+                        propertyValue = $(this).is(":checked");
+                    }
+                    $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);
                 }
-                $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);
             }
         });
     });

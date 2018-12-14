@@ -23,8 +23,15 @@ import alpine.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.QueryManager;
 
 public abstract class AbstractIntegrationPoint implements IntegrationPoint {
+
+    protected QueryManager qm;
+
+    public void setQueryManager(QueryManager qm) {
+        this.qm = qm;
+    }
 
     public void handleUnexpectedHttpResponse(Logger logger, String url, int statusCode, String statusText) {
         logger.error("An error occurred while communicating with the " + name() + " integration point");
@@ -48,5 +55,9 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
                 .content("An error occurred with the " + name() + " integration point. Check log for details. " + e.getMessage())
                 .level(NotificationLevel.ERROR)
         );
+    }
+
+    public void complete() {
+        // nothing to do
     }
 }

@@ -31,7 +31,6 @@ import org.dependencytrack.integrations.FindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
@@ -48,13 +47,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements F
     private static final String CONNECTOR_UPLOAD_URL = API_ROOT + "/connectors/%s/data_file";
     private static final String CONNECTOR_RUN_URL = API_ROOT + "/connectors/%s/run";
 
-    private QueryManager qm;
     private String connectorId;
-
-    @Override
-    public void setQueryManager(QueryManager qm) {
-        this.qm = qm;
-    }
 
     @Override
     public String name() {

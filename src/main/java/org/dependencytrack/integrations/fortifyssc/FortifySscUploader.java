@@ -26,7 +26,6 @@ import org.dependencytrack.integrations.FindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
-import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -39,13 +38,6 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Find
 
     private static final Logger LOGGER = Logger.getLogger(FortifySscUploader.class);
     private static final String APPID_PROPERTY = "fortify.ssc.applicationId";
-
-    private QueryManager qm;
-
-    @Override
-    public void setQueryManager(QueryManager qm) {
-        this.qm = qm;
-    }
 
     @Override
     public String name() {
@@ -101,8 +93,4 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Find
         }
     }
 
-    @Override
-    public void complete() {
-        // nothing to do
-    }
 }

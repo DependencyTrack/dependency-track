@@ -21,11 +21,13 @@ import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DateUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -151,6 +153,17 @@ public class KennaDataTransformer {
         final String application = (project.getVersion() == null) ? project.getName() : project.getName() + " " + project.getVersion();
         asset.put("application", application);
         asset.put("external_id", assetId);
+
+        // If the project has tags, add them to the KDI
+        final List<Tag> tags = project.getTags();
+        if (tags != null && tags.size() > 0) {
+            final ArrayList<String> tagArray = new ArrayList<>();
+            for (Tag tag: tags) {
+                tagArray.add(tag.getName());
+            }
+            asset.put("tags", tagArray);
+        }
+
         asset.put("vulns", vulns);
 
         // Add the asset to an array

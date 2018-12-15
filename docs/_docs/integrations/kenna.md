@@ -49,3 +49,5 @@ This feature is used to map projects in Dependency-Track to applications/assets 
 The external_id may be anything as long as it uniquely identifies the application in Kenna. Shown in the example
 is the UUID of the Dependency-Track project. However, the external_id may be an organizations internal identifier
 for the application.
+
+![Kenna Findings](/images/screenshots/kenna-findings.png)

@@ -165,7 +165,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="emailSmtpPasswordInput">SMTP password</label>
-                                <input type="password" class="form-control" autocomplete="off" id="emailSmtpPasswordInput" data-group-name="email" data-property-name="smtp.password">
+                                <input type="text" conceal autocomplete="off" class="form-control" id="emailSmtpPasswordInput" data-group-name="email" data-property-name="smtp.password">
                             </div>
                             <div class="checkbox">
                                 <label><input type="checkbox" id="emailSmtpSslTlsInput" data-group-name="email" data-property-name="smtp.ssltls"> Enable SSL/TLS encryption</label>
@@ -239,7 +239,7 @@
                             </div>
                             <div class="form-group admin-form-content">
                                 <label class="required" for="scannerOssIndexApiTokenInput">API Token</label>
-                                <input type="password" class="form-control required" autocomplete="off" id="scannerOssIndexApiTokenInput" data-group-name="scanner" data-property-name="ossindex.api.token">
+                                <input type="text" conceal autocomplete="off" class="form-control required" id="scannerOssIndexApiTokenInput" data-group-name="scanner" data-property-name="ossindex.api.token">
                             </div>
                             <div class="form-group admin-form-content">
                                 <button type="button" class="btn btn-primary btn-config-property" id="updateOssIndexConfigButton" data-group-name="scanner">Update</button>
@@ -399,7 +399,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="required" for="integrationsSscPasswordInput">Password</label>
-                                <input type="password" class="form-control required" id="integrationsSscPasswordInput" data-group-name="integrations" data-property-name="fortify.ssc.password">
+                                <input type="text" conceal autocomplete="off"  class="form-control required" id="integrationsSscPasswordInput" data-group-name="integrations" data-property-name="fortify.ssc.password">
                             </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="integrationsFortifyUpdateButton" data-group-name="integrations" data-property-scope="fortify">Update</button>
                         </div>
@@ -415,7 +415,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="required" for="integrationsKennaSecurityTokenInput">Token</label>
-                                <input type="password" class="form-control required" id="integrationsKennaSecurityTokenInput" data-group-name="integrations" data-property-name="kenna.token">
+                                <input type="text" conceal autocomplete="off"  class="form-control required" id="integrationsKennaSecurityTokenInput" data-group-name="integrations" data-property-name="kenna.token">
                             </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="integrationsKennaSecurityUpdateButton" data-group-name="integrations" data-property-scope="kenna">Update</button>
                         </div>
@@ -609,11 +609,11 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="required" for="createManagedUserPasswordInput">Password</label>
-                                <input type="password" name="password" class="form-control required" id="createManagedUserPasswordInput">
+                                <input type="text" conceal autocomplete="off"  name="password" class="form-control required" id="createManagedUserPasswordInput">
                             </div>
                             <div class="form-group">
                                 <label class="required" for="createManagedUserConfirmInput">Confirm Password</label>
-                                <input type="password" name="confirmPassword" class="form-control required" id="createManagedUserConfirmInput">
+                                <input type="text" conceal autocomplete="off"  name="confirmPassword" class="form-control required" id="createManagedUserConfirmInput">
                             </div>
                             <div class="checkbox">
                                 <label><input type="checkbox" name="forcePasswordChange" id="createManagedUserForcePasswordChangeInput"> User must change password at next login</label>

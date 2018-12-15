@@ -1293,12 +1293,20 @@ $(document).ready(function () {
         let scope = $(this).data("property-scope");
         $("input[data-group-name]").each(function() {
             if (groupName === $(this).data("group-name")) {
-                if (scope === null || $(this).data("property-name").startsWith(scope)) {
+                if (!scope || $(this).data("property-name").startsWith(scope)) {
                     let propertyValue = $(this).val();
                     if ($(this).attr("type") === "checkbox") {
                         propertyValue = $(this).is(":checked");
                     }
-                    $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue);
+                    $rest.updateConfigProperty($(this).data("group-name"), $(this).data("property-name"), propertyValue,
+                        function(data) {
+                            toastr.options = $common.toastrOptions;
+                            toastr.success("Configuration saved");
+                        },
+                        function(data) {
+                            toastr.options = $common.toastrOptions;
+                            toastr.warning("An unexpected error occurred while saving. Check server logs for details.");
+                        });
                 }
             }
         });

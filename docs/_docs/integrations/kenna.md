@@ -37,6 +37,8 @@ connector ID will be used when configuring integration with Dependency-Track.
 Dependency-Track includes the ability to specify configuration properties on a per-project basis. 
 This feature is used to map projects in Dependency-Track to applications/assets in Kenna.
 
+![Configure Project Properties](/images/screenshots/kenna-project-properties.png)
+
 | Attribute      | Value                             |
 | ---------------| --------------------------------- |
 | Group Name     | `integrations`                    |

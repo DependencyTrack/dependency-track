@@ -17,6 +17,17 @@ Requirements:
 * Dependency-Track v3.4.0 or higher
 * Kenna Security with Application Risk Module
 
+### Kenna Security Configuration
+
+#### Step 1: Navigate to connectors
+![Navigate to connectors](/images/screenshots/kenna-connectors.png)
+
+#### Step 2: Add a KDI connector
+![Add KDI connector](/images/screenshots/kenna-add-kdi-connector.png)
+
+Each connector has a unique ID. The ID is typically available in the URL as well as accessible via the Kenna API. The 
+connector ID will be used when configuring integration with Dependency-Track.
+
 ### Dependency-Track Configuration
 
 #### Global configuration
@@ -33,11 +44,6 @@ This feature is used to map projects in Dependency-Track to applications/assets 
 | Property Value | The assets external_id            |
 | Property Type  | `STRING`                          |
 
-
-### Kenna Security Configuration
-
-#### Step 1: Navigate to connectors
-![Navigate to connectors](/images/screenshots/kenna-connectors.png)
-
-#### Step 2: Add a KDI connector
-![Add KDI connector](/images/screenshots/kenna-add-kdi-connector.png)
+The external_id may be anything as long as it uniquely identifies the application in Kenna. Shown in the example
+is the UUID of the Dependency-Track project. However, the external_id may be an organizations internal identifier
+for the application.

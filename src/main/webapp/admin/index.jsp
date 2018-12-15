@@ -414,8 +414,12 @@
                                 <br/>Restarting Dependency-Track is required for cadence changes to take effect
                             </div>
                             <div class="form-group">
+                                <label class="required" for="integrationsKennaSecurityConnectorIdInput">Connector ID</label>
+                                <input type="text" class="form-control required" id="integrationsKennaSecurityConnectorIdInput" data-group-name="integrations" data-property-name="kenna.connector.id">
+                            </div>
+                            <div class="form-group">
                                 <label class="required" for="integrationsKennaSecurityTokenInput">Token</label>
-                                <input type="text" conceal autocomplete="off"  class="form-control required" id="integrationsKennaSecurityTokenInput" data-group-name="integrations" data-property-name="kenna.token">
+                                <input type="text" conceal autocomplete="off" class="form-control required" id="integrationsKennaSecurityTokenInput" data-group-name="integrations" data-property-name="kenna.token">
                             </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="integrationsKennaSecurityUpdateButton" data-group-name="integrations" data-property-scope="kenna">Update</button>
                         </div>

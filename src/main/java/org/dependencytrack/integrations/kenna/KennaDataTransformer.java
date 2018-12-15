@@ -130,7 +130,7 @@ public class KennaDataTransformer {
                 vulnDef.put("cve_identifiers", vulnerability.getVulnId());
             }
             if (vulnerability.getCwe() != null) {
-                vulnDef.put("cwe_identifiers", "CWE-" + vulnerability.getCwe().getId());
+                vulnDef.put("cwe_identifier", "CWE-" + vulnerability.getCwe().getId());
             }
             if (vulnerability.getTitle() != null) {
                 vulnDef.put("name", vulnerability.getTitle());

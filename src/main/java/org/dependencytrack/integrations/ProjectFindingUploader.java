@@ -17,12 +17,16 @@
  */
 package org.dependencytrack.integrations;
 
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.Project;
+import java.io.InputStream;
+import java.util.List;
 
-public interface FindingUploader extends IntegrationPoint {
+public interface ProjectFindingUploader extends FindingUploader {
 
-    void setQueryManager(QueryManager qm);
+    boolean isProjectConfigured(Project project);
 
-    boolean isEnabled();
+    InputStream process(Project project, List<Finding> findings);
 
+    void upload(Project project, InputStream payload);
 }

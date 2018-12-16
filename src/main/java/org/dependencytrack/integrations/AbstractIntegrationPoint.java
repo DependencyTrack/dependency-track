@@ -56,8 +56,4 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
                 .level(NotificationLevel.ERROR)
         );
     }
-
-    public void complete() {
-        // nothing to do
-    }
 }

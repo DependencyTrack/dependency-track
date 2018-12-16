@@ -17,12 +17,12 @@
  */
 package org.dependencytrack.integrations;
 
-import org.dependencytrack.persistence.QueryManager;
+import java.io.InputStream;
 
-public interface FindingUploader extends IntegrationPoint {
+public interface PortfolioFindingUploader extends FindingUploader {
 
-    void setQueryManager(QueryManager qm);
+    InputStream process();
 
-    boolean isEnabled();
+    void upload(InputStream payload);
 
 }

@@ -23,29 +23,25 @@ import alpine.model.ConfigProperty;
 import io.github.openunirest.http.HttpResponse;
 import io.github.openunirest.http.JsonNode;
 import io.github.openunirest.http.Unirest;
-import io.github.openunirest.request.HttpRequest;
 import io.github.openunirest.request.HttpRequestWithBody;
 import org.apache.http.entity.ContentType;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
-import org.dependencytrack.integrations.FindingUploader;
-import org.dependencytrack.model.Finding;
+import org.dependencytrack.integrations.PortfolioFindingUploader;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class KennaSecurityUploader extends AbstractIntegrationPoint implements FindingUploader {
+public class KennaSecurityUploader extends AbstractIntegrationPoint implements PortfolioFindingUploader {
 
     private static final Logger LOGGER = Logger.getLogger(KennaSecurityUploader.class);
     private static final String ASSET_EXTID_PROPERTY = "kenna.asset.external_id";
     private static final String API_ROOT = "https://api.kennasecurity.com";
     private static final String CONNECTOR_UPLOAD_URL = API_ROOT + "/connectors/%s/data_file";
-    private static final String CONNECTOR_RUN_URL = API_ROOT + "/connectors/%s/run";
 
     private String connectorId;
 
@@ -71,23 +67,19 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements F
     }
 
     @Override
-    public boolean isProjectConfigured(Project project) {
-        final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
-        if (externalId != null && externalId.getPropertyValue() != null) {
-            return true;
+    public InputStream process() {
+        final KennaDataTransformer kdi = new KennaDataTransformer(qm);
+        for (Project project: qm.getAllProjects()) {
+            final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
+            if (externalId != null && externalId.getPropertyValue() != null) {
+                kdi.process(project, externalId.getPropertyValue());
+            }
         }
-        return false;
+        return new ByteArrayInputStream(kdi.generate().toString().getBytes());
     }
 
     @Override
-    public InputStream process(Project project, List<Finding> findings) {
-        final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
-        final JSONObject kdi = new KennaDataTransformer(qm, project, findings, externalId.getPropertyValue()).getDocument();
-        return new ByteArrayInputStream(kdi.toString(2).getBytes());
-    }
-
-    @Override
-    public void upload(Project project, Object payload) {
+    public void upload(InputStream payload) {
         final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         try {
             final String token = DataEncryption.decryptAsString(tokenProperty.getPropertyValue());
@@ -96,16 +88,16 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements F
             final HttpResponse<JsonNode> response = request
                     .header("X-Risk-Token", token)
                     .header("accept", "application/json")
-                    .field("file", (InputStream)payload, ContentType.APPLICATION_JSON, project.getUuid().toString() + ".json")
-                    //.field("run", "true")
+                    .field("file", payload, ContentType.APPLICATION_JSON, "findings.json")
+                    .field("run", "true")
                     .asJson();
             if (response.getStatus() == 200 && response.getBody() != null) {
                 JSONObject root = response.getBody().getObject();
                 if (root.getString("success").equals("true")) {
-                    LOGGER.debug("Successfully uploaded KDI for project: " + project.getUuid().toString());
+                    LOGGER.debug("Successfully uploaded KDI");
                     return;
                 }
-                LOGGER.warn("An unexpected response was received uploading findings to Kenna Security for project: " + project.getUuid().toString());
+                LOGGER.warn("An unexpected response was received uploading findings to Kenna Security");
             } else {
                 LOGGER.warn("Kenna uploader did not receive expected response while attempting to upload "
                         + "Dependency-Track findings. HTTP response code: "
@@ -114,34 +106,6 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements F
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to Kenna Security", e);
-        }
-    }
-
-    @Override
-    public void complete() {
-        final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
-        try {
-            final String token = DataEncryption.decryptAsString(tokenProperty.getPropertyValue());
-            Unirest.setHttpClient(HttpClientFactory.createClient());
-            final HttpRequest request = Unirest.get(String.format(CONNECTOR_RUN_URL, connectorId));
-            final HttpResponse<JsonNode> response = request
-                    .header("X-Risk-Token", token)
-                    .header("accept", "application/json")
-                    .asJson();
-            if (response.getStatus() == 200 && response.getBody() != null) {
-                JSONObject root = response.getBody().getObject();
-                if (root.getString("success").equals("true")) {
-                    LOGGER.debug("Successfully instructed Kenna connector to run");
-                    return;
-                }
-                LOGGER.warn("An unexpected response was received instructing Kenna connector to run");
-            } else {
-                LOGGER.warn("Kenna uploader did not receive expected response while instructing connector to run. "
-                        + "HTTP response code: " + response.getStatus() + " - " + response.getStatusText());
-                handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
-            }
-        } catch (Exception e) {
-            LOGGER.error("An error occurred attempting to run Kenna connector", e);
         }
     }
 }

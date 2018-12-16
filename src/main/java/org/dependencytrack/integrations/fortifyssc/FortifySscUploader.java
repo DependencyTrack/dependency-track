@@ -22,7 +22,7 @@ import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
-import org.dependencytrack.integrations.FindingUploader;
+import org.dependencytrack.integrations.ProjectFindingUploader;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
@@ -34,7 +34,7 @@ import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
-public class FortifySscUploader extends AbstractIntegrationPoint implements FindingUploader {
+public class FortifySscUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
     private static final Logger LOGGER = Logger.getLogger(FortifySscUploader.class);
     private static final String APPID_PROPERTY = "fortify.ssc.applicationId";
@@ -74,7 +74,7 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Find
     }
 
     @Override
-    public void upload(Project project, Object payload) {
+    public void upload(Project project, InputStream payload) {
         final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
         final ConfigProperty username = qm.getConfigProperty(FORTIFY_SSC_USERNAME.getGroupName(), FORTIFY_SSC_USERNAME.getPropertyName());
         final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());
@@ -85,12 +85,11 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Find
                     username.getPropertyValue(),
                     DataEncryption.decryptAsString(password.getPropertyValue()));
             if (token != null) {
-                client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), (InputStream)payload);
+                client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), payload);
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to Fortify Software Security Center", e);
             handleException(LOGGER, e);
         }
     }
-
 }

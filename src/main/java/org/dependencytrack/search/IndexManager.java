@@ -321,7 +321,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Deletes the index directory.
      * @since 3.4.0
      */
-    public static void deleteIndexDirectory(IndexType indexType) {
+    public static void delete(IndexType indexType) {
         final File indexDir = getIndexDirectory(indexType);
         if (indexDir.exists()) {
             LOGGER.info("Deleting " + indexType.name().toLowerCase() + " index");

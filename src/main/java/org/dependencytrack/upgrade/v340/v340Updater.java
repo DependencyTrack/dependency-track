@@ -17,16 +17,10 @@
  */
 package org.dependencytrack.upgrade.v340;
 
-import alpine.event.framework.Event;
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
 import alpine.util.DbUtil;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.License;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.search.IndexManager;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -45,16 +39,10 @@ public class v340Updater extends AbstractUpgradeItem {
         DbUtil.dropTable(connection, "PROJECT_PROPERTY"); // Will be dynamically recreated
 
         LOGGER.info("Deleting search engine indices");
-        IndexManager.deleteIndexDirectory(IndexManager.IndexType.LICENSE);
-        IndexManager.deleteIndexDirectory(IndexManager.IndexType.PROJECT);
-        IndexManager.deleteIndexDirectory(IndexManager.IndexType.COMPONENT);
-        IndexManager.deleteIndexDirectory(IndexManager.IndexType.VULNERABILITY);
-
-        LOGGER.info("Dispatching events to reindex all objects"); //todo change this to check for empty directory and reindex - default object generator?
-        Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, License.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Project.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Component.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Vulnerability.class));
+        IndexManager.delete(IndexManager.IndexType.LICENSE);
+        IndexManager.delete(IndexManager.IndexType.PROJECT);
+        IndexManager.delete(IndexManager.IndexType.COMPONENT);
+        IndexManager.delete(IndexManager.IndexType.VULNERABILITY);
     }
 
 }

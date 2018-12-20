@@ -29,10 +29,10 @@
         <listener-class>alpine.persistence.PersistenceInitializer</listener-class>
     </listener>
     <listener>
-        <listener-class>alpine.persistence.PersistenceManagerFactory</listener-class>
+        <listener-class>org.dependencytrack.upgrade.UpgradeInitializer</listener-class>
     </listener>
     <listener>
-        <listener-class>org.dependencytrack.upgrade.UpgradeInitializer</listener-class>
+        <listener-class>alpine.persistence.PersistenceManagerFactory</listener-class>
     </listener>
     <listener>
         <listener-class>org.dependencytrack.event.EventSubsystemInitializer</listener-class>

@@ -18,12 +18,23 @@
 package org.dependencytrack.upgrade;
 
 import alpine.logging.Logger;
+import alpine.model.InstalledUpgrades;
+import alpine.model.SchemaVersion;
+import alpine.persistence.JdoProperties;
 import alpine.upgrade.UpgradeException;
 import alpine.upgrade.UpgradeExecutor;
+import org.datanucleus.PersistenceNucleusContext;
+import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.persistence.QueryManager;
+import javax.jdo.JDOHelper;
+import javax.jdo.PersistenceManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
 
 public class UpgradeInitializer implements ServletContextListener {
 
@@ -33,11 +44,22 @@ public class UpgradeInitializer implements ServletContextListener {
      * {@inheritDoc}
      */
     public void contextInitialized(ServletContextEvent event) {
+        LOGGER.info("Initializing upgrade framework");
+        final JDOPersistenceManagerFactory pmf  = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.get(), "Alpine");
+
+        // Ensure that the UpgradeMetaProcessor and SchemaVersion tables are created NOW, not dynamically at runtime.
+        final PersistenceNucleusContext ctx = pmf.getNucleusContext();
+        final Set<String> classNames = new HashSet<>();
+        classNames.add(InstalledUpgrades.class.getCanonicalName());
+        classNames.add(SchemaVersion.class.getCanonicalName());
+        ((SchemaAwareStoreManager)ctx.getStoreManager()).createSchemaForClasses(classNames, new Properties());
+
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
-        QueryManager qm = new QueryManager();
-        UpgradeExecutor executor = new UpgradeExecutor(qm);
+        final PersistenceManager pm = pmf.getPersistenceManager();
+        final QueryManager qm = new QueryManager(pm);
+        final UpgradeExecutor executor = new UpgradeExecutor(qm);
 
         try {
             executor.executeUpgrades(UpgradeItems.getUpgradeItems());
@@ -45,6 +67,8 @@ public class UpgradeInitializer implements ServletContextListener {
         catch (UpgradeException e) {
             LOGGER.error("An error occurred performing upgrade processing. " + e.getMessage());
         }
+        pm.close();
+        pmf.close();
     }
 
     /**

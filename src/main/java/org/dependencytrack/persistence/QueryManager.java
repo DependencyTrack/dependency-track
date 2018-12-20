@@ -57,6 +57,7 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
 import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,6 +85,14 @@ public class QueryManager extends AlpineQueryManager {
      */
     public QueryManager() {
         super();
+    }
+
+    /**
+     * Constructs a new QueryManager.
+     * @param pm a PersistenceManager object
+     */
+    public QueryManager(final PersistenceManager pm) {
+        super(pm);
     }
 
     /**

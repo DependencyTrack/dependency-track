@@ -23,7 +23,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>1.4.3-SNAPSHOT</version>
+        <version>1.4.3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -83,16 +83,16 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>1.0.0</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.1.0</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>1.1.0</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>1.1.1</lib.cyclonedx-java.version>
         <lib.dependency-check.version>4.0.1</lib.dependency-check.version>
         <lib.lucene.version>7.6.0</lib.lucene.version>
-        <lib.packageurl.version>1.0.0-SNAPSHOT</lib.packageurl.version>
-        <lib.pebble.version>3.0.4-SNAPSHOT</lib.pebble.version>
-        <lib.spdx-tools.version>2.1.14</lib.spdx-tools.version>
-        <lib.unirest.version>2.2.10</lib.unirest.version>
+        <lib.packageurl.version>1.0.0</lib.packageurl.version>
+        <lib.pebble.version>3.0.6</lib.pebble.version>
+        <lib.spdx-tools.version>2.1.15</lib.spdx-tools.version>
+        <lib.unirest.version>2.5.03</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <!-- Maven Plugin Properties -->
-        <plugin.github-release-plugin.version>1.2.0</plugin.github-release-plugin.version>
+        <plugin.github-release-plugin.version>1.3.0</plugin.github-release-plugin.version>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
     </properties>
 

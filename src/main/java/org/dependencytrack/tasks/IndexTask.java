@@ -54,9 +54,7 @@ public class IndexTask implements Subscriber {
             } else if (IndexEvent.Action.COMMIT == event.getAction()) {
                 indexManager.commit();
             } else if (IndexEvent.Action.REINDEX == event.getAction()) {
-                LOGGER.info("Starting reindex task");
-                //todo
-                LOGGER.info("Reindexing complete");
+                indexManager.reindex();
             }
         }
     }

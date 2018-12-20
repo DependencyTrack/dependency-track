@@ -21,6 +21,7 @@ import alpine.Config;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -78,7 +79,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Defines the type of supported indexes.
      * @since 3.0.0
      */
-    protected enum IndexType {
+    public enum IndexType {
         PROJECT,
         COMPONENT,
         VULNERABILITY,
@@ -111,9 +112,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.0.0
      */
     private synchronized Directory getDirectory() throws IOException {
-        final File indexDir = new File(
-                Config.getInstance().getDataDirectorty(),
-                "index" + File.separator + indexType.name().toLowerCase());
+        final File indexDir = getIndexDirectory(indexType);
         if (!indexDir.exists()) {
             if (!indexDir.mkdirs()) {
                 LOGGER.error("Unable to create index directory: " + indexDir.getCanonicalPath());
@@ -296,4 +295,49 @@ public abstract class IndexManager implements AutoCloseable {
         }
     }
 
+    /**
+     * Returns the directory where this index is located.
+     * @return a File object
+     * @since 3.4.0
+     */
+    private static File getIndexDirectory(IndexType indexType) {
+        return new File(
+                Config.getInstance().getDataDirectorty(),
+                "index" + File.separator + indexType.name().toLowerCase());
+    }
+
+    /**
+     * Deletes the index directory. This method should be both overwritten and called via overwriting method.
+     * @since 3.4.0
+     */
+    public void reindex() {
+        final File indexDir = getIndexDirectory(indexType);
+        if (indexDir.exists()) {
+            indexDir.delete();
+        }
+    }
+
+    /**
+     * Deletes the index directory.
+     * @since 3.4.0
+     */
+    public static void deleteIndexDirectory(IndexType indexType) {
+        final File indexDir = getIndexDirectory(indexType);
+        if (indexDir.exists()) {
+            LOGGER.info("Deleting " + indexType.name().toLowerCase() + " index");
+            try {
+                FileDeleteStrategy.FORCE.delete(indexDir);
+            } catch (IOException e) {
+                LOGGER.error("An error occurred deleting the " + indexType.name().toLowerCase() + " index", e);
+            }
+        }
+    }
+
+    /**
+     * Returns if the index directory exists or not.
+     * @since 3.4.0
+     */
+    public static boolean exists(IndexType indexType) {
+        return getIndexDirectory(indexType).exists();
+    }
 }

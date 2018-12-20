@@ -20,6 +20,7 @@ package org.dependencytrack.search;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
@@ -27,7 +28,9 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.QueryManager;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Indexer for operating on licenses.
@@ -101,4 +104,27 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
         }
     }
 
+    /**
+     * Re-indexes all License objects.
+     * @since 3.4.0
+     */
+    public void reindex() {
+        LOGGER.info("Starting reindex task. This may take some time.");
+        super.reindex();
+        try (QueryManager qm = new QueryManager()) {
+            final long total = qm.getCount(License.class);
+            long count = 0;
+            while (count < total) {
+                final PaginatedResult result = qm.getLicenses();
+                final List<License> licenses = result.getList(License.class);
+                for (License license: licenses) {
+                    add(license);
+                }
+                count += result.getObjects().size();
+                qm.advancePagination();
+            }
+            commit();
+        }
+        LOGGER.info("Reindexing complete");
+    }
 }

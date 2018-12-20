@@ -49,4 +49,10 @@ public interface ObjectIndexer<T> {
      */
     void commit();
 
+    /**
+     * Re-indexes all objects of the ObjectIndexer type.
+     * @since 3.4.0
+     */
+    void reindex();
+
 }

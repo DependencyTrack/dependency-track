@@ -36,6 +36,7 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
+import org.dependencytrack.search.IndexManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.File;
@@ -61,11 +62,23 @@ public class DefaultObjectGenerator implements ServletContextListener {
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
-        // Creates empty indexes on startup if indexes do not exist
-        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Project.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Component.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
-        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, License.class));
+
+        if (!IndexManager.exists(IndexManager.IndexType.LICENSE)) {
+            LOGGER.info("Dispatching event to reindex licenses");
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, License.class));
+        }
+        if (!IndexManager.exists(IndexManager.IndexType.PROJECT)) {
+            LOGGER.info("Dispatching event to reindex projects");
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Project.class));
+        }
+        if (!IndexManager.exists(IndexManager.IndexType.COMPONENT)) {
+            LOGGER.info("Dispatching event to reindex components");
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Component.class));
+        }
+        if (!IndexManager.exists(IndexManager.IndexType.VULNERABILITY)) {
+            LOGGER.info("Dispatching event to reindex vulnerabilities");
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Vulnerability.class));
+        }
 
         loadDefaultPermissions();
         loadDefaultPersonas();

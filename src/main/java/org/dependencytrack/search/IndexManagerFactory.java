@@ -43,6 +43,8 @@ public class IndexManagerFactory {
                 public void remove(Object object) { }
                 @Override
                 public void commit() { }
+                @Override
+                public void reindex() { }
             };
         }
         if (event.getObject() instanceof Project || Project.class == event.getIndexableClass()) {

@@ -20,6 +20,7 @@ package org.dependencytrack.search;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
@@ -27,7 +28,9 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.QueryManager;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Indexer for operating on projects.
@@ -115,4 +118,27 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         }
     }
 
+    /**
+     * Re-indexes all Project objects.
+     * @since 3.4.0
+     */
+    public void reindex() {
+        LOGGER.info("Starting reindex task. This may take some time.");
+        super.reindex();
+        try (QueryManager qm = new QueryManager()) {
+            final long total = qm.getCount(Project.class);
+            long count = 0;
+            while (count < total) {
+                final PaginatedResult result = qm.getProjects();
+                final List<Project> projects = result.getList(Project.class);
+                for (Project project: projects) {
+                    add(project);
+                }
+                count += result.getObjects().size();
+                qm.advancePagination();
+            }
+            commit();
+        }
+        LOGGER.info("Reindexing complete");
+    }
 }

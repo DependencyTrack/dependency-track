@@ -136,7 +136,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
             List<Component> paginatedList = paginatedComponents.getPaginatedList();
             for (Component component: paginatedList) {
                 if (shouldAnalyze(component.getPurl())) {
-                    coordinates.add(component.getPurl().canonicalize());
+                    //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
+                    coordinates.add(minimizePurl(component.getPurl()));
                 }
             }
             if (coordinates.size() == 0) {
@@ -154,6 +155,27 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
             doThrottleDelay();
             paginatedComponents.nextPage();
         }
+    }
+
+    /**
+     * Sonatype OSSIndex (as of December 2018) has an issue that fails to identify vulnerabilities when
+     * HTTP POST is used and PackageURL is specified that contains qualifiers (and possibly a subpath).
+     * Therefore, this method will return a String representation of a PackageURL without qualifier
+     * or subpath. This method should be removed at a future date when OSSIndex resolves the issue.
+     *
+     * TODO: Delete this method and workaround for OSSIndex bug once Sonatype resolves it.
+     * @since 3.4.0
+     */
+    @Deprecated
+    private static String minimizePurl(PackageURL purl) {
+        String p = purl.canonicalize();
+        if (p.contains("?")) {
+            p = p.substring(0, p.lastIndexOf("?"));
+        }
+        if (p.contains("#")) {
+            p = p.substring(0, p.lastIndexOf("#"));
+        }
+        return p;
     }
 
     /**
@@ -181,7 +203,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
         try (QueryManager qm = new QueryManager()) {
             for (ComponentReport componentReport: report) {
                 for (Component component: componentsScanned) {
-                    final String componentPurl = component.getPurl().canonicalize();
+                    //final String componentPurl = component.getPurl().canonicalize(); // todo: put this back when minimizePurl() is removed
+                    final String componentPurl = minimizePurl(component.getPurl());
                     final PackageURL sonatypePurl = oldPurlResolver(componentReport.getCoordinates());
                     if (componentPurl.equals(componentReport.getCoordinates()) ||
                             (sonatypePurl != null && componentPurl.equals(sonatypePurl.canonicalize()))) {
@@ -284,6 +307,11 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      */
     private PackageURL oldPurlResolver(String coordinates) {
         try {
+            // Check if OSSIndex has updated their implementation or not
+            if (coordinates.startsWith("pkg:")) {
+                return new PackageURL(coordinates);
+            }
+            // Nope, they're still using the 'old' style. Force update it.
             return new PackageURL("pkg:" + coordinates.replaceFirst(":", "/"));
         } catch (MalformedPackageURLException e) {
             return null;

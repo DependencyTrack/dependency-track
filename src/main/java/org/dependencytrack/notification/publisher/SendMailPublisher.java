@@ -62,6 +62,7 @@ public class SendMailPublisher implements Publisher {
                 return; // smtp is not enabled
             }
             final boolean smtpAuth = (smtpUser.getPropertyValue() != null && smtpPass.getPropertyValue() != null);
+            final String password = (smtpPass.getPropertyValue() != null) ? DataEncryption.decryptAsString(smtpPass.getPropertyValue()) : null;
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom.getPropertyValue())
                     .to(destination)
@@ -70,7 +71,7 @@ public class SendMailPublisher implements Publisher {
                     .host(smtpHostname.getPropertyValue())
                     .port(Integer.valueOf(smtpPort.getPropertyValue()))
                     .username(smtpUser.getPropertyValue())
-                    .password(DataEncryption.decryptAsString(smtpPass.getPropertyValue()))
+                    .password(password)
                     .smtpauth(smtpAuth)
                     .useStartTLS(BooleanUtil.valueOf(smtpSslTls.getPropertyValue()))
                     .trustCert(Boolean.valueOf(smtpTrustCert.getPropertyValue()));

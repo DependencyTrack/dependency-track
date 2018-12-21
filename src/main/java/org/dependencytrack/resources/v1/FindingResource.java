@@ -26,9 +26,9 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -37,6 +37,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JAX-RS resources for processing findings.
@@ -53,7 +54,7 @@ public class FindingResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all findings for a specific project",
-            response = Vulnerability.class,
+            response = Finding.class,
             responseContainer = "List",
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
     )
@@ -69,6 +70,32 @@ public class FindingResource extends AlpineResource {
                 final long totalCount = qm.getVulnerabilityCount(project, true);
                 final List<Finding> findings = qm.getFindings(project);
                 return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/project/{uuid}/export")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a the findings for the specified project as FPF"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
+    public Response exportFindingsByProject(@PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project != null) {
+                final List<Finding> findings = qm.getFindings(project);
+                final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);
+                Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
+                rb.header("Content-Disposition", "inline; filename=findings-" + uuid + ".fpf");
+                return rb.build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }

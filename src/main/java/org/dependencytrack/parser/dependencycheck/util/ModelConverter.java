@@ -132,10 +132,12 @@ public final class ModelConverter {
         if (group != null) {
             dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "vendor", group, Confidence.HIGHEST);
             dependency.addEvidence(EvidenceType.VENDOR, "dependency-track", "groupid", group, Confidence.HIGHEST);
+            dependency.addVendorWeighting(group);
         }
         if (name != null) {
             dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "name", name, Confidence.HIGHEST);
             dependency.addEvidence(EvidenceType.PRODUCT, "dependency-track", "artifactid", name, Confidence.HIGHEST);
+            dependency.addProductWeighting(name);
         }
         if (version != null) {
             dependency.addEvidence(EvidenceType.VERSION, "dependency-track", "version", version, Confidence.HIGHEST);

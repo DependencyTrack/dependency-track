@@ -62,6 +62,7 @@ Features
 * Supports [CycloneDX] and [SPDX] bill-of-material and [Dependency-Check] XML
 * Easy to read metrics for components, projects, and portfolio
 * Provides a reliable mirror of the NVD data feed
+* Native support for Kenna Security, Fortify SSC, and ThreadFix
 * API-first design facilitates easy integration with other systems
 * API documentation available in Swagger 2.0 (OpenAPI 3 support coming soon)
 * Supports internally managed users, Active Directory/LDAP, and API Keys

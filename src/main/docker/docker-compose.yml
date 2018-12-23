@@ -1,0 +1,42 @@
+version: '3'
+services:
+  dtrack:
+    environment:
+    # The Dependency-Track container can be configured using any of the
+    # available configuration properties defined in:
+    # https://docs.dependencytrack.org/getting-started/configuration/
+    # All properties are upper case with periods replaced by underscores.
+    #
+    # Database Properties
+    - ALPINE_DATABASE_MODE=external
+    - ALPINE_DATABASE_URL=jdbc:postgresql://postgres10:5432/dtrack
+    - ALPINE_DATABASE_DRIVER=org.postgresql.Driver
+    - ALPINE_DATABASE_DRIVER_PATH=/extlib/postgresql-42.2.5.jar
+    - ALPINE_DATABASE_USERNAME=dtrack
+    - ALPINE_DATABASE_PASSWORD=changeme
+    #
+    # Optional LDAP Properties
+    # - ALPINE_LDAP_ENABLED=
+    # - ALPINE_LDAP_SERVER_URL=ldap://ldap.example.com:389
+    # - ALPINE_LDAP_BASEDN=dc=example,dc=com
+    # - ALPINE_LDAP_SECURITY_AUTH=simple
+    # - ALPINE_LDAP_BIND_USERNAME=
+    # - ALPINE_LDAP_BIND_PASSWORD=
+    # - ALPINE_LDAP_AUTH_USERNAME_FORMAT=%s@example.com
+    # - ALPINE_LDAP_ATTRIBUTE_NAME=userPrincipalName
+    # - ALPINE_LDAP_ATTRIBUTE_MAIL=mail
+    # - ALPINE_LDAP_GROUPS_FILTER=(&(objectClass=group)(objectCategory=Group))
+    # - ALPINE_LDAP_USER_GROUPS_FILTER=(member:1.2.840.113556.1.4.1941:={USER_DN})
+    # - ALPINE_LDAP_USER_PROVISIONING=false
+    # - ALPINE_LDAP_TEAM_SYNCHRONIZATION=false
+    #
+    # Optional HTTP Proxy Settings
+    # - ALPINE_HTTP_PROXY_ADDRESS=proxy.example.com
+    # - ALPINE_HTTP_PROXY_PORT=8888
+    # - ALPINE_HTTP_PROXY_USERNAME=
+    # - ALPINE_HTTP_PROXY_PASSWORD=
+    image: 'owasp/dependency-track'
+    ports:
+    - '80:8080'
+    volumes:
+    - './data:/data'

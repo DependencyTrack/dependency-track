@@ -17,6 +17,7 @@
  */
 package org.dependencytrack.upgrade;
 
+import alpine.Config;
 import alpine.logging.Logger;
 import alpine.model.InstalledUpgrades;
 import alpine.model.SchemaVersion;
@@ -45,6 +46,11 @@ public class UpgradeInitializer implements ServletContextListener {
      */
     public void contextInitialized(ServletContextEvent event) {
         LOGGER.info("Initializing upgrade framework");
+
+        final String driverPath = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER_PATH);
+        if (driverPath != null) {
+            Config.getInstance().expandClasspath(driverPath);
+        }
         final JDOPersistenceManagerFactory pmf  = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.get(), "Alpine");
 
         // Ensure that the UpgradeMetaProcessor and SchemaVersion tables are created NOW, not dynamically at runtime.

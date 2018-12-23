@@ -53,7 +53,7 @@ import static org.dependencytrack.tasks.NistMirrorTask.NVD_MIRROR_DIR;
 public class DependencyCheckTask extends BaseComponentAnalyzerTask implements ScanTask, Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(DependencyCheckTask.class);
-    private static final String DC_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "dependency-check";
+    public static final String DC_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "dependency-check";
     private static final String DC_DATA_DIR = DC_ROOT_DIR + File.separator + "data";
     private static final String DC_REPORT_DIR = DC_ROOT_DIR + File.separator + "reports";
     private static final String DC_REPORT_FILE = DC_REPORT_DIR + File.separator + "dependency-check-report.xml";

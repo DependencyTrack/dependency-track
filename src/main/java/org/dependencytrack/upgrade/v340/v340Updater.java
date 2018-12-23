@@ -21,7 +21,11 @@ import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
 import alpine.util.DbUtil;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.dependencytrack.search.IndexManager;
+import org.dependencytrack.tasks.scanners.DependencyCheckTask;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -43,6 +47,13 @@ public class v340Updater extends AbstractUpgradeItem {
         IndexManager.delete(IndexManager.IndexType.PROJECT);
         IndexManager.delete(IndexManager.IndexType.COMPONENT);
         IndexManager.delete(IndexManager.IndexType.VULNERABILITY);
+
+        LOGGER.info("Deleting Dependency-Check work directory");
+        try {
+            FileDeleteStrategy.FORCE.delete(new File(DependencyCheckTask.DC_ROOT_DIR));
+        } catch (IOException e) {
+            LOGGER.error("An error occurred deleting the Dependency-Check work directory", e);
+        }
     }
 
 }

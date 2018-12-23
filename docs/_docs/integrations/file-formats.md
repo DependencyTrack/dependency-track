@@ -11,8 +11,7 @@ systems that are not API-aware or compatible.
 
 Dependency-Track has a native format that can be used to share findings with other systems. The findings contain 
 identical information as presented while auditing, but also include information about the project and the system 
-that created the file. The file type is called **Finding Packaging Format** (FPF) and is available in 
-Dependency-Track v3.4 and later.
+that created the file. The file type is called **Finding Packaging Format** (FPF).
 
 FPF's are json files and have the following sections:
 

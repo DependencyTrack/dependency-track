@@ -30,8 +30,6 @@ The preferred method for production environments is to use docker-compose.yml wi
 database container (Postgres, MySQL, or Microsoft SQL). The following is an example YAML file that
 can be used with `docker-compose` or `docker stack deploy`.
 
-> Configuration via environment variables is available in Dependency-Track v3.4 and higher.
-
 ```yaml
 version: '3'
 services:
@@ -79,8 +77,8 @@ services:
 
 ### Bundled JDBC Drivers
 
-JDBC Drivers are included with Dependency-Track v3.4 and higher. The drivers can be 
-referenced from `ALPINE_DATABASE_DRIVER_PATH`.
+JDBC Drivers are included with Dependency-Track (Docker only). They can be specified 
+with `ALPINE_DATABASE_DRIVER_PATH`.
 
 | Driver        | Path                                      |
 | ------------- | ----------------------------------------- |

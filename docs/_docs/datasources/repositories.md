@@ -25,6 +25,8 @@ Dependency-Track supports the following repositories:
 |           | Clojars          | 4 |
 |           | Google Android   | 5 |
 | npm       | NPM              | 1 |
+| nuget     | NuGet            | 1 |
+| pypi      | PyPi             | 1 |
 
 
 > Future versions of Dependency-Track will support configurable repositories and additional ecosystems.

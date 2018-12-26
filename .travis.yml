@@ -13,6 +13,10 @@ addons:
     build_command: mvn clean package
     branch_pattern: coverity_scan
 
+before_install:
+- sudo apt-get install jq
+- wget -O ~/codacy-coverage-reporter-assembly-latest.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r '.assets[0].browser_download_url')
+
 before_script:
   - export REPO=owasp/dependency-track
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
@@ -23,6 +27,7 @@ script:
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 
 after_success:
+  - java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r target/jacoco-ut/jacoco.xml
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
     docker push $REPO;

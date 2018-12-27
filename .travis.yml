@@ -3,6 +3,8 @@ jdk: oraclejdk8
 env:
   global:
   - secure: TQZGDK1eLnY/PFC41ESFRob0dfmhIehuY9n3OVu3gUKrLjEZS5VqTWczx54jrtB0bHH46ZogthATjpaJwgOoAI2AuqHiz3reCAgKA4XE/gGhgiIDLUTUg+fbG6frEPRjWB/OBamCWIip3pB6Acm/nqczFCAVfK2OIyQZvyCGFO0=
+  - secure: E/b1Py2L8TaCfHIBskdm0RgjcvPjKwjE7CTcKoiTR6TI4fSb2CKjBJBNRW2spFG825OttGKNoaWlIFBTMnXYGswUnuTfQlL/ngTct62nlMQ1H8YI2+2UQ61R2q9vbl5DeREzrXzHrSTX7qPx4m5rwCmvA5D7suKdzqgz7ToIQ6I=
+
 addons:
   coverity_scan:
     project:

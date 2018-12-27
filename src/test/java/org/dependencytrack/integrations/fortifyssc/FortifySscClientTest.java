@@ -72,7 +72,6 @@ public class FortifySscClientTest {
     public void testUploadFindingsPositiveCase() throws Exception {
         String token = "db975c97-98b1-4988-8d6a-9c3e044dfff3";
         String applicationVersion = "12345";
-
         FortifySscUploader uploader = new FortifySscUploader();
         wireMockRule.stubFor(
                 post(urlEqualTo("/ssc/upload/resultFileUpload.html?mat=" + token + "&engineType=DEPENDENCY_TRACK&entityId=" + applicationVersion))
@@ -92,7 +91,6 @@ public class FortifySscClientTest {
     public void testUploadFindingsNegativeCase() throws Exception {
         String token = "db975c97-98b1-4988-8d6a-9c3e044dfff3";
         String applicationVersion = "";
-
         FortifySscUploader uploader = new FortifySscUploader();
         wireMockRule.stubFor(
                 post(urlEqualTo("/ssc/upload/resultFileUpload.html?mat=" + token + "&engineType=DEPENDENCY_TRACK&entityId=" + applicationVersion))

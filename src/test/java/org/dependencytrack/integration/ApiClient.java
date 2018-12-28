@@ -17,14 +17,14 @@
  */
 package org.dependencytrack.integration;
 
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.commons.io.FileUtils;
 import org.datanucleus.util.Base64;
 import org.json.JSONObject;
 import org.dependencytrack.util.HttpClientFactory;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
+import unirest.UnirestException;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -32,7 +32,7 @@ import java.util.UUID;
 public class ApiClient {
 
     static {
-        Unirest.setHttpClient(HttpClientFactory.createClient());
+        Unirest.config().httpClient(HttpClientFactory.createClient());
     }
 
     private String baseUrl;

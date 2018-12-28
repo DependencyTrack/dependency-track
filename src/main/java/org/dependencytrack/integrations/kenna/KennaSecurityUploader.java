@@ -20,10 +20,6 @@ package org.dependencytrack.integrations.kenna;
 import alpine.crypto.DataEncryption;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.request.HttpRequestWithBody;
 import org.apache.http.entity.ContentType;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
@@ -31,6 +27,10 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONObject;
+import unirest.HttpRequestWithBody;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -83,7 +83,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
         final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         try {
             final String token = DataEncryption.decryptAsString(tokenProperty.getPropertyValue());
-            Unirest.setHttpClient(HttpClientFactory.createClient());
+            Unirest.config().httpClient(HttpClientFactory.createClient());
             final HttpRequestWithBody request = Unirest.post(String.format(CONNECTOR_UPLOAD_URL, connectorId));
             final HttpResponse<JsonNode> response = request
                     .header("X-Risk-Token", token)

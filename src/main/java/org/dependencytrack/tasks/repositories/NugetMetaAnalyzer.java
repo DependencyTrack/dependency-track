@@ -19,14 +19,14 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.http.exceptions.UnirestException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONArray;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
+import unirest.UnirestException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -67,7 +67,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(Component component) {
-        Unirest.setHttpClient(HttpClientFactory.createClient());
+        Unirest.config().httpClient(HttpClientFactory.createClient());
         MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             if (performVersionCheck(meta, component)) {

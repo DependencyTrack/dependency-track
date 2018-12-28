@@ -33,6 +33,7 @@ import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -90,9 +91,23 @@ public final class HttpClientFactory {
      * @return a HttpClient object with optional proxy settings
      */
     public static HttpClient createClient() {
+        return createClient(null);
+    }
+
+    /**
+     * Factory method that create a HttpClient object. This method will attempt to use
+     * proxy settings defined in application.properties first. If they are not set,
+     * this method will attempt to use proxy settings from the environment by looking
+     * for 'https_proxy' and 'http_proxy'.
+     * @return a HttpClient object with optional proxy settings
+     */
+    public static HttpClient createClient(DnsResolver dnsResolver) {
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
+        if (dnsResolver != null) {
+            clientBuilder.setDnsResolver(dnsResolver);
+        }
 
         ProxyInfo proxyInfo = createProxyInfo();
 

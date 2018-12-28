@@ -18,12 +18,12 @@
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.logging.Logger;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.request.HttpRequestWithBody;
 import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONObject;
+import unirest.HttpRequestWithBody;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public class FortifySscClient {
     }
 
     public String generateOneTimeUploadToken(final String username, final String password) {
-        Unirest.setHttpClient(HttpClientFactory.createClient());
+        Unirest.config().httpClient(HttpClientFactory.createClient());
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
         final HttpRequestWithBody request = Unirest.post(baseURL + "/api/v1/fileTokens");
         final HttpResponse<JsonNode> response = request
@@ -63,7 +63,7 @@ public class FortifySscClient {
     }
 
     public void uploadDependencyTrackFindings(String token, String applicationVersion, InputStream findingsJson) {
-        Unirest.setHttpClient(HttpClientFactory.createClient());
+        Unirest.config().httpClient(HttpClientFactory.createClient());
         final HashMap<String, Object> params = new HashMap<>();
         params.put("engineType", "DEPENDENCY_TRACK");
         params.put("mat", token);

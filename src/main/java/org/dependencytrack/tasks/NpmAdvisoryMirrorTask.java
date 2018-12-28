@@ -22,10 +22,6 @@ import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
@@ -41,6 +37,10 @@ import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.parser.npm.model.AdvisoryResults;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
+import unirest.UnirestException;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
@@ -86,7 +86,7 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
         LOGGER.info("Retrieving NPM advisories at " + currentDate);
 
         try {
-            Unirest.setHttpClient(HttpClientFactory.createClient());
+            Unirest.config().httpClient(HttpClientFactory.createClient());
 
             boolean more = true;
 

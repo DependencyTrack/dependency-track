@@ -25,10 +25,6 @@ import alpine.model.ConfigProperty;
 import alpine.util.Pageable;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.Cwe;
@@ -43,6 +39,10 @@ import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
+import unirest.UnirestException;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -182,7 +182,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * Submits the payload to the Sonatype OSS Index service
      */
     private List<ComponentReport> submit(JSONObject payload) throws UnirestException {
-        Unirest.setHttpClient(HttpClientFactory.createClient());
+        Unirest.config().httpClient(HttpClientFactory.createClient());
         final HttpResponse<JsonNode> jsonResponse = Unirest.post(API_BASE_URL)
                 .header(HttpHeaders.ACCEPT, "application/json")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")

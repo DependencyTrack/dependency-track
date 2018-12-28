@@ -21,10 +21,6 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
-import io.github.openunirest.http.HttpResponse;
-import io.github.openunirest.http.JsonNode;
-import io.github.openunirest.http.Unirest;
-import io.github.openunirest.http.exceptions.UnirestException;
 import org.dependencytrack.parser.npm.NpmAuditParser;
 import org.json.JSONObject;
 import org.dependencytrack.event.MetricsUpdateEvent;
@@ -36,6 +32,10 @@ import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.HttpClientFactory;
 import org.dependencytrack.util.NotificationUtil;
+import unirest.HttpResponse;
+import unirest.JsonNode;
+import unirest.Unirest;
+import unirest.UnirestException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -146,7 +146,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * Submits the payload to the NPM service
      */
     private List<Advisory> submit(JSONObject payload) throws UnirestException {
-        Unirest.setHttpClient(HttpClientFactory.createClient());
+        Unirest.config().httpClient(HttpClientFactory.createClient());
         final HttpResponse<JsonNode> jsonResponse = Unirest.post(API_BASE_URL)
                 .header("user-agent", "npm/6.1.0 node/v10.5.0 linux x64")
                 .header("npm-in-ci", "false")

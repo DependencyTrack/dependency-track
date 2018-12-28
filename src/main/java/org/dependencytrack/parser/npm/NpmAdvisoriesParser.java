@@ -15,15 +15,14 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-
 package org.dependencytrack.parser.npm;
 
 import alpine.logging.Logger;
-import io.github.openunirest.http.JsonNode;
 import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.parser.npm.model.AdvisoryResults;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import unirest.JsonNode;
 
 /**
  * Parser for NPM Advisory objects returned from the NPM Advisory API.

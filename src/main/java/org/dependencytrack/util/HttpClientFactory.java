@@ -36,7 +36,7 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.auth.DigestSchemeFactory;
 import org.apache.http.impl.auth.NTLMSchemeFactory;
@@ -124,7 +124,7 @@ public final class HttpClientFactory {
             try {
                 SSLContext sslContext = SSLContextBuilder
                         .create()
-                        .loadTrustMaterial(new TrustSelfSignedStrategy())
+                        .loadTrustMaterial(new TrustAllStrategy())
                         .build();
                 clientBuilder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE));
             } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException e) {

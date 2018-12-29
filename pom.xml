@@ -258,11 +258,19 @@
         </dependency>
         <!-- Test Dependencies -->
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-standalone</artifactId>
-            <version>2.20.0</version>
+            <groupId>com.github.stefanbirkner</groupId>
+            <artifactId>system-rules</artifactId>
+            <version>1.19.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- mockserver -->
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>5.5.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

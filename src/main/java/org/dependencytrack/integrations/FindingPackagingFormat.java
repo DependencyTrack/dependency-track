@@ -60,7 +60,7 @@ public class FindingPackagingFormat {
             meta.put("application", about.getApplication());
             meta.put("version", about.getVersion());
             meta.put("timestamp", DateUtil.toISO8601(new Date()));
-            if (baseUrl.getPropertyValue() != null) {
+            if (baseUrl != null && baseUrl.getPropertyValue() != null) {
                 meta.put("baseUrl", baseUrl.getPropertyValue());
             }
 

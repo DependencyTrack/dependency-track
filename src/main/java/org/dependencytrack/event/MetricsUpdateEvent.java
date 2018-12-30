@@ -39,7 +39,7 @@ public class MetricsUpdateEvent implements Event {
     }
 
     private Type type = Type.PORTFOLIO;
-    private Object target = null;
+    private Object target;
 
     // Call this to perform a metrics update on a specific project or component
     public MetricsUpdateEvent(Object target) {

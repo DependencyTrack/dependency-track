@@ -35,7 +35,9 @@ public class ScanUploadEvent implements Event {
 
     public ScanUploadEvent(final UUID projectUuid, final byte[] scan) {
         this.projectUuid = projectUuid;
-        this.scan = scan;
+        if (scan != null) {
+            this.scan = scan.clone();
+        }
     }
 
     public ScanUploadEvent(final UUID projectUuid, final File file) {
@@ -48,7 +50,7 @@ public class ScanUploadEvent implements Event {
     }
 
     public byte[] getScan() {
-        return scan;
+        return scan != null ? scan.clone() : null;
     }
 
     public File getFile() {

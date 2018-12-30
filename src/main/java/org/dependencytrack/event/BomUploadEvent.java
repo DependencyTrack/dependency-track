@@ -35,7 +35,9 @@ public class BomUploadEvent extends AbstractChainableEvent {
 
     public BomUploadEvent(final UUID projectUuid, final byte[] bom) {
         this.projectUuid = projectUuid;
-        this.bom = bom;
+        if (bom != null) {
+            this.bom = bom.clone();
+        }
     }
 
     public BomUploadEvent(final UUID projectUuid, final File file) {
@@ -48,7 +50,7 @@ public class BomUploadEvent extends AbstractChainableEvent {
     }
 
     public byte[] getBom() {
-        return bom;
+        return bom != null ? bom.clone() : null;
     }
 
     public File getFile() {

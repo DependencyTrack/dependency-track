@@ -25,6 +25,7 @@ import alpine.model.ConfigProperty;
 import alpine.util.Pageable;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.Cwe;
@@ -119,10 +120,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(PackageURL purl) {
-        if (purl == null) {
-            return false;
-        }
-        return true;
+        return purl != null;
     }
 
     /**
@@ -140,7 +138,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                     coordinates.add(minimizePurl(component.getPurl()));
                 }
             }
-            if (coordinates.size() == 0) {
+            if (CollectionUtils.isEmpty(coordinates)) {
                 return;
             }
             final JSONObject json = new JSONObject();

@@ -18,6 +18,7 @@
 package org.dependencytrack.search;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Helper class that defines constants used by the indexers.
@@ -94,9 +95,9 @@ public final class IndexConstants {
      */
     private IndexConstants() { }
 
-    private static HashMap<String, Float> searchBoosts = new HashMap<>();
+    private static Map<String, Float> searchBoosts = new HashMap<>();
 
-    public static HashMap<String, Float> getBoostMap() {
+    public static Map<String, Float> getBoostMap() {
         if (searchBoosts.isEmpty()) {
             searchBoosts.put(PROJECT_UUID, BOOST_PROJECT_UUID);
             searchBoosts.put(PROJECT_NAME, BOOST_PROJECT_NAME);

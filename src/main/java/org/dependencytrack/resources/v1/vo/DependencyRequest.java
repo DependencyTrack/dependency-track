@@ -41,7 +41,9 @@ public class DependencyRequest {
                              @JsonProperty(value = "componentUuids", required = true) String[] componentUuids,
                              @JsonProperty(value = "notes") String notes) {
         this.projectUuid = projectUuid;
-        this.componentUuids = componentUuids;
+        if (componentUuids != null) {
+            this.componentUuids = componentUuids.clone();
+        }
         this.notes = notes;
     }
 
@@ -50,7 +52,7 @@ public class DependencyRequest {
     }
 
     public String[] getComponentUuids() {
-        return componentUuids;
+        return componentUuids != null ? componentUuids.clone() : null;
     }
 
     public String getNotes() {

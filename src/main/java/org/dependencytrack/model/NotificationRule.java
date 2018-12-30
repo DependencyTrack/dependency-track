@@ -22,6 +22,7 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import javax.jdo.annotations.Column;
@@ -186,7 +187,7 @@ public class NotificationRule implements Serializable {
     }
 
     public void setNotifyOn(Set<NotificationGroup> groups) {
-        if (groups == null || groups.size() == 0) {
+        if (CollectionUtils.isNotEmpty(groups)) {
             this.notifyOn = null;
             return;
         }

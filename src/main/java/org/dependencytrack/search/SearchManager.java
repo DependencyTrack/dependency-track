@@ -69,19 +69,17 @@ public class SearchManager {
         final SearchResult searchResult = new SearchResult();
         final List<Map<String, String>> resultSet = new ArrayList<>();
         try {
-            final StringBuilder sb = new StringBuilder();
-            sb.append(queryString);
-            sb.append("^100");
-            sb.append(" OR ");
-            sb.append(queryString);
-            sb.append("*");
-            sb.append("^5");
-            sb.append(" OR ");
-            sb.append("*");
-            sb.append(queryString);
-            sb.append("*");
-
-            final Query query = indexManager.getQueryParser().parse(sb.toString());
+            String sb = queryString +
+                    "^100" +
+                    " OR " +
+                    queryString +
+                    "*" +
+                    "^5" +
+                    " OR " +
+                    "*" +
+                    queryString +
+                    "*";
+            final Query query = indexManager.getQueryParser().parse(sb);
             final TopDocs results = indexManager.getIndexSearcher().search(query, limit);
 
             if (LOGGER.isDebugEnabled()) {

@@ -272,11 +272,15 @@ public class License implements Serializable {
     }
 
     public String[] getSeeAlso() {
-        return seeAlso;
+        return seeAlso != null ? seeAlso.clone() : null;
     }
 
     public void setSeeAlso(String[] seeAlso) {
-        this.seeAlso = seeAlso;
+        if (seeAlso != null) {
+            this.seeAlso = seeAlso.clone();
+        } else {
+            this.seeAlso = null;
+        }
     }
 
     public UUID getUuid() {

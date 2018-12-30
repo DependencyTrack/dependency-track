@@ -18,6 +18,7 @@
 package org.dependencytrack.parser.spdx.rdf;
 
 import alpine.logging.Logger;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.exception.ParseException;
 import org.dependencytrack.model.Component;
@@ -125,7 +126,7 @@ public class SpdxDocumentParser {
          * Verify the document is valid and throw an exception with cause(s) if not.
          */
         final List<String> verify = doc.verify();
-        if (verify.size() > 0) {
+        if (CollectionUtils.isNotEmpty(verify)) {
             LOGGER.warn("The SPDX Document has " + verify.size() + " parsing exception(s)");
             final StringBuilder sb = new StringBuilder();
             for (int i = 0; i < verify.size(); i++) {

@@ -20,6 +20,7 @@ package org.dependencytrack.parser.cyclonedx.util;
 import alpine.logging.Logger;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
 import org.dependencytrack.model.Classifier;
@@ -116,7 +117,7 @@ public class ModelConverter {
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
                 components.add(convert(qm, cycloneDxComponent.getComponents().get(i)));
             }
-            if (components.size() > 0) {
+            if (CollectionUtils.isNotEmpty(components)) {
                 component.setChildren(components);
             }
         }

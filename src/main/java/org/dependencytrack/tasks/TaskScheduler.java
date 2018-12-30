@@ -22,7 +22,14 @@ import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
 import alpine.tasks.AlpineTaskScheduler;
 import alpine.util.BooleanUtil;
-import org.dependencytrack.event.*;
+import org.dependencytrack.event.FortifySscUploadEvent;
+import org.dependencytrack.event.KennaSecurityUploadEvent;
+import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.NistMirrorEvent;
+import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
+import org.dependencytrack.event.RepositoryMetaEvent;
+import org.dependencytrack.event.VulnDbSyncEvent;
+import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 

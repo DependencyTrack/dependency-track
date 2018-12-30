@@ -34,7 +34,9 @@ import unirest.Unirest;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
 
 public class KennaSecurityUploader extends AbstractIntegrationPoint implements PortfolioFindingUploader {
 

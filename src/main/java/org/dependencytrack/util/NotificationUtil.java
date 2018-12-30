@@ -19,6 +19,7 @@ package org.dependencytrack.util;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Dependency;
@@ -85,7 +86,7 @@ public class NotificationUtil {
                     .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
             );
         }
-        if (vulnerabilities.size() > 0) {
+        if (CollectionUtils.isNotEmpty(vulnerabilities)) {
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)

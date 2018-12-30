@@ -31,7 +31,8 @@ public class BomUploadEventTest {
         byte[] bom = "testing".getBytes();
         BomUploadEvent event = new BomUploadEvent(uuid, bom);
         Assert.assertEquals(uuid, event.getProjectUuid());
-        Assert.assertEquals(bom, event.getBom());
+        Assert.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
+        Assert.assertTrue(event.getBom().length > 0);
         Assert.assertNull(event.getFile());
     }
 

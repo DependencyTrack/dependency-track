@@ -228,7 +228,7 @@ public class MetricsUpdateTask implements Subscriber {
         for (Dependency dependency: dependencies) {
 
             // Get the component
-            final Component component = dependency.getComponent();
+            //final Component component = dependency.getComponent();
 
             // Update the dependency metrics
             final MetricCounters dependencyMetrics = updateDependencyMetrics(qm, dependency.getId());

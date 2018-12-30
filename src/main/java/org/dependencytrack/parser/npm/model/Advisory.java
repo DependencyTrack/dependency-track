@@ -195,11 +195,15 @@ public class Advisory {
     }
 
     public String[] getCves() {
-        return cves;
+        return cves != null ? cves.clone() : null;
     }
 
     public void setCves(String[] cves) {
-        this.cves = cves;
+        if (cves != null) {
+            this.cves = cves.clone();
+        } else {
+            this.cves = null;
+        }
     }
 
     public String getVulnerableVersions() {

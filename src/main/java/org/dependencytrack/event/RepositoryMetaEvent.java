@@ -22,7 +22,7 @@ import org.dependencytrack.model.Component;
 
 public class RepositoryMetaEvent implements Event {
 
-    private Component component = null;
+    private Component component;
 
     public RepositoryMetaEvent() { }
 

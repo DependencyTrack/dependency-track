@@ -21,6 +21,7 @@ import alpine.Config;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -61,9 +62,9 @@ import java.util.List;
 public abstract class IndexManager implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(IndexManager.class);
-    private IndexWriter iwriter = null;
-    private IndexSearcher isearcher = null;
-    private MultiFieldQueryParser qparser = null;
+    private IndexWriter iwriter;
+    private IndexSearcher isearcher;
+    private MultiFieldQueryParser qparser;
     private IndexType indexType;
 
     /**
@@ -288,7 +289,7 @@ public abstract class IndexManager implements AutoCloseable {
                     .level(NotificationLevel.ERROR)
             );
         }
-        if (list.size() > 0) {
+        if (CollectionUtils.isNotEmpty(list)) {
             return list.get(0); // There should only be one document
         } else {
             return null;

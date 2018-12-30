@@ -237,7 +237,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             parser.parse(uncompressedFile);
         } catch (IOException ex) {
             mirroredWithoutErrors = false;
-            ex.printStackTrace();
+            LOGGER.error("An error occurred uncompressing NVD payload", ex);
         } finally {
             close(gzis);
             close(out);
@@ -253,7 +253,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             try {
                 object.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.warn("Error closing stream", e);
             }
         }
     }

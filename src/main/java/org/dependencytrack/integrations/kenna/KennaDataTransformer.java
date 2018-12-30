@@ -17,8 +17,8 @@
  */
 package org.dependencytrack.integrations.kenna;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
@@ -41,11 +41,11 @@ public class KennaDataTransformer {
 
     private static final String SCANNER_TYPE = "Dependency-Track";
     private QueryManager qm;
-    private HashMap<String, Vulnerability> portfolioVulnerabilities = new HashMap<>();
+    private Map<String, Vulnerability> portfolioVulnerabilities = new HashMap<>();
     private final JSONArray assets = new JSONArray();
     private final JSONArray vulnDefs = new JSONArray();
 
-    public KennaDataTransformer(QueryManager qm) {
+    KennaDataTransformer(QueryManager qm) {
         this.qm = qm;
     }
 
@@ -71,7 +71,7 @@ public class KennaDataTransformer {
         final JSONArray vulns = new JSONArray();
         final List<Finding> findings = qm.getFindings(project);
         for (Finding finding: findings) {
-            final HashMap analysis = finding.getAnalysis();
+            final Map analysis = finding.getAnalysis();
             final Object suppressed = finding.getAnalysis().get("isSuppressed");
             if (suppressed instanceof Boolean) {
                 final boolean isSuppressed = (Boolean)analysis.get("isSuppressed");
@@ -80,10 +80,10 @@ public class KennaDataTransformer {
                 }
             }
             final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
-            final Component component = qm.getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
+            //final Component component = qm.getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
             final String stateString = (String)finding.getAnalysis().get("state");
             final AnalysisState analysisState = (stateString != null) ? AnalysisState.valueOf(stateString) : AnalysisState.NOT_SET;
-            final JSONObject kdiVuln = generateKdiVuln(vulnerability, component, analysisState);
+            final JSONObject kdiVuln = generateKdiVuln(vulnerability, analysisState);
             vulns.put(kdiVuln);
             portfolioVulnerabilities.put(generateScannerIdentifier(vulnerability), vulnerability);
         }
@@ -110,7 +110,7 @@ public class KennaDataTransformer {
         asset.put("external_id", externalId);
         // If the project has tags, add them to the KDI
         final List<Tag> tags = project.getTags();
-        if (tags != null && tags.size() > 0) {
+        if (CollectionUtils.isNotEmpty(tags)) {
             final ArrayList<String> tagArray = new ArrayList<>();
             for (Tag tag: tags) {
                 tagArray.add(tag.getName());
@@ -124,7 +124,7 @@ public class KennaDataTransformer {
      * Generates a KDI vulnerability object which will be assigned to an asset and which will reference a KDI
      * vulnerability definition.
      */
-    private JSONObject generateKdiVuln(Vulnerability vulnerability, Component component, AnalysisState analysisState) {
+    private JSONObject generateKdiVuln(Vulnerability vulnerability, AnalysisState analysisState) {
         final JSONObject vuln = new JSONObject();
         vuln.put("scanner_type", SCANNER_TYPE);
         vuln.put("scanner_identifier", generateScannerIdentifier(vulnerability));

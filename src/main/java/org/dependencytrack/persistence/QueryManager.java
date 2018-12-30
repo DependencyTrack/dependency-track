@@ -17,15 +17,14 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.Config;
 import alpine.event.framework.Event;
-import alpine.model.ConfigProperty;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -60,8 +59,8 @@ import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -76,9 +75,8 @@ import java.util.stream.Collectors;
  * @author Steve Springett
  * @since 3.0.0
  */
+@SuppressWarnings({"UnusedReturnValue", "unused"})
 public class QueryManager extends AlpineQueryManager {
-
-    private static final boolean ENFORCE_AUTHORIZATION = Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHORIZATION);
 
     /**
      * Default constructor.
@@ -159,11 +157,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param version the version of the Project (or null)
      * @return a Project object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Project getProject(String name, String version) {
         final Query query = pm.newQuery(Project.class, "name == :name && version == :version");
-        final List<Project> result = (List<Project>) query.execute(name, version);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(name, version));
     }
 
     /**
@@ -188,7 +184,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return List of resolved Tags
      */
     @SuppressWarnings("unchecked")
-    public synchronized List<Tag> resolveTags(List<Tag> tags) {
+    private synchronized List<Tag> resolveTags(List<Tag> tags) {
         if (tags == null) {
             return new ArrayList<>();
         }
@@ -214,12 +210,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param name the name of the Tag
      * @return a Tag object
      */
-    @SuppressWarnings("unchecked")
     public Tag getTagByName(String name) {
         final String trimmedTag = StringUtils.trimToNull(name);
         final Query query = pm.newQuery(Tag.class, "name == :name");
-        final List<Tag> result = (List<Tag>) query.execute(trimmedTag);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(trimmedTag));
     }
 
     /**
@@ -243,7 +237,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param names the name(s) of the Tag(s) to create
      * @return the created Tag object(s)
      */
-    public List<Tag> createTags(List<String> names) {
+    private List<Tag> createTags(List<String> names) {
         final List<Tag> newTags = new ArrayList<>();
         for (String name: names) {
             final String trimmedTag = StringUtils.trimToNull(name);
@@ -484,11 +478,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param propertyName the name of the property
      * @return a ProjectProperty object
      */
-    @SuppressWarnings("unchecked")
     public ProjectProperty getProjectProperty(final Project project, final String groupName, final String propertyName) {
         Query query = this.pm.newQuery(ProjectProperty.class, "project == :project && groupName == :groupName && propertyName == :propertyName");
-        List<ProjectProperty> result = (List)query.execute(project, groupName, propertyName);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(project, groupName, propertyName));
     }
 
     /**
@@ -524,7 +516,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Scans
      */
     @SuppressWarnings("unchecked")
-    public List<Scan> getScans(Project project) {
+    private List<Scan> getScans(Project project) {
         final Query query = pm.newQuery(Scan.class, "project == :project");
         return (List<Scan>) query.execute(project);
     }
@@ -533,7 +525,7 @@ public class QueryManager extends AlpineQueryManager {
      * Deletes scans belonging to the specified Project.
      * @param project the Project to delete scans for
      */
-    public void deleteScans(Project project) {
+    private void deleteScans(Project project) {
         final Query query = pm.newQuery(Scan.class, "project == :project");
         query.deletePersistentAll(project);
     }
@@ -543,7 +535,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component to delete scans for
      */
     @SuppressWarnings("unchecked")
-    public void deleteScans(Component component) {
+    private void deleteScans(Component component) {
         final Query query = pm.newQuery(Scan.class, "components.contains(component)");
         for (Scan scan: (List<Scan>) query.execute(component)) {
             scan.getComponents().remove(component);
@@ -570,7 +562,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Boms
      */
     @SuppressWarnings("unchecked")
-    public List<Bom> getBoms(Project project) {
+    private List<Bom> getBoms(Project project) {
         final Query query = pm.newQuery(Bom.class, "project == :project");
         return (List<Bom>) query.execute(project);
     }
@@ -579,7 +571,7 @@ public class QueryManager extends AlpineQueryManager {
      * Deletes boms belonging to the specified Project.
      * @param project the Project to delete boms for
      */
-    public void deleteBoms(Project project) {
+    private void deleteBoms(Project project) {
         final Query query = pm.newQuery(Bom.class, "project == :project");
         query.deletePersistentAll(project);
     }
@@ -589,7 +581,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component to delete boms for
      */
     @SuppressWarnings("unchecked")
-    public void deleteBoms(Component component) {
+    private void deleteBoms(Component component) {
         final Query query = pm.newQuery(Bom.class, "components.contains(component)");
         for (Bom bom: (List<Bom>) query.execute(component)) {
             bom.getComponents().remove(component);
@@ -632,7 +624,6 @@ public class QueryManager extends AlpineQueryManager {
      * @param hash the hash of the component to retrieve
      * @return a Component, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Component getComponentByHash(String hash) {
         if (hash == null) {
             return null;
@@ -649,8 +640,7 @@ public class QueryManager extends AlpineQueryManager {
         } else {
             return null;
         }
-        final List<Component> result = (List<Component>) query.execute(hash);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(hash));
     }
 
     /**
@@ -660,11 +650,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param version the version of the component to retrieve
      * @return a Component, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Component getComponentByAttributes(String group, String name, String version) {
         final Query query = pm.newQuery(Component.class, "group == :group && name == :name && version == :version");
-        final List<Component> result = (List<Component>) query.execute(group, name, version);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(group, name, version));
     }
 
     /**
@@ -796,12 +784,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param licenseId the SPDX license ID to retrieve
      * @return a License object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public License getLicense(String licenseId) {
         final Query query = pm.newQuery(License.class, "licenseId == :licenseId");
         query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
-        final List<License> result = (List<License>) query.execute(licenseId);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(licenseId));
     }
 
     /**
@@ -810,7 +796,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a created License object
      */
-    public License createLicense(License license, boolean commitIndex) {
+    private License createLicense(License license, boolean commitIndex) {
         final License result = persist(license);
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, License.class);
@@ -823,7 +809,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a License object
      */
-    public License updateLicense(License transientLicense, boolean commitIndex) {
+    private License updateLicense(License transientLicense, boolean commitIndex) {
         final License license;
         if (transientLicense.getId() > 0) {
             license = getObjectById(License.class, transientLicense.getId());
@@ -857,7 +843,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a synchronize License object
      */
-    public License synchronizeLicense(License license, boolean commitIndex) {
+    License synchronizeLicense(License license, boolean commitIndex) {
         License result = updateLicense(license, commitIndex);
         if (result == null) {
             result = createLicense(license, commitIndex);
@@ -884,7 +870,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a Vulnerability object
      */
-    public Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
+    private Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
         final Vulnerability vulnerability;
         if (transientVulnerability.getId() > 0) {
             vulnerability = getObjectById(Vulnerability.class, transientVulnerability.getId());
@@ -949,12 +935,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param vulnId the name of the vulnerability
      * @return the matching Vulnerability object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
         final Query query = pm.newQuery(Vulnerability.class, "source == :source && vulnId == :vulnId");
         query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
-        final List<Vulnerability> result = (List<Vulnerability>) query.execute(source, vulnId);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(source, vulnId));
     }
 
     /**
@@ -973,9 +957,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param module the NPM module to query on
      * @return a list of Vulnerability objects
      */
-    /** todo: determine if this is needed and delete */
     @Deprecated
     @SuppressWarnings("unchecked")
+    //todo: determine if this is needed and delete
     public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
         final Query query = pm.newQuery(Vulnerability.class, "source == :source && subtitle == :module");
         query.getFetchPlan().addGroup(Vulnerability.FetchGroup.COMPONENTS.name());
@@ -1041,7 +1025,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param name the name of the CWE
      * @return a CWE object
      */
-    public Cwe createCweIfNotExist(int id, String name) {
+    Cwe createCweIfNotExist(int id, String name) {
         Cwe cwe = getCweById(id);
         if (cwe != null) {
             return cwe;
@@ -1057,11 +1041,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param cweId the CWE-ID
      * @return a CWE object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Cwe getCweById(int cweId) {
         final Query query = pm.newQuery(Cwe.class, "cweId == :cweId");
-        final List<Cwe> result = (List<Cwe>) query.execute(cweId);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(cweId));
     }
 
     /**
@@ -1101,7 +1083,7 @@ public class QueryManager extends AlpineQueryManager {
         // Holder for an existing Dependency (if present)
         Dependency existingDependency = null;
 
-        if (dependencies.size() > 0) {
+        if (CollectionUtils.isNotEmpty(dependencies)) {
             // Ensure that only one dependency object exists
             if (dependencies.size() > 1) {
                 // Iterate through the duplicates and add them to the list of dependencies to be deleted
@@ -1252,7 +1234,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param project the Project to delete dependencies of
      */
     @SuppressWarnings("unchecked")
-    public void deleteDependencies(Project project) {
+    private void deleteDependencies(Project project) {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
         query.deletePersistentAll(project);
@@ -1263,7 +1245,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component to delete dependencies of
      */
     @SuppressWarnings("unchecked")
-    public void deleteDependencies(Component component) {
+    private void deleteDependencies(Component component) {
         final Query query = pm.newQuery(Dependency.class, "component == :component");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
         query.deletePersistentAll(component);
@@ -1297,10 +1279,8 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component
      * @return a Dependency object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Dependency getDependency(Project project, Component component) {
-        final List<Dependency> result = getDependencies(project, component);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(getDependencies(project, component));
     }
 
     /**
@@ -1327,12 +1307,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param dependency the dependency to fully refresh
      * @return a Dependency object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Dependency getDependency(Dependency dependency) {
         final Query query = pm.newQuery(Dependency.class, "id == :id");
         query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
-        final List<Dependency> result = (List<Dependency>) query.execute(dependency.getId());
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(dependency.getId()));
     }
 
     /**
@@ -1396,7 +1374,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
+    private List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
         String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
         final Query query = pm.newQuery(Vulnerability.class, filter);
         return (List<Vulnerability>)query.execute(component);
@@ -1420,7 +1398,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public List<Vulnerability> getAllVulnerabilities(Dependency dependency, boolean includeSuppressed) {
+    private List<Vulnerability> getAllVulnerabilities(Dependency dependency, boolean includeSuppressed) {
         final String filter;
         if (includeSuppressed) {
             filter = "components.contains(:component)";
@@ -1470,7 +1448,7 @@ public class QueryManager extends AlpineQueryManager {
                     getAllVulnerabilities(dependency)
             );
             for (Vulnerability componentVuln: componentVulns) {
-                componentVuln.setComponents(Arrays.asList(pm.detachCopy(dependency.getComponent())));
+                componentVuln.setComponents(Collections.singletonList(pm.detachCopy(dependency.getComponent())));
             }
             vulnerabilities.addAll(componentVulns);
         }
@@ -1642,7 +1620,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Analysis objects, or null if not found
      */
     @SuppressWarnings("unchecked")
-    public List<Analysis> getAnalyses(Project project) {
+    private List<Analysis> getAnalyses(Project project) {
         final Query query = pm.newQuery(Analysis.class, "project == :project");
         return (List<Analysis>) query.execute(project);
     }
@@ -1654,11 +1632,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param vulnerability the Vulnerability
      * @return a Analysis object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public Analysis getAnalysis(Project project, Component component, Vulnerability vulnerability) {
         final Query query = pm.newQuery(Analysis.class, "project == :project && component == :component && vulnerability == :vulnerability");
-        final List<Analysis> result = (List<Analysis>) query.execute(project, component, vulnerability);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(project, component, vulnerability));
     }
 
     /**
@@ -1712,7 +1688,7 @@ public class QueryManager extends AlpineQueryManager {
      * Deleted all analysis and comments associated for the specified Component.
      * @param component the Component to delete analysis for
      */
-    public void deleteAnalysisTrail(Component component) {
+    private void deleteAnalysisTrail(Component component) {
         final Query query = pm.newQuery(Analysis.class, "component == :component");
         query.deletePersistentAll(component);
     }
@@ -1721,7 +1697,7 @@ public class QueryManager extends AlpineQueryManager {
      * Deleted all analysis and comments associated for the specified Project.
      * @param project the Project to delete analysis for
      */
-    public void deleteAnalysisTrail(Project project) {
+    private void deleteAnalysisTrail(Project project) {
         final Query query = pm.newQuery(Analysis.class, "project == :project");
         query.deletePersistentAll(project);
     }
@@ -1767,12 +1743,10 @@ public class QueryManager extends AlpineQueryManager {
      * Retrieves the most recent PortfolioMetrics.
      * @return a PortfolioMetrics object
      */
-    @SuppressWarnings("unchecked")
     public PortfolioMetrics getMostRecentPortfolioMetrics() {
         final Query query = pm.newQuery(PortfolioMetrics.class);
         query.setOrdering("lastOccurrence desc");
-        final List<PortfolioMetrics> result = execute(query).getList(PortfolioMetrics.class);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(execute(query).getList(PortfolioMetrics.class));
     }
 
     /**
@@ -1802,12 +1776,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param project the Project to retrieve metrics for
      * @return a ProjectMetrics object
      */
-    @SuppressWarnings("unchecked")
     public ProjectMetrics getMostRecentProjectMetrics(Project project) {
         final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
         query.setOrdering("lastOccurrence desc");
-        final List<ProjectMetrics> result = execute(query, project).getList(ProjectMetrics.class);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(execute(query, project).getList(ProjectMetrics.class));
     }
 
     /**
@@ -1838,12 +1810,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component to retrieve metrics for
      * @return a ComponentMetrics object
      */
-    @SuppressWarnings("unchecked")
     public ComponentMetrics getMostRecentComponentMetrics(Component component) {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
-        final List<ComponentMetrics> result = execute(query, component).getList(ComponentMetrics.class);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(execute(query, component).getList(ComponentMetrics.class));
     }
 
     /**
@@ -1874,12 +1844,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param dependency the Dependency to retrieve metrics for
      * @return a DependencyMetrics object
      */
-    @SuppressWarnings("unchecked")
     public DependencyMetrics getMostRecentDependencyMetrics(Dependency dependency) {
         final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component");
         query.setOrdering("lastOccurrence desc");
-        final List<DependencyMetrics> result = execute(query, dependency.getProject(), dependency.getComponent()).getList(DependencyMetrics.class);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(execute(query, dependency.getProject(), dependency.getComponent()).getList(DependencyMetrics.class));
     }
 
     /**
@@ -1923,7 +1891,7 @@ public class QueryManager extends AlpineQueryManager {
             m.setCount(metric.getCount());
             m.setMeasuredAt(metric.getMeasuredAt());
             persist(m);
-        } else if (result.size() == 0) {
+        } else if (CollectionUtils.isEmpty(result)) {
             persist(metric);
         } else {
             delete(result);
@@ -1935,7 +1903,7 @@ public class QueryManager extends AlpineQueryManager {
      * Deleted all metrics associated for the specified Project.
      * @param project the Project to delete metrics for
      */
-    public void deleteMetrics(Project project) {
+    private void deleteMetrics(Project project) {
         final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
         query.deletePersistentAll(project);
 
@@ -1947,7 +1915,7 @@ public class QueryManager extends AlpineQueryManager {
      * Deleted all metrics associated for the specified Component.
      * @param component the Component to delete metrics for
      */
-    public void deleteMetrics(Component component) {
+    private void deleteMetrics(Component component) {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.deletePersistentAll(component);
 
@@ -2013,16 +1981,14 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Determins if the repository exists in the database.
+     * Determines if the repository exists in the database.
      * @param type the type of repository (required)
      * @param identifier the repository identifier
      * @return true if object exists, false if not
      */
-    @SuppressWarnings("unchecked")
-    public boolean repositoryExist(RepositoryType type, String identifier) {
+    private boolean repositoryExist(RepositoryType type, String identifier) {
         final Query query = pm.newQuery(Repository.class, "type == :type && identifier == :identifier");
-        List<Repository> result = (List<Repository>)query.execute(type, identifier);
-        return result.size() > 0;
+        return singleResult(query.execute(type, identifier)) != null;
     }
 
     /**
@@ -2062,12 +2028,10 @@ public class QueryManager extends AlpineQueryManager {
      * @param name the Package URL name of the meta component
      * @return a RepositoryMetaComponent object, or null if not found
      */
-    @SuppressWarnings("unchecked")
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {
         final Query query = pm.newQuery(RepositoryMetaComponent.class);
         query.setFilter("repositoryType == :repositoryType && namespace == :namespace && name == :name");
-        final List<RepositoryMetaComponent> result = (List<RepositoryMetaComponent>) query.execute(repositoryType, namespace, name);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(repositoryType, namespace, name));
     }
 
     /**
@@ -2088,7 +2052,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param transientRepositoryMetaComponent the RepositoryMetaComponent to update
      * @return a RepositoryMetaComponent object
      */
-    public RepositoryMetaComponent updateRepositoryMetaComponent(RepositoryMetaComponent transientRepositoryMetaComponent) {
+    private RepositoryMetaComponent updateRepositoryMetaComponent(RepositoryMetaComponent transientRepositoryMetaComponent) {
         final RepositoryMetaComponent metaComponent;
         if (transientRepositoryMetaComponent.getId() > 0) {
             metaComponent = getObjectById(RepositoryMetaComponent.class, transientRepositoryMetaComponent.getId());
@@ -2177,11 +2141,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param name The name of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    @SuppressWarnings("unchecked")
     public NotificationPublisher getNotificationPublisher(final String name) {
         final Query query = pm.newQuery(NotificationPublisher.class, "name == :name");
-        final List<NotificationPublisher> result = (List<NotificationPublisher>) query.execute(name);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(name));
     }
 
     /**
@@ -2190,7 +2152,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a NotificationPublisher
      */
     @SuppressWarnings("unchecked")
-    public NotificationPublisher getDefaultNotificationPublisher(final Class clazz) {
+    NotificationPublisher getDefaultNotificationPublisher(final Class clazz) {
         return getDefaultNotificationPublisher(clazz.getCanonicalName());
     }
 
@@ -2199,11 +2161,9 @@ public class QueryManager extends AlpineQueryManager {
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    @SuppressWarnings("unchecked")
-    public NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
+    private NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
         final Query query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass && defaultPublisher == true");
-        final List<NotificationPublisher> result = (List<NotificationPublisher>) query.execute(clazz);
-        return result.size() == 0 ? null : result.get(0);
+        return singleResult(query.execute(clazz));
     }
 
     /**
@@ -2211,7 +2171,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param name The name of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    public NotificationPublisher createNotificationPublisher(final String name, final String description,
+    NotificationPublisher createNotificationPublisher(final String name, final String description,
                                                              final Class publisherClass, final String templateContent,
                                                              final String templateMimeType, final boolean defaultPublisher) {
         pm.currentTransaction().begin();
@@ -2231,7 +2191,7 @@ public class QueryManager extends AlpineQueryManager {
      * Updates a NotificationPublisher.
      * @return a NotificationPublisher object
      */
-    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
+    NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
         NotificationPublisher publisher = null;
         if (transientPublisher.getId() > 0) {
             publisher = getObjectById(NotificationPublisher.class, transientPublisher.getId());

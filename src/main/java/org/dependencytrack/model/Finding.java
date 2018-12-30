@@ -20,8 +20,8 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.dependencytrack.util.VulnerabilityUtil;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -71,9 +71,9 @@ public class Finding implements Serializable {
             "WHERE \"DEPENDENCY\".\"PROJECT_ID\" = ?";
 
     private UUID project;
-    private HashMap<String, Object> component = new LinkedHashMap<>();
-    private HashMap<String, Object> vulnerability = new LinkedHashMap<>();
-    private HashMap<String, Object> analysis = new LinkedHashMap<>();
+    private Map<String, Object> component = new LinkedHashMap<>();
+    private Map<String, Object> vulnerability = new LinkedHashMap<>();
+    private Map<String, Object> analysis = new LinkedHashMap<>();
 
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
@@ -81,7 +81,7 @@ public class Finding implements Serializable {
      * of the columns being queried in {@link #QUERY}.
      * @param o An array of values specific to an individual row returned from {@link #QUERY}
      */
-    public Finding(UUID project, Object[] o) {
+    public Finding(UUID project, Object... o) {
         this.project = project;
         optValue(component, "uuid", o[0]);
         optValue(component, "name", o[1]);
@@ -106,19 +106,19 @@ public class Finding implements Serializable {
         optValue(analysis, "isSuppressed", o[18], false);
     }
 
-    public HashMap getComponent() {
+    public Map getComponent() {
         return component;
     }
 
-    public HashMap getVulnerability() {
+    public Map getVulnerability() {
         return vulnerability;
     }
 
-    public HashMap getAnalysis() {
+    public Map getAnalysis() {
         return analysis;
     }
 
-    private void optValue(HashMap<String, Object> map, String key, Object value, boolean defaultValue) {
+    private void optValue(Map<String, Object> map, String key, Object value, boolean defaultValue) {
         if (value == null) {
             map.put(key, defaultValue);
         } else {
@@ -126,7 +126,7 @@ public class Finding implements Serializable {
         }
     }
 
-    private void optValue(HashMap<String, Object> map, String key, Object value) {
+    private void optValue(Map<String, Object> map, String key, Object value) {
         if (value != null) {
             map.put(key, value);
         }

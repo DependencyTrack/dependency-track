@@ -28,7 +28,14 @@ import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 import javax.json.JsonObject;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_FROM_ADDR;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_HOSTNAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVER_PORT;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_PASSWORD;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTLS;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
 
 public class SendMailPublisher implements Publisher {
 

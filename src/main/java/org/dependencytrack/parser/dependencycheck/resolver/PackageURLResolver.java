@@ -106,8 +106,8 @@ public class PackageURLResolver implements IResolver {
     }
 
     private class GAV {
-        private String group = null;
-        private String artifact = null;
-        private String version = null;
+        private String group;
+        private String artifact;
+        private String version;
     }
 }

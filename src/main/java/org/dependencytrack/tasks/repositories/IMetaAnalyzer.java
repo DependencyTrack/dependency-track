@@ -83,6 +83,16 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.NUGET.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new NugetMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
+            } else if (PackageURL.StandardTypes.PYPI.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new PypiMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 

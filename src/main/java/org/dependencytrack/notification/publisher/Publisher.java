@@ -17,9 +17,9 @@
  */
 package org.dependencytrack.notification.publisher;
 
+import alpine.logging.Logger;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
-import org.apache.log4j.Logger;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;

@@ -37,12 +37,12 @@ integration is one of many maturity indicators. BOMs are increasingly required f
 compliance, regulatory, legal, or economic reasons.
 
 ### Scanners
-* Enable OSSIndex
+* Enable OSS Index
 * Evaluate if Dependency-Check should be enabled or disabled
 * Ensure all other scanners are enabled
 
 #### Summary
-Sonatype OSSIndex and NPM Audit provides accurate vulnerability information with minimal false positives. 
+Sonatype OSS Index and NPM Audit provides accurate vulnerability information with minimal false positives. 
 This allows organizations to have actionable results, faster. If all projects are using CycloneDX BOMs and the
 components in those BOMs have valid PackageURLs, then it may be feasible to disable the embedded
 Dependency-Check scanner. This will result in fewer false positives, less effort required for auditing

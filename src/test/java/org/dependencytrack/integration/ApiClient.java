@@ -19,17 +19,21 @@ package org.dependencytrack.integration;
 
 import org.apache.commons.io.FileUtils;
 import org.datanucleus.util.Base64;
-import org.dependencytrack.common.UnirestFactory;
 import org.json.JSONObject;
+import org.dependencytrack.util.HttpClientFactory;
 import unirest.HttpResponse;
 import unirest.JsonNode;
+import unirest.Unirest;
 import unirest.UnirestException;
-import unirest.UnirestInstance;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
 public class ApiClient {
+
+    static {
+        Unirest.config().httpClient(HttpClientFactory.createClient());
+    }
 
     private String baseUrl;
     private String apiKey;
@@ -40,8 +44,7 @@ public class ApiClient {
     }
 
     public UUID createProject(String name, String version) throws UnirestException {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> response = ui.put(baseUrl + "/api/v1/project")
+        final HttpResponse<JsonNode> response = Unirest.put(baseUrl + "/api/v1/project")
                 .header("Content-Type", "application/json")
                 .header("X-API-Key", apiKey)
                 .body(new JSONObject()
@@ -57,8 +60,7 @@ public class ApiClient {
     }
 
     public boolean uploadBom(UUID uuid, File bom) throws IOException, UnirestException {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> response = ui.put(baseUrl + "/api/v1/bom")
+        final HttpResponse<JsonNode> response = Unirest.put(baseUrl + "/api/v1/bom")
                 .header("Content-Type", "application/json")
                 .header("X-API-Key", apiKey)
                 .body(new JSONObject()
@@ -70,8 +72,7 @@ public class ApiClient {
     }
 
     public boolean uploadScan(UUID uuid, File scan) throws IOException, UnirestException {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> response = ui.put(baseUrl + "/api/v1/scan")
+        final HttpResponse<JsonNode> response = Unirest.put(baseUrl + "/api/v1/scan")
                 .header("Content-Type", "application/json")
                 .header("X-API-Key", apiKey)
                 .body(new JSONObject()

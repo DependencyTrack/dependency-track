@@ -20,7 +20,7 @@ displaying interactive job trends and per build findings.
 ### Job Configuration
 Once configured with a valid URL and API key, simply configure a job to publish the artifact.
 
-![System Configuration](/images/screenshots/jenkins-job-publish.png)
+![Job Publish Config](/images/screenshots/jenkins-job-publish.png)
 
 * **Dependency-Track project**: Specifies the unique project ID to upload scan results to. This dropdown will be
 automatically populated with a list of projects.
@@ -36,6 +36,18 @@ The results returned are identical to the auditable findings but exclude finding
 Analysis decisions and vulnerability details are included in the response. Synchronous mode is possible with 
 Dependency-Track v3.3.1 and higher.
   
+![Job Publish Thresholds](/images/screenshots/jenkins-job-thresholds.png)
+ 
+When Synchronous mode is enabled, thresholds can be defined which can optionally put the job into an UNSTABLE or FAILURE state.
+
+* **Total Findings**: Sets the threshold for the total number of critical, high, medium, or low severity findings 
+allowed. If the number of findings equals or is greater than the threshold for any one of the severities, the job status
+ will be changed to UNSTABLE or FAILURE.
+
+* **New Findings**: Sets the threshold for the number of new critical, high, medium, or low severity findings allowed. 
+If the number of new findings equals or is greater than the previous builds finding for any one of the severities, the 
+job status will be changed to UNSTABLE or FAILURE.
+ 
 ### Global Configuration
 To setup, navigate to **Jenkins &raquo; System Configuration** and complete the Dependency-Track section.
 

@@ -15,7 +15,7 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.util;
+package org.dependencytrack.common;
 
 import alpine.Config;
 import alpine.logging.Logger;
@@ -32,8 +32,10 @@ import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Lookup;
+import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.DnsResolver;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
@@ -41,8 +43,10 @@ import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.auth.DigestSchemeFactory;
 import org.apache.http.impl.auth.NTLMSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
@@ -77,21 +81,16 @@ public final class HttpClientFactory {
                 + ")";
     }
 
+    private static final HttpClient HTTP_CLIENT = createClient();
+
     private HttpClientFactory() { }
 
     public static String getUserAgent() {
         return USER_AGENT;
     }
 
-    /**
-     * Factory method that create a HttpClient object. This method will attempt to use
-     * proxy settings defined in application.properties first. If they are not set,
-     * this method will attempt to use proxy settings from the environment by looking
-     * for 'https_proxy' and 'http_proxy'.
-     * @return a HttpClient object with optional proxy settings
-     */
-    public static HttpClient createClient() {
-        return createClient(null);
+    public static HttpClient getHttpClient() {
+        return HTTP_CLIENT;
     }
 
     /**
@@ -101,13 +100,10 @@ public final class HttpClientFactory {
      * for 'https_proxy' and 'http_proxy'.
      * @return a HttpClient object with optional proxy settings
      */
-    public static HttpClient createClient(DnsResolver dnsResolver) {
+    private static CloseableHttpClient createClient() {
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
-        if (dnsResolver != null) {
-            clientBuilder.setDnsResolver(dnsResolver);
-        }
 
         ProxyInfo proxyInfo = createProxyInfo();
 
@@ -126,7 +122,13 @@ public final class HttpClientFactory {
                         .create()
                         .loadTrustMaterial(new TrustAllStrategy())
                         .build();
-                clientBuilder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE));
+                Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory> create()
+                        .register("http", PlainConnectionSocketFactory.INSTANCE)
+                        .register("https", new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE))
+                        .build();
+                final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(registry);
+                clientBuilder.setConnectionManager(connManager);
+                clientBuilder.setConnectionManagerShared(true);
             } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException e) {
                 LOGGER.warn("An error occurred while configuring proxy", e);
             }

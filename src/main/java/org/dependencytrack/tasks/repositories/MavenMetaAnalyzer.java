@@ -28,7 +28,7 @@ import org.owasp.dependencycheck.utils.XmlUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
-import org.dependencytrack.util.HttpClientFactory;
+import org.dependencytrack.common.HttpClientFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -73,8 +73,8 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(Component component) {
-        HttpClient httpClient = HttpClientFactory.createClient();
-        MetaModel meta = new MetaModel(component);
+        final HttpClient httpClient = HttpClientFactory.getHttpClient();
+        final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName().replaceAll("\\.", "/");
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);

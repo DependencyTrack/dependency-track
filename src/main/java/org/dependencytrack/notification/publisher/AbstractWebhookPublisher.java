@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publisher;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
-import org.dependencytrack.util.HttpClientFactory;
+import org.dependencytrack.common.UnirestFactory;
 import unirest.HttpResponse;
 import unirest.JsonNode;
-import unirest.Unirest;
+import unirest.UnirestInstance;
 import javax.json.JsonObject;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
@@ -41,8 +41,8 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             return;
         }
 
-        Unirest.config().httpClient(HttpClientFactory.createClient());
-        final HttpResponse<JsonNode> response = Unirest.post(destination)
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
+        final HttpResponse<JsonNode> response = ui.post(destination)
                 .header("accept", "application/json")
                 .body(content)
                 .asJson();

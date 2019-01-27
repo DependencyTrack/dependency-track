@@ -35,7 +35,7 @@ import org.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.HttpClientFactory;
+import org.dependencytrack.common.HttpClientFactory;
 import org.dependencytrack.util.NotificationUtil;
 import java.io.File;
 import java.net.MalformedURLException;

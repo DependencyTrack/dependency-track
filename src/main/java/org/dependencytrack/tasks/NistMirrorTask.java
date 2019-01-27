@@ -37,7 +37,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
-import org.dependencytrack.util.HttpClientFactory;
+import org.dependencytrack.common.HttpClientFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -138,9 +138,9 @@ public class NistMirrorTask implements LoggableSubscriber {
      */
     private long checkHead(String cveUrl) {
         try {
-            HttpClient httpClient = HttpClientFactory.createClient();
-            HttpUriRequest request = new HttpHead(cveUrl);
-            HttpResponse response = httpClient.execute(request);
+            final HttpClient httpClient = HttpClientFactory.getHttpClient();
+            final HttpUriRequest request = new HttpHead(cveUrl);
+            final HttpResponse response = httpClient.execute(request);
             return Long.valueOf(response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
         } catch (IOException | NumberFormatException | NullPointerException e) {
             LOGGER.error("Failed to determine content length");
@@ -169,10 +169,10 @@ public class NistMirrorTask implements LoggableSubscriber {
             }
 
             LOGGER.info("Initiating download of " + url.toExternalForm());
-            HttpClient httpClient = HttpClientFactory.createClient();
-            HttpUriRequest request = new HttpGet(cveUrl);
-            HttpResponse response = httpClient.execute(request);
-            StatusLine status = response.getStatusLine();
+            final HttpClient httpClient = HttpClientFactory.getHttpClient();
+            final HttpUriRequest request = new HttpGet(cveUrl);
+            final HttpResponse response = httpClient.execute(request);
+            final StatusLine status = response.getStatusLine();
             if (status.getStatusCode() == 200) {
                 LOGGER.info("Downloading...");
                 file = new File(outputDir, filename);

@@ -18,12 +18,12 @@
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.logging.Logger;
-import org.dependencytrack.util.HttpClientFactory;
+import org.dependencytrack.common.UnirestFactory;
 import org.json.JSONObject;
 import unirest.HttpRequestWithBody;
 import unirest.HttpResponse;
 import unirest.JsonNode;
-import unirest.Unirest;
+import unirest.UnirestInstance;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
@@ -34,15 +34,15 @@ public class FortifySscClient {
     private final FortifySscUploader uploader;
     private final URL baseURL;
 
-    public FortifySscClient(FortifySscUploader uploader, final URL baseURL) {
+    public FortifySscClient(final FortifySscUploader uploader, final URL baseURL) {
         this.uploader = uploader;
         this.baseURL = baseURL;
     }
 
     public String generateOneTimeUploadToken(final String username, final String password) {
-        Unirest.config().httpClient(HttpClientFactory.createClient());
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
-        final HttpRequestWithBody request = Unirest.post(baseURL + "/api/v1/fileTokens");
+        final HttpRequestWithBody request = ui.post(baseURL + "/api/v1/fileTokens");
         final HttpResponse<JsonNode> response = request
                 .header("Content-Type", "application/json")
                 .basicAuth(username, password)
@@ -63,12 +63,12 @@ public class FortifySscClient {
     }
 
     public void uploadDependencyTrackFindings(String token, String applicationVersion, InputStream findingsJson) {
-        Unirest.config().httpClient(HttpClientFactory.createClient());
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final HashMap<String, Object> params = new HashMap<>();
         params.put("engineType", "DEPENDENCY_TRACK");
         params.put("mat", token);
         params.put("entityId", applicationVersion);
-        final HttpRequestWithBody request = Unirest.post(baseURL + "/upload/resultFileUpload.html");
+        final HttpRequestWithBody request = ui.post(baseURL + "/upload/resultFileUpload.html");
         final HttpResponse<String> response = request
                 .header("accept", "application/xml")
                 .queryString(params)
@@ -81,5 +81,4 @@ public class FortifySscClient {
             uploader.handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
         }
     }
-
 }

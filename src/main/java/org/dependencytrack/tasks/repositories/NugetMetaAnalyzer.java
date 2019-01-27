@@ -19,14 +19,14 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.util.HttpClientFactory;
 import org.json.JSONArray;
 import unirest.HttpResponse;
 import unirest.JsonNode;
-import unirest.Unirest;
 import unirest.UnirestException;
+import unirest.UnirestInstance;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -67,7 +67,6 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(Component component) {
-        Unirest.config().httpClient(HttpClientFactory.createClient());
         MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             if (performVersionCheck(meta, component)) {
@@ -78,9 +77,10 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performVersionCheck(MetaModel meta, Component component) {
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = String.format(baseUrl + VERSION_QUERY_URL, component.getPurl().getName().toLowerCase());
         try {
-            HttpResponse<JsonNode> response = Unirest.get(url)
+            HttpResponse<JsonNode> response = ui.get(url)
                     .header("accept", "application/json")
                     .asJson();
             if (response.getStatus() == 200) {
@@ -100,9 +100,10 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performLastPublishedCheck(MetaModel meta, Component component) {
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = String.format(baseUrl + REGISTRATION_URL, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
         try {
-            HttpResponse<JsonNode> response = Unirest.get(url)
+            HttpResponse<JsonNode> response = ui.get(url)
                     .header("accept", "application/json")
                     .asJson();
             if (response.getStatus() == 200) {

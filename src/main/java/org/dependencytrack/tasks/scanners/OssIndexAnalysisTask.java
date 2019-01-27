@@ -27,6 +27,7 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
@@ -39,11 +40,11 @@ import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.HttpClientFactory;
+import org.dependencytrack.common.HttpClientFactory;
 import unirest.HttpResponse;
 import unirest.JsonNode;
-import unirest.Unirest;
 import unirest.UnirestException;
+import unirest.UnirestInstance;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -180,8 +181,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * Submits the payload to the Sonatype OSS Index service
      */
     private List<ComponentReport> submit(JSONObject payload) throws UnirestException {
-        Unirest.config().httpClient(HttpClientFactory.createClient());
-        final HttpResponse<JsonNode> jsonResponse = Unirest.post(API_BASE_URL)
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
+        final HttpResponse<JsonNode> jsonResponse = ui.post(API_BASE_URL)
                 .header(HttpHeaders.ACCEPT, "application/json")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .header(HttpHeaders.USER_AGENT, HttpClientFactory.getUserAgent())

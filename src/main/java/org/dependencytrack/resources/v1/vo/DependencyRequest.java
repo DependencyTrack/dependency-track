@@ -32,9 +32,9 @@ public class DependencyRequest {
 
     @NotNull
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
-    private String projectUuid;
+    private final String projectUuid;
     private String[] componentUuids;
-    private String notes;
+    private final String notes;
 
     @JsonCreator
     public DependencyRequest(@JsonProperty(value = "projectUuid", required = true) String projectUuid,

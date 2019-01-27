@@ -101,11 +101,11 @@ public final class HttpClientFactory {
      * @return a HttpClient object with optional proxy settings
      */
     private static CloseableHttpClient createClient() {
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
 
-        ProxyInfo proxyInfo = createProxyInfo();
+        final ProxyInfo proxyInfo = createProxyInfo();
 
         if (proxyInfo != null) {
             clientBuilder.setProxy(new HttpHost(proxyInfo.host, proxyInfo.port));
@@ -118,11 +118,11 @@ public final class HttpClientFactory {
             }
             // When a proxy is enabled, turn off certificate chain of trust validation and hostname verification
             try {
-                SSLContext sslContext = SSLContextBuilder
+                final SSLContext sslContext = SSLContextBuilder
                         .create()
                         .loadTrustMaterial(new TrustAllStrategy())
                         .build();
-                Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory> create()
+                final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory> create()
                         .register("http", PlainConnectionSocketFactory.INSTANCE)
                         .register("https", new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE))
                         .build();
@@ -136,7 +136,7 @@ public final class HttpClientFactory {
 
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
         clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
-        Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
+        final Lookup<AuthSchemeProvider> authProviders = RegistryBuilder.<AuthSchemeProvider>create()
                 .register(AuthSchemes.BASIC, new BasicSchemeFactory())
                 .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
                 .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
@@ -204,7 +204,7 @@ public final class HttpClientFactory {
      * @throws MalformedURLException if the URL of the proxy setting cannot be parsed
      * @throws SecurityException if the environment variable cannot be retrieved
      */
-    private static ProxyInfo buildfromEnvironment(String variable)
+    private static ProxyInfo buildfromEnvironment(final String variable)
             throws MalformedURLException, SecurityException, UnsupportedEncodingException {
 
         if (variable == null) {
@@ -228,7 +228,7 @@ public final class HttpClientFactory {
             if (proxyUrl.getUserInfo() != null) {
                 final String[] credentials = proxyUrl.getUserInfo().split(":");
                 if (credentials.length > 0) {
-                    String username = URLDecoder.decode(credentials[0], "UTF-8");
+                    final String username = URLDecoder.decode(credentials[0], "UTF-8");
                     parseProxyUsername(proxyInfo, username);
                 }
                 if (credentials.length == 2) {
@@ -245,7 +245,7 @@ public final class HttpClientFactory {
      * @param username The username to parse
      */
     @SuppressWarnings("deprecation")
-    private static void parseProxyUsername(ProxyInfo proxyInfo, String username) {
+    private static void parseProxyUsername(final ProxyInfo proxyInfo, final String username) {
         if (username.contains("\\")) {
             proxyInfo.domain = username.substring(0, username.indexOf("\\"));
             proxyInfo.username = username.substring(username.indexOf("\\") + 1);

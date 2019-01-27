@@ -46,7 +46,7 @@ public class ModelConverter {
      * @param bom the Bom to convert
      * @return a List of Component object
      */
-    public static List<Component> convert(QueryManager qm, Bom bom) {
+    public static List<Component> convert(final QueryManager qm, final Bom bom) {
         final List<Component> components = new ArrayList<>();
         for (int i = 0; i < bom.getComponents().size(); i++) {
             components.add(convert(qm, bom.getComponents().get(i)));
@@ -54,7 +54,7 @@ public class ModelConverter {
         return components;
     }
 
-    public static Component convert(QueryManager qm, org.cyclonedx.model.Component cycloneDxComponent) {
+    public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent) {
         final Component component = new Component();
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
@@ -83,7 +83,7 @@ public class ModelConverter {
         }
 
         if (cycloneDxComponent.getHashes() != null && cycloneDxComponent.getHashes().size() > 0) {
-            for (Hash hash : cycloneDxComponent.getHashes()) {
+            for (final Hash hash : cycloneDxComponent.getHashes()) {
                 if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                     component.setMd5(StringUtils.trimToNull(hash.getValue()));
                 } else if (Hash.Algorithm.SHA1.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
@@ -101,9 +101,9 @@ public class ModelConverter {
         }
 
         if (cycloneDxComponent.getLicenses() != null && cycloneDxComponent.getLicenses().size() > 0) {
-            for (org.cyclonedx.model.License cycloneLicense : cycloneDxComponent.getLicenses()) {
+            for (final org.cyclonedx.model.License cycloneLicense : cycloneDxComponent.getLicenses()) {
                 if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                    License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                    final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
                     if (license != null) {
                         component.setResolvedLicense(license);
                     }
@@ -124,7 +124,7 @@ public class ModelConverter {
         return component;
     }
 
-    public static org.cyclonedx.model.Component convert(QueryManager qm, Component component) {
+    public static org.cyclonedx.model.Component convert(final QueryManager qm, final Component component) {
         final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
         cycloneComponent.setGroup(StringUtils.trimToNull(component.getGroup()));
         cycloneComponent.setName(StringUtils.trimToNull(component.getName()));
@@ -175,11 +175,11 @@ public class ModelConverter {
         }
 
         if (component.getResolvedLicense() != null) {
-            org.cyclonedx.model.License license = new org.cyclonedx.model.License();
+            final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setId(component.getResolvedLicense().getLicenseId());
             cycloneComponent.addLicense(license);
         } else if (component.getLicense() != null) {
-            org.cyclonedx.model.License license = new org.cyclonedx.model.License();
+            final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setName(component.getLicense());
             cycloneComponent.addLicense(license);
         }

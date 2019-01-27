@@ -158,8 +158,8 @@ public class ScanResource extends AlpineResource {
      * Common logic that processes a scan given a project and list of multi-party form objects containing decoded payloads.
      */
     private Response process(Project project, List<FormDataBodyPart> artifactParts) {
-        for (FormDataBodyPart artifactPart: artifactParts) {
-            BodyPartEntity bodyPartEntity = (BodyPartEntity) artifactPart.getEntity();
+        for (final FormDataBodyPart artifactPart: artifactParts) {
+            final BodyPartEntity bodyPartEntity = (BodyPartEntity) artifactPart.getEntity();
             if (project != null) {
                 try {
                     final byte[] content = IOUtils.toByteArray(bodyPartEntity.getInputStream());

@@ -58,7 +58,7 @@ public class MetricsUpdateTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof MetricsUpdateEvent) {
             final MetricsUpdateEvent event = (MetricsUpdateEvent) e;
 
@@ -86,7 +86,7 @@ public class MetricsUpdateTask implements Subscriber {
      * Performs high-level metric updates on the portfolio.
      * @param qm a QueryManager instance
      */
-    private void updatePortfolioMetrics(QueryManager qm) {
+    private void updatePortfolioMetrics(final QueryManager qm) {
         LOGGER.info("Executing metrics update on portfolio");
         final Date measuredAt = new Date();
 
@@ -98,14 +98,14 @@ public class MetricsUpdateTask implements Subscriber {
         final List<MetricCounters> projectCountersList = new ArrayList<>();
 
         // Iterate through all projects
-        for (Project project: projects) {
+        for (final Project project: projects) {
             // Update the projects metrics
             final MetricCounters projectMetrics = updateProjectMetrics(qm, project.getId());
             projectCountersList.add(projectMetrics);
         }
 
         // Iterate through the metrics from all project
-        for (MetricCounters projectMetrics: projectCountersList) {
+        for (final MetricCounters projectMetrics: projectCountersList) {
             // Add individual project metrics to the overall portfolio metrics
             portfolioCounters.projects++;
             portfolioCounters.critical += projectMetrics.critical;
@@ -141,7 +141,7 @@ public class MetricsUpdateTask implements Subscriber {
             while (count < total) {
                 final PaginatedResult result = qm2.getComponents();
                 portfolioCounters.components = toIntExact(result.getTotal());
-                for (Component component: result.getList(Component.class)) {
+                for (final Component component: result.getList(Component.class)) {
                     final MetricCounters componentMetrics = updateComponentMetrics(qm, component.getId());
                     // Only vulnerable components
                     if (componentMetrics.chmlTotal() > 0) {
@@ -211,8 +211,8 @@ public class MetricsUpdateTask implements Subscriber {
      * @param oid the object ID of the project
      * @return MetricCounters
      */
-    private MetricCounters updateProjectMetrics(QueryManager qm, long oid) {
-        Project project = qm.getObjectById(Project.class, oid);
+    private MetricCounters updateProjectMetrics(final QueryManager qm, final long oid) {
+        final Project project = qm.getObjectById(Project.class, oid);
         LOGGER.info("Executing metrics update on project: " + project.getUuid());
         final Date measuredAt = new Date();
 
@@ -225,7 +225,7 @@ public class MetricsUpdateTask implements Subscriber {
         final List<Dependency> dependencies = qm.getAllDependencies(project);
 
         // Iterate through all dependencies
-        for (Dependency dependency: dependencies) {
+        for (final Dependency dependency: dependencies) {
 
             // Get the component
             //final Component component = dependency.getComponent();
@@ -238,7 +238,7 @@ public class MetricsUpdateTask implements Subscriber {
         }
 
         // Iterate through the metrics from all components that are dependencies of the project
-        for (MetricCounters depMetric: countersList) {
+        for (final MetricCounters depMetric: countersList) {
             // Add individual component metrics to the overall project metrics
             counters.dependencies++;
             counters.critical += depMetric.critical;
@@ -302,14 +302,14 @@ public class MetricsUpdateTask implements Subscriber {
      * @param oid object ID of the component to perform metric updates on
      * @return MetricCounters
      */
-    private MetricCounters updateComponentMetrics(QueryManager qm, long oid) {
-        Component component = qm.getObjectById(Component.class, oid);
+    private MetricCounters updateComponentMetrics(final QueryManager qm, final long oid) {
+        final Component component = qm.getObjectById(Component.class, oid);
         LOGGER.debug("Executing metrics update on component: " + component.getUuid());
         final Date measuredAt = new Date();
 
         final MetricCounters counters = new MetricCounters();
         // Retrieve the non-suppressed vulnerabilities for the component
-        for (Vulnerability vuln: qm.getAllVulnerabilities(component)) {
+        for (final Vulnerability vuln: qm.getAllVulnerabilities(component)) {
             counters.updateSeverity(vuln.getSeverity());
         }
         counters.suppressions = toIntExact(qm.getSuppressedCount(component));
@@ -360,8 +360,8 @@ public class MetricsUpdateTask implements Subscriber {
      * @param oid object ID of the dependency to perform metric updates on
      * @return MetricCounters
      */
-    private MetricCounters updateDependencyMetrics(QueryManager qm, long oid) {
-        Dependency dependency = qm.getObjectById(Dependency.class, oid);
+    private MetricCounters updateDependencyMetrics(final QueryManager qm, final long oid) {
+        final Dependency dependency = qm.getObjectById(Dependency.class, oid);
         LOGGER.debug("Executing metrics update on dependency: " + dependency.getId());
         final Date measuredAt = new Date();
 
@@ -370,7 +370,7 @@ public class MetricsUpdateTask implements Subscriber {
         final Component component = dependency.getComponent();
 
         // Retrieve the non-suppressed vulnerabilities for the component
-        for (Vulnerability vuln: qm.getAllVulnerabilities(dependency)) {
+        for (final Vulnerability vuln: qm.getAllVulnerabilities(dependency)) {
             counters.updateSeverity(vuln.getSeverity());
         }
         counters.suppressions = toIntExact(qm.getSuppressedCount(project, component));
@@ -420,13 +420,13 @@ public class MetricsUpdateTask implements Subscriber {
      * Performs metric updates on the entire vulnerability database.
      * @param qm a QueryManager instance
      */
-    private void updateVulnerabilitiesMetrics(QueryManager qm) {
+    private void updateVulnerabilitiesMetrics(final QueryManager qm) {
         LOGGER.info("Executing metrics update on vulnerability database");
         final Date measuredAt = new Date();
         final VulnerabilityMetricCounters yearMonthCounters = new VulnerabilityMetricCounters(measuredAt, true);
         final VulnerabilityMetricCounters yearCounters = new VulnerabilityMetricCounters(measuredAt, false);
         final PaginatedResult vulnsResult = qm.getVulnerabilities();
-        for (Vulnerability vulnerability: vulnsResult.getList(Vulnerability.class)) {
+        for (final Vulnerability vulnerability: vulnsResult.getList(Vulnerability.class)) {
             if (vulnerability.getCreated() != null) {
                 yearMonthCounters.updateMetics(vulnerability.getCreated());
                 yearCounters.updateMetics(vulnerability.getCreated());
@@ -435,10 +435,10 @@ public class MetricsUpdateTask implements Subscriber {
                 yearCounters.updateMetics(vulnerability.getPublished());
             }
         }
-        for (VulnerabilityMetrics metric: yearMonthCounters.getMetrics()) {
+        for (final VulnerabilityMetrics metric: yearMonthCounters.getMetrics()) {
             qm.synchronizeVulnerabilityMetrics(metric);
         }
-        for (VulnerabilityMetrics metric: yearCounters.getMetrics()) {
+        for (final VulnerabilityMetrics metric: yearCounters.getMetrics()) {
             qm.synchronizeVulnerabilityMetrics(metric);
         }
     }
@@ -448,22 +448,22 @@ public class MetricsUpdateTask implements Subscriber {
      */
     private class VulnerabilityMetricCounters {
 
-        private Date measuredAt;
-        private boolean trackMonth;
-        private List<VulnerabilityMetrics> metrics = new ArrayList<>();
+        private final Date measuredAt;
+        private final boolean trackMonth;
+        private final List<VulnerabilityMetrics> metrics = new ArrayList<>();
 
-        private VulnerabilityMetricCounters(Date measuredAt, boolean trackMonth) {
+        private VulnerabilityMetricCounters(final Date measuredAt, final boolean trackMonth) {
             this.measuredAt = measuredAt;
             this.trackMonth = trackMonth;
         }
 
-        private void updateMetics(Date timestamp) {
-            LocalDateTime date = LocalDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault());
-            int year = date.getYear();
-            int month = date.getMonthValue();
+        private void updateMetics(final Date timestamp) {
+            final LocalDateTime date = LocalDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault());
+            final int year = date.getYear();
+            final int month = date.getMonthValue();
 
             boolean found = false;
-            for (VulnerabilityMetrics metric: metrics) {
+            for (final VulnerabilityMetrics metric: metrics) {
                 if (trackMonth && metric.getYear() == year && metric.getMonth() == month) {
                     metric.setCount(metric.getCount() + 1);
                     found = true;
@@ -473,7 +473,7 @@ public class MetricsUpdateTask implements Subscriber {
                 }
             }
             if (!found) {
-                VulnerabilityMetrics metric = new VulnerabilityMetrics();
+                final VulnerabilityMetrics metric = new VulnerabilityMetrics();
                 metric.setYear(year);
                 if (trackMonth) {
                     metric.setMonth(month);
@@ -503,7 +503,7 @@ public class MetricsUpdateTask implements Subscriber {
          * Increments critical, high, medium, low counters based on the specified severity.
          * @param severity the severity to update counters on
          */
-        private void updateSeverity(Severity severity) {
+        private void updateSeverity(final Severity severity) {
             if (Severity.CRITICAL == severity) {
                 critical++;
             } else if (Severity.HIGH == severity) {

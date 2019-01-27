@@ -93,7 +93,7 @@ public class FindingResource extends AlpineResource {
             if (project != null) {
                 final List<Finding> findings = qm.getFindings(project);
                 final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);
-                Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
+                final Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
                 rb.header("Content-Disposition", "inline; filename=findings-" + uuid + ".fpf");
                 return rb.build();
             } else {

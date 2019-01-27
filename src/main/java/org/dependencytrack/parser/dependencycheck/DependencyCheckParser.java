@@ -43,7 +43,7 @@ public class DependencyCheckParser {
      * @return an Analysis object
      * @throws ParseException when errors are encountered
      */
-    public Analysis parse(File file) throws ParseException {
+    public Analysis parse(final File file) throws ParseException {
         return parse(new StreamSource(file.getAbsolutePath()));
     }
 
@@ -53,7 +53,7 @@ public class DependencyCheckParser {
      * @return an Analysis object
      * @throws ParseException when errors are encountered
      */
-    public Analysis parse(byte[] scanData) throws ParseException {
+    public Analysis parse(final byte[] scanData) throws ParseException {
         return parse(new StreamSource(new ByteArrayInputStream(scanData)));
     }
 
@@ -63,7 +63,7 @@ public class DependencyCheckParser {
      * @return an Analysis object
      * @throws ParseException when errors are encountered
      */
-    private Analysis parse(StreamSource streamSource) throws ParseException {
+    private Analysis parse(final StreamSource streamSource) throws ParseException {
         try {
             // Parse the native threat model
             final JAXBContext jaxbContext = JAXBContext.newInstance(Analysis.class);

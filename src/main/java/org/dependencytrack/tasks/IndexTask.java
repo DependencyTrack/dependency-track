@@ -38,7 +38,7 @@ public class IndexTask implements Subscriber {
      * {@inheritDoc}
      */
     @SuppressWarnings("unchecked")
-    public void inform(Event e) {
+    public void inform(final Event e) {
 
         if (e instanceof IndexEvent) {
             final IndexEvent event = (IndexEvent) e;

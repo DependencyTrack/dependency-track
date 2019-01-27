@@ -58,13 +58,13 @@ public class ScanUploadProcessingTask implements Subscriber {
     private static final Logger LOGGER = Logger.getLogger(ScanUploadProcessingTask.class);
 
     private Scan scan;
-    private List<Component> components = new ArrayList<>();
+    private final List<Component> components = new ArrayList<>();
     private QueryManager qm;
 
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof ScanUploadEvent) {
             final ScanUploadEvent event = (ScanUploadEvent) e;
 
@@ -79,7 +79,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                 final Date date = new Date();
                 scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), date);
 
-                for (Dependency dependency : analysis.getDependencies()) {
+                for (final Dependency dependency : analysis.getDependencies()) {
                     processDependency(dependency);
                 }
 
@@ -98,7 +98,7 @@ public class ScanUploadProcessingTask implements Subscriber {
         }
     }
 
-    private void processDependency(Dependency dependency) {
+    private void processDependency(final Dependency dependency) {
         // Attempt to resolve component
         final ComponentResolver componentResolver = new ComponentResolver(qm);
         Component component = componentResolver.resolve(dependency);
@@ -119,7 +119,7 @@ public class ScanUploadProcessingTask implements Subscriber {
         }
 
         if (dependency.getVulnerabilities() != null && dependency.getVulnerabilities().getVulnerabilities() != null) {
-            for (org.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
+            for (final org.dependencytrack.parser.dependencycheck.model.Vulnerability dcvuln: dependency.getVulnerabilities().getVulnerabilities()) {
 
                 /*
                  * Resolve the source of the vulnerability. The source as defined in ODC needs to be
@@ -151,20 +151,20 @@ public class ScanUploadProcessingTask implements Subscriber {
         qm.bind(scan, component);
 
         if (dependency.getEvidenceCollected() != null) {
-            for (Evidence evidence : dependency.getEvidenceCollected()) {
+            for (final Evidence evidence : dependency.getEvidenceCollected()) {
                 qm.createEvidence(component, evidence.getType(), evidence.getConfidenceScore(evidence.getConfidenceType()), evidence
                         .getSource(), evidence.getName(), evidence.getValue());
             }
         }
 
         if (dependency.getRelatedDependencies() != null) {
-            for (Dependency relatedDependency: dependency.getRelatedDependencies()) {
+            for (final Dependency relatedDependency: dependency.getRelatedDependencies()) {
                 processDependency(relatedDependency);
             }
         }
     }
 
-    private void resolveMetadata(Component component, Dependency dependency, License resolvedLicense) {
+    private void resolveMetadata(final Component component, final Dependency dependency, final License resolvedLicense) {
         // Run PackageURL resolution and use that evidence to populate metadata
         final PackageURL purl = new PackageURLResolver().resolve(dependency);
         if (purl != null) {

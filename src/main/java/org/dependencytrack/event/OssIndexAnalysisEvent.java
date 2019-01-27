@@ -30,11 +30,11 @@ public class OssIndexAnalysisEvent extends VulnerabilityAnalysisEvent {
 
     public OssIndexAnalysisEvent() { }
 
-    public OssIndexAnalysisEvent(Component component) {
+    public OssIndexAnalysisEvent(final Component component) {
         super(component);
     }
 
-    public OssIndexAnalysisEvent(List<Component> components) {
+    public OssIndexAnalysisEvent(final List<Component> components) {
         super(components);
     }
 

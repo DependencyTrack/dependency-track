@@ -71,7 +71,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
     @Override
     public InputStream process() {
         final KennaDataTransformer kdi = new KennaDataTransformer(qm);
-        for (Project project: qm.getAllProjects()) {
+        for (final Project project: qm.getAllProjects()) {
             final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
             if (externalId != null && externalId.getPropertyValue() != null) {
                 kdi.process(project, externalId.getPropertyValue());
@@ -81,7 +81,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
     }
 
     @Override
-    public void upload(InputStream payload) {
+    public void upload(final InputStream payload) {
         final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         try {
             final UnirestInstance ui = UnirestFactory.getUnirestInstance();
@@ -94,7 +94,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .field("run", "true")
                     .asJson();
             if (response.getStatus() == 200 && response.getBody() != null) {
-                JSONObject root = response.getBody().getObject();
+                final JSONObject root = response.getBody().getObject();
                 if (root.getString("success").equals("true")) {
                     LOGGER.debug("Successfully uploaded KDI");
                     return;

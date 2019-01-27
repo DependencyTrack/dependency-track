@@ -89,7 +89,7 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Principal principal = auth.authenticate();
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
-            List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal)principal);
+            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal)principal);
             final KeyManager km = KeyManager.getInstance();
             final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
             final String token = jwt.createToken(principal, permissions);
@@ -133,7 +133,7 @@ public class UserResource extends AlpineResource {
                 }
             }
             if (principal instanceof ManagedUser) {
-                ManagedUser user = qm.getManagedUser(((ManagedUser) principal).getUsername());
+                final ManagedUser user = qm.getManagedUser(((ManagedUser) principal).getUsername());
                 if (StringUtils.isNotBlank(newPassword) && StringUtils.isNotBlank(confirmPassword) && newPassword.equals(confirmPassword)) {
                     if (PasswordService.matches(newPassword.toCharArray(), user)) {
                         super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Existing password is the same as new password. Password not changed. / username: " + username);
@@ -250,7 +250,7 @@ public class UserResource extends AlpineResource {
                     final LdapUser user = qm.getLdapUser(getPrincipal().getName());
                     return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
                 } else if (super.isManagedUser()) {
-                    ManagedUser user = (ManagedUser)super.getPrincipal();
+                    final ManagedUser user = (ManagedUser)super.getPrincipal();
                     if (StringUtils.isBlank(jsonUser.getFullname())) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("Full name is required.").build();
                     }

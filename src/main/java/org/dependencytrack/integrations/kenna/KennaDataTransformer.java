@@ -40,12 +40,12 @@ import java.util.Map;
 public class KennaDataTransformer {
 
     private static final String SCANNER_TYPE = "Dependency-Track";
-    private QueryManager qm;
-    private Map<String, Vulnerability> portfolioVulnerabilities = new HashMap<>();
+    private final QueryManager qm;
+    private final Map<String, Vulnerability> portfolioVulnerabilities = new HashMap<>();
     private final JSONArray assets = new JSONArray();
     private final JSONArray vulnDefs = new JSONArray();
 
-    KennaDataTransformer(QueryManager qm) {
+    KennaDataTransformer(final QueryManager qm) {
         this.qm = qm;
     }
 
@@ -55,22 +55,22 @@ public class KennaDataTransformer {
     public JSONObject generate() {
         // Creates the reference array of vulnerability definitions based on the vulnerabilities identified.
         // Using a Map to prevent duplicates based on the key.
-        for (Map.Entry<String, Vulnerability> entry : portfolioVulnerabilities.entrySet()) {
+        for (final Map.Entry<String, Vulnerability> entry : portfolioVulnerabilities.entrySet()) {
             vulnDefs.put(generateKdiVulnDef(entry.getValue()));
         }
         // Create the root-level JSON object
-        JSONObject root = new JSONObject();
+        final JSONObject root = new JSONObject();
         root.put("skip_autoclose", false);
         root.put("assets", assets);
         root.put("vuln_defs", vulnDefs);
         return root;
     }
 
-    public void process(Project project, String externalId) {
+    public void process(final Project project, final String externalId) {
         final JSONObject kdiAsset = generateKdiAsset(project, externalId);
         final JSONArray vulns = new JSONArray();
         final List<Finding> findings = qm.getFindings(project);
-        for (Finding finding: findings) {
+        for (final Finding finding: findings) {
             final Map analysis = finding.getAnalysis();
             final Object suppressed = finding.getAnalysis().get("isSuppressed");
             if (suppressed instanceof Boolean) {
@@ -96,14 +96,14 @@ public class KennaDataTransformer {
      * we want to use a combination of SOURCE and VULN_ID to provide a consistent identifier across one
      * or more instances of Dependency-Track.
      */
-    private String generateScannerIdentifier(Vulnerability vulnerability) {
+    private String generateScannerIdentifier(final Vulnerability vulnerability) {
         return vulnerability.getSource() + "-" + vulnerability.getVulnId();
     }
 
     /**
      * Generates a KDI asset object.
      */
-    private JSONObject generateKdiAsset(Project project, String externalId) {
+    private JSONObject generateKdiAsset(final Project project, final String externalId) {
         final JSONObject asset = new JSONObject();
         final String application = (project.getVersion() == null) ? project.getName() : project.getName() + " " + project.getVersion();
         asset.put("application", application);
@@ -112,7 +112,7 @@ public class KennaDataTransformer {
         final List<Tag> tags = project.getTags();
         if (CollectionUtils.isNotEmpty(tags)) {
             final ArrayList<String> tagArray = new ArrayList<>();
-            for (Tag tag: tags) {
+            for (final Tag tag: tags) {
                 tagArray.add(tag.getName());
             }
             asset.put("tags", tagArray);
@@ -124,7 +124,7 @@ public class KennaDataTransformer {
      * Generates a KDI vulnerability object which will be assigned to an asset and which will reference a KDI
      * vulnerability definition.
      */
-    private JSONObject generateKdiVuln(Vulnerability vulnerability, AnalysisState analysisState) {
+    private JSONObject generateKdiVuln(final Vulnerability vulnerability, final AnalysisState analysisState) {
         final JSONObject vuln = new JSONObject();
         vuln.put("scanner_type", SCANNER_TYPE);
         vuln.put("scanner_identifier", generateScannerIdentifier(vulnerability));
@@ -167,7 +167,7 @@ public class KennaDataTransformer {
     /**
      * Generates a vulnerability definition that provides detail about the vulnerability assigned to the asset.
      */
-    private JSONObject generateKdiVulnDef(Vulnerability vulnerability) {
+    private JSONObject generateKdiVulnDef(final Vulnerability vulnerability) {
         final JSONObject vulnDef = new JSONObject();
         vulnDef.put("scanner_type", SCANNER_TYPE);
         vulnDef.put("scanner_identifier", generateScannerIdentifier(vulnerability));

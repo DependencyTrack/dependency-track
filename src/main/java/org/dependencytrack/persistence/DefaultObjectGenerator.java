@@ -58,7 +58,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextInitialized(ServletContextEvent event) {
+    public void contextInitialized(final ServletContextEvent event) {
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
@@ -98,7 +98,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextDestroyed(ServletContextEvent event) {
+    public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }
 
@@ -112,7 +112,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             final SpdxLicenseDetailParser parser = new SpdxLicenseDetailParser();
             try {
                 final List<License> licenses = parser.getLicenseDefinitions();
-                for (License license : licenses) {
+                for (final License license : licenses) {
                     LOGGER.info("Synchronizing: " + license.getName());
                     qm.synchronizeLicense(license, false);
                 }
@@ -130,7 +130,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultPermissions() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing permissions to datastore");
-            for (Permissions permission : Permissions.values()) {
+            for (final Permissions permission : Permissions.values()) {
                 if (qm.getPermission(permission.name()) == null) {
                     qm.createPermission(permission.name(), permission.getDescription());
                 }
@@ -154,7 +154,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             final Team managers = qm.createTeam("Portfolio Managers", false);
             final Team automation = qm.createTeam("Automation", true);
 
-            List<Permission> fullList = qm.getPermissions();
+            final List<Permission> fullList = qm.getPermissions();
 
             sysadmins.setPermissions(fullList);
             managers.setPermissions(getPortfolioManagersPermissions(fullList));
@@ -172,9 +172,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
         }
     }
 
-    private List<Permission> getPortfolioManagersPermissions(List<Permission> fullList) {
-        List<Permission> permissions = new ArrayList<>();
-        for (Permission permission: fullList) {
+    private List<Permission> getPortfolioManagersPermissions(final List<Permission> fullList) {
+        final List<Permission> permissions = new ArrayList<>();
+        for (final Permission permission: fullList) {
             if (permission.getName().equals(Permissions.Constants.VIEW_PORTFOLIO) ||
                     permission.getName().equals(Permissions.Constants.PORTFOLIO_MANAGEMENT)) {
                 permissions.add(permission);
@@ -183,9 +183,9 @@ public class DefaultObjectGenerator implements ServletContextListener {
         return permissions;
     }
 
-    private List<Permission> getAutomationPermissions(List<Permission> fullList) {
-        List<Permission> permissions = new ArrayList<>();
-        for (Permission permission: fullList) {
+    private List<Permission> getAutomationPermissions(final List<Permission> fullList) {
+        final List<Permission> permissions = new ArrayList<>();
+        for (final Permission permission: fullList) {
             if (permission.getName().equals(Permissions.Constants.VIEW_PORTFOLIO) ||
                     permission.getName().equals(Permissions.Constants.SCAN_UPLOAD) ||
                     permission.getName().equals(Permissions.Constants.BOM_UPLOAD)) {
@@ -219,7 +219,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultConfigProperties() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing config properties to datastore");
-            for (ConfigPropertyConstants cpc : ConfigPropertyConstants.values()) {
+            for (final ConfigPropertyConstants cpc : ConfigPropertyConstants.values()) {
                 if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
                     qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), cpc.getDefaultPropertyValue(), cpc.getPropertyType(), cpc.getDescription());
                 }
@@ -233,8 +233,8 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultNotificicationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
-            for (DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
-                File file = new File(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile());
+            for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
+                final File file = new File(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile());
                 try {
                     final String templateContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
                     final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher.getPublisherClass());

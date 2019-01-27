@@ -30,13 +30,13 @@ import java.util.Map;
  */
 public class SearchResult {
 
-    private Map<String, List<Map<String, String>>> results = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, List<Map<String, String>>> results = Collections.synchronizedMap(new HashMap<>());
 
     public  Map<String, List<Map<String, String>>> getResults() {
         return results;
     }
 
-    public void addResultSet(String key, List<Map<String, String>> resultSet) {
+    public void addResultSet(final String key, final List<Map<String, String>> resultSet) {
         results.put(key, resultSet);
     }
 

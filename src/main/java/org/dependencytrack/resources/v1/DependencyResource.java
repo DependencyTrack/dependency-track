@@ -129,7 +129,7 @@ public class DependencyResource extends AlpineResource {
                 if (getPrincipal() != null) {
                     addedBy = getPrincipal().getName();
                 }
-                for (String componentUuid : request.getComponentUuids()) {
+                for (final String componentUuid : request.getComponentUuids()) {
                     final Component component = qm.getObjectByUuid(Component.class, componentUuid);
                     if (component != null) {
                         qm.createDependencyIfNotExist(project, component, addedBy, request.getNotes());
@@ -164,7 +164,7 @@ public class DependencyResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProjectUuid());
             if (project != null) {
-                for (String componentUuid : request.getComponentUuids()) {
+                for (final String componentUuid : request.getComponentUuids()) {
                     final Component component = qm.getObjectByUuid(Component.class, componentUuid);
                     if (component != null) {
                         qm.removeDependencyIfExist(project, component);

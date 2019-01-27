@@ -32,15 +32,15 @@ import org.dependencytrack.model.Vulnerability;
  */
 public class IndexManagerFactory {
 
-    public static ObjectIndexer getIndexManager(IndexEvent event) {
+    public static ObjectIndexer getIndexManager(final IndexEvent event) {
         if (Config.isUnitTestsEnabled()) {
             return new ObjectIndexer() {
                 @Override
                 public String[] getSearchFields() { return new String[0]; }
                 @Override
-                public void add(Object object) { }
+                public void add(final Object object) { }
                 @Override
-                public void remove(Object object) { }
+                public void remove(final Object object) { }
                 @Override
                 public void commit() { }
                 @Override

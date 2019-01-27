@@ -60,9 +60,9 @@ public class SpdxDocumentParser {
         TAG
     }
 
-    private QueryManager qm;
+    private final QueryManager qm;
 
-    public SpdxDocumentParser(QueryManager qm) {
+    public SpdxDocumentParser(final QueryManager qm) {
         this.qm = qm;
     }
 
@@ -75,7 +75,7 @@ public class SpdxDocumentParser {
         return false;
     }
 
-    public List<Component> parse(byte[] spdx) throws ParseException {
+    public List<Component> parse(final byte[] spdx) throws ParseException {
         final String spdxString = new String(spdx, StandardCharsets.UTF_8);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {
             if (spdxString.contains("<rdf:RDF") && spdxString.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns")) {
@@ -95,7 +95,7 @@ public class SpdxDocumentParser {
     use of the deprecated methods is required.
     */
     @SuppressWarnings("deprecation")
-    public List<Component> parse(InputStream inputStream, DocumentType type) throws ParseException {
+    public List<Component> parse(final InputStream inputStream, final DocumentType type) throws ParseException {
         /*
          * Attempt to read in the document.
          */
@@ -106,7 +106,7 @@ public class SpdxDocumentParser {
                 final List<String> warnings = new ArrayList<>();
                 final SpdxDocumentContainer docContainer = TagToRDF.convertTagFileToRdf(inputStream, "RDF/XML", warnings);
                 doc = docContainer.getSpdxDocument();
-                for (String warning: warnings) {
+                for (final String warning: warnings) {
                     LOGGER.warn(warning);
                 }
             } catch (Exception e) {
@@ -149,7 +149,7 @@ public class SpdxDocumentParser {
             final List<SpdxPackage> allPackages = doc.getDocumentContainer().findAllPackages();
             final List<SpdxFile> allFiles = doc.getDocumentContainer().findAllFiles();
 
-            for (SpdxPackage spdxPackage: allPackages) {
+            for (final SpdxPackage spdxPackage: allPackages) {
                 final Component component = new Component();
                 component.setName(StringUtils.trimToNull(spdxPackage.getName()));
                 component.setDescription(StringUtils.trimToNull(spdxPackage.getDescription()));
@@ -163,8 +163,8 @@ public class SpdxDocumentParser {
                 composeChecksums(component, spdxPackage.getChecksums());
                 component.setCopyright(StringUtils.trimToNull(spdxPackage.getCopyrightText()));
                 // Process licenses - the package authors declared license always takes priority
-                AnyLicenseInfo declaredLicense = spdxPackage.getLicenseDeclared();
-                AnyLicenseInfo concludedLicense = spdxPackage.getLicenseConcluded();
+                final AnyLicenseInfo declaredLicense = spdxPackage.getLicenseDeclared();
+                final AnyLicenseInfo concludedLicense = spdxPackage.getLicenseConcluded();
                 if (declaredLicense != null) {
                     processLicenses(component, declaredLicense);
                 } else if (concludedLicense != null) {
@@ -173,7 +173,7 @@ public class SpdxDocumentParser {
                 components.add(component);
             }
 
-            for (SpdxFile spdxFile: allFiles) {
+            for (final SpdxFile spdxFile: allFiles) {
                 final Component component = new Component();
                 component.setFilename(spdxFile.getName());
                 component.setName(spdxFile.getName());
@@ -181,10 +181,10 @@ public class SpdxDocumentParser {
                 composeChecksums(component, spdxFile.getChecksums());
                 component.setCopyright(StringUtils.trimToNull(spdxFile.getCopyrightText()));
                 // Process licenses
-                AnyLicenseInfo concludedLicense = spdxFile.getLicenseConcluded();
+                final AnyLicenseInfo concludedLicense = spdxFile.getLicenseConcluded();
                 processLicenses(component, concludedLicense);
                 // artifactOf is deprecated in SPDX 2.1
-                for (DoapProject project: spdxFile.getArtifactOf()) {
+                for (final DoapProject project: spdxFile.getArtifactOf()) {
                     component.setName(project.getName());
                 }
                 components.add(component);
@@ -195,9 +195,9 @@ public class SpdxDocumentParser {
         return components;
     }
 
-    private void composeChecksums(Component component, Checksum[] checksums) {
-        for (Checksum checksum : checksums) {
-            Checksum.ChecksumAlgorithm alg = checksum.getAlgorithm();
+    private void composeChecksums(final Component component, final Checksum[] checksums) {
+        for (final Checksum checksum : checksums) {
+            final Checksum.ChecksumAlgorithm alg = checksum.getAlgorithm();
             if (alg == Checksum.ChecksumAlgorithm.checksumAlgorithm_md5) {
                 component.setMd5(StringUtils.trimToNull(checksum.getValue()));
             } else if (alg == Checksum.ChecksumAlgorithm.checksumAlgorithm_sha1) {
@@ -208,12 +208,12 @@ public class SpdxDocumentParser {
         }
     }
 
-    private void processLicenses(Component component, AnyLicenseInfo rootAnyLicenseInfo) {
+    private void processLicenses(final Component component, final AnyLicenseInfo rootAnyLicenseInfo) {
         if (rootAnyLicenseInfo instanceof ConjunctiveLicenseSet) { // two more more licenses defined
-            AnyLicenseInfo[] licenseInfos = ((ConjunctiveLicenseSet) rootAnyLicenseInfo).getFlattenedMembers();
-            for (AnyLicenseInfo licenseInfo : licenseInfos) {
+            final AnyLicenseInfo[] licenseInfos = ((ConjunctiveLicenseSet) rootAnyLicenseInfo).getFlattenedMembers();
+            for (final AnyLicenseInfo licenseInfo : licenseInfos) {
                 if (licenseInfo instanceof ExtractedLicenseInfo) {
-                    ExtractedLicenseInfo extractedLicenseInfo = (ExtractedLicenseInfo) licenseInfo;
+                    final ExtractedLicenseInfo extractedLicenseInfo = (ExtractedLicenseInfo) licenseInfo;
                     component.setLicense(extractedLicenseInfo.getName());
                 } else if (licenseInfo instanceof SpdxListedLicense) {
                     processSpdxListedLicense(component, (SpdxListedLicense) licenseInfo);
@@ -225,8 +225,8 @@ public class SpdxDocumentParser {
         }
     }
 
-    private void processSpdxListedLicense(Component component, SpdxListedLicense spdxListedLicense) {
-        License license = qm.getLicense(spdxListedLicense.getLicenseId());
+    private void processSpdxListedLicense(final Component component, final SpdxListedLicense spdxListedLicense) {
+        final License license = qm.getLicense(spdxListedLicense.getLicenseId());
         if (license != null) {
             component.setResolvedLicense(license);
         } else {

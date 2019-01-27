@@ -28,7 +28,7 @@ import javax.json.JsonObject;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
 
-    public void publish(String publisherName, PebbleTemplate template, Notification notification, JsonObject config) {
+    public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = Logger.getLogger(this.getClass());
         if (config == null) {
             logger.warn("No configuration found. Skipping notification.");

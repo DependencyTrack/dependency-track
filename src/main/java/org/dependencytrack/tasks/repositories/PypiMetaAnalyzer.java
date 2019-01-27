@@ -52,7 +52,7 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public boolean isApplicable(Component component) {
+    public boolean isApplicable(final Component component) {
         return component.getPurl() != null && PackageURL.StandardTypes.PYPI.equals(component.getPurl().getType());
     }
 
@@ -66,13 +66,13 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public MetaModel analyze(Component component) {
+    public MetaModel analyze(final Component component) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        MetaModel meta = new MetaModel(component);
+        final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
             try {
-                HttpResponse<JsonNode> response = ui.get(url)
+                final HttpResponse<JsonNode> response = ui.get(url)
                         .header("accept", "application/json")
                         .asJson();
                 if (response.getStatus() == 200) {

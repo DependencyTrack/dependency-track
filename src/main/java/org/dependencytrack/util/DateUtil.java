@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-public class DateUtil {
+public final class DateUtil {
 
     private DateUtil() {
     }
@@ -36,8 +36,8 @@ public class DateUtil {
      * @return a Date object
      * @since 3.0.0
      */
-    public static Date parseShortDate(String yyyyMMdd) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+    public static Date parseShortDate(final String yyyyMMdd) {
+        final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
         try {
             return format.parse(yyyyMMdd);
         } catch (ParseException e) {
@@ -52,8 +52,8 @@ public class DateUtil {
      * @return a Date object
      * @since 3.1.0
      */
-    public static Date parseDate(String yyyyMMddHHmmss) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static Date parseDate(final String yyyyMMddHHmmss) {
+        final SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
         try {
             return format.parse(yyyyMMddHHmmss);
         } catch (ParseException e) {
@@ -69,8 +69,8 @@ public class DateUtil {
      * @return the difference in days
      * @since 3.0.0
      */
-    public static long diff(Date start, Date end) {
-        long diff = end.getTime() - start.getTime();
+    public static long diff(final Date start, final Date end) {
+        final long diff = end.getTime() - start.getTime();
         return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
     }
 
@@ -81,9 +81,9 @@ public class DateUtil {
      * @return a String representation of an ISO 8601 date
      * @since 3.4.0
      */
-    public static String toISO8601(Date date) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+    public static String toISO8601(final Date date) {
+        final TimeZone tz = TimeZone.getTimeZone("UTC");
+        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         df.setTimeZone(tz);
         return df.format(date);
     }

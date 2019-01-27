@@ -64,7 +64,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public void add(Project project) {
+    public void add(final Project project) {
         final Document doc = new Document();
         addField(doc, IndexConstants.PROJECT_UUID, project.getUuid().toString(), Field.Store.YES, false);
         addField(doc, IndexConstants.PROJECT_NAME, project.getName(), Field.Store.YES, true);
@@ -103,7 +103,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param project A persisted Project object.
      */
-    public void remove(Project project) {
+    public void remove(final Project project) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()));
         } catch (IOException e) {
@@ -131,7 +131,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
             while (count < total) {
                 final PaginatedResult result = qm.getProjects();
                 final List<Project> projects = result.getList(Project.class);
-                for (Project project: projects) {
+                for (final Project project: projects) {
                     add(project);
                 }
                 count += result.getObjects().size();

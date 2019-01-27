@@ -38,7 +38,7 @@ public class Reference extends BaseObject {
     }
 
     @XmlElement(name = "source")
-    public void setSource(String source) {
+    public void setSource(final String source) {
         this.source = normalize(source);
     }
 
@@ -47,7 +47,7 @@ public class Reference extends BaseObject {
     }
 
     @XmlElement(name = "name")
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = normalize(name);
     }
 
@@ -56,7 +56,7 @@ public class Reference extends BaseObject {
     }
 
     @XmlElement(name = "url")
-    public void setUrl(String value) {
+    public void setUrl(final String value) {
         this.url = normalize(value);
     }
 }

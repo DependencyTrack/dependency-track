@@ -29,15 +29,15 @@ import java.util.Date;
  */
 public class DateAdapter extends XmlAdapter<String, Date> {
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     @Override
-    public String marshal(Date v) throws Exception {
+    public String marshal(final Date v) throws Exception {
         return dateFormat.format(v);
     }
 
     @Override
-    public Date unmarshal(String v) throws Exception {
+    public Date unmarshal(final String v) throws Exception {
         return dateFormat.parse(v);
     }
 

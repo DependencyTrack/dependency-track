@@ -19,13 +19,13 @@ package org.dependencytrack.event;
 
 import java.util.UUID;
 
-public class KennaSecurityUploadEvent extends VulnerabilityManagementUploadEvent {
+public class FortifySscUploadEventAbstract extends AbstractVulnerabilityManagementUploadEvent {
 
-    public KennaSecurityUploadEvent() {
+    public FortifySscUploadEventAbstract() {
         super();
     }
 
-    public KennaSecurityUploadEvent(UUID projectUuid) {
+    public FortifySscUploadEventAbstract(final UUID projectUuid) {
         super(projectUuid);
     }
 }

@@ -50,7 +50,7 @@ public class CweImporter {
 
     public void processCweDefinitions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
         try (QueryManager qm = new QueryManager();
-                InputStream is = this.getClass().getClassLoader().getResourceAsStream("nist/cwec_v2.11.xml")) {
+                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v2.11.xml")) {
 
             LOGGER.info("Synchronizing CWEs with datastore");
 
@@ -75,14 +75,14 @@ public class CweImporter {
             parseNodes((NodeList) expr2.evaluate(doc, XPathConstants.NODESET));
             parseNodes((NodeList) expr3.evaluate(doc, XPathConstants.NODESET));
 
-            for (Map.Entry<Integer, String> entry : CWE_MAPPINGS.entrySet()) {
+            for (final Map.Entry<Integer, String> entry : CWE_MAPPINGS.entrySet()) {
                 qm.createCweIfNotExist(entry.getKey(), entry.getValue().replaceAll("\\\\", "\\\\\\\\"));
             }
             LOGGER.info("CWE synchronization complete");
         }
     }
 
-    private static void parseNodes(NodeList nodeList) {
+    private static void parseNodes(final NodeList nodeList) {
         for (int i = 0; i < nodeList.getLength(); i++) {
             final Node node = nodeList.item(i);
             final NamedNodeMap attributes = node.getAttributes();

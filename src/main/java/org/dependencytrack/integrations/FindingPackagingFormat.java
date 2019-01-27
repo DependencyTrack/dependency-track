@@ -37,7 +37,7 @@ public class FindingPackagingFormat {
 
     private final JSONObject payload;
 
-    public FindingPackagingFormat(UUID projectUuid, List<Finding> findings) {
+    public FindingPackagingFormat(final UUID projectUuid, final List<Finding> findings) {
         payload = initialize(projectUuid, findings);
     }
 
@@ -45,18 +45,18 @@ public class FindingPackagingFormat {
         return payload;
     }
 
-    private JSONObject initialize(UUID projectUuid, List<Finding> findings) {
+    private JSONObject initialize(final UUID projectUuid, final List<Finding> findings) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final About about = new About();
-            ConfigProperty baseUrl = qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
+            final ConfigProperty baseUrl = qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
 
             /*
                 Create a generic meta object containing basic Dependency-Track information
                 This is useful for file-based parsing systems that needs to be able to
                 identify what type of file it is, and what type of system generated it.
              */
-            JSONObject meta = new JSONObject();
+            final JSONObject meta = new JSONObject();
             meta.put("application", about.getApplication());
             meta.put("version", about.getVersion());
             meta.put("timestamp", DateUtil.toISO8601(new Date()));
@@ -71,7 +71,7 @@ public class FindingPackagingFormat {
                 well as not have to perform additional queries back to Dependency-Track
                 to discover basic project information.
              */
-            JSONObject projectJson = new JSONObject();
+            final JSONObject projectJson = new JSONObject();
             projectJson.put("uuid", project.getUuid());
             projectJson.put("name", project.getName());
             if (project.getVersion() != null) {
@@ -89,7 +89,7 @@ public class FindingPackagingFormat {
                 Add the meta and project objects along with the findings array
                 to a root json object and return.
              */
-            JSONObject root = new JSONObject();
+            final JSONObject root = new JSONObject();
             root.put("version", FPF_VERSION);
             root.put("meta", meta);
             root.put("project", projectJson);

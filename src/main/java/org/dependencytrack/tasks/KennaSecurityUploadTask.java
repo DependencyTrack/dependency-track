@@ -19,7 +19,7 @@ package org.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.logging.Logger;
-import org.dependencytrack.event.KennaSecurityUploadEvent;
+import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.integrations.kenna.KennaSecurityUploader;
 
 public class KennaSecurityUploadTask extends VulnerabilityManagementUploadTask {
@@ -29,9 +29,9 @@ public class KennaSecurityUploadTask extends VulnerabilityManagementUploadTask {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
-        if (e instanceof KennaSecurityUploadEvent) {
-            final KennaSecurityUploadEvent event = (KennaSecurityUploadEvent) e;
+    public void inform(final Event e) {
+        if (e instanceof KennaSecurityUploadEventAbstract) {
+            final KennaSecurityUploadEventAbstract event = (KennaSecurityUploadEventAbstract) e;
             LOGGER.debug("Starting Kenna Security upload task");
             super.inform(event, new KennaSecurityUploader());
             LOGGER.debug("Kenna Security upload complete");

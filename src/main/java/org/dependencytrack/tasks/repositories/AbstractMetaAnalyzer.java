@@ -50,7 +50,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         this.baseUrl = baseUrl;
     }
 
-    public void handleUnexpectedHttpResponse(Logger logger, String url, int statusCode, String statusText, Component component) {
+    public void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText, final Component component) {
         logger.debug("HTTP Status : " + statusCode + " " + statusText);
         logger.debug(" - RepositoryType URL : " + url);
         logger.debug(" - Package URL : " + component.getPurl().canonicalize());
@@ -63,7 +63,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         );
     }
 
-    public void handleRequestException(Logger logger, Exception e) {
+    public void handleRequestException(final Logger logger, final Exception e) {
         logger.error("Request failure", e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

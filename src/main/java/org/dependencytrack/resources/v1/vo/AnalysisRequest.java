@@ -33,22 +33,22 @@ import javax.validation.constraints.Pattern;
 public class AnalysisRequest {
 
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
-    private String project;
+    private final String project;
 
     @NotNull
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The component must be a valid 36 character UUID")
-    private String component;
+    private final String component;
 
     @NotNull
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The vulnerability must be a valid 36 character UUID")
-    private String vulnerability;
+    private final String vulnerability;
 
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
-    private String comment;
+    private final String comment;
 
-    private AnalysisState analysisState;
+    private final AnalysisState analysisState;
 
-    private Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
+    private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
     @JsonCreator
     public AnalysisRequest(@JsonProperty(value = "project") String project,

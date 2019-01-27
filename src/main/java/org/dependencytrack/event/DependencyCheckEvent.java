@@ -33,22 +33,22 @@ public class DependencyCheckEvent extends VulnerabilityAnalysisEvent {
         UPDATE_ONLY
     }
 
-    private Action action;
+    private final Action action;
 
     public DependencyCheckEvent() {
         this.action = Action.ANALYZE;
     }
 
-    public DependencyCheckEvent(Action action) {
+    public DependencyCheckEvent(final Action action) {
         this.action = action;
     }
 
-    public DependencyCheckEvent(Component component) {
+    public DependencyCheckEvent(final Component component) {
         super(component);
         this.action = Action.ANALYZE;
     }
 
-    public DependencyCheckEvent(List<Component> components) {
+    public DependencyCheckEvent(final List<Component> components) {
         super(components);
         this.action = Action.ANALYZE;
     }

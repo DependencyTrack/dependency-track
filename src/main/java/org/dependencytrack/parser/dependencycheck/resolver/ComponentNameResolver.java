@@ -33,12 +33,12 @@ public class ComponentNameResolver extends AbstractStringResolver implements IRe
     /**
      * {@inheritDoc}
      */
-    public String resolve(Dependency dependency) {
+    public String resolve(final Dependency dependency) {
         if (dependency.getEvidenceCollected() == null) {
             if (dependency.getFileName() != null) {
                 return dependency.getFileName();
             } else if (dependency.getFilePath() != null) {
-                File file = new File(dependency.getFilePath());
+                final File file = new File(dependency.getFilePath());
                 return file.toPath().getFileName().toString();
             }
             return "unknown"; // a 'name' is required in order for a component to be persisted
@@ -47,7 +47,7 @@ public class ComponentNameResolver extends AbstractStringResolver implements IRe
          * Attempts to use the product evidence first, if that is null, then
          * return the filename of the component (could be null).
          */
-        String product = resolve(dependency, "product", 3);
+        final String product = resolve(dependency, "product", 3);
         if (product != null) {
             return product;
         } else {

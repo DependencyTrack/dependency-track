@@ -42,7 +42,7 @@ public class MetricsUpdateEvent implements Event {
     private Object target;
 
     // Call this to perform a metrics update on a specific project or component
-    public MetricsUpdateEvent(Object target) {
+    public MetricsUpdateEvent(final Object target) {
         if (target == null) {
             this.type = Type.PORTFOLIO;
         } else if (target instanceof Project) {
@@ -57,7 +57,7 @@ public class MetricsUpdateEvent implements Event {
 
     // Call this to perform metrics not related to the portfolio, projects, components, or dependencies.
     // For example, running metrics on vulnerabilities being tracked in the database.
-    public MetricsUpdateEvent(Type type) {
+    public MetricsUpdateEvent(final Type type) {
         this.type = type;
     }
 

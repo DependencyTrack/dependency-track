@@ -25,14 +25,14 @@ public class KennaSecurityUploadEventTest {
 
     @Test
     public void testDefaultConstructor() {
-        KennaSecurityUploadEvent event = new KennaSecurityUploadEvent();
+        KennaSecurityUploadEventAbstract event = new KennaSecurityUploadEventAbstract();
         Assert.assertNull(event.getProjectUuid());
     }
 
     @Test
     public void testProjectConstructor() {
         UUID uuid = UUID.randomUUID();
-        KennaSecurityUploadEvent event = new KennaSecurityUploadEvent(uuid);
+        KennaSecurityUploadEventAbstract event = new KennaSecurityUploadEventAbstract(uuid);
         Assert.assertEquals(uuid, event.getProjectUuid());
     }
 }

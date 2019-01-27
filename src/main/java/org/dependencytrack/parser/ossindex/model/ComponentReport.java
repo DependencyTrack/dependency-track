@@ -32,13 +32,13 @@ public class ComponentReport {
     private String coordinates;
     private String description;
     private String reference;
-    private List<ComponentReportVulnerability> vulnerabilities = new ArrayList<>();
+    private final List<ComponentReportVulnerability> vulnerabilities = new ArrayList<>();
 
     public String getCoordinates() {
         return coordinates;
     }
 
-    public void setCoordinates(String coordinates) {
+    public void setCoordinates(final String coordinates) {
         this.coordinates = coordinates;
     }
 
@@ -46,7 +46,7 @@ public class ComponentReport {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = description;
     }
 
@@ -54,7 +54,7 @@ public class ComponentReport {
         return reference;
     }
 
-    public void setReference(String reference) {
+    public void setReference(final String reference) {
         this.reference = reference;
     }
 
@@ -62,7 +62,7 @@ public class ComponentReport {
         return vulnerabilities;
     }
 
-    public void addVulnerability(ComponentReportVulnerability vulnerability) {
+    public void addVulnerability(final ComponentReportVulnerability vulnerability) {
         this.vulnerabilities.add(vulnerability);
     }
 }

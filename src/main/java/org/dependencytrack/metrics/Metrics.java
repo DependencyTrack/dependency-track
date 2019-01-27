@@ -27,15 +27,15 @@ public final class Metrics {
 
     private Metrics() { }
 
-    public static double inheritedRiskScore(int high, int medium, int low) {
+    public static double inheritedRiskScore(final int high, final int medium, final int low) {
         return inheritedRiskScore(0, high, medium, low);
     }
 
-    public static double inheritedRiskScore(int critical, int high, int medium, int low) {
+    public static double inheritedRiskScore(final int critical, final int high, final int medium, final int low) {
         return (double) ((critical * 10) + (high * 5) + (medium * 3) + (low * 1));
     }
 
-    public static double vulnerableComponentRatio(int vulnerabilities, int vulnerableComponents) {
+    public static double vulnerableComponentRatio(final int vulnerabilities, final int vulnerableComponents) {
         double ratio = 0.0;
         if (vulnerableComponents > 0) {
             ratio = (double) vulnerabilities / vulnerableComponents;

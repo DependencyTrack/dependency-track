@@ -50,7 +50,7 @@ public class FortifySscClient {
                 .asJson();
         if (response.getStatus() == 201) {
             if (response.getBody() != null) {
-                JSONObject root = response.getBody().getObject();
+                final JSONObject root = response.getBody().getObject();
                 return root.getJSONObject("data").getString("token");
             }
         } else {
@@ -62,7 +62,7 @@ public class FortifySscClient {
         return null;
     }
 
-    public void uploadDependencyTrackFindings(String token, String applicationVersion, InputStream findingsJson) {
+    public void uploadDependencyTrackFindings(final String token, final String applicationVersion, final InputStream findingsJson) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final HashMap<String, Object> params = new HashMap<>();
         params.put("engineType", "DEPENDENCY_TRACK");

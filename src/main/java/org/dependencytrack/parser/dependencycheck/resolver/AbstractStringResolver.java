@@ -36,13 +36,13 @@ public abstract class AbstractStringResolver {
      * @param minConfidenceScore the minimum confidence score
      * @return the highly confidence evidence, or null if not found or doesn't meet criteria
      */
-    protected String resolve(Dependency dependency, String evidenceType, int minConfidenceScore) {
+    protected String resolve(final Dependency dependency, final String evidenceType, final int minConfidenceScore) {
         if (dependency.getEvidenceCollected() == null) {
             return null;
         }
         Evidence best = null;
         final List<Evidence> evidenceList = dependency.getEvidenceCollected();
-        for (Evidence evidence: evidenceList) {
+        for (final Evidence evidence: evidenceList) {
             // The dependency-check report may put in the value "null" for "file" and potentially other types.
             if (evidence.getValue() == null || "null".equals(evidence.getValue())) {
                 continue;

@@ -29,11 +29,11 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
 
     protected QueryManager qm;
 
-    public void setQueryManager(QueryManager qm) {
+    public void setQueryManager(final QueryManager qm) {
         this.qm = qm;
     }
 
-    public void handleUnexpectedHttpResponse(Logger logger, String url, int statusCode, String statusText) {
+    public void handleUnexpectedHttpResponse(final Logger logger, final String url, final int statusCode, final String statusText) {
         logger.error("An error occurred while communicating with the " + name() + " integration point");
         logger.error("HTTP Status : " + statusCode + " " + statusText);
         logger.error("Request URL : " + url);
@@ -46,7 +46,7 @@ public abstract class AbstractIntegrationPoint implements IntegrationPoint {
         );
     }
 
-    public void handleException(Logger logger, Exception e) {
+    public void handleException(final Logger logger, final Exception e) {
         logger.error("An error occurred with the " + name() + " integration point", e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

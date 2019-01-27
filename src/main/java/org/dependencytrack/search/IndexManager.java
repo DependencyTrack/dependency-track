@@ -65,7 +65,7 @@ public abstract class IndexManager implements AutoCloseable {
     private IndexWriter iwriter;
     private IndexSearcher isearcher;
     private MultiFieldQueryParser qparser;
-    private IndexType indexType;
+    private final IndexType indexType;
 
     /**
      * This methods should be overwritten.
@@ -93,7 +93,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @param indexType the type of index to use
      * @since 3.0.0
      */
-    protected IndexManager(IndexType indexType) {
+    protected IndexManager(final IndexType indexType) {
         this.indexType = indexType;
     }
 
@@ -226,7 +226,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @param tokenize specifies if the field should be tokenized or not
      * @since 3.0.0
      */
-    protected void addField(Document doc, String name, String value, Field.Store store, boolean tokenize) {
+    protected void addField(final Document doc, final String name, String value, final Field.Store store, final boolean tokenize) {
         if (StringUtils.isBlank(value)) {
             value = "";
         }
@@ -246,7 +246,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @param value the value of the field
      * @since 3.0.0
      */
-    protected void updateField(Document doc, String name, String value) {
+    protected void updateField(final Document doc, final String name, String value) {
         if (StringUtils.isBlank(value)) {
             value = "";
         }
@@ -261,13 +261,13 @@ public abstract class IndexManager implements AutoCloseable {
      * @return a Lucene Document
      * @since 3.0.0
      */
-    protected Document getDocument(String fieldName, String uuid) {
+    protected Document getDocument(final String fieldName, final String uuid) {
         final List<Document> list = new ArrayList<>();
         try {
             final TermQuery query = new TermQuery(new Term(fieldName, uuid));
             final TopDocs results = getIndexSearcher().search(query, 1000000);
             final ScoreDoc[] hits = results.scoreDocs;
-            for (ScoreDoc hit : hits) {
+            for (final ScoreDoc hit : hits) {
                 list.add(getIndexSearcher().doc(hit.doc));
             }
         } catch (CorruptIndexException e) {
@@ -301,7 +301,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @return a File object
      * @since 3.4.0
      */
-    private static File getIndexDirectory(IndexType indexType) {
+    private static File getIndexDirectory(final IndexType indexType) {
         return new File(
                 Config.getInstance().getDataDirectorty(),
                 "index" + File.separator + indexType.name().toLowerCase());
@@ -322,7 +322,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Deletes the index directory.
      * @since 3.4.0
      */
-    public static void delete(IndexType indexType) {
+    public static void delete(final IndexType indexType) {
         final File indexDir = getIndexDirectory(indexType);
         if (indexDir.exists()) {
             LOGGER.info("Deleting " + indexType.name().toLowerCase() + " index");
@@ -338,7 +338,7 @@ public abstract class IndexManager implements AutoCloseable {
      * Returns if the index directory exists or not.
      * @since 3.4.0
      */
-    public static boolean exists(IndexType indexType) {
+    public static boolean exists(final IndexType indexType) {
         return getIndexDirectory(indexType).exists();
     }
 }

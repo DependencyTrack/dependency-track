@@ -237,7 +237,7 @@ public class ComponentResource extends AlpineResource {
             Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
             if (component != null) {
                 // Name cannot be empty or null - prevent it
-                String name = StringUtils.trimToNull(jsonComponent.getName());
+                final String name = StringUtils.trimToNull(jsonComponent.getName());
                 if (name != null) {
                     component.setName(name);
                 }

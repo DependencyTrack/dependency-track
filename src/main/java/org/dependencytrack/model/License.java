@@ -275,7 +275,7 @@ public class License implements Serializable {
         return seeAlso != null ? seeAlso.clone() : null;
     }
 
-    public void setSeeAlso(String[] seeAlso) {
+    public void setSeeAlso(String... seeAlso) {
         if (seeAlso != null) {
             this.seeAlso = seeAlso.clone();
         } else {

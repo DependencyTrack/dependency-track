@@ -31,7 +31,7 @@ import java.net.URL;
 
 abstract class AbstractConfigPropertyResource extends AlpineResource {
 
-    private Logger LOGGER = Logger.getLogger(this.getClass()); // Use the classes that extend this, not this class itself
+    private final Logger LOGGER = Logger.getLogger(this.getClass()); // Use the classes that extend this, not this class itself
     static final String ENCRYPTED_PLACEHOLDER = "HiddenDecryptedPropertyPlaceholder";
 
     Response updatePropertyValue(QueryManager qm, IConfigProperty json, IConfigProperty property) {
@@ -65,7 +65,7 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
             }
         } else if (property.getPropertyType() == IConfigProperty.PropertyType.URL) {
             try {
-                URL url = new URL(json.getPropertyValue());
+                final URL url = new URL(json.getPropertyValue());
                 property.setPropertyValue(url.toExternalForm());
             } catch (MalformedURLException e) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The property expected a URL but the URL was malformed.").build();

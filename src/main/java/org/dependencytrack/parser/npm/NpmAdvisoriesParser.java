@@ -40,7 +40,7 @@ public class NpmAdvisoriesParser extends BaseAdvisoryParser {
      * @param jsonNode the JSON node to parse
      * @return an AdvisoryResults object
      */
-    public AdvisoryResults parse(JsonNode jsonNode) {
+    public AdvisoryResults parse(final JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
 
         final AdvisoryResults advisoryResults = new AdvisoryResults();

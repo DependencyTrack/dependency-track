@@ -34,7 +34,8 @@ public enum DefaultNotificationPublishers {
     private String templateMimeType;
     private boolean defaultPublisher;
 
-    DefaultNotificationPublishers(String name, String description, Class publisherClass, String templateFile, String templateMimeType, boolean defaultPublisher) {
+    DefaultNotificationPublishers(final String name, final String description, final Class publisherClass,
+                                  final String templateFile, final String templateMimeType, final boolean defaultPublisher) {
         this.name = name;
         this.description = description;
         this.publisherClass = publisherClass;

@@ -29,16 +29,16 @@ import org.dependencytrack.persistence.QueryManager;
  */
 public class ComponentResolver implements IResolver {
 
-    private QueryManager qm;
+    private final QueryManager qm;
 
-    public ComponentResolver(QueryManager qm) {
+    public ComponentResolver(final QueryManager qm) {
         this.qm = qm;
     }
 
     /**
      * {@inheritDoc}
      */
-    public Component resolve(Dependency dependency) {
+    public Component resolve(final Dependency dependency) {
         Component component = qm.getComponentByHash(dependency.getMd5());
         if (component != null) {
             return component;
@@ -50,7 +50,7 @@ public class ComponentResolver implements IResolver {
         return null;
     }
 
-    public Component resolve(Component component) {
+    public Component resolve(final Component component) {
         Component resolvedComponent = qm.getComponentByHash(component.getMd5());
         if (resolvedComponent != null) {
             return resolvedComponent;

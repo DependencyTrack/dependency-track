@@ -40,7 +40,7 @@ public class SpdxLicenseDetailParser {
     /**
      * Reads in a json file and returns a License object.
      */
-    public License parse(Path path) throws IOException {
+    public License parse(final Path path) throws IOException {
         final byte[] jdon = Files.readAllBytes(path);
         final ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.readValue(jdon, License.class);
@@ -51,12 +51,12 @@ public class SpdxLicenseDetailParser {
      */
     public List<License> getLicenseDefinitions() throws IOException {
         final List<License> licenses = new ArrayList<>();
-        String[] dirs = {"/license-list-data/json/details", "/license-list-data/json/exceptions"};
-        for (String s: dirs) {
+        final String[] dirs = {"/license-list-data/json/details", "/license-list-data/json/exceptions"};
+        for (final String s: dirs) {
             final File dir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath() + s);
             final File[] files = dir.listFiles();
             if (files != null) {
-                for (File nextFile : files) {
+                for (final File nextFile : files) {
                     final License license = parse(nextFile.toPath());
                     licenses.add(license);
                 }

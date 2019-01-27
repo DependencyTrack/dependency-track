@@ -61,7 +61,7 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof NpmAdvisoryMirrorEvent) {
             LOGGER.info("Starting NPM advisory mirroring task");
             getAdvisories();
@@ -122,10 +122,10 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
      * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
      * @param results the results to synchronize
      */
-    private void updateDatasource(AdvisoryResults results) {
+    private void updateDatasource(final AdvisoryResults results) {
         LOGGER.info("Updating datasource with NPM advisories");
         try (QueryManager qm = new QueryManager()) {
-            for (Advisory advisory: results.getAdvisories()) {
+            for (final Advisory advisory: results.getAdvisories()) {
                 qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
             }
         }
@@ -137,7 +137,7 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
      * @param advisory the NPM advisory to map
      * @return a Dependency-Track Vulnerability object
      */
-    private Vulnerability mapAdvisoryToVulnerability(QueryManager qm, Advisory advisory) {
+    private Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final Advisory advisory) {
         final Vulnerability vuln = new Vulnerability();
         vuln.setSource(Vulnerability.Source.NPM);
         vuln.setVulnId(String.valueOf(advisory.getId()));
@@ -162,8 +162,8 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
         vuln.setPatchedVersions(advisory.getPatchedVersions());
 
         if (advisory.getCwe() != null) {
-            CweResolver cweResolver = new CweResolver(qm);
-            Cwe cwe = cweResolver.resolve(advisory.getCwe());
+            final CweResolver cweResolver = new CweResolver(qm);
+            final Cwe cwe = cweResolver.resolve(advisory.getCwe());
             vuln.setCwe(cwe);
         }
 

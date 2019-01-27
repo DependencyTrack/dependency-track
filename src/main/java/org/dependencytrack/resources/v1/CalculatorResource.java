@@ -57,8 +57,8 @@ public class CalculatorResource extends AlpineResource {
             @ApiParam(value = "A valid CVSSv2 or CVSSv3 vector", required = true)
             @QueryParam("vector") String vector) {
         try {
-            Cvss cvss = Cvss.fromVector(vector);
-            Score score = cvss.calculateScore();
+            final Cvss cvss = Cvss.fromVector(vector);
+            final Score score = cvss.calculateScore();
             return Response.ok(score).build();
         } catch (NullPointerException e) {
             final String invalidVector = "An invalid CVSSv2 or CVSSv3 vector submitted.";

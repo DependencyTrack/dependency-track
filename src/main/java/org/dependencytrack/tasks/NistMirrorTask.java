@@ -40,10 +40,10 @@ import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.common.HttpClientFactory;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
@@ -74,7 +74,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof NistMirrorEvent) {
             LOGGER.info("Starting NIST mirroring task");
             final File mirrorPath = new File(NVD_MIRROR_DIR);
@@ -121,7 +121,7 @@ public class NistMirrorTask implements LoggableSubscriber {
      * Creates the directory if non-existent.
      * @param outputDirPath the target output directory path
      */
-    private void setOutputDir(String outputDirPath) {
+    private void setOutputDir(final String outputDirPath) {
         outputDir = new File(outputDirPath);
         if (!outputDir.exists()) {
             if (outputDir.mkdirs()) {
@@ -136,7 +136,7 @@ public class NistMirrorTask implements LoggableSubscriber {
      * @param cveUrl the URL to perform a HTTP HEAD request on
      * @return the length of the content if it were to be downloaded
      */
-    private long checkHead(String cveUrl) {
+    private long checkHead(final String cveUrl) {
         try {
             final HttpClient httpClient = HttpClientFactory.getHttpClient();
             final HttpUriRequest request = new HttpHead(cveUrl);
@@ -152,7 +152,7 @@ public class NistMirrorTask implements LoggableSubscriber {
      * Performs a download of specified URL.
      * @param cveUrl the URL contents to download
      */
-    private void doDownload(String cveUrl) {
+    private void doDownload(final String cveUrl) {
         File file;
         try {
             final URL url = new URL(cveUrl);
@@ -220,15 +220,15 @@ public class NistMirrorTask implements LoggableSubscriber {
      * Extracts a GZip file.
      * @param file the file to extract
      */
-    private void uncompress(File file) {
+    private void uncompress(final File file) {
         final byte[] buffer = new byte[1024];
         GZIPInputStream gzis = null;
-        FileOutputStream out = null;
+        OutputStream out = null;
         try {
             LOGGER.info("Uncompressing " + file.getName());
-            gzis = new GZIPInputStream(new FileInputStream(file));
+            gzis = new GZIPInputStream(Files.newInputStream(file.toPath()));
             final File uncompressedFile = new File(file.getAbsolutePath().replaceAll(".gz", ""));
-            out = new FileOutputStream(uncompressedFile);
+            out = Files.newOutputStream(uncompressedFile.toPath());
             int len;
             while ((len = gzis.read(buffer)) > 0) {
                 out.write(buffer, 0, len);
@@ -248,7 +248,7 @@ public class NistMirrorTask implements LoggableSubscriber {
      * Closes a closable object.
      * @param object the object to close
      */
-    private void close(Closeable object) {
+    private void close(final Closeable object) {
         if (object != null) {
             try {
                 object.close();

@@ -26,7 +26,7 @@ public class RepositoryMetaEvent implements Event {
 
     public RepositoryMetaEvent() { }
 
-    public RepositoryMetaEvent(Component component) {
+    public RepositoryMetaEvent(final Component component) {
         this.component = component;
     }
 

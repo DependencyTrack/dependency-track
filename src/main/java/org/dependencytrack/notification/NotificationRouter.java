@@ -42,8 +42,8 @@ public class NotificationRouter implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationRouter.class);
 
-    public void inform(Notification notification) {
-        for (NotificationRule rule: resolveRules(notification)) {
+    public void inform(final Notification notification) {
+        for (final NotificationRule rule: resolveRules(notification)) {
 
             // Not all publishers need configuration (i.e. ConsolePublisher)
             JsonObject config = null;
@@ -70,7 +70,7 @@ public class NotificationRouter implements Subscriber {
     }
 
     @SuppressWarnings("unchecked")
-    private List<NotificationRule> resolveRules(Notification notification) {
+    private List<NotificationRule> resolveRules(final Notification notification) {
         // The notification rules to process for this specific notification
         final List<NotificationRule> rules = new ArrayList<>();
 
@@ -81,7 +81,7 @@ public class NotificationRouter implements Subscriber {
             final PersistenceManager pm = qm.getPersistenceManager();
             final Query query = pm.newQuery(NotificationRule.class);
 
-            StringBuilder sb = new StringBuilder();
+            final StringBuilder sb = new StringBuilder();
 
             final NotificationLevel level = notification.getLevel();
             if (NotificationLevel.INFORMATIONAL == level) {
@@ -94,7 +94,7 @@ public class NotificationRouter implements Subscriber {
 
             sb.append("enabled == true && scope == :scope"); //todo: improve this - this only works for testing
             query.setFilter(sb.toString());
-            List<NotificationRule> result = (List<NotificationRule>)query.execute(NotificationScope.valueOf(notification.getScope()));
+            final List<NotificationRule> result = (List<NotificationRule>)query.execute(NotificationScope.valueOf(notification.getScope()));
 
 
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
@@ -106,11 +106,11 @@ public class NotificationRouter implements Subscriber {
                 of the notification down to those projects that the rule matches and which
                 also match projects affected by the vulnerability.
                  */
-                for (NotificationRule rule: result) {
+                for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0) {
-                            for (Project project : rule.getProjects()) {
-                                for (Project affectedProject : affectedProjects) {
+                            for (final Project project : rule.getProjects()) {
+                                for (final Project affectedProject : affectedProjects) {
                                     if (affectedProject.getUuid().equals(project.getUuid())) {
                                         rules.add(rule);
                                     }
@@ -129,10 +129,10 @@ public class NotificationRouter implements Subscriber {
                 of the notification down to those projects that the rule matches and which
                 also match projects affected by the vulnerability.
                  */
-                for (NotificationRule rule: result) {
+                for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0) {
-                            for (Project project : rule.getProjects()) {
+                            for (final Project project : rule.getProjects()) {
                                 if (project.getUuid().equals(subject.getDependency().getProject().getUuid())) {
                                     rules.add(rule);
                                 }
@@ -143,7 +143,7 @@ public class NotificationRouter implements Subscriber {
                     }
                 }
             } else {
-                for (NotificationRule rule: result) {
+                for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                         rules.add(rule);
                     }

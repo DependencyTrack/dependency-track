@@ -33,6 +33,7 @@ import javax.json.JsonString;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.sql.Date;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -47,7 +48,7 @@ public final class NvdParser {
 
     private static final Logger LOGGER = Logger.getLogger(NvdParser.class);
 
-    public void parse(File file) {
+    public void parse(final File file) {
         if (!file.getName().endsWith(".json")) {
             return;
         }
@@ -55,7 +56,7 @@ public final class NvdParser {
         LOGGER.info("Parsing " + file.getName());
 
         try (QueryManager qm = new QueryManager();
-             InputStream in = new FileInputStream(file)) {
+             InputStream in = Files.newInputStream(file.toPath())) {
 
             final JsonReader reader = Json.createReader(in);
 
@@ -135,7 +136,7 @@ public final class NvdParser {
                 final StringBuilder sb = new StringBuilder();
                 for (int l = 0; l < ref1.size(); l++) {
                     final JsonObject ref2 = ref1.getJsonObject(l);
-                    for (String s : ref2.keySet()) {
+                    for (final String s : ref2.keySet()) {
                         if ("url".equals(s)) {
                             // Convert reference to Markdown format
                             final String url = ref2.getString("url");
@@ -159,7 +160,7 @@ public final class NvdParser {
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
-    private void parseCveImpact(JsonObject cveItem, Vulnerability vuln) {
+    private void parseCveImpact(final JsonObject cveItem, final Vulnerability vuln) {
         final JsonObject imp0 = cveItem.getJsonObject("impact");
         final JsonObject imp1 = imp0.getJsonObject("baseMetricV2");
         if (imp1 != null) {

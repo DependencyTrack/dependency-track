@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 public class ScanUploadEvent implements Event {
 
-    private UUID projectUuid;
+    private final UUID projectUuid;
     private File file;
     private byte[] scan;
 
@@ -50,7 +50,7 @@ public class ScanUploadEvent implements Event {
     }
 
     public byte[] getScan() {
-        return scan != null ? scan.clone() : null;
+        return scan == null ? null : scan.clone();
     }
 
     public File getFile() {

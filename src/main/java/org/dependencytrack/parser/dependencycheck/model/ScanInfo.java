@@ -39,7 +39,7 @@ public class ScanInfo extends BaseObject {
     }
 
     @XmlElement(name = "engineVersion")
-    public void setEngineVersion(String engineVersion) {
+    public void setEngineVersion(final String engineVersion) {
         this.engineVersion = normalize(engineVersion);
     }
 
@@ -48,7 +48,7 @@ public class ScanInfo extends BaseObject {
     }
 
     @XmlElement(name = "dataSource")
-    public void setDataSources(List<DataSource> dataSources) {
+    public void setDataSources(final List<DataSource> dataSources) {
         this.dataSources = dataSources;
     }
 }

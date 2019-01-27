@@ -30,9 +30,9 @@ import org.dependencytrack.persistence.QueryManager;
  */
 public class CweResolver {
 
-    private QueryManager qm;
+    private final QueryManager qm;
 
-    public CweResolver(QueryManager qm) {
+    public CweResolver(final QueryManager qm) {
         this.qm = qm;
     }
 
@@ -40,7 +40,7 @@ public class CweResolver {
      * Resolves a CWE by its string representation.
      * @param cweString the string to resolve
      */
-    public Cwe resolve(String cweString) {
+    public Cwe resolve(final String cweString) {
         if (StringUtils.isNotBlank(cweString)) {
             final String string = cweString.trim();
             String lookupString = "";

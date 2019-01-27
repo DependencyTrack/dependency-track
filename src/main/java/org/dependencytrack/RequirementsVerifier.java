@@ -30,7 +30,7 @@ public class RequirementsVerifier implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextInitialized(ServletContextEvent event) {
+    public void contextInitialized(final ServletContextEvent event) {
         final JavaVersion javaVersion = new JavaVersion();
         if (javaVersion.getMajor() != 8 || javaVersion.getUpdate() < 161) {
             failedValidation = true;
@@ -58,7 +58,7 @@ public class RequirementsVerifier implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextDestroyed(ServletContextEvent event) {
+    public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }
 

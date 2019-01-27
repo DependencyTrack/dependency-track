@@ -78,7 +78,7 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                 // values are replaced by the placeholder, they are not erroneously persisted to the database.
                 qm.getPersistenceManager().detachCopyAll(properties);
                 qm.close();
-                for (ProjectProperty property: properties) {
+                for (final ProjectProperty property: properties) {
                     // Replace the value of encrypted strings with the pre-defined placeholder
                     if (ProjectProperty.PropertyType.ENCRYPTEDSTRING == property.getPropertyType()) {
                         property.setPropertyValue(ENCRYPTED_PLACEHOLDER);

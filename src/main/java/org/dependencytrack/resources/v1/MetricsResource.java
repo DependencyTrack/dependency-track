@@ -112,7 +112,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
-        Date since = DateUtil.parseShortDate(date);
+        final Date since = DateUtil.parseShortDate(date);
         if (since == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The specified date format is incorrect.").build();
         }
@@ -138,7 +138,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
-        Date since = DateUtils.addDays(new Date(), -days);
+        final Date since = DateUtils.addDays(new Date(), -days);
         try (QueryManager qm = new QueryManager()) {
             final List<PortfolioMetrics> metrics = qm.getPortfolioMetricsSince(since);
             return Response.ok(metrics).build();
@@ -207,7 +207,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
-        Date since = DateUtil.parseShortDate(date);
+        final Date since = DateUtil.parseShortDate(date);
         return getProjectMetrics(uuid, since);
     }
 
@@ -230,7 +230,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
-        Date since = DateUtils.addDays(new Date(), -days);
+        final Date since = DateUtils.addDays(new Date(), -days);
         return getProjectMetrics(uuid, since);
     }
 
@@ -305,7 +305,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
-        Date since = DateUtil.parseShortDate(date);
+        final Date since = DateUtil.parseShortDate(date);
         if (since == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The specified date format is incorrect.").build();
         }
@@ -331,7 +331,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
-        Date since = DateUtils.addDays(new Date(), -days);
+        final Date since = DateUtils.addDays(new Date(), -days);
         return getComponentMetrics(uuid, since);
     }
 
@@ -412,7 +412,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The start date to retrieve metrics for", required = true)
             @PathParam("date") String date) {
 
-        Date since = DateUtil.parseShortDate(date);
+        final Date since = DateUtil.parseShortDate(date);
         if (since == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The specified date format is incorrect.").build();
         }
@@ -440,7 +440,7 @@ public class MetricsResource extends AlpineResource {
             @ApiParam(value = "The number of days back to retrieve metrics for", required = true)
             @PathParam("days") int days) {
 
-        Date since = DateUtils.addDays(new Date(), -days);
+        final Date since = DateUtils.addDays(new Date(), -days);
         return getDependencyMetrics(projectUuid, componentUuid, since);
     }
 

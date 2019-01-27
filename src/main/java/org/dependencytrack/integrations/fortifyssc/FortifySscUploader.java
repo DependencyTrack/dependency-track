@@ -55,29 +55,23 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
     @Override
     public boolean isEnabled() {
         final ConfigProperty enabled = qm.getConfigProperty(FORTIFY_SSC_ENABLED.getGroupName(), FORTIFY_SSC_ENABLED.getPropertyName());
-        if (enabled != null && Boolean.valueOf(enabled.getPropertyValue())) {
-            return true;
-        }
-        return false;
+        return enabled != null && Boolean.valueOf(enabled.getPropertyValue());
     }
 
     @Override
-    public boolean isProjectConfigured(Project project) {
+    public boolean isProjectConfigured(final Project project) {
         final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
-        if (applicationId != null && applicationId.getPropertyValue() != null) {
-            return true;
-        }
-        return false;
+        return applicationId != null && applicationId.getPropertyValue() != null;
     }
 
     @Override
-    public InputStream process(Project project, List<Finding> findings) {
+    public InputStream process(final Project project, final List<Finding> findings) {
         final JSONObject fpf = new FindingPackagingFormat(project.getUuid(), findings).getDocument();
         return new ByteArrayInputStream(fpf.toString(2).getBytes());
     }
 
     @Override
-    public void upload(Project project, InputStream payload) {
+    public void upload(final Project project, final InputStream payload) {
         final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
         final ConfigProperty username = qm.getConfigProperty(FORTIFY_SSC_USERNAME.getGroupName(), FORTIFY_SSC_USERNAME.getPropertyName());
         final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());

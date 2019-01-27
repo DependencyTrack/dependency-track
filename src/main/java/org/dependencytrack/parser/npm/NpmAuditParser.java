@@ -41,12 +41,12 @@ public class NpmAuditParser extends BaseAdvisoryParser {
      * @return an AdvisoryResults object
      * @
      */
-    public List<Advisory> parse(JsonNode jsonNode) {
+    public List<Advisory> parse(final JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
-        List<Advisory> advisories = new ArrayList<>();
-        JSONObject jsonAdvisories = jsonNode.getObject().getJSONObject("advisories");
-        for (String key : jsonAdvisories.keySet()) {
-            Advisory advisory = super.parse(jsonAdvisories.getJSONObject(key));
+        final List<Advisory> advisories = new ArrayList<>();
+        final JSONObject jsonAdvisories = jsonNode.getObject().getJSONObject("advisories");
+        for (final String key : jsonAdvisories.keySet()) {
+            final Advisory advisory = super.parse(jsonAdvisories.getJSONObject(key));
             advisories.add(advisory);
         }
         return advisories;

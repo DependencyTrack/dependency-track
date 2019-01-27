@@ -31,7 +31,7 @@ import java.util.List;
  */
 public abstract class BaseAdvisoryParser {
 
-    protected Advisory parse(JSONObject object) {
+    protected Advisory parse(final JSONObject object) {
         final Advisory advisory = new Advisory();
         advisory.setId(object.getInt("id"));
         advisory.setOverview(object.optString("overview", null));
@@ -63,7 +63,7 @@ public abstract class BaseAdvisoryParser {
             for (int i = 0; i < findings.length(); i++) {
                 final JSONObject finding = findings.getJSONObject(i);
                 final String version = finding.optString("version", null);
-                JSONArray paths = finding.optJSONArray("paths");
+                final JSONArray paths = finding.optJSONArray("paths");
                 for (int j = 0; j < paths.length(); j++) {
                     final String path = paths.getString(i);
                     if (path != null && path.equals(advisory.getModuleName())) {

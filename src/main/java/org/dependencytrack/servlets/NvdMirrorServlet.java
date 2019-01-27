@@ -28,7 +28,7 @@ public class NvdMirrorServlet extends FileSystemResourceServlet {
      * {@inheritDoc}
      */
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(final ServletConfig config) throws ServletException {
         super.init(config);
         super.setDirectory(NistMirrorTask.NVD_MIRROR_DIR);
         super.setAbsolute(true);

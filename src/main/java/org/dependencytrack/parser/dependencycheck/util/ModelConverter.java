@@ -51,8 +51,8 @@ public final class ModelConverter {
      * @param parserVuln the parsed Dependency-Check vulnerability to convert
      * @return a native Vulnerability object
      */
-    public static org.dependencytrack.model.Vulnerability convert(QueryManager qm,
-                                                                  org.dependencytrack.parser.dependencycheck.model.Vulnerability parserVuln) {
+    public static org.dependencytrack.model.Vulnerability convert(final QueryManager qm,
+                                                                  final org.dependencytrack.parser.dependencycheck.model.Vulnerability parserVuln) {
 
         final org.dependencytrack.model.Vulnerability persistable = new org.dependencytrack.model.Vulnerability();
         if (parserVuln.getSource().equals("NSP")) {
@@ -79,7 +79,7 @@ public final class ModelConverter {
      * @return a Dependency object
      */
     public static org.owasp.dependencycheck.dependency.Dependency convert(
-            org.dependencytrack.model.Component component) {
+            final org.dependencytrack.model.Component component) {
 
         final boolean isVirtual = !(StringUtils.isNotBlank(component.getMd5()) || StringUtils.isNotBlank(component.getSha1()));
         final org.owasp.dependencycheck.dependency.Dependency dependency =
@@ -99,7 +99,7 @@ public final class ModelConverter {
         }
         // Set the filepath of the dependency to include the UUID of the component.
         // This will be used later when processing the report.
-        String fileName = (component.getFilename() != null) ? component.getFilename() : component.getName();
+        final String fileName = (component.getFilename() != null) ? component.getFilename() : component.getName();
         dependency.setFileName(StringUtils.trimToNull(fileName));
         dependency.setFilePath(component.getUuid() + File.separator + fileName);
 

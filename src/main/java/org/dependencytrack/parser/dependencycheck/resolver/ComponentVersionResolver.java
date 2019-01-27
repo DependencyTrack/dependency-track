@@ -33,13 +33,13 @@ public class ComponentVersionResolver implements IResolver {
     /**
      * {@inheritDoc}
      */
-    public String resolve(Dependency dependency) {
+    public String resolve(final Dependency dependency) {
         if (dependency.getEvidenceCollected() == null) {
             return null;
         }
         Evidence best = null;
         final List<Evidence> evidenceList = dependency.getEvidenceCollected();
-        for (Evidence evidence: evidenceList) {
+        for (final Evidence evidence: evidenceList) {
             // do not trust configure.in - all kinds of irrelevant stuff in there
             if ("version".equals(evidence.getType()) && !("configure.in".equals(evidence.getSource()))) {
                 if ("file".equals(evidence.getSource()) && "HIGHEST".equals(evidence.getConfidence())) {

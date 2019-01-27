@@ -44,19 +44,19 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         this.throttleDelay = 0;
     }
 
-    protected BaseComponentAnalyzerTask(int paginationLimit) {
+    protected BaseComponentAnalyzerTask(final int paginationLimit) {
         this.paginationLimit = paginationLimit;
         this.throttleDelay = 0;
     }
 
-    protected BaseComponentAnalyzerTask(int paginationLimit, int throttleSeconds) {
+    protected BaseComponentAnalyzerTask(final int paginationLimit, final int throttleSeconds) {
         this.paginationLimit = paginationLimit;
         this.throttleDelay = throttleSeconds > 0 ? throttleSeconds * 1000 : 0;
     }
 
-    protected boolean isEnabled(ConfigPropertyConstants configPropertyConstants) {
+    protected boolean isEnabled(final ConfigPropertyConstants configPropertyConstants) {
         try (QueryManager qm = new QueryManager()) {
-            ConfigProperty property = qm.getConfigProperty(
+            final ConfigProperty property = qm.getConfigProperty(
                     configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName()
             );
             if (ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
@@ -70,7 +70,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
      * {@inheritDoc}
      */
     public void analyze() {
-        Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
+        final Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
         logger.info("Analyzing portfolio");
         final AlpineRequest alpineRequest = new AlpineRequest(
                 null,
@@ -94,7 +94,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     }
 
     protected void doThrottleDelay() {
-        Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
+        final Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
         if (throttleDelay > 0) {
             try {
                 Thread.sleep(throttleDelay);

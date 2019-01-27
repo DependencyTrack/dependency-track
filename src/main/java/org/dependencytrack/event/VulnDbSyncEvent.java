@@ -15,10 +15,10 @@
  *
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-
 package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
 
 public class VulnDbSyncEvent implements Event {
+
 }

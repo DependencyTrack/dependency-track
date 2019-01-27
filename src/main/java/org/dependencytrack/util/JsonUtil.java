@@ -21,35 +21,35 @@ import javax.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class JsonUtil {
+public final class JsonUtil {
 
     /**
      * Private constructor.
      */
-    public JsonUtil() { }
+    private JsonUtil() { }
 
-    public static JsonObjectBuilder add(JsonObjectBuilder builder, String key, String value) {
+    public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final String value) {
         if (value != null) {
             builder.add(key, value);
         }
         return builder;
     }
 
-    public static JsonObjectBuilder add(JsonObjectBuilder builder, String key, BigInteger value) {
+    public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final BigInteger value) {
         if (value != null) {
             builder.add(key, value);
         }
         return builder;
     }
 
-    public static JsonObjectBuilder add(JsonObjectBuilder builder, String key, BigDecimal value) {
+    public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final BigDecimal value) {
         if (value != null) {
             builder.add(key, value);
         }
         return builder;
     }
 
-    public static JsonObjectBuilder add(JsonObjectBuilder builder, String key, Enum value) {
+    public static JsonObjectBuilder add(final JsonObjectBuilder builder, final String key, final Enum value) {
         if (value != null) {
             builder.add(key, value.name());
         }

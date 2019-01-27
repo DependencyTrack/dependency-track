@@ -20,7 +20,7 @@ package org.dependencytrack.util;
 import java.util.Base64;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
-public class HttpUtil {
+public final class HttpUtil {
 
     /**
      * Private constructor.
@@ -28,11 +28,11 @@ public class HttpUtil {
     private HttpUtil() {
     }
 
-    public static String basicAuthHeader(String username, String password) {
+    public static String basicAuthHeader(final String username, final String password) {
         return AUTHORIZATION + ": " + basicAuthHeader(username, password);
     }
 
-    public static String basicAuthHeaderValue(String username, String password) {
+    public static String basicAuthHeaderValue(final String username, final String password) {
         return "Basic " +
                 Base64.getEncoder().encodeToString(
                         String.format("%s:%s", username,password)

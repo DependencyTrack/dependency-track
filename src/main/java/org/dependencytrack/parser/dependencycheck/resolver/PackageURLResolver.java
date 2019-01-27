@@ -40,10 +40,10 @@ public class PackageURLResolver implements IResolver {
     /**
      * {@inheritDoc}
      */
-    public PackageURL resolve(Dependency dependency) {
+    public PackageURL resolve(final Dependency dependency) {
         try {
             if (dependency.getIdentifiers() != null && dependency.getIdentifiers().getIdentifiers() != null) {
-                for (Identifier identifier : dependency.getIdentifiers().getIdentifiers()) {
+                for (final Identifier identifier : dependency.getIdentifiers().getIdentifiers()) {
                     if (useIdentifier("maven", dependency, identifier)) {
                         final GAV gav = parseIdentifier(identifier);
                         if (!MAVEN_ID_REGEX.matcher(gav.group).matches() || !MAVEN_ID_REGEX.matcher(gav.artifact).matches()) {
@@ -68,7 +68,7 @@ public class PackageURLResolver implements IResolver {
         return null;
     }
 
-    private boolean useIdentifier(String type, Dependency dependency, Identifier identifier) {
+    private boolean useIdentifier(final String type, final Dependency dependency, final Identifier identifier) {
         if (type == null || !type.equals(identifier.getType())) {
             return false;
         }
@@ -80,7 +80,7 @@ public class PackageURLResolver implements IResolver {
                         identifier == dependency.getIdentifier());
     }
 
-    private GAV parseIdentifier(Identifier identifier) {
+    private GAV parseIdentifier(final Identifier identifier) {
         if (identifier == null || identifier.getName() == null) {
         	throw new IllegalArgumentException("Must specify an identifier with a name");
         }

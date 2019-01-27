@@ -25,14 +25,14 @@ public class FortifySscUploadEventTest {
 
     @Test
     public void testDefaultConstructor() {
-        FortifySscUploadEvent event = new FortifySscUploadEvent();
+        FortifySscUploadEventAbstract event = new FortifySscUploadEventAbstract();
         Assert.assertNull(event.getProjectUuid());
     }
 
     @Test
     public void testProjectConstructor() {
         UUID uuid = UUID.randomUUID();
-        FortifySscUploadEvent event = new FortifySscUploadEvent(uuid);
+        FortifySscUploadEventAbstract event = new FortifySscUploadEventAbstract(uuid);
         Assert.assertEquals(uuid, event.getProjectUuid());
     }
 }

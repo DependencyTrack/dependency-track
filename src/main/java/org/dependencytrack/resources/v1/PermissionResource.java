@@ -97,11 +97,11 @@ public class PermissionResource extends AlpineResource {
             if (principal == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
             }
-            Permission permission = qm.getPermission(permissionName);
+            final Permission permission = qm.getPermission(permissionName);
             if (permission == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The permission could not be found.").build();
             }
-            List<Permission> permissions = principal.getPermissions();
+            final List<Permission> permissions = principal.getPermissions();
             if (permissions != null && !permissions.contains(permission)) {
                 permissions.add(permission);
                 principal.setPermissions(permissions);
@@ -137,11 +137,11 @@ public class PermissionResource extends AlpineResource {
             if (principal == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
             }
-            Permission permission = qm.getPermission(permissionName);
+            final Permission permission = qm.getPermission(permissionName);
             if (permission == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The permission could not be found.").build();
             }
-            List<Permission> permissions = principal.getPermissions();
+            final List<Permission> permissions = principal.getPermissions();
             if (permissions != null && permissions.contains(permission)) {
                 permissions.remove(permission);
                 principal.setPermissions(permissions);
@@ -178,11 +178,11 @@ public class PermissionResource extends AlpineResource {
             if (team == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
-            Permission permission = qm.getPermission(permissionName);
+            final Permission permission = qm.getPermission(permissionName);
             if (permission == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The permission could not be found.").build();
             }
-            List<Permission> permissions = team.getPermissions();
+            final List<Permission> permissions = team.getPermissions();
             if (permissions != null && !permissions.contains(permission)) {
                 permissions.add(permission);
                 team.setPermissions(permissions);
@@ -218,11 +218,11 @@ public class PermissionResource extends AlpineResource {
             if (uuid == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
-            Permission permission = qm.getPermission(permissionName);
+            final Permission permission = qm.getPermission(permissionName);
             if (permission == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The permission could not be found.").build();
             }
-            List<Permission> permissions = team.getPermissions();
+            final List<Permission> permissions = team.getPermissions();
             if (permissions != null && permissions.contains(permission)) {
                 permissions.remove(permission);
                 team.setPermissions(permissions);

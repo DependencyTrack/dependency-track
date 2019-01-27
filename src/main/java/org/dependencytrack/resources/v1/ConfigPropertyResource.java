@@ -67,7 +67,7 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             // values are replaced by the placeholder, they are not erroneously persisted to the database.
             qm.getPersistenceManager().detachCopyAll(configProperties);
             qm.close();
-            for (ConfigProperty configProperty: configProperties) {
+            for (final ConfigProperty configProperty: configProperties) {
                 // Replace the value of encrypted strings with the pre-defined placeholder
                 if (ConfigProperty.PropertyType.ENCRYPTEDSTRING == configProperty.getPropertyType()) {
                     configProperty.setPropertyValue(ENCRYPTED_PLACEHOLDER);

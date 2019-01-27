@@ -63,7 +63,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof DependencyCheckEvent) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_DEPENDENCYCHECK_ENABLED)) {
                 return;
@@ -93,7 +93,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
      * @param purl the PackageURL to analyze
      * @return true if Dependency-Check should analyze, false if not
      */
-    public boolean shouldAnalyze(PackageURL purl) {
+    public boolean shouldAnalyze(final PackageURL purl) {
         if (purl == null) {
             return true;
         }
@@ -106,8 +106,8 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
     /**
      * Ensures the Dependency-Check directory structure exists.
      */
-    private void setupOdcDirectoryStructure(String directory) {
-        File dir = new File(directory);
+    private void setupOdcDirectoryStructure(final String directory) {
+        final File dir = new File(directory);
         if (!dir.exists()) {
             if (dir.mkdirs()) {
                 LOGGER.info("Dependency-Check directory created successfully: " + directory);
@@ -120,7 +120,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
      */
     private void performUpdateOnly() {
         LOGGER.info("Executing Dependency-Check update-only task");
-        DependencyCheckScanAgent scanAgent = createScanAgent(true);
+        final DependencyCheckScanAgent scanAgent = createScanAgent(true);
         try {
             scanAgent.execute();
         } catch (ScanAgentException ex) {
@@ -133,22 +133,22 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
      * Analyzes a list of Components.
      * @param components a list of Components
      */
-    public void analyze(List<Component> components) {
+    public void analyze(final List<Component> components) {
         LOGGER.info("Executing Dependency-Check analysis task");
         // Iterate through the components, create evidence, and create the resulting dependency
         final List<org.owasp.dependencycheck.dependency.Dependency> dependencies = new ArrayList<>();
-        for (Component component: components) {
+        for (final Component component: components) {
 
             // Check to see that Dependency-Check only analyzes ecosystems
             // and uses analyzers capable of supporting Dependency-Track
-            PackageURL purl = component.getPurl();
+            final PackageURL purl = component.getPurl();
             if (shouldAnalyze(purl)) {
                 dependencies.add(ModelConverter.convert(component));
             }
 
         }
         LOGGER.info("Analyzing " + dependencies.size() + " component(s)");
-        DependencyCheckScanAgent scanAgent = createScanAgent(false);
+        final DependencyCheckScanAgent scanAgent = createScanAgent(false);
         scanAgent.setDependencies(dependencies);
 
         // If a global properties file exists, use it.
@@ -179,21 +179,21 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         LOGGER.info("Processing Dependency-Check analysis results");
         try (QueryManager qm = new QueryManager()) {
             final Analysis analysis = new DependencyCheckParser().parse(new File(DC_REPORT_FILE));
-            for (org.dependencytrack.parser.dependencycheck.model.Dependency dependency : analysis.getDependencies()) {
+            for (final org.dependencytrack.parser.dependencycheck.model.Dependency dependency : analysis.getDependencies()) {
                 // Resolve internally stored component
                 // The dependency filePath contains the UUID and the filename of the component - Specified in ModelConverter
-                int separator = dependency.getFilePath().indexOf(File.separator);
+                final int separator = dependency.getFilePath().indexOf(File.separator);
                 if (separator != 36) {
                     LOGGER.warn("Component cannot be resolved. Missing file separator or invalid component UUID.");
                     continue;
                 }
-                String uuid = dependency.getFilePath().substring(0, separator);
+                final String uuid = dependency.getFilePath().substring(0, separator);
                 final Component component = qm.getObjectByUuid(Component.class, uuid);
                 final org.dependencytrack.parser.dependencycheck.model.Dependency.Vulnerabilities vulnerabilities = dependency.getVulnerabilities();
 
                 // Add vulnerability to an affected component
                 if (vulnerabilities != null && vulnerabilities.getVulnerabilities() != null) {
-                    for (org.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities.getVulnerabilities()) {
+                    for (final org.dependencytrack.parser.dependencycheck.model.Vulnerability vulnerability : vulnerabilities.getVulnerabilities()) {
                         // Resolve internally stored vulnerability
                         Vulnerability internalVuln = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getName());
                         if (internalVuln == null) {
@@ -240,7 +240,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         LOGGER.info("Processing complete");
     }
 
-    private DependencyCheckScanAgent createScanAgent(boolean update) {
+    private DependencyCheckScanAgent createScanAgent(final boolean update) {
         final DependencyCheckScanAgent scanAgent = new DependencyCheckScanAgent();
         scanAgent.setDataDirectory(DC_DATA_DIR);
         scanAgent.setReportOutputDirectory(DC_REPORT_DIR);
@@ -249,7 +249,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         scanAgent.setUpdateOnly(update);
         //scanAgent.setCpeStartsWithFilter("cpe:"); //todo: will be available in 3.1.1
 
-        HttpClientFactory.ProxyInfo proxyInfo = HttpClientFactory.createProxyInfo();
+        final HttpClientFactory.ProxyInfo proxyInfo = HttpClientFactory.createProxyInfo();
         if (proxyInfo != null) {
             scanAgent.setProxyServer(proxyInfo.getHost());
             scanAgent.setProxyPort(String.valueOf(proxyInfo.getPort()));

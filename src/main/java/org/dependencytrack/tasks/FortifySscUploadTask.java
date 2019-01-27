@@ -19,7 +19,7 @@ package org.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
 import alpine.logging.Logger;
-import org.dependencytrack.event.FortifySscUploadEvent;
+import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.integrations.fortifyssc.FortifySscUploader;
 
 public class FortifySscUploadTask extends VulnerabilityManagementUploadTask {
@@ -29,9 +29,9 @@ public class FortifySscUploadTask extends VulnerabilityManagementUploadTask {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
-        if (e instanceof FortifySscUploadEvent) {
-            final FortifySscUploadEvent event = (FortifySscUploadEvent) e;
+    public void inform(final Event e) {
+        if (e instanceof FortifySscUploadEventAbstract) {
+            final FortifySscUploadEventAbstract event = (FortifySscUploadEventAbstract) e;
             LOGGER.debug("Starting Fortify Software Security Center upload task");
             super.inform(event, new FortifySscUploader());
             LOGGER.debug("Fortify Software Security Center upload complete");

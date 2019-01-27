@@ -40,7 +40,7 @@ public class Analysis extends BaseObject {
     }
 
     @XmlElement(name = "scanInfo")
-    public void setScanInfo(ScanInfo scanInfo) {
+    public void setScanInfo(final ScanInfo scanInfo) {
         this.scanInfo = scanInfo;
     }
 
@@ -49,7 +49,7 @@ public class Analysis extends BaseObject {
     }
 
     @XmlElement(name = "projectInfo")
-    public void setProjectInfo(ProjectInfo projectInfo) {
+    public void setProjectInfo(final ProjectInfo projectInfo) {
         this.projectInfo = projectInfo;
     }
 
@@ -59,7 +59,7 @@ public class Analysis extends BaseObject {
 
     @XmlElementWrapper(name = "dependencies")
     @XmlElement(name = "dependency")
-    public void setDependencies(List<Dependency> dependencies) {
+    public void setDependencies(final List<Dependency> dependencies) {
         this.dependencies = dependencies;
     }
 }

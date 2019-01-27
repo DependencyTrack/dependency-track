@@ -30,11 +30,11 @@ public class NpmAuditAnalysisEvent extends VulnerabilityAnalysisEvent {
 
     public NpmAuditAnalysisEvent() { }
 
-    public NpmAuditAnalysisEvent(Component component) {
+    public NpmAuditAnalysisEvent(final Component component) {
         super(component);
     }
 
-    public NpmAuditAnalysisEvent(List<Component> components) {
+    public NpmAuditAnalysisEvent(final List<Component> components) {
         super(components);
     }
 

@@ -44,7 +44,7 @@ public class UpgradeInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextInitialized(ServletContextEvent event) {
+    public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing upgrade framework");
 
         final String driverPath = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER_PATH);
@@ -80,7 +80,7 @@ public class UpgradeInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextDestroyed(ServletContextEvent event) {
+    public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }
 

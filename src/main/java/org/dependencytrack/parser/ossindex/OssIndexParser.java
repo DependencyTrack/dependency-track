@@ -42,19 +42,19 @@ public class OssIndexParser {
      * @param jsonNode the JSON node to parse
      * @return an ComponentReport object
      */
-    public List<ComponentReport> parse(JsonNode jsonNode) {
+    public List<ComponentReport> parse(final JsonNode jsonNode) {
         LOGGER.debug("Parsing JSON node");
-        List<ComponentReport> componentReports = new ArrayList<>();
-        JSONArray resultArray = jsonNode.getArray();
+        final List<ComponentReport> componentReports = new ArrayList<>();
+        final JSONArray resultArray = jsonNode.getArray();
         for (int i = 0; i < resultArray.length(); i++) {
-            JSONObject object = resultArray.getJSONObject(i);
-            ComponentReport componentReport = parse(object);
+            final JSONObject object = resultArray.getJSONObject(i);
+            final ComponentReport componentReport = parse(object);
             componentReports.add(componentReport);
         }
         return componentReports;
     }
 
-    private ComponentReport parse(JSONObject object) {
+    private ComponentReport parse(final JSONObject object) {
         final ComponentReport componentReport = new ComponentReport();
         componentReport.setCoordinates(object.optString("coordinates", null));
         componentReport.setDescription(object.optString("description", null));
@@ -62,7 +62,7 @@ public class OssIndexParser {
         final JSONArray vulnerabilities = object.optJSONArray("vulnerabilities");
         for (int i = 0; i < vulnerabilities.length(); i++) {
             final JSONObject vulnObject = vulnerabilities.getJSONObject(i);
-            ComponentReportVulnerability vulnerability = new ComponentReportVulnerability();
+            final ComponentReportVulnerability vulnerability = new ComponentReportVulnerability();
             vulnerability.setId(vulnObject.optString("id", null));
             vulnerability.setTitle(vulnObject.optString("title", null));
             vulnerability.setDescription(vulnObject.optString("description", null));

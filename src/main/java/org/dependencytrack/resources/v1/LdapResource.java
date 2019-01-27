@@ -75,7 +75,7 @@ public class LdapResource extends AlpineResource {
         DirContext dirContext = null;
         try {
             dirContext = ldap.createDirContext();
-            List<String> groups = ldap.getGroups(dirContext);
+            final List<String> groups = ldap.getGroups(dirContext);
             return Response.ok(groups).build();
         } catch (NamingException e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -130,7 +130,7 @@ public class LdapResource extends AlpineResource {
                 validator.validateProperty(request, "dn")
         );
         try (QueryManager qm = new QueryManager()) {
-            Team team = qm.getObjectByUuid(Team.class, request.getTeam());
+            final Team team = qm.getObjectByUuid(Team.class, request.getTeam());
             if (team != null) {
                 if (!qm.isMapped(team, request.getDn())) {
                     final MappedLdapGroup mapping = qm.createMappedLdapGroup(team, request.getDn());

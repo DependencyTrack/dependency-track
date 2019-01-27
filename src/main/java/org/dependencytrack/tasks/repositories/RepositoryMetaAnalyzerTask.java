@@ -41,10 +41,10 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
      * {@inheritDoc}
      */
     @SuppressWarnings("unchecked")
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof RepositoryMetaEvent) {
             LOGGER.debug("Analyzing component repository metadata");
-            RepositoryMetaEvent event = (RepositoryMetaEvent)e;
+            final RepositoryMetaEvent event = (RepositoryMetaEvent)e;
             if (event.getComponent() != null) {
                 try (QueryManager qm = new QueryManager()) {
                     // Refreshing the object by querying for it again is preventative
@@ -63,8 +63,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     long count = 0;
                     while (count < total) {
                         final PaginatedResult result = qm.getComponents();
-                        List<Component> components = result.getList(Component.class);
-                        for (Component component: components) {
+                        final List<Component> components = result.getList(Component.class);
+                        for (final Component component: components) {
                             analyze(qm, component);
                         }
                         count += result.getObjects().size();
@@ -76,15 +76,15 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
         }
     }
 
-    private void analyze(QueryManager qm, Component component) {
+    private void analyze(final QueryManager qm, final Component component) {
         LOGGER.debug("Analyzing component: " + component.getUuid());
-        IMetaAnalyzer analyzer = IMetaAnalyzer.build(component);
-        for (Repository repository: qm.getAllRepositoriesOrdered(analyzer.supportedRepositoryType())) {
+        final IMetaAnalyzer analyzer = IMetaAnalyzer.build(component);
+        for (final Repository repository: qm.getAllRepositoriesOrdered(analyzer.supportedRepositoryType())) {
             analyzer.setRepositoryBaseUrl(repository.getUrl());
-            MetaModel model = analyzer.analyze(component);
+            final MetaModel model = analyzer.analyze(component);
             if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
                 // Resolution from repository was successful. Update meta model
-                RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
+                final RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
                 metaComponent.setRepositoryType(repository.getType());
                 metaComponent.setNamespace(component.getPurl().getNamespace());
                 metaComponent.setName(component.getPurl().getName());

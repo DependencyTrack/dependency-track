@@ -58,7 +58,7 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public boolean isApplicable(Component component) {
+    public boolean isApplicable(final Component component) {
         return component.getPurl() != null && PackageURL.StandardTypes.MAVEN.equals(component.getPurl().getType());
     }
 
@@ -72,28 +72,28 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public MetaModel analyze(Component component) {
+    public MetaModel analyze(final Component component) {
         final HttpClient httpClient = HttpClientFactory.getHttpClient();
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName().replaceAll("\\.", "/");
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try {
-                HttpUriRequest request = new HttpGet(url);
-                org.apache.http.HttpResponse response = httpClient.execute(request);
-                StatusLine status = response.getStatusLine();
+                final HttpUriRequest request = new HttpGet(url);
+                final org.apache.http.HttpResponse response = httpClient.execute(request);
+                final StatusLine status = response.getStatusLine();
                 if (status.getStatusCode() == 200) {
-                    HttpEntity entity = response.getEntity();
+                    final HttpEntity entity = response.getEntity();
                     if (entity != null) {
                         final Document document = XmlUtils.buildSecureDocumentBuilder().parse(entity.getContent());
-                        XPathFactory xpathFactory = XPathFactory.newInstance();
-                        XPath xpath = xpathFactory.newXPath();
+                        final XPathFactory xpathFactory = XPathFactory.newInstance();
+                        final XPath xpath = xpathFactory.newXPath();
 
-                        XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
-                        String latest = (String)latestExpression.evaluate(document, XPathConstants.STRING);
+                        final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
+                        final String latest = (String)latestExpression.evaluate(document, XPathConstants.STRING);
 
-                        XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
-                        String lastUpdated = (String)lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
+                        final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
+                        final String lastUpdated = (String)lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
 
                         meta.setLatestVersion(latest);
                         if (lastUpdated != null) {

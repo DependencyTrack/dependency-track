@@ -89,6 +89,7 @@
         <lib.packageurl.version>1.0.0</lib.packageurl.version>
         <lib.pebble.version>3.0.6</lib.pebble.version>
         <lib.spdx-tools.version>2.1.15</lib.spdx-tools.version>
+        <lib.caffeine.version>2.6.2</lib.caffeine.version>
         <lib.unirest.version>3.3.03</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0-SNAPSHOT</lib.vulndb-data-mirror.version>
         <!-- Maven Plugin Properties -->
@@ -255,6 +256,12 @@
                     <artifactId>log4j-slf4j-impl</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- Object cache -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${lib.caffeine.version}</version>
         </dependency>
         <!-- Test Dependencies -->
         <dependency>

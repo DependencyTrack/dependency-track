@@ -46,7 +46,7 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public boolean isApplicable(Component component) {
+    public boolean isApplicable(final Component component) {
         return component.getPurl() != null && PackageURL.StandardTypes.GEM.equals(component.getPurl().getType());
     }
 
@@ -60,18 +60,18 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public MetaModel analyze(Component component) {
+    public MetaModel analyze(final Component component) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        MetaModel meta = new MetaModel(component);
+        final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
             try {
-                HttpResponse<JsonNode> response = ui.get(url)
+                final HttpResponse<JsonNode> response = ui.get(url)
                         .header("accept", "application/json")
                         .asJson();
                 if (response.getStatus() == 200) {
                     if (response.getBody() != null && response.getBody().getObject() != null) {
-                        String latest = response.getBody().getObject().getString("version");
+                        final String latest = response.getBody().getObject().getString("version");
                         meta.setLatestVersion(latest);
                     }
                 } else {

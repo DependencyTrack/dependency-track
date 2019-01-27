@@ -51,11 +51,11 @@ public class BomUploadProcessingTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof BomUploadEvent) {
             final BomUploadEvent event = (BomUploadEvent) e;
             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());
-            QueryManager qm = new QueryManager();
+            final QueryManager qm = new QueryManager();
             try {
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
                 final List<Component> components;
@@ -78,7 +78,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 }
                 final Date date = new Date();
                 final Bom bom = qm.createBom(project, date);
-                for (Component component: components) {
+                for (final Component component: components) {
                     processComponent(qm, bom, project, component, flattenedComponents);
                 }
 
@@ -94,7 +94,8 @@ public class BomUploadProcessingTask implements Subscriber {
         }
     }
 
-    private void processComponent(QueryManager qm, Bom bom, Project project, Component component, List<Component> flattenedComponents) {
+    private void processComponent(final QueryManager qm, final Bom bom, final Project project, Component component,
+                                  final List<Component> flattenedComponents) {
         final ComponentResolver cr = new ComponentResolver(qm);
         final Component resolvedComponent = cr.resolve(component);
         if (resolvedComponent != null) {
@@ -131,7 +132,7 @@ public class BomUploadProcessingTask implements Subscriber {
             Event.dispatch(new RepositoryMetaEvent(component));
         }
         if (component.getChildren() != null) {
-            for (Component child: component.getChildren()) {
+            for (final Component child: component.getChildren()) {
                 processComponent(qm, bom, project, child, flattenedComponents);
             }
         }
@@ -140,10 +141,10 @@ public class BomUploadProcessingTask implements Subscriber {
     /**
      * Recursively bind component and all children to a project.
      */
-    private void bind(QueryManager qm, Project project, Component component) {
+    private void bind(final QueryManager qm, final Project project, final Component component) {
         qm.createDependencyIfNotExist(project, component, null, null);
         if (component.getChildren() != null) {
-            for (Component c: component.getChildren()) {
+            for (final Component c: component.getChildren()) {
                 bind(qm, project, c);
             }
         }

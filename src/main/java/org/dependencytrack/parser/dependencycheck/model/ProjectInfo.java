@@ -40,7 +40,7 @@ public class ProjectInfo extends BaseObject {
     }
 
     @XmlElement(name = "name")
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = normalize(name);
     }
 
@@ -50,7 +50,7 @@ public class ProjectInfo extends BaseObject {
 
     @XmlElement(name = "reportDate")
     @XmlJavaTypeAdapter(DateAdapter.class)
-    public void setReportDate(Date reportDate) {
+    public void setReportDate(final Date reportDate) {
         this.reportDate = reportDate;
     }
 
@@ -59,7 +59,7 @@ public class ProjectInfo extends BaseObject {
     }
 
     @XmlElement(name = "credits")
-    public void setCredits(String credits) {
+    public void setCredits(final String credits) {
         this.credits = normalize(credits);
     }
 }

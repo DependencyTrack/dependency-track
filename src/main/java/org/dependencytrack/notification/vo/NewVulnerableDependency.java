@@ -23,10 +23,10 @@ import java.util.List;
 
 public class NewVulnerableDependency {
 
-    private List<Vulnerability> vulnerabilities;
-    private Dependency dependency;
+    private final List<Vulnerability> vulnerabilities;
+    private final Dependency dependency;
 
-    public NewVulnerableDependency(Dependency dependency, List<Vulnerability> vulnerabilities) {
+    public NewVulnerableDependency(final Dependency dependency, final List<Vulnerability> vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
         this.dependency = dependency;
     }

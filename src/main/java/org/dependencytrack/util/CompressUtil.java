@@ -37,11 +37,11 @@ public final class CompressUtil {
      * @param input the
      * @return a byte array
      */
-    public static byte[] optionallyDecompress(byte[] input) {
+    public static byte[] optionallyDecompress(final byte[] input) {
         try {
-            ByteArrayInputStream bis = new ByteArrayInputStream(input);
-            ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(bis);
-            ArchiveEntry entry = ais.getNextEntry();
+            final ByteArrayInputStream bis = new ByteArrayInputStream(input);
+            final ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(bis);
+            final ArchiveEntry entry = ais.getNextEntry();
             if (ais.canReadEntryData(entry)) {
                 return IOUtils.toByteArray(ais);
             }

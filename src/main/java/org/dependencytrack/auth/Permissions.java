@@ -36,7 +36,7 @@ public enum Permissions {
 
     private final String description;
 
-    Permissions(String description) {
+    Permissions(final String description) {
         this.description = description;
     }
 

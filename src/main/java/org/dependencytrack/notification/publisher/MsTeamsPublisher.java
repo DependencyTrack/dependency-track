@@ -27,7 +27,7 @@ public class MsTeamsPublisher extends AbstractWebhookPublisher implements Publis
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/msteams.peb");
 
-    public void inform(Notification notification, JsonObject config) {
+    public void inform(final Notification notification, final JsonObject config) {
         publish(DefaultNotificationPublishers.MS_TEAMS.getPublisherName(), TEMPLATE, notification, config);
     }
 

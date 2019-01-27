@@ -58,7 +58,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextInitialized(ServletContextEvent event) {
+    public void contextInitialized(final ServletContextEvent event) {
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
@@ -73,8 +73,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
         EVENT_SERVICE.subscribe(CloneProjectEvent.class, CloneProjectTask.class);
-        EVENT_SERVICE.subscribe(FortifySscUploadEvent.class, FortifySscUploadTask.class);
-        EVENT_SERVICE.subscribe(KennaSecurityUploadEvent.class, KennaSecurityUploadTask.class);
+        EVENT_SERVICE.subscribe(FortifySscUploadEventAbstract.class, FortifySscUploadTask.class);
+        EVENT_SERVICE.subscribe(KennaSecurityUploadEventAbstract.class, KennaSecurityUploadTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ST.subscribe(DependencyCheckEvent.class, DependencyCheckTask.class);
@@ -86,7 +86,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
-    public void contextDestroyed(ServletContextEvent event) {
+    public void contextDestroyed(final ServletContextEvent event) {
         TaskScheduler.getInstance().shutdown();
 
         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);

@@ -39,32 +39,32 @@ public class IndexEvent implements Event {
         REINDEX
     }
 
-    private Action action;
+    private final Action action;
     private Object indexableObject;
     private Class indexableClass;
 
 
-    public IndexEvent(Action action, Project project) {
+    public IndexEvent(final Action action, final Project project) {
         this.action = action;
         this.indexableObject = project;
     }
 
-    public IndexEvent(Action action, Component component) {
+    public IndexEvent(final Action action, final Component component) {
         this.action = action;
         this.indexableObject = component;
     }
 
-    public IndexEvent(Action action, Vulnerability vulnerability) {
+    public IndexEvent(final Action action, final Vulnerability vulnerability) {
         this.action = action;
         this.indexableObject = vulnerability;
     }
 
-    public IndexEvent(Action action, License license) {
+    public IndexEvent(final Action action, final License license) {
         this.action = action;
         this.indexableObject = license;
     }
 
-    public IndexEvent(Action action, Class clazz) {
+    public IndexEvent(final Action action, final Class clazz) {
         this.action = action;
         this.indexableClass = clazz;
     }

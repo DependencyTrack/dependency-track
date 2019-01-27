@@ -28,21 +28,21 @@ public class ParseException extends Exception {
     /**
      * @since 3.0.0
      */
-    public ParseException(String message) {
+    public ParseException(final String message) {
         super(message);
     }
 
     /**
      * @since 3.0.0
      */
-    public ParseException(Throwable cause) {
+    public ParseException(final Throwable cause) {
         super(cause);
     }
 
     /**
      * @since 3.0.0
      */
-    public ParseException(String message, Throwable cause) {
+    public ParseException(final String message, final Throwable cause) {
         super(message, cause);
     }
 }

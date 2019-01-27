@@ -58,7 +58,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof NpmAuditAnalysisEvent) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_NPMAUDIT_ENABLED)) {
                 return;
@@ -80,7 +80,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @param purl the PackageURL to analyze
      * @return true if NpmAuditAnalysisTask should analyze, false if not
      */
-    public boolean shouldAnalyze(PackageURL purl) {
+    public boolean shouldAnalyze(final PackageURL purl) {
         if (purl == null) {
             return false;
         }
@@ -99,7 +99,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * in multiple requests being made to the NPM Audit API.
      * @param components a list of Components
      */
-    public void analyze(List<Component> components) {
+    public void analyze(final List<Component> components) {
         final CopyOnWriteArrayList<Component> backlog = new CopyOnWriteArrayList<>(components);
         final Iterator<Component> backlogIterator = backlog.iterator();
         while (backlog.size() > 0) {
@@ -145,7 +145,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * Submits the payload to the NPM service
      */
-    private List<Advisory> submit(JSONObject payload) throws UnirestException {
+    private List<Advisory> submit(final JSONObject payload) throws UnirestException {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final HttpResponse<JsonNode> jsonResponse = ui.post(API_BASE_URL)
                 .header("user-agent", "npm/6.1.0 node/v10.5.0 linux x64")
@@ -167,12 +167,12 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * Processes NPM results.
      */
-    private void processResults(List<Component> components, List<Advisory> advisories) {
+    private void processResults(final List<Component> components, final List<Advisory> advisories) {
         LOGGER.info("Processing NPM advisories");
         try (QueryManager qm = new QueryManager()) {
-            for (Advisory advisory: advisories) {
-                Component component = getComponentFromAdvisory(components, advisory);
-                Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
+            for (final Advisory advisory: advisories) {
+                final Component component = getComponentFromAdvisory(components, advisory);
+                final Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
                 if (component != null && vulnerabiity != null) {
                     NotificationUtil.analyzeNotificationCriteria(vulnerabiity, component);
                     qm.addVulnerability(vulnerabiity, component);
@@ -185,9 +185,9 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * Resolves a Component from the metadata in the advisory.
      */
-    private Component getComponentFromAdvisory(List<Component> components, Advisory advisory) {
-        for (Component component: components) {
-            PackageURL purl = component.getPurl();
+    private Component getComponentFromAdvisory(final List<Component> components, final Advisory advisory) {
+        for (final Component component: components) {
+            final PackageURL purl = component.getPurl();
             if (purl != null) {
                 if (purl.getName().equalsIgnoreCase(advisory.getModuleName())
                         && purl.getVersion().equalsIgnoreCase(advisory.getVersion())) {

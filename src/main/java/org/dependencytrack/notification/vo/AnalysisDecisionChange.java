@@ -25,13 +25,13 @@ import java.util.Set;
 
 public class AnalysisDecisionChange {
 
-    private Vulnerability vulnerability;
-    private Component component;
-    private Set<Project> affectedProjects;
-    private Analysis analysis;
+    private final Vulnerability vulnerability;
+    private final Component component;
+    private final Set<Project> affectedProjects;
+    private final Analysis analysis;
 
-    public AnalysisDecisionChange(Vulnerability vulnerability, Component component,
-                                  Set<Project> affectedProjects, Analysis analysis) {
+    public AnalysisDecisionChange(final Vulnerability vulnerability, final Component component,
+                                  final Set<Project> affectedProjects, final Analysis analysis) {
         this.vulnerability = vulnerability;
         this.component = component;
         this.affectedProjects = affectedProjects;

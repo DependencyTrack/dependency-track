@@ -31,7 +31,7 @@ public class ComponentGroupResolver extends AbstractStringResolver implements IR
     /**
      * {@inheritDoc}
      */
-    public String resolve(Dependency dependency) {
+    public String resolve(final Dependency dependency) {
         return resolve(dependency, "vendor", 3);
     }
 

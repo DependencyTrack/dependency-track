@@ -52,7 +52,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public boolean isApplicable(Component component) {
+    public boolean isApplicable(final Component component) {
         return component.getPurl() != null && PackageURL.StandardTypes.NUGET.equals(component.getPurl().getType());
     }
 
@@ -66,8 +66,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * {@inheritDoc}
      */
-    public MetaModel analyze(Component component) {
-        MetaModel meta = new MetaModel(component);
+    public MetaModel analyze(final Component component) {
+        final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             if (performVersionCheck(meta, component)) {
                 performLastPublishedCheck(meta, component);
@@ -76,11 +76,11 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return meta;
     }
 
-    private boolean performVersionCheck(MetaModel meta, Component component) {
+    private boolean performVersionCheck(final MetaModel meta, final Component component) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = String.format(baseUrl + VERSION_QUERY_URL, component.getPurl().getName().toLowerCase());
         try {
-            HttpResponse<JsonNode> response = ui.get(url)
+            final HttpResponse<JsonNode> response = ui.get(url)
                     .header("accept", "application/json")
                     .asJson();
             if (response.getStatus() == 200) {
@@ -99,11 +99,11 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         return false;
     }
 
-    private boolean performLastPublishedCheck(MetaModel meta, Component component) {
+    private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = String.format(baseUrl + REGISTRATION_URL, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
         try {
-            HttpResponse<JsonNode> response = ui.get(url)
+            final HttpResponse<JsonNode> response = ui.get(url)
                     .header("accept", "application/json")
                     .asJson();
             if (response.getStatus() == 200) {

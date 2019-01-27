@@ -42,7 +42,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class NotificationUtil {
+public final class NotificationUtil {
+
+    /**
+     * Private constructor.
+     */
+    private NotificationUtil() { }
 
     public static void analyzeNotificationCriteria(Vulnerability vulnerability, Component component) {
         try (QueryManager qm = new QueryManager()) {
@@ -50,9 +55,9 @@ public class NotificationUtil {
                 // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
                 // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
                 // it warrants a Notification be dispatched.
-                Set<Project> affectedProjects = new HashSet<>();
-                List<Dependency> dependencies = qm.detach(qm.getAllDependencies(component));
-                for (Dependency dependency : dependencies) {
+                final Set<Project> affectedProjects = new HashSet<>();
+                final List<Dependency> dependencies = qm.detach(qm.getAllDependencies(component));
+                for (final Dependency dependency : dependencies) {
                     affectedProjects.add(dependency.getProject());
                 }
 
@@ -71,12 +76,12 @@ public class NotificationUtil {
         }
     }
 
-    public static void analyzeNotificationCriteria(QueryManager qm, Dependency newDependency) {
+    public static void analyzeNotificationCriteria(final QueryManager qm, final Dependency newDependency) {
         Dependency dependency = qm.getDependency(newDependency);
-        List<Vulnerability> vulnerabilities = qm.detach(qm.getAllVulnerabilities(dependency));
+        final List<Vulnerability> vulnerabilities = qm.detach(qm.getAllVulnerabilities(dependency));
         dependency = qm.detach(Dependency.class, dependency.getId());
-        for (Vulnerability vulnerability: vulnerabilities) {
-            Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
+        for (final Vulnerability vulnerability: vulnerabilities) {
+            final Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABILITY)
@@ -98,8 +103,8 @@ public class NotificationUtil {
         }
     }
 
-    public static void analyzeNotificationCriteria(QueryManager qm, Analysis analysis,
-                                                   boolean analysisStateChange, boolean suppressionChange) {
+    public static void analyzeNotificationCriteria(final QueryManager qm, Analysis analysis,
+                                                   final boolean analysisStateChange, final boolean suppressionChange) {
         if (analysisStateChange || suppressionChange) {
             final NotificationGroup notificationGroup;
             final Set<Project> affectedProjects = new HashSet<>();
@@ -110,8 +115,8 @@ public class NotificationUtil {
             } else {
                 // This was a global analysis decision affecting all projects
                 notificationGroup = NotificationGroup.GLOBAL_AUDIT_CHANGE;
-                List<Dependency> dependencies = qm.getAllDependencies(analysis.getProject());
-                for (Dependency dependency : dependencies) {
+                final List<Dependency> dependencies = qm.getAllDependencies(analysis.getProject());
+                for (final Dependency dependency : dependencies) {
                     affectedProjects.add(qm.detach(Project.class, dependency.getProject().getId()));
                 }
             }
@@ -156,16 +161,16 @@ public class NotificationUtil {
         }
     }
 
-    public static JsonObject toJson(Project project) {
-        JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
+    public static JsonObject toJson(final Project project) {
+        final JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
         projectBuilder.add("uuid", project.getUuid().toString());
         JsonUtil.add(projectBuilder, "name", project.getName());
         JsonUtil.add(projectBuilder, "version", project.getVersion());
         JsonUtil.add(projectBuilder, "description", project.getDescription());
         JsonUtil.add(projectBuilder, "purl", project.getPurl());
         if (project.getTags() != null && project.getTags().size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            for (Tag tag: project.getTags()) {
+            final StringBuilder sb = new StringBuilder();
+            for (final Tag tag: project.getTags()) {
                 sb.append(tag.getName()).append(",");
             }
             String tags = sb.toString();
@@ -177,8 +182,8 @@ public class NotificationUtil {
         return projectBuilder.build();
     }
 
-    public static JsonObject toJson(Component component) {
-        JsonObjectBuilder componentBuilder = Json.createObjectBuilder();
+    public static JsonObject toJson(final Component component) {
+        final JsonObjectBuilder componentBuilder = Json.createObjectBuilder();
         componentBuilder.add("uuid", component.getUuid().toString());
         JsonUtil.add(componentBuilder, "group", component.getGroup());
         JsonUtil.add(componentBuilder, "name", component.getName());
@@ -193,8 +198,8 @@ public class NotificationUtil {
         return componentBuilder.build();
     }
 
-    public static JsonObject toJson(Vulnerability vulnerability) {
-        JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
+    public static JsonObject toJson(final Vulnerability vulnerability) {
+        final JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
         vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
         JsonUtil.add(vulnerabilityBuilder, "vulnId", vulnerability.getVulnId());
         JsonUtil.add(vulnerabilityBuilder, "source", vulnerability.getSource());
@@ -206,7 +211,7 @@ public class NotificationUtil {
         JsonUtil.add(vulnerabilityBuilder, "cvssv3", vulnerability.getCvssV3BaseScore());
         JsonUtil.add(vulnerabilityBuilder, "severity",  vulnerability.getSeverity());
         if (vulnerability.getCwe() != null) {
-            JsonObject cweNode = Json.createObjectBuilder()
+            final JsonObject cweNode = Json.createObjectBuilder()
                     .add("cweId", vulnerability.getCwe().getCweId())
                     .add("name", vulnerability.getCwe().getName())
                     .build();
@@ -215,8 +220,8 @@ public class NotificationUtil {
         return vulnerabilityBuilder.build();
     }
 
-    public static JsonObject toJson(Analysis analysis) {
-        JsonObjectBuilder analysisBuilder = Json.createObjectBuilder();
+    public static JsonObject toJson(final Analysis analysis) {
+        final JsonObjectBuilder analysisBuilder = Json.createObjectBuilder();
         analysisBuilder.add("suppressed", analysis.isSuppressed());
         JsonUtil.add(analysisBuilder, "state", analysis.getAnalysisState());
         if (analysis.getProject() != null) {
@@ -227,8 +232,8 @@ public class NotificationUtil {
         return analysisBuilder.build();
     }
 
-    public static JsonObject toJson(NewVulnerabilityIdentified vo) {
-        JsonObjectBuilder builder = Json.createObjectBuilder();
+    public static JsonObject toJson(final NewVulnerabilityIdentified vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
         }
@@ -236,8 +241,8 @@ public class NotificationUtil {
             builder.add("vulnerability", toJson(vo.getVulnerability()));
         }
         if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
-            JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
-            for (Project project: vo.getAffectedProjects()) {
+            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (final Project project: vo.getAffectedProjects()) {
                 projectsBuilder.add(toJson(project));
             }
             builder.add("affectedProjects", projectsBuilder.build());
@@ -245,8 +250,8 @@ public class NotificationUtil {
         return builder.build();
     }
 
-    public static JsonObject toJson(NewVulnerableDependency vo) {
-        JsonObjectBuilder builder = Json.createObjectBuilder();
+    public static JsonObject toJson(final NewVulnerableDependency vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getDependency().getProject() != null) {
             builder.add("project", toJson(vo.getDependency().getProject()));
         }
@@ -254,8 +259,8 @@ public class NotificationUtil {
             builder.add("component", toJson(vo.getDependency().getComponent()));
         }
         if (vo.getVulnerabilities() != null && vo.getVulnerabilities().size() > 0) {
-            JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
-            for (Vulnerability vulnerability : vo.getVulnerabilities()) {
+            final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
+            for (final Vulnerability vulnerability : vo.getVulnerabilities()) {
                 vulnsBuilder.add(toJson(vulnerability));
             }
             builder.add("vulnerabilities", vulnsBuilder.build());
@@ -263,8 +268,8 @@ public class NotificationUtil {
         return builder.build();
     }
 
-    public static JsonObject toJson(AnalysisDecisionChange vo) {
-        JsonObjectBuilder builder = Json.createObjectBuilder();
+    public static JsonObject toJson(final AnalysisDecisionChange vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
         }
@@ -275,8 +280,8 @@ public class NotificationUtil {
             builder.add("analysis", toJson(vo.getAnalysis()));
         }
         if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
-            JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
-            for (Project project: vo.getAffectedProjects()) {
+            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
+            for (final Project project: vo.getAffectedProjects()) {
                 projectsBuilder.add(toJson(project));
             }
             builder.add("affectedProjects", projectsBuilder.build());
@@ -284,7 +289,7 @@ public class NotificationUtil {
         return builder.build();
     }
 
-    private static String generateNotificationContent(Vulnerability vulnerability) {
+    private static String generateNotificationContent(final Vulnerability vulnerability) {
         final String content;
         if (vulnerability.getDescription() != null) {
             content = vulnerability.getDescription();
@@ -294,7 +299,7 @@ public class NotificationUtil {
         return content;
     }
 
-    private static String generateNotificationContent(Dependency dependency, List<Vulnerability> vulnerabilities) {
+    private static String generateNotificationContent(final Dependency dependency, final List<Vulnerability> vulnerabilities) {
         final String content;
         if (vulnerabilities.size() == 1) {
             content = "A dependency was introduced that contains 1 known vulnerability";
@@ -304,7 +309,7 @@ public class NotificationUtil {
         return content;
     }
 
-    private static String generateNotificationContent(Analysis analysis) {
+    private static String generateNotificationContent(final Analysis analysis) {
         final String content;
         if (analysis.getProject() != null) {
             content = "An analysis decision was made to a finding affecting a project";

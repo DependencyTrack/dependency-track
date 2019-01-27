@@ -118,7 +118,7 @@ public class Advisory {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(final int id) {
         this.id = id;
     }
 
@@ -126,7 +126,7 @@ public class Advisory {
         return created;
     }
 
-    public void setCreated(String created) {
+    public void setCreated(final String created) {
         this.created = created;
     }
 
@@ -134,7 +134,7 @@ public class Advisory {
         return updated;
     }
 
-    public void setUpdated(String updated) {
+    public void setUpdated(final String updated) {
         this.updated = updated;
     }
 
@@ -142,7 +142,7 @@ public class Advisory {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(final String title) {
         this.title = title;
     }
 
@@ -150,7 +150,7 @@ public class Advisory {
         return overview;
     }
 
-    public void setOverview(String overview) {
+    public void setOverview(final String overview) {
         this.overview = overview;
     }
 
@@ -158,7 +158,7 @@ public class Advisory {
         return recommendation;
     }
 
-    public void setRecommendation(String recommendation) {
+    public void setRecommendation(final String recommendation) {
         this.recommendation = recommendation;
     }
 
@@ -166,7 +166,7 @@ public class Advisory {
         return foundBy;
     }
 
-    public void setFoundBy(String foundBy) {
+    public void setFoundBy(final String foundBy) {
         this.foundBy = foundBy;
     }
 
@@ -174,7 +174,7 @@ public class Advisory {
         return reportedBy;
     }
 
-    public void setReportedBy(String reportedBy) {
+    public void setReportedBy(final String reportedBy) {
         this.reportedBy = reportedBy;
     }
 
@@ -182,7 +182,7 @@ public class Advisory {
         return moduleName;
     }
 
-    public void setModuleName(String moduleName) {
+    public void setModuleName(final String moduleName) {
         this.moduleName = moduleName;
     }
 
@@ -190,7 +190,7 @@ public class Advisory {
         return version;
     }
 
-    public void setVersion(String version) {
+    public void setVersion(final String version) {
         this.version = version;
     }
 
@@ -198,7 +198,7 @@ public class Advisory {
         return cves != null ? cves.clone() : null;
     }
 
-    public void setCves(String[] cves) {
+    public void setCves(final String[] cves) {
         if (cves != null) {
             this.cves = cves.clone();
         } else {
@@ -210,7 +210,7 @@ public class Advisory {
         return vulnerableVersions;
     }
 
-    public void setVulnerableVersions(String vulnerableVersions) {
+    public void setVulnerableVersions(final String vulnerableVersions) {
         this.vulnerableVersions = vulnerableVersions;
     }
 
@@ -218,7 +218,7 @@ public class Advisory {
         return patchedVersions;
     }
 
-    public void setPatchedVersions(String patchedVersions) {
+    public void setPatchedVersions(final String patchedVersions) {
         this.patchedVersions = patchedVersions;
     }
 
@@ -226,7 +226,7 @@ public class Advisory {
         return references;
     }
 
-    public void setReferences(String references) {
+    public void setReferences(final String references) {
         this.references = references;
     }
 
@@ -234,7 +234,7 @@ public class Advisory {
         return access;
     }
 
-    public void setAccess(String access) {
+    public void setAccess(final String access) {
         this.access = access;
     }
 
@@ -242,7 +242,7 @@ public class Advisory {
         return severity;
     }
 
-    public void setSeverity(String severity) {
+    public void setSeverity(final String severity) {
         this.severity = severity;
     }
 
@@ -250,7 +250,7 @@ public class Advisory {
         return cwe;
     }
 
-    public void setCwe(String cwe) {
+    public void setCwe(final String cwe) {
         this.cwe = cwe;
     }
 }

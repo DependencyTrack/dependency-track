@@ -47,19 +47,19 @@ public class LicenseResolver implements IResolver {
         HINTS.put("GPLv2 with classpath exception", "GPL-2.0-with-classpath-exception");
     }
 
-    private QueryManager qm;
+    private final QueryManager qm;
 
-    public LicenseResolver(QueryManager qm) {
+    public LicenseResolver(final QueryManager qm) {
         this.qm = qm;
     }
 
     /**
      * {@inheritDoc}
      */
-    public License resolve(Dependency dependency) {
+    public License resolve(final Dependency dependency) {
         if (dependency.getLicense() != null) {
             final List<License> licenses = qm.getLicenses().getList(License.class);
-            for (License license : licenses) {
+            for (final License license : licenses) {
                 if (StringUtils.containsIgnoreCase(dependency.getLicense(), license.getLicenseId())) {
                     return license;
                 } else if (StringUtils.containsIgnoreCase(dependency.getLicense(), license.getName())) {
@@ -78,7 +78,7 @@ public class LicenseResolver implements IResolver {
                         }
 
                         // No match yet - try using hints
-                        for (Map.Entry<String, String> entry : HINTS.entrySet()) {
+                        for (final Map.Entry<String, String> entry : HINTS.entrySet()) {
                             if (StringUtils.containsIgnoreCase(seeAlso, entry.getKey())) {
                                 // Match was found. Retrieve the license from the SPDX license ID
                                 return qm.getLicense(entry.getValue());

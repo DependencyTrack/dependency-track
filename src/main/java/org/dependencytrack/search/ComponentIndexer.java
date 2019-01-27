@@ -64,7 +64,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void add(Component component) {
+    public void add(final Component component) {
         final Document doc = new Document();
         addField(doc, IndexConstants.COMPONENT_UUID, component.getUuid().toString(), Field.Store.YES, false);
         addField(doc, IndexConstants.COMPONENT_NAME, component.getName(), Field.Store.YES, true);
@@ -92,7 +92,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
      *
      * @param component A persisted Component object.
      */
-    public void remove(Component component) {
+    public void remove(final Component component) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.COMPONENT_UUID, component.getUuid().toString()));
         } catch (IOException e) {
@@ -120,7 +120,7 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
             while (count < total) {
                 final PaginatedResult result = qm.getComponents();
                 final List<Component> components = result.getList(Component.class);
-                for (Component component: components) {
+                for (final Component component: components) {
                     add(component);
                 }
                 count += result.getObjects().size();

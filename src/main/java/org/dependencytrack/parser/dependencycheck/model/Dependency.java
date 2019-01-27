@@ -51,7 +51,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlAttribute(name = "isVirtual")
-    public void setVirtual(boolean virtual) {
+    public void setVirtual(final boolean virtual) {
         isVirtual = virtual;
     }
 
@@ -60,7 +60,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "fileName")
-    public void setFileName(String fileName) {
+    public void setFileName(final String fileName) {
         this.fileName = normalize(fileName);
     }
 
@@ -69,7 +69,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "filePath")
-    public void setFilePath(String filePath) {
+    public void setFilePath(final String filePath) {
         this.filePath = normalize(filePath);
     }
 
@@ -78,7 +78,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "md5")
-    public void setMd5(String md5) {
+    public void setMd5(final String md5) {
         this.md5 = normalize(md5);
     }
 
@@ -87,7 +87,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "sha1")
-    public void setSha1(String sha1) {
+    public void setSha1(final String sha1) {
         this.sha1 = normalize(sha1);
     }
 
@@ -96,7 +96,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "description")
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = normalize(description);
     }
 
@@ -105,7 +105,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "license")
-    public void setLicense(String license) {
+    public void setLicense(final String license) {
         this.license = normalize(license);
     }
 
@@ -115,7 +115,7 @@ public class Dependency extends BaseObject {
 
     @XmlElementWrapper(name = "evidenceCollected")
     @XmlElement(name = "evidence")
-    public void setEvidenceCollected(List<Evidence> evidenceCollected) {
+    public void setEvidenceCollected(final List<Evidence> evidenceCollected) {
         this.evidenceCollected = evidenceCollected;
     }
 
@@ -124,7 +124,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "identifiers")
-    public void setIdentifiers(Identifiers identifiers) {
+    public void setIdentifiers(final Identifiers identifiers) {
         this.identifiers = identifiers;
     }
 
@@ -133,7 +133,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "identifier")
-    public void setIdentifier(Identifier identifier) {
+    public void setIdentifier(final Identifier identifier) {
         if (this.identifiers == null) {
             this.identifiers = new Identifiers();
         }
@@ -146,7 +146,7 @@ public class Dependency extends BaseObject {
     }
 
     @XmlElement(name = "vulnerabilities")
-    public void setVulnerabilities(Vulnerabilities vulnerabilities) {
+    public void setVulnerabilities(final Vulnerabilities vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
     }
 
@@ -156,7 +156,7 @@ public class Dependency extends BaseObject {
 
     @XmlElementWrapper(name = "relatedDependencies")
     @XmlElement(name = "relatedDependency")
-    public void setRelatedDependencies(List<Dependency> dependencies) {
+    public void setRelatedDependencies(final List<Dependency> dependencies) {
         this.relatedDependencies = dependencies;
     }
 
@@ -173,7 +173,7 @@ public class Dependency extends BaseObject {
             return identifiers;
         }
 
-        public void addIdentifier(Identifier identifier) {
+        public void addIdentifier(final Identifier identifier) {
             if (identifiers == null) {
                 identifiers = new ArrayList<>();
             }
@@ -181,7 +181,7 @@ public class Dependency extends BaseObject {
         }
 
         @XmlElement(name = "identifier")
-        public void setIdentifiers(List<Identifier> identifiers) {
+        public void setIdentifiers(final List<Identifier> identifiers) {
             this.identifiers = identifiers;
         }
 
@@ -190,7 +190,7 @@ public class Dependency extends BaseObject {
         }
 
         @XmlElement(name = "suppressedIdentifier")
-        public void setSuppressedIdentifiers(List<Identifier> suppressedIdentifiers) {
+        public void setSuppressedIdentifiers(final List<Identifier> suppressedIdentifiers) {
             this.suppressedIdentifiers = suppressedIdentifiers;
         }
     }
@@ -209,7 +209,7 @@ public class Dependency extends BaseObject {
         }
 
         @XmlElement(name = "vulnerability")
-        public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
+        public void setVulnerabilities(final List<Vulnerability> vulnerabilities) {
             this.vulnerabilities = vulnerabilities;
         }
 
@@ -218,7 +218,7 @@ public class Dependency extends BaseObject {
         }
 
         @XmlElement(name = "suppressedVulnerability")
-        public void setSuppressedVulnerabilities(List<Vulnerability> suppressedVulnerabilities) {
+        public void setSuppressedVulnerabilities(final List<Vulnerability> suppressedVulnerabilities) {
             this.suppressedVulnerabilities = suppressedVulnerabilities;
         }
     }

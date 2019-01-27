@@ -17,21 +17,15 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
 import java.util.UUID;
 
-public abstract class VulnerabilityManagementUploadEvent implements Event {
+public class KennaSecurityUploadEventAbstract extends AbstractVulnerabilityManagementUploadEvent {
 
-    private UUID projectUuid;
-
-    VulnerabilityManagementUploadEvent() {
+    public KennaSecurityUploadEventAbstract() {
+        super();
     }
 
-    VulnerabilityManagementUploadEvent(UUID projectUuid) {
-        this.projectUuid = projectUuid;
-    }
-
-    public UUID getProjectUuid() {
-        return projectUuid;
+    public KennaSecurityUploadEventAbstract(final UUID projectUuid) {
+        super(projectUuid);
     }
 }

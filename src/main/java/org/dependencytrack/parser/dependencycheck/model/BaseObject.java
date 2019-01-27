@@ -29,11 +29,11 @@ import org.owasp.dependencycheck.dependency.Confidence;
  */
 public abstract class BaseObject {
 
-    protected String normalize(String string) {
+    protected String normalize(final String string) {
         return StringUtils.normalizeSpace(StringUtils.trimToNull(string));
     }
 
-    protected Confidence getConfidenceFromString(String confidence) {
+    protected Confidence getConfidenceFromString(final String confidence) {
         switch (normalize(confidence)) {
             case "HIGHEST":
                 return Confidence.HIGHEST;
@@ -48,7 +48,7 @@ public abstract class BaseObject {
         }
     }
 
-    public int getConfidenceScore(Confidence confidence) {
+    public int getConfidenceScore(final Confidence confidence) {
         switch (confidence.name()) {
             case "HIGHEST":
                 return 4;

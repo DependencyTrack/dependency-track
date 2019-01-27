@@ -22,8 +22,8 @@ import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
 import alpine.tasks.AlpineTaskScheduler;
 import alpine.util.BooleanUtil;
-import org.dependencytrack.event.FortifySscUploadEvent;
-import org.dependencytrack.event.KennaSecurityUploadEvent;
+import org.dependencytrack.event.FortifySscUploadEventAbstract;
+import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
@@ -78,8 +78,8 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);
 
         // Configurable tasks
-        scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEvent());
-        scheduleConfigurableTask(300000, KENNA_ENABLED, KENNA_SYNC_CADENCE, new KennaSecurityUploadEvent());
+        scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEventAbstract());
+        scheduleConfigurableTask(300000, KENNA_ENABLED, KENNA_SYNC_CADENCE, new KennaSecurityUploadEventAbstract());
     }
 
     /**
@@ -90,13 +90,13 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         return INSTANCE;
     }
 
-    private void scheduleConfigurableTask(long initialDelay, ConfigPropertyConstants enabledConstraint,
-                                          ConfigPropertyConstants constraint, Event event) {
+    private void scheduleConfigurableTask(final long initialDelay, final ConfigPropertyConstants enabledConstraint,
+                                          final ConfigPropertyConstants constraint, final Event event) {
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty enabledProperty = qm.getConfigProperty(
                     enabledConstraint.getGroupName(), enabledConstraint.getPropertyName());
             if (enabledProperty != null && enabledProperty.getPropertyValue() != null) {
-                boolean isEnabled = BooleanUtil.valueOf(enabledProperty.getPropertyValue());
+                final boolean isEnabled = BooleanUtil.valueOf(enabledProperty.getPropertyValue());
                 if (!isEnabled) {
                     return;
                 }

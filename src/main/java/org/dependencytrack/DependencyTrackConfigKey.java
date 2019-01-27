@@ -34,7 +34,7 @@ public enum DependencyTrackConfigKey implements Config.Key {
 
     private String propertyName;
     private Object defaultValue;
-    DependencyTrackConfigKey(String item, Object defaultValue) {
+    DependencyTrackConfigKey(final String item, final Object defaultValue) {
         this.propertyName = item;
         this.defaultValue = defaultValue;
     }

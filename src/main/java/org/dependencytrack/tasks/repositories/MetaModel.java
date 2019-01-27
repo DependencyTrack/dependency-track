@@ -22,11 +22,11 @@ import java.util.Date;
 
 public class MetaModel {
 
-    private Component component;
+    private final Component component;
     private String latestVersion;
     private Date publishedTimestamp;
 
-    public MetaModel(Component component) {
+    public MetaModel(final Component component) {
         this.component = component;
     }
 
@@ -38,7 +38,7 @@ public class MetaModel {
         return latestVersion;
     }
 
-    public void setLatestVersion(String latestVersion) {
+    public void setLatestVersion(final String latestVersion) {
         this.latestVersion = latestVersion;
     }
 
@@ -46,7 +46,7 @@ public class MetaModel {
         return publishedTimestamp;
     }
 
-    public void setPublishedTimestamp(Date publishedTimestamp) {
+    public void setPublishedTimestamp(final Date publishedTimestamp) {
         this.publishedTimestamp = publishedTimestamp;
     }
 }

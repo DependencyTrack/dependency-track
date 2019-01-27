@@ -28,7 +28,7 @@ import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
  */
 public class CloneProjectEvent extends AbstractChainableEvent {
 
-    private CloneProjectRequest request;
+    private final CloneProjectRequest request;
 
     public CloneProjectEvent(final CloneProjectRequest request) {
         this.request = request;

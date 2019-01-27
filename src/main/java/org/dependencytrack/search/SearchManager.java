@@ -48,7 +48,7 @@ public class SearchManager {
 
     private static final Logger LOGGER = Logger.getLogger(SearchManager.class);
 
-    public SearchResult searchIndices(String queryString, int limit) {
+    public SearchResult searchIndices(final String queryString, final int limit) {
         final SearchResult searchResult = new SearchResult();
         final IndexManager[] indexManagers = {
                 ProjectIndexer.getInstance(),
@@ -65,11 +65,11 @@ public class SearchManager {
         return searchResult;
     }
 
-    public SearchResult searchIndex(IndexManager indexManager, String queryString, int limit) {
+    public SearchResult searchIndex(final IndexManager indexManager, final String queryString, final int limit) {
         final SearchResult searchResult = new SearchResult();
         final List<Map<String, String>> resultSet = new ArrayList<>();
         try {
-            String sb = queryString +
+            final String sb = queryString +
                     "^100" +
                     " OR " +
                     queryString +
@@ -86,10 +86,10 @@ public class SearchManager {
                 LOGGER.debug("Searching for: " + queryString + " - Total Hits: " + results.totalHits);
             }
 
-            for (ScoreDoc scoreDoc: results.scoreDocs) {
+            for (final ScoreDoc scoreDoc: results.scoreDocs) {
                 final Document doc = indexManager.getIndexSearcher().doc(scoreDoc.doc);
                 final Map<String, String> fields = new HashMap<>();
-                for (IndexableField field: doc.getFields()) {
+                for (final IndexableField field: doc.getFields()) {
                     if (StringUtils.isNotBlank(field.stringValue())) {
                         fields.put(field.name(), field.stringValue());
                     }

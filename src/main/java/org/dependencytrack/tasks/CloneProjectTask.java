@@ -33,7 +33,7 @@ public class CloneProjectTask implements Subscriber {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof CloneProjectEvent) {
             final CloneProjectEvent event = (CloneProjectEvent)e;
             final CloneProjectRequest request = event.getRequest();

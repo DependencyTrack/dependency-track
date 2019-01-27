@@ -64,7 +64,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public void add(License license) {
+    public void add(final License license) {
         final Document doc = new Document();
         addField(doc, IndexConstants.LICENSE_UUID, license.getUuid().toString(), Field.Store.YES, false);
         addField(doc, IndexConstants.LICENSE_LICENSEID, license.getLicenseId(), Field.Store.YES, true);
@@ -89,7 +89,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
      *
      * @param license A persisted License object.
      */
-    public void remove(License license) {
+    public void remove(final License license) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.LICENSE_UUID, license.getUuid().toString()));
         } catch (IOException e) {
@@ -117,7 +117,7 @@ public final class LicenseIndexer extends IndexManager implements ObjectIndexer<
             while (count < total) {
                 final PaginatedResult result = qm.getLicenses();
                 final List<License> licenses = result.getList(License.class);
-                for (License license: licenses) {
+                for (final License license: licenses) {
                     add(license);
                 }
                 count += result.getObjects().size();

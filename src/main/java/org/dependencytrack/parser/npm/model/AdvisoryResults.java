@@ -37,7 +37,7 @@ public class AdvisoryResults {
         return next;
     }
 
-    public void setNext(String next) {
+    public void setNext(final String next) {
         this.next = next;
     }
 
@@ -45,7 +45,7 @@ public class AdvisoryResults {
         return previous;
     }
 
-    public void setPrevious(String previous) {
+    public void setPrevious(final String previous) {
         this.previous = previous;
     }
 
@@ -53,7 +53,7 @@ public class AdvisoryResults {
         return total;
     }
 
-    public void setTotal(int total) {
+    public void setTotal(final int total) {
         this.total = total;
     }
 
@@ -61,7 +61,7 @@ public class AdvisoryResults {
         return advisoryList;
     }
 
-    public void add(Advisory advisory) {
+    public void add(final Advisory advisory) {
         advisoryList.add(advisory);
     }
 

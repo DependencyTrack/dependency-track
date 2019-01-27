@@ -73,17 +73,17 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof OssIndexAnalysisEvent) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED)) {
                 return;
             }
             try (QueryManager qm = new QueryManager()) {
-                ConfigProperty apiUsernameProperty = qm.getConfigProperty(
+                final ConfigProperty apiUsernameProperty = qm.getConfigProperty(
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getPropertyName()
                 );
-                ConfigProperty apiTokenProperty = qm.getConfigProperty(
+                final ConfigProperty apiTokenProperty = qm.getConfigProperty(
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
                 );
@@ -120,7 +120,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @param purl the PackageURL to analyze
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
-    public boolean shouldAnalyze(PackageURL purl) {
+    public boolean shouldAnalyze(final PackageURL purl) {
         return purl != null;
     }
 
@@ -128,12 +128,12 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * Analyzes a list of Components.
      * @param components a list of Components
      */
-    public void analyze(List<Component> components) {
-        Pageable<Component> paginatedComponents = new Pageable<>(100, components);
+    public void analyze(final List<Component> components) {
+        final Pageable<Component> paginatedComponents = new Pageable<>(100, components);
         while (!paginatedComponents.isPaginationComplete()) {
             final List<String> coordinates = new ArrayList<>();
-            List<Component> paginatedList = paginatedComponents.getPaginatedList();
-            for (Component component: paginatedList) {
+            final List<Component> paginatedList = paginatedComponents.getPaginatedList();
+            for (final Component component: paginatedList) {
                 if (shouldAnalyze(component.getPurl())) {
                     //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
                     coordinates.add(minimizePurl(component.getPurl()));
@@ -166,7 +166,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @since 3.4.0
      */
     @Deprecated
-    private static String minimizePurl(PackageURL purl) {
+    private static String minimizePurl(final PackageURL purl) {
         String p = purl.canonicalize();
         if (p.contains("?")) {
             p = p.substring(0, p.lastIndexOf("?"));
@@ -180,7 +180,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * Submits the payload to the Sonatype OSS Index service
      */
-    private List<ComponentReport> submit(JSONObject payload) throws UnirestException {
+    private List<ComponentReport> submit(final JSONObject payload) throws UnirestException {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final HttpResponse<JsonNode> jsonResponse = ui.post(API_BASE_URL)
                 .header(HttpHeaders.ACCEPT, "application/json")
@@ -198,10 +198,10 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
         return new ArrayList<>();
     }
 
-    private void processResults(List<ComponentReport> report, List<Component> componentsScanned) {
+    private void processResults(final List<ComponentReport> report, final List<Component> componentsScanned) {
         try (QueryManager qm = new QueryManager()) {
-            for (ComponentReport componentReport: report) {
-                for (Component component: componentsScanned) {
+            for (final ComponentReport componentReport: report) {
+                for (final Component component: componentsScanned) {
                     //final String componentPurl = component.getPurl().canonicalize(); // todo: put this back when minimizePurl() is removed
                     final String componentPurl = minimizePurl(component.getPurl());
                     final PackageURL sonatypePurl = oldPurlResolver(componentReport.getCoordinates());
@@ -210,7 +210,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                         /*
                         Found the component
                          */
-                        for (ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
+                        for (final ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
                             if (reportedVuln.getCve() != null) {
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
@@ -249,7 +249,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
     /**
      * Generates a Dependency-Track vulnerability object from a Sonatype OSS ComponentReportVulnerability object.
      */
-    private Vulnerability generateVulnerability(QueryManager qm, ComponentReportVulnerability reportedVuln) {
+    private Vulnerability generateVulnerability(final QueryManager qm, final ComponentReportVulnerability reportedVuln) {
         final Vulnerability vulnerability = new Vulnerability();
         if (reportedVuln.getCve() != null) {
             vulnerability.setSource(Vulnerability.Source.NVD);

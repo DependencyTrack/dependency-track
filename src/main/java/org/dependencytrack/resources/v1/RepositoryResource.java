@@ -106,7 +106,7 @@ public class RepositoryResource extends AlpineResource {
             @ApiParam(value = "The Package URL for the component to query", required = true)
             @QueryParam("purl") String purl) {
         try {
-            PackageURL packageURL = new PackageURL(purl);
+            final PackageURL packageURL = new PackageURL(purl);
             try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 final RepositoryType type = RepositoryType.resolve(packageURL);
                 if (RepositoryType.UNSUPPORTED == type) {

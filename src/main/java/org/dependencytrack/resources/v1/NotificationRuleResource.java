@@ -192,18 +192,18 @@ public class NotificationRuleResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to add to the rule", required = true)
             @PathParam("projectUuid") String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
-            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
             }
             if (rule.getScope() != NotificationScope.PORTFOLIO) {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Project limitations are only possible on notification rules with PORTFOLIO scope.").build();
             }
-            Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
-            List<Project> projects = rule.getProjects();
+            final List<Project> projects = rule.getProjects();
             if (projects != null && !projects.contains(project)) {
                 rule.getProjects().add(project);
                 qm.persist(rule);
@@ -233,18 +233,18 @@ public class NotificationRuleResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to remove from the rule", required = true)
             @PathParam("projectUuid") String projectUuid) {
         try (QueryManager qm = new QueryManager()) {
-            NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
             }
             if (rule.getScope() != NotificationScope.PORTFOLIO) {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Project limitations are only possible on notification rules with PORTFOLIO scope.").build();
             }
-            Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
-            List<Project> projects = rule.getProjects();
+            final List<Project> projects = rule.getProjects();
             if (projects != null && projects.contains(project)) {
                 rule.getProjects().remove(project);
                 qm.persist(rule);

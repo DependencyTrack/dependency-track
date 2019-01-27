@@ -33,19 +33,19 @@ public class CloneProjectRequest {
 
     @NotNull
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
-    private String project;
+    private final String project;
 
     @NotNull
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The version may only contain printable characters")
-    private String version;
+    private final String version;
 
-    private boolean includeTags;
+    private final boolean includeTags;
 
-    private boolean includeProperties;
+    private final boolean includeProperties;
 
-    private boolean includeDependencies;
+    private final boolean includeDependencies;
 
-    private boolean includeAuditHistory;
+    private final boolean includeAuditHistory;
 
     @JsonCreator
     public CloneProjectRequest(@JsonProperty(value = "project", required = true) String project,

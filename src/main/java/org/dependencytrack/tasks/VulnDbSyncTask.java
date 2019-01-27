@@ -64,7 +64,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
     /**
      * {@inheritDoc}
      */
-    public void inform(Event e) {
+    public void inform(final Event e) {
         if (e instanceof VulnDbSyncEvent) {
             LOGGER.info("Starting VulnDB mirror synchronization task");
             final File vulndbDir = new File(Config.getInstance().getDataDirectorty(), "vulndb");
@@ -72,15 +72,15 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                 LOGGER.info("VulnDB mirror directory does not exist. Skipping.");
                 return;
             }
-            File[] files = vulndbDir.listFiles(
+            final File[] files = vulndbDir.listFiles(
                     (dir, name) -> name.toLowerCase().startsWith("vulnerabilities_")
             );
             if (files != null) {
-                for (File file : files) {
+                for (final File file : files) {
                     LOGGER.info("Parsing: " + file.getName());
-                    VulnDbParser parser = new VulnDbParser();
+                    final VulnDbParser parser = new VulnDbParser();
                     try {
-                        Results results = parser.parse(file, us.springett.vulndbdatamirror.parser.model.Vulnerability.class);
+                        final Results results = parser.parse(file, us.springett.vulndbdatamirror.parser.model.Vulnerability.class);
                         updateDatasource(results);
                     } catch (IOException ex) {
                         LOGGER.error("An error occurred while parsing VulnDB payload: " + file.getName(), ex);
@@ -113,13 +113,13 @@ public class VulnDbSyncTask implements LoggableSubscriber {
      * Synchronizes the VulnDB vulnerabilities with the internal Dependency-Track database.
      * @param results the results to synchronize
      */
-    private void updateDatasource(Results results) {
+    private void updateDatasource(final Results results) {
         LOGGER.info("Updating datasource with VulnDB vulnerabilities");
         try (QueryManager qm = new QueryManager()) {
-            for (Object o: results.getResults()) {
+            for (final Object o: results.getResults()) {
                 if (o instanceof us.springett.vulndbdatamirror.parser.model.Vulnerability) {
-                    us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln = (us.springett.vulndbdatamirror.parser.model.Vulnerability)o;
-                    org.dependencytrack.model.Vulnerability vulnerability = convert(qm, vulnDbVuln);
+                    final us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln = (us.springett.vulndbdatamirror.parser.model.Vulnerability)o;
+                    final org.dependencytrack.model.Vulnerability vulnerability = convert(qm, vulnDbVuln);
                     qm.synchronizeVulnerability(vulnerability, false);
                 }
             }
@@ -131,7 +131,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
      * @param vulnDbVuln the VulnDB vulnerability to convert
      * @return a Dependency-Track Vulnerability object
      */
-    private org.dependencytrack.model.Vulnerability convert(QueryManager qm, us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln) {
+    private org.dependencytrack.model.Vulnerability convert(final QueryManager qm, final us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln) {
         final org.dependencytrack.model.Vulnerability vuln = new org.dependencytrack.model.Vulnerability();
         vuln.setSource(org.dependencytrack.model.Vulnerability.Source.VULNDB);
         vuln.setVulnId(sanitize(String.valueOf(vulnDbVuln.getId())));
@@ -139,7 +139,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
 
 
         /* Description */
-        StringBuilder description = new StringBuilder();
+        final StringBuilder description = new StringBuilder();
         if (vulnDbVuln.getDescription() != null) {
             description.append(sanitize(vulnDbVuln.getDescription()));
         }
@@ -174,7 +174,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
 
         /* References */
         final StringBuilder references = new StringBuilder();
-        for (us.springett.vulndbdatamirror.parser.model.ExternalReference reference : vulnDbVuln.getExtReferences()) {
+        for (final us.springett.vulndbdatamirror.parser.model.ExternalReference reference : vulnDbVuln.getExtReferences()) {
             final String sType = sanitize(reference.getType());
             final String sValue = sanitize(reference.getValue());
             // Convert reference to Markdown format
@@ -189,7 +189,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
 
         /* Credits */
         final StringBuilder credits = new StringBuilder();
-        for (us.springett.vulndbdatamirror.parser.model.Author author : vulnDbVuln.getAuthors()) {
+        for (final us.springett.vulndbdatamirror.parser.model.Author author : vulnDbVuln.getAuthors()) {
             final String name = sanitize(author.getName());
             final String company = sanitize(author.getCompany());
             if (name != null && company != null) {
@@ -209,9 +209,9 @@ public class VulnDbSyncTask implements LoggableSubscriber {
         }
 
         CvssV2 cvssV2;
-        for (CvssV2Metric metric : vulnDbVuln.getCvssV2Metrics()) {
+        for (final CvssV2Metric metric : vulnDbVuln.getCvssV2Metrics()) {
             cvssV2 = metric.toNormalizedMetric();
-            Score score = cvssV2.calculateScore();
+            final Score score = cvssV2.calculateScore();
             vuln.setCvssV2Vector(cvssV2.getVector());
             vuln.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
             vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
@@ -222,9 +222,9 @@ public class VulnDbSyncTask implements LoggableSubscriber {
         }
 
         CvssV3 cvssV3;
-        for (CvssV3Metric metric : vulnDbVuln.getCvssV3Metrics()) {
+        for (final CvssV3Metric metric : vulnDbVuln.getCvssV3Metrics()) {
             cvssV3 = metric.toNormalizedMetric();
-            Score score = cvssV3.calculateScore();
+            final Score score = cvssV3.calculateScore();
             vuln.setCvssV3Vector(cvssV3.getVector());
             vuln.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
             vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
@@ -258,7 +258,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
      * @param input the String to sanitize
      * @return a sanitized String free of unwanted characters
      */
-    private String sanitize(String input) {
+    private String sanitize(final String input) {
         if (input == null) {
             return null;
         }

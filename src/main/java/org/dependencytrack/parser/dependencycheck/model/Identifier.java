@@ -40,7 +40,7 @@ public class Identifier extends BaseObject {
     }
 
     @XmlAttribute(name = "type")
-    public void setType(String type) {
+    public void setType(final String type) {
         this.type = normalize(type);
     }
 
@@ -49,7 +49,7 @@ public class Identifier extends BaseObject {
     }
 
     @XmlAttribute(name = "confidence")
-    public void setConfidence(String confidence) {
+    public void setConfidence(final String confidence) {
         this.confidence = normalize(confidence);
     }
 
@@ -58,7 +58,7 @@ public class Identifier extends BaseObject {
     }
 
     @XmlElement(name = "name")
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = normalize(name);
     }
 
@@ -67,7 +67,7 @@ public class Identifier extends BaseObject {
     }
 
     @XmlElement(name = "url")
-    public void setUrl(String url) {
+    public void setUrl(final String url) {
         this.url = normalize(url);
     }
 }

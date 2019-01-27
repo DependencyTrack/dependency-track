@@ -121,7 +121,7 @@ public class ProjectResource extends AlpineResource {
             @PathParam("tag") String tagString) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
 
-            Tag tag = qm.getTagByName(tagString);
+            final Tag tag = qm.getTagByName(tagString);
             final PaginatedResult result = qm.getProjects(tag);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }

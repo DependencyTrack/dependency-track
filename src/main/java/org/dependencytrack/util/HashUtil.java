@@ -18,39 +18,40 @@
 package org.dependencytrack.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 
-public class HashUtil {
+public final class HashUtil {
 
     private HashUtil() { }
 
-    public static String md5(File file) {
-        try (FileInputStream fis = new FileInputStream(file)) {
+    public static String md5(final File file) {
+        try (InputStream fis = Files.newInputStream(file.toPath())) {
             return org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
         } catch (IOException e){
             return null;
         }
     }
 
-    public static String sha1(File file) {
-        try (FileInputStream fis = new FileInputStream(file)) {
+    public static String sha1(final File file) {
+        try (InputStream fis = Files.newInputStream(file.toPath())) {
             return org.apache.commons.codec.digest.DigestUtils.sha1Hex(fis);
         } catch (IOException e){
             return null;
         }
     }
 
-    public static String sha256(File file) {
-        try (FileInputStream fis = new FileInputStream(file)) {
+    public static String sha256(final File file) {
+        try (InputStream fis = Files.newInputStream(file.toPath())) {
             return org.apache.commons.codec.digest.DigestUtils.sha256Hex(fis);
         } catch (IOException e){
             return null;
         }
     }
 
-    public static String sha512(File file) {
-        try (FileInputStream fis = new FileInputStream(file)) {
+    public static String sha512(final File file) {
+        try (InputStream fis = Files.newInputStream(file.toPath())) {
             return org.apache.commons.codec.digest.DigestUtils.sha512Hex(fis);
         } catch (IOException e){
             return null;

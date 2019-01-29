@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Subscriber task that performs synchronization with VulnDB mirrored data.
@@ -73,7 +74,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                 return;
             }
             final File[] files = vulndbDir.listFiles(
-                    (dir, name) -> name.toLowerCase().startsWith("vulnerabilities_")
+                    (dir, name) -> name.toLowerCase(Locale.ENGLISH).startsWith("vulnerabilities_")
             );
             if (files != null) {
                 for (final File file : files) {

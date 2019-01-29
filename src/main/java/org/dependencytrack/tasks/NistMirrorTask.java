@@ -41,6 +41,7 @@ import org.dependencytrack.common.HttpClientFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -175,9 +176,11 @@ public class NistMirrorTask implements LoggableSubscriber {
             final StatusLine status = response.getStatusLine();
             if (status.getStatusCode() == 200) {
                 LOGGER.info("Downloading...");
-                file = new File(outputDir, filename);
-                FileUtils.copyInputStreamToFile(response.getEntity().getContent(), file);
-                uncompress(file);
+                try (InputStream in = response.getEntity().getContent()) {
+                    file = new File(outputDir, filename);
+                    FileUtils.copyInputStreamToFile(in, file);
+                    uncompress(file);
+                }
             } else if (response.getStatusLine().getStatusCode() == 403) {
                 mirroredWithoutErrors = false;
                 final String detailMessage = "This may occur if the NVD is throttling connections due to excessive load or repeated " +

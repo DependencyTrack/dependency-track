@@ -55,6 +55,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
@@ -290,8 +291,8 @@ public class BomResource extends AlpineResource {
         for (final FormDataBodyPart artifactPart: artifactParts) {
             final BodyPartEntity bodyPartEntity = (BodyPartEntity) artifactPart.getEntity();
             if (project != null) {
-                try {
-                    final byte[] content = IOUtils.toByteArray(bodyPartEntity.getInputStream());
+                try (InputStream in = bodyPartEntity.getInputStream()) {
+                    final byte[] content = IOUtils.toByteArray(in);
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
                     final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), content);

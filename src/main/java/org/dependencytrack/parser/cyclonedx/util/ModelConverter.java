@@ -31,6 +31,7 @@ import org.dependencytrack.persistence.QueryManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 public class ModelConverter {
 
@@ -70,15 +71,15 @@ public class ModelConverter {
         }
 
         final String type = StringUtils.trimToNull(cycloneDxComponent.getType());
-        if ("application".toUpperCase().equals(type.toUpperCase())) {
+        if ("application".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
             component.setClassifier(Classifier.APPLICATION);
-        } else if ("framework".toUpperCase().equals(type.toUpperCase())) {
+        } else if ("framework".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
             component.setClassifier(Classifier.FRAMEWORK);
-        } else if ("library".toUpperCase().equals(type.toUpperCase())) {
+        } else if ("library".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
             component.setClassifier(Classifier.LIBRARY);
-        } else if ("operating-system".toUpperCase().equals(type.toUpperCase())) {
+        } else if ("operating-system".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
             component.setClassifier(Classifier.OPERATING_SYSTEM);
-        } else if ("device".toUpperCase().equals(type.toUpperCase())) {
+        } else if ("device".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
             component.setClassifier(Classifier.DEVICE);
         }
 

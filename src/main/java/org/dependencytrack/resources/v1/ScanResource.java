@@ -45,6 +45,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Base64;
 import java.util.List;
 
@@ -161,8 +162,8 @@ public class ScanResource extends AlpineResource {
         for (final FormDataBodyPart artifactPart: artifactParts) {
             final BodyPartEntity bodyPartEntity = (BodyPartEntity) artifactPart.getEntity();
             if (project != null) {
-                try {
-                    final byte[] content = IOUtils.toByteArray(bodyPartEntity.getInputStream());
+                try (InputStream in = bodyPartEntity.getInputStream()) {
+                    final byte[] content = IOUtils.toByteArray(in);
                     // todo: make option to combine all the scan data so components are reconciled in a single pass.
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
                     Event.dispatch(new ScanUploadEvent(project.getUuid(), content));

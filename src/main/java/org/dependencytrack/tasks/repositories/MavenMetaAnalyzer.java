@@ -38,6 +38,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * An IMetaAnalyzer implementation that supports Maven repositories (including Maven Central).
@@ -85,19 +86,21 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (status.getStatusCode() == 200) {
                     final HttpEntity entity = response.getEntity();
                     if (entity != null) {
-                        final Document document = XmlUtils.buildSecureDocumentBuilder().parse(entity.getContent());
-                        final XPathFactory xpathFactory = XPathFactory.newInstance();
-                        final XPath xpath = xpathFactory.newXPath();
+                        try (InputStream in = entity.getContent()) {
+                            final Document document = XmlUtils.buildSecureDocumentBuilder().parse(in);
+                            final XPathFactory xpathFactory = XPathFactory.newInstance();
+                            final XPath xpath = xpathFactory.newXPath();
 
-                        final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
-                        final String latest = (String)latestExpression.evaluate(document, XPathConstants.STRING);
+                            final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
+                            final String latest = (String)latestExpression.evaluate(document, XPathConstants.STRING);
 
-                        final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
-                        final String lastUpdated = (String)lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
+                            final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
+                            final String lastUpdated = (String)lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
 
-                        meta.setLatestVersion(latest);
-                        if (lastUpdated != null) {
-                            meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
+                            meta.setLatestVersion(latest);
+                            if (lastUpdated != null) {
+                                meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
+                            }
                         }
                     }
                 } else {

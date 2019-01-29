@@ -26,7 +26,7 @@ import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
-import us.springett.parsers.cpe.CpeParsingException;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import java.io.File;
 import java.math.BigDecimal;
 

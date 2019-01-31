@@ -19,6 +19,7 @@ package org.dependencytrack;
 
 import alpine.Config;
 import alpine.persistence.PersistenceManagerFactory;
+import org.dependencytrack.persistence.QueryManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,7 +28,9 @@ import javax.jdo.datastore.JDOConnection;
 import java.sql.Connection;
 import java.sql.Statement;
 
-public abstract class BaseTest {
+public abstract class PersistenceCapableTest {
+
+    protected QueryManager qm;
 
     @BeforeClass
     public static void init() {
@@ -35,9 +38,19 @@ public abstract class BaseTest {
     }
 
     @Before
+    public void before() throws Exception {
+        dbReset();
+        this.qm = new QueryManager();
+    }
+
     @After
+    public void after() throws Exception {
+        dbReset();
+        this.qm.close();
+    }
+
     @SuppressWarnings("unchecked")
-    public void dbReset() throws Exception {
+    private void dbReset() throws Exception {
         PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager();
         JDOConnection jdoConnection = pm.getDataStoreConnection();
         Connection conn = null;

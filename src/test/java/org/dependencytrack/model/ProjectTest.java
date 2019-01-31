@@ -19,42 +19,39 @@ package org.dependencytrack.model;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.dependencytrack.BaseTest;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.PersistenceCapableTest;
 import java.util.Date;
 
-public class ProjectTest extends BaseTest {
+public class ProjectTest extends PersistenceCapableTest {
 
     @Test
     public void testProjectPersistence() {
-        try (QueryManager qm = new QueryManager()) {
-            Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, false);
-            Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, false);
-            Scan scan = qm.createScan(p1, new Date(), new Date());
-            Bom bom = qm.createBom(p1, new Date());
+        Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, false);
+        Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, false);
+        Scan scan = qm.createScan(p1, new Date(), new Date());
+        Bom bom = qm.createBom(p1, new Date());
 
-            Assert.assertEquals("Example Project 1", p1.getName());
-            Assert.assertEquals("Example Project 2", p2.getName());
+        Assert.assertEquals("Example Project 1", p1.getName());
+        Assert.assertEquals("Example Project 2", p2.getName());
 
-            Assert.assertNotNull(p1.getUuid());
-            Assert.assertNotNull(p2.getUuid());
+        Assert.assertNotNull(p1.getUuid());
+        Assert.assertNotNull(p2.getUuid());
 
-            Assert.assertNotNull(scan.getProject());
-            Assert.assertEquals("Example Project 1", scan.getProject().getName());
-            Assert.assertEquals("Description 1", scan.getProject().getDescription());
-            Assert.assertEquals("1.0", scan.getProject().getVersion());
+        Assert.assertNotNull(scan.getProject());
+        Assert.assertEquals("Example Project 1", scan.getProject().getName());
+        Assert.assertEquals("Description 1", scan.getProject().getDescription());
+        Assert.assertEquals("1.0", scan.getProject().getVersion());
 
-            Assert.assertNotNull(scan.getUuid());
-            Assert.assertNotNull(scan.getExecuted());
-            Assert.assertNotNull(scan.getImported());
+        Assert.assertNotNull(scan.getUuid());
+        Assert.assertNotNull(scan.getExecuted());
+        Assert.assertNotNull(scan.getImported());
 
-            Assert.assertNotNull(bom.getProject());
-            Assert.assertEquals("Example Project 1", bom.getProject().getName());
-            Assert.assertEquals("Description 1", bom.getProject().getDescription());
-            Assert.assertEquals("1.0", bom.getProject().getVersion());
+        Assert.assertNotNull(bom.getProject());
+        Assert.assertEquals("Example Project 1", bom.getProject().getName());
+        Assert.assertEquals("Description 1", bom.getProject().getDescription());
+        Assert.assertEquals("1.0", bom.getProject().getVersion());
 
-            Assert.assertNotNull(bom.getUuid());
-            Assert.assertNotNull(bom.getImported());
-        }
+        Assert.assertNotNull(bom.getUuid());
+        Assert.assertNotNull(bom.getImported());
     }
 }

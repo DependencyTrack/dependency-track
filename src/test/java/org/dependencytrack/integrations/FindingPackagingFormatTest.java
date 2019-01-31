@@ -18,38 +18,35 @@
 package org.dependencytrack.integrations;
 
 import alpine.Config;
-import org.dependencytrack.BaseTest;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.Collections;
 
-public class FindingPackagingFormatTest extends BaseTest {
+public class FindingPackagingFormatTest extends PersistenceCapableTest {
 
     @Test
     public void wrapperTest() {
-        try (QueryManager qm = new QueryManager()) {
-            Project project = qm.createProject(
-                    "Test", "Sample project", "1.0", null, null, null, false);
-            FindingPackagingFormat fpf = new FindingPackagingFormat(
-                    project.getUuid(),
-                    Collections.EMPTY_LIST
-            );
-            JSONObject root = fpf.getDocument();
+        Project project = qm.createProject(
+                "Test", "Sample project", "1.0", null, null, null, false);
+        FindingPackagingFormat fpf = new FindingPackagingFormat(
+                project.getUuid(),
+                Collections.EMPTY_LIST
+        );
+        JSONObject root = fpf.getDocument();
 
-            JSONObject meta = root.getJSONObject("meta");
-            Assert.assertEquals(Config.getInstance().getApplicationName(), meta.getString("application"));
-            Assert.assertEquals(Config.getInstance().getApplicationVersion(), meta.getString("version"));
-            Assert.assertNotNull(meta.getString("timestamp"));
+        JSONObject meta = root.getJSONObject("meta");
+        Assert.assertEquals(Config.getInstance().getApplicationName(), meta.getString("application"));
+        Assert.assertEquals(Config.getInstance().getApplicationVersion(), meta.getString("version"));
+        Assert.assertNotNull(meta.getString("timestamp"));
 
-            JSONObject pjson = root.getJSONObject("project");
-            Assert.assertEquals(project.getName(), pjson.getString("name"));
-            Assert.assertEquals(project.getDescription(), pjson.getString("description"));
-            Assert.assertEquals(project.getVersion(), pjson.getString("version"));
+        JSONObject pjson = root.getJSONObject("project");
+        Assert.assertEquals(project.getName(), pjson.getString("name"));
+        Assert.assertEquals(project.getDescription(), pjson.getString("description"));
+        Assert.assertEquals(project.getVersion(), pjson.getString("version"));
 
-            Assert.assertEquals("1.0", root.getString("version"));
-        }
+        Assert.assertEquals("1.0", root.getString("version"));
     }
 }

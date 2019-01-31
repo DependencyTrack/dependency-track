@@ -18,7 +18,7 @@
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.model.IConfigProperty;
-import org.dependencytrack.BaseTest;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.Assert;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
 
-public class FortifySscUploaderTest extends BaseTest {
+public class FortifySscUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationMetadata() {
@@ -39,49 +39,43 @@ public class FortifySscUploaderTest extends BaseTest {
 
     @Test
     public void testIntegrationEnabledCases() {
-        try (QueryManager qm = new QueryManager()) {
-            qm.createConfigProperty(
-                    FORTIFY_SSC_ENABLED.getGroupName(),
-                    FORTIFY_SSC_ENABLED.getPropertyName(),
-                    "true",
-                    IConfigProperty.PropertyType.BOOLEAN,
-                    null
-            );
-            Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
-            qm.createProjectProperty(
-                    project,
-                    FORTIFY_SSC_ENABLED.getGroupName(),
-                    "fortify.ssc.applicationId",
-                    "12345",
-                    IConfigProperty.PropertyType.STRING,
-                    null
-            );
-            FortifySscUploader extension = new FortifySscUploader();
-            extension.setQueryManager(qm);
-            Assert.assertTrue(extension.isEnabled());
-            Assert.assertTrue(extension.isProjectConfigured(project));
-        }
+        qm.createConfigProperty(
+                FORTIFY_SSC_ENABLED.getGroupName(),
+                FORTIFY_SSC_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
+        qm.createProjectProperty(
+                project,
+                FORTIFY_SSC_ENABLED.getGroupName(),
+                "fortify.ssc.applicationId",
+                "12345",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        FortifySscUploader extension = new FortifySscUploader();
+        extension.setQueryManager(qm);
+        Assert.assertTrue(extension.isEnabled());
+        Assert.assertTrue(extension.isProjectConfigured(project));
     }
 
     @Test
     public void testIntegrationDisabledCases() {
-        try (QueryManager qm = new QueryManager()) {
-            Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
-            FortifySscUploader extension = new FortifySscUploader();
-            extension.setQueryManager(qm);
-            Assert.assertFalse(extension.isEnabled());
-            Assert.assertFalse(extension.isProjectConfigured(project));
-        }
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
+        FortifySscUploader extension = new FortifySscUploader();
+        extension.setQueryManager(qm);
+        Assert.assertFalse(extension.isEnabled());
+        Assert.assertFalse(extension.isProjectConfigured(project));
     }
 
     @Test
     public void testIntegrationFindings() throws Exception {
-        try (QueryManager qm = new QueryManager()) {
-            Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
-            FortifySscUploader extension = new FortifySscUploader();
-            extension.setQueryManager(qm);
-            InputStream in = extension.process(project, new ArrayList<>());
-            Assert.assertTrue(in != null && in.available() > 0);
-        }
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
+        FortifySscUploader extension = new FortifySscUploader();
+        extension.setQueryManager(qm);
+        InputStream in = extension.process(project, new ArrayList<>());
+        Assert.assertTrue(in != null && in.available() > 0);
     }
 }

@@ -18,12 +18,12 @@
 package org.dependencytrack.integrations;
 
 import alpine.logging.Logger;
-import org.dependencytrack.BaseTest;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class AbstractIntegrationPointTest extends BaseTest {
+public class AbstractIntegrationPointTest extends PersistenceCapableTest {
 
     @Test
     public void testAbstractMethods() {
@@ -31,10 +31,8 @@ public class AbstractIntegrationPointTest extends BaseTest {
                 AbstractIntegrationPoint.class,
                 Mockito.CALLS_REAL_METHODS
         );
-        try (QueryManager qm = new QueryManager()) {
-            extension.setQueryManager(qm);
-            extension.handleException(Logger.getLogger(this.getClass()), new Exception());
-            extension.handleUnexpectedHttpResponse(Logger.getLogger(this.getClass()), "http://localhost", 400, "very very bad");
-        }
+        extension.setQueryManager(qm);
+        extension.handleException(Logger.getLogger(this.getClass()), new Exception());
+        extension.handleUnexpectedHttpResponse(Logger.getLogger(this.getClass()), "http://localhost", 400, "very very bad");
     }
 }

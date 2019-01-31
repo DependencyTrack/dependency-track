@@ -19,7 +19,7 @@ package org.dependencytrack.parser.dependencycheck;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.dependencytrack.BaseTest;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scan;
@@ -34,7 +34,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
-public class DependencyCheckParserTest extends BaseTest {
+public class DependencyCheckParserTest extends PersistenceCapableTest {
 
     @Test
     public void parseTest() throws Exception {
@@ -110,7 +110,6 @@ public class DependencyCheckParserTest extends BaseTest {
         File file = new File("src/test/resources/dependency-check-report.xml");
         Analysis analysis = new DependencyCheckParser().parse(file);
 
-        QueryManager qm = new QueryManager();
         Project project = qm.createProject(analysis.getProjectInfo().getName(), "My Description", "1.0.0", null, null, null, false);
         Scan scan = qm.createScan(project, new Date(), new Date());
 
@@ -138,7 +137,5 @@ public class DependencyCheckParserTest extends BaseTest {
             }
         }
         Assert.assertEquals(1034, components.size());
-
-        qm.close();
     }
 }

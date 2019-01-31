@@ -18,7 +18,7 @@
 package org.dependencytrack.integrations.kenna;
 
 import alpine.model.IConfigProperty;
-import org.dependencytrack.BaseTest;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,7 +27,7 @@ import java.io.InputStream;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 
-public class KennaSecurityUploaderTest extends BaseTest {
+public class KennaSecurityUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationMetadata() {
@@ -38,43 +38,37 @@ public class KennaSecurityUploaderTest extends BaseTest {
 
     @Test
     public void testIntegrationEnabledCases() {
-        try (QueryManager qm = new QueryManager()) {
-            qm.createConfigProperty(
-                    KENNA_ENABLED.getGroupName(),
-                    KENNA_ENABLED.getPropertyName(),
-                    "true",
-                    IConfigProperty.PropertyType.BOOLEAN,
-                    null
-            );
-            qm.createConfigProperty(
-                    KENNA_ENABLED.getGroupName(),
-                    KENNA_CONNECTOR_ID.getPropertyName(),
-                    "Dependency-Track (KDI)",
-                    IConfigProperty.PropertyType.STRING,
-                    null
-            );
-            KennaSecurityUploader extension = new KennaSecurityUploader();
-            extension.setQueryManager(qm);
-            Assert.assertTrue(extension.isEnabled());
-        }
+        qm.createConfigProperty(
+                KENNA_ENABLED.getGroupName(),
+                KENNA_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        qm.createConfigProperty(
+                KENNA_ENABLED.getGroupName(),
+                KENNA_CONNECTOR_ID.getPropertyName(),
+                "Dependency-Track (KDI)",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        KennaSecurityUploader extension = new KennaSecurityUploader();
+        extension.setQueryManager(qm);
+        Assert.assertTrue(extension.isEnabled());
     }
 
     @Test
     public void testIntegrationDisabledCases() {
-        try (QueryManager qm = new QueryManager()) {
-            KennaSecurityUploader extension = new KennaSecurityUploader();
-            extension.setQueryManager(qm);
-            Assert.assertFalse(extension.isEnabled());
-        }
+        KennaSecurityUploader extension = new KennaSecurityUploader();
+        extension.setQueryManager(qm);
+        Assert.assertFalse(extension.isEnabled());
     }
 
     @Test
     public void testIntegrationFindings() throws Exception {
-        try (QueryManager qm = new QueryManager()) {
-            KennaSecurityUploader extension = new KennaSecurityUploader();
-            extension.setQueryManager(qm);
-            InputStream in = extension.process();
-            Assert.assertTrue(in != null && in.available() > 0);
-        }
+        KennaSecurityUploader extension = new KennaSecurityUploader();
+        extension.setQueryManager(qm);
+        InputStream in = extension.process();
+        Assert.assertTrue(in != null && in.available() > 0);
     }
 }

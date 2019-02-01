@@ -187,7 +187,7 @@ public class NotificationRule implements Serializable {
     }
 
     public void setNotifyOn(Set<NotificationGroup> groups) {
-        if (CollectionUtils.isNotEmpty(groups)) {
+        if (CollectionUtils.isEmpty(groups)) {
             this.notifyOn = null;
             return;
         }

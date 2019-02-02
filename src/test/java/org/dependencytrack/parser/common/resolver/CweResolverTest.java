@@ -26,7 +26,8 @@ import org.junit.Test;
 public class CweResolverTest extends PersistenceCapableTest {
 
     @Before
-    public void beforeClass() {
+    public void before() throws Exception {
+        super.before();
         qm.createCweIfNotExist(79, "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
     }
 

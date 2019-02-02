@@ -74,7 +74,7 @@ public class NotificationRouter implements Subscriber {
         // The notification rules to process for this specific notification
         final List<NotificationRule> rules = new ArrayList<>();
 
-        if (notification.getScope() == null || notification.getGroup() == null || notification.getLevel() == null) {
+        if (notification == null || notification.getScope() == null || notification.getGroup() == null || notification.getLevel() == null) {
             return rules;
         }
         try (QueryManager qm = new QueryManager()) {

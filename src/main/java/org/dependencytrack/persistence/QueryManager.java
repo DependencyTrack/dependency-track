@@ -2171,7 +2171,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param name The name of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    NotificationPublisher createNotificationPublisher(final String name, final String description,
+    public NotificationPublisher createNotificationPublisher(final String name, final String description,
                                                              final Class publisherClass, final String templateContent,
                                                              final String templateMimeType, final boolean defaultPublisher) {
         pm.currentTransaction().begin();

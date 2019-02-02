@@ -1025,7 +1025,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param name the name of the CWE
      * @return a CWE object
      */
-    Cwe createCweIfNotExist(int id, String name) {
+    public Cwe createCweIfNotExist(int id, String name) {
         Cwe cwe = getCweById(id);
         if (cwe != null) {
             return cwe;

@@ -306,6 +306,13 @@
                 <configuration>
                     <releaseName>${project.version}</releaseName>
                     <tag>${project.version}</tag>
+                    <!--
+                         For snapshot pre-releases we want to override the existing snapshot
+                         by deleting it first and re-uploading the artifact. Caution should
+                         be taken to not re-release GA builds.
+                    -->
+                    <overwriteArtifact>true</overwriteArtifact>
+                    <deleteRelease>true</deleteRelease>
                     <fileSets>
                         <fileSet>
                             <directory>${project.build.directory}</directory>

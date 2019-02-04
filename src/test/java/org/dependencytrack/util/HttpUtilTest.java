@@ -17,26 +17,20 @@
  */
 package org.dependencytrack.util;
 
-import java.util.Base64;
-import static org.apache.http.HttpHeaders.AUTHORIZATION;
+import org.junit.Assert;
+import org.junit.Test;
 
-public final class HttpUtil {
+public class HttpUtilTest { 
 
-    /**
-     * Private constructor.
-     */
-    private HttpUtil() {
+    @Test
+    public void testBasicAuthHeader() throws Exception {
+        String header = HttpUtil.basicAuthHeader("username", "password");
+        Assert.assertEquals("Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=", header);
+    } 
+
+    @Test
+    public void testBasicAuthHeaderValue() throws Exception {
+        String authvalue = HttpUtil.basicAuthHeaderValue("username", "password");
+        Assert.assertEquals("Basic dXNlcm5hbWU6cGFzc3dvcmQ=", authvalue);
     }
-
-    public static String basicAuthHeader(final String username, final String password) {
-        return AUTHORIZATION + ": " + basicAuthHeaderValue(username, password);
-    }
-
-    public static String basicAuthHeaderValue(final String username, final String password) {
-        return "Basic " +
-                Base64.getEncoder().encodeToString(
-                        String.format("%s:%s", username,password)
-                                .getBytes()
-                );
-    }
-}
+} 

@@ -14,6 +14,10 @@ addons:
     build_command_prepend: 
     build_command: mvn clean package
     branch_pattern: coverity_scan
+  sonarcloud:
+    organization: "dependencytrack"
+    token:
+      secure: A2WvgrmCiiwS8k2ofWXL+LtRlLKtmDlEjjngQRRqj1Uk/p5CLsNHI65Nb8kpLJq83JpxmqK51KBJlC9ZuCVXSGWAx4pleouz4l8vp5qi38RzBTgUlhUXr5rGjDMpxsQZtDguC4/j+DmPSxDTdyDKsnXvwSJbboRAhrfPRqAzxJ4=
 
 before_install:
   - sudo apt-get install jq
@@ -24,7 +28,7 @@ before_script:
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
 
 script:
-  - mvn clean package
+  - mvn clean package sonar:sonar
   - mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 

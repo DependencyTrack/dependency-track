@@ -28,6 +28,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.cyclonedx.BomGenerator;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
@@ -202,7 +203,7 @@ public class BomResource extends AlpineResource {
                 Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
                 if (project == null && request.isAutoCreate()) {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
-                        project = qm.createProject(request.getProjectName(), null, request.getProjectVersion(), null, null, null, true);
+                        project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, null, null, true);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
@@ -238,10 +239,12 @@ public class BomResource extends AlpineResource {
             }
         } else { // additional behavior added in v3.1.0
             try (QueryManager qm = new QueryManager()) {
-                Project project = qm.getProject(projectName, projectVersion);
+                final String trimmedProjectName = StringUtils.trimToNull(projectName);
+                final String trimmedProjectVersion = StringUtils.trimToNull(projectVersion);
+                Project project = qm.getProject(trimmedProjectName, trimmedProjectVersion);
                 if (project == null && autoCreate) {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
-                        project = qm.createProject(projectName, null, projectVersion, null, null, null, true);
+                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, null, null, true);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }

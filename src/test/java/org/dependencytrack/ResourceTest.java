@@ -18,17 +18,15 @@
 package org.dependencytrack;
 
 import alpine.Config;
-import alpine.persistence.PersistenceManagerFactory;
 import org.dependencytrack.persistence.QueryManager;
+import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import javax.jdo.PersistenceManager;
-import javax.jdo.datastore.JDOConnection;
-import java.sql.Connection;
-import java.sql.Statement;
 
-public abstract class PersistenceCapableTest {
+import static org.dependencytrack.PersistenceCapableTest.dbReset;
+
+public abstract class ResourceTest extends JerseyTest {
 
     protected QueryManager qm;
 
@@ -47,26 +45,5 @@ public abstract class PersistenceCapableTest {
     public void after() throws Exception {
         dbReset();
         this.qm.close();
-    }
-
-    @SuppressWarnings("unchecked")
-    static void dbReset() throws Exception {
-        PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager();
-        JDOConnection jdoConnection = pm.getDataStoreConnection();
-        Connection conn = null;
-        Statement stmt = null;
-        try {
-            conn = (Connection)jdoConnection.getNativeConnection();
-            stmt = conn.createStatement();
-            stmt.executeUpdate("DROP ALL OBJECTS DELETE FILES");
-        } finally {
-            if (conn != null) {
-                conn.close();
-            }
-            if (stmt != null) {
-                stmt.close();
-            }
-        }
-        pm.close();
     }
 }

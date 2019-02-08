@@ -23,6 +23,12 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.ws.rs.core.Response;
+import java.io.StringReader;
 
 import static org.dependencytrack.PersistenceCapableTest.dbReset;
 
@@ -45,5 +51,19 @@ public abstract class ResourceTest extends JerseyTest {
     public void after() throws Exception {
         dbReset();
         this.qm.close();
+    }
+
+    protected JsonObject parseJsonObject(Response response) {
+        StringReader stringReader = new StringReader(response.readEntity(String.class));
+        try (JsonReader jsonReader = Json.createReader(stringReader)) {
+            return jsonReader.readObject();
+        }
+    }
+
+    protected JsonArray parseJsonArray(Response response) {
+        StringReader stringReader = new StringReader(response.readEntity(String.class));
+        try (JsonReader jsonReader = Json.createReader(stringReader)) {
+            return jsonReader.readArray();
+        }
     }
 }

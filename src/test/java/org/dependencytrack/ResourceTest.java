@@ -34,6 +34,36 @@ import static org.dependencytrack.PersistenceCapableTest.dbReset;
 
 public abstract class ResourceTest extends JerseyTest {
 
+    protected final String V1_ANALYSIS = "/v1/analysis";
+    protected final String V1_BOM = "/v1/bom";
+    protected final String V1_CALCULATOR = "/v1/calculator";
+    protected final String V1_COMPONENT = "/v1/component";
+    protected final String V1_CONFIG_PROPERTY = "/v1/configProperty";
+    protected final String V1_CWE = "/v1/cwe";
+    protected final String V1_DEPENDENCY = "/v1/dependency";
+    protected final String V1_FINDING = "/v1/finding";
+    protected final String V1_LDAP = "/v1/ldap";
+    protected final String V1_LICENSE = "/v1/license";
+    protected final String V1_METRICS = "/v1/metrics";
+    protected final String V1_NOTIFICATION_PUBLISHER = "/v1/notification/publisher";
+    protected final String V1_NOTIFICATION_RULE = "/v1/notification/rule";
+    protected final String V1_PERMISSION = "/v1/permission";
+    protected final String V1_PROJECT = "/v1/project";
+    protected final String V1_REPOSITORY = "/v1/repository";
+    protected final String V1_SCAN = "/v1/scan";
+    protected final String V1_SEARCH = "/v1/search";
+    protected final String V1_TEAM = "/v1/team";
+    protected final String V1_USER = "/v1/user";
+    protected final String V1_VULNERABILITY = "/v1/vulnerability";
+    protected final String ORDER_BY = "orderBy";
+    protected final String SORT = "sort";
+    protected final String SORT_ASC = "asc";
+    protected final String SORT_DESC = "desc";
+    protected final String FILTER = "filter";
+    protected final String PAGE = "page";
+    protected final String SIZE = "size";
+    protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
+
     protected QueryManager qm;
 
     @BeforeClass
@@ -51,6 +81,10 @@ public abstract class ResourceTest extends JerseyTest {
     public void after() throws Exception {
         dbReset();
         this.qm.close();
+    }
+
+    protected String getPlainTextBody(Response response) {
+        return response.readEntity(String.class);
     }
 
     protected JsonObject parseJsonObject(Response response) {

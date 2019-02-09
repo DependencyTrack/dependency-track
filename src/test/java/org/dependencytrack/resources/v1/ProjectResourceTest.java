@@ -111,7 +111,7 @@ public class ProjectResourceTest extends ResourceTest {
         List<Tag> tags = new ArrayList<>();
         Tag tag = qm.createTag("production");
         tags.add(tag);
-        Project project = qm.createProject("ABC", null, "1.0", tags, null, null, false);
+        qm.createProject("ABC", null, "1.0", tags, null, null, false);
         qm.createProject("DEF", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/tag/" + "production")
                 .request().get(Response.class);
@@ -127,7 +127,7 @@ public class ProjectResourceTest extends ResourceTest {
         List<Tag> tags = new ArrayList<>();
         Tag tag = qm.createTag("production");
         tags.add(tag);
-        Project project = qm.createProject("ABC", null, "1.0", tags, null, null, false);
+        qm.createProject("ABC", null, "1.0", tags, null, null, false);
         qm.createProject("DEF", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/tag/" + "stable")
                 .request().get(Response.class);

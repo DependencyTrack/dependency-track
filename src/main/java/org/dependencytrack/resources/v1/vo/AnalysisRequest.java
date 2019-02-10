@@ -17,9 +17,11 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
+import alpine.json.TrimmedStringDeserializer;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.dependencytrack.model.AnalysisState;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -43,6 +45,7 @@ public class AnalysisRequest {
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The vulnerability must be a valid 36 character UUID")
     private final String vulnerability;
 
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
     private final String comment;
 

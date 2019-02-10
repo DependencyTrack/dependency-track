@@ -17,6 +17,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.util.UuidUtil;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -25,7 +26,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,5 +139,46 @@ public class ProjectResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals(0, json.size());
+    }
+
+    @Test
+    public void createProjectTest() {
+        Project project = new Project();
+        project.setName("Acme Example");
+        project.setVersion("1.0");
+        project.setDescription("Test project");
+        Response response = target(V1_PROJECT)
+                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Acme Example", json.getString("name"));
+        Assert.assertEquals("1.0", json.getString("version"));
+        Assert.assertEquals("Test project", json.getString("description"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+    }
+
+    @Test
+    public void createProjectDuplicateTest() {
+        Project project = new Project();
+        project.setName("Acme Example");
+        project.setVersion("1.0");
+        Response response = target(V1_PROJECT)
+                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        response = target(V1_PROJECT)
+                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(409, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("A project with the specified name already exists.", body);
+    }
+
+    @Test
+    public void createProjectEmptyTest() {
+        Project project = new Project();
+        project.setName(" ");
+        Response response = target(V1_PROJECT)
+                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
     }
 }

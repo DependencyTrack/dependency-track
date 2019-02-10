@@ -17,9 +17,11 @@
  */
 package org.dependencytrack.model;
 
+import alpine.json.TrimmedStringDeserializer;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +41,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -92,14 +95,16 @@ public class Component implements Serializable {
     @Persistent
     @Column(name = "NAME", jdbcType = "VARCHAR", allowsNull = "false")
     @Index(name = "COMPONENT_NAME_IDX")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
     @Column(name = "VERSION", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
@@ -112,12 +117,14 @@ public class Component implements Serializable {
     @Persistent
     @Column(name = "FILENAME", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.FS_DIRECTORY_NAME, message = "The specified filename is not valid and cannot be used as a filename")
     private String filename;
 
     @Persistent
     @Column(name = "EXTENSION", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.FS_FILE_NAME, message = "The specified filename extension is not valid and cannot be used as a extension")
     private String extension;
 
@@ -173,18 +180,21 @@ public class Component implements Serializable {
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
 
     @Persistent
     @Column(name = "COPYRIGHT", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The copyright may only contain printable characters")
     private String copyright;
 
     @Persistent
     @Column(name = "LICENSE", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
 

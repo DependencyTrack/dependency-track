@@ -17,8 +17,11 @@
  */
 package org.dependencytrack.model;
 
+import alpine.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -58,10 +61,12 @@ public class AnalysisComment implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "COMMENT", jdbcType = "CLOB", allowsNull = "false")
     @NotNull
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String comment;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "COMMENTER")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String commenter;
 
     public long getId() {

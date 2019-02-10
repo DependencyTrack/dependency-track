@@ -17,9 +17,11 @@
  */
 package org.dependencytrack.model;
 
+import alpine.json.TrimmedStringDeserializer;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.StringUtils;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -27,6 +29,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -57,6 +60,7 @@ public class Evidence implements Serializable {
     @Persistent
     @Column(name = "TYPE", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The type may only contain printable characters")
     private String type;
 
@@ -66,21 +70,24 @@ public class Evidence implements Serializable {
 
     @Persistent
     @Column(name = "SOURCE", jdbcType = "VARCHAR", allowsNull = "false")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The source may only contain printable characters")
     private String source;
 
     @Persistent
     @Column(name = "NAME", jdbcType = "VARCHAR", length = 128, allowsNull = "false")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
     @Column(name = "VALUE", jdbcType = "VARCHAR", length = 4096)
     @Size(max = 4096)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     // NOTE: Evidence may contain control characters and unicode replacement characters.
     // Nearly impossible to perform positive input validation on this field.
     private String value;

@@ -36,6 +36,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -96,7 +97,7 @@ public class License implements Serializable {
     @Column(name = "NAME", allowsNull = "false")
     @Index(name = "LICENSE_NAME_IDX")
     @JsonProperty(value = "name")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;

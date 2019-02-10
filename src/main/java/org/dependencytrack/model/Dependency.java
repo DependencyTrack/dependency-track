@@ -93,6 +93,7 @@ public class Dependency implements Serializable {
 
     @Persistent
     @Column(name = "ADDED_BY")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String addedBy;
 
     @Persistent

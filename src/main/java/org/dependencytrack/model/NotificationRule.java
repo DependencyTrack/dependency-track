@@ -17,11 +17,13 @@
  */
 package org.dependencytrack.model;
 
+import alpine.json.TrimmedStringDeserializer;
 import alpine.notification.NotificationLevel;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -35,6 +37,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -69,8 +72,9 @@ public class NotificationRule implements Serializable {
      */
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
@@ -95,11 +99,13 @@ public class NotificationRule implements Serializable {
 
     @Persistent
     @Column(name = "NOTIFY_ON", length = 1024)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String notifyOn;
 
     @Persistent
     @Column(name = "MESSAGE", length = 1024)
     @Size(max = 1024)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The message may only contain printable characters")
     private String message;
 
@@ -109,6 +115,7 @@ public class NotificationRule implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "PUBLISHER_CONFIG", jdbcType = "CLOB")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String publisherConfig;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")

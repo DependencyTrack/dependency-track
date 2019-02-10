@@ -29,6 +29,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -71,19 +72,22 @@ public class NotificationPublisher implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "NAME", allowsNull = "false")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String name;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "DESCRIPTION")
     @Size(min = 0, max = 1024)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String description;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "PUBLISHER_CLASS", length = 1024, allowsNull = "false")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 1024)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String publisherClass;
 
     @Persistent(defaultFetchGroup = "false")
@@ -93,8 +97,9 @@ public class NotificationPublisher implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "TEMPLATE_MIME_TYPE", allowsNull = "false")
-    @NotNull
+    @NotBlank
     @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String templateMimeType;
 
     @Persistent(defaultFetchGroup = "true")

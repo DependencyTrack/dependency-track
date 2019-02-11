@@ -181,4 +181,55 @@ public class ProjectResourceTest extends ResourceTest {
                 .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
     }
+
+    @Test
+    public void updateProjectTest() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        project.setDescription("Test project");
+        Response response = target(V1_PROJECT)
+                .request().post(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals("1.0", json.getString("version"));
+        Assert.assertEquals("Test project", json.getString("description"));
+    }
+
+    @Test
+    public void updateProjectEmptyNameTest() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        project.setName(" ");
+        Response response = target(V1_PROJECT)
+                .request().post(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+    }
+
+    @Test
+    public void updateProjectDuplicateTest() {
+        qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("DEF", null, "1.0", null, null, null, false);
+        project.setName("ABC");
+        Response response = target(V1_PROJECT)
+                .request().post(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(409, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("A project with the specified name and version already exists.", body);
+    }
+
+    @Test
+    public void deleteProjectTest() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Response response = target(V1_PROJECT + "/" + project.getUuid().toString())
+                .request().delete();
+        Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void deleteProjectInvalidUuidTest() {
+        qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Response response = target(V1_PROJECT + "/" + UUID.randomUUID().toString())
+                .request().delete();
+        Assert.assertEquals(404, response.getStatus(), 0);
+    }
 }

@@ -232,4 +232,6 @@ public class ProjectResourceTest extends ResourceTest {
                 .request().delete();
         Assert.assertEquals(404, response.getStatus(), 0);
     }
+
+    //todo: add clone tests
 }

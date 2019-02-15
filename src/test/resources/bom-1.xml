@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
+    <components>
+        <component type="application">
+            <publisher>Example Incorporated</publisher>
+            <group>com.example</group>
+            <name>xmlutil</name>
+            <version>1.0.0</version>
+            <description>A makebelieve XML utility library</description>
+            <hashes>
+                <hash alg="MD5">2b67669c925048d1a5c7f124d9ba1d2a</hash>
+                <hash alg="SHA-1">72ca79908c814022905e86f8bbecd9b829352139</hash>
+                <hash alg="SHA-256">1389877662864d2bb0488b4b1e417ce5647a1687084341178a203b243dfe90e7</hash>
+            </hashes>
+            <licenses>
+                <license>
+                    <id>Apache-2.0</id>
+                </license>
+            </licenses>
+            <copyright>Copyright Example Inc. All rights reserved.</copyright>
+            <cpe>cpe:/a:example:xmlutil:1.0.0</cpe>
+            <purl>pkg:maven/com.example/xmlutil@1.0.0?packaging=jar</purl>
+            <modified>false</modified>
+        </component>
+    </components>
+</bom>
+    

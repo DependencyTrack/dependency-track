@@ -18,6 +18,11 @@
 package org.dependencytrack;
 
 import alpine.Config;
+import alpine.auth.PasswordService;
+import alpine.model.ManagedUser;
+import alpine.model.Permission;
+import alpine.model.Team;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -29,6 +34,8 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.dependencytrack.PersistenceCapableTest.dbReset;
 
@@ -63,8 +70,12 @@ public abstract class ResourceTest extends JerseyTest {
     protected final String PAGE = "page";
     protected final String SIZE = "size";
     protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
+    protected final String X_API_KEY = "X-Api-Key";
 
     protected QueryManager qm;
+    protected ManagedUser testUser;
+    protected Team team;
+    protected String apiKey;
 
     @BeforeClass
     public static void init() {
@@ -74,13 +85,29 @@ public abstract class ResourceTest extends JerseyTest {
     @Before
     public void before() throws Exception {
         dbReset();
+        // Add a test user and team with API key. Optional if this is used, but its available to all tests.
         this.qm = new QueryManager();
+        testUser = qm.createManagedUser("testuser", String.valueOf(PasswordService.createHash("testuser".toCharArray())));
+        team = qm.createTeam("Test Users", true);
+        qm.addUserToTeam(testUser, team);
+        this.apiKey = team.getApiKeys().get(0).getKey();
     }
 
     @After
     public void after() throws Exception {
         dbReset();
         this.qm.close();
+    }
+
+    public void initializeWithPermissions(Permissions... permissions) {
+        List<Permission> permissionList = new ArrayList<>();
+        for (Permissions permission: permissions) {
+            permissionList.add(qm.createPermission(permission.name(), null));
+        }
+        testUser.setPermissions(permissionList);
+        team.setPermissions(permissionList);
+        qm.persist(team);
+        testUser = qm.persist(testUser);
     }
 
     protected String getPlainTextBody(Response response) {

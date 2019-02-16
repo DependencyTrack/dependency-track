@@ -597,7 +597,7 @@ public class QueryManager extends AlpineQueryManager {
     public PaginatedResult getComponents() {
         final Query query = pm.newQuery(Component.class);
         if (orderBy == null) {
-            query.setOrdering("name asc");
+            query.setOrdering("name asc, version desc");
         }
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:name)");

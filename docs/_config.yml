@@ -28,6 +28,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-feed
   - jekyll-redirect-from
+  - jekyll-mermaid
 
 exclude:
   - Gemfile

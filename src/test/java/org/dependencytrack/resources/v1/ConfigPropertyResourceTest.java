@@ -161,9 +161,9 @@ public class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     public void updateConfigPropertyEncryptedStringTest() {
-        ConfigProperty property = qm.createConfigProperty("my.group", "my.encryptedString", "jaalfF*45lajf", IConfigProperty.PropertyType.ENCRYPTEDSTRING, "A encrypted string");
+        ConfigProperty property = qm.createConfigProperty("my.group", "my.encryptedString", "aaaaa", IConfigProperty.PropertyType.ENCRYPTEDSTRING, "A encrypted string");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
-        request.setPropertyValue("jkllF*9430ala");
+        request.setPropertyValue("bbbbb");
         Response response = target(V1_CONFIG_PROPERTY).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(request, MediaType.APPLICATION_JSON));

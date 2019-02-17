@@ -74,7 +74,7 @@ public class CweResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The CWE could not be found")
     })
-    public Response getLCwe(
+    public Response getCwe(
             @ApiParam(value = "The CWE ID of the CWE to retrieve", required = true)
             @PathParam("cweId") int cweId) {
         try (QueryManager qm = new QueryManager()) {

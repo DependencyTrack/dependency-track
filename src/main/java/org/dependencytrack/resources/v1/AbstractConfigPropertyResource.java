@@ -41,7 +41,11 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                 return check;
             }
             property = qm.persist(property);
-            return Response.ok(property).build();
+            IConfigProperty detached = qm.detach(property.getClass(), property.getId());
+            if (IConfigProperty.PropertyType.ENCRYPTEDSTRING == detached.getPropertyType()) {
+                detached.setPropertyValue(ENCRYPTED_PLACEHOLDER);
+            }
+            return Response.ok(detached).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("The config property could not be found.").build();
         }

@@ -6,6 +6,9 @@ env:
   - secure: E/b1Py2L8TaCfHIBskdm0RgjcvPjKwjE7CTcKoiTR6TI4fSb2CKjBJBNRW2spFG825OttGKNoaWlIFBTMnXYGswUnuTfQlL/ngTct62nlMQ1H8YI2+2UQ61R2q9vbl5DeREzrXzHrSTX7qPx4m5rwCmvA5D7suKdzqgz7ToIQ6I=
 
 addons:
+  apt:
+    packages:
+    - oracle-java8-installer
   coverity_scan:
     project:
       name: stevespringett/dependency-track

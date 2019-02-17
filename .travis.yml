@@ -6,10 +6,6 @@ env:
   - secure: E/b1Py2L8TaCfHIBskdm0RgjcvPjKwjE7CTcKoiTR6TI4fSb2CKjBJBNRW2spFG825OttGKNoaWlIFBTMnXYGswUnuTfQlL/ngTct62nlMQ1H8YI2+2UQ61R2q9vbl5DeREzrXzHrSTX7qPx4m5rwCmvA5D7suKdzqgz7ToIQ6I=
 
 addons:
-  apt:
-    packages:
-    - oracle-java8-installer
-    - oracle-java8-unlimited-jce-policy
   coverity_scan:
     project:
       name: stevespringett/dependency-track
@@ -25,6 +21,8 @@ addons:
 
 before_install:
   - sudo apt-get install jq
+  - sudo add-apt-repository ppa:webupd8team/java -y
+  - sudo apt install oracle-java8-unlimited-jce-policy -y
   - wget -O ~/codacy-coverage-reporter-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
 
 before_script:

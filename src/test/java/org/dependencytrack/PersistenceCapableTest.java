@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import javax.jdo.PersistenceManager;
 import javax.jdo.datastore.JDOConnection;
+import java.security.Security;
 import java.sql.Connection;
 import java.sql.Statement;
 
@@ -35,6 +36,7 @@ public abstract class PersistenceCapableTest {
     @BeforeClass
     public static void init() {
         Config.enableUnitTests();
+        Security.setProperty("crypto.policy", "unlimited");
     }
 
     @Before

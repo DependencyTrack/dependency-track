@@ -20,9 +20,12 @@ addons:
       secure: A2WvgrmCiiwS8k2ofWXL+LtRlLKtmDlEjjngQRRqj1Uk/p5CLsNHI65Nb8kpLJq83JpxmqK51KBJlC9ZuCVXSGWAx4pleouz4l8vp5qi38RzBTgUlhUXr5rGjDMpxsQZtDguC4/j+DmPSxDTdyDKsnXvwSJbboRAhrfPRqAzxJ4=
 
 before_install:
-  - sudo apt-get install jq
   - sudo add-apt-repository ppa:webupd8team/java -y
+  - sudo apt-get update -q
+  - sudo apt-get install jq
+  - sudo apt install oracle-java8-installer -y
   - sudo apt install oracle-java8-unlimited-jce-policy -y
+  - sudo apt install oracle-java8-set-default -y
   - wget -O ~/codacy-coverage-reporter-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
 
 before_script:

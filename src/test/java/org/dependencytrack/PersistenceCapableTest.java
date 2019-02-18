@@ -25,9 +25,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import javax.jdo.PersistenceManager;
 import javax.jdo.datastore.JDOConnection;
-import java.security.Security;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
 import java.sql.Connection;
 import java.sql.Statement;
+
+import static org.mockito.Mockito.mock;
 
 public abstract class PersistenceCapableTest {
 
@@ -35,7 +38,8 @@ public abstract class PersistenceCapableTest {
 
     @BeforeClass
     public static void init() {
-        Security.setProperty("crypto.policy", "unlimited");
+        RequirementsVerifier verifier = new RequirementsVerifier();
+        verifier.contextInitialized(new ServletContextEvent(mock(ServletContext.class)));
         Config.enableUnitTests();
     }
 

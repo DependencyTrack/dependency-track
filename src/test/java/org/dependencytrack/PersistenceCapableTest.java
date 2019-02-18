@@ -25,12 +25,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import javax.jdo.PersistenceManager;
 import javax.jdo.datastore.JDOConnection;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
 import java.sql.Connection;
 import java.sql.Statement;
-
-import static org.mockito.Mockito.mock;
 
 public abstract class PersistenceCapableTest {
 
@@ -38,8 +34,6 @@ public abstract class PersistenceCapableTest {
 
     @BeforeClass
     public static void init() {
-        RequirementsVerifier verifier = new RequirementsVerifier();
-        verifier.contextInitialized(new ServletContextEvent(mock(ServletContext.class)));
         Config.enableUnitTests();
     }
 

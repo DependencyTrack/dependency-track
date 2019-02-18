@@ -32,15 +32,12 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.dependencytrack.PersistenceCapableTest.dbReset;
-import static org.mockito.Mockito.mock;
 
 public abstract class ResourceTest extends JerseyTest {
 
@@ -82,8 +79,6 @@ public abstract class ResourceTest extends JerseyTest {
 
     @BeforeClass
     public static void init() {
-        RequirementsVerifier verifier = new RequirementsVerifier();
-        verifier.contextInitialized(new ServletContextEvent(mock(ServletContext.class)));
         Config.enableUnitTests();
     }
 

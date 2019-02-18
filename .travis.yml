@@ -33,7 +33,7 @@ before_script:
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
 
 script:
-  - mvn -X clean package sonar:sonar
+  - mvn clean package sonar:sonar
   - mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 

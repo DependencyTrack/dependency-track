@@ -26,6 +26,7 @@ before_install:
   - sudo apt install oracle-java8-installer -y
   - sudo apt install oracle-java8-unlimited-jce-policy -y
   - sudo apt install oracle-java8-set-default -y
+  - java -version
   - wget -O ~/codacy-coverage-reporter-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
 
 before_script:
@@ -33,7 +34,7 @@ before_script:
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
 
 script:
-  - mvn clean package sonar:sonar
+  - mvn -X clean package sonar:sonar
   - mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 

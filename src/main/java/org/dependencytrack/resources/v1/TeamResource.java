@@ -114,7 +114,6 @@ public class TeamResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    //public Response createTeam(String jsonRequest) {
     public Response createTeam(Team jsonTeam) {
         //Team team = MapperUtil.readAsObjectOf(Team.class, jsonRequest);
         final Validator validator = super.getValidator();

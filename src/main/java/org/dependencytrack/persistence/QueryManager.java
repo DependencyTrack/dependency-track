@@ -1192,7 +1192,7 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
-        query.setOrdering("component.name asc");
+        query.setOrdering("component.name asc, component.version desc");
         if (filter != null) {
             query.setFilter("project == :project && component.name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";

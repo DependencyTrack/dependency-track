@@ -70,8 +70,7 @@ public class LicenseResource extends AlpineResource {
     @ApiOperation(
             value = "Returns a concise listing of all licenses",
             response = License.class,
-            responseContainer = "List",
-            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of licenses")
+            responseContainer = "List"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -79,7 +78,7 @@ public class LicenseResource extends AlpineResource {
     public Response getLicenseListing() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<License> result = qm.getAllLicensesConcise();
-            return Response.ok(result).header(TOTAL_COUNT_HEADER, result.size()).build();
+            return Response.ok(result).build();
         }
     }
 

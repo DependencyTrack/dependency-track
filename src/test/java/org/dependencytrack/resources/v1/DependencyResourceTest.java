@@ -19,15 +19,12 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.filters.AuthenticationFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.resources.v1.vo.DependencyRequest;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.json.JsonUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonArray;

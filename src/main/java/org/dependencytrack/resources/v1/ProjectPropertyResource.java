@@ -124,9 +124,15 @@ public class ProjectPropertyResource extends AbstractConfigPropertyResource {
                     final ProjectProperty property = qm.createProjectProperty(project,
                             StringUtils.trimToNull(json.getGroupName()),
                             StringUtils.trimToNull(json.getPropertyName()),
-                            StringUtils.trimToNull(json.getPropertyValue()),
+                            null, // Set value to null - this will be taken care of by updatePropertyValue below
                             json.getPropertyType(),
                             StringUtils.trimToNull(json.getDescription()));
+                    updatePropertyValue(qm, json, property);
+                    qm.getPersistenceManager().detachCopy(project);
+                    qm.close();
+                    if (ProjectProperty.PropertyType.ENCRYPTEDSTRING == property.getPropertyType()) {
+                        property.setPropertyValue(ENCRYPTED_PLACEHOLDER);
+                    }
                     return Response.status(Response.Status.CREATED).entity(property).build();
                 } else {
                     return Response.status(Response.Status.CONFLICT).entity("A property with the specified project/group/name combination already exists.").build();

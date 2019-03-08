@@ -18,26 +18,34 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonObject;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
 public class CalculatorResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(CalculatorResource.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(CalculatorResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Test
     public void getCvssScoresV3Test() {
         Response response = target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -51,7 +59,9 @@ public class CalculatorResourceTest extends ResourceTest {
     public void getCvssScoresV2Test() {
         Response response = target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "(AV:N/AC:L/Au:N/C:P/I:P/A:P)")
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -65,7 +75,9 @@ public class CalculatorResourceTest extends ResourceTest {
     public void getCvssScoresInvalidTest() {
         Response response = target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "foobar")
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(400, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);

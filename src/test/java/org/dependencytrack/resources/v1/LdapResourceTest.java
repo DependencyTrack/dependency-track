@@ -23,12 +23,14 @@ import alpine.model.MappedLdapGroup;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.UUID;
@@ -36,9 +38,11 @@ import java.util.UUID;
 public class LdapResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(LdapResource.class)
-                .register(AuthenticationFilter.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(LdapResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Test

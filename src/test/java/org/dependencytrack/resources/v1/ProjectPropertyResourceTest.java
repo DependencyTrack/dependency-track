@@ -25,12 +25,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.UUID;
@@ -38,9 +40,11 @@ import java.util.UUID;
 public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(ProjectPropertyResource.class)
-                .register(AuthenticationFilter.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(ProjectPropertyResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Test

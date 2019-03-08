@@ -26,20 +26,24 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import java.util.UUID;
 
 public class FindingResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(FindingResource.class)
-                .register(AuthenticationFilter.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(FindingResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Test

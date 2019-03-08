@@ -22,6 +22,9 @@ import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,9 +36,11 @@ import javax.ws.rs.core.Response;
 public class LicenseResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(LicenseResource.class)
-                .register(AuthenticationFilter.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(LicenseResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Before

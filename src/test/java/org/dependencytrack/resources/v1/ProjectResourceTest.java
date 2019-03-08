@@ -17,17 +17,20 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.AuthenticationFilter;
 import alpine.util.UuidUtil;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -37,8 +40,11 @@ import java.util.UUID;
 public class ProjectResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(ProjectResource.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(ProjectResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Test
@@ -46,7 +52,10 @@ public class ProjectResourceTest extends ResourceTest {
         for (int i=0; i<1000; i++) {
             qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, false);
         }
-        Response response = target(V1_PROJECT).request().get(Response.class);
+        Response response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(1000), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -63,7 +72,9 @@ public class ProjectResourceTest extends ResourceTest {
         Response response = target(V1_PROJECT)
                 .queryParam(ORDER_BY, "name")
                 .queryParam(SORT, SORT_ASC)
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -78,7 +89,9 @@ public class ProjectResourceTest extends ResourceTest {
         Response response = target(V1_PROJECT)
                 .queryParam(ORDER_BY, "name")
                 .queryParam(SORT, SORT_DESC)
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -90,7 +103,9 @@ public class ProjectResourceTest extends ResourceTest {
     public void getProjectByUuidTest() {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/" + project.getUuid())
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -102,7 +117,9 @@ public class ProjectResourceTest extends ResourceTest {
     public void getProjectByInvalidUuidTest() {
         qm.createProject("ABC", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/" + UUID.randomUUID())
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
@@ -117,7 +134,9 @@ public class ProjectResourceTest extends ResourceTest {
         qm.createProject("ABC", null, "1.0", tags, null, null, false);
         qm.createProject("DEF", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/tag/" + "production")
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -133,7 +152,9 @@ public class ProjectResourceTest extends ResourceTest {
         qm.createProject("ABC", null, "1.0", tags, null, null, false);
         qm.createProject("DEF", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/tag/" + "stable")
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
@@ -148,7 +169,9 @@ public class ProjectResourceTest extends ResourceTest {
         project.setVersion("1.0");
         project.setDescription("Test project");
         Response response = target(V1_PROJECT)
-                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
@@ -164,10 +187,14 @@ public class ProjectResourceTest extends ResourceTest {
         project.setName("Acme Example");
         project.setVersion("1.0");
         Response response = target(V1_PROJECT)
-                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(201, response.getStatus(), 0);
         response = target(V1_PROJECT)
-                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
         String body = getPlainTextBody(response);
         Assert.assertEquals("A project with the specified name already exists.", body);
@@ -178,7 +205,9 @@ public class ProjectResourceTest extends ResourceTest {
         Project project = new Project();
         project.setName(" ");
         Response response = target(V1_PROJECT)
-                .request().put(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
     }
 
@@ -187,7 +216,9 @@ public class ProjectResourceTest extends ResourceTest {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
         project.setDescription("Test project");
         Response response = target(V1_PROJECT)
-                .request().post(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
@@ -201,7 +232,9 @@ public class ProjectResourceTest extends ResourceTest {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
         project.setName(" ");
         Response response = target(V1_PROJECT)
-                .request().post(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(400, response.getStatus(), 0);
     }
 
@@ -211,7 +244,9 @@ public class ProjectResourceTest extends ResourceTest {
         Project project = qm.createProject("DEF", null, "1.0", null, null, null, false);
         project.setName("ABC");
         Response response = target(V1_PROJECT)
-                .request().post(Entity.entity(project, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
         Assert.assertEquals(409, response.getStatus(), 0);
         String body = getPlainTextBody(response);
         Assert.assertEquals("A project with the specified name and version already exists.", body);
@@ -221,7 +256,9 @@ public class ProjectResourceTest extends ResourceTest {
     public void deleteProjectTest() {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/" + project.getUuid().toString())
-                .request().delete();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
@@ -229,7 +266,9 @@ public class ProjectResourceTest extends ResourceTest {
     public void deleteProjectInvalidUuidTest() {
         qm.createProject("ABC", null, "1.0", null, null, null, false);
         Response response = target(V1_PROJECT + "/" + UUID.randomUUID().toString())
-                .request().delete();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
     }
 

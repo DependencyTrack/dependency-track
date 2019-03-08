@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
@@ -27,11 +28,13 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+import org.glassfish.jersey.test.DeploymentContext;
+import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -41,8 +44,11 @@ import java.util.UUID;
 public class AnalysisResourceTest extends ResourceTest {
 
     @Override
-    protected Application configure() {
-        return new ResourceConfig(AnalysisResource.class);
+    protected DeploymentContext configureDeployment() {
+        return ServletDeploymentContext.forServlet(new ServletContainer(
+                new ResourceConfig(AnalysisResource.class)
+                        .register(AuthenticationFilter.class)))
+                .build();
     }
 
     @Test
@@ -65,7 +71,9 @@ public class AnalysisResourceTest extends ResourceTest {
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vulnerability.getUuid())
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -93,7 +101,9 @@ public class AnalysisResourceTest extends ResourceTest {
                 .queryParam("project", UUID.randomUUID())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", vulnerability.getUuid())
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
@@ -119,7 +129,9 @@ public class AnalysisResourceTest extends ResourceTest {
                 .queryParam("project", project.getUuid())
                 .queryParam("component", UUID.randomUUID())
                 .queryParam("vulnerability", vulnerability.getUuid())
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
@@ -145,7 +157,9 @@ public class AnalysisResourceTest extends ResourceTest {
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
                 .queryParam("vulnerability", UUID.randomUUID())
-                .request().get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         Assert.assertEquals(404, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
@@ -171,7 +185,9 @@ public class AnalysisResourceTest extends ResourceTest {
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
         Response response = target(V1_ANALYSIS + "/global")
-                .request().put(Entity.entity(request, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -203,7 +219,9 @@ public class AnalysisResourceTest extends ResourceTest {
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
         Response response = target(V1_ANALYSIS)
-                .request().put(Entity.entity(request, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -235,7 +253,9 @@ public class AnalysisResourceTest extends ResourceTest {
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
         Response response = target(V1_ANALYSIS)
-                .request().put(Entity.entity(request, MediaType.APPLICATION_JSON));
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);

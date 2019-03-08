@@ -25,6 +25,8 @@ import alpine.model.Team;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.test.JerseyTest;
+import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
+import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -97,6 +99,11 @@ public abstract class ResourceTest extends JerseyTest {
     public void after() throws Exception {
         dbReset();
         this.qm.close();
+    }
+
+    @Override
+    protected TestContainerFactory getTestContainerFactory() {
+        return new GrizzlyWebTestContainerFactory();
     }
 
     public void initializeWithPermissions(Permissions... permissions) {

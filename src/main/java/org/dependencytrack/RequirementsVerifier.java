@@ -19,6 +19,7 @@ package org.dependencytrack;
 
 import alpine.logging.Logger;
 import alpine.util.JavaVersion;
+import org.dependencytrack.exception.RequirementsException;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -27,37 +28,43 @@ public class RequirementsVerifier implements ServletContextListener {
     private static final Logger LOGGER = Logger.getLogger(RequirementsVerifier.class);
     private static boolean failedValidation = false;
 
+    private static synchronized void setFailedValidation(boolean value) {
+        failedValidation = value;
+    }
+
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextInitialized(final ServletContextEvent event) {
         final JavaVersion javaVersion = new JavaVersion();
         if (javaVersion.getMajor() != 8 || javaVersion.getUpdate() < 161) {
-            failedValidation = true;
+            setFailedValidation(true);
             final String message = "Dependency-Track requires Java 8 with a minimum update of 162 or higher. Cannot continue.";
             LOGGER.error("Using Java version: " + javaVersion.toString());
             LOGGER.error(message);
-            throw new RuntimeException(message);
+            throw new RequirementsException(message);
         }
         if (Runtime.getRuntime().maxMemory()/1024/1024 <= 3584) {
-            failedValidation = true;
+            setFailedValidation(true);
             // too complicated to calculate (Eden, Survivor, Tenured) and different type names between Java versions.
             // Therefore, safely assume anything above 3.5GB available max memory is likely to be 4GB or higher.
             final String message = "Dependency-Track requires a minimum of 4GB RAM (heap). Cannot continue. To fix, specify -Xmx4G (or higher) when executing Java.";
             LOGGER.error(message);
-            throw new RuntimeException(message);
+            throw new RequirementsException(message);
         }
         if (Runtime.getRuntime().availableProcessors() < 2) {
-            failedValidation = true;
+            setFailedValidation(true);
             final String message = "Dependency-Track requires a minimum of 2 CPU cores. Cannot continue.";
             LOGGER.error(message);
-            throw new RuntimeException(message);
+            throw new RequirementsException(message);
         }
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }

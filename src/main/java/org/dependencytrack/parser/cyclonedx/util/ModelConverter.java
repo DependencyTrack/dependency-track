@@ -83,7 +83,7 @@ public class ModelConverter {
             component.setClassifier(Classifier.DEVICE);
         }
 
-        if (cycloneDxComponent.getHashes() != null && cycloneDxComponent.getHashes().size() > 0) {
+        if (cycloneDxComponent.getHashes() != null && !cycloneDxComponent.getHashes().isEmpty()) {
             for (final Hash hash : cycloneDxComponent.getHashes()) {
                 if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                     component.setMd5(StringUtils.trimToNull(hash.getValue()));
@@ -101,7 +101,7 @@ public class ModelConverter {
             }
         }
 
-        if (cycloneDxComponent.getLicenses() != null && cycloneDxComponent.getLicenses().size() > 0) {
+        if (cycloneDxComponent.getLicenses() != null && !cycloneDxComponent.getLicenses().isEmpty()) {
             for (final org.cyclonedx.model.License cycloneLicense : cycloneDxComponent.getLicenses()) {
                 if (StringUtils.isNotBlank(cycloneLicense.getId())) {
                     final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
@@ -113,7 +113,7 @@ public class ModelConverter {
             }
         }
 
-        if (cycloneDxComponent.getComponents() != null && cycloneDxComponent.getComponents().size() > 0) {
+        if (cycloneDxComponent.getComponents() != null && !cycloneDxComponent.getComponents().isEmpty()) {
             final Collection<Component> components = new ArrayList<>();
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
                 components.add(convert(qm, cycloneDxComponent.getComponents().get(i)));
@@ -140,18 +140,16 @@ public class ModelConverter {
 
         String type = "library";
         if (component.getClassifier() != null) {
-            if (component.getClassifier() != null) {
-                if (component.getClassifier() == Classifier.APPLICATION) {
-                    type = "application";
-                } else if (component.getClassifier() == Classifier.FRAMEWORK) {
-                    type = "framework";
-                } else if (component.getClassifier() == Classifier.LIBRARY) {
-                    type = "library";
-                } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
-                    type = "operating-system";
-                } else if (component.getClassifier() == Classifier.DEVICE) {
-                    type = "device";
-                }
+            if (component.getClassifier() == Classifier.APPLICATION) {
+                type = "application";
+            } else if (component.getClassifier() == Classifier.FRAMEWORK) {
+                type = "framework";
+            } else if (component.getClassifier() == Classifier.LIBRARY) {
+                type = "library";
+            } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
+                type = "operating-system";
+            } else if (component.getClassifier() == Classifier.DEVICE) {
+                type = "device";
             }
         }
         cycloneComponent.setType(type);

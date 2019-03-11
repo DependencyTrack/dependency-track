@@ -37,6 +37,7 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextInitialized(final ServletContextEvent event) {
         if (RequirementsVerifier.failedValidation()) {
             return;
@@ -47,6 +48,7 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextDestroyed(final ServletContextEvent event) {
         NOTIFICATION_SERVICE.shutdown();
     }

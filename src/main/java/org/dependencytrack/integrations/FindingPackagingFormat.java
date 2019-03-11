@@ -34,6 +34,17 @@ public class FindingPackagingFormat {
 
     /** FPF is versioned. If the format changes, the version needs to be bumped. */
     private static final String FPF_VERSION = "1.0";
+    private static final String FIELD_APPLICATION = "application";
+    private static final String FIELD_VERSION = "version";
+    private static final String FIELD_TIMESTAMP = "timestamp";
+    private static final String FIELD_BASE_URL = "baseUrl";
+    private static final String FIELD_UUID = "uuid";
+    private static final String FIELD_DESCRIPTION = "description";
+    private static final String FIELD_NAME = "name";
+    private static final String FIELD_PURL = "purl";
+    private static final String FIELD_META = "meta";
+    private static final String FIELD_PROJECT = "project";
+    private static final String FIELD_FINDINGS = "findings";
 
     private final JSONObject payload;
 
@@ -57,11 +68,11 @@ public class FindingPackagingFormat {
                 identify what type of file it is, and what type of system generated it.
              */
             final JSONObject meta = new JSONObject();
-            meta.put("application", about.getApplication());
-            meta.put("version", about.getVersion());
-            meta.put("timestamp", DateUtil.toISO8601(new Date()));
+            meta.put(FIELD_APPLICATION, about.getApplication());
+            meta.put(FIELD_VERSION, about.getVersion());
+            meta.put(FIELD_TIMESTAMP, DateUtil.toISO8601(new Date()));
             if (baseUrl != null && baseUrl.getPropertyValue() != null) {
-                meta.put("baseUrl", baseUrl.getPropertyValue());
+                meta.put(FIELD_BASE_URL, baseUrl.getPropertyValue());
             }
 
 
@@ -72,16 +83,16 @@ public class FindingPackagingFormat {
                 to discover basic project information.
              */
             final JSONObject projectJson = new JSONObject();
-            projectJson.put("uuid", project.getUuid());
-            projectJson.put("name", project.getName());
+            projectJson.put(FIELD_UUID, project.getUuid());
+            projectJson.put(FIELD_NAME, project.getName());
             if (project.getVersion() != null) {
-                projectJson.put("version", project.getVersion());
+                projectJson.put(FIELD_VERSION, project.getVersion());
             }
             if (project.getDescription() != null) {
-                projectJson.put("description", project.getDescription());
+                projectJson.put(FIELD_DESCRIPTION, project.getDescription());
             }
             if (project.getPurl() != null) {
-                projectJson.put("purl", project.getPurl());
+                projectJson.put(FIELD_PURL, project.getPurl());
             }
 
 
@@ -90,10 +101,10 @@ public class FindingPackagingFormat {
                 to a root json object and return.
              */
             final JSONObject root = new JSONObject();
-            root.put("version", FPF_VERSION);
-            root.put("meta", meta);
-            root.put("project", projectJson);
-            root.put("findings", findings);
+            root.put(FIELD_VERSION, FPF_VERSION);
+            root.put(FIELD_META, meta);
+            root.put(FIELD_PROJECT, projectJson);
+            root.put(FIELD_FINDINGS, findings);
             return root;
         }
     }

@@ -58,6 +58,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextInitialized(final ServletContextEvent event) {
         if (RequirementsVerifier.failedValidation()) {
             return;
@@ -86,6 +87,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextDestroyed(final ServletContextEvent event) {
         TaskScheduler.getInstance().shutdown();
 

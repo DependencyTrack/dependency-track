@@ -44,6 +44,7 @@ public class UpgradeInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing upgrade framework");
 
@@ -78,6 +79,7 @@ public class UpgradeInitializer implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }

@@ -46,6 +46,7 @@ public class v320Updater extends AbstractUpgradeItem {
     /**
      * Overriding due to an issue with Dependency-Track 3.1.x and PostgreSQL upgrade framework incompatability.
      */
+    @Override
     public boolean shouldUpgrade(AlpineQueryManager queryManager, Connection connection) {
         try {
             UpgradeMetaProcessor ump = new UpgradeMetaProcessor(connection);

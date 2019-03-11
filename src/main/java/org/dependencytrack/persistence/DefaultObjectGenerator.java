@@ -58,6 +58,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextInitialized(final ServletContextEvent event) {
         if (RequirementsVerifier.failedValidation()) {
             return;
@@ -98,6 +99,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void contextDestroyed(final ServletContextEvent event) {
         /* Intentionally blank to satisfy interface */
     }
@@ -143,7 +145,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     private void loadDefaultPersonas() {
         try (QueryManager qm = new QueryManager()) {
-            if (qm.getManagedUsers().size() > 0 && qm.getTeams().size() > 0) {
+            if (!qm.getManagedUsers().isEmpty() && !qm.getTeams().isEmpty()) {
                 return;
             }
             LOGGER.info("Adding default users and teams to datastore");

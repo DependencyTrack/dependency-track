@@ -40,7 +40,7 @@
                 <div class="row">
                     <div class="col-sm-6 col-md-6">
                         <a href="https://dependencytrack.org/">
-                            <img src="<c:url value="/images/dt.svg"/>" style="width:200px; margin-bottom:20px">
+                            <img src="<c:url value="/images/dt.svg"/>" alt="Dependency-Track logo" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
                             Dependency-Track is an intelligent Software Composition Analysis (SCA) platform
@@ -56,7 +56,7 @@
                     </div>
                     <div class="col-sm-6 col-md-6">
                         <a href="https://github.com/stevespringett/Alpine">
-                            <img src="<c:url value="/images/Alpine.svg"/>" style="width:200px; margin-bottom:20px">
+                            <img src="<c:url value="/images/Alpine.svg"/>" alt="Alpine logo" style="width:200px; margin-bottom:20px">
                         </a>
                         <p>
                             Alpine is an opinionated scaffolding framework that jump-starts Java projects with
@@ -108,7 +108,7 @@
         <div class="modal-dialog vertical-align-center">
             <div class="modal-content login-modal-content">
                 <div class="modal-header login-modal-header login-header">
-                    <img src="<c:url value="/images/dt.svg"/>" style="width:200px"/>
+                    <img src="<c:url value="/images/dt.svg"/>" alt="Dependency-Track logo" style="width:200px"/>
                 </div>
                 <div class="modal-body login-modal-body">
                     <form id="login-form" role="form" action="" method="post" class="login-form" autocomplete="off">
@@ -133,7 +133,7 @@
         <div class="modal-dialog vertical-align-center">
             <div class="modal-content login-modal-content">
                 <div class="modal-header login-modal-header login-header">
-                    <img src="<c:url value="/images/dt.svg"/>" style="width:200px"/>
+                    <img src="<c:url value="/images/dt.svg"/>" alt="Dependency-Track logo" style="width:200px"/>
                 </div>
                 <div class="modal-body login-modal-body">
                     <form id="forcePasswordChange-form" role="form" action="" method="post" class="login-form" autocomplete="off">

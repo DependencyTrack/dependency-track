@@ -16,8 +16,8 @@
             </button>
             <div>
                 <a href="<c:url value="/"/>">
-                    <img src="<c:url value="/images/dt-icon.svg"/>" style="height:44px; margin-top:4px; margin-right:10px"/>
-                    <img src="<c:url value="/images/dt-title.svg"/>" style="height:12px; margin-top:6px;"/>
+                    <img src="<c:url value="/images/dt-icon.svg"/>" alt="" style="height:44px; margin-top:4px; margin-right:10px"/>
+                    <img src="<c:url value="/images/dt-title.svg"/>" alt="" style="height:12px; margin-top:6px;"/>
                 </a>
             </div>
         </div>

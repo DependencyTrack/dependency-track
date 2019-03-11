@@ -38,9 +38,8 @@ public final class CompressUtil {
      * @return a byte array
      */
     public static byte[] optionallyDecompress(final byte[] input) {
-        try {
-            final ByteArrayInputStream bis = new ByteArrayInputStream(input);
-            final ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(bis);
+        try (final ByteArrayInputStream bis = new ByteArrayInputStream(input);
+             final ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(bis)) {
             final ArchiveEntry entry = ais.getNextEntry();
             if (ais.canReadEntryData(entry)) {
                 return IOUtils.toByteArray(ais);

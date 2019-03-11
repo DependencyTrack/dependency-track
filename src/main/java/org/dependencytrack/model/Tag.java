@@ -34,6 +34,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Model for assigning tags to specific objects.
@@ -90,10 +91,14 @@ public class Tag implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        if (object != null && object instanceof Tag) {
+        if (object instanceof Tag) {
             return this.id == ((Tag) object).id;
         }
         return false;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

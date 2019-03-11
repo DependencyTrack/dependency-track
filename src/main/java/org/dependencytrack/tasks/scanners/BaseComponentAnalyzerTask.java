@@ -94,14 +94,12 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     }
 
     protected void doThrottleDelay() {
-        final Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
         if (throttleDelay > 0) {
-            try {
-                Thread.sleep(throttleDelay);
-            } catch (InterruptedException e) {
-                logger.error("An error occurred while throttling the scanner.", e);
+            long now = System.currentTimeMillis();
+            final long delayUntil = now + throttleDelay;
+            while(now < delayUntil) {
+                now = System.currentTimeMillis();
             }
         }
     }
-
 }

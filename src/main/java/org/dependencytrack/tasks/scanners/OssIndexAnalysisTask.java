@@ -285,14 +285,14 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
             if (cvss != null) {
                 final Score score = cvss.calculateScore();
                 if (cvss instanceof CvssV2) {
-                    vulnerability.setCvssV2BaseScore(new BigDecimal(score.getBaseScore()));
-                    vulnerability.setCvssV2ImpactSubScore(new BigDecimal(score.getImpactSubScore()));
-                    vulnerability.setCvssV2ExploitabilitySubScore(new BigDecimal(score.getExploitabilitySubScore()));
+                    vulnerability.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
+                    vulnerability.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
+                    vulnerability.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
                     vulnerability.setCvssV2Vector(cvss.getVector());
                 } else if (cvss instanceof CvssV3) {
-                    vulnerability.setCvssV3BaseScore(new BigDecimal(score.getBaseScore()));
-                    vulnerability.setCvssV3ImpactSubScore(new BigDecimal(score.getImpactSubScore()));
-                    vulnerability.setCvssV3ExploitabilitySubScore(new BigDecimal(score.getExploitabilitySubScore()));
+                    vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
+                    vulnerability.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
+                    vulnerability.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
                     vulnerability.setCvssV3Vector(cvss.getVector());
                 }
             }

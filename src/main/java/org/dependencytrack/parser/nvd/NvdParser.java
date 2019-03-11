@@ -31,7 +31,6 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonString;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.Date;
@@ -56,9 +55,8 @@ public final class NvdParser {
         LOGGER.info("Parsing " + file.getName());
 
         try (QueryManager qm = new QueryManager();
-             InputStream in = Files.newInputStream(file.toPath())) {
-
-            final JsonReader reader = Json.createReader(in);
+             InputStream in = Files.newInputStream(file.toPath());
+             final JsonReader reader = Json.createReader(in)) {
 
             final JsonObject root = reader.readObject();
             final JsonArray cveItems = root.getJsonArray("CVE_Items");
@@ -119,7 +117,7 @@ public final class NvdParser {
                             final String cweString = prob4.getString("value");
                             if (cweString != null && cweString.startsWith("CWE-")) {
                                 try {
-                                    final int cweId = Integer.parseInt(cweString.substring(4, cweString.length()).trim());
+                                    final int cweId = Integer.parseInt(cweString.substring(4).trim());
                                     final Cwe cwe = qm.getCweById(cweId);
                                     vulnerability.setCwe(cwe);
                                 } catch (NumberFormatException e) {

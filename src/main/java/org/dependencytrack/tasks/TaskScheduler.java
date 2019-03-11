@@ -106,7 +106,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
             final ConfigProperty property = qm.getConfigProperty(constraint.getGroupName(), constraint.getPropertyName());
             if (property != null && property.getPropertyValue() != null) {
                 final Integer minutes = Integer.valueOf(property.getPropertyValue());
-                scheduleEvent(event, initialDelay, minutes * 60 * 1000);
+                scheduleEvent(event, initialDelay, (long)minutes * (long)60 * (long)1000);
             }
         }
     }

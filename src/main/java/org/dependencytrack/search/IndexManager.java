@@ -313,10 +313,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.4.0
      */
     public void reindex() {
-        final File indexDir = getIndexDirectory(indexType);
-        if (indexDir.exists()) {
-            indexDir.delete();
-        }
+        delete(indexType);
     }
 
     /**

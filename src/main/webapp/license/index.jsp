@@ -62,7 +62,7 @@
                                 </tr>
                                 <tr>
                                     <td></td>
-                                    <td><img id="generalOsiLogo" src="<c:url value="/images/osi-logo.svg"/>" width="100"></td>
+                                    <td><img id="generalOsiLogo" src="<c:url value="/images/osi-logo.svg"/>" alt="OSI logo" width="100"></td>
                                 </tr>
                             </table>
                         </div>

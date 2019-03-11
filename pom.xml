@@ -94,6 +94,9 @@
         <!-- Maven Plugin Properties -->
         <plugin.github-release-plugin.version>1.3.0</plugin.github-release-plugin.version>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
+        <!-- SonarCloud properties -->
+        <sonar.exclusions>src/main/webapp/*</sonar.exclusions>
+
     </properties>
 
     <repositories>

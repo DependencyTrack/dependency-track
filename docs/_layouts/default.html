@@ -11,7 +11,6 @@
 		<link rel="apple-touch-icon" href="{{ site.baseurl }}/apple-touch-icon.png">
 		<link rel="icon" type="image/png" href="{{ site.baseurl }}/touch-icon.png" sizes="192x192">
 		<link rel="shortcut icon" type="image/ico" href="{{ site.baseurl }}/favicon.ico"/>
-		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 
 		{% feed_meta %}
 		{% seo %}
@@ -64,7 +63,6 @@
 
 		<section class="main">
 			<div class="page-header">
-				<div style="position:absolute; top:10px"><a class="btn pull-left js-toolbar-action" aria-label="" href="#"><i class="fa fa-align-justify"></i></a></div>
 				<h2>{% if page.category %}{{ page.category }}{% else %}{{ site.title }}{% endif %}</h2>
 				<h3>{{ page.title }}</h3>
 			</div>
@@ -78,6 +76,5 @@
 				document.body.classList.toggle("nav-open");
 			});
 		</script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js" defer></script>
 	</body>
 </html>

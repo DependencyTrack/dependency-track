@@ -65,9 +65,7 @@ public class UpgradeInitializer implements ServletContextListener {
         }
         final PersistenceManager pm = pmf.getPersistenceManager();
         final QueryManager qm = new QueryManager(pm);
-        final UpgradeExecutor executor = new UpgradeExecutor(qm);
-
-        try {
+        try (final UpgradeExecutor executor = new UpgradeExecutor(qm)) {
             executor.executeUpgrades(UpgradeItems.getUpgradeItems());
         }
         catch (UpgradeException e) {

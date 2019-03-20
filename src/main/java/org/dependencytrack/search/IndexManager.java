@@ -174,13 +174,13 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.0.0
      */
     protected QueryParser getQueryParser() {
-        try (final Analyzer analyzer = new StandardAnalyzer()) {
-            if (qparser == null) {
-                qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
-                qparser.setAllowLeadingWildcard(true);
-            }
-            return qparser;
+        // DO NOT close (either manually or try-with-resource) the Analyzer
+        final Analyzer analyzer = new StandardAnalyzer();
+        if (qparser == null) {
+            qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
+            qparser.setAllowLeadingWildcard(true);
         }
+        return qparser;
     }
 
     /**

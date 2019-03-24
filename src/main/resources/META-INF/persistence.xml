@@ -16,11 +16,9 @@
   ~
   ~ Copyright (c) Steve Springett. All Rights Reserved.
   -->
-
-<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd" version="1.0">
-
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd" version="2.2">
     <persistence-unit name="Alpine">
         <class>org.dependencytrack.model.Analysis</class>
         <class>org.dependencytrack.model.AnalysisComment</class>
@@ -47,5 +45,4 @@
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
     </persistence-unit>
-
 </persistence>

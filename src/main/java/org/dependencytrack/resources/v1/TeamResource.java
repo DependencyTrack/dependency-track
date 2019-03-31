@@ -86,7 +86,7 @@ public class TeamResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The user could not be found")
+            @ApiResponse(code = 404, message = "The team could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response getTeam(
@@ -97,7 +97,7 @@ public class TeamResource extends AlpineResource {
             if (team != null) {
                 return Response.ok(team).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
         }
     }
@@ -138,10 +138,14 @@ public class TeamResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team could not be found")
+            @ApiResponse(code = 404, message = "The team could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response updateTeam(Team jsonTeam) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonTeam, "name")
+        );
         try (QueryManager qm = new QueryManager()) {
             Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid());
             if (team != null) {
@@ -151,7 +155,7 @@ public class TeamResource extends AlpineResource {
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team updated: " + team.getName());
                 return Response.ok(team).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
         }
     }
@@ -165,7 +169,7 @@ public class TeamResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team could not be found")
+            @ApiResponse(code = 404, message = "The team could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteTeam(Team jsonTeam) {
@@ -177,7 +181,7 @@ public class TeamResource extends AlpineResource {
                 qm.delete(team);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
         }
     }
@@ -192,7 +196,7 @@ public class TeamResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The UUID of the team could not be found")
+            @ApiResponse(code = 404, message = "The team could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response generateApiKey(
@@ -204,7 +208,7 @@ public class TeamResource extends AlpineResource {
                 final ApiKey apiKey = qm.createApiKey(team);
                 return Response.status(Response.Status.CREATED).entity(apiKey).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
             }
         }
     }

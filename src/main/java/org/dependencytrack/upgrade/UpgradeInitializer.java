@@ -64,15 +64,15 @@ public class UpgradeInitializer implements ServletContextListener {
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
-        final PersistenceManager pm = pmf.getPersistenceManager();
-        final QueryManager qm = new QueryManager(pm);
-        try (final UpgradeExecutor executor = new UpgradeExecutor(qm)) {
-            executor.executeUpgrades(UpgradeItems.getUpgradeItems());
+        try (final PersistenceManager pm = pmf.getPersistenceManager();
+             final QueryManager qm = new QueryManager(pm)) {
+            final UpgradeExecutor executor = new UpgradeExecutor(qm);
+            try {
+                executor.executeUpgrades(UpgradeItems.getUpgradeItems());
+            } catch (UpgradeException e) {
+                LOGGER.error("An error occurred performing upgrade processing. " + e.getMessage());
+            }
         }
-        catch (UpgradeException e) {
-            LOGGER.error("An error occurred performing upgrade processing. " + e.getMessage());
-        }
-        pm.close();
         pmf.close();
     }
 

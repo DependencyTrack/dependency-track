@@ -20,16 +20,14 @@ package org.dependencytrack.upgrade.v350;
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
-import org.apache.commons.lang.StringUtils;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.QueryManager;
+import alpine.util.DbUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 public class v350Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v350Updater.class);
-
+    private static final String STMT_1 = "UPDATE \"PROJECT\" SET \"NAME\" = '(Undefined)' WHERE \"NAME\" IS NULL OR LTRIM(RTRIM(\"NAME\")) = ''";
 
     public String getSchemaVersion() {
         return "3.5.0";
@@ -37,18 +35,7 @@ public class v350Updater extends AbstractUpgradeItem {
 
     public void executeUpgrade(AlpineQueryManager aqm, Connection connection) throws SQLException {
         LOGGER.info("Validating project names");
-        try (QueryManager qm = new QueryManager(aqm.getPersistenceManager())) {
-            for (Project project: qm.getAllProjects()) {
-                if (null == StringUtils.trimToNull(project.getName())) {
-                    project.setName("(Undefined)");
-                    qm.persist(project);
-                }
-                if (project.getVersion() != null && StringUtils.trimToNull(project.getVersion()) == null) {
-                    project.setVersion(null);
-                    qm.persist(project);
-                }
-            }
-        }
+        DbUtil.executeUpdate(connection, STMT_1);
     }
 
 }

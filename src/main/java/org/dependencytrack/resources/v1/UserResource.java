@@ -270,7 +270,7 @@ public class UserResource extends AlpineResource {
                     super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "User profile updated: " + user.getUsername());
                     return Response.ok(user).build();
                 }
-                return Response.status(401).build();
+                return Response.status(Response.Status.UNAUTHORIZED).build();
             }
         }
         // Authentication is not enabled, but we need to return a positive response without any principal data.

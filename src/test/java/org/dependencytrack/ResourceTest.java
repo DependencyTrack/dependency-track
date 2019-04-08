@@ -18,6 +18,8 @@
 package org.dependencytrack;
 
 import alpine.Config;
+import alpine.auth.JsonWebToken;
+import alpine.auth.JwtAuthenticationService;
 import alpine.auth.PasswordService;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
@@ -76,6 +78,7 @@ public abstract class ResourceTest extends JerseyTest {
 
     protected QueryManager qm;
     protected ManagedUser testUser;
+    protected String jwt;
     protected Team team;
     protected String apiKey;
 
@@ -90,6 +93,7 @@ public abstract class ResourceTest extends JerseyTest {
         // Add a test user and team with API key. Optional if this is used, but its available to all tests.
         this.qm = new QueryManager();
         testUser = qm.createManagedUser("testuser", String.valueOf(PasswordService.createHash("testuser".toCharArray())));
+        this.jwt = new JsonWebToken().createToken(testUser);
         team = qm.createTeam("Test Users", true);
         qm.addUserToTeam(testUser, team);
         this.apiKey = team.getApiKeys().get(0).getKey();

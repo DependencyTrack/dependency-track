@@ -870,7 +870,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return a Vulnerability object
      */
-    private Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
+    public Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {
         final Vulnerability vulnerability;
         if (transientVulnerability.getId() > 0) {
             vulnerability = getObjectById(Vulnerability.class, transientVulnerability.getId());
@@ -1440,12 +1440,12 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    public List<Vulnerability> getVulnerabilities(Project project) {
+    public List<Vulnerability> getVulnerabilities(Project project, boolean includeSuppressed) {
         final List<Vulnerability> vulnerabilities = new ArrayList<>();
         final List<Dependency> dependencies = getAllDependencies(project);
         for (final Dependency dependency: dependencies) {
             final Collection<Vulnerability> componentVulns = pm.detachCopyAll(
-                    getAllVulnerabilities(dependency)
+                    getAllVulnerabilities(dependency, includeSuppressed)
             );
             for (final Vulnerability componentVuln: componentVulns) {
                 componentVuln.setComponents(Collections.singletonList(pm.detachCopy(dependency.getComponent())));

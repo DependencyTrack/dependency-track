@@ -877,7 +877,9 @@ public class QueryManager extends AlpineQueryManager {
         } else {
             vulnerability = getVulnerabilityByVulnId(transientVulnerability.getSource(), transientVulnerability.getVulnId());
         }
-
+        if (transientVulnerability.getCwe() != null) {
+            transientVulnerability.setCwe(getCweById(transientVulnerability.getCwe().getCweId()));
+        }
         if (vulnerability != null) {
             vulnerability.setCreated(transientVulnerability.getCreated());
             vulnerability.setPublished(transientVulnerability.getPublished());

@@ -258,6 +258,8 @@ public class MetricsUpdateTask implements Subscriber {
         counters.findingsAudited = toIntExact(qm.getAuditedCount(project));
         counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
+        counters.suppressions = toIntExact(qm.getSuppressedCount(project));
+
         // Query for an existing ProjectMetrics
         final ProjectMetrics last = qm.getMostRecentProjectMetrics(project);
         if (last != null && last.getCritical() == counters.critical && last.getHigh() == counters.high

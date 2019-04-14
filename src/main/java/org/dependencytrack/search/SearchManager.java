@@ -69,15 +69,16 @@ public class SearchManager {
         final SearchResult searchResult = new SearchResult();
         final List<Map<String, String>> resultSet = new ArrayList<>();
         try {
+            String escaped = escape(queryString);
             final String sb = queryString +
                     "^100" +
                     " OR " +
-                    queryString +
+                    escaped +
                     "*" +
                     "^5" +
                     " OR " +
                     "*" +
-                    queryString +
+                    escaped +
                     "*";
             final Query query = indexManager.getQueryParser().parse(sb);
             final TopDocs results = indexManager.getIndexSearcher().search(query, limit);
@@ -130,4 +131,36 @@ public class SearchManager {
         return searchResult;
     }
 
+    /**
+     * Escapes special characters used in Lucene query syntax.
+     * + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+     *
+     * @param input the text to escape
+     * @return escaped text
+     */
+    private static String escape(final String input) {
+        if(input == null) {
+            return null;
+        }
+        char[] specialChars = {'+', '-', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\', '/'};
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            final char c = input.charAt(i);
+            if (contains(specialChars, c)) {
+                sb.append("\\" + c);
+            } else {
+                sb.append(String.valueOf(c));
+            }
+        }
+        return sb.toString();
+    }
+
+    private static boolean contains(char[] chars, char queryChar) {
+        for (char c : chars) {
+            if (c == queryChar) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

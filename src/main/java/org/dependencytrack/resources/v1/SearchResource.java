@@ -31,6 +31,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -49,16 +50,35 @@ public class SearchResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Processes and returns search results",
-            response = SearchResult.class
+            response = SearchResult.class,
+            notes = "Use of this endpoint may lead to URL encoding/decoding issues and is not recommended"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response search(@PathParam("query") String query) {
+        return performSearch(query);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Processes and returns search results",
+            response = SearchResult.class,
+            notes = "Preferred search endpoint"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response searchViaQueryString(@QueryParam("query") String query) {
+        return performSearch(query);
+    }
+
+    private Response performSearch(String query) {
         final SearchManager searchManager = new SearchManager();
         final SearchResult searchResult = searchManager.searchIndices(query, 10);
         return Response.ok(searchResult).build();
     }
-
 }

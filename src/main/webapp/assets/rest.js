@@ -76,7 +76,7 @@ $rest.smartsearchProject = function smartsearch() {
         datumTokenizer: Bloodhound.tokenizers.obj.whitespace("name"),
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            url: $rest.contextPath() + URL_SEARCH + "?query=%QUERY",
             wildcard: '%QUERY',
             /**
              * @param {Object} response the JSON response
@@ -100,7 +100,7 @@ $rest.smartsearchComponent = function smartsearch() {
         datumTokenizer: Bloodhound.tokenizers.obj.whitespace("name"),
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            url: $rest.contextPath() + URL_SEARCH + "?query=%QUERY",
             wildcard: '%QUERY',
             /**
              * @param {Object} response the JSON response
@@ -124,7 +124,7 @@ $rest.smartsearchVulnerability = function smartsearch() {
         datumTokenizer: Bloodhound.tokenizers.obj.whitespace("vulnId"),
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            url: $rest.contextPath() + URL_SEARCH + "?query=%QUERY",
             wildcard: '%QUERY',
             /**
              * @param {Object} response the JSON response
@@ -148,7 +148,7 @@ $rest.smartsearchLicense = function smartsearch() {
         datumTokenizer: Bloodhound.tokenizers.obj.whitespace("name"),
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
-            url: $rest.contextPath() + URL_SEARCH + "/%QUERY",
+            url: $rest.contextPath() + URL_SEARCH + "?query=%QUERY",
             wildcard: '%QUERY',
             /**
              * @param {Object} response the JSON response

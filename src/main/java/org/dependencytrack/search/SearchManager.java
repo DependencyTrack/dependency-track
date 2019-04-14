@@ -70,7 +70,7 @@ public class SearchManager {
         final List<Map<String, String>> resultSet = new ArrayList<>();
         try {
             String escaped = escape(queryString);
-            final String sb = queryString +
+            final String sb = escaped +
                     "^100" +
                     " OR " +
                     escaped +
@@ -84,7 +84,7 @@ public class SearchManager {
             final TopDocs results = indexManager.getIndexSearcher().search(query, limit);
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Searching for: " + queryString + " - Total Hits: " + results.totalHits);
+                LOGGER.debug("Searching for: " + escaped + " - Total Hits: " + results.totalHits);
             }
 
             for (final ScoreDoc scoreDoc: results.scoreDocs) {

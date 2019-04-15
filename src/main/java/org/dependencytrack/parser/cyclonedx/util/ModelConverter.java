@@ -23,6 +23,7 @@ import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
+import org.cyclonedx.model.LicenseChoice;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.cyclonedx.model.Hash;
@@ -101,8 +102,9 @@ public class ModelConverter {
             }
         }
 
-        if (cycloneDxComponent.getLicenses() != null && !cycloneDxComponent.getLicenses().isEmpty()) {
-            for (final org.cyclonedx.model.License cycloneLicense : cycloneDxComponent.getLicenses()) {
+        final LicenseChoice licenseChoice = cycloneDxComponent.getLicenseChoice();
+        if (licenseChoice != null && licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
+            for (final org.cyclonedx.model.License cycloneLicense : licenseChoice.getLicenses()) {
                 if (StringUtils.isNotBlank(cycloneLicense.getId())) {
                     final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
                     if (license != null) {
@@ -176,11 +178,15 @@ public class ModelConverter {
         if (component.getResolvedLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setId(component.getResolvedLicense().getLicenseId());
-            cycloneComponent.addLicense(license);
+            final LicenseChoice licenseChoice = new LicenseChoice();
+            licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (component.getLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setName(component.getLicense());
-            cycloneComponent.addLicense(license);
+            final LicenseChoice licenseChoice = new LicenseChoice();
+            licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
         }
 
         /*

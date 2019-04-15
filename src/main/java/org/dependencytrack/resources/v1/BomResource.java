@@ -30,6 +30,9 @@ import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.cyclonedx.BomGenerator;
+import org.cyclonedx.BomGeneratorFactory;
+import org.cyclonedx.CycloneDxSchema;
+import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Component;
@@ -57,11 +60,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -99,9 +101,13 @@ public class BomResource extends AlpineResource {
             }
             final List<Dependency> dependencies = qm.getAllDependencies(project);
             final List<Component> components = dependencies.stream().map(Dependency::getComponent).collect(Collectors.toList());
-            final Set<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toSet());
+            final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
             try {
-                final BomGenerator bomGenerator = new BomGenerator(cycloneComponents);
+                Bom bom = new Bom();
+                bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
+                bom.setVersion(1);
+                bom.setComponents(cycloneComponents);
+                final BomGenerator bomGenerator = BomGeneratorFactory.create(CycloneDxSchema.Version.VERSION_11, bom);
                 bomGenerator.generate();
                 return Response.ok(bomGenerator.toXmlString()).build();
             } catch (ParserConfigurationException | TransformerException e) {
@@ -125,9 +131,13 @@ public class BomResource extends AlpineResource {
     public Response exportComponentsAsCycloneDx () {
         try (QueryManager qm = new QueryManager()) {
             final List<Component> components = qm.getAllComponents();
-            final Set<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toSet());
+            final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
             try {
-                final BomGenerator bomGenerator = new BomGenerator(cycloneComponents);
+                Bom bom = new Bom();
+                bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
+                bom.setVersion(1);
+                bom.setComponents(cycloneComponents);
+                final BomGenerator bomGenerator = BomGeneratorFactory.create(CycloneDxSchema.Version.VERSION_11, bom);
                 bomGenerator.generate();
                 return Response.ok(bomGenerator.toXmlString()).build();
             } catch (ParserConfigurationException | TransformerException e) {
@@ -158,9 +168,13 @@ public class BomResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }
             try {
-                final Set<org.cyclonedx.model.Component> cycloneComponents = new HashSet<>();
+                final List<org.cyclonedx.model.Component> cycloneComponents = new ArrayList<>();
                 cycloneComponents.add(ModelConverter.convert(qm, component));
-                final BomGenerator bomGenerator = new BomGenerator(cycloneComponents);
+                Bom bom = new Bom();
+                bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
+                bom.setVersion(1);
+                bom.setComponents(cycloneComponents);
+                final BomGenerator bomGenerator = BomGeneratorFactory.create(CycloneDxSchema.Version.VERSION_11, bom);
                 bomGenerator.generate();
                 return Response.ok(bomGenerator.toXmlString()).build();
             } catch (ParserConfigurationException | TransformerException e) {

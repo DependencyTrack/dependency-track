@@ -1,4 +1,4 @@
-FROM openjdk:8u181-jre-alpine
+FROM openjdk:8u201-jre-alpine
 LABEL maintainer="steve.springett@owasp.org"
 LABEL vendor="OWASP"
 

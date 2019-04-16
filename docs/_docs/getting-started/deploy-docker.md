@@ -72,6 +72,15 @@ services:
     # - ALPINE_HTTP_PROXY_PORT=8888
     # - ALPINE_HTTP_PROXY_USERNAME=
     # - ALPINE_HTTP_PROXY_PASSWORD=
+    #
+    # Optional Cross-Origin Resource Sharing (CORS) Headers
+    # - ALPINE_CORS_ENABLED=true
+    # - ALPINE_CORS_ALLOW_ORIGIN=*
+    # - ALPINE_CORS_ALLOW_METHODS=GET POST PUT DELETE OPTIONS
+    # - ALPINE_CORS_ALLOW_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *
+    # - ALPINE_CORS_EXPOSE_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
+    # - ALPINE_CORS_ALLOW_CREDENTIALS=true
+    # - ALPINE_CORS_MAX_AGE=3600
     image: 'owasp/dependency-track'
     ports:
     - '80:8080'

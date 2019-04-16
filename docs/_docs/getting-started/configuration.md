@@ -239,6 +239,20 @@ alpine.ldap.team.synchronization=false
 # alpine.http.proxy.username=
 # alpine.http.proxy.password=
 
+# Optional
+# Cross-Origin Resource Sharing (CORS) headers to include in REST responses.
+# If 'alpine.cors.enabled' is true, CORS headers will be sent, if false, no
+# CORS headers will be sent.
+# See Also: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+# The following are default values
+#alpine.cors.enabled=true
+#alpine.cors.allow.origin=*
+#alpine.cors.allow.methods=GET POST PUT DELETE OPTIONS
+#alpine.cors.allow.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *
+#alpine.cors.expose.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
+#alpine.cors.allow.credentials=true
+#alpine.cors.max.age=3600
+
 ####################### Dependency-Track Configuration ######################
 
 # Optional

@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Subscriber task that performs an analysis of component using NPM Audit API.
@@ -84,10 +83,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
         if (purl == null) {
             return false;
         }
-        if (purl.getType().equalsIgnoreCase("npm")) {
-            return true;
-        }
-        return false;
+        return "npm".equals(purl.getType());
     }
 
     /**
@@ -100,25 +96,27 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        final CopyOnWriteArrayList<Component> backlog = new CopyOnWriteArrayList<>(components);
-        final Iterator<Component> backlogIterator = backlog.iterator();
-        while (backlog.size() > 0) {
+        final ArrayList<Component> backlog = new ArrayList<>(components);
+        while (!backlog.isEmpty()) {
+            // Defines a Map of Components to analyze
             final Map<String, Component> npmCandidates = new HashMap<>();
+
+            // NPM payload objects
             final JSONObject npmRequires = new JSONObject();
             final JSONObject npmDependencies = new JSONObject();
 
-            while (backlogIterator.hasNext()) {
-                final Component component = backlogIterator.next();
+            for (Iterator<Component> iterator = backlog.iterator(); iterator.hasNext();) {
+                Component component = iterator.next();
                 final PackageURL purl = component.getPurl();
                 if (shouldAnalyze(purl)) {
                     if (!npmCandidates.containsKey(component.getName())) {
                         npmCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());
                         npmDependencies.put(purl.getName(), new JSONObject().put("version", purl.getVersion()));
-                        backlog.remove(component);
+                        iterator.remove(); // Remove the current component being iterated on
                     }
                 } else {
-                    backlog.remove(component);
+                    iterator.remove(); // Remove the current component being iterated on
                 }
             }
 

@@ -6,7 +6,7 @@
   "licenseId": "PostgreSQL",
   "seeAlso": [
     "http://www.postgresql.org/about/licence",
-    "http://www.opensource.org/licenses/PostgreSQL"
+    "https://opensource.org/licenses/PostgreSQL"
   ],
   "isOsiApproved": true
 }

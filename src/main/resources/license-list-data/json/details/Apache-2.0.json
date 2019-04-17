@@ -10,7 +10,7 @@
   "standardLicenseHeader": "Copyright [yyyy] [name of copyright owner]\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\n\nyou may not use this file except in compliance with the License.\n\nYou may obtain a copy of the License at\n\nhttp://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\n\ndistributed under the License is distributed on an \"AS IS\" BASIS,\n\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n\nSee the License for the specific language governing permissions and\n\nlimitations under the License.",
   "seeAlso": [
     "http://www.apache.org/licenses/LICENSE-2.0",
-    "http://www.opensource.org/licenses/Apache-2.0"
+    "https://opensource.org/licenses/Apache-2.0"
   ],
   "isOsiApproved": true
 }

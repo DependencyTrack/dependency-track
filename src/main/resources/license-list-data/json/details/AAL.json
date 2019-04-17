@@ -6,7 +6,7 @@
   "licenseComments": "This license was released: 2002 Originally written by Edwin A. Suominen for licensing his PRIVARIA secure networking software (see www.privaria.org). The author, who is not an attorney, places this license template into the public domain along with a complete disclaimer of any warranty or responsibility for its content or legal efficacy. You may use or modify the language freely, but entirely at your own risk.",
   "licenseId": "AAL",
   "seeAlso": [
-    "http://www.opensource.org/licenses/attribution"
+    "https://opensource.org/licenses/attribution"
   ],
   "isOsiApproved": true
 }

@@ -1,6 +1,6 @@
 {
-  "licenseListVersion": "v3.3",
-  "releaseDate": "2018-10-25",
+  "licenseListVersion": "3.5",
+  "releaseDate": "2019-04-02",
   "exceptions": [
     {
       "reference": "./Libtool-exception.html",
@@ -236,7 +236,7 @@
     },
     {
       "reference": "./Nokia-Qt-exception-1.1.html",
-      "isDeprecatedLicenseId": false,
+      "isDeprecatedLicenseId": true,
       "detailsUrl": "http://spdx.org/licenses/Nokia-Qt-exception-1.1.json",
       "referenceNumber": "22",
       "name": "Nokia Qt LGPL exception 1.1",
@@ -313,10 +313,22 @@
       "licenseExceptionId": "Autoconf-exception-2.0"
     },
     {
+      "reference": "./GPL-CC-1.0.html",
+      "isDeprecatedLicenseId": false,
+      "detailsUrl": "http://spdx.org/licenses/GPL-CC-1.0.json",
+      "referenceNumber": "29",
+      "name": "GPL Cooperation Commitment 1.0",
+      "seeAlso": [
+        "https://github.com/gplcc/gplcc/blob/master/Project/COMMITMENT",
+        "https://gplcc.github.io/gplcc/Project/README-PROJECT.html"
+      ],
+      "licenseExceptionId": "GPL-CC-1.0"
+    },
+    {
       "reference": "./Font-exception-2.0.html",
       "isDeprecatedLicenseId": false,
       "detailsUrl": "http://spdx.org/licenses/Font-exception-2.0.json",
-      "referenceNumber": "29",
+      "referenceNumber": "30",
       "name": "Font exception 2.0",
       "seeAlso": [
         "http://www.gnu.org/licenses/gpl-faq.html#FontException"
@@ -327,7 +339,7 @@
       "reference": "./u-boot-exception-2.0.html",
       "isDeprecatedLicenseId": false,
       "detailsUrl": "http://spdx.org/licenses/u-boot-exception-2.0.json",
-      "referenceNumber": "30",
+      "referenceNumber": "31",
       "name": "U-Boot exception 2.0",
       "seeAlso": [
         "http://git.denx.de/?p\u003du-boot.git;a\u003dblob;f\u003dLicenses/Exceptions"
@@ -338,7 +350,7 @@
       "reference": "./GCC-exception-2.0.html",
       "isDeprecatedLicenseId": false,
       "detailsUrl": "http://spdx.org/licenses/GCC-exception-2.0.json",
-      "referenceNumber": "31",
+      "referenceNumber": "32",
       "name": "GCC Runtime Library exception 2.0",
       "seeAlso": [
         "https://gcc.gnu.org/git/?p\u003dgcc.git;a\u003dblob;f\u003dgcc/libgcc1.c;h\u003d762f5143fc6eed57b6797c82710f3538aa52b40b;hb\u003dcb143a3ce4fb417c68f5fa2691a1b1b1053dfba9#l10"
@@ -349,7 +361,7 @@
       "reference": "./mif-exception.html",
       "isDeprecatedLicenseId": false,
       "detailsUrl": "http://spdx.org/licenses/mif-exception.json",
-      "referenceNumber": "32",
+      "referenceNumber": "33",
       "name": "Macros and Inline Functions Exception",
       "seeAlso": [
         "http://www.scs.stanford.edu/histar/src/lib/cppsup/exception",
@@ -362,7 +374,7 @@
       "reference": "./OCaml-LGPL-linking-exception.html",
       "isDeprecatedLicenseId": false,
       "detailsUrl": "http://spdx.org/licenses/OCaml-LGPL-linking-exception.json",
-      "referenceNumber": "33",
+      "referenceNumber": "34",
       "name": "OCaml LGPL Linking Exception",
       "seeAlso": [
         "https://caml.inria.fr/ocaml/license.en.html"

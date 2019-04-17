@@ -5,7 +5,7 @@
   "name": "GNU General Public License v3.0 w/GCC Runtime Library exception",
   "licenseId": "GPL-3.0-with-GCC-exception",
   "seeAlso": [
-    "http://www.gnu.org/licenses/gcc-exception-3.1.html"
+    "https://www.gnu.org/licenses/gcc-exception-3.1.html"
   ],
   "isOsiApproved": true
 }

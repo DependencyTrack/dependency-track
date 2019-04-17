@@ -7,7 +7,7 @@
   "licenseComments": "This license has been deprecated. A note at the top of the OSI license page states, \"The Intel Open Source License for CDSA/CSSM Implementation (BSD License with Export Notice) (Intel has ceased to use or recommend this license)\"",
   "licenseId": "Intel",
   "seeAlso": [
-    "http://opensource.org/licenses/Intel"
+    "https://opensource.org/licenses/Intel"
   ],
   "isOsiApproved": true
 }

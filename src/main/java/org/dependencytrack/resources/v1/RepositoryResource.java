@@ -100,7 +100,8 @@ public class RepositoryResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "The request was successful, but no repositories are configured to support the specified Package URL"),
             @ApiResponse(code = 400, message = "The specified Package URL is invalid and not in the correct format"),
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The repository metadata for the specified component cannot be found"),
     })
     public Response getRepositoryMetaComponent(
             @ApiParam(value = "The Package URL for the component to query", required = true)
@@ -114,7 +115,12 @@ public class RepositoryResource extends AlpineResource {
                 }
                 final RepositoryMetaComponent result = qm.getRepositoryMetaComponent(
                         RepositoryType.resolve(packageURL), packageURL.getNamespace(), packageURL.getName());
-                return Response.ok(result).build();
+                if (result == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The repository metadata for the specified component cannot be found.").build();
+                } else {
+                    //todo: future enhancement: provide pass-thru capability for component metadata not already present and being tracked
+                    return Response.ok(result).build();
+                }
             }
         } catch (MalformedPackageURLException e) {
             return Response.status(Response.Status.BAD_REQUEST).build();

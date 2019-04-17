@@ -153,4 +153,17 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertEquals(400, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
     }
+
+    @Test
+    public void getRepositoryMetaUntrackedComponentTest() {
+        Response response = target(V1_REPOSITORY + "/latest")
+                .queryParam("purl", "pkg:/maven/org.acme/example-component@1.0.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The repository metadata for the specified component cannot be found.", body);
+    }
 }

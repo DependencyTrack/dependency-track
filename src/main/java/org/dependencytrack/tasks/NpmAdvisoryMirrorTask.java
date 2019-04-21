@@ -22,6 +22,10 @@ import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.IndexEvent;
@@ -37,10 +41,6 @@ import org.dependencytrack.parser.npm.NpmAdvisoriesParser;
 import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.parser.npm.model.AdvisoryResults;
 import org.dependencytrack.persistence.QueryManager;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestException;
-import unirest.UnirestInstance;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
@@ -126,6 +126,7 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
         LOGGER.info("Updating datasource with NPM advisories");
         try (QueryManager qm = new QueryManager()) {
             for (final Advisory advisory: results.getAdvisories()) {
+                LOGGER.debug("Synchronizing advisory: " + advisory.getId());
                 qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
             }
         }

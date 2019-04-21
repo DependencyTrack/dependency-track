@@ -21,22 +21,18 @@ import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.owasp.dependencycheck.utils.XmlUtils;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
-import org.dependencytrack.common.HttpClientFactory;
+import org.owasp.dependencycheck.utils.XmlUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.*;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -74,44 +70,42 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(final Component component) {
-        final HttpClient httpClient = HttpClientFactory.getHttpClient();
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName().replaceAll("\\.", "/");
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try {
                 final HttpUriRequest request = new HttpGet(url);
-                final org.apache.http.HttpResponse response = httpClient.execute(request);
-                final StatusLine status = response.getStatusLine();
-                if (status.getStatusCode() == 200) {
-                    final HttpEntity entity = response.getEntity();
-                    if (entity != null) {
-                        try (InputStream in = entity.getContent()) {
-                            final Document document = XmlUtils.buildSecureDocumentBuilder().parse(in);
-                            final XPathFactory xpathFactory = XPathFactory.newInstance();
-                            final XPath xpath = xpathFactory.newXPath();
+                try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                    final StatusLine status = response.getStatusLine();
+                    if (status.getStatusCode() == 200) {
+                        final HttpEntity entity = response.getEntity();
+                        if (entity != null) {
+                            try (InputStream in = entity.getContent()) {
+                                final Document document = XmlUtils.buildSecureDocumentBuilder().parse(in);
+                                final XPathFactory xpathFactory = XPathFactory.newInstance();
+                                final XPath xpath = xpathFactory.newXPath();
 
-                            final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
-                            final String latest = (String)latestExpression.evaluate(document, XPathConstants.STRING);
+                                final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
+                                final String latest = (String) latestExpression.evaluate(document, XPathConstants.STRING);
 
-                            final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
-                            final String lastUpdated = (String)lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
+                                final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
+                                final String lastUpdated = (String) lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
 
-                            meta.setLatestVersion(latest);
-                            if (lastUpdated != null) {
-                                meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
+                                meta.setLatestVersion(latest);
+                                if (lastUpdated != null) {
+                                    meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
+                                }
                             }
                         }
+                    } else {
+                        handleUnexpectedHttpResponse(LOGGER, url, status.getStatusCode(), status.getReasonPhrase(), component);
                     }
-                } else {
-                    handleUnexpectedHttpResponse(LOGGER, url, status.getStatusCode(), status.getReasonPhrase(), component);
                 }
-
             } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
                 handleRequestException(LOGGER, e);
             }
         }
         return meta;
     }
-
 }

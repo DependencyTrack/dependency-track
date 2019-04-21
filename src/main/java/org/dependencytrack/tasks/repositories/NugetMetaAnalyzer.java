@@ -19,14 +19,14 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.json.JSONArray;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestException;
-import unirest.UnirestInstance;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

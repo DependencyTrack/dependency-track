@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
 package org.dependencytrack.common;
 
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
-public final class UnirestFactory {
+public class ManagedHttpClient {
 
-    private static final UnirestInstance UNIREST_INSTANCE = Unirest.primaryInstance();
-    static {
-        UNIREST_INSTANCE.config().httpClient(ManagedHttpClientFactory.newManagedHttpClient().getHttpClient());
+    private CloseableHttpClient httpClient;
+    private PoolingHttpClientConnectionManager connectionManager;
+
+    public ManagedHttpClient(CloseableHttpClient httpClient, PoolingHttpClientConnectionManager connectionManager) {
+        this.httpClient = httpClient;
+        this.connectionManager = connectionManager;
     }
 
-    private UnirestFactory() {
+    public CloseableHttpClient getHttpClient() {
+        return httpClient;
     }
 
-    public static UnirestInstance getUnirestInstance() {
-        return UNIREST_INSTANCE;
+    public PoolingHttpClientConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 }

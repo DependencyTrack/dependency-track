@@ -17,9 +17,9 @@
  */
 package org.dependencytrack.common;
 
+import kong.unirest.UnirestInstance;
 import org.junit.Assert;
 import org.junit.Test;
-import unirest.UnirestInstance;
 
 public class UnirestFactoryTest {
 
@@ -33,6 +33,6 @@ public class UnirestFactoryTest {
     @Test
     public void httpClientTest() {
         UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        Assert.assertSame(ui.config().getClient().getClient(), HttpClientFactory.getHttpClient());
+        Assert.assertSame(ui.config().getClient().getClient(), ManagedHttpClientFactory.newManagedHttpClient());
     }
 }

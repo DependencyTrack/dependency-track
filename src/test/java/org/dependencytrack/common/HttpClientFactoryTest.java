@@ -39,15 +39,15 @@ public class HttpClientFactoryTest {
 
     @Test
     public void instanceTest() {
-        HttpClient c1 = HttpClientFactory.getHttpClient();
-        HttpClient c2 = HttpClientFactory.getHttpClient();
+        HttpClient c1 = ManagedHttpClientFactory.getHttpClient();
+        HttpClient c2 = ManagedHttpClientFactory.getHttpClient();
         Assert.assertSame(c1, c2);
         Assert.assertTrue(c1 instanceof CloseableHttpClient);
     }
 
     @Test
     public void proxyIntoTest() {
-        HttpClientFactory.ProxyInfo proxyInfo = HttpClientFactory.createProxyInfo();
+        ManagedHttpClientFactory.ProxyInfo proxyInfo = ManagedHttpClientFactory.createProxyInfo();
         Assert.assertEquals("127.0.0.1", proxyInfo.getHost());
         Assert.assertEquals(1080, proxyInfo.getPort());
         Assert.assertEquals("acme", proxyInfo.getDomain());
@@ -64,6 +64,6 @@ public class HttpClientFactoryTest {
                 + SystemUtil.getOsName() + "; "
                 + SystemUtil.getOsVersion()
                 + ")";
-        Assert.assertEquals(expected, HttpClientFactory.getUserAgent());
+        Assert.assertEquals(expected, ManagedHttpClientFactory.getUserAgent());
     }
 }

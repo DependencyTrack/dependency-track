@@ -22,9 +22,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
-import org.owasp.dependencycheck.exception.ScanAgentException;
-import org.owasp.dependencycheck.reporting.ReportGenerator;
+import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.DependencyCheckEvent;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.exception.ParseException;
@@ -35,8 +33,10 @@ import org.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.common.HttpClientFactory;
 import org.dependencytrack.util.NotificationUtil;
+import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
+import org.owasp.dependencycheck.exception.ScanAgentException;
+import org.owasp.dependencycheck.reporting.ReportGenerator;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -249,7 +249,7 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         scanAgent.setUpdateOnly(update);
         //scanAgent.setCpeStartsWithFilter("cpe:"); //todo: will be available in 3.1.1
 
-        final HttpClientFactory.ProxyInfo proxyInfo = HttpClientFactory.createProxyInfo();
+        final ManagedHttpClientFactory.ProxyInfo proxyInfo = ManagedHttpClientFactory.createProxyInfo();
         if (proxyInfo != null) {
             scanAgent.setProxyServer(proxyInfo.getHost());
             scanAgent.setProxyPort(String.valueOf(proxyInfo.getPort()));

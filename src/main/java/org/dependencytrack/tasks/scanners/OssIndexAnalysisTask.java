@@ -25,26 +25,26 @@ import alpine.model.ConfigProperty;
 import alpine.util.Pageable;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.MetricsUpdateEvent;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.util.NotificationUtil;
-import org.json.JSONObject;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.common.HttpClientFactory;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestException;
-import unirest.UnirestInstance;
+import org.dependencytrack.util.NotificationUtil;
+import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -185,7 +185,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
         final HttpResponse<JsonNode> jsonResponse = ui.post(API_BASE_URL)
                 .header(HttpHeaders.ACCEPT, "application/json")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .header(HttpHeaders.USER_AGENT, HttpClientFactory.getUserAgent())
+                .header(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent())
                 .basicAuth(apiUsername, apiToken)
                 .body(payload)
                 .asJson();

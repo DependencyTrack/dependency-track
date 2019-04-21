@@ -19,13 +19,13 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestException;
-import unirest.UnirestInstance;
 
 /**
  * An IMetaAnalyzer implementation that supports NPM.

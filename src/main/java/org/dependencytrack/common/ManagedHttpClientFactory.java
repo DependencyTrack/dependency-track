@@ -27,7 +27,6 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -43,7 +42,6 @@ import org.apache.http.impl.auth.BasicSchemeFactory;
 import org.apache.http.impl.auth.DigestSchemeFactory;
 import org.apache.http.impl.auth.NTLMSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -58,7 +56,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-public final class HttpClientFactory {
+public final class ManagedHttpClientFactory {
 
     private static final String PROXY_ADDRESS = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_ADDRESS);
     private static int PROXY_PORT;
@@ -69,7 +67,7 @@ public final class HttpClientFactory {
     }
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD);
-    private static final Logger LOGGER = Logger.getLogger(HttpClientFactory.class);
+    private static final Logger LOGGER = Logger.getLogger(ManagedHttpClientFactory.class);
     private static final String USER_AGENT;
     static {
         USER_AGENT = Config.getInstance().getApplicationName()
@@ -81,26 +79,21 @@ public final class HttpClientFactory {
                 + ")";
     }
 
-    private static final HttpClient HTTP_CLIENT = createClient();
-
-    private HttpClientFactory() { }
+    private ManagedHttpClientFactory() { }
 
     public static String getUserAgent() {
         return USER_AGENT;
     }
 
-    public static HttpClient getHttpClient() {
-        return HTTP_CLIENT;
-    }
-
     /**
-     * Factory method that create a HttpClient object. This method will attempt to use
+     * Factory method that create a PooledHttpClient object. This method will attempt to use
      * proxy settings defined in application.properties first. If they are not set,
      * this method will attempt to use proxy settings from the environment by looking
      * for 'https_proxy' and 'http_proxy'.
-     * @return a HttpClient object with optional proxy settings
+     * @return a PooledHttpClient object with optional proxy settings
      */
-    private static CloseableHttpClient createClient() {
+    public static ManagedHttpClient newManagedHttpClient() {
+        PoolingHttpClientConnectionManager connectionManager = null;
         final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
@@ -126,12 +119,19 @@ public final class HttpClientFactory {
                         .register("http", PlainConnectionSocketFactory.INSTANCE)
                         .register("https", new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE))
                         .build();
-                final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(registry);
-                clientBuilder.setConnectionManager(connManager);
+                connectionManager = new PoolingHttpClientConnectionManager(registry);
+                connectionManager.setMaxTotal(200);
+                connectionManager.setDefaultMaxPerRoute(20);
+                clientBuilder.setConnectionManager(connectionManager);
                 clientBuilder.setConnectionManagerShared(true);
             } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException e) {
                 LOGGER.warn("An error occurred while configuring proxy", e);
             }
+        } else {
+            connectionManager = new PoolingHttpClientConnectionManager();
+            connectionManager.setMaxTotal(200);
+            connectionManager.setDefaultMaxPerRoute(20);
+            clientBuilder.setConnectionManager(connectionManager);
         }
 
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
@@ -143,7 +143,7 @@ public final class HttpClientFactory {
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         clientBuilder.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
-        return clientBuilder.build();
+        return new ManagedHttpClient(clientBuilder.build(), connectionManager);
     }
 
     /**

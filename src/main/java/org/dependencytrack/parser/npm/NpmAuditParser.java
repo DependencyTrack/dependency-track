@@ -18,9 +18,9 @@
 package org.dependencytrack.parser.npm;
 
 import alpine.logging.Logger;
+import kong.unirest.JsonNode;
 import org.dependencytrack.parser.npm.model.Advisory;
 import org.json.JSONObject;
-import unirest.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -25,19 +25,18 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.DependencyCheckEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
-import org.dependencytrack.common.HttpClientFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -138,10 +137,8 @@ public class NistMirrorTask implements LoggableSubscriber {
      * @return the length of the content if it were to be downloaded
      */
     private long checkHead(final String cveUrl) {
-        try {
-            final HttpClient httpClient = HttpClientFactory.getHttpClient();
-            final HttpUriRequest request = new HttpHead(cveUrl);
-            final HttpResponse response = httpClient.execute(request);
+        final HttpUriRequest request = new HttpHead(cveUrl);
+        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             return Long.valueOf(response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
         } catch (IOException | NumberFormatException | NullPointerException e) {
             LOGGER.error("Failed to determine content length");
@@ -170,42 +167,41 @@ public class NistMirrorTask implements LoggableSubscriber {
             }
 
             LOGGER.info("Initiating download of " + url.toExternalForm());
-            final HttpClient httpClient = HttpClientFactory.getHttpClient();
             final HttpUriRequest request = new HttpGet(cveUrl);
-            final HttpResponse response = httpClient.execute(request);
-            final StatusLine status = response.getStatusLine();
-            if (status.getStatusCode() == 200) {
-                LOGGER.info("Downloading...");
-                try (InputStream in = response.getEntity().getContent()) {
-                    file = new File(outputDir, filename);
-                    FileUtils.copyInputStreamToFile(in, file);
-                    uncompress(file);
+            try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                final StatusLine status = response.getStatusLine();
+                if (status.getStatusCode() == 200) {
+                    LOGGER.info("Downloading...");
+                    try (InputStream in = response.getEntity().getContent()) {
+                        file = new File(outputDir, filename);
+                        FileUtils.copyInputStreamToFile(in, file);
+                        uncompress(file);
+                    }
+                } else if (response.getStatusLine().getStatusCode() == 403) {
+                    mirroredWithoutErrors = false;
+                    final String detailMessage = "This may occur if the NVD is throttling connections due to excessive load or repeated " +
+                            "connections from the same IP address or as a result of firewall or proxy authentication failures";
+                    LOGGER.warn("Unable to download - HTTP Response 403: " + status.getReasonPhrase());
+                    LOGGER.warn(detailMessage);
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.NVD_MIRROR)
+                            .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode() + ". " + detailMessage)
+                            .level(NotificationLevel.ERROR)
+                    );
+                } else {
+                    mirroredWithoutErrors = false;
+                    LOGGER.warn("Unable to download - HTTP Response " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.NVD_MIRROR)
+                            .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode())
+                            .level(NotificationLevel.ERROR)
+                    );
                 }
-            } else if (response.getStatusLine().getStatusCode() == 403) {
-                mirroredWithoutErrors = false;
-                final String detailMessage = "This may occur if the NVD is throttling connections due to excessive load or repeated " +
-                        "connections from the same IP address or as a result of firewall or proxy authentication failures";
-                LOGGER.warn("Unable to download - HTTP Response 403: " + status.getReasonPhrase());
-                LOGGER.warn(detailMessage);
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.NVD_MIRROR)
-                        .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode() + ". " + detailMessage)
-                        .level(NotificationLevel.ERROR)
-                );
-            } else {
-                mirroredWithoutErrors = false;
-                LOGGER.warn("Unable to download - HTTP Response " + status.getStatusCode() + ": " + status.getReasonPhrase());
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.SYSTEM)
-                        .group(NotificationGroup.DATASOURCE_MIRRORING)
-                        .title(NotificationConstants.Title.NVD_MIRROR)
-                        .content("An error occurred mirroring the contents of the National Vulnerability Database. Check log for details. HTTP Response: " + status.getStatusCode())
-                        .level(NotificationLevel.ERROR)
-                );
             }
-
         } catch (IOException e) {
             mirroredWithoutErrors = false;
             LOGGER.error("Download failed : " + e.getMessage());

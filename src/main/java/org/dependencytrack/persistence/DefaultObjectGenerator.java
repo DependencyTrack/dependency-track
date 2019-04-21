@@ -134,6 +134,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             LOGGER.info("Synchronizing permissions to datastore");
             for (final Permissions permission : Permissions.values()) {
                 if (qm.getPermission(permission.name()) == null) {
+                    LOGGER.debug("Creating permission: " + permission.name());
                     qm.createPermission(permission.name(), permission.getDescription());
                 }
             }
@@ -149,15 +150,20 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 return;
             }
             LOGGER.info("Adding default users and teams to datastore");
+            LOGGER.debug("Creating user: admin");
             ManagedUser admin = qm.createManagedUser("admin", "Administrator", "admin@localhost",
                     new String(PasswordService.createHash("admin".toCharArray())), true, true, false);
 
+            LOGGER.debug("Creating team: Administrators");
             final Team sysadmins = qm.createTeam("Administrators", false);
+            LOGGER.debug("Creating team: Portfolio Managers");
             final Team managers = qm.createTeam("Portfolio Managers", false);
+            LOGGER.debug("Creating team: Automation");
             final Team automation = qm.createTeam("Automation", true);
 
             final List<Permission> fullList = qm.getPermissions();
 
+            LOGGER.debug("Assigning default permissions to teams");
             sysadmins.setPermissions(fullList);
             managers.setPermissions(getPortfolioManagersPermissions(fullList));
             automation.setPermissions(getAutomationPermissions(fullList));
@@ -166,6 +172,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.persist(managers);
             qm.persist(automation);
 
+            LOGGER.debug("Adding admin user to System Administrators");
             qm.addUserToTeam(admin, sysadmins);
 
             admin = qm.getObjectById(ManagedUser.class, admin.getId());
@@ -222,6 +229,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing config properties to datastore");
             for (final ConfigPropertyConstants cpc : ConfigPropertyConstants.values()) {
+                LOGGER.debug("Creating config property: " + cpc.getGroupName() + " / " + cpc.getPropertyName());
                 if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
                     qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), cpc.getDefaultPropertyValue(), cpc.getPropertyType(), cpc.getDescription());
                 }
@@ -261,5 +269,4 @@ public class DefaultObjectGenerator implements ServletContextListener {
             }
         }
     }
-
 }

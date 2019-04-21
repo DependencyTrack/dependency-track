@@ -20,10 +20,10 @@ package org.dependencytrack.notification.publisher;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestInstance;
 import javax.json.JsonObject;
 
 public abstract class AbstractWebhookPublisher implements Publisher {

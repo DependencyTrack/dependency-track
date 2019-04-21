@@ -17,14 +17,14 @@
  */
 package org.dependencytrack.integration;
 
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import org.apache.commons.io.FileUtils;
 import org.datanucleus.util.Base64;
 import org.dependencytrack.common.UnirestFactory;
 import org.json.JSONObject;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestException;
-import unirest.UnirestInstance;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;

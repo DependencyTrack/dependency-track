@@ -60,6 +60,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 );
                 try (QueryManager qm = new QueryManager(alpineRequest)) {
                     final long total = qm.getCount(Component.class);
+                    LOGGER.info("Performing component repository metadata analysis against all (" + total +") components in the portfolio");
                     long count = 0;
                     while (count < total) {
                         final PaginatedResult result = qm.getComponents();
@@ -71,6 +72,7 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                         qm.advancePagination();
                     }
                 }
+                LOGGER.info("Portfolio component repository metadata analysis complete");
             }
             LOGGER.debug("Component repository metadata analysis complete");
         }

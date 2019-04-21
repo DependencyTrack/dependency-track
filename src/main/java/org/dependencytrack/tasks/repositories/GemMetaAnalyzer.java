@@ -22,10 +22,10 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import unirest.HttpResponse;
-import unirest.JsonNode;
-import unirest.UnirestException;
-import unirest.UnirestInstance;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 
 /**
  * An IMetaAnalyzer implementation that supports Ruby Gems.

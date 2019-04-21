@@ -18,11 +18,11 @@
 package org.dependencytrack.parser.ossindex;
 
 import alpine.logging.Logger;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import kong.unirest.JsonNode;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
-import unirest.JsonNode;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 

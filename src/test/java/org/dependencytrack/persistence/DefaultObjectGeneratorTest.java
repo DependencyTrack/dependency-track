@@ -40,7 +40,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultLicenses");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(414, qm.getAllLicensesConcise().size());
+        Assert.assertEquals(422, qm.getAllLicensesConcise().size());
     }
 
     @Test

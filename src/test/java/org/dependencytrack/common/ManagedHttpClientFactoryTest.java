@@ -27,7 +27,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
-public class HttpClientFactoryTest {
+public class ManagedHttpClientFactoryTest {
 
     @Rule
     public EnvironmentVariables environmentVariables = new EnvironmentVariables();
@@ -39,8 +39,8 @@ public class HttpClientFactoryTest {
 
     @Test
     public void instanceTest() {
-        HttpClient c1 = ManagedHttpClientFactory.getHttpClient();
-        HttpClient c2 = ManagedHttpClientFactory.getHttpClient();
+        HttpClient c1 = ManagedHttpClientFactory.newManagedHttpClient().getHttpClient();
+        HttpClient c2 = ManagedHttpClientFactory.newManagedHttpClient().getHttpClient();
         Assert.assertSame(c1, c2);
         Assert.assertTrue(c1 instanceof CloseableHttpClient);
     }

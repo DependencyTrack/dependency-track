@@ -33,6 +33,6 @@ public class UnirestFactoryTest {
     @Test
     public void httpClientTest() {
         UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        Assert.assertSame(ui.config().getClient().getClient(), ManagedHttpClientFactory.newManagedHttpClient());
+        Assert.assertNotSame(ui.config().getClient().getClient(), ManagedHttpClientFactory.newManagedHttpClient());
     }
 }

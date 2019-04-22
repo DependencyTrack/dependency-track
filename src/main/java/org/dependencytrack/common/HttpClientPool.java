@@ -92,7 +92,7 @@ public class HttpClientPool {
                     cm.closeExpiredConnections();
                     // Optionally, close connections that have been idle too long.
                     cm.closeIdleConnections(60, TimeUnit.SECONDS);
-                    LOGGER.info("Stats: " + cm.getTotalStats().toString());
+                    LOGGER.debug("Stats: " + cm.getTotalStats().toString());
                 }
                 // Acknowledge the stop request.
                 stopRequest.stopped();

@@ -41,7 +41,7 @@ public class ManagedHttpClientFactoryTest {
     public void instanceTest() {
         HttpClient c1 = ManagedHttpClientFactory.newManagedHttpClient().getHttpClient();
         HttpClient c2 = ManagedHttpClientFactory.newManagedHttpClient().getHttpClient();
-        Assert.assertSame(c1, c2);
+        Assert.assertNotSame(c1, c2);
         Assert.assertTrue(c1 instanceof CloseableHttpClient);
     }
 

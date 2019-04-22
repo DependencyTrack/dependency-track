@@ -1940,6 +1940,9 @@ $rest.getLatestFromRepository = function getProject(packageUrl, successCallback,
                     $rest.callbackValidator(successCallback(data));
                 }
             },
+            404: function(data) {
+                // Don't do anything. Simply catch the fact that the server doesn't know what the latest version is so that errors are not displayed in the UI.
+            },
             400: function(data) {
                 if (failCallback) {
                     $rest.callbackValidator(failCallback(data));

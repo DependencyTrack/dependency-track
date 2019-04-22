@@ -28,6 +28,7 @@ public class v350Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v350Updater.class);
     private static final String STMT_1 = "UPDATE \"PROJECT\" SET \"NAME\" = '(Undefined)' WHERE \"NAME\" IS NULL OR LTRIM(RTRIM(\"NAME\")) = ''";
+    private static final String STMT_2 = "UPDATE \"REPOSITORY\" SET \"URL\" = \"https://api.nuget.org/\" WHERE \"IDENTIFIER\" = \"nuget-gallery\"";
 
     public String getSchemaVersion() {
         return "3.5.0";
@@ -36,6 +37,9 @@ public class v350Updater extends AbstractUpgradeItem {
     public void executeUpgrade(AlpineQueryManager aqm, Connection connection) throws SQLException {
         LOGGER.info("Validating project names");
         DbUtil.executeUpdate(connection, STMT_1);
+
+        LOGGER.info("Correcting NuGet API URL");
+        DbUtil.executeUpdate(connection, STMT_2);
     }
 
 }

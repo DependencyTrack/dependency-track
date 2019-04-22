@@ -218,7 +218,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true);
             qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true);
             qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true);
-            qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://nuget.org/", true);
+            qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true);
         }
     }
 

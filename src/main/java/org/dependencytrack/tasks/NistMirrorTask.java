@@ -63,6 +63,8 @@ public class NistMirrorTask implements LoggableSubscriber {
     private static final String CVE_XML_20_BASE_URL = "https://nvd.nist.gov/feeds/xml/cve/2.0/nvdcve-2.0-%d.xml.gz";
     private static final String CVE_JSON_10_MODIFIED_URL = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-modified.json.gz";
     private static final String CVE_JSON_10_BASE_URL = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-%d.json.gz";
+    private static final String CVE_JSON_10_MODIFIED_META = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-modified.meta";
+    private static final String CVE_JSON_10_BASE_META = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-%d.meta";
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private File outputDir;
@@ -97,13 +99,16 @@ public class NistMirrorTask implements LoggableSubscriber {
             final String xml12BaseUrl = CVE_XML_12_BASE_URL.replace("%d", String.valueOf(i));
             final String xml20BaseUrl = CVE_XML_20_BASE_URL.replace("%d", String.valueOf(i));
             final String json10BaseUrl = CVE_JSON_10_BASE_URL.replace("%d", String.valueOf(i));
+            final String cveBaseMetaUrl = CVE_JSON_10_BASE_META.replace("%d", String.valueOf(i));
             doDownload(xml12BaseUrl);
             doDownload(xml20BaseUrl);
             doDownload(json10BaseUrl);
+            doDownload(cveBaseMetaUrl);
         }
         doDownload(CVE_XML_12_MODIFIED_URL);
         doDownload(CVE_XML_20_MODIFIED_URL);
         doDownload(CVE_JSON_10_MODIFIED_URL);
+        doDownload(CVE_JSON_10_MODIFIED_META);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()
@@ -175,7 +180,9 @@ public class NistMirrorTask implements LoggableSubscriber {
                     try (InputStream in = response.getEntity().getContent()) {
                         file = new File(outputDir, filename);
                         FileUtils.copyInputStreamToFile(in, file);
-                        uncompress(file);
+                        if (file.getName().endsWith(".gz")) {
+                            uncompress(file);
+                        }
                     }
                 } else if (response.getStatusLine().getStatusCode() == 403) {
                     mirroredWithoutErrors = false;

@@ -11,7 +11,7 @@ The defect may already be reported! Please search for the defect before creating
 ### Current Behavior:
 
 
-### Steps to Reproduce (if defect):
+### Steps to Reproduce:
 
 
 ### Expected Behavior:

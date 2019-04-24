@@ -8,16 +8,16 @@ assignees: ''
 The defect may already be reported! Please search for the defect before creating one.
 
 
-###Current Behavior:
+### Current Behavior:
 
 
-###Steps to Reproduce (if defect):
+### Steps to Reproduce (if defect):
 
 
-###Expected Behavior:
+### Expected Behavior:
 
 
-###Environment:
+### Environment:
   
   - Dependency-Track Version:
   - Distribution: [ Docker | Executable WAR | Traditional WAR ]
@@ -25,5 +25,6 @@ The defect may already be reported! Please search for the defect before creating
   - Database Server: [ H2 | MSSQL | MySQL | PostgreSQL ]
   - Browser: 
 
-###Additional Details:
+### Additional Details:
+
 (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links for us to have context, eg. stackoverflow, gitter, etc)

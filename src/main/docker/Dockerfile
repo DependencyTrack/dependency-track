@@ -7,8 +7,11 @@ ARG APP_DIR=/opt/owasp/dependency-track
 ARG DATA_DIR=/data
 ARG USER=dtrack
 
+# The default logging level
+ENV LOGGING_LEVEL=INFO
+
 # Environment variables that can be passed at runtime
-ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4G -DdependencyTrack.loggingLevel=INFO"
+ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4G"
 
 # Create the application directory where Dependency-Track will be installed
 RUN mkdir -p ${APP_DIR}
@@ -37,4 +40,4 @@ EXPOSE 8080
 
 # Launch Dependency-Track
 WORKDIR ${APP_DIR}
-CMD java $JAVA_OPTIONS -jar dependency-track-embedded.war
+CMD java $JAVA_OPTIONS -DdependencyTrack.loggingLevel=$LOGGING_LEVEL -jar dependency-track-embedded.war

@@ -272,3 +272,16 @@ will attempt to read the `https_proxy` and `http_proxy` environment variables. I
 of these are set, Dependency-Track will use them automatically.
 
 Dependency-Track supports proxies that require BASIC, DIGEST, and NTLM authentication.
+
+#### Logging Levels
+
+Logging levels (INFO, WARN, ERROR, DEBUG, TRACE) can be specified by passing the level 
+to the `dependencyTrack.loggingLevel` system property on startup. For example, the 
+following command will start Dependency-Track (embedded) with DEBUG logging:
+
+```bash
+java -Xmx4G -DdependencyTrack.loggingLevel=DEBUG -jar dependency-track-embedded.war
+```
+
+For Docker deployments, simply set the `LOGGING_LEVEL` environment variable to one of
+INFO, WARN, ERROR, DEBUG, or TRACE.

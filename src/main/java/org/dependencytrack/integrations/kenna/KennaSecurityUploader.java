@@ -70,10 +70,12 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
 
     @Override
     public InputStream process() {
+        LOGGER.debug("Processing...");
         final KennaDataTransformer kdi = new KennaDataTransformer(qm);
         for (final Project project: qm.getAllProjects()) {
             final ProjectProperty externalId = qm.getProjectProperty(project, KENNA_ENABLED.getGroupName(), ASSET_EXTID_PROPERTY);
             if (externalId != null && externalId.getPropertyValue() != null) {
+                LOGGER.debug("Transforming findings for project: " + project.getUuid() + " to KDI format");
                 kdi.process(project, externalId.getPropertyValue());
             }
         }
@@ -82,6 +84,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
 
     @Override
     public void upload(final InputStream payload) {
+        LOGGER.debug("Uploading payload to KennaSecurity");
         final ConfigProperty tokenProperty = qm.getConfigProperty(KENNA_TOKEN.getGroupName(), KENNA_TOKEN.getPropertyName());
         try {
             final UnirestInstance ui = UnirestFactory.getUnirestInstance();

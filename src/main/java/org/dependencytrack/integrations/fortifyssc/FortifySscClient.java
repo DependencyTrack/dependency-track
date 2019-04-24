@@ -40,6 +40,7 @@ public class FortifySscClient {
     }
 
     public String generateOneTimeUploadToken(final String username, final String password) {
+        LOGGER.debug("Generating one-time upload token");
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
         final HttpRequestWithBody request = ui.post(baseURL + "/api/v1/fileTokens");
@@ -51,6 +52,7 @@ public class FortifySscClient {
         if (response.getStatus() == 201) {
             if (response.getBody() != null) {
                 final JSONObject root = response.getBody().getObject();
+                LOGGER.debug("One-time upload token retrieved");
                 return root.getJSONObject("data").getString("token");
             }
         } else {
@@ -63,6 +65,7 @@ public class FortifySscClient {
     }
 
     public void uploadDependencyTrackFindings(final String token, final String applicationVersion, final InputStream findingsJson) {
+        LOGGER.debug("Uploading Dependency-Track findings to Fortify SSC");
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final HashMap<String, Object> params = new HashMap<>();
         params.put("engineType", "DEPENDENCY_TRACK");
@@ -74,7 +77,9 @@ public class FortifySscClient {
                 .queryString(params)
                 .field("files[]", findingsJson, "findings.json")
                 .asString();
-        if (response.getStatus() != 200) {
+        if (response.getStatus() == 200) {
+            LOGGER.debug("Successfully uploaded findings to Fortify SSC");
+        } else {
             LOGGER.warn("Fortify SSC Client did not receive expected response while attempting to upload "
                     + "Dependency-Track findings. HTTP response code: "
                     + response.getStatus() + " - " + response.getStatusText());

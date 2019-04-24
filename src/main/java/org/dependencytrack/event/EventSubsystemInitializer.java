@@ -20,6 +20,7 @@ package org.dependencytrack.event;
 import alpine.event.LdapSyncEvent;
 import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
+import alpine.logging.Logger;
 import alpine.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
@@ -49,6 +50,8 @@ import javax.servlet.ServletContextListener;
  */
 public class EventSubsystemInitializer implements ServletContextListener {
 
+    private static final Logger LOGGER = Logger.getLogger(EventSubsystemInitializer.class);
+
     // Starts the EventService
     private static final EventService EVENT_SERVICE = EventService.getInstance();
 
@@ -60,6 +63,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
      */
     @Override
     public void contextInitialized(final ServletContextEvent event) {
+        LOGGER.info("Initializing asynchronous event subsystem");
+
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
@@ -89,6 +94,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
      */
     @Override
     public void contextDestroyed(final ServletContextEvent event) {
+        LOGGER.info("Shutting down asynchronous event subsystem");
         TaskScheduler.getInstance().shutdown();
 
         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);

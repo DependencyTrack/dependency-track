@@ -60,6 +60,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
      */
     @Override
     public void contextInitialized(final ServletContextEvent event) {
+        LOGGER.info("Initializing default object generator");
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
@@ -115,7 +116,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             try {
                 final List<License> licenses = parser.getLicenseDefinitions();
                 for (final License license : licenses) {
-                    LOGGER.info("Synchronizing: " + license.getName());
+                    LOGGER.debug("Synchronizing: " + license.getName());
                     qm.synchronizeLicense(license, false);
                 }
             } catch (IOException e) {

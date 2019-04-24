@@ -37,6 +37,7 @@ public class RequirementsVerifier implements ServletContextListener {
      */
     @Override
     public void contextInitialized(final ServletContextEvent event) {
+        LOGGER.info("Initializing requirements verifier");
         final JavaVersion javaVersion = new JavaVersion();
         if (javaVersion.getMajor() != 8 || javaVersion.getUpdate() < 161) {
             setFailedValidation(true);

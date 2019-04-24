@@ -30,6 +30,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
 
     public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = Logger.getLogger(this.getClass());
+        logger.debug("Preparing to publish notification");
         if (config == null) {
             logger.warn("No configuration found. Skipping notification.");
             return;

@@ -17,6 +17,7 @@
  */
 package org.dependencytrack.notification;
 
+import alpine.logging.Logger;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
 import org.dependencytrack.RequirementsVerifier;
@@ -31,6 +32,8 @@ import javax.servlet.ServletContextListener;
  */
 public class NotificationSubsystemInitializer implements ServletContextListener {
 
+    private static final Logger LOGGER = Logger.getLogger(NotificationSubsystemInitializer.class);
+
     // Starts the NotificationService
     private static final NotificationService NOTIFICATION_SERVICE = NotificationService.getInstance();
 
@@ -42,6 +45,7 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
         if (RequirementsVerifier.failedValidation()) {
             return;
         }
+        LOGGER.info("Initializing notification service");
         NOTIFICATION_SERVICE.subscribe(new Subscription(NotificationRouter.class));
     }
 
@@ -50,6 +54,7 @@ public class NotificationSubsystemInitializer implements ServletContextListener 
      */
     @Override
     public void contextDestroyed(final ServletContextEvent event) {
+        LOGGER.info("Shutting down notification service");
         NOTIFICATION_SERVICE.shutdown();
     }
 }

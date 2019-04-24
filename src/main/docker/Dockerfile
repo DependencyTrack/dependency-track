@@ -8,7 +8,7 @@ ARG DATA_DIR=/data
 ARG USER=dtrack
 
 # Environment variables that can be passed at runtime
-ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4G"
+ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4G -DdependencyTrack.loggingLevel=INFO"
 
 # Create the application directory where Dependency-Track will be installed
 RUN mkdir -p ${APP_DIR}

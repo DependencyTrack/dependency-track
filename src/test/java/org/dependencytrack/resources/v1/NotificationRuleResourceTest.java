@@ -25,6 +25,7 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
@@ -42,6 +43,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -137,6 +139,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Rule 1", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         rule.setName("Example Rule");
+        rule.setNotifyOn(Collections.singleton(NotificationGroup.NEW_VULNERABILITY));
         Response response = target(V1_NOTIFICATION_RULE).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(rule, MediaType.APPLICATION_JSON));
@@ -147,7 +150,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
         Assert.assertTrue(json.getBoolean("enabled"));
         Assert.assertEquals("PORTFOLIO", json.getString("scope"));
         Assert.assertEquals("INFORMATIONAL", json.getString("notificationLevel"));
-        Assert.assertEquals(0, json.getJsonArray("notifyOn").size());
+        Assert.assertEquals("NEW_VULNERABILITY", json.getJsonArray("notifyOn").getString(0));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
         Assert.assertEquals("Slack", json.getJsonObject("publisher").getString("name"));
     }

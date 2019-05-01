@@ -267,6 +267,7 @@ public class ComponentResource extends AlpineResource {
 
                 component = qm.updateComponent(component, true);
                 Event.dispatch(new VulnerabilityAnalysisEvent(component));
+                Event.dispatch(new RepositoryMetaEvent(component));
                 return Response.ok(component).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();

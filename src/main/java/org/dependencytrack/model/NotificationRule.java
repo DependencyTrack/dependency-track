@@ -99,7 +99,6 @@ public class NotificationRule implements Serializable {
 
     @Persistent
     @Column(name = "NOTIFY_ON", length = 1024)
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String notifyOn;
 
     @Persistent

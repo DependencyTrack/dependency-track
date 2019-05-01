@@ -276,11 +276,11 @@ Dependency-Track supports proxies that require BASIC, DIGEST, and NTLM authentic
 #### Logging Levels
 
 Logging levels (INFO, WARN, ERROR, DEBUG, TRACE) can be specified by passing the level 
-to the `dependencyTrack.loggingLevel` system property on startup. For example, the 
+to the `dependencyTrack.logging.level` system property on startup. For example, the 
 following command will start Dependency-Track (embedded) with DEBUG logging:
 
 ```bash
-java -Xmx4G -DdependencyTrack.loggingLevel=DEBUG -jar dependency-track-embedded.war
+java -Xmx4G -DdependencyTrack.logging.level=DEBUG -jar dependency-track-embedded.war
 ```
 
 For Docker deployments, simply set the `LOGGING_LEVEL` environment variable to one of

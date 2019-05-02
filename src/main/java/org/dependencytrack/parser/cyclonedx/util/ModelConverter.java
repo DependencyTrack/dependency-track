@@ -65,10 +65,12 @@ public class ModelConverter {
         component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
         component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
 
-        try {
-            component.setPurl(new PackageURL(cycloneDxComponent.getPurl()));
-        } catch (MalformedPackageURLException e) {
-            LOGGER.warn("Unable to parse PackageURL: " + cycloneDxComponent.getPurl());
+        if (StringUtils.isNotBlank(cycloneDxComponent.getPurl())) {
+            try {
+                component.setPurl(new PackageURL(StringUtils.trimToNull(cycloneDxComponent.getPurl())));
+            } catch (MalformedPackageURLException e) {
+                LOGGER.warn("Unable to parse PackageURL: " + cycloneDxComponent.getPurl());
+            }
         }
 
         final String type = StringUtils.trimToNull(cycloneDxComponent.getType());
@@ -82,6 +84,8 @@ public class ModelConverter {
             component.setClassifier(Classifier.OPERATING_SYSTEM);
         } else if ("device".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
             component.setClassifier(Classifier.DEVICE);
+        } else if ("file".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
+            component.setClassifier(Classifier.FILE);
         }
 
         if (cycloneDxComponent.getHashes() != null && !cycloneDxComponent.getHashes().isEmpty()) {
@@ -152,6 +156,8 @@ public class ModelConverter {
                 type = "operating-system";
             } else if (component.getClassifier() == Classifier.DEVICE) {
                 type = "device";
+            } else if (component.getClassifier() == Classifier.FILE) {
+                type = "file";
             }
         }
         cycloneComponent.setType(type);

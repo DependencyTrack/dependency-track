@@ -51,7 +51,10 @@ public class ModelConverter {
     public static List<Component> convert(final QueryManager qm, final Bom bom) {
         final List<Component> components = new ArrayList<>();
         for (int i = 0; i < bom.getComponents().size(); i++) {
-            components.add(convert(qm, bom.getComponents().get(i)));
+            final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
+            if (cycloneDxComponent != null) {
+                components.add(convert(qm, cycloneDxComponent));
+            }
         }
         return components;
     }
@@ -73,35 +76,24 @@ public class ModelConverter {
             }
         }
 
-        final String type = StringUtils.trimToNull(cycloneDxComponent.getType());
-        if ("application".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
-            component.setClassifier(Classifier.APPLICATION);
-        } else if ("framework".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
-            component.setClassifier(Classifier.FRAMEWORK);
-        } else if ("library".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
-            component.setClassifier(Classifier.LIBRARY);
-        } else if ("operating-system".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
-            component.setClassifier(Classifier.OPERATING_SYSTEM);
-        } else if ("device".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
-            component.setClassifier(Classifier.DEVICE);
-        } else if ("file".toUpperCase(Locale.ENGLISH).equals(type.toUpperCase(Locale.ENGLISH))) {
-            component.setClassifier(Classifier.FILE);
-        }
+        component.setClassifier(Classifier.valueOf(cycloneDxComponent.getType().name()));
 
         if (cycloneDxComponent.getHashes() != null && !cycloneDxComponent.getHashes().isEmpty()) {
             for (final Hash hash : cycloneDxComponent.getHashes()) {
-                if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setMd5(StringUtils.trimToNull(hash.getValue()));
-                } else if (Hash.Algorithm.SHA1.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha1(StringUtils.trimToNull(hash.getValue()));
-                } else if (Hash.Algorithm.SHA_256.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha256(StringUtils.trimToNull(hash.getValue()));
-                } else if (Hash.Algorithm.SHA_512.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha512(StringUtils.trimToNull(hash.getValue()));
-                } else if (Hash.Algorithm.SHA3_256.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha3_256(StringUtils.trimToNull(hash.getValue()));
-                } else if (Hash.Algorithm.SHA3_512.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
-                    component.setSha3_512(StringUtils.trimToNull(hash.getValue()));
+                if (hash != null) {
+                    if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                        component.setMd5(StringUtils.trimToNull(hash.getValue()));
+                    } else if (Hash.Algorithm.SHA1.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                        component.setSha1(StringUtils.trimToNull(hash.getValue()));
+                    } else if (Hash.Algorithm.SHA_256.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                        component.setSha256(StringUtils.trimToNull(hash.getValue()));
+                    } else if (Hash.Algorithm.SHA_512.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                        component.setSha512(StringUtils.trimToNull(hash.getValue()));
+                    } else if (Hash.Algorithm.SHA3_256.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                        component.setSha3_256(StringUtils.trimToNull(hash.getValue()));
+                    } else if (Hash.Algorithm.SHA3_512.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                        component.setSha3_512(StringUtils.trimToNull(hash.getValue()));
+                    }
                 }
             }
         }
@@ -109,20 +101,25 @@ public class ModelConverter {
         final LicenseChoice licenseChoice = cycloneDxComponent.getLicenseChoice();
         if (licenseChoice != null && licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
             for (final org.cyclonedx.model.License cycloneLicense : licenseChoice.getLicenses()) {
-                if (StringUtils.isNotBlank(cycloneLicense.getId())) {
-                    final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
-                    if (license != null) {
-                        component.setResolvedLicense(license);
+                if (cycloneLicense != null) {
+                    if (StringUtils.isNotBlank(cycloneLicense.getId())) {
+                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                        if (license != null) {
+                            component.setResolvedLicense(license);
+                        }
                     }
+                    component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
                 }
-                component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
             }
         }
 
         if (cycloneDxComponent.getComponents() != null && !cycloneDxComponent.getComponents().isEmpty()) {
             final Collection<Component> components = new ArrayList<>();
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
-                components.add(convert(qm, cycloneDxComponent.getComponents().get(i)));
+                final org.cyclonedx.model.Component cycloneDxChildComponent = cycloneDxComponent.getComponents().get(i);
+                if (cycloneDxChildComponent != null) {
+                    components.add(convert(qm, cycloneDxChildComponent));
+                }
             }
             if (CollectionUtils.isNotEmpty(components)) {
                 component.setChildren(components);
@@ -144,23 +141,7 @@ public class ModelConverter {
             cycloneComponent.setPurl(component.getPurl().canonicalize());
         }
 
-        String type = "library";
-        if (component.getClassifier() != null) {
-            if (component.getClassifier() == Classifier.APPLICATION) {
-                type = "application";
-            } else if (component.getClassifier() == Classifier.FRAMEWORK) {
-                type = "framework";
-            } else if (component.getClassifier() == Classifier.LIBRARY) {
-                type = "library";
-            } else if (component.getClassifier() == Classifier.OPERATING_SYSTEM) {
-                type = "operating-system";
-            } else if (component.getClassifier() == Classifier.DEVICE) {
-                type = "device";
-            } else if (component.getClassifier() == Classifier.FILE) {
-                type = "file";
-            }
-        }
-        cycloneComponent.setType(type);
+        cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(component.getClassifier().name()));
 
         if (component.getMd5() != null) {
             cycloneComponent.addHash(new Hash(Hash.Algorithm.MD5, component.getMd5()));

@@ -28,5 +28,6 @@ public enum Classifier {
     FRAMEWORK,
     LIBRARY,
     OPERATING_SYSTEM,
-    DEVICE
+    DEVICE,
+    FILE
 }

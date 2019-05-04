@@ -76,7 +76,11 @@ public class ModelConverter {
             }
         }
 
-        component.setClassifier(Classifier.valueOf(cycloneDxComponent.getType().name()));
+        if (cycloneDxComponent.getType() != null) {
+            component.setClassifier(Classifier.valueOf(cycloneDxComponent.getType().name()));
+        } else {
+            component.setClassifier(Classifier.LIBRARY);
+        }
 
         if (cycloneDxComponent.getHashes() != null && !cycloneDxComponent.getHashes().isEmpty()) {
             for (final Hash hash : cycloneDxComponent.getHashes()) {
@@ -141,7 +145,11 @@ public class ModelConverter {
             cycloneComponent.setPurl(component.getPurl().canonicalize());
         }
 
-        cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(component.getClassifier().name()));
+        if (component.getClassifier() != null) {
+            cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(component.getClassifier().name()));
+        } else {
+            cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
+        }
 
         if (component.getMd5() != null) {
             cycloneComponent.addHash(new Hash(Hash.Algorithm.MD5, component.getMd5()));

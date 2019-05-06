@@ -45,7 +45,7 @@ Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial
 Ecosystem Overview
 -------------------
 
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/integrations.png)
+![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
 
 Features
 -------------------
@@ -71,7 +71,7 @@ Features
 
 Screenshots
 -------------------
-![alt text](https://raw.githubusercontent.com/stevespringett/dependency-track/master/docs/images/screenshots/dashboard.png)
+![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
 
 For more eye-candy, visit <https://dependencytrack.org/>.
 

@@ -172,15 +172,15 @@ Online documentation is accessible at: <https://docs.dependencytrack.org/>
 Community
 -------------------
 
-* Twitter: <https://twitter.com/dependencytrack>
+* Twitter: <https://dependencytrack.org/twitter>
 
-* YouTube: <https://www.youtube.com/channel/UC8xdttysl3gNAQYvk1J9Efg>
+* YouTube: <https://dependencytrack.org/youtube>
 
-* Gitter: <https://gitter.im/dependency-track/Lobby>
+* Gitter: <https://dependencytrack.org/gitter>
 
-* Slack: <https://owasp.slack.com/messages/proj-dependency-track>
+* Slack: <https://dependencytrack.org/slack> (Invite:  <https://dependencytrack.org/slack/invite>)
 
-* Google Groups: <https://groups.google.com/forum/#!forum/dependency-track>
+* Discussion (Groups.io): <https://dependencytrack.org/discussion>
 
 
 Support
@@ -214,7 +214,7 @@ the [NOTICES.txt] [notices] file for more information.
   [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
   [Dependency-Track Jenkins Plugin]: https://wiki.jenkins.io/display/JENKINS/OWASP+Dependency-Track+Plugin
   [Jenkins Pipeline]: https://jenkins.io/solutions/pipeline
-  [CycloneDX]: http://cyclonedx.org
+  [CycloneDX]: https://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
   [license-url]: https://github.com/DependencyTrack/dependency-track/blob/master/LICENSE.txt

@@ -17,7 +17,7 @@ alpine.ldap.server.url=ldap://ldap.example.com:3268
 alpine.ldap.basedn=dc=example,dc=com
 alpine.ldap.security.auth=simple
 alpine.ldap.auth.username.format=%s@example.com
-alpine.ldap.bind.username=cn=ServiceAccount,cn=Users,dc=example,dc=com
+alpine.ldap.bind.username=cn=ServiceAccount,ou=Users,dc=example,dc=com
 alpine.ldap.bind.password=mypassword
 alpine.ldap.attribute.name=userPrincipalName
 alpine.ldap.attribute.mail=mail

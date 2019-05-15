@@ -76,6 +76,13 @@ public class DependencyMetricsTest {
     }
 
     @Test
+    public void testUnassigned() {
+        DependencyMetrics metric = new DependencyMetrics();
+        metric.setUnassigned(9191);
+        Assert.assertEquals(9191, metric.getUnassigned());
+    }
+
+    @Test
     public void testVulnerabilities() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setVulnerabilities(6);

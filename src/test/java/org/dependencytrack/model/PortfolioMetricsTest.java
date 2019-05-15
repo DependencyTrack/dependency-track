@@ -60,6 +60,13 @@ public class PortfolioMetricsTest {
     }
 
     @Test
+    public void testUnassigned() {
+        PortfolioMetrics metric = new PortfolioMetrics();
+        metric.setUnassigned(9191);
+        Assert.assertEquals(9191, metric.getUnassigned());
+    }
+
+    @Test
     public void testVulnerabilities() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setVulnerabilities(6);

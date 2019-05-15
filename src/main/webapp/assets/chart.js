@@ -27,7 +27,7 @@ $chart.days = function days(num) {
 };
 
 /**
- * Creates a chart with the total number of critical, high, medium, and low severity findings/vulnerabilities.
+ * Creates a chart with the total number of critical, high, medium, low, and unassigned severity findings/vulnerabilities.
  */
 $chart.createSeverityTrendChart = function createSeverityTrendChart(metrics, divId, title) {
     function prepareChartData(metrics) {
@@ -35,17 +35,20 @@ $chart.createSeverityTrendChart = function createSeverityTrendChart(metrics, div
         let high = [];
         let medium = [];
         let low = [];
+        let unassigned = [];
         for (let i = 0; i < metrics.length; i++) {
             critical.push({x: new Date(metrics[i].firstOccurrence), y: metrics[i].critical});
             high.push({x: new Date(metrics[i].firstOccurrence), y: metrics[i].high});
             medium.push({x: new Date(metrics[i].firstOccurrence), y: metrics[i].medium});
             low.push({x: new Date(metrics[i].firstOccurrence), y: metrics[i].low});
+            unassigned.push({x: new Date(metrics[i].firstOccurrence), y: metrics[i].unassigned});
 
             if (i === metrics.length - 1) {
                 critical.push({x: new Date(metrics[i].lastOccurrence), y: metrics[i].critical});
                 high.push({x: new Date(metrics[i].lastOccurrence), y: metrics[i].high});
                 medium.push({x: new Date(metrics[i].lastOccurrence), y: metrics[i].medium});
                 low.push({x: new Date(metrics[i].lastOccurrence), y: metrics[i].low});
+                unassigned.push({x: new Date(metrics[i].lastOccurrence), y: metrics[i].unassigned});
             }
         }
         return [
@@ -77,7 +80,13 @@ $chart.createSeverityTrendChart = function createSeverityTrendChart(metrics, div
                 color: "#4cae4c",
                 fillOpacity: .1
             },
-
+            {
+                area: true,
+                values: unassigned,
+                key: "Unassigned",
+                color: "#c0c0c0",
+                fillOpacity: .1
+            }
         ];
     }
 

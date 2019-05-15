@@ -25,11 +25,8 @@ public class MetricsTest {
 
     @Test
     public void testMetricCalculations() {
-        double chml = Metrics.inheritedRiskScore(20, 10, 5, 1);
-        Assert.assertEquals(266, chml, 0);
-
-        double hml = Metrics.inheritedRiskScore(10, 5, 1);
-        Assert.assertEquals(66, hml, 0);
+        double chml = Metrics.inheritedRiskScore(20, 10, 5, 1, 3);
+        Assert.assertEquals(281, chml, 0);
 
         double ratio = Metrics.vulnerableComponentRatio(5, 100);
         Assert.assertEquals(0.05, ratio, 0);

@@ -57,6 +57,11 @@
                                                 <td nowrap><span class="severity-low fa fa-circle-o"></span>&nbsp;Low Severity:&nbsp;</td>
                                                 <td nowrap><span id="metricLow"></span></td>
                                             </tr>
+                                            <tr>
+                                                <td></td>
+                                                <td nowrap><span class="severity-unassigned fa fa-circle-o"></span>&nbsp;Unassigned Severity:&nbsp;</td>
+                                                <td nowrap><span id="metricUnassigned"></span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                 </tr>

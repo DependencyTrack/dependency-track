@@ -136,6 +136,7 @@ function populateMetrics(metric) {
     $("#metricHigh").html(filterXSS($common.valueWithDefault(metric.high, "0")));
     $("#metricMedium").html(filterXSS($common.valueWithDefault(metric.medium, "0")));
     $("#metricLow").html(filterXSS($common.valueWithDefault(metric.low, "0")));
+    $("#metricUnassigned").html(filterXSS($common.valueWithDefault(metric.unassigned, "0")));
     $("#metricIrs").html(filterXSS($common.valueWithDefault(metric.inheritedRiskScore, "0")));
 
     $("#statVulnerabilities").html(filterXSS($common.valueWithDefault(metric.vulnerabilities, "0")));

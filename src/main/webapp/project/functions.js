@@ -42,7 +42,7 @@ function formatDependenciesTable(res) {
         }
 
         $rest.getDependencyCurrentMetrics(projectUuid, res[i].component.uuid, function (data) {
-            res[i].component.vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
+            res[i].component.vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low, data.unassigned);
             dependenciesTable.bootstrapTable("updateRow", {
                 index: i,
                 row: res[i].component
@@ -379,6 +379,7 @@ function populateMetrics(metric) {
     $("#metricHigh").html(filterXSS($common.valueWithDefault(metric.high, "0")));
     $("#metricMedium").html(filterXSS($common.valueWithDefault(metric.medium, "0")));
     $("#metricLow").html(filterXSS($common.valueWithDefault(metric.low, "0")));
+    $("#metricUnassigned").html(filterXSS($common.valueWithDefault(metric.unassigned, "0")));
     $("#metricIrs").html(filterXSS($common.valueWithDefault(metric.inheritedRiskScore, "0")));
 
     $("#statTotalComponents").html(filterXSS($common.valueWithDefault(metric.components, "0")));

@@ -65,6 +65,10 @@ public class PortfolioMetrics implements Serializable {
     private int low;
 
     @Persistent
+    @Column(name = "UNASSIGNED_SEVERITY", allowsNull = "true") // New column, must allow nulls on existing databases)
+    private Integer unassigned;
+
+    @Persistent
     @Column(name = "VULNERABILITIES")
     private int vulnerabilities;
 
@@ -162,6 +166,14 @@ public class PortfolioMetrics implements Serializable {
 
     public void setLow(int low) {
         this.low = low;
+    }
+
+    public int getUnassigned() {
+        return unassigned;
+    }
+
+    public void setUnassigned(int unassigned) {
+        this.unassigned = unassigned;
     }
 
     public int getVulnerabilities() {

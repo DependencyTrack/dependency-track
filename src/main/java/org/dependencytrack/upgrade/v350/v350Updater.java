@@ -29,8 +29,13 @@ public class v350Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v350Updater.class);
     private static final String STMT_1 = "UPDATE \"PROJECT\" SET \"NAME\" = '(Undefined)' WHERE \"NAME\" IS NULL OR LTRIM(RTRIM(\"NAME\")) = ''";
-    private static final String STMT_2 = "UPDATE \"REPOSITORY\" SET \"URL\" = \"https://api.nuget.org/\" WHERE \"IDENTIFIER\" = \"nuget-gallery\"";
-
+    private static final String STMT_2 = "UPDATE \"REPOSITORY\" SET \"URL\" = 'https://api.nuget.org/' WHERE \"IDENTIFIER\" = 'nuget-gallery'";
+    private static final String[] UNASSIGNED_METRICS = new String[] {
+            "UPDATE \"PORTFOLIOMETRICS\" SET \"UNASSIGNED_SEVERITY\" = 0 WHERE \"UNASSIGNED_SEVERITY\" IS NULL",
+            "UPDATE \"PROJECTMETRICS\" SET \"UNASSIGNED_SEVERITY\" = 0 WHERE \"UNASSIGNED_SEVERITY\" IS NULL",
+            "UPDATE \"DEPENDENCYMETRICS\" SET \"UNASSIGNED_SEVERITY\" = 0 WHERE \"UNASSIGNED_SEVERITY\" IS NULL",
+            "UPDATE \"COMPONENTMETRICS\" SET \"UNASSIGNED_SEVERITY\" = 0 WHERE \"UNASSIGNED_SEVERITY\" IS NULL"
+    };
     public String getSchemaVersion() {
         return "3.5.0";
     }
@@ -41,6 +46,11 @@ public class v350Updater extends AbstractUpgradeItem {
 
         LOGGER.info("Correcting NuGet API URL");
         DbUtil.executeUpdate(connection, STMT_2);
+
+        LOGGER.info("Adding support for unassigned (severity) metrics");
+        for (String statement: UNASSIGNED_METRICS) {
+            DbUtil.executeUpdate(connection, statement);
+        }
     }
 
 }

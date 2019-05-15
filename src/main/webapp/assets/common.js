@@ -284,13 +284,14 @@ $common.generateProgressBar = function generateProgressBar(count, total) {
 
 /**
  * Creates a multi-color progress bar consisting of the number of
- * critical, high, medium, and low severity vulnerabilities.
+ * critical, high, medium, low, and unassigned severity vulnerabilities.
  */
-$common.generateSeverityProgressBar = function generateSeverityProgressBar(critical, high, medium, low) {
-    let percentCritical = (critical/(critical+high+medium+low))*100;
-    let percentHigh = (high/(critical+high+medium+low))*100;
-    let percentMedium = (medium/(critical+high+medium+low))*100;
-    let percentLow = (low/(critical+high+medium+low))*100;
+$common.generateSeverityProgressBar = function generateSeverityProgressBar(critical, high, medium, low, unassigned) {
+    let percentCritical = (critical/(critical+high+medium+low+unassigned))*100;
+    let percentHigh = (high/(critical+high+medium+low+unassigned))*100;
+    let percentMedium = (medium/(critical+high+medium+low+unassigned))*100;
+    let percentLow = (low/(critical+high+medium+low+unassigned))*100;
+    let percentUnassigned = (unassigned/(critical+high+medium+low+unassigned))*100;
     let block = '<span class="progress">';
     if (critical > 0) {
         block += '<div class="progress-bar severity-critical-bg" data-toggle="tooltip" data-placement="top" title="Critical: ' + critical + ' (' + Math.round(percentCritical*10)/10 + '%)" style="width:' + percentCritical+ '%">' + critical + '</div>';
@@ -304,7 +305,10 @@ $common.generateSeverityProgressBar = function generateSeverityProgressBar(criti
     if (low > 0) {
         block += '<div class="progress-bar severity-low-bg" data-toggle="tooltip" data-placement="top" title="Low: ' + low + ' (' + Math.round(percentLow * 10) / 10 + '%)" style="width:' + percentLow + '%">' + low + '</div>';
     }
-    if (critical === 0 && high === 0 && medium === 0 && low === 0) {
+    if (unassigned > 0) {
+        block += '<div class="progress-bar severity-unassigned-bg" data-toggle="tooltip" data-placement="top" title="Unassigned: ' + unassigned + ' (' + Math.round(percentUnassigned * 10) / 10 + '%)" style="width:' + percentUnassigned + '%">' + unassigned + '</div>';
+    }
+    if (critical === 0 && high === 0 && medium === 0 && low === 0 && unassigned === 0) {
         block += '<div class="progress-bar severity-info-bg" data-toggle="tooltip" data-placement="top" title="No Vulnerabilities Detected" style="width:100%">0</div>';
     }
     block += '</span>';

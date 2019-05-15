@@ -60,6 +60,13 @@ public class ProjectMetricsTest {
     }
 
     @Test
+    public void testUnassigned() {
+        ProjectMetrics metric = new ProjectMetrics();
+        metric.setUnassigned(9191);
+        Assert.assertEquals(9191, metric.getUnassigned());
+    }
+
+    @Test
     public void testVulnerabilities() {
         ProjectMetrics metric = new ProjectMetrics();
         metric.setVulnerabilities(6);

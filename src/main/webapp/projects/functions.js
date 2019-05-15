@@ -38,7 +38,7 @@ function formatProjectsTable(res) {
         }
 
         $rest.getProjectCurrentMetrics(res[i].uuid, function (data) {
-            res[i].vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low);
+            res[i].vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low, data.unassigned);
             projectsTable.bootstrapTable('updateRow', {
                 index: i,
                 row: res[i]

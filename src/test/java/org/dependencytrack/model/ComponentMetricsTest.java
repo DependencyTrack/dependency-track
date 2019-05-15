@@ -65,7 +65,14 @@ public class ComponentMetricsTest {
         ComponentMetrics metric = new ComponentMetrics();
         metric.setLow(7);
         Assert.assertEquals(7, metric.getLow());
-    } 
+    }
+
+    @Test
+    public void testUnassigned() {
+        ComponentMetrics metric = new ComponentMetrics();
+        metric.setUnassigned(9191);
+        Assert.assertEquals(9191, metric.getUnassigned());
+    }
 
     @Test
     public void testVulnerabilities() {

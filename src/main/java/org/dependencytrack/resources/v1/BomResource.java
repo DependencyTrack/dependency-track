@@ -42,6 +42,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
+import org.dependencytrack.resources.v1.vo.BomSubmitResponse;
+import org.dependencytrack.resources.v1.vo.TokenBeingProcessedResponse;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -63,7 +65,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -190,7 +191,8 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported bill of material format document",
-            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
+            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission.",
+			response = BomSubmitResponse.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -233,7 +235,8 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported bill of material format document",
-            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
+            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission.",
+			response = BomSubmitResponse.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -274,7 +277,8 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
-            notes = "This endpoint is intended to be used in conjunction with uploading a supported BOM document. Upon upload, a token will be returned. The token can then be queried using this endpoint to determine if any tasks (such as vulnerability analysis) is being performed on the BOM. A value of true indicates processing is occurring. A value of false indicates that no processing is occurring for the specified token. However, a value of false also does not confirm the token is valid, only that no processing is associated with the specified token."
+            notes = "This endpoint is intended to be used in conjunction with uploading a supported BOM document. Upon upload, a token will be returned. The token can then be queried using this endpoint to determine if any tasks (such as vulnerability analysis) is being performed on the BOM. A value of true indicates processing is occurring. A value of false indicates that no processing is occurring for the specified token. However, a value of false also does not confirm the token is valid, only that no processing is associated with the specified token.",
+			response = TokenBeingProcessedResponse.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -285,7 +289,7 @@ public class BomResource extends AlpineResource {
             @PathParam("uuid") String uuid) {
 
         final boolean value = Event.isEventBeingProcessed(UUID.fromString(uuid));
-        return Response.ok(Collections.singletonMap("processing", value)).build();
+        return Response.ok(new TokenBeingProcessedResponse(value)).build();
     }
 
     /**
@@ -296,7 +300,7 @@ public class BomResource extends AlpineResource {
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), decoded);
             Event.dispatch(bomUploadEvent);
-            return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
+            return Response.ok(new BomSubmitResponse(bomUploadEvent.getChainIdentifier().toString())).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
         }
@@ -315,7 +319,7 @@ public class BomResource extends AlpineResource {
                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130
                     final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), content);
                     Event.dispatch(bomUploadEvent);
-                    return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
+                    return Response.ok(new BomSubmitResponse(bomUploadEvent.getChainIdentifier().toString())).build();
                 } catch (IOException e) {
                     return Response.status(Response.Status.BAD_REQUEST).build();
                 }

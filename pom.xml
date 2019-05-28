@@ -82,7 +82,7 @@
     <properties>
         <!-- Dependency Versions -->
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
-        <lib.cpe-parser.version>2.0.0</lib.cpe-parser.version>
+        <lib.cpe-parser.version>2.0.1</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.1.0</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>2.0.0</lib.cyclonedx-java.version>
         <lib.dependency-check.version>4.0.2</lib.dependency-check.version>

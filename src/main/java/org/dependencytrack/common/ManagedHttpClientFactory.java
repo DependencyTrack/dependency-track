@@ -143,7 +143,7 @@ public final class ManagedHttpClientFactory {
                 .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
-        clientBuilder.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build());
+        clientBuilder.disableCookieManagement();
         return new ManagedHttpClient(clientBuilder.build(), connectionManager);
     }
 

@@ -43,6 +43,7 @@ import org.dependencytrack.parser.dependencycheck.resolver.PackageURLResolver;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -71,6 +72,13 @@ public class ScanUploadProcessingTask implements Subscriber {
 
             final File file = event.getFile();
             final byte[] scanData = CompressUtil.optionallyDecompress(event.getScan());
+
+            final String scanString = new String(scanData, StandardCharsets.UTF_8);
+            if (!scanString.startsWith("<?xml") || !scanString.contains("<analysis") || !scanString.contains("https://jeremylong.github.io/DependencyCheck/dependency-check.1.")) {
+                LOGGER.warn("The scan uploaded is not in a supported format. Supported formats include Dependency-Check XML schema v1.x produced by Dependency-Check v1.x - v4.x. Refer to https://docs.dependencytrack.org/best-practices/");
+                return;
+            }
+
             try {
                 final Analysis analysis = (file != null)
                         ? new DependencyCheckParser().parse(file)

@@ -53,6 +53,9 @@
                         <p>
                             Build ID: <span id="systemAppBuildId"></span>
                         </p>
+                        <p>
+                            Built On: <span id="systemAppBuiltOn"></span>
+                        </p>
                     </div>
                     <div class="col-sm-6 col-md-6">
                         <a href="https://github.com/stevespringett/Alpine">
@@ -68,6 +71,9 @@
                         </p>
                         <p>
                             Build ID: <span id="systemFrameworkBuildId"></span>
+                        </p>
+                        <p>
+                            Built On: <span id="systemFrameworkBuiltOn"></span>
                         </p>
                     </div>
                 </div>

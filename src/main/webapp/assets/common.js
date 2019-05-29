@@ -133,11 +133,11 @@ $common.initialize = function initialize() {
             // Populates teh system modeal with general app info
             $("#systemAppName").html(data.application);
             $("#systemAppVersion").html(data.version);
-            $("#systemAppTimestamp").html(data.timestamp);
+            $("#systemAppBuiltOn").html($common.formatTimestamp(data.timestamp, true));
             $("#systemAppBuildId").html(data.uuid);
             $("#systemFrameworkName").html(data.framework.name);
             $("#systemFrameworkVersion").html(data.framework.version);
-            $("#systemFrameworkTimestamp").html(data.framework.timestamp);
+            $("#systemFrameworkBuiltOn").html($common.formatTimestamp(data.framework.timestamp, true));
             $("#systemFrameworkBuildId").html(data.framework.uuid);
 
             if (!$.sessionStorage.isSet("token")) {

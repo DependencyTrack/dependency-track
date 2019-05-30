@@ -68,9 +68,11 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
+                    LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                     final BomParser parser = new BomParser();
                     components = ModelConverter.convert(qm, parser.parse(bomBytes));
                 } else if (SpdxDocumentParser.isSupportedSpdxFormat(bomString)) {
+                    LOGGER.info("Processing SPDX BOM uploaded to project: " + event.getProjectUuid());
                     final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
                     components = parser.parse(bomBytes);
                 } else {
@@ -82,10 +84,19 @@ public class BomUploadProcessingTask implements Subscriber {
                 for (final Component component: components) {
                     processComponent(qm, bom, project, component, flattenedComponents);
                 }
-
+                LOGGER.debug("Reconciling dependencies for project " + event.getProjectUuid());
                 qm.reconcileDependencies(project, existingProjectDependencies, flattenedComponents);
+                LOGGER.debug("Updating last import date for project " + event.getProjectUuid());
                 qm.updateLastBomImport(project, date);
-                Event.dispatch(new VulnerabilityAnalysisEvent(flattenedComponents).project(project));
+                // Instead of firing off a new VulnerabilityAnalysisEvent, chain the VulnerabilityAnalysisEvent to
+                // the BomUploadEvent so that synchronous publishing mode (Jenkins) waits until vulnerability
+                // analysis has completed. If not chained, synchronous publishing mode will return immediately upon
+                // return from this method, resulting in inaccurate findings being returned in the response (since
+                // the vulnerability analysis hasn't taken place yet).
+                final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(flattenedComponents).project(project);
+                vae.setChainIdentifier(event.getChainIdentifier());
+                Event.dispatch(vae);
+                LOGGER.info("BOM processing for project " + event.getProjectUuid() + " complete");
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
             } finally {
@@ -97,9 +108,19 @@ public class BomUploadProcessingTask implements Subscriber {
 
     private void processComponent(final QueryManager qm, final Bom bom, final Project project, Component component,
                                   final List<Component> flattenedComponents) {
+        LOGGER.debug("Processing component (group:" + component.getGroup()
+                + ", name:" + component.getName()
+                + ", version:" + component.getVersion()
+                + ", purl:" +  component.getPurl()
+                + ") for project: " + project.getUuid().toString());
         final ComponentResolver cr = new ComponentResolver(qm);
         final Component resolvedComponent = cr.resolve(component);
         if (resolvedComponent != null) {
+            LOGGER.debug("Component (group:" + component.getGroup()
+                    + ", name:" + component.getName()
+                    + ", version:" + component.getVersion()
+                    + ", purl:" +  component.getPurl()
+                    + ") has been resolved");
             final long oid = resolvedComponent.getId();
             resolvedComponent.setName(component.getName());
             resolvedComponent.setGroup(component.getGroup());
@@ -123,6 +144,11 @@ public class BomUploadProcessingTask implements Subscriber {
             // IMPORTANT: refreshing the object by querying for it again is critical.
             flattenedComponents.add(qm.getObjectById(Component.class, oid));
         } else {
+            LOGGER.debug("Component (group:" + component.getGroup()
+                    + ", name:" + component.getName()
+                    + ", version:" + component.getVersion()
+                    + ", purl:" +  component.getPurl()
+                    + ") is not resolved. Creating new component");
             component = qm.createComponent(component, false);
 
             final long oid = component.getId();

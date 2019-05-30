@@ -78,7 +78,7 @@ public class ScanUploadProcessingTask implements Subscriber {
                 LOGGER.warn("The scan uploaded is not in a supported format. Supported formats include Dependency-Check XML schema v1.x produced by Dependency-Check v1.x - v4.x. Refer to https://docs.dependencytrack.org/best-practices/");
                 return;
             }
-
+            LOGGER.info("Processing Dependency-Check XML scan uploaded to project: " + event.getProjectUuid() + ". This may result in unexpected or inaccurate results. Refer to https://docs.dependencytrack.org/best-practices/");
             try {
                 final Analysis analysis = (file != null)
                         ? new DependencyCheckParser().parse(file)

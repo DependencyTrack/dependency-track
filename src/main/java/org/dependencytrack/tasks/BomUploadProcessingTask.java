@@ -96,7 +96,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(flattenedComponents).project(project);
                 vae.setChainIdentifier(event.getChainIdentifier());
                 Event.dispatch(vae);
-                LOGGER.info("BOM processing for project " + event.getProjectUuid() + " complete");
+                LOGGER.info("Processed " + flattenedComponents.size() + " components uploaded to project " + event.getProjectUuid());
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
             } finally {

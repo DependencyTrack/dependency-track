@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.auth.LdapConnectionWrapper;
 import alpine.auth.PermissionRequired;
+import alpine.logging.Logger;
 import alpine.model.MappedLdapGroup;
 import alpine.model.Team;
 import alpine.resources.AlpineResource;
@@ -55,6 +56,8 @@ import java.util.List;
 @Api(value = "ldap", authorizations = @Authorization(value = "X-Api-Key"))
 public class LdapResource extends AlpineResource {
 
+    private static final Logger LOGGER = Logger.getLogger(LdapResource.class);
+
     @GET
     @Path("/groups")
     @Produces(MediaType.APPLICATION_JSON)
@@ -79,6 +82,7 @@ public class LdapResource extends AlpineResource {
             final List<String> groups = ldap.getGroups(dirContext);
             return Response.ok(groups).build();
         } catch (NamingException e) {
+            LOGGER.error("An error occurred attempting to retrieve a list of groups from the configured LDAP server", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         } finally {
             ldap.closeQuietly(dirContext);

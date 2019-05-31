@@ -138,7 +138,7 @@ table tr:first-child th {
     margin: 50px auto;
 }
 .modal-header {
-    background-color: #23446F;
+    background-color: rgba(36, 39, 51, 0.94);
     padding: 10px 15px;
 }
 .modal-title {
@@ -147,6 +147,9 @@ table tr:first-child th {
 }
 .modal-content {
     border: 0;
+}
+.modal-footer {
+    background-color: #fafafa;
 }
 .login-modal-header {
     background-color: #ffffff;
@@ -474,10 +477,10 @@ h4 {
     background-color: #999;
 }
 .btn-primary {
-    background-color: #23446F;
+    background-color: #3f4f6F;
 }
 .btn-primary:hover {
-    background-color: #2F649C;
+    background-color: #4f5f7F;
 }
 .btn-default {
     background-color: #eeeeee;
@@ -799,6 +802,9 @@ button.require-portfolio-management {
 }
 .nav>li.require-vulnerability-analysis, div.require-vulnerability-analysis, div.require-access-management, div.require-system-configuration {
     display: none;
+}
+.nav-tabs>li>a, .panel-footer {
+    padding: 8px 15px;
 }
 .refresh-metric {
     display: none;

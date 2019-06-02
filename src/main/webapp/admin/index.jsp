@@ -725,9 +725,10 @@
                 </div>
                 <div class="modal-body">
                     <table id="mappedTeamLdapGroupTable" class="table table-hover" data-toggle="table"
-                           data-search="true" data-click-to-select="true" data-page-size="5" data-page-list="[5, 10, 25, 50, 100]"
                            data-response-handler="formatMappedTeamLdapGroupTable"
-                           data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true">
+                           data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
+                           data-silent-sort="false" data-page-size="5" data-page-list="[5, 10, 25]"
+                           data-search="true" data-click-to-select="true" data-height="100%">
                         <thead>
                         <tr>
                             <th data-align="middle" data-field="selected" data-checkbox="true"></th>

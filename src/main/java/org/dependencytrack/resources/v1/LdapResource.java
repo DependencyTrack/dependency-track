@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.auth.LdapConnectionWrapper;
 import alpine.auth.PermissionRequired;
+import alpine.cache.CacheManager;
 import alpine.logging.Logger;
 import alpine.model.MappedLdapGroup;
 import alpine.model.Team;
@@ -30,10 +31,12 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest;
 import javax.naming.NamingException;
+import javax.naming.SizeLimitExceededException;
 import javax.naming.directory.DirContext;
 import javax.validation.Validator;
 import javax.ws.rs.DELETE;
@@ -44,7 +47,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing LDAP group mapping requests.
@@ -65,7 +70,8 @@ public class LdapResource extends AlpineResource {
             value = "Returns the DNs of all accessible groups within the directory",
             response = String.class,
             responseContainer = "List",
-            notes = "This API performs a pass-thru query to the configured LDAP server."
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of ldap groups that match the specified search criteria"),
+            notes = "This API performs a pass-thru query to the configured LDAP server. Search criteria results are cached using default Alpine CacheManager policy"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
@@ -75,18 +81,32 @@ public class LdapResource extends AlpineResource {
         if (!LdapConnectionWrapper.LDAP_CONFIGURED) {
             return Response.ok().build();
         }
-        final LdapConnectionWrapper ldap = new LdapConnectionWrapper();
-        DirContext dirContext = null;
-        try {
-            dirContext = ldap.createDirContext();
-            final List<String> groups = ldap.getGroups(dirContext);
-            return Response.ok(groups).build();
-        } catch (NamingException e) {
-            LOGGER.error("An error occurred attempting to retrieve a list of groups from the configured LDAP server", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        } finally {
-            ldap.closeQuietly(dirContext);
+        if (getAlpineRequest().getFilter() == null) {
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
+        List<String> groups = CacheManager.getInstance().get(ArrayList.class, "ldap-group-search:" + getAlpineRequest().getFilter());
+        if (groups == null) {
+            final LdapConnectionWrapper ldap = new LdapConnectionWrapper();
+            DirContext dirContext = null;
+            try {
+                dirContext = ldap.createDirContext();
+                groups = ldap.searchForGroupName(dirContext, getAlpineRequest().getFilter());
+                CacheManager.getInstance().put("ldap-group-search:" + getAlpineRequest().getFilter(), groups);
+            } catch (SizeLimitExceededException e) {
+                LOGGER.warn("The LDAP server did not return results from the specified search criteria as the result list would have exceeded the size limit specified by the LDAP server");
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } catch (NamingException e) {
+                LOGGER.error("An error occurred attempting to retrieve a list of groups from the configured LDAP server", e);
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            } finally {
+                ldap.closeQuietly(dirContext);
+            }
+        }
+        final List<String> result = groups.stream()
+                .skip(getAlpineRequest().getPagination().getOffset())
+                .limit(getAlpineRequest().getPagination().getLimit())
+                .collect(Collectors.toList());
+        return Response.ok(result).header(TOTAL_COUNT_HEADER, groups.size()).build();
     }
 
     @GET

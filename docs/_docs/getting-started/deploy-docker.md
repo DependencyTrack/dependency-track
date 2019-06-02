@@ -64,6 +64,8 @@ services:
     # - ALPINE_LDAP_ATTRIBUTE_MAIL=mail
     # - ALPINE_LDAP_GROUPS_FILTER=(&(objectClass=group)(objectCategory=Group))
     # - ALPINE_LDAP_USER_GROUPS_FILTER=(member:1.2.840.113556.1.4.1941:={USER_DN})
+    # - ALPINE_LDAP_GROUPS_SEARCH_FILTER=(&(objectClass=group)(objectCategory=Group)(cn=*{SEARCH_TERM}*))
+    # - ALPINE_LDAP_USERS_SEARCH_FILTER=(&(objectClass=user)(objectCategory=Person)(cn=*{SEARCH_TERM}*))
     # - ALPINE_LDAP_USER_PROVISIONING=false
     # - ALPINE_LDAP_TEAM_SYNCHRONIZATION=false
     #

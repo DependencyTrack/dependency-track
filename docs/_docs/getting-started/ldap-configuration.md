@@ -23,6 +23,8 @@ alpine.ldap.attribute.name=userPrincipalName
 alpine.ldap.attribute.mail=mail
 alpine.ldap.groups.filter=(&(objectClass=group)(objectCategory=Group))
 alpine.ldap.user.groups.filter=(member:1.2.840.113556.1.4.1941:={USER_DN})
+alpine.ldap.groups.search.filter=(&(objectClass=group)(objectCategory=Group)(cn=*{SEARCH_TERM}*))
+alpine.ldap.users.search.filter=(&(objectClass=user)(objectCategory=Person)(cn=*{SEARCH_TERM}*))
 ```
 
 #### ApacheDS Example
@@ -39,6 +41,8 @@ alpine.ldap.attribute.name=cn
 alpine.ldap.attribute.mail=mail
 alpine.ldap.groups.filter=(&(objectClass=groupOfUniqueNames))
 alpine.ldap.user.groups.filter=(&(objectClass=groupOfUniqueNames)(uniqueMember={USER_DN}))
+alpine.ldap.groups.search.filter=(&(objectClass=groupOfUniqueNames)(cn=*{SEARCH_TERM}*))
+alpine.ldap.users.search.filter=(&(objectClass=inetOrgPerson)(cn=*{SEARCH_TERM}*))
 ```
 
 #### Fedora 389 Directory Example
@@ -55,6 +59,8 @@ alpine.ldap.attribute.name=uid
 alpine.ldap.attribute.mail=mail
 alpine.ldap.groups.filter=(&(objectClass=groupOfUniqueNames))
 alpine.ldap.user.groups.filter=(&(objectClass=groupOfUniqueNames)(uniqueMember={USER_DN}))
+alpine.ldap.groups.search.filter=(&(objectClass=groupOfUniqueNames)(cn=*{SEARCH_TERM}*))
+alpine.ldap.users.search.filter=(&(objectClass=inetOrgPerson)(cn=*{SEARCH_TERM}*))
 ```
 
 #### NetIQ/Novell eDirectory Example
@@ -71,4 +77,6 @@ alpine.ldap.attribute.name=uid
 alpine.ldap.attribute.mail=mail
 alpine.ldap.groups.filter=(&(objectClass=groupOfUniqueNames))
 alpine.ldap.user.groups.filter=(&(objectClass=groupOfUniqueNames)(uniqueMember={USER_DN}))
+alpine.ldap.groups.search.filter=(&(objectClass=groupOfUniqueNames)(cn=*{SEARCH_TERM}*))
+alpine.ldap.users.search.filter=(&(objectClass=inetOrgPerson)(cn=*{SEARCH_TERM}*))
 ```

@@ -164,6 +164,10 @@ $common.unloadSpinner = function unloadSpinner() {
  * force the login modal to display
  */
 $common.logout = function logout() {
+    // Instructs all tabs (via localStorage event) that the session is being invalidated
+    $.localStorage.set("sessionInvalidate", Date.now());
+    $.localStorage.remove("sessionInvalidate");
+    // Removes the token from session storage and reload
     $.sessionStorage.remove("token");
     location.reload();
 };

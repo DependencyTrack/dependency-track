@@ -28,3 +28,28 @@
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/nv.d3.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/toastr/toastr.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/style.css"/><%=VERSION_PARAM%>">
+<script type="text/javascript">
+    (function() {
+        if (!sessionStorage.length) {
+            // Ask other tabs for session storage
+            localStorage.setItem('getSessionStorage', Date.now());
+        };
+        window.addEventListener('storage', function (event) {
+            if (event.key == 'getSessionStorage') {
+                // Some tab asked for the sessionStorage -> send it
+                localStorage.setItem('sessionStorage', JSON.stringify(sessionStorage));
+                localStorage.removeItem('sessionStorage');
+            } else if (event.key == 'sessionStorage' && !sessionStorage.length) {
+                // sessionStorage is empty -> fill it
+                var data = JSON.parse(event.newValue), value;
+                for (key in data) {
+                    sessionStorage.setItem(key, data[key]);
+                }
+            } else if (event.key == 'sessionInvalidate') {
+                // clearing out session in the event a user clicks the logout button
+                sessionStorage.clear();
+                location.reload();
+            }
+        });
+    })();
+</script>

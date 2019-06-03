@@ -45,6 +45,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
 
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final HttpResponse<JsonNode> response = ui.post(destination)
+                .header("content-type", "application/json")
                 .header("accept", "application/json")
                 .body(content)
                 .asJson();

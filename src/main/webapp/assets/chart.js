@@ -180,7 +180,6 @@ $chart.createSinglePointPercentageTrendChart = function createSinglePointTrendCh
             let total = eval("metrics[i]." + totalField);
             let completed = eval("metrics[i]." + completedField);
             let percentage = $common.calcProgressPercent(total, completed);
-            console.log(percentage);
             totalArray.push({x: new Date(metrics[i].firstOccurrence), y: percentage});
 
             if (i === metrics.length - 1) {

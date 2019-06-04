@@ -23,6 +23,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.io.FileUtils;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.DependencyCheckEvent;
 import org.dependencytrack.event.MetricsUpdateEvent;
@@ -35,10 +36,12 @@ import org.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.dependencytrack.parser.dependencycheck.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.agent.DependencyCheckScanAgent;
 import org.owasp.dependencycheck.exception.ScanAgentException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,9 +126,12 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         LOGGER.info("Executing Dependency-Check update-only task");
         final DependencyCheckScanAgent scanAgent = createScanAgent(true);
         try {
-            scanAgent.execute();
+            final Engine engine = scanAgent.execute();
+            FileUtils.deleteQuietly(engine.getSettings().getTempDirectory());
         } catch (ScanAgentException ex) {
             LOGGER.error("An error occurred executing Dependency-Check scan agent", ex);
+        } catch (IOException ex) {
+            LOGGER.error("An error occurred while deleting the Dependency-Check temp directory", ex);
         }
         LOGGER.info("Dependency-Check update-only complete");
     }
@@ -165,11 +171,14 @@ public class DependencyCheckTask extends BaseComponentAnalyzerTask implements Sc
         }
 
         try {
-            scanAgent.execute();
+            final Engine engine = scanAgent.execute();
             processResults();
+            FileUtils.deleteQuietly(engine.getSettings().getTempDirectory());
             LOGGER.info("Dependency-Check analysis complete");
         } catch (ScanAgentException ex) {
             LOGGER.error("An error occurred executing Dependency-Check scan agent", ex);
+        } catch (IOException ex) {
+            LOGGER.error("An error occurred while deleting the Dependency-Check temp directory", ex);
         }
     }
 

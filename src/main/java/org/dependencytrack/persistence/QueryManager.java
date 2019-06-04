@@ -1192,16 +1192,34 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getDependencies(Project project) {
+        PaginatedResult result;
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
-        query.setOrdering("component.name asc, component.version desc");
+        if (orderBy == null) {
+            query.setOrdering("component.name asc, component.version desc");
+        }
         if (filter != null) {
             query.setFilter("project == :project && component.name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, project, filterString);
+            result = execute(query, project, filterString);
+        } else {
+            result = execute(query, project);
         }
-        return execute(query, project);
+        // Populate each Dependency object in the paginated result with transitive related
+        // data to minimize the number of round trips a client needs to make, process, and render.
+        for (Dependency dependency: result.getList(Dependency.class)) {
+            dependency.setMetrics(getMostRecentDependencyMetrics(dependency));
+            final PackageURL purl = dependency.getComponent().getPurl();
+            if (purl != null) {
+                final RepositoryType type = RepositoryType.resolve(purl);
+                if (RepositoryType.UNSUPPORTED != type) {
+                    final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
+                    dependency.getComponent().setRepositoryMeta(repoMetaComponent);
+                }
+            }
+        }
+        return result;
     }
 
     /**

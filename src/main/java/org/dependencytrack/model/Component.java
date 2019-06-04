@@ -236,6 +236,8 @@ public class Component implements Serializable {
     @NotNull
     private UUID uuid;
 
+    private transient RepositoryMetaComponent repositoryMeta;
+
     public long getId() {
         return id;
     }
@@ -450,6 +452,14 @@ public class Component implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public RepositoryMetaComponent getRepositoryMeta() {
+        return repositoryMeta;
+    }
+
+    public void setRepositoryMeta(RepositoryMetaComponent repositoryMeta) {
+        this.repositoryMeta = repositoryMeta;
     }
 
     @Override

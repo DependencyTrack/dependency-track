@@ -107,6 +107,8 @@ public class Dependency implements Serializable {
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String notes;
 
+    private transient DependencyMetrics metrics;
+
     public long getId() {
         return id;
     }
@@ -153,6 +155,14 @@ public class Dependency implements Serializable {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public DependencyMetrics getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(DependencyMetrics metrics) {
+        this.metrics = metrics;
     }
 
 }

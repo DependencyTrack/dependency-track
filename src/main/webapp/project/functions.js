@@ -23,48 +23,29 @@
  * Called by bootstrap table to format the data in the dependencies table.
  */
 function formatDependenciesTable(res) {
-    let projectUuid = $.getUrlVar("uuid");
-    let dependenciesTable = $("#dependenciesTable");
     for (let i=0; i<res.length; i++) {
-
-        if (res[i].component.hasOwnProperty("purl") && res[i].component.hasOwnProperty("version")) {
-            $rest.getLatestFromRepository(res[i].component.purl, updateDependencyRowWithLatest(i, res[i]));
+        if (res[i].component.hasOwnProperty("version") && res[i].component.hasOwnProperty("repositoryMeta")) {
+            if (res[i].component.repositoryMeta.hasOwnProperty("latestVersion")) {
+                if (res[i].component.repositoryMeta.latestVersion !== res[i].component.version) {
+                    res[i].component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Outdated component. Current version is: '+ filterXSS(res[i].component.repositoryMeta.latestVersion) + '"><i class="fa fa-exclamation-triangle status-warning" aria-hidden="true"></i></span> ' + filterXSS(res[i].component.version);
+                } else {
+                    res[i].component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Component version is the latest available from the configured repositories"><i class="fa fa-exclamation-triangle status-passed" aria-hidden="true"></i></span> ' + filterXSS(res[i].component.version);
+                }
+                res[i].latestVersion = filterXSS(res[i].component.repositoryMeta.latestVersion);
+            }
         }
-
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].component.name)+ "</a>";
-        res[i].component.version = filterXSS(res[i].component.version);
         res[i].component.group = filterXSS(res[i].component.group);
-
         if (res[i].component.hasOwnProperty("resolvedLicense")) {
             let licenseurl = "../license/?licenseId=" + res[i].component.resolvedLicense.licenseId;
             res[i].component.license = "<a href=\"" + licenseurl + "\">" + filterXSS(res[i].component.resolvedLicense.licenseId) + "</a>";
         }
-
-        $rest.getDependencyCurrentMetrics(projectUuid, res[i].component.uuid, function (data) {
-            res[i].component.vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low, data.unassigned);
-            dependenciesTable.bootstrapTable("updateRow", {
-                index: i,
-                row: res[i].component
-            });
-        });
+        if (res[i].hasOwnProperty("metrics")) {
+            res[i].vulnerabilities = $common.generateSeverityProgressBar(res[i].metrics.critical, res[i].metrics.high, res[i].metrics.medium, res[i].metrics.low, res[i].metrics.unassigned);
+        }
     }
     return res;
-}
-
-function updateDependencyRowWithLatest(rowNumber, rowData) {
-    return function (data) {
-        const dependenciesTable = $("#dependenciesTable");
-        if (data.hasOwnProperty("latestVersion")) {
-            if (data.latestVersion !== rowData.component.version) {
-                rowData.component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Outdated component. Current version is: '+ filterXSS(data.latestVersion) + '"><i class="fa fa-exclamation-triangle status-warning" aria-hidden="true"></i></span> ' + filterXSS(rowData.component.version);
-            } else {
-                rowData.component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Component version is the latest available from the configured repositories"><i class="fa fa-exclamation-triangle status-passed" aria-hidden="true"></i></span> ' + filterXSS(rowData.component.version);
-            }
-            rowData.latestVersion = filterXSS(data.latestVersion);
-        }
-        dependenciesTable.bootstrapTable("updateRow", {index: rowNumber, row: rowData});
-    };
 }
 
 /**

@@ -168,33 +168,33 @@ function vulnerabilitiesDetailFormatter(index, row) {
     <form id="form-${componentUuid}">
         <div class="form-group" style="display:none" id="group-title-${componentUuid}-${vulnUuid}">
             <label for="title-${componentUuid}-${vulnUuid}">Title</label>
-            <input type="text" class="form-control" disabled="disabled" id="title-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="title-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
         </div>
         <div class="form-group" style="display:none" id="group-subtitle-${componentUuid}-${vulnUuid}">
             <label for="subtitle-${componentUuid}-${vulnUuid}">Subtitle</label>
-            <input type="text" class="form-control" disabled="disabled" id="subtitle-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="subtitle-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
         </div>
         <div class="form-group" style="display:none" id="group-description-${componentUuid}-${vulnUuid}">
             <label for="description-${componentUuid}-${vulnUuid}">Description</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="description-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+            <textarea class="form-control disabled" readonly="readonly" rows="7" id="description-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
         </div>
         <div class="form-group" style="display:none" id="group-recommendation-${componentUuid}-${vulnUuid}">
             <label for="recommendation-${componentUuid}-${vulnUuid}">Recommendation</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="recommendation-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+            <textarea class="form-control disabled" readonly="readonly" rows="7" id="recommendation-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
         </div>
         <div class="form-group" style="display:none" id="group-cvssV2Vector-${componentUuid}-${vulnUuid}">
             <label for="cvssV2Vector-${componentUuid}-${vulnUuid}">CVSSv2 Vector</label>
-            <input type="text" class="form-control" disabled="disabled" id="cvssV2Vector-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="cvssV2Vector-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
         </div>
         <div class="form-group" style="display:none" id="group-cvssV3Vector-${componentUuid}-${vulnUuid}">
             <label for="cvssV3Vector-${componentUuid}-${vulnUuid}">CVSSv3 Vector</label>
-            <input type="text" class="form-control" disabled="disabled" id="cvssV3Vector-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="cvssV3Vector-${componentUuid}-${vulnUuid}" value="" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}">
         </div>
     </div>
     <div class="col-sm-6 col-md-6">
         <div class="form-group">
             <label for="audit-trail-${componentUuid}-${vulnUuid}">Audit Trail</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="audit-trail-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
+            <textarea class="form-control disabled" readonly="readonly" rows="7" id="audit-trail-${componentUuid}-${vulnUuid}" data-component-uuid="${componentUuid}" data-vuln-uuid="${vulnUuid}"></textarea>
         </div>
         <div class="form-group">
             <label for="comment-${componentUuid}-${vulnUuid}">Comment</label>

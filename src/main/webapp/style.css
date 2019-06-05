@@ -772,6 +772,13 @@ label.required:after {
 input.required, select.required, textarea.required {
     border-color: #ffd700;
 }
+input.disabled, textarea.disabled {
+    cursor: no-drop;
+}
+input.disabled:focus, textarea.disabled:focus {
+    outline-style: none;
+    box-shadow: none;
+}
 .inDetailFormatterForm input[type=checkbox] {
     position: relative;
 }

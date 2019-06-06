@@ -149,6 +149,8 @@ public class Project implements Serializable {
     @Column(name = "LAST_BOM_IMPORTED")
     private Date lastBomImport;
 
+    private transient ProjectMetrics metrics;
+
     public long getId() {
         return id;
     }
@@ -243,6 +245,14 @@ public class Project implements Serializable {
 
     public void setLastBomImport(Date lastBomImport) {
         this.lastBomImport = lastBomImport;
+    }
+
+    public ProjectMetrics getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(ProjectMetrics metrics) {
+        this.metrics = metrics;
     }
 
     @Override

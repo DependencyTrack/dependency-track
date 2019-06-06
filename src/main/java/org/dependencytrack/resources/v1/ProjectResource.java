@@ -74,7 +74,7 @@ public class ProjectResource extends AlpineResource {
     public Response getProjects(@ApiParam(value = "The optional name of the project to query on", required = false)
                                 @QueryParam("name") String name) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = (name != null) ? qm.getProjects(name) : qm.getProjects();
+            final PaginatedResult result = (name != null) ? qm.getProjects(name) : qm.getProjects(true);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
@@ -123,7 +123,7 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
 
             final Tag tag = qm.getTagByName(tagString);
-            final PaginatedResult result = qm.getProjects(tag);
+            final PaginatedResult result = qm.getProjects(tag, true);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

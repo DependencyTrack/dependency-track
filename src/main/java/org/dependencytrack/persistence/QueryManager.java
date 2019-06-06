@@ -107,7 +107,8 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getProjects() {
+    public PaginatedResult getProjects(final boolean includeMetrics) {
+        final PaginatedResult result;
         final Query query = pm.newQuery(Project.class);
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
@@ -117,13 +118,31 @@ public class QueryManager extends AlpineQueryManager {
             final Tag tag = getTagByName(filter.trim());
             if (tag != null) {
                 query.setFilter("name.toLowerCase().matches(:name) || tags.contains(:tag)");
-                return execute(query, filterString, tag);
+                result = execute(query, filterString, tag);
             } else {
                 query.setFilter("name.toLowerCase().matches(:name)");
-                return execute(query, filterString);
+                result = execute(query, filterString);
+            }
+        } else {
+            result = execute(query);
+        }
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
             }
         }
-        return execute(query);
+        return result;
+    }
+
+    /**
+     * Returns a list of all projects.
+     * @return a List of Projects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getProjects() {
+        return getProjects(false);
     }
 
     /**
@@ -168,12 +187,30 @@ public class QueryManager extends AlpineQueryManager {
      * @param tag the tag associated with the Project
      * @return a List of Projects that contain the tag
      */
-    public PaginatedResult getProjects(final Tag tag) {
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
+        final PaginatedResult result;
         final Query query = pm.newQuery(Project.class, "tags.contains(:tag)");
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
-        return execute(query, tag);
+        result = execute(query, tag);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a paginated result of projects by tag.
+     * @param tag the tag associated with the Project
+     * @return a List of Projects that contain the tag
+     */
+    public PaginatedResult getProjects(final Tag tag) {
+        return getProjects(tag, false);
     }
 
     /**
@@ -595,7 +632,8 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Components
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getComponents() {
+    public PaginatedResult getComponents(final boolean includeMetrics) {
+        final PaginatedResult result;
         final Query query = pm.newQuery(Component.class);
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
@@ -603,9 +641,26 @@ public class QueryManager extends AlpineQueryManager {
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
+        } else {
+            result = execute(query);
         }
-        return execute(query);
+        if (includeMetrics) {
+            // Populate each Component object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Component component : result.getList(Component.class)) {
+                component.setMetrics(getMostRecentComponentMetrics(component));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a list of all Components defined in the datastore.
+     * @return a List of Components
+     */
+    public PaginatedResult getComponents() {
+        return getComponents(false);
     }
 
     /**
@@ -1191,8 +1246,8 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Dependency objects
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getDependencies(Project project) {
-        PaginatedResult result;
+    public PaginatedResult getDependencies(final Project project, final boolean includeMetrics) {
+        final PaginatedResult result;
         final Query query = pm.newQuery(Dependency.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
         query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
@@ -1206,20 +1261,32 @@ public class QueryManager extends AlpineQueryManager {
         } else {
             result = execute(query, project);
         }
-        // Populate each Dependency object in the paginated result with transitive related
-        // data to minimize the number of round trips a client needs to make, process, and render.
-        for (Dependency dependency: result.getList(Dependency.class)) {
-            dependency.setMetrics(getMostRecentDependencyMetrics(dependency));
-            final PackageURL purl = dependency.getComponent().getPurl();
-            if (purl != null) {
-                final RepositoryType type = RepositoryType.resolve(purl);
-                if (RepositoryType.UNSUPPORTED != type) {
-                    final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
-                    dependency.getComponent().setRepositoryMeta(repoMetaComponent);
+        if (includeMetrics) {
+            // Populate each Dependency object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Dependency dependency : result.getList(Dependency.class)) {
+                dependency.setMetrics(getMostRecentDependencyMetrics(dependency));
+                final PackageURL purl = dependency.getComponent().getPurl();
+                if (purl != null) {
+                    final RepositoryType type = RepositoryType.resolve(purl);
+                    if (RepositoryType.UNSUPPORTED != type) {
+                        final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
+                        dependency.getComponent().setRepositoryMeta(repoMetaComponent);
+                    }
                 }
             }
         }
         return result;
+    }
+
+    /**
+     * Returns a List of Dependency for the specified Project.
+     * @param project the Project to retrieve dependencies of
+     * @return a List of Dependency objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getDependencies(Project project) {
+        return getDependencies(project, false);
     }
 
     /**

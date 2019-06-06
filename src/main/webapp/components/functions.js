@@ -35,13 +35,9 @@ function formatComponentsTable(res) {
             res[i].license = "<a href=\"" + licenseurl + "\">" + filterXSS(res[i].resolvedLicense.licenseId) + "</a>";
         }
 
-        $rest.getComponentCurrentMetrics(res[i].uuid, function (data) {
-            res[i].vulnerabilities = $common.generateSeverityProgressBar(data.critical, data.high, data.medium, data.low, data.unassigned);
-            componentsTable.bootstrapTable('updateRow', {
-                index: i,
-                row: res[i]
-            });
-        });
+        if (res[i].hasOwnProperty("metrics")) {
+            res[i].vulnerabilities = $common.generateSeverityProgressBar(res[i].metrics.critical, res[i].metrics.high, res[i].metrics.medium, res[i].metrics.low, res[i].metrics.unassigned);
+        }
     }
     return res;
 }

@@ -1834,7 +1834,7 @@ public class QueryManager extends AlpineQueryManager {
     public PortfolioMetrics getMostRecentPortfolioMetrics() {
         final Query query = pm.newQuery(PortfolioMetrics.class);
         query.setOrdering("lastOccurrence desc");
-        return singleResult(execute(query).getList(PortfolioMetrics.class));
+        return singleResult(query.execute());
     }
 
     /**
@@ -1867,7 +1867,7 @@ public class QueryManager extends AlpineQueryManager {
     public ProjectMetrics getMostRecentProjectMetrics(Project project) {
         final Query query = pm.newQuery(ProjectMetrics.class, "project == :project");
         query.setOrdering("lastOccurrence desc");
-        return singleResult(execute(query, project).getList(ProjectMetrics.class));
+        return singleResult(query.execute(project));
     }
 
     /**
@@ -1901,7 +1901,7 @@ public class QueryManager extends AlpineQueryManager {
     public ComponentMetrics getMostRecentComponentMetrics(Component component) {
         final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
-        return singleResult(execute(query, component).getList(ComponentMetrics.class));
+        return singleResult(query.execute(component));
     }
 
     /**
@@ -1935,7 +1935,7 @@ public class QueryManager extends AlpineQueryManager {
     public DependencyMetrics getMostRecentDependencyMetrics(Dependency dependency) {
         final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component");
         query.setOrdering("lastOccurrence desc");
-        return singleResult(execute(query, dependency.getProject(), dependency.getComponent()).getList(DependencyMetrics.class));
+        return singleResult(query.execute(dependency.getProject(), dependency.getComponent()));
     }
 
     /**

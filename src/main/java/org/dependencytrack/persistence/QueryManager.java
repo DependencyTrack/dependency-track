@@ -1607,7 +1607,9 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Returns a List of Projects affected by a specific vulnerability.
      * @param vulnerability the vulnerability to query on
-     * @param suppressed
+     * @param includeSuppressed if includeSuppressed is true, return all dependencies which are affected by given
+     *                          vulnerability and suppressed dependencies. If includeSuppressed is false,
+     *                          return only affected dependencies.
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")

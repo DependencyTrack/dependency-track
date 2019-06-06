@@ -28,9 +28,9 @@ COPY ./target/dependency-track-embedded.war ${APP_DIR}
 VOLUME ${DATA_DIR}
 
 # Download optional JDBC drivers to the external library directory
-ADD http://central.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar /extlib
-ADD http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar /extlib
-ADD http://central.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar /extlib
+ADD https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar /extlib
+ADD https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar /extlib
+ADD https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar /extlib
 RUN chown -f -R ${USER}:${USER} /extlib
 
 # Specify the user to run commands as

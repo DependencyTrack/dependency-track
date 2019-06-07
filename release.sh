@@ -31,7 +31,7 @@ fi
 
 # Default build produces traditional war. Exit on failure.
 mvn clean package
-if [[ "$?" -ne 0 ]] ; the
+if [[ "$?" -ne 0 ]] ; then
   echo 'Aborting release due to build failure'; exit $rc
 fi
 # Build embedded Jetty distribution. Exit on failure

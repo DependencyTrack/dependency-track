@@ -29,7 +29,8 @@ before_script:
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "snapshot"; else echo $TRAVIS_BRANCH ; fi`
 
 script:
-  - mvn clean package sonar:sonar -Dsonar.branch=master -Dsonar.host.url=https://sonarcloud.io
+  - mvn clean package
+  # - mvn clean package sonar:sonar -Dsonar.host.url=https://sonarcloud.io
   - mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 

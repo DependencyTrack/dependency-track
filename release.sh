@@ -28,8 +28,17 @@ if [ -d ".git" ]; then
 elif [ -d ".svn" ]; then
     svn commit -m "Preparing to release $RELEASE_VERSION"
 fi
-mvn clean package
-mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+
+# Default build produces traditional war. Exit on failure.
+if [[ "$?" -ne 0 ]] ; then
+  mvn clean package
+  echo 'Aborting release due to build failure'; exit $rc
+fi
+# Build embedded Jetty distribution. Exit on failure
+if [[ "$?" -ne 0 ]] ; then
+  mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+  echo 'Aborting release due to build failure'; exit $rc
+fi
 mvn net.nicoulaj.maven.plugins:checksum-maven-plugin:files
 mvn github-release:release
 

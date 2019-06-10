@@ -111,33 +111,33 @@ function findingDetailFormatter(index, row) {
     <form id="form-${row.uuid}">
         <div class="form-group" style="display:none" id="group-title-${row.component.uuid}-${row.vulnerability.uuid}">
             <label for="title-${row.component.uuid}-${row.vulnerability.uuid}">Title</label>
-            <input type="text" class="form-control" disabled="disabled" id="title-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="title-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
         <div class="form-group" style="display:none" id="group-subtitle-${row.component.uuid}-${row.vulnerability.uuid}">
             <label for="subtitle-${row.component.uuid}-${row.vulnerability.uuid}">Subtitle</label>
-            <input type="text" class="form-control" disabled="disabled" id="subtitle-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="subtitle-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
         <div class="form-group" style="display:none" id="group-description-${row.component.uuid}-${row.vulnerability.uuid}">
             <label for="description-${row.component.uuid}-${row.vulnerability.uuid}">Description</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="description-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
+            <textarea class="form-control disabled" readonly="readonly" rows="7" id="description-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
         </div>
         <div class="form-group" style="display:none" id="group-recommendation-${row.component.uuid}-${row.vulnerability.uuid}">
             <label for="recommendation-${row.component.uuid}-${row.vulnerability.uuid}">Recommendation</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="recommendation-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
+            <textarea class="form-control disabled" readonly="readonly" rows="7" id="recommendation-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
         </div>
         <div class="form-group" style="display:none" id="group-cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}">
             <label for="cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}">CVSSv2 Vector</label>
-            <input type="text" class="form-control" disabled="disabled" id="cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="cvssV2Vector-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
         <div class="form-group" style="display:none" id="group-cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}">
             <label for="cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}">CVSSv3 Vector</label>
-            <input type="text" class="form-control" disabled="disabled" id="cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
+            <input type="text" class="form-control disabled" readonly="readonly" id="cvssV3Vector-${row.component.uuid}-${row.vulnerability.uuid}" value="" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}">
         </div>
     </div>
     <div class="col-sm-6 col-md-6">
         <div class="form-group">
             <label for="audit-trail-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}">Audit Trail</label>
-            <textarea class="form-control" disabled="disabled" rows="7" id="audit-trail-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
+            <textarea class="form-control disabled" readonly="readonly" rows="7" id="audit-trail-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}" data-component-uuid="${row.component.uuid}" data-vuln-uuid="${row.vulnerability.uuid}"></textarea>
         </div>
         <div class="form-group">
             <label for="comment-${projectUuid}-${row.component.uuid}-${row.vulnerability.uuid}">Comment</label>

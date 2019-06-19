@@ -18,12 +18,12 @@
 # Dependency-Track
 Dependency-Track is an intelligent Software Supply Chain Component Analysis platform that allows organizations to 
 identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
-and highly beneficial approach to Software Composition Analysis (SCA) by leveraging the capabilities of Software
-Bill-of-Materials (SBoM). This approach provides capabilities that traditional SCA solutions cannot achieve.
+and highly beneficial approach by leveraging the capabilities of Software Bill-of-Materials (SBoM). This approach 
+provides capabilities that traditional Software Composition Analysis (SCA) solutions cannot achieve.
 
-Dependency-Track can monitor all applications in its portfolio in order to proactively identify risk across an 
-organization. The platform has an API-first design and is ideal for use in Continuous Integration (CI) and 
-Continuous Delivery (CD) environments.
+Dependency-Track monitors component usage across all versions of every application in its portfolio in order to 
+proactively identify risk across an organization. The platform has an API-first design and is ideal for use in 
+Continuous Integration (CI) and Continuous Delivery (CD) environments.
 
 **NOTICE: Always use official binary releases in production.**
 

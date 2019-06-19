@@ -20,7 +20,9 @@ package org.dependencytrack.parser.dependencycheck.model;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * XmlAdapter class used to convert date formats.
@@ -31,15 +33,27 @@ import java.util.Date;
 public class DateAdapter extends XmlAdapter<String, Date> {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    private final SimpleDateFormat dateFormatInstant = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    {
+        dateFormatInstant.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
+
 
     @Override
     public String marshal(final Date v) throws Exception {
-        return dateFormat.format(v);
+        return dateFormatInstant.format(v);
     }
 
     @Override
     public Date unmarshal(final String v) throws Exception {
-        return dateFormat.parse(v);
+        Date parsed;
+
+        try {
+            parsed = dateFormat.parse(v);
+        } catch (ParseException err) {
+            parsed = dateFormatInstant.parse(v);
+        }
+        return parsed;
     }
 
 }

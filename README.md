@@ -55,7 +55,7 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports importing of [CycloneDX] and [SPDX] software bill-of-materials
-* Supports importing of [Dependency-Check] reports to simplify transitioning to SBoMs
+* Supports importing of [Dependency-Check] reports to simplify the transition to SBoMs
 * Easy to read metrics for components, projects, and portfolio
 * Native support for Kenna Security, Fortify SSC, and ThreadFix
 * API-first design facilitates easy integration with other systems

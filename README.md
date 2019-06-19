@@ -27,10 +27,10 @@ Continuous Delivery (CD) environments.
 
 **NOTICE: Always use official binary releases in production.**
 
-##Ecosystem Overview
+## Ecosystem Overview
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
 
-##Features
+## Features
 * Tracks component usage across all version of every application in an organizations portfolio
 * Identifies multiple forms of risk including
   * Components with known vulnerabilities
@@ -63,19 +63,19 @@ Continuous Delivery (CD) environments.
 * Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 
-##Screenshots
+## Screenshots
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
 
 For more eye-candy, visit <https://dependencytrack.org/>.
 
-##Distributions
+## Distributions
 Dependency-Track supports the following three deployment options:
 
 * Docker container
 * Executable WAR
 * Conventional WAR
 
-##Deploying Docker Container
+## Deploying Docker Container
 Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required
 other than an modern version of Docker. Dependency-Track uses the following conventions:
 
@@ -109,7 +109,7 @@ docker rm dependency-track
 docker volume rm dependency-track:/data
 ```
 
-##Deploying the Executable WAR
+## Deploying the Executable WAR
 Another simple way to get Dependency-Track running quickly is to automatically deploy the executable WAR. This
 method requires Java 8u101 or higher. Simply download `dependency-track-embedded.war` and execute:
 
@@ -117,13 +117,13 @@ method requires Java 8u101 or higher. Simply download `dependency-track-embedded
 java -Xmx4G -jar dependency-track-embedded.war
 ```
 
-##Deploying the Conventional WAR
+## Deploying the Conventional WAR
 This is the most difficult to deploy option as it requires an already installed and configured Servlet 
 container such as Apache Tomcat 8.5 and higher, however, it offers the most flexible deployment options.
 Follow the Servlet containers instructions for deploying `dependency-track.war`.
  
  
-##Compiling From Sources (optional)
+## Compiling From Sources (optional)
 To create an executable WAR that is ready to launch (recommended for most users):
 
 ```shell
@@ -142,19 +142,21 @@ To create an executable WAR that is ready to be deployed in a Docker container:
 mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
-##Resources
+## Resources
+
 * Website: <https://dependencytrack.org/>
 * Documentation: <https://docs.dependencytrack.org/>
 * Component Analysis: <https://www.owasp.org/index.php/Component_Analysis>
 
-##Community
+## Community
+
 * Twitter: <https://dependencytrack.org/twitter>
 * YouTube: <https://dependencytrack.org/youtube>
 * Gitter: <https://dependencytrack.org/gitter>
 * Slack: <https://dependencytrack.org/slack> (Invite:  <https://dependencytrack.org/slack/invite>)
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
 
-##Support
+## Support
 Dependency-Track is an open source project, created by people who believe that the knowledge of using 
 vulnerable components should be accessible to anyone with a desire to know. By supporting this project, you'll
 allow the team to outsource testing, infrastructure, further research and development efforts, and engage in 
@@ -162,7 +164,7 @@ outreach to various communities that would benefit from this technology.
 
 [![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=paypal%40owasp%2eorg&lc=US&item_name=OWASP%20Dependency-Track&no_note=0&currency_code=USD&bn=PP%2dDonationsBF)
 
-##Copyright & License
+## Copyright & License
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the 

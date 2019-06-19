@@ -15,78 +15,67 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/owasp/dependency-track.svg)](https://hub.docker.com/r/owasp/dependency-track/)
 
 
-Dependency-Track
-=========
+# Dependency-Track
+Dependency-Track is an intelligent Software Supply Chain Component Analysis platform that allows organizations to 
+identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
+and highly beneficial approach to Software Composition Analysis (SCA) by leveraging the capabilities of Software
+Bill-of-Materials (SBoM). This approach provides capabilities that traditional SCA solutions cannot achieve.
 
-Modern applications leverage the availability of existing components for use as building blocks 
-in application development. By using existing components, organizations can dramatically decrease
-time-to-market. Reusing existing components however, comes at a cost. Organizations that build on 
-top of existing components assume risk for software they did not create. Vulnerabilities in third-party
-components are inherited by all applications that use those components. The [OWASP Top Ten] (2013 and 2017)
-both recognize the risk of [using components with known vulnerabilities](https://www.owasp.org/index.php/Top_10_2013-A9-Using_Components_with_Known_Vulnerabilities).
-
-Dependency-Track is a Software Composition Analysis (SCA) platform that keeps track of all third-party 
-components used in all the applications an organization creates or consumes. It integrates with multiple
-vulnerability databases including the [National Vulnerability Database] (NVD), [NPM Public Advisories],
-[Sonatype OSS Index], and [VulnDB] from [Risk Based Security]. Dependency-Track monitors all applications 
-in its portfolio in order to proactively identify vulnerabilities in components that are placing your 
-applications at risk. Use of Dependency-Track can play a vital role in an overall [Cyber Supply Chain Risk Management](https://csrc.nist.gov/Projects/Supply-Chain-Risk-Management) (C-SCRM) 
-program by fulfilling many of the recommendations laid out by [SAFECode](https://www.safecode.org/wp-content/uploads/2017/05/SAFECode_TPC_Whitepaper.pdf).
-
-Dependency-Track is designed to be used in an automated DevOps environment where BOM (bill-of-material) formats are 
-automatically ingested during CI/CD. Use of the [Dependency-Track Jenkins Plugin] is highly recommended for this purpose 
-and is well suited for use in [Jenkins Pipeline]. In such an environment, Dependency-Track enables your DevOps teams to 
-accelerate while still keeping tabs on component usage and any inherited risk.
-
-Dependency-Track can also be used to monitor vulnerabilities in COTS (commercial off-the-shelf) software.
+Dependency-Track can monitor all applications in its portfolio in order to proactively identify risk across an 
+organization. The platform has an API-first design and is ideal for use in Continuous Integration (CI) and 
+Continuous Delivery (CD) environments.
 
 **NOTICE: Always use official binary releases in production.**
 
-Ecosystem Overview
--------------------
-
+##Ecosystem Overview
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
 
-Features
--------------------
-
-* Increases visibility into the use of vulnerable and outdated components
-* Flexible data model supporting an unlimited number of projects and components
-* Tracks vulnerabilities and inherited risk
-  * by component
-  * by project
-  * across entire portfolio
-* Tracks usage of out-of-date components
+##Features
+* Tracks component usage across all version of every application in an organizations portfolio
+* Identifies multiple forms of risk including
+  * Components with known vulnerabilities
+  * Out-of-date components
+  * Modified components
+  * License risk
+  * More coming soon...
+* Integrates with multiple sources of vulnerability intelligence including:
+  * [National Vulnerability Database] (NVD)
+  * [NPM Public Advisories]
+  * [Sonatype OSS Index]
+  * [VulnDB] from [Risk Based Security]
+  * More coming soon.
+* Ecosystem agnostic with built-in repository support for:
+  * Ruby Gems
+  * Maven
+  * NPM
+  * NuGet
+  * Python (Pypi)
+  * More coming soon.  
 * Includes a comprehensive auditing workflow for triaging results
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
-* Supports [CycloneDX] and [SPDX] bill-of-material and [Dependency-Check] XML
+* Supports importing of [CycloneDX] and [SPDX] software bill-of-materials
+* Supports importing of [Dependency-Check] reports to simplify transitioning to SBoMs
 * Easy to read metrics for components, projects, and portfolio
-* Provides a reliable mirror of the NVD data feed
 * Native support for Kenna Security, Fortify SSC, and ThreadFix
 * API-first design facilitates easy integration with other systems
 * API documentation available in Swagger 2.0 (OpenAPI 3 support coming soon)
 * Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 
-Screenshots
--------------------
+##Screenshots
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
 
 For more eye-candy, visit <https://dependencytrack.org/>.
 
-Distributions
--------------------
-
+##Distributions
 Dependency-Track supports the following three deployment options:
 
 * Docker container
 * Executable WAR
 * Conventional WAR
 
-Deploying Docker Container
--------------------
-
+##Deploying Docker Container
 Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required
 other than an modern version of Docker. Dependency-Track uses the following conventions:
 
@@ -120,9 +109,7 @@ docker rm dependency-track
 docker volume rm dependency-track:/data
 ```
 
-Deploying the Executable WAR
--------------------
-
+##Deploying the Executable WAR
 Another simple way to get Dependency-Track running quickly is to automatically deploy the executable WAR. This
 method requires Java 8u101 or higher. Simply download `dependency-track-embedded.war` and execute:
 
@@ -130,17 +117,13 @@ method requires Java 8u101 or higher. Simply download `dependency-track-embedded
 java -Xmx4G -jar dependency-track-embedded.war
 ```
 
-Deploying the Conventional WAR
--------------------
-
+##Deploying the Conventional WAR
 This is the most difficult to deploy option as it requires an already installed and configured Servlet 
 container such as Apache Tomcat 8.5 and higher, however, it offers the most flexible deployment options.
 Follow the Servlet containers instructions for deploying `dependency-track.war`.
  
  
-Compiling From Sources (optional)
--------------------
-
+##Compiling From Sources (optional)
 To create an executable WAR that is ready to launch (recommended for most users):
 
 ```shell
@@ -159,33 +142,19 @@ To create an executable WAR that is ready to be deployed in a Docker container:
 mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
-Website
--------------------
+##Resources
+* Website: <https://dependencytrack.org/>
+* Documentation: <https://docs.dependencytrack.org/>
+* Component Analysis: <https://www.owasp.org/index.php/Component_Analysis>
 
-The official Dependency-Track website is accessible at: <https://dependencytrack.org/>
-
-Documentation
--------------------
-
-Online documentation is accessible at: <https://docs.dependencytrack.org/>
-
-Community
--------------------
-
+##Community
 * Twitter: <https://dependencytrack.org/twitter>
-
 * YouTube: <https://dependencytrack.org/youtube>
-
 * Gitter: <https://dependencytrack.org/gitter>
-
 * Slack: <https://dependencytrack.org/slack> (Invite:  <https://dependencytrack.org/slack/invite>)
-
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
 
-
-Support
--------------------
-
+##Support
 Dependency-Track is an open source project, created by people who believe that the knowledge of using 
 vulnerable components should be accessible to anyone with a desire to know. By supporting this project, you'll
 allow the team to outsource testing, infrastructure, further research and development efforts, and engage in 
@@ -193,9 +162,7 @@ outreach to various communities that would benefit from this technology.
 
 [![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=paypal%40owasp%2eorg&lc=US&item_name=OWASP%20Dependency-Track&no_note=0&currency_code=USD&bn=PP%2dDonationsBF)
 
-Copyright & License
--------------------
-
+##Copyright & License
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the 

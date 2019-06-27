@@ -40,4 +40,4 @@ EXPOSE 8080
 
 # Launch Dependency-Track
 WORKDIR ${APP_DIR}
-CMD java $JAVA_OPTIONS -DdependencyTrack.loggingLevel=$LOGGING_LEVEL -jar dependency-track-embedded.war
+CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war

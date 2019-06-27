@@ -53,21 +53,21 @@
         </encoder>
     </appender>
 
-    <logger name="alpine" level="${dependencyTrack.loggingLevel:-INFO}" additivity="false">
+    <logger name="alpine" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
         <appender-ref ref="FILE" />
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
-    <logger name="org.dependencytrack" level="${dependencyTrack.loggingLevel:-INFO}" additivity="false">
+    <logger name="org.dependencytrack" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
         <appender-ref ref="FILE" />
         <appender-ref ref="SECURITY_CONSOLE" />
     </logger>
 
-    <logger name="org.owasp.dependencycheck" level="${dependencyTrack.loggingLevel:-INFO}" additivity="false">
+    <logger name="org.owasp.dependencycheck" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
         <appender-ref ref="FILE" />
     </logger>
 
-    <logger name="org.eclipse.jetty" level="${dependencyTrack.loggingLevel:-INFO}" additivity="false">
+    <logger name="org.eclipse.jetty" level="${dependencyTrack.logging.level:-INFO}" additivity="false">
         <appender-ref ref="EMBEDDED_SERVER" />
     </logger>
 

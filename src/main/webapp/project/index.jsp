@@ -385,6 +385,7 @@
                 </div>
                 <div class="modal-body">
                     <table id="projectPropertiesTable" class="table table-hover detail-table" data-toggle="table"
+                           data-response-handler="formatProjectPropertiesTable"
                            data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                            data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
                            data-silent-sort="false" data-page-size="5" data-height="100%">

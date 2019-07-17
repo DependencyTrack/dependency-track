@@ -264,7 +264,7 @@ $common.displayErrorModal = function displayErrorModal(xhr, fallbackMessage) {
         message = xhr.responseText.trim();
     }
     $("#modal-genericError").modal("show");
-    $("#modal-genericErrorContent").html(message);
+    $("#modal-genericErrorContent").text(message);
 };
 
 /**
@@ -272,7 +272,7 @@ $common.displayErrorModal = function displayErrorModal(xhr, fallbackMessage) {
  */
 $common.displayInfoModal = function displayInfoModal(message) {
     $("#modal-informational").modal("show");
-    $("#modal-infoMessage").html(message);
+    $("#modal-infoMessage").text(message);
 };
 
 /**
@@ -565,7 +565,7 @@ $(document).ready(function () {
                  * @returns {string}
                  */
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + 'project/?uuid=' + data.uuid + '">' + data.name + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'project/?uuid=' + filterXSS(data.uuid) + '">' + filterXSS(data.name) + '</a>';
                 }
             }
         },
@@ -582,7 +582,7 @@ $(document).ready(function () {
                  * @returns {string}
                  */
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + 'component/?uuid=' + data.uuid + '">' + data.name + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'component/?uuid=' + filterXSS(data.uuid) + '">' + filterXSS(data.name) + '</a>';
                 }
             }
         },
@@ -599,7 +599,7 @@ $(document).ready(function () {
                  * @returns {string}
                  */
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + 'vulnerability/?source=' + data.source + '&vulnId=' + data.vulnId + '">' + data.vulnId + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'vulnerability/?source=' + filterXSS(data.source) + '&vulnId=' + filterXSS(data.vulnId) + '">' + filterXSS(data.vulnId) + '</a>';
                 }
             }
         },
@@ -616,7 +616,7 @@ $(document).ready(function () {
                  * @returns {string}
                  */
                 suggestion: function (data) {
-                    return '<a class="tt-suggestion-item" href="' + contextPath + 'license/?licenseId=' + data.licenseId + '">' + data.name + '</a>';
+                    return '<a class="tt-suggestion-item" href="' + contextPath + 'license/?licenseId=' + filterXSS(data.licenseId) + '">' + filterXSS(data.name) + '</a>';
                 }
             }
         }

@@ -24,14 +24,16 @@
  */
 function formatDependenciesTable(res) {
     for (let i=0; i<res.length; i++) {
-        if (res[i].component.hasOwnProperty("version") && res[i].component.hasOwnProperty("repositoryMeta")) {
-            if (res[i].component.repositoryMeta.hasOwnProperty("latestVersion")) {
+        if (res[i].component.hasOwnProperty("version")) {
+            if (res[i].component.hasOwnProperty("repositoryMeta") && res[i].component.repositoryMeta.hasOwnProperty("latestVersion")) {
                 if (res[i].component.repositoryMeta.latestVersion !== res[i].component.version) {
                     res[i].component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Outdated component. Current version is: '+ filterXSS(res[i].component.repositoryMeta.latestVersion) + '"><i class="fa fa-exclamation-triangle status-warning" aria-hidden="true"></i></span> ' + filterXSS(res[i].component.version);
                 } else {
                     res[i].component.version = '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Component version is the latest available from the configured repositories"><i class="fa fa-exclamation-triangle status-passed" aria-hidden="true"></i></span> ' + filterXSS(res[i].component.version);
                 }
                 res[i].latestVersion = filterXSS(res[i].component.repositoryMeta.latestVersion);
+            } else {
+                res[i].component.version = filterXSS(res[i].component.version);
             }
         }
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
@@ -44,6 +46,17 @@ function formatDependenciesTable(res) {
         if (res[i].hasOwnProperty("metrics")) {
             res[i].vulnerabilities = $common.generateSeverityProgressBar(res[i].metrics.critical, res[i].metrics.high, res[i].metrics.medium, res[i].metrics.low, res[i].metrics.unassigned);
         }
+    }
+    return res;
+}
+
+function formatProjectPropertiesTable(res) {
+    for (let i=0; i<res.length; i++) {
+        res[i].groupName = filterXSS(res[i].groupName);
+        res[i].propertyName = filterXSS(res[i].propertyName);
+        res[i].propertyValue = filterXSS(res[i].propertyValue);
+        res[i].propertyType = filterXSS(res[i].propertyType);
+        res[i].description = filterXSS(res[i].description);
     }
     return res;
 }
@@ -65,17 +78,17 @@ function formatComponentsTable(res) {
  */
 function formatFindingsTable(res) {
     for (let i=0; i<res.length; i++) {
-        let vulnurl = "../vulnerability/?source=" + res[i].vulnerability.source + "&vulnId=" + res[i].vulnerability.vulnId;
+        let vulnurl = "../vulnerability/?source=" + filterXSS(res[i].vulnerability.source) + "&vulnId=" + filterXSS(res[i].vulnerability.vulnId);
         res[i].vulnerability.href = $common.formatSourceLabel(res[i].vulnerability.source) + " <a href=\"" + vulnurl + "\">" + filterXSS(res[i].vulnerability.vulnId) + "</a>";
 
         if (res[i].vulnerability.hasOwnProperty("cweId") && res[i].vulnerability.hasOwnProperty("cweName")) {
-            res[i].vulnerability.cwefield = "<div class='truncate-ellipsis'><span>CWE-" + res[i].vulnerability.cweId + " " + res[i].vulnerability.cweName + "</span></div>";
+            res[i].vulnerability.cwefield = "<div class='truncate-ellipsis'><span>CWE-" + filterXSS(res[i].vulnerability.cweId) + " " + filterXSS(res[i].vulnerability.cweName) + "</span></div>";
         } else {
             res[i].vulnerability.cwefield = "";
         }
 
         if (res[i].vulnerability.hasOwnProperty("severity")) {
-            res[i].vulnerability.severityLabel = $common.formatSeverityLabel(res[i].vulnerability.severity);
+            res[i].vulnerability.severityLabel = $common.formatSeverityLabel(filterXSS(res[i].vulnerability.severity));
         }
 
         if (res[i].analysis.hasOwnProperty("isSuppressed") && res[i].analysis.isSuppressed === true) {
@@ -84,16 +97,10 @@ function formatFindingsTable(res) {
             res[i].analysis.isSuppressedLabel = '';
         }
 
-        if (!res[i].component.hasOwnProperty("group")) {
-            res[i].component.group = "";
-        }
-        if (!res[i].component.hasOwnProperty("version")) {
-            res[i].component.version = "";
-        }
-        if (!res[i].analysis.hasOwnProperty("state")) {
-            res[i].analysis.state = "";
-        }
-
+        res[i].component.name = filterXSS(res[i].component.name);
+        res[i].component.group = res[i].component.hasOwnProperty("group") ? filterXSS(res[i].component.group) : "";
+        res[i].component.version = res[i].component.hasOwnProperty("version") ? filterXSS(res[i].component.version) : "";
+        res[i].analysis.state = res[i].analysis.hasOwnProperty("state") ? filterXSS(res[i].analysis.state) : "";
     }
     return res;
 }

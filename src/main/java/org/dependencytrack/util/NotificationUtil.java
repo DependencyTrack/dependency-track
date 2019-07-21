@@ -116,8 +116,8 @@ public final class NotificationUtil {
             } else {
                 // This was a global analysis decision affecting all projects
                 notificationGroup = NotificationGroup.GLOBAL_AUDIT_CHANGE;
-                final List<Dependency> dependencies = qm.getAllDependencies(analysis.getProject());
-                for (final Dependency dependency : dependencies) {
+
+                for (final Dependency dependency : qm.getAllDependencies(analysis.getComponent())) {
                     affectedProjects.add(qm.detach(Project.class, dependency.getProject().getId()));
                 }
             }

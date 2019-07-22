@@ -27,6 +27,7 @@ import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
@@ -68,13 +69,23 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
-                    LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
-                    final BomParser parser = new BomParser();
-                    components = ModelConverter.convert(qm, parser.parse(bomBytes));
+                    if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
+                        LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
+                        final BomParser parser = new BomParser();
+                        components = ModelConverter.convert(qm, parser.parse(bomBytes));
+                    } else {
+                        LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
+                        return;
+                    }
                 } else if (SpdxDocumentParser.isSupportedSpdxFormat(bomString)) {
-                    LOGGER.info("Processing SPDX BOM uploaded to project: " + event.getProjectUuid());
-                    final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
-                    components = parser.parse(bomBytes);
+                    if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_SPDX)) {
+                        LOGGER.info("Processing SPDX BOM uploaded to project: " + event.getProjectUuid());
+                        final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
+                        components = parser.parse(bomBytes);
+                    } else {
+                        LOGGER.warn("A SPDX BOM was uploaded but accepting SPDX BOMs is disabled. Aborting");
+                        return;
+                    }
                 } else {
                     LOGGER.warn("The BOM uploaded is not in a supported format. Supported formats include CycloneDX, SPDX RDF, and SPDX Tag");
                     return;

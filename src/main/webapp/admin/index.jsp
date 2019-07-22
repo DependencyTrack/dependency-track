@@ -34,6 +34,7 @@
                     <div id="collapseConfiguration" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingConfiguration">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#generalConfigTab">General</a>
+                            <a data-toggle="tab" class="list-group-item" href="#artifactsTab">BOM Formats</a>
                             <a data-toggle="tab" class="list-group-item" href="#emailTab">Email</a>
                         </div>
                     </div>
@@ -141,6 +142,20 @@
                                 <input type="text" name="Base URL" class="form-control required" id="generalConfigBaseUrlInput" data-group-name="general" data-property-name="base.url">
                             </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateGeneralConfigButton" data-group-name="general">Update</button>
+                        </div>
+                        <div class="tab-pane admin-form-content" id="artifactsTab" data-admin-title="BOM Formats">
+                            <h3 class="admin-section-title">BOM Format Configuration</h3>
+                            <p>Enables support for processing BOMs of various formats. Only BOM formats which are enabled will be processed.</p>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="artifactCycloneDxEnableInput" data-group-name="artifact" data-property-name="cyclonedx.enabled"> Enable CycloneDX</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="artifactSpdxEnableInput" data-group-name="artifact" data-property-name="spdx.enabled"> Enable SPDX</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="artifactDependencyCheckEnableInput" data-group-name="artifact" data-property-name="dependencycheck.enabled"> Enable Dependency-Check XML reports (<strong>deprecated</strong>)</label>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-config-property" id="updateArtifactConfigButton" data-group-name="artifact">Update</button>
                         </div>
                         <div class="tab-pane admin-form-content" id="emailTab" data-admin-title="Email">
                             <h3 class="admin-section-title">Email Service Configuration</h3>

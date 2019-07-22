@@ -19,41 +19,19 @@
 package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
+import alpine.model.ConfigProperty;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import alpine.util.BooleanUtil;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentMetrics;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.Dependency;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.Evidence;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.License;
-import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.model.PortfolioMetrics;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectMetrics;
-import org.dependencytrack.model.ProjectProperty;
-import org.dependencytrack.model.Repository;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.Scan;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityMetrics;
+import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
 import javax.jdo.FetchPlan;
@@ -2296,6 +2274,21 @@ public class QueryManager extends AlpineQueryManager {
             return persist(publisher);
         }
         return null;
+    }
+
+    /**
+     * Determines if a config property is enabled or not.
+     * @param configPropertyConstants the property to query
+     * @return true if enabled, false if not
+     */
+    public boolean isEnabled(final ConfigPropertyConstants configPropertyConstants) {
+        final ConfigProperty property = getConfigProperty(
+                configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName()
+        );
+        if (ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
+            return BooleanUtil.valueOf(property.getPropertyValue());
+        }
+        return false;
     }
 
     /**

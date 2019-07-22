@@ -30,6 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.ScanUploadEvent;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.ScanSubmitRequest;
@@ -74,6 +75,9 @@ public class ScanResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.SCAN_UPLOAD)
     public Response uploadScan(ScanSubmitRequest request) {
+        if (!isEnabled()) {
+            return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Accepting Dependency-Check reports is not enabled. Aborting.").build();
+        }
         final Validator validator = getValidator();
         if (request.getProject() != null) { // behavior in v3.0.0
             failOnValidationError(
@@ -121,7 +125,9 @@ public class ScanResource extends AlpineResource {
                                @FormDataParam("projectName") String projectName,
                                @FormDataParam("projectVersion") String projectVersion,
                                final FormDataMultiPart multiPart) {
-
+        if (!isEnabled()) {
+            return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Accepting Dependency-Check reports is not enabled. Aborting.").build();
+        }
         final List<FormDataBodyPart> artifactParts = multiPart.getFields("scan");
         if (projectUuid != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager()) {
@@ -179,6 +185,12 @@ public class ScanResource extends AlpineResource {
             }
         }
         return Response.ok().build();
+    }
+
+    private boolean isEnabled() {
+        try (QueryManager qm = new QueryManager()) {
+            return qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_DEPENDENCYCHECK);
+        }
     }
 
 }

@@ -2285,7 +2285,7 @@ public class QueryManager extends AlpineQueryManager {
         final ConfigProperty property = getConfigProperty(
                 configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName()
         );
-        if (ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
+        if (property != null && ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
             return BooleanUtil.valueOf(property.getPropertyValue());
         }
         return false;

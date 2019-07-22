@@ -19,9 +19,11 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.filters.AuthenticationFilter;
+import alpine.model.ConfigProperty;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.resources.v1.vo.ScanSubmitRequest;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -30,6 +32,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -47,6 +50,18 @@ public class ScanResourceTest extends ResourceTest {
                         .register(AuthenticationFilter.class)
                         .register(MultiPartFeature.class)))
                 .build();
+    }
+
+    @Before
+    public void before() throws Exception {
+        super.before();
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCEPT_ARTIFACT_DEPENDENCYCHECK.getGroupName(),
+                ConfigPropertyConstants.ACCEPT_ARTIFACT_DEPENDENCYCHECK.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.SCANNER_DEPENDENCYCHECK_ENABLED.getPropertyType(),
+                null
+        );
     }
 
     @Test

@@ -308,13 +308,13 @@ $rest.updatePrincipalSelf = function getPrincipalSelf(fullname, email, newPasswo
 /**
  * Service called when a project is created.
  */
-$rest.createProject = function createProject(name, version, description, tags, successCallback, failCallback) {
+$rest.createProject = function createProject(name, version, description, tags, active, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_PROJECT,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_PUT,
-        data: JSON.stringify({name: name, version: version, description: description, tags: tags}),
+        data: JSON.stringify({name: name, version: version, description: description, tags: tags, active: active}),
         statusCode: {
             201: function(data) {
                 if (successCallback) {
@@ -415,13 +415,13 @@ $rest.getProjectVersions = function getProjectVersions(name, successCallback, fa
 /**
  * Service called when a project is updated.
  */
-$rest.updateProject = function updateProject(uuid, name, version, description, tags, successCallback, failCallback) {
+$rest.updateProject = function updateProject(uuid, name, version, description, tags, active, successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_PROJECT,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_POST,
-        data: JSON.stringify({uuid: uuid, name: name, version: version, description: description, tags: tags}),
+        data: JSON.stringify({uuid: uuid, name: name, version: version, description: description, tags: tags, active: active}),
         statusCode: {
             200: function(data) {
                 if (successCallback) {

@@ -141,13 +141,17 @@ public class Project implements Serializable {
     @Column(name = "LAST_SCAN_IMPORTED")
     private Date lastScanImport;
 
-    /**
+    /**N
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
     @Column(name = "LAST_BOM_IMPORTED")
     private Date lastBomImport;
+
+    @Persistent
+    @Column(name = "ACTIVE")
+    private Boolean active; // Added in v3.6. Existing records need to be nullable on upgrade.
 
     private transient ProjectMetrics metrics;
 
@@ -245,6 +249,17 @@ public class Project implements Serializable {
 
     public void setLastBomImport(Date lastBomImport) {
         this.lastBomImport = lastBomImport;
+    }
+
+    public boolean isActive() {
+        if (active == null) {
+            return true;
+        }
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public ProjectMetrics getMetrics() {

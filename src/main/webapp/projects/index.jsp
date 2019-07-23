@@ -159,6 +159,10 @@
                         <label for="createProjectTagsInput">Tags</label>
                         <input type="text" name="tags" placeholder="Comma separated" class="form-control" data-role="tagsinput" id="createProjectTagsInput">
                     </div>
+                    <div class="checkbox checkbox-primary">
+                        <input type="checkbox" name="active" class="styled require-portfolio-management" id="createProjectActiveInput" checked="checked">
+                        <label for="createProjectActiveInput">Active</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>

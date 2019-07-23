@@ -274,10 +274,11 @@ public class QueryManager extends AlpineQueryManager {
      * @param tags a List of Tags - these will be resolved if necessary
      * @param parent an optional parent Project
      * @param purl an optional Package URL
+     * @param active specified if the project is active
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created Project
      */
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, String purl, boolean commitIndex) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, String purl, boolean active, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -286,6 +287,7 @@ public class QueryManager extends AlpineQueryManager {
             project.setParent(parent);
         }
         project.setPurl(purl);
+        project.setActive(active);
         final Project result = persist(project);
 
         final List<Tag> resolvedTags = resolveTags(tags);
@@ -304,15 +306,17 @@ public class QueryManager extends AlpineQueryManager {
      * @param version the project version
      * @param tags a List of Tags - these will be resolved if necessary
      * @param purl an optional Package URL
+     * @param active specified if the project is active
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, String purl, boolean commitIndex) {
+    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, String purl, boolean active, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, uuid);
         project.setName(name);
         project.setDescription(description);
         project.setVersion(version);
         project.setPurl(purl);
+        project.setActive(active);
 
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
@@ -333,6 +337,7 @@ public class QueryManager extends AlpineQueryManager {
         project.setName(source.getName());
         project.setDescription(source.getDescription());
         project.setVersion(newVersion);
+        project.setActive(source.isActive());
         if (project.getPurl() != null && newVersion != null) {
             try {
                 final PackageURL sourcePurl = new PackageURL(project.getPurl());

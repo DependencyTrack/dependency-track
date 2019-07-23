@@ -50,7 +50,7 @@
         <filter-class>alpine.filters.WhitelistUrlFilter</filter-class>
         <init-param>
             <param-name>allowUrls</param-name>
-            <param-value>/index.jsp,/functions.js,/admin,/api,/assets,/component,/components,/favicon.ico,/images,/license,/licenses,/project,/projects,/style.css,/vulnerabilities,/vulnerability,/mirror</param-value>
+            <param-value>/index.jsp,/functions.js,/admin,/api,/assets,/component,/components,/favicon.ico,/images,/license,/licenses,/project,/projects,/style.css,/vulnerabilities,/vulnerability,/mirror,/awesome-bootstrap-checkbox.css</param-value>
         </init-param>
     </filter>
     <filter-mapping>

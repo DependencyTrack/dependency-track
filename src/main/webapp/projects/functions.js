@@ -56,6 +56,7 @@ function clearInputFields() {
     $("#createProjectVersionInput").val("");
     $("#createProjectDescriptionInput").val("");
     $("#createProjectTagsInput").tagsinput("removeAll");
+    $("#createProjectActiveInput").prop("checked", "checked");
 }
 
 function updateStats(metric) {
@@ -93,7 +94,8 @@ $(document).ready(function () {
         const version = $("#createProjectVersionInput").val();
         const description = $("#createProjectDescriptionInput").val();
         const tags = $common.csvStringToObjectArray($("#createProjectTagsInput").val());
-        $rest.createProject(name, version, description, tags, projectCreated);
+        const active = $("#createProjectActiveInput").prop("checked");
+        $rest.createProject(name, version, description, tags, active, projectCreated);
         clearInputFields();
     });
 

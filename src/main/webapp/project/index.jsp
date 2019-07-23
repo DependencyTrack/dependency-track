@@ -306,6 +306,10 @@
                         <label for="projectTagsInput">Tags</label>
                         <input type="text" name="tags" placeholder="Comma separated" class="form-control require-portfolio-management" disabled="disabled" data-role="tagsinput" id="projectTagsInput">
                     </div>
+                    <div class="checkbox checkbox-primary">
+                        <input type="checkbox" name="active" class="styled require-portfolio-management" id="projectActiveInput">
+                        <label for="projectActiveInput">Active</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger require-portfolio-management" data-dismiss="modal" id="deleteProjectButton">Delete</button>

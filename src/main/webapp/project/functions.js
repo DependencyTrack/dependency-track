@@ -321,6 +321,10 @@ function populateProjectData(data) {
     $("#projectNameInput").val(data.name);
     $("#projectVersionInput").val(data.version);
     $("#projectDescriptionInput").val(data.description);
+    if (data.active) {
+        $("#projectActiveInput").prop("checked", "checked");
+
+    }
 
     $("#projectTitle").html(escapedProjectName);
     if (data.version) {
@@ -480,7 +484,8 @@ $(document).ready(function () {
         let version = $("#projectVersionInput").val();
         let description = $("#projectDescriptionInput").val();
         let tags = $common.csvStringToObjectArray($("#projectTagsInput").val());
-        $rest.updateProject(uuid, name, version, description, tags, function() {
+        let active = $("#projectActiveInput").is(':checked');
+        $rest.updateProject(uuid, name, version, description, tags, active, function() {
             $rest.getProject(uuid, populateProjectData);
         });
     });

@@ -49,7 +49,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void getPropertiesTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         qm.createProjectProperty(project, "mygroup", "prop1", "value1", IConfigProperty.PropertyType.STRING, "Test Property 1");
         qm.createProjectProperty(project, "mygroup", "prop2", "value2", IConfigProperty.PropertyType.ENCRYPTEDSTRING, "Test Property 2");
         Response response = target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
@@ -85,7 +85,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void createPropertyTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         ProjectProperty property = new ProjectProperty();
         property.setProject(project);
         property.setGroupName("mygroup");
@@ -108,7 +108,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void createPropertyEncryptedTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         ProjectProperty property = new ProjectProperty();
         property.setProject(project);
         property.setGroupName("mygroup");
@@ -131,7 +131,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void createPropertyDuplicateTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         qm.createProjectProperty(project, "mygroup", "prop1", "value1", IConfigProperty.PropertyType.STRING, null);
         String uuid = project.getUuid().toString();
         qm.close();
@@ -153,7 +153,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void createPropertyInvalidTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         ProjectProperty property = new ProjectProperty();
         property.setProject(project);
         property.setGroupName("mygroup");
@@ -172,7 +172,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void updatePropertyTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         String uuid = project.getUuid().toString();
         ProjectProperty property = qm.createProjectProperty(project, "mygroup", "prop1", "value1", IConfigProperty.PropertyType.STRING, null);
         qm.getPersistenceManager().detachCopy(property);
@@ -192,7 +192,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
 
     @Test
     public void updatePropertyInvalidTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         ProjectProperty property = new ProjectProperty();
         property.setProject(project);
         property.setGroupName("mygroup");
@@ -212,7 +212,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
     //@Test
     // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
     public void deletePropertyTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         ProjectProperty property = qm.createProjectProperty(project, "mygroup", "prop1", "value1", IConfigProperty.PropertyType.STRING, null);
         String uuid = project.getUuid().toString();
         qm.getPersistenceManager().detachCopy(property);

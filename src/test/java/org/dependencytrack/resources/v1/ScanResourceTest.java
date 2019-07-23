@@ -67,7 +67,7 @@ public class ScanResourceTest extends ResourceTest {
     @Test
     public void uploadScanTest() throws Exception {
         initializeWithPermissions(Permissions.SCAN_UPLOAD);
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         File file = new File(Thread.currentThread().getContextClassLoader().getResource("dependency-check-report.xml").getFile());
         String scanString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
         ScanSubmitRequest request = new ScanSubmitRequest(project.getUuid().toString(), null, null, false, scanString);

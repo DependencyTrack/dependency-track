@@ -106,7 +106,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         rule.setNotifyOn(notifyOn);
         // Creates a project which will later be matched on
         List<Project> projects = new ArrayList<>();
-        Project project = qm.createProject("Test Project", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Test Project", null, "1.0", null, null, null, true, false);
         projects.add(project);
         rule.setProjects(projects);
         // Creates a new notification
@@ -137,7 +137,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         rule.setNotifyOn(notifyOn);
         // Creates a project which will later be matched on
         List<Project> projects = new ArrayList<>();
-        Project project = qm.createProject("Test Project", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Test Project", null, "1.0", null, null, null, true, false);
         projects.add(project);
         rule.setProjects(projects);
         // Creates a new notification
@@ -147,7 +147,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
         Set<Project> affectedProjects = new HashSet<>();
-        Project affectedProject = qm.createProject("Affected Project", null, "1.0", null, null, null, false);
+        Project affectedProject = qm.createProject("Affected Project", null, "1.0", null, null, null, true, false);
         affectedProjects.add(affectedProject);
         NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects);
         notification.setSubject(subject);

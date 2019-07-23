@@ -48,8 +48,8 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void getFindingsByProjectTest() {
-        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
-        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c1 = createComponent("Component A", "1.0");
         Component c2 = createComponent("Component B", "1.0");
         Component c3 = createComponent("Component C", "1.0");
@@ -111,8 +111,8 @@ public class FindingResourceTest extends ResourceTest {
 
     @Test
     public void exportFindingsByProjectTest() {
-        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
-        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c1 = createComponent("Component A", "1.0");
         Component c2 = createComponent("Component B", "1.0");
         Component c3 = createComponent("Component C", "1.0");

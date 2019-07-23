@@ -186,7 +186,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void addProjectToRuleTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
@@ -203,7 +203,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void addProjectToRuleInvalidRuleTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         Response response = target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
@@ -216,7 +216,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void addProjectToRuleInvalidScopeTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
         Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
@@ -243,7 +243,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void addProjectToRuleDuplicateProjectTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         List<Project> projects = new ArrayList<>();
@@ -259,7 +259,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void removeProjectFromRuleTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         List<Project> projects = new ArrayList<>();
@@ -275,7 +275,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void removeProjectFromRuleInvalidRuleTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         Response response = target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
@@ -288,7 +288,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void removeProjectFromRuleInvalidScopeTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
         Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()
@@ -315,7 +315,7 @@ public class NotificationRuleResourceTest extends ResourceTest {
 
     @Test
     public void removeProjectFromRuleDuplicateProjectTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, true, false);
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/project/" + project.getUuid().toString()).request()

@@ -54,7 +54,7 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void exportProjectAsCycloneDxTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c = new Component();
         c.setName("sample-component");
         c.setVersion("1.0");
@@ -124,7 +124,7 @@ public class BomResourceTest extends ResourceTest {
     @Test
     public void uploadBomTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         File file = new File(Thread.currentThread().getContextClassLoader().getResource("bom-1.xml").getFile());
         String bomString = Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(file));
         BomSubmitRequest request = new BomSubmitRequest(project.getUuid().toString(), null, null, false, bomString);

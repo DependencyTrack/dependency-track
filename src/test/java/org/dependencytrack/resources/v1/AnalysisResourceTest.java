@@ -53,7 +53,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");
@@ -84,7 +84,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisInvalidProjectUuidTest() {
-        qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");
@@ -112,7 +112,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisInvalidComponentUuidTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");
@@ -140,7 +140,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisInvalidVulnerabilityUuidTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");
@@ -168,7 +168,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void updateGlobalAnalysisTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");
@@ -202,7 +202,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void updateAnalysisTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");
@@ -236,7 +236,7 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void updateAnalysisChangeStateTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
         component.setName("Acme Component");
         component.setVersion("1.0");

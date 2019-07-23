@@ -48,7 +48,7 @@ public class DependencyResourceTest extends ResourceTest {
 
     @Test
     public void getDependenciesByProjectTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component a1 = createComponent("Component A", "1.0");
         Component a2 = createComponent("Component A", "2.0");
         Component b = createComponent("Component B", "1.0");
@@ -84,9 +84,9 @@ public class DependencyResourceTest extends ResourceTest {
 
     @Test
     public void getDependenciesByComponentTest() {
-        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
-        Project p2 = qm.createProject("Acme Example", null, "2.0", null, null, null, false);
-        qm.createProject("Acme Example", null, "3.0", null, null, null, false);
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project p2 = qm.createProject("Acme Example", null, "2.0", null, null, null, true, false);
+        qm.createProject("Acme Example", null, "3.0", null, null, null, true, false);
         Component component = createComponent("Component A", "1.0");
         qm.createDependencyIfNotExist(p1, component, null, null);
         qm.createDependencyIfNotExist(p2, component, null, null);
@@ -117,7 +117,7 @@ public class DependencyResourceTest extends ResourceTest {
 
     @Test
     public void addDependencyTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c1 = createComponent("Component A", "1.0");
         Component c2 = createComponent("Component B", "1.0");
         String[] components = {c1.getUuid().toString(), c2.getUuid().toString()};
@@ -146,7 +146,7 @@ public class DependencyResourceTest extends ResourceTest {
 
     @Test
     public void addDependencyInvalidComponentTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         String[] components = {UUID.randomUUID().toString(), UUID.randomUUID().toString()};
         DependencyRequest request = new DependencyRequest(project.getUuid().toString(), components, null);
         Response response = target(V1_DEPENDENCY).request()
@@ -161,7 +161,7 @@ public class DependencyResourceTest extends ResourceTest {
     //@Test
     // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
     public void removeDependencyTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c1 = createComponent("Component A", "1.0");
         Component c2 = createComponent("Component B", "2.0");
         qm.createDependencyIfNotExist(project, c1, null, null);

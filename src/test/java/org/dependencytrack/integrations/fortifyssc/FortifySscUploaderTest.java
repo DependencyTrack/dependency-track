@@ -47,7 +47,7 @@ public class FortifySscUploaderTest extends PersistenceCapableTest {
                 IConfigProperty.PropertyType.BOOLEAN,
                 null
         );
-        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
         qm.createProjectProperty(
                 project,
                 FORTIFY_SSC_ENABLED.getGroupName(),
@@ -64,7 +64,7 @@ public class FortifySscUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationDisabledCases() {
-        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
         FortifySscUploader extension = new FortifySscUploader();
         extension.setQueryManager(qm);
         Assert.assertFalse(extension.isEnabled());
@@ -73,7 +73,7 @@ public class FortifySscUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationFindings() throws Exception {
-        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
         FortifySscUploader extension = new FortifySscUploader();
         extension.setQueryManager(qm);
         InputStream in = extension.process(project, new ArrayList<>());

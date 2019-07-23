@@ -51,7 +51,7 @@ public class ProjectResourceTest extends ResourceTest {
     @Test
     public void getProjectsDefaultRequestTest() {
         for (int i=0; i<1000; i++) {
-            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, false);
+            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
         }
         Response response = target(V1_PROJECT)
                 .request()
@@ -68,8 +68,8 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void getProjectsAscOrderedRequestTest() {
-        qm.createProject("ABC", null, "1.0", null, null, null, false);
-        qm.createProject("DEF", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT)
                 .queryParam(ORDER_BY, "name")
                 .queryParam(SORT, SORT_ASC)
@@ -85,8 +85,8 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void getProjectsDescOrderedRequestTest() {
-        qm.createProject("ABC", null, "1.0", null, null, null, false);
-        qm.createProject("DEF", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT)
                 .queryParam(ORDER_BY, "name")
                 .queryParam(SORT, SORT_DESC)
@@ -102,7 +102,7 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void getProjectByUuidTest() {
-        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT + "/" + project.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -116,7 +116,7 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void getProjectByInvalidUuidTest() {
-        qm.createProject("ABC", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT + "/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -132,8 +132,8 @@ public class ProjectResourceTest extends ResourceTest {
         List<Tag> tags = new ArrayList<>();
         Tag tag = qm.createTag("production");
         tags.add(tag);
-        qm.createProject("ABC", null, "1.0", tags, null, null, false);
-        qm.createProject("DEF", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", tags, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT + "/tag/" + "production")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -150,8 +150,8 @@ public class ProjectResourceTest extends ResourceTest {
         List<Tag> tags = new ArrayList<>();
         Tag tag = qm.createTag("production");
         tags.add(tag);
-        qm.createProject("ABC", null, "1.0", tags, null, null, false);
-        qm.createProject("DEF", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", tags, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT + "/tag/" + "stable")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -214,7 +214,7 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void updateProjectTest() {
-        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         project.setDescription("Test project");
         Response response = target(V1_PROJECT)
                 .request()
@@ -230,7 +230,7 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void updateProjectEmptyNameTest() {
-        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         project.setName(" ");
         Response response = target(V1_PROJECT)
                 .request()
@@ -241,8 +241,8 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void updateProjectDuplicateTest() {
-        qm.createProject("ABC", null, "1.0", null, null, null, false);
-        Project project = qm.createProject("DEF", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        Project project = qm.createProject("DEF", null, "1.0", null, null, null, true, false);
         project.setName("ABC");
         Response response = target(V1_PROJECT)
                 .request()
@@ -255,7 +255,7 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void deleteProjectTest() {
-        Project project = qm.createProject("ABC", null, "1.0", null, null, null, false);
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT + "/" + project.getUuid().toString())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -265,7 +265,7 @@ public class ProjectResourceTest extends ResourceTest {
 
     @Test
     public void deleteProjectInvalidUuidTest() {
-        qm.createProject("ABC", null, "1.0", null, null, null, false);
+        qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = target(V1_PROJECT + "/" + UUID.randomUUID().toString())
                 .request()
                 .header(X_API_KEY, apiKey)

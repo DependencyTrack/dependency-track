@@ -111,7 +111,7 @@ public class DependencyCheckParserTest extends PersistenceCapableTest {
         File file = new File("src/test/resources/dependency-check-report.xml");
         Analysis analysis = new DependencyCheckParser().parse(file);
 
-        Project project = qm.createProject(analysis.getProjectInfo().getName(), "My Description", "1.0.0", null, null, null, false);
+        Project project = qm.createProject(analysis.getProjectInfo().getName(), "My Description", "1.0.0", null, null, null, true, false);
         Scan scan = qm.createScan(project, new Date(), new Date());
 
         Assert.assertEquals(analysis.getProjectInfo().getName(), project.getName());

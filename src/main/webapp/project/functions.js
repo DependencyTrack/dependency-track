@@ -471,7 +471,7 @@ $(document).ready(function () {
         let selections = dependenciesTable.bootstrapTable("getSelections");
         let componentUuids = [];
         for (let i=0; i<selections.length; i++) {
-            componentUuids[i] = selections[i].uuid;
+            componentUuids[i] = selections[i].component.uuid;
         }
         $rest.removeDependency(uuid, componentUuids, function() {
             $("#dependenciesTable").bootstrapTable("refresh", {silent: true});

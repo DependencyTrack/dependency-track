@@ -19,18 +19,25 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.auth.AuthenticationNotRequired;
+import alpine.model.ConfigProperty;
 import alpine.resources.AlpineResource;
-import io.swagger.annotations.*;
+import alpine.util.BooleanUtil;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.misc.Badger;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_ENABLED;
 
 /**
  * JAX-RS resources for processing metrics.
@@ -39,10 +46,16 @@ import javax.ws.rs.core.Response;
  * @since 3.6.0
  */
 @Path("/v1/badge")
-@Api(value = "badge", authorizations = @Authorization(value = "X-Api-Key"))
+@Api(value = "badge")
 public class BadgeResource extends AlpineResource {
 
     private static final String SVG_MEDIA_TYPE = "image/svg+xml";
+
+    private boolean isBadgeSupportEnabled(final QueryManager qm) {
+        ConfigProperty property = qm.getConfigProperty(
+                GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName());
+        return BooleanUtil.valueOf(property.getPropertyValue());
+    }
 
     @GET
     @Path("/vulns/project/{uuid}")
@@ -52,22 +65,26 @@ public class BadgeResource extends AlpineResource {
             response = ProjectMetrics.class
     )
     @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "Badge support is disabled. No content will be returned."),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    //@PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    @AuthenticationNotRequired // todo remove this
+    @AuthenticationNotRequired
     public Response getProjectVulnerabilitiesBadge(
             @ApiParam(value = "The UUID of the project to retrieve metrics for", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project != null) {
-                final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
-                final Badger badger = new Badger();
-                return Response.ok(badger.generate(metrics)).build();
+            if (isBadgeSupportEnabled(qm)) {
+                final Project project = qm.getObjectByUuid(Project.class, uuid);
+                if (project != null) {
+                    final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+                    final Badger badger = new Badger();
+                    return Response.ok(badger.generate(metrics)).build();
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                }
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                return Response.status(Response.Status.NO_CONTENT).build();
             }
         }
     }

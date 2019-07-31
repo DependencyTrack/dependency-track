@@ -141,6 +141,9 @@
                                 <label class="required" for="generalConfigBaseUrlInput">Dependency-Track Base URL</label>
                                 <input type="text" name="Base URL" class="form-control required" id="generalConfigBaseUrlInput" data-group-name="general" data-property-name="base.url">
                             </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" id="generalConfigBadgeEnabledInput" data-group-name="general" data-property-name="badge.enabled"> Enable SVG badge support (unauthenticated)</label>
+                            </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateGeneralConfigButton" data-group-name="general">Update</button>
                         </div>
                         <div class="tab-pane admin-form-content" id="artifactsTab" data-admin-title="BOM Formats">

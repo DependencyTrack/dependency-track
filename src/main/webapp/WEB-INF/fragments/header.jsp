@@ -28,7 +28,6 @@
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/d3/nv.d3.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/assets/toastr/toastr.min.css"/><%=VERSION_PARAM%>">
 <link rel="stylesheet" type="text/css" href="<c:url value="/style.css"/><%=VERSION_PARAM%>">
-<link rel="stylesheet" type="text/css" href="<c:url value="/awesome-bootstrap-checkbox.css"/><%=VERSION_PARAM%>"> <!-- https://www.cssscript.com/pretty-checkbox-radio-inputs-bootstrap-awesome-bootstrap-checkbox-css/ -->
 <script type="text/javascript">
     (function() {
         if (!sessionStorage.length) {

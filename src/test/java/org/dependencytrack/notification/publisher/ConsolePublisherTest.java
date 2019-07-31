@@ -58,7 +58,7 @@ public class ConsolePublisherTest {
         notification.setContent("This is only a test");
         ConsolePublisher publisher = new ConsolePublisher();
         publisher.inform(notification, null);
-        Assert.assertEquals(expectedResult(notification), outContent.toString());
+        Assert.assertTrue(outContent.toString().contains(expectedResult(notification)));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class ConsolePublisherTest {
         notification.setContent("This is only a test");
         ConsolePublisher publisher = new ConsolePublisher();
         publisher.inform(notification, null);
-        Assert.assertEquals(expectedResult(notification), errContent.toString());
+        Assert.assertTrue(errContent.toString().contains(expectedResult(notification)));
     }
 
     private String expectedResult(Notification notification) {

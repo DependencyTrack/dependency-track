@@ -40,14 +40,19 @@ function formatProjectsTable(res) {
         if (res[i].hasOwnProperty("metrics")) {
             res[i].vulnerabilities = $common.generateSeverityProgressBar(res[i].metrics.critical, res[i].metrics.high, res[i].metrics.medium, res[i].metrics.low, res[i].metrics.unassigned);
         }
-
-        if (res[i].active === true) {
-            res[i].activeLabel = '<i class="fa fa-check-square-o" aria-hidden="true"></i>';
-        } else {
-            res[i].activeLabel = '';
-        }
     }
     return res;
+}
+
+function rowStyleProjectsTable(row, index) {
+    if (!row.active) {
+        return {
+            css: {
+                background: "#dddeee"
+            }
+        }
+    }
+    return {};
 }
 
 function projectCreated(data) {

@@ -117,6 +117,7 @@
             </div>
                 <table id="projectsTable" class="table table-hover detail-table" data-toggle="table"
                        data-url="<c:url value="/api/v1/project"/>" data-response-handler="formatProjectsTable"
+                       data-row-style="rowStyleProjectsTable"
                        data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                        data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                        data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
@@ -127,7 +128,6 @@
                     <th data-align="left" data-field="version" data-sortable="true">Version</th>
                     <th data-align="left" data-field="lastScanImportLabel" data-sort-name="lastScanImport" data-sortable="true" data-visible="false">Last Scan Import</th>
                     <th data-align="left" data-field="lastBomImportLabel" data-sort-name="lastBomImport" data-sortable="true">Last BOM Import</th>
-                    <th data-align="center" data-field="activeLabel" data-class="tight">Active</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>

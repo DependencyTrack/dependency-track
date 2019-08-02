@@ -104,7 +104,9 @@ public class BomUploadProcessingTask implements Subscriber {
                 // analysis has completed. If not chained, synchronous publishing mode will return immediately upon
                 // return from this method, resulting in inaccurate findings being returned in the response (since
                 // the vulnerability analysis hasn't taken place yet).
-                final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(flattenedComponents).project(project);
+                final List<Component> detachedFlattenedComponent = qm.detach(flattenedComponents);
+                final Project detachedProject = qm.detach(Project.class, project.getId());
+                final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(detachedFlattenedComponent).project(detachedProject);
                 vae.setChainIdentifier(event.getChainIdentifier());
                 Event.dispatch(vae);
                 LOGGER.info("Processed " + flattenedComponents.size() + " components uploaded to project " + event.getProjectUuid());

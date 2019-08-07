@@ -386,9 +386,11 @@ $rest.getProject = function getProject(uuid, successCallback, failCallback) {
 /**
  * Service called to retrieve a list of all projects with the specified name
  */
-$rest.getProjectVersions = function getProjectVersions(name, successCallback, failCallback) {
+$rest.getProjectVersions = function getProjectVersions(name, excludeInactive, successCallback, failCallback) {
+    let queryString = (excludeInactive) ? "name=" + name + "&excludeInactive=true" : "name=" + name;
+    console.log(queryString);
     $.ajax({
-        url: $rest.contextPath() + URL_PROJECT + "?name=" + name,
+        url: $rest.contextPath() + URL_PROJECT + "?" + queryString,
         contentType: CONTENT_TYPE_JSON,
         dataType: DATA_TYPE,
         type: METHOD_GET,

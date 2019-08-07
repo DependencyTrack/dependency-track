@@ -85,7 +85,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getProjects(final boolean includeMetrics) {
+    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive) {
         final PaginatedResult result;
         final Query query = pm.newQuery(Project.class);
         if (orderBy == null) {
@@ -95,14 +95,27 @@ public class QueryManager extends AlpineQueryManager {
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             final Tag tag = getTagByName(filter.trim());
             if (tag != null) {
-                query.setFilter("name.toLowerCase().matches(:name) || tags.contains(:tag)");
+                if (excludeInactive) {
+                    query.setFilter("(name.toLowerCase().matches(:name) || tags.contains(:tag)) && active == true");
+                } else {
+                    query.setFilter("name.toLowerCase().matches(:name) || tags.contains(:tag)");
+                }
                 result = execute(query, filterString, tag);
             } else {
-                query.setFilter("name.toLowerCase().matches(:name)");
+                if (excludeInactive) {
+                    query.setFilter("name.toLowerCase().matches(:name) && active == true");
+                } else {
+                    query.setFilter("name.toLowerCase().matches(:name)");
+                }
                 result = execute(query, filterString);
             }
         } else {
-            result = execute(query);
+            if (excludeInactive) {
+                query.setFilter("active == true");
+                result = execute(query);
+            } else {
+                result = execute(query);
+            }
         }
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
@@ -112,6 +125,15 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         return result;
+    }
+
+    /**
+     * Returns a list of all projects.
+     * @return a List of Projects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getProjects(final boolean includeMetrics) {
+        return getProjects(includeMetrics, false);
     }
 
     /**
@@ -141,10 +163,15 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Project objects
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getProjects(final String name) {
-        final Query query = pm.newQuery(Project.class, "name == :name");
+    public PaginatedResult getProjects(final String name, final boolean excludeInactive) {
+        final Query query = pm.newQuery(Project.class);
         if (orderBy == null) {
             query.setOrdering("version desc");
+        }
+        if (excludeInactive) {
+            query.setFilter("name == :name && active == true");
+        } else {
+            query.setFilter("name == :name)");
         }
         return execute(query, name);
     }

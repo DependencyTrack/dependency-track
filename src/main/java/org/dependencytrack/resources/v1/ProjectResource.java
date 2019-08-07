@@ -72,9 +72,11 @@ public class ProjectResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjects(@ApiParam(value = "The optional name of the project to query on", required = false)
-                                @QueryParam("name") String name) {
+                                @QueryParam("name") String name,
+                                @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+                                @QueryParam("excludeInactive") boolean excludeInactive) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = (name != null) ? qm.getProjects(name) : qm.getProjects(true);
+            final PaginatedResult result = (name != null) ? qm.getProjects(name, excludeInactive) : qm.getProjects(true, excludeInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

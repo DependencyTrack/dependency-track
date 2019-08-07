@@ -113,11 +113,12 @@
             <div id="projectsToolbar">
                 <div class="form-inline" role="form">
                     <button id="createProjectButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalCreateProject"><span class="fa fa-plus"></span> Create Project</button>
+                    &nbsp;&nbsp;&nbsp;<input type="checkbox" id="showInactiveProjects">&nbsp;&nbsp;Show inactive projects
                 </div>
             </div>
                 <table id="projectsTable" class="table table-hover detail-table" data-toggle="table"
-                       data-url="<c:url value="/api/v1/project"/>" data-response-handler="formatProjectsTable"
-                       data-row-style="rowStyleProjectsTable"
+                       data-url="<c:url value="/api/v1/project"/>?excludeInactive=true" data-response-handler="formatProjectsTable"
+                       data-row-style="rowStyleProjectsTable" data-buttons-class="primary"
                        data-show-refresh="true" data-show-columns="true" data-search="true" data-detail-view="true"
                        data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
                        data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"

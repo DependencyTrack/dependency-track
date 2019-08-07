@@ -115,4 +115,9 @@ $(document).ready(function () {
         $("#createProjectNameInput").val("");
     });
 
+    $("#showInactiveProjects").change(function() {
+        const url = $rest.contextPath() + URL_PROJECT + "?excludeInactive=" + !$(this).prop("checked");
+        $("#projectsTable").bootstrapTable("refresh", {silent: true, url: url});
+    });
+
 });

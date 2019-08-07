@@ -301,7 +301,7 @@ function clearInputFields() {
 function populateProjectData(data) {
 
     // Retrieve the list of project versions and determine which one should be selected
-    $rest.getProjectVersions(data.name, function (versionData) {
+    $rest.getProjectVersions(data.name, true, function (versionData) {
         let select = $("#projectVersionSelect");
         $.each(versionData, function() {
             let escapedProjectVersion = filterXSS(this.version);

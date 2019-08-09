@@ -20,7 +20,7 @@ services:
     # - ALPINE_DATABASE_POOL_MAX_LIFETIME=600000
     #
     # Optional LDAP Properties
-    # - ALPINE_LDAP_ENABLED=
+    # - ALPINE_LDAP_ENABLED=true
     # - ALPINE_LDAP_SERVER_URL=ldap://ldap.example.com:389
     # - ALPINE_LDAP_BASEDN=dc=example,dc=com
     # - ALPINE_LDAP_SECURITY_AUTH=simple

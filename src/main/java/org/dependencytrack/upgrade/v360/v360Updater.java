@@ -37,6 +37,10 @@ public class v360Updater extends AbstractUpgradeItem {
     public void executeUpgrade(AlpineQueryManager aqm, Connection connection) throws SQLException {
         LOGGER.info("Updating project active status. Setting all projects to active");
         DbUtil.executeUpdate(connection, STMT_1);
+
+        LOGGER.info("Dropping unused CPE database fields from the Vulnerability object");
+        DbUtil.dropColumn(connection, "VULNERABILITY", "MATCHEDCPE");
+        DbUtil.dropColumn(connection, "VULNERABILITY", "MATCHEDALLPREVIOUSCPE");
     }
 
 }

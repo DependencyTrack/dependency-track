@@ -970,8 +970,6 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setCvssV3BaseScore(transientVulnerability.getCvssV3BaseScore());
             vulnerability.setCvssV3ImpactSubScore(transientVulnerability.getCvssV3ImpactSubScore());
             vulnerability.setCvssV3ExploitabilitySubScore(transientVulnerability.getCvssV3ExploitabilitySubScore());
-            vulnerability.setMatchedAllPreviousCPE(transientVulnerability.getMatchedAllPreviousCPE());
-            vulnerability.setMatchedCPE(transientVulnerability.getMatchedCPE());
 
             final Vulnerability result = persist(vulnerability);
             Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
@@ -1083,6 +1081,30 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         return false;
+    }
+
+    /**
+     * Synchronize a License, updating it if it needs updating, or creating it if it doesn't exist.
+     * @param cpe the License object to synchronize
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a synchronize License object
+     */
+    public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
+        Cpe result = getCpeBy23(cpe.getCpe23());
+        if (result == null) {
+            result = persist(cpe);
+        }
+        return result;
+    }
+
+    /**
+     * Returns a CPE by it's CPE v2.3 string.
+     * @param cpe23 the CPE 2.3 string
+     * @return a CPE object, or null if not found
+     */
+    public Cpe getCpeBy23(String cpe23) {
+        final Query query = pm.newQuery(Cpe.class, "cpe23 == :cpe23");
+        return singleResult(query.execute(cpe23));
     }
 
     /**

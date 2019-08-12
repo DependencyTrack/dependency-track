@@ -26,8 +26,6 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scan;
 import org.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.dependencytrack.parser.dependencycheck.model.Dependency;
-import org.dependencytrack.parser.dependencycheck.model.Evidence;
-import org.dependencytrack.persistence.QueryManager;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -132,10 +130,6 @@ public class DependencyCheckParserTest extends PersistenceCapableTest {
             Assert.assertEquals(dependency.getFileName(), component.getFilename());
             components.add(component);
             qm.bind(scan, component);
-
-            for (Evidence evidence: dependency.getEvidenceCollected()) {
-                qm.createEvidence(component, evidence.getType(), evidence.getConfidenceScore(evidence.getConfidenceType()), evidence.getSource(), evidence.getName(), evidence.getValue());
-            }
         }
         Assert.assertEquals(1034, components.size());
     }

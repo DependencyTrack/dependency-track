@@ -111,7 +111,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());
@@ -140,7 +139,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());
@@ -169,7 +167,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());
@@ -198,7 +195,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());
@@ -227,7 +223,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());
@@ -256,7 +251,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());
@@ -285,7 +279,6 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
         Assert.assertNotNull(component.getResolvedLicense());
         Assert.assertNull(component.getParent());
         Assert.assertNull(component.getChildren());
-        Assert.assertNull(component.getEvidence());
         Assert.assertNull(component.getScans());
         Assert.assertNull(component.getVulnerabilities());
         Assert.assertNull(component.getUuid());

@@ -59,8 +59,8 @@ public class CpeReference implements Serializable {
     private String name;
 
     @Persistent
-    @Column(name = "HREF", jdbcType = "VARCHAR")
-    @Size(max = 1024)
+    @Column(name = "HREF", jdbcType = "VARCHAR", length = 2048)
+    @Size(max = 2048)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The href may only contain a valid URI")
     private String href;
 

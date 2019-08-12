@@ -274,6 +274,11 @@
             <artifactId>libthrift</artifactId>
             <version>0.12.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+            <version>5.2.1</version>
+        </dependency>
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.mock-server</groupId>

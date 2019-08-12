@@ -33,7 +33,6 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.dependencycheck.DependencyCheckParser;
 import org.dependencytrack.parser.dependencycheck.model.Analysis;
 import org.dependencytrack.parser.dependencycheck.model.Dependency;
-import org.dependencytrack.parser.dependencycheck.model.Evidence;
 import org.dependencytrack.parser.dependencycheck.resolver.ComponentGroupResolver;
 import org.dependencytrack.parser.dependencycheck.resolver.ComponentNameResolver;
 import org.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
@@ -158,13 +157,6 @@ public class ScanUploadProcessingTask implements Subscriber {
 
         components.add(component);
         qm.bind(scan, component);
-
-        if (dependency.getEvidenceCollected() != null) {
-            for (final Evidence evidence : dependency.getEvidenceCollected()) {
-                qm.createEvidence(component, evidence.getType(), evidence.getConfidenceScore(evidence.getConfidenceType()), evidence
-                        .getSource(), evidence.getName(), evidence.getValue());
-            }
-        }
 
         if (dependency.getRelatedDependencies() != null) {
             for (final Dependency relatedDependency: dependency.getRelatedDependencies()) {

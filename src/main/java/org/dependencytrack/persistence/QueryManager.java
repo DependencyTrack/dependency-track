@@ -790,28 +790,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Creates new evidence for a Component.
-     * @param component the Component to create evidence for
-     * @param type the type of evidence
-     * @param confidenceScore the confidence score
-     * @param source the source of where the evidence was obtained from
-     * @param name the name of the evidence
-     * @param value the value of the evidence
-     * @return a new Evidence object
-     */
-    public Evidence createEvidence(Component component, String type, int confidenceScore,
-                                    String source, String name, String value) {
-        final Evidence evidence = new Evidence();
-        evidence.setComponent(component);
-        evidence.setType(type);
-        evidence.setConfidence(confidenceScore);
-        evidence.setSource(source);
-        evidence.setName(name);
-        evidence.setValue(value);
-        return persist(evidence);
-    }
-
-    /**
      * Returns a List of all License objects.
      * @return a List of all License objects
      */

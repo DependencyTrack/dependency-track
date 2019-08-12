@@ -193,17 +193,6 @@ public class ComponentTest {
     }
 
     @Test
-    public void testEvidence() {
-        List<Evidence> evidenceList = new ArrayList<>();
-        Evidence evidence = new Evidence();
-        evidenceList.add(evidence);
-        Component component = new Component();
-        component.setEvidence(evidenceList);
-        Assert.assertEquals(1, component.getEvidence().size());
-        Assert.assertEquals(evidence, component.getEvidence().iterator().next());
-    } 
-
-    @Test
     public void testScans() {
         List<Scan> scans = new ArrayList<>();
         Scan scan = new Scan();

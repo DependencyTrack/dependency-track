@@ -31,7 +31,6 @@
         <class>org.dependencytrack.model.Cwe</class>
         <class>org.dependencytrack.model.Dependency</class>
         <class>org.dependencytrack.model.DependencyMetrics</class>
-        <class>org.dependencytrack.model.Evidence</class>
         <class>org.dependencytrack.model.License</class>
         <class>org.dependencytrack.model.NotificationPublisher</class>
         <class>org.dependencytrack.model.NotificationRule</class>

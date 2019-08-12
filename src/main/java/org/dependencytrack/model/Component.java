@@ -211,9 +211,6 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
 
-    @Persistent(mappedBy = "component")
-    private Collection<Evidence> evidence;
-
     @Persistent
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     @JsonIgnore
@@ -405,14 +402,6 @@ public class Component implements Serializable {
 
     public void setChildren(Collection<Component> children) {
         this.children = children;
-    }
-
-    public Collection<Evidence> getEvidence() {
-        return evidence;
-    }
-
-    public void setEvidence(Collection<Evidence> evidence) {
-        this.evidence = evidence;
     }
 
     public List<Scan> getScans() {

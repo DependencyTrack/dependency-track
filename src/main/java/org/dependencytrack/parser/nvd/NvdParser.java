@@ -231,21 +231,8 @@ public final class NvdParser {
             return cpe;
         }
         try {
-            cpe = new Cpe();
-            us.springett.parsers.cpe.Cpe parsedCpe = CpeParser.parse(cpe23Uri);
-            cpe.setCpe23(cpe23Uri);
-            cpe.setCpe22(parsedCpe.toCpe22Uri());
-            cpe.setPart(parsedCpe.getPart().getAbbreviation());
-            cpe.setVendor(parsedCpe.getVendor());
-            cpe.setProduct(parsedCpe.getProduct());
-            cpe.setVersion(parsedCpe.getVersion());
-            cpe.setUpdate(parsedCpe.getUpdate());
-            cpe.setEdition(parsedCpe.getEdition());
-            cpe.setLanguage(parsedCpe.getLanguage());
-            cpe.setSwEdition(parsedCpe.getSwEdition());
-            cpe.setTargetSw(parsedCpe.getTargetSw());
-            cpe.setTargetHw(parsedCpe.getTargetHw());
-            cpe.setOther(parsedCpe.getOther());
+            cpe = ModelConverter.convertCpe23Uri(cpe23Uri);
+            cpe.setOfficial(false); // This is NOT from the official CPE dictionary, rather, from the vulnerability feed
             return qm.persist(cpe);
         } catch (CpeParsingException | CpeEncodingException e) {
             LOGGER.error("An error occurred while parsing: " + cpe23Uri, e);

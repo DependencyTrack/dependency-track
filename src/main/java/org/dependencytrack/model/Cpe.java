@@ -33,7 +33,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * Model class for Common Platform Enumeration (CPE).
@@ -140,6 +139,10 @@ public class Cpe implements Serializable {
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The other may only contain printable characters")
     private String other;
+
+    @Persistent
+    @Column(name = "OFFICIAL")
+    private boolean official;
 
     @Persistent(mappedBy = "cpe")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
@@ -265,45 +268,19 @@ public class Cpe implements Serializable {
         this.other = other;
     }
 
-    /*
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Cpe)) return false;
-        Cpe cpe = (Cpe) o;
-        return id == cpe.id &&
-                Objects.equals(cpe22, cpe.cpe22) &&
-                Objects.equals(cpe23, cpe.cpe23) &&
-                Objects.equals(title, cpe.title) &&
-                Objects.equals(part, cpe.part) &&
-                Objects.equals(vendor, cpe.vendor) &&
-                Objects.equals(product, cpe.product) &&
-                Objects.equals(version, cpe.version) &&
-                Objects.equals(update, cpe.update) &&
-                Objects.equals(edition, cpe.edition) &&
-                Objects.equals(language, cpe.language) &&
-                Objects.equals(swEdition, cpe.swEdition) &&
-                Objects.equals(targetSw, cpe.targetSw) &&
-                Objects.equals(targetHw, cpe.targetHw) &&
-                Objects.equals(other, cpe.other);
+    public boolean isOfficial() {
+        return official;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, cpe22, cpe23, title, part, vendor, product, version, update, edition, language, swEdition, targetSw, targetHw, other);
-    }
-    */
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Cpe)) return false;
-        Cpe cpe = (Cpe) o;
-        return Objects.equals(cpe23, cpe.cpe23);
+    public void setOfficial(boolean official) {
+        this.official = official;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(cpe23);
+    public Collection<CpeReference> getReferences() {
+        return references;
+    }
+
+    public void setReferences(Collection<CpeReference> references) {
+        this.references = references;
     }
 }

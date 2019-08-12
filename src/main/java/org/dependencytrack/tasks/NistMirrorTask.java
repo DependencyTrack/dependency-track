@@ -37,6 +37,7 @@ import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.parser.nvd.CpeDictionaryParser;
 import org.dependencytrack.parser.nvd.NvdParser;
 import java.io.Closeable;
 import java.io.File;
@@ -99,6 +100,8 @@ public class NistMirrorTask implements LoggableSubscriber {
     private void getAllFiles() {
         final Date currentDate = new Date();
         LOGGER.info("Downloading files at " + currentDate);
+        // Download the CPE dictionary first
+        doDownload(CPE_DICTIONARY_23_XML, ResourceType.CPE);
         for (int i = START_YEAR; i <= END_YEAR; i++) {
             final String json10BaseUrl = CVE_JSON_10_BASE_URL.replace("%d", String.valueOf(i));
             final String cveBaseMetaUrl = CVE_JSON_10_BASE_META.replace("%d", String.valueOf(i));
@@ -107,7 +110,6 @@ public class NistMirrorTask implements LoggableSubscriber {
         }
         doDownload(CVE_JSON_10_MODIFIED_URL, ResourceType.CVE);
         doDownload(CVE_JSON_10_MODIFIED_META, ResourceType.CVE);
-        doDownload(CPE_DICTIONARY_23_XML, ResourceType.CPE);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()
@@ -239,9 +241,11 @@ public class NistMirrorTask implements LoggableSubscriber {
                 out.write(buffer, 0, len);
             }
             if (ResourceType.CVE == resourceType) {
-                NvdParser parser = new NvdParser();
+                final NvdParser parser = new NvdParser();
                 parser.parse(uncompressedFile);
             } else if (ResourceType.CPE == resourceType) {
+                final CpeDictionaryParser parser = new CpeDictionaryParser();
+                parser.parse(uncompressedFile);
             }
         } catch (IOException ex) {
             mirroredWithoutErrors = false;

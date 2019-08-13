@@ -22,9 +22,11 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
+import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -32,7 +34,9 @@ import javax.jdo.annotations.PrimaryKey;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Model class for Common Platform Enumeration (CPE).
@@ -147,6 +151,12 @@ public class Cpe implements Serializable {
     @Persistent(mappedBy = "cpe")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<CpeReference> references;
+
+    @Persistent(table = "CPE_VULNERABILITIES", mappedBy = "affectedCpes")
+    @Join(column = "CPE_ID")
+    @Element(column = "VULNERABILITY_ID", dependent = "false")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
+    private List<Vulnerability> vulnerabilities;
 
     public long getId() {
         return id;
@@ -282,5 +292,20 @@ public class Cpe implements Serializable {
 
     public void setReferences(Collection<CpeReference> references) {
         this.references = references;
+    }
+
+    public List<Vulnerability> getVulnerabilities() {
+        return vulnerabilities;
+    }
+
+    public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
+        this.vulnerabilities = vulnerabilities;
+    }
+
+    public void addVulnerability(Vulnerability vulnerability) {
+        if (this.vulnerabilities == null) {
+            this.vulnerabilities = new ArrayList<>();
+        }
+        this.vulnerabilities.add(vulnerability);
     }
 }

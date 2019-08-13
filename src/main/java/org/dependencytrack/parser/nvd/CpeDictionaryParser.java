@@ -55,6 +55,7 @@ public class CpeDictionaryParser {
             return;
         }
         LOGGER.info("Parsing " + file.getName());
+        LOGGER.info("This may take several minutes");
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         try (InputStream in = Files.newInputStream(file.toPath())) {
             final XMLEventReader xmlEventReader = xmlInputFactory.createXMLEventReader(in);

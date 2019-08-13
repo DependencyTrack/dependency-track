@@ -27,7 +27,6 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.Cvss;
-import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import javax.json.Json;
@@ -111,23 +110,6 @@ public final class NvdParser {
                     // CVE Impact
                     parseCveImpact(cveItem, vulnerability);
 
-                    // CPE
-                    final List<Cpe> affectedProducts = new ArrayList<>();
-                    final JsonObject configurations = cveItem.getJsonObject("configurations");
-                    final JsonArray nodes = configurations.getJsonArray("nodes");
-                    for (int j = 0; j < nodes.size(); j++) {
-                        final JsonObject node = nodes.getJsonObject(j);
-                        affectedProducts.addAll(parseCpes(qm, node));
-                        if (node.containsKey("children")) {
-                            final JsonArray children = node.getJsonArray("children");
-                            for (int l = 0; l < children.size(); l++) {
-                                final JsonObject child = children.getJsonObject(l);
-                                affectedProducts.addAll(parseCpes(qm, child));
-                            }
-                        }
-                    }
-                    // todo: associate the CPEs to the vulnerability
-
                     // CWE
                     final JsonObject prob0 = cve.getJsonObject("problemtype");
                     final JsonArray prob1 = prob0.getJsonArray("problemtype_data");
@@ -173,7 +155,25 @@ public final class NvdParser {
 
                     // Update the vulnerability
                     LOGGER.debug("Synchronizing: " + vulnerability.getVulnId());
-                    qm.synchronizeVulnerability(vulnerability, false);
+                    final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+
+                    // CPE
+                    final List<Cpe> affectedProducts = new ArrayList<>();
+                    final JsonObject configurations = cveItem.getJsonObject("configurations");
+                    final JsonArray nodes = configurations.getJsonArray("nodes");
+                    for (int j = 0; j < nodes.size(); j++) {
+                        final JsonObject node = nodes.getJsonObject(j);
+                        affectedProducts.addAll(parseCpes(qm, node));
+                        if (node.containsKey("children")) {
+                            final JsonArray children = node.getJsonArray("children");
+                            for (int l = 0; l < children.size(); l++) {
+                                final JsonObject child = children.getJsonObject(l);
+                                affectedProducts.addAll(parseCpes(qm, child));
+                            }
+                        }
+                    }
+                    synchronizeVulnerability.setAffectedCpes(affectedProducts);
+                    qm.persist(synchronizeVulnerability);
                 }
             });
         } catch (Exception e) {

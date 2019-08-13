@@ -948,7 +948,9 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setCvssV3BaseScore(transientVulnerability.getCvssV3BaseScore());
             vulnerability.setCvssV3ImpactSubScore(transientVulnerability.getCvssV3ImpactSubScore());
             vulnerability.setCvssV3ExploitabilitySubScore(transientVulnerability.getCvssV3ExploitabilitySubScore());
-
+            if (transientVulnerability.getAffectedCpes() != null) {
+                vulnerability.setAffectedCpes(transientVulnerability.getAffectedCpes());
+            }
             final Vulnerability result = persist(vulnerability);
             Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
             commitSearchIndex(commitIndex, Vulnerability.class);

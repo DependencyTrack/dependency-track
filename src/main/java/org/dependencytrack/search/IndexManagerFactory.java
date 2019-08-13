@@ -21,6 +21,7 @@ package org.dependencytrack.search;
 import alpine.Config;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
@@ -56,6 +57,8 @@ public class IndexManagerFactory {
             return VulnerabilityIndexer.getInstance();
         } else if (event.getObject() instanceof License || License.class == event.getIndexableClass()) {
             return LicenseIndexer.getInstance();
+        } else if (event.getObject() instanceof Cpe || Cpe.class == event.getIndexableClass()) {
+            return CpeIndexer.getInstance();
         }
         throw new IllegalArgumentException("Unsupported indexer requested");
     }

@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.parser.nvd;
 
+import alpine.event.framework.Event;
 import alpine.logging.Logger;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.CpeReference;
 import org.dependencytrack.persistence.QueryManager;
@@ -113,7 +115,8 @@ public class CpeDictionaryParser {
                 }
             }
         } catch (IOException | XMLStreamException e) {
-            LOGGER.error("Oops", e);
+            LOGGER.error("An error occurred processing the CPE dictionary", e);
         }
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Cpe.class));
     }
 }

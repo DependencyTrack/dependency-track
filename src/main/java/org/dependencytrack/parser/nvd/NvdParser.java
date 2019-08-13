@@ -180,6 +180,7 @@ public final class NvdParser {
             LOGGER.error("An error occurred while parsing NVD JSON data", e);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Cpe.class));
     }
 
     private void parseCveImpact(final JsonObject cveItem, final Vulnerability vuln) {
@@ -233,7 +234,8 @@ public final class NvdParser {
         try {
             cpe = ModelConverter.convertCpe23Uri(cpe23Uri);
             cpe.setOfficial(false); // This is NOT from the official CPE dictionary, rather, from the vulnerability feed
-            return qm.persist(cpe);
+            cpe = qm.persist(cpe);
+            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(Cpe.class, cpe.getId())));
         } catch (CpeParsingException | CpeEncodingException e) {
             LOGGER.error("An error occurred while parsing: " + cpe23Uri, e);
         }

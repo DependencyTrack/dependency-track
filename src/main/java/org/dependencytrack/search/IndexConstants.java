@@ -63,6 +63,16 @@ public final class IndexConstants {
             LICENSE_UUID, LICENSE_LICENSEID, LICENSE_NAME
     };
 
+    static final String CPE_UUID = "uuid";
+    static final String CPE_22 = "cpe22";
+    static final String CPE_23 = "cpe23";
+    static final String CPE_VENDOR = "vendor";
+    static final String CPE_PRODUCT = "product";
+    static final String CPE_VERSION = "version";
+    static final String[] CPE_SEARCH_FIELDS = {
+            CPE_22, CPE_23, CPE_VENDOR, CPE_PRODUCT, CPE_VERSION
+    };
+
     /**
      * Field constants highlighting boost factors in performing search
      * for various user-defined fields.
@@ -90,6 +100,12 @@ public final class IndexConstants {
     private static final float BOOST_LICENSE_UUID = 100.0f;
     private static final float BOOST_LICENSE_LICENSEID = 90.0f;
     private static final float BOOST_LICENSE_NAME = 20.0f;
+
+    private static final float BOOST_CPE_UUID = 100.0f;
+    private static final float BOOST_CPE_22 = 90.0f;
+    private static final float BOOST_CPE_23 = 90.0f;
+    private static final float BOOST_CPE_VENDOR = 20.0f;
+    private static final float BOOST_CPE_PRODUCT = 20.0f;
 
     /**
      * Private constructor.
@@ -120,6 +136,12 @@ public final class IndexConstants {
             searchBoosts.put(LICENSE_UUID, BOOST_LICENSE_UUID);
             searchBoosts.put(LICENSE_LICENSEID, BOOST_LICENSE_LICENSEID);
             searchBoosts.put(LICENSE_NAME, BOOST_LICENSE_NAME);
+
+            searchBoosts.put(CPE_UUID, BOOST_CPE_UUID);
+            searchBoosts.put(CPE_22, BOOST_CPE_22);
+            searchBoosts.put(CPE_23, BOOST_CPE_23);
+            searchBoosts.put(CPE_VENDOR, BOOST_CPE_VENDOR);
+            searchBoosts.put(CPE_PRODUCT, BOOST_CPE_PRODUCT);
         }
         return searchBoosts;
     }

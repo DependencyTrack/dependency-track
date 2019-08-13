@@ -1073,6 +1073,8 @@ public class QueryManager extends AlpineQueryManager {
         Cpe result = getCpeBy23(cpe.getCpe23());
         if (result == null) {
             result = persist(cpe);
+            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+            commitSearchIndex(commitIndex, Cpe.class);
         }
         return result;
     }
@@ -1085,6 +1087,24 @@ public class QueryManager extends AlpineQueryManager {
     public Cpe getCpeBy23(String cpe23) {
         final Query query = pm.newQuery(Cpe.class, "cpe23 == :cpe23");
         return singleResult(query.execute(cpe23));
+    }
+
+    /**
+     * Returns a List of all CPE objects.
+     * @return a List of all CPE objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getCpes() {
+        final Query query = pm.newQuery(Cpe.class);
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
+        if (filter != null) {
+            query.setFilter("vendor.toLowerCase().matches(:filter) || product.toLowerCase().matches(:filter)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
     }
 
     /**

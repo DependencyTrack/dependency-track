@@ -27,6 +27,7 @@ public class NotificationConstants {
         public static final String VULNDB_MIRROR = "VulnDB Mirroring";
         public static final String COMPONENT_INDEXER = "Component Indexing Service";
         public static final String LICENSE_INDEXER = "License Indexing Service";
+        public static final String CPE_INDEXER = "CPE Indexing Service";
         public static final String PROJECT_INDEXER = "Project Indexing Service";
         public static final String VULNERABILITY_INDEXER = "Vulnerability Indexing Service";
         public static final String CORE_INDEXING_SERVICES = "Core Indexing Services";

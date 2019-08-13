@@ -31,12 +31,15 @@ import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Model class for Common Platform Enumeration (CPE).
@@ -157,6 +160,12 @@ public class Cpe implements Serializable {
     @Element(column = "VULNERABILITY_ID", dependent = "false")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
+
+    @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
+    @Unique(name = "CPE_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
+    @NotNull
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -307,5 +316,13 @@ public class Cpe implements Serializable {
             this.vulnerabilities = new ArrayList<>();
         }
         this.vulnerabilities.add(vulnerability);
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 }

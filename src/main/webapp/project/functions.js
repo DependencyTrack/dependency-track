@@ -492,7 +492,7 @@ $(document).ready(function () {
 
     $("#deleteProjectButton").on("click", function () {
         $rest.deleteProject(uuid, function() {
-            window.location.href = "../projects";
+            window.location.href = "../projects/";
         });
     });
 

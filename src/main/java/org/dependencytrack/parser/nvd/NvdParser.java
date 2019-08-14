@@ -216,9 +216,11 @@ public final class NvdParser {
             final JsonArray cpeMatches = node.getJsonArray("cpe_match");
             for (int k = 0; k < cpeMatches.size(); k++) {
                 final JsonObject cpeMatch = cpeMatches.getJsonObject(k);
-                final Cpe cpe = generateCpe(qm, cpeMatch);
-                if (cpe != null) {
-                    cpes.add(cpe);
+                if (cpeMatch.getBoolean("vulnerable", true)) { // only parse the CPEs marked as vulnerable
+                    final Cpe cpe = generateCpe(qm, cpeMatch);
+                    if (cpe != null) {
+                        cpes.add(cpe);
+                    }
                 }
             }
         }

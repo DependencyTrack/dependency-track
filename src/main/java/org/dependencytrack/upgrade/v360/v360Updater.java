@@ -33,7 +33,7 @@ public class v360Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v360Updater.class);
     private static final String STMT_1 = "UPDATE \"PROJECT\" SET \"ACTIVE\" = TRUE WHERE \"ACTIVE\" IS NULL";
-    private static final String STMT_2 = "DELETE FROM \"CONFIGPROPERTY\" WHERE \"PROPERTYNAME\" = 'dependencycheck.enabled'";
+    private static final String STMT_2 = "DELETE FROM \"CONFIGPROPERTY\" WHERE \"GROUPNAME\" = 'scanner' AND \"PROPERTYNAME\" = 'dependencycheck.enabled'";
 
     public String getSchemaVersion() {
         return "3.6.0";

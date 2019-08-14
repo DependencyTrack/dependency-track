@@ -18,10 +18,14 @@
  */
 package org.dependencytrack.upgrade.v360;
 
+import alpine.Config;
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
 import alpine.util.DbUtil;
+import org.apache.commons.io.FileDeleteStrategy;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -29,6 +33,7 @@ public class v360Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v360Updater.class);
     private static final String STMT_1 = "UPDATE \"PROJECT\" SET \"ACTIVE\" = TRUE WHERE \"ACTIVE\" IS NULL";
+    private static final String STMT_2 = "DELETE FROM \"CONFIGPROPERTY\" WHERE \"PROPERTYNAME\" = 'dependencycheck.enabled'";
 
     public String getSchemaVersion() {
         return "3.6.0";
@@ -37,6 +42,17 @@ public class v360Updater extends AbstractUpgradeItem {
     public void executeUpgrade(AlpineQueryManager aqm, Connection connection) throws SQLException {
         LOGGER.info("Updating project active status. Setting all projects to active");
         DbUtil.executeUpdate(connection, STMT_1);
+
+        LOGGER.info("Removing legacy Dependency-Check configuration settings");
+        DbUtil.executeUpdate(connection, STMT_2);
+
+        LOGGER.info("Deleting Dependency-Check work directory");
+        try {
+            final String DC_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "dependency-check";
+            FileDeleteStrategy.FORCE.delete(new File(DC_ROOT_DIR));
+        } catch (IOException e) {
+            LOGGER.error("An error occurred deleting the Dependency-Check work directory", e);
+        }
 
         LOGGER.info("Dropping unused evidence database field from the Component object");
         DbUtil.dropColumn(connection, "COMPONENT", "EVIDENCE");

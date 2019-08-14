@@ -50,7 +50,6 @@
                     <div id="collapseScanners" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingScanners">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#scannerCpeTab">Internal CPE</a>
-                            <a data-toggle="tab" class="list-group-item" href="#scannerDependencyCheckTab">Dependency-Check</a>
                             <a data-toggle="tab" class="list-group-item" href="#scannerNpmAuditTab">NPM Audit</a>
                             <a data-toggle="tab" class="list-group-item" href="#scannerOssIndexTab">Sonatype OSS Index</a>
                         </div>
@@ -212,36 +211,6 @@
                                     <p>
                                         The Common Platform Enumeration (CPE) analyzer is an internal scanner implementation that analyzes component CPEs against the internal vulnerability database. All vulnerabilities that have a CPE, regardless of source, will be utilized by the CPE analyzer.
                                     </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane" id="scannerDependencyCheckTab" data-admin-title="Dependency-Check">
-                            <h3 class="admin-section-title">Dependency-Check Configuration</h3>
-                            <div class="checkbox">
-                                <input id="scannerDependencyCheckToggleButton" class="scannerToggleButton" type="checkbox" data-toggle="toggle" data-size="small" data-width="130" data-group-name="scanner" data-property-name="dependencycheck.enabled" data-on="<i class='fa fa-power-off'></i> Enabled" data-off="<i class='fa fa-power-off'></i> Disabled">
-                            </div>
-                            <div class="panel panel-default">
-                                <div class="panel-body">
-                                    <p>
-                                        OWASP Dependency-Check is a utility designed to discover vulnerabilities in
-                                        third-party components. Dependency-Check uses evidence-based analysis and
-                                        performs fuzzy matching against the NVD to present results based on confidence.
-                                        Dependency-Track has native integration with Dependency-Check.
-                                    </p>
-                                    <p>
-                                        Evidence-based analysis will lead to false positives, however, the technique can
-                                        also be utilized to discover potential issues with an applications environment.
-                                    </p>
-                                    <p>
-                                        Note: Due to the file-based approach that Dependency-Check natively uses,
-                                        not all Dependency-Check analyzers are enabled. Most notably, NPM analysis
-                                        is disabled. Organizations utilizing Node.js are encouraged to use the native
-                                        NPM Audit analyzer in Dependency-Track.
-                                    </p>
-                                </div>
-                                <div class="panel-footer">
-                                    References:<br/>
-                                    <a href="https://www.owasp.org/index.php/OWASP_Dependency_Check">OWASP Dependency-Check Project</a>
                                 </div>
                             </div>
                         </div>

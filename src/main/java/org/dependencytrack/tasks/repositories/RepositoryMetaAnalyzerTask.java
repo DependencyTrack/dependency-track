@@ -25,7 +25,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import alpine.resources.OrderDirection;
 import alpine.resources.Pagination;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Repository;

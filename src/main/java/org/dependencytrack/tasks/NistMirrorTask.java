@@ -32,7 +32,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
-import org.dependencytrack.event.DependencyCheckEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -88,9 +87,6 @@ public class NistMirrorTask implements LoggableSubscriber {
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
             LOGGER.info("NIST mirroring complete");
-
-            // Publish a Dependency-Check UPDATE ONLY event to update its data directory.
-            Event.dispatch(new DependencyCheckEvent(DependencyCheckEvent.Action.UPDATE_ONLY));
         }
     }
 

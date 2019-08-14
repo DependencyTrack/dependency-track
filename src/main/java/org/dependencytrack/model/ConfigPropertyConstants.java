@@ -35,7 +35,6 @@ public enum ConfigPropertyConstants {
     SCANNER_CPE_ENABLED("scanner", "cpe.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable the internal CPE analyzer"),
     SCANNER_CPE_FUZZY_ENABLED("scanner", "cpe.fuzzy.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable non-exact fuzzy matching using the CPE analyzer"),
     SCANNER_CPE_FUZZY_EXCLUDE_PURL("scanner", "cpe.fuzzy.exclude.purl", "true", PropertyType.BOOLEAN, "Flag to enable/disable fuzzy matching on components that have a Package URL (PURL) defined"),
-    SCANNER_DEPENDENCYCHECK_ENABLED("scanner", "dependencycheck.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable OWASP Dependency-Check"),
     SCANNER_NPMAUDIT_ENABLED("scanner", "npmaudit.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable NPM Audit"),
     SCANNER_OSSINDEX_ENABLED("scanner", "ossindex.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Sonatype OSS Index"),
     SCANNER_OSSINDEX_API_USERNAME("scanner", "ossindex.api.username", null, PropertyType.STRING, "The API username used for OSS Index authentication"),

@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.parser.dependencycheck.model;
 
-import org.owasp.dependencycheck.dependency.Confidence;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -51,17 +50,13 @@ public class Evidence extends BaseObject {
         return confidence;
     }
 
-    public Confidence getConfidenceType() {
-        return getConfidenceFromString(confidence);
-    }
-
     @XmlAttribute(name = "confidence")
     public void setConfidence(final String confidence) {
         this.confidence = normalize(confidence);
     }
 
     public int getConfidenceScore() {
-        return this.getConfidenceScore(this.getConfidenceType());
+        return this.getConfidenceScore(this.getConfidence());
     }
 
     public String getSource() {

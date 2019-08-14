@@ -29,7 +29,7 @@ import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
-import org.owasp.dependencycheck.utils.XmlUtils;
+import org.dependencytrack.util.XmlUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -83,7 +83,7 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                         final HttpEntity entity = response.getEntity();
                         if (entity != null) {
                             try (InputStream in = entity.getContent()) {
-                                final Document document = XmlUtils.buildSecureDocumentBuilder().parse(in);
+                                final Document document = XmlUtil.buildSecureDocumentBuilder().parse(in);
                                 final XPathFactory xpathFactory = XPathFactory.newInstance();
                                 final XPath xpath = xpathFactory.newXPath();
 

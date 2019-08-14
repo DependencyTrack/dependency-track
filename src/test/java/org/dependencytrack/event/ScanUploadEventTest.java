@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.event;
 
+import alpine.util.SystemUtil;
 import org.junit.Assert;
 import org.junit.Test;
-import org.owasp.dependencycheck.utils.FileUtils;
 import java.io.File;
 import java.util.UUID;
 
@@ -40,7 +40,7 @@ public class ScanUploadEventTest {
     @Test
     public void testFileConstructor() {
         UUID uuid = UUID.randomUUID();
-        File bitBucket = new File(FileUtils.getBitBucket());
+        File bitBucket = new File(SystemUtil.getBitBucket());
         ScanUploadEvent event = new ScanUploadEvent(uuid, bitBucket);
         Assert.assertEquals(uuid, event.getProjectUuid());
         Assert.assertEquals(bitBucket, event.getFile());

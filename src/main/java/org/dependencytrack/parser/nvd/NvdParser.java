@@ -20,7 +20,7 @@ package org.dependencytrack.parser.nvd;
 
 import alpine.event.framework.Event;
 import alpine.logging.Logger;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;

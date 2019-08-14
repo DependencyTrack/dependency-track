@@ -18,13 +18,13 @@
  */
 package org.dependencytrack.upgrade.v340;
 
+import alpine.Config;
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
 import alpine.util.DbUtil;
 import org.apache.commons.io.FileDeleteStrategy;
 import org.dependencytrack.search.IndexManager;
-import org.dependencytrack.tasks.scanners.DependencyCheckTask;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -51,7 +51,8 @@ public class v340Updater extends AbstractUpgradeItem {
 
         LOGGER.info("Deleting Dependency-Check work directory");
         try {
-            FileDeleteStrategy.FORCE.delete(new File(DependencyCheckTask.DC_ROOT_DIR));
+            final String DC_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "dependency-check";
+            FileDeleteStrategy.FORCE.delete(new File(DC_ROOT_DIR));
         } catch (IOException e) {
             LOGGER.error("An error occurred deleting the Dependency-Check work directory", e);
         }

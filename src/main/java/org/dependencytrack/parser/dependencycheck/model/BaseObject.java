@@ -19,7 +19,6 @@
 package org.dependencytrack.parser.dependencycheck.model;
 
 import org.apache.commons.lang3.StringUtils;
-import org.owasp.dependencycheck.dependency.Confidence;
 
 /**
  * Defines a base object that provides helper methods used to
@@ -34,23 +33,8 @@ public abstract class BaseObject {
         return StringUtils.normalizeSpace(StringUtils.trimToNull(string));
     }
 
-    protected Confidence getConfidenceFromString(final String confidence) {
-        switch (normalize(confidence)) {
-            case "HIGHEST":
-                return Confidence.HIGHEST;
-            case "HIGH":
-                return Confidence.HIGH;
-            case "MEDIUM":
-                return Confidence.MEDIUM;
-            case "LOW":
-                return Confidence.LOW;
-            default:
-                return Confidence.LOW;
-        }
-    }
-
-    public int getConfidenceScore(final Confidence confidence) {
-        switch (confidence.name()) {
+    public int getConfidenceScore(final String confidence) {
+        switch (confidence) {
             case "HIGHEST":
                 return 4;
             case "HIGH":
@@ -63,6 +47,5 @@ public abstract class BaseObject {
                 return 1;
         }
     }
-
 }
 

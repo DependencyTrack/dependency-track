@@ -74,7 +74,6 @@ public class Cpe implements Serializable {
 
     @Persistent
     @Column(name = "TITLE", jdbcType = "VARCHAR")
-
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The title may only contain printable characters")
     private String title;

@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 public class ProjectFindingUploaderTest {
 
     @Test
+    @SuppressWarnings("unchecked")
     public final void projectFindingMethodsTest() throws IOException {
         Project project = new Project();
         List<Finding> findings = Collections.EMPTY_LIST;

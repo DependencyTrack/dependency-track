@@ -43,7 +43,7 @@
                     <div class="panel-heading admin-accordion" role="tab" id="headingScanners">
                         <div class="panel-title">
                             <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseScanners" aria-expanded="false" aria-controls="collapseScanners">
-                                Scanners
+                                Analyzers
                             </a>
                         </div>
                     </div>

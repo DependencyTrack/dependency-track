@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.filters.AuthenticationFilter;
-import alpine.model.ConfigProperty;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -59,7 +58,7 @@ public class ScanResourceTest extends ResourceTest {
                 ConfigPropertyConstants.ACCEPT_ARTIFACT_DEPENDENCYCHECK.getGroupName(),
                 ConfigPropertyConstants.ACCEPT_ARTIFACT_DEPENDENCYCHECK.getPropertyName(),
                 "true",
-                ConfigPropertyConstants.SCANNER_DEPENDENCYCHECK_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCEPT_ARTIFACT_DEPENDENCYCHECK.getPropertyType(),
                 null
         );
     }

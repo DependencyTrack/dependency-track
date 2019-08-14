@@ -21,9 +21,16 @@ package org.dependencytrack.tasks.scanners;
 
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.CpeAnalysisEvent;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Cpe;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.QueryManager;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import java.util.List;
 
 /**
@@ -34,12 +41,24 @@ import java.util.List;
  */
 public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
+    private static final Logger LOGGER = Logger.getLogger(CpeAnalysisTask.class);
+
     /**
      * {@inheritDoc}
      */
     public void inform(final Event e) {
         if (e instanceof CpeAnalysisEvent) {
-
+            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_CPE_ENABLED)) {
+                return;
+            }
+            final CpeAnalysisEvent event = (CpeAnalysisEvent)e;
+            LOGGER.info("Starting CPE analysis task");
+            if (event.getComponents().size() > 0) {
+                analyze(event.getComponents());
+            } else {
+                super.analyze();
+            }
+            LOGGER.info("CPE analysis complete");
         }
     }
 
@@ -50,7 +69,7 @@ public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
      * @return true if CpeAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(final PackageURL purl) {
-        return purl != null;
+        return true;
     }
 
     /**
@@ -58,6 +77,66 @@ public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
+        final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_CPE_FUZZY_ENABLED);
+        final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_CPE_FUZZY_EXCLUDE_PURL);
+        try (QueryManager qm = new QueryManager()) {
+            for (Component component : components) {
+                preciseCpeAnalysis(qm, component);
+                cpeFieldAnalysis(qm, component);
+                if (fuzzyEnabled) {
+                    if (component.getPurl() == null || !excludeComponentsWithPurl) {
+                        fuzzyCpeAnalysis(qm, component);
+                    }
+                }
+            }
+        }
+    }
 
+    /**
+     * This method will analyze the CPE field specified in a component and match it with
+     * CPEs that are known to contain vulnerabilities. Supports both CPE 2.2 and CPE 2.3 URIs.
+     */
+    private void preciseCpeAnalysis(final QueryManager qm, final Component component) {
+        if (component.getCpe() != null) {
+            final List<Cpe> matchedCpes = qm.getCpes(component.getCpe());
+            for (Cpe cpe: matchedCpes) {
+                if (cpe.getVulnerabilities() != null) {
+                    for (Vulnerability vulnerability: cpe.getVulnerabilities()) {
+                        qm.addVulnerability(vulnerability, component);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * This method will analyze the CPE field specified in a component by parsing the CPE
+     * into the various fields (part, vendor, product, version) and match it with CPEs that
+     * are known to contain vulnerabilities.
+     */
+    private void cpeFieldAnalysis(final QueryManager qm, final Component component) {
+        if (component.getCpe() != null) {
+            try {
+                final us.springett.parsers.cpe.Cpe parsedCpe = CpeParser.parse(component.getCpe());
+                final List<Cpe> matchedCpes = qm.getCpes(
+                        parsedCpe.getPart().getAbbreviation(),
+                        parsedCpe.getVendor(),
+                        parsedCpe.getProduct(),
+                        parsedCpe.getVersion());
+                for (Cpe cpe: matchedCpes) {
+                    if (cpe.getVulnerabilities() != null) {
+                        for (Vulnerability vulnerability: cpe.getVulnerabilities()) {
+                            qm.addVulnerability(vulnerability, component);
+                        }
+                    }
+                }
+            } catch (CpeParsingException e) {
+                LOGGER.error("An error occurred parsing a CPE defined for a component: " + component.getCpe(), e);
+            }
+        }
+    }
+
+    private void fuzzyCpeAnalysis(final QueryManager qm, final Component component) {
+        //TODO
     }
 }

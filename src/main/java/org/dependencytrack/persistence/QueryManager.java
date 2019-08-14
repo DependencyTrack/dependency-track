@@ -1108,6 +1108,27 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of all CPE objects that match the specified CPE (v2.2 or v2.3) uri.
+     * @return a List of matching CPE objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Cpe> getCpes(final String cpeString) {
+        final Query query = pm.newQuery(Cpe.class, "cpe23 == :cpeString || cpe22 == :cpeString");
+        return (List<Cpe>)query.execute(cpeString);
+    }
+
+    /**
+     * Returns a List of all CPE objects that match the specified vendor/product/version.
+     * @return a List of matching CPE objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Cpe> getCpes(final String part, final String vendor, final String product, final String version) {
+        final Query query = pm.newQuery(Cpe.class);
+        query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
+        return (List<Cpe>)query.executeWithArray(part, vendor, product, version);
+    }
+
+    /**
      * Checks if the specified CWE id exists or not. If not, creates
      * a new CWE with the specified ID and name. In both cases, the
      * CWE will be returned.

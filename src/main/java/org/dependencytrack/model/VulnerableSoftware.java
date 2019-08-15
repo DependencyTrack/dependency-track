@@ -21,11 +21,10 @@ package org.dependencytrack.model;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
-import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -34,20 +33,21 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.UUID;
 
 /**
- * Model class for Common Platform Enumeration (CPE).
+ * The VulnerableSoftware is a model class for representing vulnerable software
+ * as defined by CPE. In essence, it's a CPE which is directly associated to a
+ * vulnerability through the NVD CVE data feeds.
  *
  * @author Steve Springett
  * @since 3.6.0
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Cpe implements ICpe, Serializable {
+public class VulnerableSoftware implements ICpe, Serializable {
 
-    private static final long serialVersionUID = 1598287997098587015L;
+    private static final long serialVersionUID = -3987946408457131098L;
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -56,23 +56,17 @@ public class Cpe implements ICpe, Serializable {
 
     @Persistent
     @Column(name = "CPE22", jdbcType = "VARCHAR")
-    @Index(name = "CPE_CPE22_IDX")
+    @Index(name = "VULNERABLESOFTWARE_CPE22_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The cpe22 may only contain printable characters")
     private String cpe22;
 
     @Persistent
     @Column(name = "CPE23", jdbcType = "VARCHAR", allowsNull = "false")
-    @Index(name = "CPE_CPE23_IDX", unique = "true")
+    @Index(name = "VULNERABLESOFTWARE_CPE23_IDX", unique = "true")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The cpe23 may only contain printable characters")
     private String cpe23;
-
-    @Persistent
-    @Column(name = "TITLE", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The title may only contain printable characters")
-    private String title;
 
     @Persistent
     @Column(name = "PART", jdbcType = "VARCHAR")
@@ -82,14 +76,14 @@ public class Cpe implements ICpe, Serializable {
 
     @Persistent
     @Column(name = "VENDOR", jdbcType = "VARCHAR")
-    @Index(name = "CPE_VENDOR_IDX")
+    @Index(name = "VULNERABLESOFTWARE_VENDOR_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The vendor may only contain printable characters")
     private String vendor;
 
     @Persistent
     @Column(name = "PRODUCT", jdbcType = "VARCHAR")
-    @Index(name = "CPE_PRODUCT_IDX")
+    @Index(name = "VULNERABLESOFTWARE_PRODUCT_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The product may only contain printable characters")
     private String product;
@@ -142,12 +136,34 @@ public class Cpe implements ICpe, Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The other may only contain printable characters")
     private String other;
 
-    @Persistent(mappedBy = "cpe")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    private Collection<CpeReference> references;
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "VULNERABILITY_ID")
+    @Index(name = "VULNERABLESOFTWARE_VULNERABILITY_IDX")
+    private Vulnerability vulnerability;
+
+    @Persistent
+    @Column(name = "VERSIONENDEXCLUDING")
+    private String versionEndExcluding;
+
+    @Persistent
+    @Column(name = "VERSIONENDINCLUDING")
+    private String versionEndIncluding;
+
+    @Persistent
+    @Column(name = "VERSIONSTARTEXCLUDING")
+    private String versionStartExcluding;
+
+    @Persistent
+    @Column(name = "VERSIONSTARTINCLUDING")
+    private String versionStartIncluding;
+
+    @Persistent
+    @Column(name = "VULNERABLE")
+    @JsonProperty(value = "isVulnerable")
+    private boolean vulnerable;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
-    @Unique(name = "CPE_UUID_IDX")
+    @Unique(name = "VULNERABLESOFTWARE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
@@ -174,14 +190,6 @@ public class Cpe implements ICpe, Serializable {
 
     public void setCpe23(String cpe23) {
         this.cpe23 = cpe23;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public String getPart() {
@@ -272,12 +280,52 @@ public class Cpe implements ICpe, Serializable {
         this.other = other;
     }
 
-    public Collection<CpeReference> getReferences() {
-        return references;
+    public Vulnerability getVulnerability() {
+        return vulnerability;
     }
 
-    public void setReferences(Collection<CpeReference> references) {
-        this.references = references;
+    public void setVulnerability(Vulnerability vulnerability) {
+        this.vulnerability = vulnerability;
+    }
+
+    public String getVersionEndExcluding() {
+        return versionEndExcluding;
+    }
+
+    public void setVersionEndExcluding(String versionEndExcluding) {
+        this.versionEndExcluding = versionEndExcluding;
+    }
+
+    public String getVersionEndIncluding() {
+        return versionEndIncluding;
+    }
+
+    public void setVersionEndIncluding(String versionEndIncluding) {
+        this.versionEndIncluding = versionEndIncluding;
+    }
+
+    public String getVersionStartExcluding() {
+        return versionStartExcluding;
+    }
+
+    public void setVersionStartExcluding(String versionStartExcluding) {
+        this.versionStartExcluding = versionStartExcluding;
+    }
+
+    public String getVersionStartIncluding() {
+        return versionStartIncluding;
+    }
+
+    public void setVersionStartIncluding(String versionStartIncluding) {
+        this.versionStartIncluding = versionStartIncluding;
+    }
+
+    public boolean isVulnerable() {
+        return vulnerable;
+    }
+
+    public void setVulnerable(boolean vulnerable) {
+        this.vulnerable = vulnerable;
     }
 
     public UUID getUuid() {

@@ -19,6 +19,8 @@
 package org.dependencytrack.parser.nvd;
 
 import org.dependencytrack.model.Cpe;
+import org.dependencytrack.model.ICpe;
+import org.dependencytrack.model.VulnerableSoftware;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
@@ -28,7 +30,7 @@ public final class ModelConverter {
     private ModelConverter() {
     }
 
-    public static Cpe convertCpe23Uri(Cpe cpe, String cpe23Uri) throws CpeParsingException, CpeEncodingException {
+    public static ICpe convertCpe23Uri(ICpe cpe, String cpe23Uri) throws CpeParsingException, CpeEncodingException {
         us.springett.parsers.cpe.Cpe parsedCpe = CpeParser.parse(cpe23Uri);
         cpe.setCpe23(cpe23Uri);
         cpe.setCpe22(parsedCpe.toCpe22Uri());
@@ -46,8 +48,13 @@ public final class ModelConverter {
         return cpe;
     }
 
-    public static Cpe convertCpe23Uri(String cpe23Uri) throws CpeParsingException, CpeEncodingException {
+    public static Cpe convertCpe23UriToCpe(String cpe23Uri) throws CpeParsingException, CpeEncodingException {
         Cpe cpe = new Cpe();
-        return convertCpe23Uri(cpe, cpe23Uri);
+        return (Cpe)convertCpe23Uri(cpe, cpe23Uri);
+    }
+
+    public static VulnerableSoftware convertCpe23UriToVulnerableSoftware(String cpe23Uri) throws CpeParsingException, CpeEncodingException {
+        VulnerableSoftware vs = new VulnerableSoftware();
+        return (VulnerableSoftware)convertCpe23Uri(vs, cpe23Uri);
     }
 }

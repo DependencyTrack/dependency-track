@@ -73,6 +73,17 @@ public final class IndexConstants {
             CPE_22, CPE_23, CPE_VENDOR, CPE_PRODUCT, CPE_VERSION
     };
 
+    static final String VULNERABLESOFTWARE_UUID = "uuid";
+    static final String VULNERABLESOFTWARE_CPE_22 = "cpe22";
+    static final String VULNERABLESOFTWARE_CPE_23 = "cpe23";
+    static final String VULNERABLESOFTWARE_VENDOR = "vendor";
+    static final String VULNERABLESOFTWARE_PRODUCT = "product";
+    static final String VULNERABLESOFTWARE_VERSION = "version";
+    static final String[] VULNERABLESOFTWARE_SEARCH_FIELDS = {
+            VULNERABLESOFTWARE_CPE_22, VULNERABLESOFTWARE_CPE_23, VULNERABLESOFTWARE_VENDOR,
+            VULNERABLESOFTWARE_PRODUCT, VULNERABLESOFTWARE_VERSION
+    };
+
     /**
      * Field constants highlighting boost factors in performing search
      * for various user-defined fields.
@@ -106,6 +117,12 @@ public final class IndexConstants {
     private static final float BOOST_CPE_23 = 90.0f;
     private static final float BOOST_CPE_VENDOR = 20.0f;
     private static final float BOOST_CPE_PRODUCT = 20.0f;
+
+    private static final float BOOST_VULNERABLESOFTWARE_UUID = 100.0f;
+    private static final float BOOST_VULNERABLESOFTWARE_CPE_22 = 90.0f;
+    private static final float BOOST_VULNERABLESOFTWARE_CPE_23 = 90.0f;
+    private static final float BOOST_VULNERABLESOFTWARE_VENDOR = 20.0f;
+    private static final float BOOST_VULNERABLESOFTWARE_PRODUCT = 20.0f;
 
     /**
      * Private constructor.
@@ -142,6 +159,12 @@ public final class IndexConstants {
             searchBoosts.put(CPE_23, BOOST_CPE_23);
             searchBoosts.put(CPE_VENDOR, BOOST_CPE_VENDOR);
             searchBoosts.put(CPE_PRODUCT, BOOST_CPE_PRODUCT);
+
+            searchBoosts.put(VULNERABLESOFTWARE_UUID, BOOST_VULNERABLESOFTWARE_UUID);
+            searchBoosts.put(VULNERABLESOFTWARE_CPE_22, BOOST_VULNERABLESOFTWARE_CPE_22);
+            searchBoosts.put(VULNERABLESOFTWARE_CPE_23, BOOST_VULNERABLESOFTWARE_CPE_23);
+            searchBoosts.put(VULNERABLESOFTWARE_VENDOR, BOOST_VULNERABLESOFTWARE_VENDOR);
+            searchBoosts.put(VULNERABLESOFTWARE_PRODUCT, BOOST_VULNERABLESOFTWARE_PRODUCT);
         }
         return searchBoosts;
     }

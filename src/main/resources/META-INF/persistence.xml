@@ -44,6 +44,7 @@
         <class>org.dependencytrack.model.Tag</class>
         <class>org.dependencytrack.model.Vulnerability</class>
         <class>org.dependencytrack.model.VulnerabilityMetrics</class>
+        <class>org.dependencytrack.model.VulnerableSoftware</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
     </persistence-unit>

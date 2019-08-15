@@ -25,6 +25,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
@@ -158,21 +159,21 @@ public final class NvdParser {
                     final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
 
                     // CPE
-                    final List<Cpe> affectedProducts = new ArrayList<>();
+                    final List<VulnerableSoftware> vulnerableSoftwares = new ArrayList<>();
                     final JsonObject configurations = cveItem.getJsonObject("configurations");
                     final JsonArray nodes = configurations.getJsonArray("nodes");
                     for (int j = 0; j < nodes.size(); j++) {
                         final JsonObject node = nodes.getJsonObject(j);
-                        affectedProducts.addAll(parseCpes(qm, node));
+                        vulnerableSoftwares.addAll(parseCpes(qm, node));
                         if (node.containsKey("children")) {
                             final JsonArray children = node.getJsonArray("children");
                             for (int l = 0; l < children.size(); l++) {
                                 final JsonObject child = children.getJsonObject(l);
-                                affectedProducts.addAll(parseCpes(qm, child));
+                                vulnerableSoftwares.addAll(parseCpes(qm, child));
                             }
                         }
                     }
-                    synchronizeVulnerability.setAffectedCpes(affectedProducts);
+                    synchronizeVulnerability.setVulnerableSoftwares(vulnerableSoftwares);
                     qm.persist(synchronizeVulnerability);
                 }
             });
@@ -210,34 +211,38 @@ public final class NvdParser {
         }
     }
 
-    private List<Cpe> parseCpes(final QueryManager qm, final JsonObject node) {
-        final List<Cpe> cpes = new ArrayList<>();
+    private List<VulnerableSoftware> parseCpes(final QueryManager qm, final JsonObject node) {
+        final List<VulnerableSoftware> vsList = new ArrayList<>();
         if (node.containsKey("cpe_match")) {
             final JsonArray cpeMatches = node.getJsonArray("cpe_match");
             for (int k = 0; k < cpeMatches.size(); k++) {
                 final JsonObject cpeMatch = cpeMatches.getJsonObject(k);
-                if (cpeMatch.getBoolean("vulnerable", true)) { // only parse the CPEs marked as vulnerable
-                    final Cpe cpe = generateCpe(qm, cpeMatch);
-                    if (cpe != null) {
-                        cpes.add(cpe);
+                //if (cpeMatch.getBoolean("vulnerable", true)) { // only parse the CPEs marked as vulnerable
+                    final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpeMatch);
+                    if (vs != null) {
+                        vsList.add(vs);
                     }
-                }
+                //}
             }
         }
-        return cpes;
+        return vsList;
     }
 
-    private synchronized Cpe generateCpe(final QueryManager qm, final JsonObject cpeMatch) {
+    private synchronized VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch) {
         final String cpe23Uri = cpeMatch.getString("cpe23Uri");
-        Cpe cpe = qm.getCpeBy23(cpe23Uri);
-        if (cpe != null) {
-            return cpe;
+        VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri);
+        if (vs != null) {
+            return vs;
         }
         try {
-            cpe = ModelConverter.convertCpe23Uri(cpe23Uri);
-            cpe.setOfficial(false); // This is NOT from the official CPE dictionary, rather, from the vulnerability feed
-            cpe = qm.persist(cpe);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(Cpe.class, cpe.getId())));
+            vs = ModelConverter.convertCpe23UriToVulnerableSoftware(cpe23Uri);
+            vs.setVulnerable(cpeMatch.getBoolean("vulnerable", true));
+            vs.setVersionEndExcluding(cpeMatch.getString("versionEndExcluding", null));
+            vs.setVersionEndIncluding(cpeMatch.getString("versionEndIncluding", null));
+            vs.setVersionStartExcluding(cpeMatch.getString("versionStartExcluding", null));
+            vs.setVersionStartIncluding(cpeMatch.getString("versionStartIncluding", null));
+            vs = qm.persist(vs);
+            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
         } catch (CpeParsingException | CpeEncodingException e) {
             LOGGER.error("An error occurred while parsing: " + cpe23Uri, e);
         }

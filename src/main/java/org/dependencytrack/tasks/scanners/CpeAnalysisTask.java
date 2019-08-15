@@ -26,8 +26,7 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.CpeAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cpe;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
@@ -98,13 +97,9 @@ public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
      */
     private void preciseCpeAnalysis(final QueryManager qm, final Component component) {
         if (component.getCpe() != null) {
-            final List<Cpe> matchedCpes = qm.getCpes(component.getCpe());
-            for (Cpe cpe: matchedCpes) {
-                if (cpe.getVulnerabilities() != null) {
-                    for (Vulnerability vulnerability: cpe.getVulnerabilities()) {
-                        qm.addVulnerability(vulnerability, component);
-                    }
-                }
+            final List<VulnerableSoftware> matchedCpes = qm.getAllVulnerableSoftwareByCpe23(component.getCpe());
+            for (VulnerableSoftware vs: matchedCpes) {
+                qm.addVulnerability(vs.getVulnerability(), component);
             }
         }
     }
@@ -118,17 +113,13 @@ public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
         if (component.getCpe() != null) {
             try {
                 final us.springett.parsers.cpe.Cpe parsedCpe = CpeParser.parse(component.getCpe());
-                final List<Cpe> matchedCpes = qm.getCpes(
+                final List<VulnerableSoftware> matchedCpes = qm.getAllVulnerableSoftware(
                         parsedCpe.getPart().getAbbreviation(),
                         parsedCpe.getVendor(),
                         parsedCpe.getProduct(),
                         parsedCpe.getVersion());
-                for (Cpe cpe: matchedCpes) {
-                    if (cpe.getVulnerabilities() != null) {
-                        for (Vulnerability vulnerability: cpe.getVulnerabilities()) {
-                            qm.addVulnerability(vulnerability, component);
-                        }
-                    }
+                for (VulnerableSoftware vs: matchedCpes) {
+                    qm.addVulnerability(vs.getVulnerability(), component);
                 }
             } catch (CpeParsingException e) {
                 LOGGER.error("An error occurred parsing a CPE defined for a component: " + component.getCpe(), e);

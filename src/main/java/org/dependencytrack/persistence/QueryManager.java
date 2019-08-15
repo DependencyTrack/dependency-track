@@ -948,8 +948,8 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setCvssV3BaseScore(transientVulnerability.getCvssV3BaseScore());
             vulnerability.setCvssV3ImpactSubScore(transientVulnerability.getCvssV3ImpactSubScore());
             vulnerability.setCvssV3ExploitabilitySubScore(transientVulnerability.getCvssV3ExploitabilitySubScore());
-            if (transientVulnerability.getAffectedCpes() != null) {
-                vulnerability.setAffectedCpes(transientVulnerability.getAffectedCpes());
+            if (transientVulnerability.getVulnerableSoftwares() != null) {
+                vulnerability.setVulnerableSoftwares(transientVulnerability.getVulnerableSoftwares());
             }
             final Vulnerability result = persist(vulnerability);
             Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
@@ -1064,10 +1064,10 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Synchronize a License, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param cpe the License object to synchronize
+     * Synchronize a Cpe, updating it if it needs updating, or creating it if it doesn't exist.
+     * @param cpe the Cpe object to synchronize
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return a synchronize License object
+     * @return a synchronize Cpe object
      */
     public Cpe synchronizeCpe(Cpe cpe, boolean commitIndex) {
         Cpe result = getCpeBy23(cpe.getCpe23());
@@ -1126,6 +1126,71 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(Cpe.class);
         query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
         return (List<Cpe>)query.executeWithArray(part, vendor, product, version);
+    }
+
+    /**
+     * Synchronize a VulnerableSoftware, updating it if it needs updating, or creating it if it doesn't exist.
+     * @param vs the VulnerableSoftware object to synchronize
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a synchronize VulnerableSoftware object
+     */
+    public VulnerableSoftware synchronizeVulnerableSoftware(VulnerableSoftware vs, boolean commitIndex) {
+        VulnerableSoftware result = getVulnerableSoftwareByCpe23(vs.getCpe23());
+        if (result == null) {
+            result = persist(vs);
+            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+            commitSearchIndex(commitIndex, VulnerableSoftware.class);
+        }
+        return result;
+    }
+
+    /**
+     * Returns a VulnerableSoftware by it's CPE v2.3 string.
+     * @param cpe23 the CPE 2.3 string
+     * @return a VulnerableSoftware object, or null if not found
+     */
+    public VulnerableSoftware getVulnerableSoftwareByCpe23(String cpe23) {
+        final Query query = pm.newQuery(VulnerableSoftware.class, "cpe23 == :cpe23");
+        return singleResult(query.execute(cpe23));
+    }
+
+    /**
+     * Returns a List of all VulnerableSoftware objects.
+     * @return a List of all VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getVulnerableSoftware() {
+        final Query query = pm.newQuery(VulnerableSoftware.class);
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
+        if (filter != null) {
+            query.setFilter("vendor.toLowerCase().matches(:filter) || product.toLowerCase().matches(:filter)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
+    }
+
+    /**
+     * Returns a List of all VulnerableSoftware objects that match the specified CPE (v2.2 or v2.3) uri.
+     * @return a List of matching VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<VulnerableSoftware> getAllVulnerableSoftwareByCpe23(final String cpeString) {
+        final Query query = pm.newQuery(VulnerableSoftware.class, "cpe23 == :cpeString || cpe22 == :cpeString");
+        return (List<VulnerableSoftware>)query.execute(cpeString);
+    }
+
+    /**
+     * Returns a List of all VulnerableSoftware objects that match the specified vendor/product/version.
+     * @return a List of matching VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product, final String version) {
+        final Query query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
+        return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product, version);
     }
 
     /**

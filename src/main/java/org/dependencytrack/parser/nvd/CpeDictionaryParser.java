@@ -69,7 +69,6 @@ public class CpeDictionaryParser {
                     StartElement startElement = xmlEvent.asStartElement();
                     if (startElement.getName().getLocalPart().equals("cpe-item")) {
                         cpe = new Cpe();
-                        cpe.setOfficial(true); // This is from the official CPE dictionary
                         cpeReferences = new ArrayList<>();
                         final Attribute attrName = startElement.getAttributeByName(new QName("name"));
                         if(attrName != null) {

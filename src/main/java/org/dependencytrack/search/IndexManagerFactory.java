@@ -25,6 +25,7 @@ import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 
 /**
  * Creates IndexManager implementations based on event types.
@@ -59,6 +60,8 @@ public class IndexManagerFactory {
             return LicenseIndexer.getInstance();
         } else if (event.getObject() instanceof Cpe || Cpe.class == event.getIndexableClass()) {
             return CpeIndexer.getInstance();
+        } else if (event.getObject() instanceof VulnerableSoftware || VulnerableSoftware.class == event.getIndexableClass()) {
+            return VulnerableSoftwareIndexer.getInstance();
         }
         throw new IllegalArgumentException("Unsupported indexer requested");
     }

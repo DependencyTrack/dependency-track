@@ -86,7 +86,8 @@ public abstract class IndexManager implements AutoCloseable {
         COMPONENT,
         VULNERABILITY,
         LICENSE,
-        CPE
+        CPE,
+        VULNERABLESOFTWARE,
     }
 
     /**

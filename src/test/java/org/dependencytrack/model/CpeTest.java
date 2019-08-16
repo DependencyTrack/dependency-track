@@ -66,7 +66,6 @@ public class CpeTest {
         cpe.setTargetSw("*");
         cpe.setTargetHw("*");
         cpe.setOther("*");
-        cpe.setOfficial(true);
         Assert.assertEquals("a", cpe.getPart());
         Assert.assertEquals("acme", cpe.getVendor());
         Assert.assertEquals("cool-product", cpe.getProduct());
@@ -78,7 +77,6 @@ public class CpeTest {
         Assert.assertEquals("*", cpe.getTargetSw());
         Assert.assertEquals("*", cpe.getTargetHw());
         Assert.assertEquals("*", cpe.getOther());
-        Assert.assertTrue(cpe.isOfficial());
     }
 
     @Test

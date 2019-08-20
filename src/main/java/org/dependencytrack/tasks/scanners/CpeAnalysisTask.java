@@ -26,6 +26,7 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.CpeAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.parsers.cpe.CpeParser;
@@ -97,9 +98,13 @@ public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
      */
     private void preciseCpeAnalysis(final QueryManager qm, final Component component) {
         if (component.getCpe() != null) {
-            final List<VulnerableSoftware> matchedCpes = qm.getAllVulnerableSoftwareByCpe23(component.getCpe());
+            final List<VulnerableSoftware> matchedCpes = qm.getAllVulnerableSoftwareByCpe(component.getCpe());
             for (VulnerableSoftware vs: matchedCpes) {
-                qm.addVulnerability(vs.getVulnerability(), component);
+                if (vs.getVulnerabilities() != null) {
+                    for (Vulnerability vulnerability: vs.getVulnerabilities()) {
+                        qm.addVulnerability(vulnerability, component);
+                    }
+                }
             }
         }
     }
@@ -119,7 +124,11 @@ public class CpeAnalysisTask extends BaseComponentAnalyzerTask implements Subscr
                         parsedCpe.getProduct(),
                         parsedCpe.getVersion());
                 for (VulnerableSoftware vs: matchedCpes) {
-                    qm.addVulnerability(vs.getVulnerability(), component);
+                    if (vs.getVulnerabilities() != null) {
+                        for (Vulnerability vulnerability: vs.getVulnerabilities()) {
+                            qm.addVulnerability(vulnerability, component);
+                        }
+                    }
                 }
             } catch (CpeParsingException e) {
                 LOGGER.error("An error occurred parsing a CPE defined for a component: " + component.getCpe(), e);

@@ -948,8 +948,8 @@ public class QueryManager extends AlpineQueryManager {
             vulnerability.setCvssV3BaseScore(transientVulnerability.getCvssV3BaseScore());
             vulnerability.setCvssV3ImpactSubScore(transientVulnerability.getCvssV3ImpactSubScore());
             vulnerability.setCvssV3ExploitabilitySubScore(transientVulnerability.getCvssV3ExploitabilitySubScore());
-            if (transientVulnerability.getVulnerableSoftwares() != null) {
-                vulnerability.setVulnerableSoftwares(transientVulnerability.getVulnerableSoftwares());
+            if (transientVulnerability.getVulnerableSoftware() != null) {
+                vulnerability.setVulnerableSoftware(transientVulnerability.getVulnerableSoftware());
             }
             final Vulnerability result = persist(vulnerability);
             Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
@@ -1177,7 +1177,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of matching VulnerableSoftware objects
      */
     @SuppressWarnings("unchecked")
-    public List<VulnerableSoftware> getAllVulnerableSoftwareByCpe23(final String cpeString) {
+    public List<VulnerableSoftware> getAllVulnerableSoftwareByCpe(final String cpeString) {
         final Query query = pm.newQuery(VulnerableSoftware.class, "cpe23 == :cpeString || cpe22 == :cpeString");
         return (List<VulnerableSoftware>)query.execute(cpeString);
     }

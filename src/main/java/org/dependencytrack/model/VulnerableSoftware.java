@@ -23,8 +23,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Element;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
+import javax.jdo.annotations.Join;
+import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -33,6 +37,8 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -62,8 +68,8 @@ public class VulnerableSoftware implements ICpe, Serializable {
     private String cpe22;
 
     @Persistent
-    @Column(name = "CPE23", jdbcType = "VARCHAR", allowsNull = "false")
-    @Index(name = "VULNERABLESOFTWARE_CPE23_IDX", unique = "true")
+    @Column(name = "CPE23", jdbcType = "VARCHAR")
+    @Index(name = "VULNERABLESOFTWARE_CPE23_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The cpe23 may only contain printable characters")
     private String cpe23;
@@ -136,11 +142,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The other may only contain printable characters")
     private String other;
 
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "VULNERABILITY_ID")
-    @Index(name = "VULNERABLESOFTWARE_VULNERABILITY_IDX")
-    private Vulnerability vulnerability;
-
     @Persistent
     @Column(name = "VERSIONENDEXCLUDING")
     private String versionEndExcluding;
@@ -161,6 +162,12 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Column(name = "VULNERABLE")
     @JsonProperty(value = "isVulnerable")
     private boolean vulnerable;
+
+    @Persistent(table = "VULNERABLESOFTWARE_VULNERABILITIES", mappedBy = "vulnerableSoftware")
+    @Join(column = "VULNERABLESOFTWARE_ID")
+    @Element(column = "VULNERABILITY_ID", dependent = "false")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
+    private List<Vulnerability> vulnerabilities;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "VULNERABLESOFTWARE_UUID_IDX")
@@ -280,14 +287,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
         this.other = other;
     }
 
-    public Vulnerability getVulnerability() {
-        return vulnerability;
-    }
-
-    public void setVulnerability(Vulnerability vulnerability) {
-        this.vulnerability = vulnerability;
-    }
-
     public String getVersionEndExcluding() {
         return versionEndExcluding;
     }
@@ -326,6 +325,21 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setVulnerable(boolean vulnerable) {
         this.vulnerable = vulnerable;
+    }
+
+    public List<Vulnerability> getVulnerabilities() {
+        return vulnerabilities;
+    }
+
+    public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
+        this.vulnerabilities = vulnerabilities;
+    }
+
+    public void addVulnerability(Vulnerability vulnerability) {
+        if (this.vulnerabilities == null) {
+            this.vulnerabilities = new ArrayList<>();
+        }
+        this.vulnerabilities.add(vulnerability);
     }
 
     public UUID getUuid() {

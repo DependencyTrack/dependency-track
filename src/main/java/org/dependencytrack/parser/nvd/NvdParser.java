@@ -164,16 +164,16 @@ public final class NvdParser {
                     final JsonArray nodes = configurations.getJsonArray("nodes");
                     for (int j = 0; j < nodes.size(); j++) {
                         final JsonObject node = nodes.getJsonObject(j);
-                        vulnerableSoftwares.addAll(parseCpes(qm, node));
+                        vulnerableSoftwares.addAll(parseCpes(qm, node, synchronizeVulnerability));
                         if (node.containsKey("children")) {
                             final JsonArray children = node.getJsonArray("children");
                             for (int l = 0; l < children.size(); l++) {
                                 final JsonObject child = children.getJsonObject(l);
-                                vulnerableSoftwares.addAll(parseCpes(qm, child));
+                                vulnerableSoftwares.addAll(parseCpes(qm, child, vulnerability));
                             }
                         }
                     }
-                    synchronizeVulnerability.setVulnerableSoftwares(vulnerableSoftwares);
+                    synchronizeVulnerability.setVulnerableSoftware(vulnerableSoftwares);
                     qm.persist(synchronizeVulnerability);
                 }
             });
@@ -211,24 +211,25 @@ public final class NvdParser {
         }
     }
 
-    private List<VulnerableSoftware> parseCpes(final QueryManager qm, final JsonObject node) {
+    private List<VulnerableSoftware> parseCpes(final QueryManager qm, final JsonObject node, final Vulnerability vulnerability) {
         final List<VulnerableSoftware> vsList = new ArrayList<>();
         if (node.containsKey("cpe_match")) {
             final JsonArray cpeMatches = node.getJsonArray("cpe_match");
             for (int k = 0; k < cpeMatches.size(); k++) {
                 final JsonObject cpeMatch = cpeMatches.getJsonObject(k);
-                //if (cpeMatch.getBoolean("vulnerable", true)) { // only parse the CPEs marked as vulnerable
-                    final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpeMatch);
+                if (cpeMatch.getBoolean("vulnerable", true)) { // only parse the CPEs marked as vulnerable
+                    final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpeMatch, vulnerability);
                     if (vs != null) {
                         vsList.add(vs);
                     }
-                //}
+                }
             }
         }
         return vsList;
     }
 
-    private synchronized VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch) {
+    private synchronized VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch,
+                                                                       final Vulnerability vulnerability) {
         final String cpe23Uri = cpeMatch.getString("cpe23Uri");
         VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri);
         if (vs != null) {
@@ -237,6 +238,7 @@ public final class NvdParser {
         try {
             vs = ModelConverter.convertCpe23UriToVulnerableSoftware(cpe23Uri);
             vs.setVulnerable(cpeMatch.getBoolean("vulnerable", true));
+            vs.addVulnerability(vulnerability);
             vs.setVersionEndExcluding(cpeMatch.getString("versionEndExcluding", null));
             vs.setVersionEndIncluding(cpeMatch.getString("versionEndIncluding", null));
             vs.setVersionStartExcluding(cpeMatch.getString("versionStartExcluding", null));

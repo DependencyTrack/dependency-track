@@ -1129,29 +1129,16 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Synchronize a VulnerableSoftware, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param vs the VulnerableSoftware object to synchronize
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return a synchronize VulnerableSoftware object
-     */
-    public VulnerableSoftware synchronizeVulnerableSoftware(VulnerableSoftware vs, boolean commitIndex) {
-        VulnerableSoftware result = getVulnerableSoftwareByCpe23(vs.getCpe23());
-        if (result == null) {
-            result = persist(vs);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
-            commitSearchIndex(commitIndex, VulnerableSoftware.class);
-        }
-        return result;
-    }
-
-    /**
      * Returns a VulnerableSoftware by it's CPE v2.3 string.
      * @param cpe23 the CPE 2.3 string
      * @return a VulnerableSoftware object, or null if not found
      */
-    public VulnerableSoftware getVulnerableSoftwareByCpe23(String cpe23) {
-        final Query query = pm.newQuery(VulnerableSoftware.class, "cpe23 == :cpe23");
-        return singleResult(query.execute(cpe23));
+    public VulnerableSoftware getVulnerableSoftwareByCpe23(String cpe23,
+                                                           String versionEndExcluding, String versionEndIncluding,
+                                                           String versionStartExcluding, String versionStartIncluding) {
+        final Query query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter("cpe23 == :cpe23 && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
+        return singleResult(query.executeWithArray(cpe23, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
     }
 
     /**
@@ -1191,6 +1178,17 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = pm.newQuery(VulnerableSoftware.class);
         query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
         return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product, version);
+    }
+
+    /**
+     * Returns a List of all VulnerableSoftware objects that match the specified vendor/product.
+     * @return a List of matching VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product) {
+        final Query query = pm.newQuery(VulnerableSoftware.class);
+        query.setFilter("part == :part && vendor == :vendor && product == :product");
+        return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product);
     }
 
     /**

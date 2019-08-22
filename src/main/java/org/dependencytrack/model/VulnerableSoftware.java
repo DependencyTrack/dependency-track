@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.model;
 
-import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,9 +32,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +47,8 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Index(name = "VULNERABLESOFTWARE_CPE23_VERSION_RANGE_IDX", members = {"cpe23", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
+@Index(name = "VULNERABLESOFTWARE_PART_VENDOR_PRODUCT_IDX", members = {"part", "vendor", "product"})
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
@@ -62,84 +60,53 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     @Persistent
     @Column(name = "CPE22", jdbcType = "VARCHAR")
-    @Index(name = "VULNERABLESOFTWARE_CPE22_IDX")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The cpe22 may only contain printable characters")
     private String cpe22;
 
     @Persistent
     @Column(name = "CPE23", jdbcType = "VARCHAR")
-    @Index(name = "VULNERABLESOFTWARE_CPE23_IDX")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The cpe23 may only contain printable characters")
     private String cpe23;
 
     @Persistent
     @Column(name = "PART", jdbcType = "VARCHAR")
-    @Size(max = 1)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The part may only contain printable characters")
     private String part;
 
     @Persistent
     @Column(name = "VENDOR", jdbcType = "VARCHAR")
-    @Index(name = "VULNERABLESOFTWARE_VENDOR_IDX")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The vendor may only contain printable characters")
     private String vendor;
 
     @Persistent
     @Column(name = "PRODUCT", jdbcType = "VARCHAR")
-    @Index(name = "VULNERABLESOFTWARE_PRODUCT_IDX")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The product may only contain printable characters")
     private String product;
 
     @Persistent
-    @Column(name = "VERSION", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
     private String version;
 
     @Persistent
     @Column(name = "UPDATE", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The update may only contain printable characters")
     private String update;
 
     @Persistent
     @Column(name = "EDITION", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The edition may only contain printable characters")
     private String edition;
 
     @Persistent
     @Column(name = "LANGUAGE", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The language may only contain printable characters")
     private String language;
 
     @Persistent
     @Column(name = "SWEDITION", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The swEdition may only contain printable characters")
     private String swEdition;
 
     @Persistent
     @Column(name = "TARGETSW", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The targetSw may only contain printable characters")
     private String targetSw;
 
     @Persistent
     @Column(name = "TARGETHW", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The targetHw may only contain printable characters")
     private String targetHw;
 
     @Persistent
     @Column(name = "OTHER", jdbcType = "VARCHAR")
-    @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The other may only contain printable characters")
     private String other;
 
     @Persistent
@@ -172,7 +139,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "VULNERABLESOFTWARE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
-    @NotNull
     private UUID uuid;
 
     public long getId() {

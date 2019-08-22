@@ -30,6 +30,7 @@ import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
+import us.springett.parsers.cpe.values.Part;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -120,7 +121,6 @@ public final class NvdParser {
                         for (int k = 0; k < prob3.size(); k++) {
                             final JsonObject prob4 = prob3.getJsonObject(k);
                             if ("en".equals(prob4.getString("lang"))) {
-                                //vulnerability.setCwe(prob4.getString("value"));
                                 final String cweString = prob4.getString("value");
                                 if (cweString != null && cweString.startsWith("CWE-")) {
                                     try {
@@ -173,7 +173,8 @@ public final class NvdParser {
                             }
                         }
                     }
-                    synchronizeVulnerability.setVulnerableSoftware(vulnerableSoftwares);
+                    final List<VulnerableSoftware> reconciledList = reconcile(vulnerableSoftwares);
+                    synchronizeVulnerability.setVulnerableSoftware(reconciledList);
                     qm.persist(synchronizeVulnerability);
                 }
             });
@@ -182,6 +183,36 @@ public final class NvdParser {
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Cpe.class));
+    }
+
+    /**
+     * CVE configurations may consist of applications and operating systems. In the case of
+     * configurations that contain both application and operating system parts, we do not
+     * want both types of CPEs to be associated to the vulnerability as it will lead to
+     * false positives on the operating system. https://nvd.nist.gov/vuln/detail/CVE-2015-0312
+     * is a good example of this as it contains application CPEs describing various versions
+     * of Adobe Flash player, but also contains CPEs for all versions of Windows, macOS, and
+     * Linux. This method will only return a List of VulnerableSoftware objects which are
+     * applications when there are also operating system CPE in list supplied to this method.
+     * @param vulnerableSoftwareList a list of all VulnerableSoftware object for a given CVE
+     * @return a reconciled list of VulnerableSoftware objects
+     */
+    private List<VulnerableSoftware> reconcile(List<VulnerableSoftware> vulnerableSoftwareList) {
+        final List<VulnerableSoftware> appPartList = new ArrayList<>();
+        final List<VulnerableSoftware> osPartList = new ArrayList<>();
+        for (VulnerableSoftware vulnerableSoftware: vulnerableSoftwareList) {
+            if (vulnerableSoftware.getCpe23() != null && Part.OPERATING_SYSTEM.getAbbreviation().equals(vulnerableSoftware.getPart())) {
+                osPartList.add(vulnerableSoftware);
+            }
+            if (vulnerableSoftware.getCpe23() != null && Part.APPLICATION.getAbbreviation().equals(vulnerableSoftware.getPart())) {
+                appPartList.add(vulnerableSoftware);
+            }
+        }
+        if (!osPartList.isEmpty() && !appPartList.isEmpty()) {
+            return appPartList;
+        } else {
+            return vulnerableSoftwareList;
+        }
     }
 
     private void parseCveImpact(final JsonObject cveItem, final Vulnerability vuln) {
@@ -231,7 +262,12 @@ public final class NvdParser {
     private synchronized VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch,
                                                                        final Vulnerability vulnerability) {
         final String cpe23Uri = cpeMatch.getString("cpe23Uri");
-        VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri);
+        final String versionEndExcluding = cpeMatch.getString("versionEndExcluding", null);
+        final String versionEndIncluding = cpeMatch.getString("versionEndIncluding", null);
+        final String versionStartExcluding = cpeMatch.getString("versionStartExcluding", null);
+        final String versionStartIncluding = cpeMatch.getString("versionStartIncluding", null);
+        VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri, versionEndExcluding,
+                versionEndIncluding, versionStartExcluding, versionStartIncluding);
         if (vs != null) {
             return vs;
         }
@@ -239,12 +275,13 @@ public final class NvdParser {
             vs = ModelConverter.convertCpe23UriToVulnerableSoftware(cpe23Uri);
             vs.setVulnerable(cpeMatch.getBoolean("vulnerable", true));
             vs.addVulnerability(vulnerability);
-            vs.setVersionEndExcluding(cpeMatch.getString("versionEndExcluding", null));
-            vs.setVersionEndIncluding(cpeMatch.getString("versionEndIncluding", null));
-            vs.setVersionStartExcluding(cpeMatch.getString("versionStartExcluding", null));
-            vs.setVersionStartIncluding(cpeMatch.getString("versionStartIncluding", null));
+            vs.setVersionEndExcluding(versionEndExcluding);
+            vs.setVersionEndIncluding(versionEndIncluding);
+            vs.setVersionStartExcluding(versionStartExcluding);
+            vs.setVersionStartIncluding(versionStartIncluding);
             vs = qm.persist(vs);
-            Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
+            //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
+            return vs;
         } catch (CpeParsingException | CpeEncodingException e) {
             LOGGER.error("An error occurred while parsing: " + cpe23Uri, e);
         }

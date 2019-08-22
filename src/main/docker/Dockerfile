@@ -1,4 +1,4 @@
-FROM openjdk:8u201-jre-alpine
+FROM alpine:3.10
 LABEL maintainer="steve.springett@owasp.org"
 LABEL vendor="OWASP"
 
@@ -8,8 +8,9 @@ ARG DATA_DIR=/data
 ARG EXTLIB_DIR=/extlib
 ARG USER=dtrack
 
+RUN apk --no-cache add openjdk8-jre-base \
 # Create the application directory where Dependency-Track will be installed and the external library directory
-RUN mkdir -p "$APP_DIR" "$DATA_DIR" "$EXTLIB_DIR"
+	&& mkdir -p "$APP_DIR" "$DATA_DIR" "$EXTLIB_DIR"
 
 # Copy the compiled WAR to the application directory created above
 COPY ./target/dependency-track-embedded.war "$APP_DIR"

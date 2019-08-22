@@ -9,7 +9,7 @@ ARG EXTLIB_DIR=/extlib
 ARG USER=dtrack
 
 # Create the application directory where Dependency-Track will be installed and the external library directory
-RUN mkdir -p -m 770 "$APP_DIR" "$DATA_DIR" "$EXTLIB_DIR"
+RUN mkdir -p "$APP_DIR" "$DATA_DIR" "$EXTLIB_DIR"
 
 # Copy the compiled WAR to the application directory created above
 COPY ./target/dependency-track-embedded.war "$APP_DIR"
@@ -26,7 +26,7 @@ RUN adduser -h "$DATA_DIR" -s bash -D "$USER" \
 
 # Specify the user to run commands as
 USER "$USER"
-WORKDIR "$APP_DIR"
+WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track
 CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war

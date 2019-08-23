@@ -35,8 +35,8 @@ script:
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
 
 after_success:
-  - java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+  - if [ "$TRAVIS_BRANCH" == "master" AND "$TRAVIS_PULL_REQUEST" == "false" ]; then
+    - java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
     docker push $REPO;
     fi

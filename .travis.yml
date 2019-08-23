@@ -23,6 +23,9 @@ before_install:
   - java -version
   - sudo apt-get install jq
   - wget -O ~/codacy-coverage-reporter-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
+  - export DOCKLE_VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+  - wget -O ~/dockle.tar.gz https://github.com/goodwithtech/dockle/releases/download/v${DOCKLE_VERSION}/dockle_${DOCKLE_VERSION}_Linux-64bit.tar.gz
+  - tar zxvf ~/dockle.tar.gz -C ~/
 
 before_script:
   - export REPO=owasp/dependency-track
@@ -33,6 +36,8 @@ script:
   # - mvn clean package sonar:sonar -Dsonar.host.url=https://sonarcloud.io
   - mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
+  # TODO: - ~/dockle --exit-code 1 $REPO:$TAG
+  - ~/dockle $REPO:$TAG
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" AND "$TRAVIS_PULL_REQUEST" == "false" ]; then

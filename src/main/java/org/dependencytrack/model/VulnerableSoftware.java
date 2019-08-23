@@ -49,6 +49,8 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Index(name = "VULNERABLESOFTWARE_CPE23_VERSION_RANGE_IDX", members = {"cpe23", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
 @Index(name = "VULNERABLESOFTWARE_PART_VENDOR_PRODUCT_IDX", members = {"part", "vendor", "product"})
+@Index(name = "VULNERABLESOFTWARE_PURL_VERSION_RANGE_IDX", members = {"purl", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
+@Index(name = "VULNERABLESOFTWARE_PURL_TYPE_NS_NAME_IDX", members = {"purlType", "purlNamespace", "purlName"})
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
@@ -57,6 +59,34 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
+
+    @Persistent
+    @Column(name = "PURL", jdbcType = "VARCHAR")
+    private String purl;
+
+    @Persistent
+    @Column(name = "PURL_TYPE", jdbcType = "VARCHAR")
+    private String purlType;
+
+    @Persistent
+    @Column(name = "PURL_NAMESPACE", jdbcType = "VARCHAR")
+    private String purlNamespace;
+
+    @Persistent
+    @Column(name = "PURL_NAME", jdbcType = "VARCHAR")
+    private String purlName;
+
+    @Persistent
+    @Column(name = "PURL_VERSION", jdbcType = "VARCHAR")
+    private String purlVersion;
+
+    @Persistent
+    @Column(name = "PURL_QUALIFIERS", jdbcType = "VARCHAR")
+    private String purlQualifiers;
+
+    @Persistent
+    @Column(name = "PURL_SUBPATH", jdbcType = "VARCHAR")
+    private String purlSubpath;
 
     @Persistent
     @Column(name = "CPE22", jdbcType = "VARCHAR")
@@ -147,6 +177,62 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getPurl() {
+        return purl;
+    }
+
+    public void setPurl(String purl) {
+        this.purl = purl;
+    }
+
+    public String getPurlType() {
+        return purlType;
+    }
+
+    public void setPurlType(String purlType) {
+        this.purlType = purlType;
+    }
+
+    public String getPurlNamespace() {
+        return purlNamespace;
+    }
+
+    public void setPurlNamespace(String purlNamespace) {
+        this.purlNamespace = purlNamespace;
+    }
+
+    public String getPurlName() {
+        return purlName;
+    }
+
+    public void setPurlName(String purlName) {
+        this.purlName = purlName;
+    }
+
+    public String getPurlVersion() {
+        return purlVersion;
+    }
+
+    public void setPurlVersion(String purlVersion) {
+        this.purlVersion = purlVersion;
+    }
+
+    public String getPurlQualifiers() {
+        return purlQualifiers;
+    }
+
+    public void setPurlQualifiers(String purlQualifiers) {
+        this.purlQualifiers = purlQualifiers;
+    }
+
+    public String getPurlSubpath() {
+        return purlSubpath;
+    }
+
+    public void setPurlSubpath(String purlSubpath) {
+        this.purlSubpath = purlSubpath;
     }
 
     public String getCpe22() {

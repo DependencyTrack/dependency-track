@@ -28,7 +28,7 @@ before_install:
   - tar zxvf ~/dockle.tar.gz -C ~/
   - export TRIVY_VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
   - wget -O ~/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
-  - tar zxvf trivy.tar.gz -C ~/
+  - tar zxvf ~/trivy.tar.gz -C ~/
 
 cache:
   directories:

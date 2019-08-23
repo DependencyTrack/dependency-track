@@ -259,7 +259,7 @@ public final class NvdParser {
         return vsList;
     }
 
-    private synchronized VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch,
+    private VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch,
                                                                        final Vulnerability vulnerability) {
         final String cpe23Uri = cpeMatch.getString("cpe23Uri");
         final String versionEndExcluding = cpeMatch.getString("versionEndExcluding", null);

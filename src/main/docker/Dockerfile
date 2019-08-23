@@ -20,13 +20,13 @@ ADD https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-conne
 ADD https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar "$EXTLIB_DIR"
 
 # Create a user and assign home directory to a non-standard path
-RUN adduser -h "$DATA_DIR" -s bash -D "$USER" \
+RUN adduser -h "$DATA_DIR" -D "$USER" \
 # Ensure "$USER" have access to all the needed directories
     && chown -R "$USER":"$USER" "$APP_DIR" "$EXTLIB_DIR" \
     && chmod -R 770 "$APP_DIR" "$DATA_DIR" "$EXTLIB_DIR"
 
 # Specify the user to run commands as
-USER "$USER"
+USER 1000
 WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track

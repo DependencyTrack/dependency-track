@@ -23,6 +23,7 @@ import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.util.NotificationUtil;
@@ -59,6 +60,10 @@ public interface Publisher {
                 context.put("subjectJson", NotificationUtil.toJson(subject));
             } else if (notification.getSubject() instanceof AnalysisDecisionChange) {
                 final AnalysisDecisionChange subject = (AnalysisDecisionChange) notification.getSubject();
+                context.put("subject", subject);
+                context.put("subjectJson", NotificationUtil.toJson(subject));
+            } else if (notification.getSubject() instanceof BomConsumedOrProcessed) {
+                final BomConsumedOrProcessed subject = (BomConsumedOrProcessed) notification.getSubject();
                 context.put("subject", subject);
                 context.put("subjectJson", NotificationUtil.toJson(subject));
             }

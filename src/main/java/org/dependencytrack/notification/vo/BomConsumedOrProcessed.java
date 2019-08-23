@@ -16,26 +16,32 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.notification;
+package org.dependencytrack.notification.vo;
 
-public enum NotificationGroup {
+import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.Project;
 
-    // System Groups
-    CONFIGURATION,
-    DATASOURCE_MIRRORING,
-    REPOSITORY,
-    INTEGRATION,
-    INDEXING_SERVICE,
-    FILE_SYSTEM,
+public class BomConsumedOrProcessed {
 
-    // Portfolio Groups
-    NEW_VULNERABILITY,
-    NEW_VULNERABLE_DEPENDENCY,
-    //NEW_OUTDATED_COMPONENT,
-    //FIXED_VULNERABILITY,
-    //FIXED_OUTDATED,
-    GLOBAL_AUDIT_CHANGE,
-    PROJECT_AUDIT_CHANGE,
-    BOM_CONSUMED,
-    BOM_PROCESSED
+    private Project project;
+    private String bom;
+    private Bom.Format format;
+
+    public BomConsumedOrProcessed(final Project project, final String bom, final Bom.Format format) {
+        this.project = project;
+        this.bom = bom;
+        this.format = format;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public String getBom() {
+        return bom;
+    }
+
+    public Bom.Format getFormat() {
+        return format;
+    }
 }

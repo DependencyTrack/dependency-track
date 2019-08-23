@@ -48,6 +48,27 @@ public class Bom implements Serializable {
 
     private static final long serialVersionUID = -4378439983100141050L;
 
+    public enum Format {
+        CYCLONEDX("CycloneDX", "CycloneDX BOM Specification"),
+        SPDX("SPDX", "Software Package Data Exchange");
+
+        private final String formatShortName;
+        private final String formatLongName;
+
+        Format(final String formatShortName, final String formatLongName) {
+            this.formatShortName = formatShortName;
+            this.formatLongName = formatLongName;
+        }
+
+        public String getFormatShortName() {
+            return formatShortName;
+        }
+
+        public String getFormatLongName() {
+            return formatLongName;
+        }
+    }
+
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore

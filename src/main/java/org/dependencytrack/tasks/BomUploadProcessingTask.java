@@ -133,7 +133,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         .title(NotificationConstants.Title.BOM_PROCESSED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("A " + bomFormat.getFormatShortName() + " BOM was processed")
-                        .subject(new BomConsumedOrProcessed(project, Base64.getEncoder().encodeToString(bomBytes), bomFormat)));
+                        .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat)));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
             } finally {

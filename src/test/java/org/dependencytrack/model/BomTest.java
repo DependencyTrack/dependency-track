@@ -68,4 +68,18 @@ public class BomTest {
         bom.setUuid(uuid);
         Assert.assertEquals(uuid.toString(), bom.getUuid().toString());
     }
+
+    @Test
+    public void testBomFormat() {
+        Bom bom = new Bom();
+        bom.setBomFormat(Bom.Format.CYCLONEDX);
+        Assert.assertEquals(Bom.Format.CYCLONEDX.getFormatShortName(), bom.getBomFormat());
+    }
+
+    @Test
+    public void testBomSpecVersion() {
+        Bom bom = new Bom();
+        bom.setSpecVersion("1.1");
+        Assert.assertEquals("1.1", bom.getSpecVersion());
+    }
 }

@@ -299,7 +299,8 @@ public final class NotificationUtil {
         if (vo.getBom() != null) {
             builder.add("bom", Json.createObjectBuilder()
                     .add("content", vo.getBom())
-                    .add("format", vo.getFormat().getFormatShortName()).build()
+                    .add("format", vo.getFormat().getFormatShortName())
+                    .add("specVersion", vo.getSpecVersion()).build()
             );
         }
         return builder.build();

@@ -26,11 +26,13 @@ public class BomConsumedOrProcessed {
     private Project project;
     private String bom;
     private Bom.Format format;
+    private String specVersion;
 
-    public BomConsumedOrProcessed(final Project project, final String bom, final Bom.Format format) {
+    public BomConsumedOrProcessed(final Project project, final String bom, final Bom.Format format, final String specVersion) {
         this.project = project;
         this.bom = bom;
         this.format = format;
+        this.specVersion = specVersion;
     }
 
     public Project getProject() {
@@ -43,5 +45,9 @@ public class BomConsumedOrProcessed {
 
     public Bom.Format getFormat() {
         return format;
+    }
+
+    public String getSpecVersion() {
+        return specVersion;
     }
 }

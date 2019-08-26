@@ -79,6 +79,14 @@ public class Bom implements Serializable {
     @NotNull
     private Date imported;
 
+    @Persistent
+    @Column(name = "BOM_FORMAT")
+    private String bomFormat;
+
+    @Persistent
+    @Column(name = "SPEC_VERSION")
+    private String specVersion;
+
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
@@ -110,6 +118,22 @@ public class Bom implements Serializable {
 
     public void setImported(Date imported) {
         this.imported = imported;
+    }
+
+    public String getBomFormat() {
+        return bomFormat;
+    }
+
+    public void setBomFormat(Format format) {
+        this.bomFormat = format.formatShortName;
+    }
+
+    public String getSpecVersion() {
+        return specVersion;
+    }
+
+    public void setSpecVersion(String specVersion) {
+        this.specVersion = specVersion;
     }
 
     public Project getProject() {

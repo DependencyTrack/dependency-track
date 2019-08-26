@@ -76,12 +76,15 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 final Bom.Format bomFormat;
+                final String bomSpecVersion;
                 if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
                         LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
                         final BomParser parser = new BomParser();
-                        components = ModelConverter.convert(qm, parser.parse(bomBytes));
+                        final org.cyclonedx.model.Bom bom = parser.parse(bomBytes);
+                        bomSpecVersion = bom.getSchemaVersion();
+                        components = ModelConverter.convert(qm, bom);
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;
@@ -91,6 +94,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         LOGGER.info("Processing SPDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.SPDX;
                         final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
+                        bomSpecVersion = parser.getSpecVersion();
                         components = parser.parse(bomBytes);
                     } else {
                         LOGGER.warn("A SPDX BOM was uploaded but accepting SPDX BOMs is disabled. Aborting");
@@ -106,9 +110,9 @@ public class BomUploadProcessingTask implements Subscriber {
                         .title(NotificationConstants.Title.BOM_CONSUMED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("A " + bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
-                        .subject(new BomConsumedOrProcessed(project, Base64.getEncoder().encodeToString(bomBytes), bomFormat)));
+                        .subject(new BomConsumedOrProcessed(project, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
                 final Date date = new Date();
-                final Bom bom = qm.createBom(project, date);
+                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion);
                 for (final Component component: components) {
                     processComponent(qm, bom, project, component, flattenedComponents);
                 }
@@ -133,7 +137,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         .title(NotificationConstants.Title.BOM_PROCESSED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("A " + bomFormat.getFormatShortName() + " BOM was processed")
-                        .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat)));
+                        .subject(new BomConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing bom", ex);
             } finally {

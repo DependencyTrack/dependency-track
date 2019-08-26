@@ -30,7 +30,7 @@ public class ProjectTest extends PersistenceCapableTest {
         Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
         Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, true, false);
         Scan scan = qm.createScan(p1, new Date(), new Date());
-        Bom bom = qm.createBom(p1, new Date());
+        Bom bom = qm.createBom(p1, new Date(), Bom.Format.CYCLONEDX, "1.1");
 
         Assert.assertEquals("Example Project 1", p1.getName());
         Assert.assertEquals("Example Project 2", p2.getName());

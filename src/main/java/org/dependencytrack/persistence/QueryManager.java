@@ -597,10 +597,12 @@ public class QueryManager extends AlpineQueryManager {
      * @param imported the Date when the bom was imported
      * @return a new Bom object
      */
-    public Bom createBom(Project project, Date imported) {
+    public Bom createBom(Project project, Date imported, Bom.Format format, String version) {
         final Bom bom = new Bom();
         bom.setImported(imported);
         bom.setProject(project);
+        bom.setBomFormat(format);
+        bom.setSpecVersion(version);
         return persist(bom);
     }
 

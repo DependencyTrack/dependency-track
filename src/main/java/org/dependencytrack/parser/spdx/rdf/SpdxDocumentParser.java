@@ -61,10 +61,15 @@ public class SpdxDocumentParser {
         TAG
     }
 
+    private String specVersion = null;
     private final QueryManager qm;
 
     public SpdxDocumentParser(final QueryManager qm) {
         this.qm = qm;
+    }
+
+    public String getSpecVersion() {
+        return specVersion;
     }
 
     public static boolean isSupportedSpdxFormat(final String spdxString) {
@@ -77,6 +82,7 @@ public class SpdxDocumentParser {
     }
 
     public List<Component> parse(final byte[] spdx) throws ParseException {
+        specVersion = null;
         final String spdxString = new String(spdx, StandardCharsets.UTF_8);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {
             if (spdxString.contains("<rdf:RDF") && spdxString.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns")) {
@@ -97,6 +103,7 @@ public class SpdxDocumentParser {
     */
     @SuppressWarnings("deprecation")
     public List<Component> parse(final InputStream inputStream, final DocumentType type) throws ParseException {
+        specVersion = null;
         /*
          * Attempt to read in the document.
          */
@@ -107,6 +114,7 @@ public class SpdxDocumentParser {
                 final List<String> warnings = new ArrayList<>();
                 final SpdxDocumentContainer docContainer = TagToRDF.convertTagFileToRdf(inputStream, "RDF/XML", warnings);
                 doc = docContainer.getSpdxDocument();
+                specVersion = doc.getSpecVersion();
                 for (final String warning: warnings) {
                     LOGGER.warn(warning);
                 }
@@ -117,6 +125,7 @@ public class SpdxDocumentParser {
         } else {
             try {
                 doc = SPDXDocumentFactory.createSpdxDocument(inputStream, "http://spdx.org", "RDF/XML");
+                specVersion = doc.getSpecVersion();
             } catch (InvalidSPDXAnalysisException e) {
                 LOGGER.warn("Unable to read SPDX RDF Document", e);
                 throw new ParseException("Unable to read SPDX RDF Document", e);

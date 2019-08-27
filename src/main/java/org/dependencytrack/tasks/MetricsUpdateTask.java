@@ -293,6 +293,9 @@ public class MetricsUpdateTask implements Subscriber {
             // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
             last.setLastOccurrence(measuredAt);
             qm.persist(last);
+            // Update the convenience fields in the Project object
+            project.setLastInheritedRiskScore(last.getInheritedRiskScore());
+            qm.persist(project);
         } else {
             final ProjectMetrics projectMetrics = new ProjectMetrics();
             projectMetrics.setProject(project);
@@ -312,6 +315,9 @@ public class MetricsUpdateTask implements Subscriber {
             projectMetrics.setFirstOccurrence(measuredAt);
             projectMetrics.setLastOccurrence(measuredAt);
             qm.persist(projectMetrics);
+            // Update the convenience fields in the Project object
+            project.setLastInheritedRiskScore(projectMetrics.getInheritedRiskScore());
+            qm.persist(project);
         }
         return counters;
     }
@@ -358,6 +364,9 @@ public class MetricsUpdateTask implements Subscriber {
             // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
             last.setLastOccurrence(measuredAt);
             qm.persist(last);
+            // Update the convenience fields in the Component object
+            component.setLastInheritedRiskScore(last.getInheritedRiskScore());
+            qm.persist(component);
         } else {
             final ComponentMetrics componentMetrics = new ComponentMetrics();
             componentMetrics.setComponent(component);
@@ -375,6 +384,9 @@ public class MetricsUpdateTask implements Subscriber {
             componentMetrics.setFirstOccurrence(measuredAt);
             componentMetrics.setLastOccurrence(measuredAt);
             qm.persist(componentMetrics);
+            // Update the convenience fields in the Component object
+            component.setLastInheritedRiskScore(componentMetrics.getInheritedRiskScore());
+            qm.persist(component);
         }
         return counters;
     }

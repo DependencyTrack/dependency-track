@@ -226,6 +226,14 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
+    /**
+     * Convenience field which stores the Inherited Risk Score (IRS) of the last metric in the {@link ComponentMetrics} table
+     */
+    @Persistent
+    @Index(name = "COMPONENT_LAST_RISKSCORE_IDX")
+    @Column(name = "LAST_RISKSCORE", allowsNull = "true") // New column, must allow nulls on existing databases))
+    private Double lastInheritedRiskScore;
+
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "COMPONENT_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -457,6 +465,14 @@ public class Component implements Serializable {
 
     public void setRepositoryMeta(RepositoryMetaComponent repositoryMeta) {
         this.repositoryMeta = repositoryMeta;
+    }
+
+    public Double getLastInheritedRiskScore() {
+        return lastInheritedRiskScore;
+    }
+
+    public void setLastInheritedRiskScore(Double lastInheritedRiskScore) {
+        this.lastInheritedRiskScore = lastInheritedRiskScore;
     }
 
     @Override

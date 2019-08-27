@@ -156,7 +156,7 @@
                                 <div class="form-inline" role="form">
                                     <button id="addDependencyButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalAddDependency"><span class="fa fa-plus"></span> Add Dependency</button>
                                     <button id="removeDependencyButton" class="btn btn-default require-portfolio-management"><span class="fa fa-minus"></span> Remove Dependency</button>
-                                    <button id="uploadBomDisplayModalButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalUploadBom"><span class="fa fa-upload"></span> Upload BoM</button>
+                                    <button id="uploadBomDisplayModalButton" class="btn btn-default require-portfolio-management" data-toggle="modal" data-target="#modalUploadBom"><span class="fa fa-upload"></span> Upload BOM</button>
                                 </div>
                             </div>
                             <table id="dependenciesTable" class="table table-hover detail-table" data-toggle="table"

@@ -129,6 +129,7 @@
                     <th data-align="left" data-field="version" data-sortable="true">Version</th>
                     <th data-align="left" data-field="lastScanImportLabel" data-sort-name="lastScanImport" data-sortable="true" data-visible="false">Last Scan Import</th>
                     <th data-align="left" data-field="lastBomImportLabel" data-sort-name="lastBomImport" data-sortable="true">Last BOM Import</th>
+                    <th data-align="left" data-field="lastBomImportFormatLabel" data-sort-name="lastBomImportFormat" data-sortable="true">BOM Format</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>

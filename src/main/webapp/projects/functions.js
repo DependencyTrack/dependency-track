@@ -37,6 +37,10 @@ function formatProjectsTable(res) {
             res[i].lastBomImportLabel = $common.formatTimestamp(res[i].lastBomImport, true);
         }
 
+        if (res[i].hasOwnProperty("lastBomImportFormat")) {
+            res[i].lastBomImportFormatLabel = filterXSS(res[i].lastBomImportFormat);
+        }
+
         if (res[i].hasOwnProperty("metrics")) {
             res[i].vulnerabilities = $common.generateSeverityProgressBar(res[i].metrics.critical, res[i].metrics.high, res[i].metrics.medium, res[i].metrics.low, res[i].metrics.unassigned);
         }

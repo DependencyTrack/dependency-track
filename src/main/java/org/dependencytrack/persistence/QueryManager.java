@@ -462,11 +462,13 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Updates the last time a bom was imported.
      * @param date the date of the last bom import
+     * @param bomFormat the format and version of the bom format
      * @return the updated Project
      */
-    public Project updateLastBomImport(Project p, Date date) {
+    public Project updateLastBomImport(Project p, Date date, String bomFormat) {
         final Project project = getObjectById(Project.class, p.getId());
         project.setLastBomImport(date);
+        project.setLastBomImportFormat(bomFormat);
         return persist(project);
     }
 

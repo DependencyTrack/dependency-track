@@ -141,13 +141,21 @@ public class Project implements Serializable {
     @Column(name = "LAST_SCAN_IMPORTED")
     private Date lastScanImport;
 
-    /**N
+    /**
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
     @Column(name = "LAST_BOM_IMPORTED")
     private Date lastBomImport;
+
+    /**
+     * Convenience field which will contain the format of the last entry in the {@link Bom} table
+     */
+    @Persistent
+    @Index(name = "PROJECT_LASTBOMIMPORT_FORMAT_IDX")
+    @Column(name = "LAST_BOM_IMPORTED_FORMAT")
+    private String lastBomImportFormat;
 
     @Persistent
     @Column(name = "ACTIVE")
@@ -249,6 +257,14 @@ public class Project implements Serializable {
 
     public void setLastBomImport(Date lastBomImport) {
         this.lastBomImport = lastBomImport;
+    }
+
+    public String getLastBomImportFormat() {
+        return lastBomImportFormat;
+    }
+
+    public void setLastBomImportFormat(String lastBomImportFormat) {
+        this.lastBomImportFormat = lastBomImportFormat;
     }
 
     public boolean isActive() {

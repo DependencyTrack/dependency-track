@@ -119,7 +119,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 LOGGER.debug("Reconciling dependencies for project " + event.getProjectUuid());
                 qm.reconcileDependencies(project, existingProjectDependencies, flattenedComponents);
                 LOGGER.debug("Updating last import date for project " + event.getProjectUuid());
-                qm.updateLastBomImport(project, date);
+                qm.updateLastBomImport(project, date, bomFormat.getFormatShortName() + " " + bomSpecVersion);
                 // Instead of firing off a new VulnerabilityAnalysisEvent, chain the VulnerabilityAnalysisEvent to
                 // the BomUploadEvent so that synchronous publishing mode (Jenkins) waits until vulnerability
                 // analysis has completed. If not chained, synchronous publishing mode will return immediately upon

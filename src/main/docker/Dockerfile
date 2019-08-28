@@ -24,7 +24,7 @@ RUN mkdir -p -m 770 "$DATA_DIR" "$EXTLIB_DIR" \
 	&& wget -P "$EXTLIB_DIR" https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar \
     && wget -P "$EXTLIB_DIR" https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar \
     && wget -P "$EXTLIB_DIR" https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar \
-	&& chown -R "$USERNAME":"$USERNAME" "$EXTLIBDIR" \
+	&& chown -R "$USERNAME":"$USERNAME" "$EXTLIB_DIR" \
     && chmod -R 440 "$EXTLIB_DIR"/* \
 	&& apk --no-cache add openjdk8-jre-base
 

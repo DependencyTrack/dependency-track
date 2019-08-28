@@ -17,7 +17,6 @@ COPY --chown=1000 ./target/dependency-track-embedded.war "$APP_DIR"/
 # Create a user and assign home directory to a $DATA_DIR
 # Download optional JDBC drivers to the external library directory
 # Ensure UID 1000 & GID 1000 own all the needed directories
-# Ensure GID 1000 have access to the database drivers
 # Install JRE
 RUN mkdir -p -m 770 "$DATA_DIR" "$EXTLIB_DIR" \
     && adduser -D -h "$DATA_DIR" -u 1000 "$USERNAME" \
@@ -25,7 +24,6 @@ RUN mkdir -p -m 770 "$DATA_DIR" "$EXTLIB_DIR" \
     && wget -P "$EXTLIB_DIR" https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar \
     && wget -P "$EXTLIB_DIR" https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar \
 	&& chown -R "$USERNAME":"$USERNAME" "$EXTLIB_DIR" \
-    && chmod -R 440 "$EXTLIB_DIR"/* \
 	&& apk --no-cache add openjdk8-jre-base
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)

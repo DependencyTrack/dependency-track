@@ -88,7 +88,7 @@ public class MetricsUpdateTask implements Subscriber {
      * @param qm a QueryManager instance
      */
     private void updatePortfolioMetrics(final QueryManager qm) {
-        LOGGER.info("Executing metrics update on portfolio");
+        LOGGER.info("Executing portfolio metrics update");
         final Date measuredAt = new Date();
 
         // Retrieve list of all projects
@@ -215,6 +215,7 @@ public class MetricsUpdateTask implements Subscriber {
             portfolioMetrics.setLastOccurrence(measuredAt);
             qm.persist(portfolioMetrics);
         }
+        LOGGER.info("Completed portfolio metrics update");
     }
 
     /**
@@ -225,7 +226,7 @@ public class MetricsUpdateTask implements Subscriber {
      */
     private MetricCounters updateProjectMetrics(final QueryManager qm, final long oid) {
         final Project project = qm.getObjectById(Project.class, oid);
-        LOGGER.info("Executing metrics update on project: " + project.getUuid());
+        LOGGER.info("Executing metrics update for project: " + project.getUuid());
         final Date measuredAt = new Date();
 
         final MetricCounters counters = new MetricCounters();
@@ -322,6 +323,7 @@ public class MetricsUpdateTask implements Subscriber {
             project.setLastInheritedRiskScore(projectMetrics.getInheritedRiskScore());
             qm.persist(project);
         }
+        LOGGER.info("Completed metrics update for project: " + project.getUuid());
         return counters;
     }
 
@@ -333,7 +335,7 @@ public class MetricsUpdateTask implements Subscriber {
      */
     private MetricCounters updateComponentMetrics(final QueryManager qm, final long oid) {
         final Component component = qm.getObjectById(Component.class, oid);
-        LOGGER.debug("Executing metrics update on component: " + component.getUuid());
+        LOGGER.debug("Executing metrics update for component: " + component.getUuid());
         final Date measuredAt = new Date();
 
         final MetricCounters counters = new MetricCounters();
@@ -391,6 +393,7 @@ public class MetricsUpdateTask implements Subscriber {
             component.setLastInheritedRiskScore(componentMetrics.getInheritedRiskScore());
             qm.persist(component);
         }
+        LOGGER.debug("Completed metrics update for component: " + component.getUuid());
         return counters;
     }
 
@@ -402,7 +405,7 @@ public class MetricsUpdateTask implements Subscriber {
      */
     private MetricCounters updateDependencyMetrics(final QueryManager qm, final long oid) {
         final Dependency dependency = qm.getObjectById(Dependency.class, oid);
-        LOGGER.debug("Executing metrics update on dependency: " + dependency.getId());
+        LOGGER.debug("Executing metrics update for dependency: " + dependency.getId());
         final Date measuredAt = new Date();
 
         final MetricCounters counters = new MetricCounters();
@@ -458,6 +461,7 @@ public class MetricsUpdateTask implements Subscriber {
             dependencyMetrics.setLastOccurrence(measuredAt);
             qm.persist(dependencyMetrics);
         }
+        LOGGER.debug("Completed metrics update for dependency: " + dependency.getId());
         return counters;
     }
 
@@ -486,6 +490,7 @@ public class MetricsUpdateTask implements Subscriber {
         for (final VulnerabilityMetrics metric: yearCounters.getMetrics()) {
             qm.synchronizeVulnerabilityMetrics(metric);
         }
+        LOGGER.info("Completed metrics update on vulnerability database");
     }
 
     /**

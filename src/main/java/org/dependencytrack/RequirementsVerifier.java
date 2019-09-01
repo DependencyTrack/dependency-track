@@ -40,7 +40,14 @@ public class RequirementsVerifier implements ServletContextListener {
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing requirements verifier");
         final JavaVersion javaVersion = new JavaVersion();
-        if (javaVersion.getMajor() != 8 || javaVersion.getUpdate() < 161) {
+        if (javaVersion.getMajor() != 8 || javaVersion.getMajor() != 11) {
+            setFailedValidation(true);
+            final String message = "Dependency-Track supports Java LTS releases only. Cannot continue.";
+            LOGGER.error("Using Java version: " + javaVersion.toString());
+            LOGGER.error(message);
+            throw new RequirementsException(message);
+        }
+        if (javaVersion.getMajor() == 8 && javaVersion.getUpdate() < 161) {
             setFailedValidation(true);
             final String message = "Dependency-Track requires Java 8 with a minimum update of 162 or higher. Cannot continue.";
             LOGGER.error("Using Java version: " + javaVersion.toString());

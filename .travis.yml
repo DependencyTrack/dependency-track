@@ -11,7 +11,7 @@ addons:
       name: stevespringett/dependency-track
       description: Dependency-Track Coverity Scan
     notification_email: Steve.Springett@owasp.org
-    build_command_prepend: 
+    build_command_prepend:
     build_command: mvn clean package
     branch_pattern: coverity_scan
   sonarcloud:
@@ -53,7 +53,7 @@ after_success:
   - if [ "$TRAVIS_BRANCH" == "master" AND "$TRAVIS_PULL_REQUEST" == "false" ]; then
     - java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
     docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
-    docker push $REPO;
+    docker push $REPO:$TAG;
     fi
 
 notifications:

@@ -39,6 +39,9 @@ USER ${USER}
 
 EXPOSE 8080
 
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl -f http://127.0.0.1:8080/api/version || exit 1
+
 # Launch Dependency-Track
 WORKDIR ${APP_DIR}
 CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war

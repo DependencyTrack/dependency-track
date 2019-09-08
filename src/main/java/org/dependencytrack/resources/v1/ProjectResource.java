@@ -107,6 +107,33 @@ public class ProjectResource extends AlpineResource {
     }
 
     @GET
+    @Path("/lookup")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a specific project by its name and version",
+            response = Project.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getProject(
+            @ApiParam(value = "The name of the project to query on", required = true)
+            @QueryParam("name") String name,
+            @ApiParam(value = "The version of the project to query on", required = true)
+            @QueryParam("version") String version) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getProject(name, version);
+            if (project != null) {
+                return Response.ok(project).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
+
+    @GET
     @Path("/tag/{tag}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

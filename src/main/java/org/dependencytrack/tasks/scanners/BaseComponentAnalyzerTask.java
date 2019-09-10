@@ -95,9 +95,13 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     }
 
     protected void doThrottleDelay() {
-        if (throttleDelay > 0) {
+        doThrottleDelay(throttleDelay);
+    }
+
+    protected void doThrottleDelay(long delay) {
+        if (delay > 0) {
             long now = System.currentTimeMillis();
-            final long delayUntil = now + throttleDelay;
+            final long delayUntil = now + delay;
             while(now < delayUntil) {
                 now = System.currentTimeMillis();
             }

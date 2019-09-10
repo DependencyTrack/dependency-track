@@ -40,6 +40,7 @@ import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
 import org.dependencytrack.tasks.scanners.CpeAnalysisTask;
 import org.dependencytrack.tasks.scanners.NpmAuditAnalysisTask;
 import org.dependencytrack.tasks.scanners.OssIndexAnalysisTask;
+import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -77,6 +78,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(OssIndexAnalysisEvent.class, OssIndexAnalysisTask.class);
         EVENT_SERVICE.subscribe(NpmAdvisoryMirrorEvent.class, NpmAdvisoryMirrorTask.class);
         EVENT_SERVICE.subscribe(VulnDbSyncEvent.class, VulnDbSyncTask.class);
+        EVENT_SERVICE.subscribe(VulnDbAnalysisEvent.class, VulnDbAnalysisTask.class);
         EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
@@ -106,6 +108,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(OssIndexAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(NpmAdvisoryMirrorTask.class);
         EVENT_SERVICE.unsubscribe(VulnDbSyncTask.class);
+        EVENT_SERVICE.unsubscribe(VulnDbAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(RepositoryMetaAnalyzerTask.class);
         EVENT_SERVICE.unsubscribe(MetricsUpdateTask.class);

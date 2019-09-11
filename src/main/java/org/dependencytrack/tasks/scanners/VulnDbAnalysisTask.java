@@ -29,7 +29,7 @@ import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.parser.vulndb.util.ModelConverter;
+import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.vulndbdatamirror.client.VulnDbApi;
 import us.springett.vulndbdatamirror.parser.model.Results;
@@ -134,6 +134,8 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.getId()));
                 if (vulnerability == null) {
                     vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
+                } else {
+                    vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 }
                 qm.addVulnerability(vulnerability, component);
             }

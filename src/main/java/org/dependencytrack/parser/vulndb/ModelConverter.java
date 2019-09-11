@@ -16,11 +16,12 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.vulndb.util;
+package org.dependencytrack.parser.vulndb;
 
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -51,7 +52,7 @@ public final class ModelConverter {
      * @param vulnDbVuln the VulnDB vulnerability to convert
      * @return a Dependency-Track Vulnerability object
      */
-    public static org.dependencytrack.model.Vulnerability convert(final QueryManager qm, final us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln) {
+    public static Vulnerability convert(final QueryManager qm, final us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln) {
         final org.dependencytrack.model.Vulnerability vuln = new org.dependencytrack.model.Vulnerability();
         vuln.setSource(org.dependencytrack.model.Vulnerability.Source.VULNDB);
         vuln.setVulnId(sanitize(String.valueOf(vulnDbVuln.getId())));

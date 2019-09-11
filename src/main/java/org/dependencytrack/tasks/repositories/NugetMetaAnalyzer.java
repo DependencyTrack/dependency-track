@@ -116,7 +116,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                             final Date published = dateFormat.parse(updateTime);
                             meta.setPublishedTimestamp(published);
                         } catch (ParseException e) {
-                            LOGGER.warn("An error occurred while parsing upload time", e);
+                            LOGGER.warn("An error occurred while parsing upload time for " + component.getPurl().toString(), e);
                         }
                     }
                 }

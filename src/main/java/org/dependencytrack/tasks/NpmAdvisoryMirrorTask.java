@@ -104,6 +104,18 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
                     updateDatasource(results);
                     more = results.getNext() != null;
                     url = NPM_BASE_URL + results.getNext();
+                } else {
+                    final String error = "An unexpected response received from NPM while performing mirror. Response: "
+                            + jsonResponse.getStatus() + " " + jsonResponse.getStatusText() + " - Aborting";
+                    LOGGER.warn(error);
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.SYSTEM)
+                            .group(NotificationGroup.DATASOURCE_MIRRORING)
+                            .title(NotificationConstants.Title.NPM_ADVISORY_MIRROR)
+                            .content(error)
+                            .level(NotificationLevel.ERROR)
+                    );
+                    return;
                 }
             }
         } catch (UnirestException e) {

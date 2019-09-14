@@ -46,3 +46,5 @@ ENV LOGGING_LEVEL=INFO
 ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4G"
  
 #VOLUME "$DATA_DIR"
+
+HEALTHCHECK --interval=5m --timeout=3s CMD wget -q -O/dev/null http://127.0.0.1:8080/api/version

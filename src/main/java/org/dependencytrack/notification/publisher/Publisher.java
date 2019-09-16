@@ -19,13 +19,17 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
+import alpine.util.UrlUtil;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import javax.json.JsonObject;
 import java.io.IOException;
@@ -40,41 +44,50 @@ public interface Publisher {
     void inform(Notification notification, JsonObject config);
 
     default String prepareTemplate(final Notification notification, final PebbleTemplate template) {
-        final Map<String, Object> context = new HashMap<>();
-        final long epochSecond = notification.getTimestamp().toEpochSecond(
-                ZoneId.systemDefault().getRules()
-                        .getOffset(notification.getTimestamp())
-        );
-        context.put("timestampEpochSecond", epochSecond);
-        context.put("timestamp", notification.getTimestamp().toString());
-        context.put("notification", notification);
 
-        if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
-            if (notification.getSubject() instanceof NewVulnerabilityIdentified) {
-                final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
-                context.put("subject", subject);
-                context.put("subjectJson", NotificationUtil.toJson(subject));
-            } else if (notification.getSubject() instanceof NewVulnerableDependency) {
-                final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
-                context.put("subject", subject);
-                context.put("subjectJson", NotificationUtil.toJson(subject));
-            } else if (notification.getSubject() instanceof AnalysisDecisionChange) {
-                final AnalysisDecisionChange subject = (AnalysisDecisionChange) notification.getSubject();
-                context.put("subject", subject);
-                context.put("subjectJson", NotificationUtil.toJson(subject));
-            } else if (notification.getSubject() instanceof BomConsumedOrProcessed) {
-                final BomConsumedOrProcessed subject = (BomConsumedOrProcessed) notification.getSubject();
-                context.put("subject", subject);
-                context.put("subjectJson", NotificationUtil.toJson(subject));
+        try (QueryManager qm = new QueryManager()) {
+            final ConfigProperty baseUrlProperty = qm.getConfigProperty(
+                    ConfigPropertyConstants.GENERAL_BASE_URL.getGroupName(),
+                    ConfigPropertyConstants.GENERAL_BASE_URL.getPropertyName()
+            );
+
+            final Map<String, Object> context = new HashMap<>();
+            final long epochSecond = notification.getTimestamp().toEpochSecond(
+                    ZoneId.systemDefault().getRules()
+                            .getOffset(notification.getTimestamp())
+            );
+            context.put("timestampEpochSecond", epochSecond);
+            context.put("timestamp", notification.getTimestamp().toString());
+            context.put("notification", notification);
+            context.put("baseUrl", UrlUtil.normalize(baseUrlProperty.getPropertyValue()));
+
+            if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
+                if (notification.getSubject() instanceof NewVulnerabilityIdentified) {
+                    final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof NewVulnerableDependency) {
+                    final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof AnalysisDecisionChange) {
+                    final AnalysisDecisionChange subject = (AnalysisDecisionChange) notification.getSubject();
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof BomConsumedOrProcessed) {
+                    final BomConsumedOrProcessed subject = (BomConsumedOrProcessed) notification.getSubject();
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                }
             }
-        }
 
-        try (Writer writer = new StringWriter()) {
-            template.evaluate(writer, context);
-            return writer.toString();
-        } catch (IOException e) {
-            Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);
-            return null;
+            try (Writer writer = new StringWriter()) {
+                template.evaluate(writer, context);
+                return writer.toString();
+            } catch (IOException e) {
+                Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);
+                return null;
+            }
         }
     }
 

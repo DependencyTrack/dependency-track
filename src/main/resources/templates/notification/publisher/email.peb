@@ -2,40 +2,50 @@
 
 --------------------------------------------------------------------------------
 {% if notification.group == "NEW_VULNERABILITY" %}
-Vuln ID:   {{ subject.vulnerability.vulnId }}
-Severity:  {{ subject.vulnerability.severity }}
-Source:    {{ subject.vulnerability.source }}
-Component: {{ subject.component.toString }}
+Vulnerability ID:  {{ subject.vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
+Severity:          {{ subject.vulnerability.severity }}
+Source:            {{ subject.vulnerability.source }}
+Component:         {{ subject.component.toString }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
-Project:   {{ subject.dependency.project.toString }}
-Component: {{ subject.dependency.component.toString }}
+Project:           {{ subject.dependency.project.toString }}
+Project URL:       {{ baseUrl }}/project/?uuid={{ subject.dependency.project.uuid }}
+Component:         {{ subject.dependency.component.toString }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.dependency.component.uuid }}
 
 Vulnerabilities
 {% for vulnerability in subject.vulnerabilities %}
-Vuln ID:   {{ vulnerability.vulnId }}
-Severity:  {{ vulnerability.severity }}
-Source:    {{ vulnerability.source }}
+Vulnerability ID:  {{ vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ vulnerability.source }}&vulnId={{ vulnerability.vulnId }}
+Severity:          {{ vulnerability.severity }}
+Source:            {{ vulnerability.source }}
 Description:
 {{ vulnerability.description }}
 
 {% endfor %}
 {% elseif notification.group == "GLOBAL_AUDIT_CHANGE" %}
 Analysis Type:  Global Component Analysis
-Analysis State: {{ subject.analysis.analysisState }}
-Suppressed:     {{ subject.analysis.suppressed }}
-Vuln ID:        {{ subject.vulnerability.vulnId }}
-Severity:       {{ subject.vulnerability.severity }}
-Source:         {{ subject.vulnerability.source }}
-Component:      {{ subject.component.toString }}
+Analysis State:    {{ subject.analysis.analysisState }}
+Suppressed:        {{ subject.analysis.suppressed }}
+Vulnerability ID:  {{ subject.vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
+Severity:          {{ subject.vulnerability.severity }}
+Source:            {{ subject.vulnerability.source }}
+Component:         {{ subject.component.toString }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
 Analysis Type:  Project Analysis
-Analysis State: {{ subject.analysis.analysisState }}
-Suppressed:     {{ subject.analysis.suppressed }}
-Vuln ID:        {{ subject.vulnerability.vulnId }}
-Severity:       {{ subject.vulnerability.severity }}
-Source:         {{ subject.vulnerability.source }}
-Component:      {{ subject.component.toString }}
-Project:        {{ subject.project.toString }}
+Analysis State:    {{ subject.analysis.analysisState }}
+Suppressed:        {{ subject.analysis.suppressed }}
+Vulnerability ID:  {{ subject.vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
+Severity:          {{ subject.vulnerability.severity }}
+Source:            {{ subject.vulnerability.source }}
+Component:         {{ subject.component.toString }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
+Project:           {{ subject.project.toString }}
+Project URL:       {{ baseUrl }}/project/?uuid={{ subject.project.uuid }}
 {% else %}
 Level:     {{ notification.level }}
 Scope:     {{ notification.scope }}

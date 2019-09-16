@@ -43,7 +43,7 @@ EXPOSE 8080
 ENV LOGGING_LEVEL=INFO
 
 # Environment variables that can be passed at runtime
-ENV JAVA_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4G"
+ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=80.0"
  
 #VOLUME "$DATA_DIR"
 

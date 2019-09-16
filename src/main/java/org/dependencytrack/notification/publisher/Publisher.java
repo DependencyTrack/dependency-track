@@ -59,7 +59,11 @@ public interface Publisher {
             context.put("timestampEpochSecond", epochSecond);
             context.put("timestamp", notification.getTimestamp().toString());
             context.put("notification", notification);
-            context.put("baseUrl", UrlUtil.normalize(baseUrlProperty.getPropertyValue()));
+            if (baseUrlProperty != null) {
+                context.put("baseUrl", UrlUtil.normalize(baseUrlProperty.getPropertyValue()));
+            } else {
+                context.put("baseUrl", "");
+            }
 
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
                 if (notification.getSubject() instanceof NewVulnerabilityIdentified) {

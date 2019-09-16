@@ -21,6 +21,7 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.junit.AfterClass;
@@ -35,7 +36,7 @@ import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class SlackPublisherTest {
+public class SlackPublisherTest extends PersistenceCapableTest {
 
     private static ClientAndServer mockServer;
 
@@ -45,7 +46,7 @@ public class SlackPublisherTest {
     }
 
     @AfterClass
-    public static void after() {
+    public static void afterClass() {
         mockServer.stop();
     }
 

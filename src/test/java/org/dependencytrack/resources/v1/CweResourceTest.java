@@ -61,7 +61,7 @@ public class CweResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals(100, json.size());
         Assert.assertEquals(1, json.getJsonObject(0).getInt("cweId"));
-        Assert.assertEquals("Location", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("DEPRECATED: Location", json.getJsonObject(0).getString("name"));
     }
 
     @Test

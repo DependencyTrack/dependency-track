@@ -39,7 +39,7 @@ import java.util.TreeMap;
 
 /**
  * This class parses CWEs and adds them to the database (if necessary).
- * cwec_v2.11.xml obtained from https://cwe.mitre.org/data/xml/cwec_v2.11.xml
+ * cwec_v3.3.xml obtained from https://cwe.mitre.org/data/xml/cwec_v3.3.xml
  *
  * @author Steve Springett
  * @since 3.0.0
@@ -51,7 +51,7 @@ public class CweImporter {
 
     public void processCweDefinitions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
         try (QueryManager qm = new QueryManager();
-                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v2.11.xml")) {
+                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v3.3.xml")) {
 
             LOGGER.info("Synchronizing CWEs with datastore");
 
@@ -70,7 +70,7 @@ public class CweImporter {
 
             final XPathExpression expr1 = xpath.compile("/Weakness_Catalog/Categories/Category");
             final XPathExpression expr2 = xpath.compile("/Weakness_Catalog/Weaknesses/Weakness");
-            final XPathExpression expr3 = xpath.compile("/Weakness_Catalog/Compound_Elements/Compound_Element");
+            final XPathExpression expr3 = xpath.compile("/Weakness_Catalog/Views/View");
 
             parseNodes((NodeList) expr1.evaluate(doc, XPathConstants.NODESET));
             parseNodes((NodeList) expr2.evaluate(doc, XPathConstants.NODESET));

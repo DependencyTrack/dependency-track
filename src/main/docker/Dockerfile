@@ -32,7 +32,6 @@ WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track
 CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war
-#CMD cat /etc/*-release
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080

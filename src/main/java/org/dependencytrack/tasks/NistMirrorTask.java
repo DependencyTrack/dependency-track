@@ -72,6 +72,8 @@ public class NistMirrorTask implements LoggableSubscriber {
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private File outputDir;
+    private long metricParseTime;
+    private long metricDownloadTime;
 
     private static final Logger LOGGER = Logger.getLogger(NistMirrorTask.class);
 
@@ -82,11 +84,16 @@ public class NistMirrorTask implements LoggableSubscriber {
      */
     public void inform(final Event e) {
         if (e instanceof NistMirrorEvent) {
+            final long start = System.currentTimeMillis();
             LOGGER.info("Starting NIST mirroring task");
             final File mirrorPath = new File(NVD_MIRROR_DIR);
             setOutputDir(mirrorPath.getAbsolutePath());
             getAllFiles();
+            final long end = System.currentTimeMillis();
             LOGGER.info("NIST mirroring complete");
+            LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
+            LOGGER.info("Time spend (parse): " + metricParseTime + "ms");
+            LOGGER.info("Time spent (total): " + (end - start) + "ms");
         }
     }
 
@@ -167,11 +174,13 @@ public class NistMirrorTask implements LoggableSubscriber {
                     return;
                 }
             }
-
+            final long start = System.currentTimeMillis();
             LOGGER.info("Initiating download of " + url.toExternalForm());
             final HttpUriRequest request = new HttpGet(urlString);
             try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                 final StatusLine status = response.getStatusLine();
+                final long end = System.currentTimeMillis();
+                metricDownloadTime += end - start;
                 if (status.getStatusCode() == 200) {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
@@ -236,6 +245,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             while ((len = gzis.read(buffer)) > 0) {
                 out.write(buffer, 0, len);
             }
+            final long start = System.currentTimeMillis();
             if (ResourceType.CVE == resourceType) {
                 final NvdParser parser = new NvdParser();
                 parser.parse(uncompressedFile);
@@ -243,6 +253,8 @@ public class NistMirrorTask implements LoggableSubscriber {
                 final CpeDictionaryParser parser = new CpeDictionaryParser();
                 parser.parse(uncompressedFile);
             }
+            final long end = System.currentTimeMillis();
+            metricParseTime += end - start;
         } catch (IOException ex) {
             mirroredWithoutErrors = false;
             LOGGER.error("An error occurred uncompressing NVD payload", ex);

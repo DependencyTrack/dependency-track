@@ -1,47 +1,47 @@
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM adoptopenjdk/openjdk8:alpine-jre
 LABEL maintainer="steve.springett@owasp.org"
 LABEL vendor="OWASP"
 
 # Arguments that can be passed at build time
-ARG APP_DIR=/opt/owasp/dependency-track
-ARG DATA_DIR=/data
-ARG USER=dtrack
-ARG EXT_LIB=/extlib
+# Directory names must end with / to avoid errors when ADDing and COPYing
+ARG APP_DIR=/opt/owasp/dependency-track/
+ARG DATA_DIR=/data/
+ARG EXTLIB_DIR=/extlib/
+ARG USERNAME=dtrack
 
-# The default logging level
+# Create the directory where Dependency-Track will store its data (${DATA_DIR}) and the external library directory (${EXTLIB_DIR})
+# Create a user and assign home directory to a ${DATA_DIR}
+# Download optional JDBC drivers to the external library directory
+# Ensure UID 1000 & GID 1000 own all the needed directories
+RUN mkdir -p -m 770 ${DATA_DIR} $EXTLIB_DIR} \
+    && adduser -D -h ${DATA_DIR} -u 1000 ${USERNAME} \
+    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar \
+    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar \
+    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar \
+    && chown -R ${USERNAME}:${USERNAME} ${DATA_DIR} ${EXTLIB_DIR}
+
+# Copy the compiled WAR to the application directory created above
+# Automatically creates the $APP_DIR directory
+COPY --chown=1000 ./target/dependency-track-embedded.war ${APP_DIR}
+
+# Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
+USER 1000
+
+# Specify the container working directory
+WORKDIR ${APP_DIR}
+
+# Launch Dependency-Track
+CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war
+#CMD cat /etc/*-release
+
+# Specify which port Dependency-Track listens on
+EXPOSE 8080
+
+# Dependency-Track's default logging level
 ENV LOGGING_LEVEL=INFO
 
 # Environment variables that can be passed at runtime
-ENV JAVA_OPTIONS="-Xmx4G"
+ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=90.0"
 
-# Create the application directory where Dependency-Track will be installed
-RUN mkdir -p ${APP_DIR}
-
-# Create the external library directory
-RUN mkdir -p ${EXT_LIB}
-
-# Create a user and assign home directory to a non-standard path
-RUN adduser -h ${DATA_DIR} -s bash -D ${USER}
-
-# Copy the compiled WAR to the application directory created above
-COPY ./target/dependency-track-embedded.war ${APP_DIR}
-
-VOLUME ${DATA_DIR}
-
-# Download optional JDBC drivers to the external library directory
-ADD https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar ${EXT_LIB}
-ADD https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar ${EXT_LIB}
-ADD https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar ${EXT_LIB}
-RUN chown -f -R ${USER}:${USER} ${EXT_LIB}
-
-# Specify the user to run commands as
-USER ${USER}
-
-EXPOSE 8080
-
-HEALTHCHECK --interval=5m --timeout=3s \
-  CMD curl -f http://127.0.0.1:8080/api/version || exit 1
-
-# Launch Dependency-Track
-WORKDIR ${APP_DIR}
-CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war
+# Add a healthcheck using the Dependency-Track version API
+HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://127.0.0.1:8080/api/version || exit 1

@@ -22,20 +22,20 @@ import org.dependencytrack.model.Component;
 import java.util.List;
 
 /**
- * Defines an event used to start an internal CPE analysis.
+ * Defines an event used to start an internal analysis which leverages the VulnerableSoftware model.
  *
  * @author Steve Springett
  * @since 3.6.0
  */
-public class CpeAnalysisEvent extends VulnerabilityAnalysisEvent {
+public class InternalAnalysisEvent extends VulnerabilityAnalysisEvent {
 
-    public CpeAnalysisEvent() { }
+    public InternalAnalysisEvent() { }
 
-    public CpeAnalysisEvent(final Component component) {
+    public InternalAnalysisEvent(final Component component) {
         super(component);
     }
 
-    public CpeAnalysisEvent(final List<Component> components) {
+    public InternalAnalysisEvent(final List<Component> components) {
         super(components);
     }
 }

@@ -22,7 +22,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.event.CpeAnalysisEvent;
+import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.VulnerableSoftware;
@@ -32,36 +32,36 @@ import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import java.util.List;
 
 /**
- * Subscriber task that performs an analysis of component using internal CPE data.
+ * Subscriber task that performs an analysis of component using internal CPE/PURL data.
  *
  * @author Steve Springett
  * @since 3.6.0
  */
-public class CpeAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask implements Subscriber {
+public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask implements Subscriber {
 
-    private static final Logger LOGGER = Logger.getLogger(CpeAnalysisTask.class);
+    private static final Logger LOGGER = Logger.getLogger(InternalAnalysisTask.class);
 
     /**
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        if (e instanceof CpeAnalysisEvent) {
-            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_CPE_ENABLED)) {
+        if (e instanceof InternalAnalysisEvent) {
+            if (!super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_ENABLED)) {
                 return;
             }
-            final CpeAnalysisEvent event = (CpeAnalysisEvent)e;
-            LOGGER.info("Starting CPE analysis task");
+            final InternalAnalysisEvent event = (InternalAnalysisEvent)e;
+            LOGGER.info("Starting internal analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
             } else {
                 super.analyze();
             }
-            LOGGER.info("CPE analysis complete");
+            LOGGER.info("Internal analysis complete");
         }
     }
 
     /**
-     * Determines if the {@link CpeAnalysisTask} is suitable for analysis based on the PackageURL.
+     * Determines if the {@link InternalAnalysisTask} is suitable for analysis based on the PackageURL.
      *
      * @param purl the PackageURL to analyze
      * @return true if CpeAnalysisTask should analyze, false if not
@@ -75,8 +75,8 @@ public class CpeAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask impl
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_CPE_FUZZY_ENABLED);
-        final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_CPE_FUZZY_EXCLUDE_PURL);
+        final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_ENABLED);
+        final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
         try (QueryManager qm = new QueryManager()) {
             for (Component component : components) {
                 versionRangeAnalysis(qm, component);

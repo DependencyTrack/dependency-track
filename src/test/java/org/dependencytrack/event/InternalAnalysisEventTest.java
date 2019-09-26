@@ -24,11 +24,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CpeAnalysisEventTest {
+public class InternalAnalysisEventTest {
 
     @Test
     public void testDefaultConstructor() {
-        CpeAnalysisEvent event = new CpeAnalysisEvent();
+        InternalAnalysisEvent event = new InternalAnalysisEvent();
         Assert.assertNull(event.getProject());
         Assert.assertEquals(0, event.getComponents().size());
     }
@@ -36,7 +36,7 @@ public class CpeAnalysisEventTest {
     @Test
     public void testComponentConstructor() {
         Component component = new Component();
-        CpeAnalysisEvent event = new CpeAnalysisEvent(component);
+        InternalAnalysisEvent event = new InternalAnalysisEvent(component);
         Assert.assertEquals(1, event.getComponents().size());
     }
 
@@ -45,7 +45,7 @@ public class CpeAnalysisEventTest {
         Component component = new Component();
         List<Component> components = new ArrayList<>();
         components.add(component);
-        CpeAnalysisEvent event = new CpeAnalysisEvent(components);
+        InternalAnalysisEvent event = new InternalAnalysisEvent(components);
         Assert.assertEquals(1, event.getComponents().size());
     }
 }

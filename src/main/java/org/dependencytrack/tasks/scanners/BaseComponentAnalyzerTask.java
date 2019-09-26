@@ -26,8 +26,11 @@ import alpine.resources.OrderDirection;
 import alpine.resources.Pagination;
 import alpine.util.BooleanUtil;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
+import java.util.Date;
 
 /**
  * A base class that has logic common or useful to all classes that extend it.
@@ -36,6 +39,7 @@ import org.dependencytrack.persistence.QueryManager;
  * @since 3.0.0
  */
 public abstract class BaseComponentAnalyzerTask implements ScanTask {
+    private final Logger LOGGER = Logger.getLogger(this.getClass()); // We dont want this class reporting the logger
 
     private final int paginationLimit;
     private final int throttleDelay;
@@ -106,5 +110,29 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                 now = System.currentTimeMillis();
             }
         }
+    }
+
+    protected boolean isCacheCurrent(Vulnerability.Source source, String targetHost, String target) {
+        try (QueryManager qm = new QueryManager()) {
+            boolean isCacheCurrent = false;
+            ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
+            if (cac != null) {
+                final Date now = new Date();
+                if (now.getTime() > cac.getLastOccurrence().getTime()) {
+                    final long delta = now.getTime() - cac.getLastOccurrence().getTime();
+                    isCacheCurrent = delta <= 3600000; // TODO: Default to 1 hour. Make this configurable in a future release
+                }
+            }
+            if (isCacheCurrent) {
+                LOGGER.debug("Cache is current. Skipping analysis. (source: " + source + " / targetHost: " + targetHost + " / target: " + target);
+            } else {
+                LOGGER.debug("Cache is not current. Analysis should be performed (source: " + source + " / targetHost: " + targetHost + " / target: " + target);
+            }
+            return isCacheCurrent;
+        }
+    }
+
+    protected void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String targetHost, String target) {
+        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date());
     }
 }

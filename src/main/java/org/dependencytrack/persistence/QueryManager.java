@@ -36,6 +36,7 @@ import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentMetrics;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cpe;
@@ -2457,6 +2458,26 @@ public class QueryManager extends AlpineQueryManager {
             return BooleanUtil.valueOf(property.getPropertyValue());
         }
         return false;
+    }
+
+    public ComponentAnalysisCache getComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target) {
+        final Query query = pm.newQuery(ComponentAnalysisCache.class,
+                "cacheType == :cacheType && targetHost == :targetHost && targetType == :targetType && target == :target");
+        query.setOrdering("lastOccurrence desc");
+        return singleResult(query.executeWithArray(cacheType, targetHost, targetType, target));
+    }
+
+    public void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence) {
+        ComponentAnalysisCache cac = getComponentAnalysisCache(cacheType, targetHost, targetType, target);
+        if (cac == null) {
+            cac = new ComponentAnalysisCache();
+            cac.setCacheType(cacheType);
+            cac.setTargetHost(targetHost);
+            cac.setTargetType(targetType);
+            cac.setTarget(target);
+        }
+        cac.setLastOccurrence(lastOccurrence);
+        persist(cac);
     }
 
     /**

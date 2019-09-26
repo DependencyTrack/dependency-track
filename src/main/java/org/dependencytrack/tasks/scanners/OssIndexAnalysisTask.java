@@ -62,7 +62,7 @@ import java.util.List;
  */
 public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
-    private static final String API_BASE_URL = "https://ossindex.net/api/v3/component-report";
+    private static final String API_BASE_URL = "https://ossindex.sonatype.org/api/v3/component-report";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
     private String apiUsername;
     private String apiToken;
@@ -122,7 +122,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(final PackageURL purl) {
-        return purl != null;
+        return purl != null && !isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, purl.toString());
     }
 
     /**
@@ -242,6 +242,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                         }
                         Event.dispatch(new MetricsUpdateEvent(component));
                     }
+                    updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString());
                 }
             }
         }

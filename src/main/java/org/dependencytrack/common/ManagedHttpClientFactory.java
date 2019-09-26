@@ -42,6 +42,7 @@ import org.apache.http.impl.auth.DigestSchemeFactory;
 import org.apache.http.impl.auth.NTLMSchemeFactory;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -142,6 +143,7 @@ public final class ManagedHttpClientFactory {
                 .build();
         clientBuilder.setDefaultAuthSchemeRegistry(authProviders);
         clientBuilder.disableCookieManagement();
+        clientBuilder.setRedirectStrategy(LaxRedirectStrategy.INSTANCE);
         return new ManagedHttpClient(clientBuilder.build(), connectionManager);
     }
 

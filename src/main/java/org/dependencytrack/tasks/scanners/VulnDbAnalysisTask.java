@@ -44,6 +44,7 @@ import java.util.List;
 public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(VulnDbAnalysisTask.class);
+    private static final String TARGET_HOST = "https://vulndb.cyberriskanalytics.com/";
     private final int PAGE_SIZE = 100;
     private String apiConsumerKey;
     private String apiConsumerSecret;
@@ -110,7 +111,8 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     public void analyze(final List<Component> components) {
         final VulnDbApi api = new VulnDbApi(this.apiConsumerKey, this.apiConsumerSecret, UnirestFactory.getUnirestInstance());
         for (final Component component: components) {
-            if (shouldAnalyze(component.getPurl()) && component.getCpe() != null) {
+            if (shouldAnalyze(component.getPurl()) && component.getCpe() != null
+                    && !isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())) {
                 int page = 1;
                 boolean more = true;
                 while (more) {
@@ -139,6 +141,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 }
                 qm.addVulnerability(vulnerability, component);
             }
+            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe());
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }

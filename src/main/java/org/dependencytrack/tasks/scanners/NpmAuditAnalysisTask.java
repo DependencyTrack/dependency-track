@@ -84,7 +84,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
         if (purl == null) {
             return false;
         }
-        return "npm".equals(purl.getType());
+        return "npm".equals(purl.getType()) && !isCacheCurrent(Vulnerability.Source.NPM, API_BASE_URL, purl.toString());
     }
 
     /**
@@ -177,6 +177,9 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                     qm.addVulnerability(vulnerabiity, component);
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));
+            }
+            for (final Component component: components) {
+                updateAnalysisCacheStats(qm, Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString());
             }
         }
     }

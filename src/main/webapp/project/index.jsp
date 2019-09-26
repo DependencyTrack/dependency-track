@@ -359,7 +359,7 @@
         <div class="modal-dialog modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <span class="modal-title">Upload BoM</span>
+                    <span class="modal-title">Upload BOM</span>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -367,7 +367,7 @@
 			                <span class="input-group-btn">
         		                <button class="btn btn-default btn-choose" type="button">Choose</button>
     		                </span>
-                            <input type="text" class="form-control" placeholder="Choose a CycloneDX or SPDX BoM..."/>
+                            <input type="text" class="form-control" placeholder="Choose a CycloneDX or SPDX BOM..."/>
                             <span class="input-group-btn">
        			                <button class="btn btn-warning btn-reset" type="button">Reset</button>
     		                </span>

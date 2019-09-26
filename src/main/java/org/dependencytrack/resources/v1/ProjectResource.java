@@ -194,7 +194,7 @@ public class ProjectResource extends AlpineResource {
                         jsonProject.getTags(),
                         parent,
                         StringUtils.trimToNull(jsonProject.getPurl()),
-                        jsonProject.isActive(),
+                        true,
                         true);
                 return Response.status(Response.Status.CREATED).entity(project).build();
             } else {

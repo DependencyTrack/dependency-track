@@ -131,6 +131,7 @@
                     <th data-align="left" data-field="lastBomImportLabel" data-sort-name="lastBomImport" data-sortable="true">Last BOM Import</th>
                     <th data-align="left" data-field="lastBomImportFormatLabel" data-sort-name="lastBomImportFormat" data-sortable="true" class="tight">BOM Format</th>
                     <th data-align="left" data-field="lastInheritedRiskScore" data-sortable="true" class="tight">Risk Score</th>
+                    <th data-align="center" data-field="activeLabel" data-class="tight">Active</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>
                 </tr>
                 </thead>
@@ -162,10 +163,6 @@
                     <div class="form-group">
                         <label for="createProjectTagsInput">Tags</label>
                         <input type="text" name="tags" placeholder="Comma separated" class="form-control" data-role="tagsinput" id="createProjectTagsInput">
-                    </div>
-                    <div class="checkbox checkbox-primary">
-                        <input type="checkbox" name="active" class="styled require-portfolio-management" id="createProjectActiveInput" checked="checked">
-                        <label for="createProjectActiveInput">Active</label>
                     </div>
                 </div>
                 <div class="modal-footer">

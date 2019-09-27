@@ -4,7 +4,7 @@
     private static final String BUILD_ID = Config.getInstance().getApplicationBuildUuid();
     private static final String VERSION_PARAM = "?v=" + BUILD_ID;
 %>
-<script type="text/javascript" src="<c:url value="/assets/jquery/jquery-3.4.0.min.js"/><%=VERSION_PARAM%>"></script>
+<script type="text/javascript" src="<c:url value="/assets/jquery/jquery-3.4.1.min.js"/><%=VERSION_PARAM%>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.storageapi.min.js"/><%=VERSION_PARAM%>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/jquery.easypiechart.min.js"/><%=VERSION_PARAM%>"></script>
 <script type="text/javascript" src="<c:url value="/assets/jquery/typeahead.bundle.min.js"/><%=VERSION_PARAM%>"></script>

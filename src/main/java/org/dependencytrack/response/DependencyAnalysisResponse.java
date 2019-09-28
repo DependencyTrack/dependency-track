@@ -31,6 +31,7 @@ public class DependencyAnalysisResponse {
     private String version;
     private UUID uuid;
     private String componentName;
+    // last comment in audit trial
     private String lastComment;
     private AnalysisState analysisState;
     private boolean suppressed;

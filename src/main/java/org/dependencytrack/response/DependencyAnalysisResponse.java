@@ -27,7 +27,7 @@ import java.util.UUID;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DependencyAnalysisResponse {
-    private String name;
+    private String projectName;
     private String version;
     private UUID uuid;
     private String componentName;
@@ -35,23 +35,15 @@ public class DependencyAnalysisResponse {
     private AnalysisState analysisState;
     private boolean suppressed;
 
-    public DependencyAnalysisResponse(String name, String version, UUID uuid, String componentName, String lastComment,
-            AnalysisState analysisState, boolean suppressed) {
-        this.name = name;
-        this.version = version;
-        this.uuid = uuid;
-        this.componentName = componentName;
-        this.lastComment = lastComment;
-        this.analysisState = analysisState;
-        this.suppressed = suppressed;
+    public DependencyAnalysisResponse() {
     }
 
-    public String getName() {
-        return name;
+    public String getProjectName() {
+        return projectName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     public String getVersion() {
@@ -101,4 +93,6 @@ public class DependencyAnalysisResponse {
     public void setComponentName(String componentName) {
         this.componentName = componentName;
     }
+
+
 }

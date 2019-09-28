@@ -18,7 +18,7 @@
 # Dependency-Track
 Dependency-Track is an intelligent Software [Supply Chain Component Analysis] platform that allows organizations to 
 identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
-and highly beneficial approach by leveraging the capabilities of [Software Bill-of-Materials] (SBoM). This approach 
+and highly beneficial approach by leveraging the capabilities of [Software Bill-of-Materials] (SBOM). This approach 
 provides capabilities that traditional Software Composition Analysis (SCA) solutions cannot achieve.
 
 Dependency-Track monitors component usage across all versions of every application in its portfolio in order to 
@@ -55,7 +55,7 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports importing of [CycloneDX] and [SPDX] software bill-of-materials
-* Supports importing of [Dependency-Check] reports to simplify the transition to SBoMs
+* Supports importing of [Dependency-Check] reports to simplify the transition to SBOMs
 * Easy to read metrics for components, projects, and portfolio
 * Native support for Kenna Security, Fortify SSC, and ThreadFix
 * API-first design facilitates easy integration with other systems

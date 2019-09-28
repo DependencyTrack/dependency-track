@@ -31,6 +31,7 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
 
 ## Features
+* Tracks application, library, framework, operating system, and hardware components
 * Tracks component usage across all version of every application in an organizations portfolio
 * Identifies multiple forms of risk including
   * Components with known vulnerabilities
@@ -54,12 +55,11 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Includes a comprehensive auditing workflow for triaging results
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
-* Supports importing of [CycloneDX] and [SPDX] software bill-of-materials
-* Supports importing of [Dependency-Check] reports to simplify the transition to SBOMs
+* Supports importing [CycloneDX] and [SPDX] Software Bill-of-Materials (SBOM) formats
 * Easy to read metrics for components, projects, and portfolio
 * Native support for Kenna Security, Fortify SSC, and ThreadFix
 * API-first design facilitates easy integration with other systems
-* API documentation available in Swagger 2.0 (OpenAPI 3 support coming soon)
+* API documentation available in OpenAPI format
 * Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 

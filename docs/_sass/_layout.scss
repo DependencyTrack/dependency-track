@@ -172,7 +172,7 @@ $nav-image: $baseurl + "/images/menu.svg";
 .content,
 .page-header {
 	//max-width: $content-max-width;
-	padding: 0 ($space + 5) $space;
+	padding: 0 ($space + 10) $space;
 	margin: $space auto 0 auto;
 }
 
@@ -243,7 +243,7 @@ nav > ul {
 	}
 
 	> a {
-		color: #666;
+		color: #eee;
 		text-decoration: none;
 		font-size: 1.4rem;
 		padding: $space / 2 0 $space / 2 $space * 2;
@@ -253,13 +253,21 @@ nav > ul {
 	&.current > a,
 	> a:active,
 	> a:hover {
-		color: #3D598B;
+		color: #8BE9FD;
+	}
+
+	&.current > a,
+	> a:active {
+		font-weight: bold;
 	}
 
 	&.top-level > a {
 		line-height: 1.5;
 		font-weight: 600;
 		padding-left: $space;
+		color: #ffffff;
+		text-transform: uppercase;
+		font-size: 1.2rem;
 	}
 }
 

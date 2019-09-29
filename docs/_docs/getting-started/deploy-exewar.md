@@ -11,22 +11,24 @@ configured, executable WARs fast-track this process by bundling a Servlet contai
 execute the bundled application.
 
 The Dependency-Track executable WAR is delivered ready-to-run. To use the executable WAR, the only requirement 
-is to have Java 8u162 (or higher) installed and execute:
+is to have Java 8u162 (or higher) installed.
 
 ### Requirements
 
-* Java 8 with u162 or higher
-* 4GB minimum heap space (-Xmx)
-* 2 CPU cores
+| Minimum | Recommended |
+|:---------|:--------|
+| Java 8 u162 (or higher) | Java 8 u162 or higher |
+| 4GB RAM | 16GB RAM |
+| 2 CPU cores | 4 CPU cores |
 
-If these requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 8 
+If minimum requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 8 
 already installed, this method of execution may provide the fastest deployment path.
 
 ### Startup
 
 ```bash
 # Executes Dependency-Track with default options
-java -Xmx4G -jar dependency-track-embedded.war
+java -Xmx8G -jar dependency-track-embedded.war
 ```
 
 #### Command-Line Arguments
@@ -42,13 +44,17 @@ The following command-line arguments can be passed to a compiled executable WAR 
 #### Examples
 
 ```bash
-java -Xmx4G -jar dependency-track-embedded.war -context /dtrack
+java -Xmx12G -jar dependency-track-embedded.war -context /dtrack
 ```
 
 ```bash
-java -Xmx4G -jar dependency-track-embedded.war -port 8081
+java -Xmx12G -jar dependency-track-embedded.war -port 8081
 ```
 
 ```bash
-java -Xmx4G -jar dependency-track-embedded.war -context /dtrack -host 192.168.1.16 -port 9000
+java -Xmx12G -jar dependency-track-embedded.war -context /dtrack -host 192.168.1.16 -port 9000
+```
+
+```bash
+java -XX:MaxRAMPercentage=80.0 -jar dependency-track-embedded.war
 ```

@@ -1,7 +1,7 @@
 ---
 title: National Vulnerability Database
 category: Datasources
-chapter: 3
+chapter: 4
 order: 1
 ---
 
@@ -25,33 +25,21 @@ is built into Dependency-Track and does not require further configuration. The m
 
 Directory listing is prohibited, but the index consists of identical content available from the NVD. This includes:
 
-* nvdcve-modified.xml.gz
-* nvdcve-2.0-modified.xml.gz
-* nvdcve-%d.xml.gz
-* nvdcve-2.0-%d.xml.gz
+##### JSON 1.0 feed
 * nvdcve-1.0-modified.json.gz
 * nvdcve-1.0-%d.json.gz
+* nvdcve-1.0-%d.meta
 
 (Where %d is a four digit year starting with 2002)
 
-### Configuring OWASP Dependency-Check
 
-Dependency-Check can be configured to utilize the NVD mirror provided by Dependency-Track. Organizations that utilize
-one of the Dependency-Check implementations (Command Line, Jenkins, Maven, Ant, or Gradle plugin) are highly encouraged 
-to utilize an internal mirror since it has the following advantages:
+##### JSON 1.1 feed
+* nvdcve-1.1-modified.json.gz
+* nvdcve-1.1-%d.json.gz
+* nvdcve-1.1-%d.meta
 
-* Increases performance by eliminating large downloads over the public Internet
-* Increases build stability by eliminating the reliance on external networks
-* Reduces likelihood of encountering temporary HTTP 429 (too many requests)
-* Demonstrates the organization is good netizens by acknowledging the NVD doesn't have unlimited capacity
+(Where %d is a four digit year starting with 2002)
 
-Example Dependency-Check configuration:
 
-```ini
-cveUrl12Modified=http://hostname/mirror/nvd/nvdcve-modified.xml.gz
-cveUrl20Modified=http://hostname/mirror/nvd/nvdcve-2.0-modified.xml.gz
-cveUrl12Base=http://hostname/mirror/nvd/nvdcve-%d.xml.gz
-cveUrl20Base=http://hostname/mirror/nvd/nvdcve-2.0-%d.xml.gz
-```
-
-Consult the [Dependency-Check documentation](https://jeremylong.github.io/DependencyCheck) for further details.
+##### CPE
+* official-cpe-dictionary_v2.3.xml.gz

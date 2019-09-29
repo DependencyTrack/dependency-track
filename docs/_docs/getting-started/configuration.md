@@ -9,6 +9,11 @@ The central configuration file `application.properties` resides in the classpath
 This configuration file controls many performance tuning parameters but is most useful for defining
 optional external database sources, directory services (LDAP), and proxy settings.
 
+For containerized deployments, the properties defined in the configuration file can also be specified 
+as environment variables. All environment variables are upper case with periods (.) replaced with underscores (_).
+Refer to the [Docker instructions]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) for 
+configuration examples using environment variables.
+
 Dependency-Track administrators are highly encouraged to create a copy of this file in the
 Dependency-Track data directory and customize it prior to deploying to production.
 
@@ -270,16 +275,6 @@ alpine.ldap.team.synchronization=false
 #alpine.cors.expose.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
 #alpine.cors.allow.credentials=true
 #alpine.cors.max.age=3600
-
-####################### Dependency-Track Configuration ######################
-
-# Optional
-# Specifies if VulnDB access is enabled or not. VulnDB is a commercial source
-# of vulnerability data that requires a subscription. Enabling VulnDB provides
-# vulnerability data that may not be published in public repositories and may
-# enhance public vulnerability data with additional content.
-# Refer to https://vulndb.cyberriskanalytics.com/ for information.
-# datasource.vulndb.enabled=false
 ```
 
 #### Proxy Configuration

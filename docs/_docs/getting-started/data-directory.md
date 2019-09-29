@@ -17,11 +17,10 @@ The data directory includes:
 | Content                    | Purpose                                    |
 | -------------------------- | ------------------------------------------ |
 | db.mv.db                   | Embedded H2 database                       |
-| dependency-check           | Dependency-Check data and report directory |
 | dependency-track.log       | Application log                            |
 | dependency-track-audit.log | Application audit log                      |
 | index                      | Internal search engine index               |
 | keys                       | Keys used to generate/verify JWT tokens    |
-| nist                       | Mirror of the NVD                          |
+| nist                       | Mirror of the NVD and CPE                  |
 | server.log                 | Embedded Jetty server log                  |
 | vulndb                     | Mirror of VulnDB                           |

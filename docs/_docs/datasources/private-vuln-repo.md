@@ -1,12 +1,14 @@
 ---
 title: Private Vulnerability Repository
-category: Usage
-chapter: 2
-order: 4
+category: Datasources
+chapter: 4
+order: 7
+redirect_from:
+  - /usage/private-vuln-repo/
 ---
 
 Dependency-Track has the ability to maintain it's own repository of internally managed vulnerabilities. The private
-repository behaves identical to other sources of vulnerability intelligence including the NVD.
+repository behaves identical to other sources of vulnerability intelligence such as the NVD.
 
 ![add vulnerability](/images/screenshots/vulnerability-add.png)
 

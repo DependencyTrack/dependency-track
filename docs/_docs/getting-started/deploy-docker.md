@@ -6,7 +6,7 @@ order: 1
 ---
 
 Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required
-other than an modern version of Docker. 
+other than a modern version of Docker.
 
 > The 'latest' tag in Docker Hub will always refer to the latest stable GA release. Consult the GitHub repo
 > for instructions on how to run untested snapshot releases.

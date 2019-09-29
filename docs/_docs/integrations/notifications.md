@@ -1,7 +1,7 @@
 ---
 title: Notifications
 category: Integrations
-chapter: 5
+chapter: 6
 order: 6
 ---
 
@@ -40,6 +40,8 @@ Each scope contains a set of notification groups that can be used to subscribe t
 | PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | Notifications generated as a result of a vulnerable component becoming a dependency of a project |
 | PORTFOLIO | GLOBAL_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global) |
 | PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project |
+| PORTFOLIO | BOM_CONSUMED | Notifications generated whenever a supported BOM is ingested and identified |
+| PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed |
 
 
 ## Configuring Notifications
@@ -237,6 +239,36 @@ Audit change notifications are fired whenever the analysis state changes or when
           "version": "1.0.0"
         }
       ]
+    }
+  }
+}
+```
+
+#### BOM_CONSUMED and BOM_PROCESSED
+This type of notification will always contain:
+* 1 project
+* 1 bom
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "BOM_CONSUMED",
+    "timestamp": "2019-08-23T21:57:57.418",
+    "title": "Bill-of-Materials Consumed",
+    "content": "A CycloneDX BOM was consumed and will be processed",
+    "subject": {
+      "project": {
+        "uuid": "6fb1820f-5280-4577-ac51-40124aabe307",
+        "name": "Acme Example",
+        "version": "1.0.0"
+      },
+      "bom": {
+        "content": "<base64 encoded bom>",
+        "format": "CycloneDX",
+        "specVersion": "1.1"
+      }
     }
   }
 }

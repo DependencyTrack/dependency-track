@@ -1,29 +1,20 @@
 ---
 title: Best Practices
 category: Best Practices
-chapter: 8
+chapter: 9
 order: 
 ---
 
 ### Importing and Using BOMs
 * For best results, always generate and import [CycloneDX](https://cyclonedx.org) BOMs
-* Do not import Dependency-Check XML reports
 * Do not import SPDX v2.1 (or previous) BOMs
 
 #### Summary
 BOMs are a statement of facts, and the type of facts a BOM has will greatly impact
 how effective the system will be when performing component risk analysis.
 
-Dependency-Check operates on evidence, not facts. When Dependency-Check reports are
-imported, Dependency-Track attempts to make sense of the evidence and derive certain facts
-with reasonable certainly including group/organization, name, and version. Dependency-Check
-reports often do not contain license information, nor does Dependency-Check support the
-PackageURL specification. Suppressions in Dependency-Check XML reports additionally are not
-honored due to a lack of signed audit trail and the fact that suppressions only affect
-findings from a single scanner (Dependency-Check).
-
-SPDX BOM format v2.1 and previous do not support PackageURL. When importing SPDX BOMs, 
-ensure the format is version 2.2 or higher and contains valid PackageURLs for each component.
+SPDX BOM format v2.1 and previous do not support Package URL. When importing SPDX BOMs, 
+ensure the format is version 2.2 or higher and contains valid Package URLs for each component.
 
 ### Generating and Obtaining BOMs
 * When developing software, generate BOMs during Continuous Integration (CI)
@@ -36,18 +27,16 @@ The ability for an organization to generate a complete bill-of-material during c
 integration is one of many maturity indicators. BOMs are increasingly required for various
 compliance, regulatory, legal, or economic reasons.
 
-### Scanners
+### Analyzers
+* Enable Internal Analyzer
+* Enable NPM Audit
 * Enable OSS Index
-* Evaluate if Dependency-Check should be enabled or disabled
-* Ensure all other scanners are enabled
 
 #### Summary
-Sonatype OSS Index and NPM Audit provides accurate vulnerability information with minimal false positives. 
-This allows organizations to have actionable results, faster. If all projects are using CycloneDX BOMs and the
-components in those BOMs have valid PackageURLs, then it may be feasible to disable the embedded
-Dependency-Check scanner. This will result in fewer false positives, less effort required for auditing
-findings, and ultimately more time for development teams to focus on updating vulnerable and outdated 
-components. This is especially important for teams that have time-boxed constraints.
+Sonatype OSS Index and NPM Audit provides accurate vulnerability information for application dependencies.
+All components in the portfolio should have valid Package URLs to take advantage of OSS Index and NPM Audit.
+Non-application dependencies such as operating systems, hardware, firmware, etc, should have valid CPEs to
+take advantage of the internal CPE analyzer.
 
 ### Leverage APIs and Integrations
 * Make findings actionable by leveraging Webhooks (via [notifications]({{ site.baseurl }}{% link _docs/integrations/notifications.md %}))

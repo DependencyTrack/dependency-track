@@ -1,21 +1,20 @@
 ---
 title: Datasource Routing
 category: Datasources
-chapter: 3
-order: 4
+chapter: 4
+order: 5
 ---
 
 Components often belong to one or more ecosystems. These ecosystems typically have one or more sources of 
 truth that provide additional data about the components. For example, Maven Central and the NPM repository provide 
-information about Java and Node components respectively. Likewise, NPM public advisories provides vulnerability 
-intelligence specific to Node modules.
+information about Java and Node components respectively. 
 
 Dependency-Track has adopted an emerging spec called [Package URL](https://github.com/package-url/purl-spec) that
 provides a flexible way to represent metadata about components and their place in various ecosystems.
 
-> It's highly recommended that every component being tracked by the system have a valid Package URL. 
+> It's highly recommended that every software component being tracked by the system have a valid Package URL. 
 
-### Package URL (purl)
+### Package URL (PURL)
 
 Package URL was created to standardize how software package metadata is represented so that packages could universally
 be located regardless of what vendor, project, or ecosystem the packages belong. Package URL conforms to [RFC-3986](https://tools.ietf.org/html/rfc3986).
@@ -53,16 +52,11 @@ pkg:pypi/django-package@1.11.1.dev1
 
 Dependency-Track uses Package URL in several ways:
 
-* Routes the identification of vulnerabilities to one or more internal scanners
-* Reduces false positives and false negatives by using the scanner that is most appropriate to the ecosystem the component belongs
+* Routes the identification of vulnerabilities to one or more analyzers
+* Reduces false positives and false negatives by using the analyzer that is most appropriate to the ecosystem the component belongs
 * Works in conjunction with numerous repositories to identify outdated components across multiple ecosystems
 
-The default scanner, if a Package URL is not specified for a component, is to use Dependency-Check's ability to perform
-fuzzy matching against the NVD. This approach may work for some components, but in the case of Node modules, would lead
-to both false positives and negatives. If a valid Package URL was specified for a Node module for instance, Dependency-Track
-would use it's own internal NPM audit scanner, thus providing more actionable and accurate results.
-
-Dependency-Track (as of v3.1.0) also provides the ability to determine out-of-date components. It uses the Package URL
+Dependency-Track provides the ability to determine out-of-date components. It uses the Package URL
 of the component and maps it to a corresponding list of repositories that have been configured to support the components 
 ecosystem.
 
@@ -70,13 +64,51 @@ Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories
 
 ### Package URL support in Bill-of-Materials
 
-The CycloneDX BOM specification supports Package URL on a per-component basis. Users of the 
-[CycloneDX Maven plugin](https://github.com/CycloneDX/cyclonedx-maven-plugin) or
-[CycloneDX Node module](https://github.com/CycloneDX/cyclonedx-node-module) will automatically have valid Package URLs 
-for every component in the resulting BOM. 
-
-When importing dependency-check-report.xml, Dependency-Track will attempt to automatically generate Package URLs for 
-every component identified. Support is currently limited to Maven and npm.
+The CycloneDX BOM specification supports Package URL on a per-component basis. Users of the official CycloneDX 
+implementations for various build systems will automatically have valid Package URLs for every component in the 
+resulting BOM. 
 
 When importing SPDX BOM documents, Package URL identification cannot be automatically determined, although support 
 for Package URL may be coming to the SPDX specification in a future release.
+
+### Common Platform Enumeration (CPE)
+Like Package URL, the Common Platform Enumeration (CPE) specification is a structured naming scheme for applications, 
+operating systems, and hardware.
+
+The syntax of CPE is:
+```
+cpe:2.3:part:vendor:product:version:update:edition:language:sw_edition:target_sw:target_hw:other
+```
+
+* **Part**: Specifies an application (a), operating system (o), or hardware (h) component. Required
+* **Vendor**: The name of the vendor as defined in the CPE dictionary Required.
+* **Product**: The name of the affected product. Required.
+* **Version**: The affected version. 
+* **Update**: The update of the package.
+* **Edition**: Legacy edition (deprecated)
+* **Language**: Any language defined in RFC-5646
+* **SW Edition**: The software edition
+* **Target SW**: The software environment in which the product operates
+* **Target HW**: The hardware environment in which the product operates
+* **Other**: Vendor or product-specific information
+
+#### Examples:
+
+```
+cpe:2.3:a:joomla:joomla\!:3.9.8:*:*:*:*:*:*:*
+
+cpe:2.3:o:redhat:enterprise_linux_server_eus:7.7:*:*:*:*:*:*:*
+
+cpe:2.3:h:intel:core_i7:870:*:*:*:*:*:*:*
+```
+
+
+### CPE and Dependency-Track
+
+Dependency-Track uses CPE with its internal analyzer. 
+The internal analyzer relies on a dictionary of vulnerable software. This dictionary is automatically populated when 
+NVD mirroring or VulnDB mirroring is performed. The internal analyzer is used by all components with valid CPEs, 
+including application, operating system, and hardware components.
+
+Components with a valid CPE defined, will use the internal analyzer (and optionally the VulnDB analyzer) to identify
+known vulnerabilities.

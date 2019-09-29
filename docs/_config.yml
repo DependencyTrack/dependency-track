@@ -30,6 +30,9 @@ plugins:
   - jekyll-redirect-from
   - jekyll-mermaid
 
+mermaid:
+  src: 'scripts/mermaid.min.js'
+
 exclude:
   - Gemfile
   - Gemfile.lock

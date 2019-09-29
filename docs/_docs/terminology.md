@@ -1,7 +1,7 @@
 ---
 title: Terminology
 category: Terminology
-chapter: 9
+chapter: 10
 order:
 ---
 
@@ -19,11 +19,16 @@ for each finding.
 In supply chains, a bill of material (BOM) defines and describes the contents of what is used in the manufacturing and 
 packaging of the deliverable. In software supply chains, this refers to the contents of all components bundled with the
 software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports two BOM 
-formats: CycloneDX and SPDX.
+formats: CycloneDX and SPDX. Bill-of-Materials specific to software components are commonly referred to as SBOMs.
 
 ### Component
-Dependency-Track defines a component as a standalone entity. A component may be a third-party library, an operating
-system, or a microprocessor.
+Dependency-Track defines a component as a standalone entity. A component may be an open source component, third-party 
+library, first-party library, an operating system, or a hardware device.
+
+### CPE
+Common Platform Enumeration (CPE) is a structured naming scheme for information technology systems, software, and 
+packages. Based upon the generic syntax for Uniform Resource Identifiers (URI), a CPE typically includes the vendor, 
+product name, and version.
 
 ### CVE
 Common Vulnerabilities and Exposures (CVE&reg;) is a list of common identifiers for publicly known cybersecurity 
@@ -36,8 +41,8 @@ Common Weakness Enumeration (CWE) is a taxonomy of software security errors that
 common set of weaknesses.
 
 ### CycloneDX
-A lightweight data exchange specification intended to easily identify software components as bill of materials.
-See: <http://cyclonedx.org/>
+A bill-of-materials (BOM) specification that is lightweight and security focused.
+See: <https://cyclonedx.org/>
 
 ### Dependency
 Dependency-Track defines a dependency as a project that includes a component. Once a component is assigned to a 
@@ -53,9 +58,9 @@ license IDs so that license names and terms can be automatically resolved when B
 ### Managed User
 An internally managed user that has the ability to login to Dependency-Track.
 
-### Package URL (purl)
-A purl or package URL is a lightweight specification that standardizes the ability to reliably identify and locate 
-software packages. A purl is a URL string used to identify and locate a software package in a mostly universal and 
+### Package URL (PURL)
+PURL or Package URL is a lightweight specification that standardizes the ability to reliably identify and locate 
+software packages. PURL is a URI string used to identify and locate a software package in a mostly universal and 
 uniform way across programing languages, package managers, packaging conventions, tools, APIs and databases. 
 See: <https://github.com/package-url/purl-spec>
 

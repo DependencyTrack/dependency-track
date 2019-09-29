@@ -1,12 +1,12 @@
 ---
 title: Jenkins
 category: Integrations
-chapter: 5
+chapter: 6
 order: 4
 ---
 
-The [Dependency-Track Jenkins plugin] aids in publishing [CycloneDX] and [SPDX] Bill-of-Material (BOM) documents as 
-well as Dependency-Check XML reports to the Dependency-Track platform.
+The [Dependency-Track Jenkins plugin] aids in publishing [CycloneDX] and [SPDX] Bill-of-Materials (BOM) 
+to Dependency-Track.
 
 Publishing BOMs can be performed asynchronously or synchronously.
 
@@ -29,7 +29,6 @@ automatically populated with a list of projects.
 
 * **Artifact Type**: Options are:
   * Software Bill of Material (CycloneDX or SPDX) 
-  * Dependency-Check Scan Result (XML)
   
 * **Synchronous mode**: Uploads a BOM to Dependency-Track and waits for Dependency-Track to process and return results.
 The results returned are identical to the auditable findings but exclude findings that have previously been suppressed. 
@@ -59,7 +58,6 @@ The following permission should be assigned to the API key configured above.
 | Permission | Description |
 | ------|-------------|
 | BOM_UPLOAD | Allows the uploading of CycloneDX and SPDX BOMs |
-| SCAN_UPLOAD | Allows the uploading of Dependency-Check XML reports |
 | VIEW_PORTFOLIO | Allows the plugin to list the projects in the dropdown |
 | VULNERABILITY_ANALYSIS | Allows access to the findings API for trending and results (synchronous mode only) |
 | PROJECT_CREATION_UPLOAD | Allows the dynamic creation of projects (if enabled by the plugin) |

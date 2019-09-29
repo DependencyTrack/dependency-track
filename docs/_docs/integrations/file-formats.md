@@ -1,7 +1,7 @@
 ---
 title: File Formats
 category: Integrations
-chapter: 5
+chapter: 6
 order: 2
 ---
 

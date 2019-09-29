@@ -43,4 +43,4 @@ ENV LOGGING_LEVEL=INFO
 ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=90.0"
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://127.0.0.1:8080/api/version || exit 1
+HEALTHCHECK --interval=5m --timeout=3s CMD wget -q -O /dev/null http://127.0.0.1:8080/api/version || exit 1

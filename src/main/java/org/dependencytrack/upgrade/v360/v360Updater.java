@@ -54,8 +54,8 @@ public class v360Updater extends AbstractUpgradeItem {
             LOGGER.error("An error occurred deleting the Dependency-Check work directory", e);
         }
 
-        LOGGER.info("Dropping unused evidence database field from the Component object");
-        DbUtil.dropColumn(connection, "COMPONENT", "EVIDENCE");
+        LOGGER.info("Dropping unused evidence table");
+        DbUtil.dropTable(connection, "EVIDENCE");
 
         LOGGER.info("Dropping unused CPE database fields from the Vulnerability object");
         DbUtil.dropColumn(connection, "VULNERABILITY", "MATCHEDCPE");

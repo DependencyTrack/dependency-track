@@ -13,7 +13,7 @@ ARG USERNAME=dtrack
 # Create a user and assign home directory to a ${DATA_DIR}
 # Download optional JDBC drivers to the external library directory
 # Ensure UID 1000 & GID 1000 own all the needed directories
-RUN mkdir -p -m 770 ${DATA_DIR} $EXTLIB_DIR} \
+RUN mkdir -p -m 770 ${DATA_DIR} ${EXTLIB_DIR} \
     && adduser -D -h ${DATA_DIR} -u 1000 ${USERNAME} \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar \

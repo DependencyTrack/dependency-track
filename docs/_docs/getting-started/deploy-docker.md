@@ -29,7 +29,7 @@ docker pull owasp/dependency-track
 docker volume create --name dependency-track
 
 # Run the container with 8GB RAM on port 8080
-docker run -d -m 8192 -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
+docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
 ```
 
 ### Docker Compose (Automated / Orchestration)

@@ -67,6 +67,63 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getProjectsByNameRequestTest() {
+        for (int i=0; i<1000; i++) {
+            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
+        }
+        Response response = target(V1_PROJECT)
+                .queryParam("name", "Acme Example")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(1000), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(100, json.size());
+        Assert.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("999", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test
+    public void getProjectsByInvalidNameRequestTest() {
+        for (int i=0; i<1000; i++) {
+            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
+        }
+        Response response = target(V1_PROJECT)
+                .queryParam("name", "blah")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(0, json.size());
+    }
+
+    @Test
+    public void getProjectsByNameActiveOnlyRequestTest() {
+        for (int i=0; i<500; i++) {
+            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, true, false);
+        }
+        for (int i=500; i<1000; i++) {
+            qm.createProject("Acme Example", null, String.valueOf(i), null, null, null, false, false);
+        }
+        Response response = target(V1_PROJECT)
+                .queryParam("name", "Acme Example")
+                .queryParam("excludeInactive", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(500), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(100, json.size());
+    }
+
+    @Test
     public void getProjectsAscOrderedRequestTest() {
         qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         qm.createProject("DEF", null, "1.0", null, null, null, true, false);

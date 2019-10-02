@@ -198,7 +198,7 @@ public class QueryManager extends AlpineQueryManager {
         if (excludeInactive) {
             query.setFilter("name == :name && active == true");
         } else {
-            query.setFilter("name == :name)");
+            query.setFilter("name == :name");
         }
         return execute(query, name);
     }

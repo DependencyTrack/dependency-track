@@ -33,6 +33,7 @@ public class v360Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v360Updater.class);
     private static final String STMT_1 = "UPDATE \"PROJECT\" SET \"ACTIVE\" = TRUE WHERE \"ACTIVE\" IS NULL";
+    private static final String STMT_1_ALT = "UPDATE \"PROJECT\" SET \"ACTIVE\" = 1 WHERE \"ACTIVE\" IS NULL";
     private static final String STMT_2 = "DELETE FROM \"CONFIGPROPERTY\" WHERE \"GROUPNAME\" = 'scanner' AND \"PROPERTYNAME\" = 'dependencycheck.enabled'";
 
     public String getSchemaVersion() {
@@ -41,7 +42,12 @@ public class v360Updater extends AbstractUpgradeItem {
 
     public void executeUpgrade(AlpineQueryManager aqm, Connection connection) throws SQLException {
         LOGGER.info("Updating project active status. Setting all projects to active");
-        DbUtil.executeUpdate(connection, STMT_1);
+        try {
+            DbUtil.executeUpdate(connection, STMT_1);
+        } catch (Exception e) {
+            LOGGER.info("Active field is likely not boolean. Attempting project active status update assuming bit field");
+            DbUtil.executeUpdate(connection, STMT_1_ALT);
+        }
 
         LOGGER.info("Removing legacy Dependency-Check configuration settings");
         DbUtil.executeUpdate(connection, STMT_2);

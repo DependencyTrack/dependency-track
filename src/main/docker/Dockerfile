@@ -31,7 +31,7 @@ USER 1000
 WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track
-CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war
+CMD java $JAVA_OPTIONS -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war -context ${CONTEXT}
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080
@@ -42,5 +42,9 @@ ENV LOGGING_LEVEL=INFO
 # Environment variables that can be passed at runtime
 ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=90.0"
 
+# The web context defaults to the root. To override, supply an alternative context which starts with a / but does not end with one
+# Example: /dtrack
+ENV CONTEXT=""
+
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=5m --timeout=3s CMD wget -q -O /dev/null http://127.0.0.1:8080/api/version || exit 1
+HEALTHCHECK --interval=5m --timeout=3s CMD wget -q -O /dev/null http://127.0.0.1:8080${CONTEXT}/api/version || exit 1

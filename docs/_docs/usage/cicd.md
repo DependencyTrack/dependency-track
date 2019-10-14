@@ -33,7 +33,7 @@ curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
   }'
 ```
 
-It's also possible to publish BOMs via HTTP POST which does not require Base 64 encoding the payload.
+It's also possible to publish BOMs via HTTP POST which does not require Base64 encoding the payload.
  
 ```bash
 curl -X "POST" "http://dtrack.example.com/api/v1/bom" \

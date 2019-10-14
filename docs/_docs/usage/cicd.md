@@ -33,6 +33,16 @@ curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
   }'
 ```
 
+It's also possible to publish BOMs via HTTP POST which does not require Base 64 encoding the payload.
+ 
+```bash
+curl -X "POST" "http://dtrack.example.com/api/v1/bom" \
+     -H 'Content-Type: multipart/form-data; charset=utf-8; boundary=__X_CURL_BOUNDARY__' \
+     -H 'X-Api-Key: LPojpCDSsEd4V9Zi6qCWr4KsiF3Konze' \
+     -F "project=f90934f5-cb88-47ce-81cb-db06fc67d4b4" \
+     -F "bom=<?xml version=\"1.0\" encoding=\"UTF-8\"?>..."
+```
+
 #### Large Payloads
 In cases where the scan or BOM being uploaded is large, using cURLs capability of specifying a file
 containing a payload may be preferred.

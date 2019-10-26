@@ -45,9 +45,9 @@ script:
   - mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
   - docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
   # TODO: - ~/dockle --exit-code 1 $REPO:$TAG
-  - ~/dockle $REPO:$TAG
-  - ~/trivy --exit-code 0 --quiet --auto-refresh $REPO:$TAG
-  - ~/trivy --exit-code 1 --severity CRITICAL --quiet --auto-refresh $REPO:$TAG
+  #- ~/dockle $REPO:$TAG
+  #- ~/trivy --exit-code 0 --quiet --auto-refresh $REPO:$TAG
+  #- ~/trivy --exit-code 1 --severity CRITICAL --quiet --auto-refresh $REPO:$TAG
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" AND "$TRAVIS_PULL_REQUEST" == "false" ]; then

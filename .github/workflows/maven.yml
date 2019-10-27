@@ -43,7 +43,7 @@ jobs:
       run: |
         docker build -f src/main/docker/Dockerfile -t $DOCKER_REPO:$DOCKER_TAG .
     - name: Publishing container to Docker Hub
-      with:
+      env:
         HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
         HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |

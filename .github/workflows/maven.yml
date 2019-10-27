@@ -9,7 +9,9 @@ jobs:
 
     strategy:
       matrix:
-        java: [ '1.8.0', '11.0.x' ]
+      # Need to figure out a way to prevent duplicate pushes to Docker Hub. Should only be done with one.
+      #java: [ '1.8.0', '11.0.x' ]
+      java: [ '1.8.0' ]
     env:
       DOCKER_REPO: owasp/dependency-track
       DOCKER_TAG: snapshot
@@ -41,9 +43,12 @@ jobs:
       run: |
         docker build -f src/main/docker/Dockerfile -t $DOCKER_REPO:$DOCKER_TAG .
     - name: Publishing container to Docker Hub
+      with:
+        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
+        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |
-        # docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
-        # docker push $DOCKER_REPO:$DOCKER_TAG;
+        docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
+        docker push $DOCKER_REPO:$DOCKER_TAG;
     - name: Analyzing Docker container
       run: |
         ~/dockle $DOCKER_REPO:$DOCKER_TAG

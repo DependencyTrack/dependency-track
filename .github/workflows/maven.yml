@@ -33,10 +33,10 @@ jobs:
       run: |
         mvn clean package -Dmaven.test.skip=true
         mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
-    - name: Publish test coverage
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      #run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
+    #- name: Publish test coverage
+    #  env:
+    #    CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+    #  run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
     - name: Building Docker container
       run: |
         docker build -f src/main/docker/Dockerfile -t $DOCKER_REPO:$DOCKER_TAG .

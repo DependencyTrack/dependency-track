@@ -9,9 +9,9 @@ jobs:
 
     strategy:
       matrix:
-      # Need to figure out a way to prevent duplicate pushes to Docker Hub. Should only be done with one.
-      #java: [ '1.8.0', '11.0.x' ]
-      java: [ '1.8.0' ]
+        # Need to figure out a way to prevent duplicate pushes to Docker Hub. Should only be done with one.
+        #java: [ '1.8.0', '11.0.x' ]
+        java: [ '1.8.0' ]
     env:
       DOCKER_REPO: owasp/dependency-track
       DOCKER_TAG: snapshot

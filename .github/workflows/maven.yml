@@ -1,4 +1,4 @@
-name: Java CI
+name: CI Build
 
 on: [push]
 
@@ -17,5 +17,33 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}
+    - name: Install tools
+      run: |
+        sudo apt-get install jq
+        wget -O ~/codacy-coverage-reporter-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
+        export DOCKLE_VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        wget -O ~/dockle.tar.gz https://github.com/goodwithtech/dockle/releases/download/v${DOCKLE_VERSION}/dockle_${DOCKLE_VERSION}_Linux-64bit.tar.gz
+        tar zxvf ~/dockle.tar.gz -C ~/
+        export TRIVY_VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+        wget -O ~/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+        tar zxvf ~/trivy.tar.gz -C ~/
     - name: Build with Maven
-      run: mvn package --file pom.xml
+      run: |
+        mvn clean package
+        mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+    - name: Publish test coverage
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r alpine/target/jacoco-ut/jacoco.xml
+    - name: Building Docker container
+      run: |
+        docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
+    - name: Publishing container to Docker Hub
+      run: |
+        # docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD";
+        # docker push $REPO:$TAG;
+    - name: Analyzing Docker container
+      run: |
+        ~/dockle $REPO:$TAG
+        ~/trivy --exit-code 0 --quiet --auto-refresh $REPO:$TAG
+        # ~/trivy --exit-code 1 --severity CRITICAL --quiet --auto-refresh $REPO:$TAG

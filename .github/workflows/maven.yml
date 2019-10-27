@@ -37,6 +37,8 @@ jobs:
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
     - name: Building Docker container
       run: |
+        export REPO=owasp/dependency-track
+        export TAG=snapshot
         docker build -f src/main/docker/Dockerfile -t $REPO:$TAG .
     - name: Publishing container to Docker Hub
       run: |

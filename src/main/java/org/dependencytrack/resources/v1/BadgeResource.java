@@ -88,4 +88,38 @@ public class BadgeResource extends AlpineResource {
             }
         }
     }
+
+    @GET
+    @Path("/vulns/project/{name}/{version}")
+    @Produces(SVG_MEDIA_TYPE)
+    @ApiOperation(
+            value = "Returns current metrics for a specific project",
+            response = ProjectMetrics.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "Badge support is disabled. No content will be returned."),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @AuthenticationNotRequired
+    public Response getProjectVulnerabilitiesBadge(
+            @ApiParam(value = "The name of the project to query on", required = true)
+            @PathParam("name") String name,
+            @ApiParam(value = "The version of the project to query on", required = true)
+            @PathParam("version") String version) {
+        try (QueryManager qm = new QueryManager()) {
+            if (isBadgeSupportEnabled(qm)) {
+                final Project project = qm.getProject(name, version);
+                if (project != null) {
+                    final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+                    final Badger badger = new Badger();
+                    return Response.ok(badger.generate(metrics)).build();
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                }
+            } else {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
+        }
+    }
 }

@@ -40,15 +40,13 @@ import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.search.IndexManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Creates default objects on an empty database.
@@ -249,7 +247,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultNotificicationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
-            for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {                
+            for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
                 try {
                 	final File file = new File(URLDecoder.decode(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile(), UTF_8.name()));
                     final String templateContent = FileUtils.readFileToString(file, UTF_8);

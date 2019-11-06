@@ -20,17 +20,15 @@ package org.dependencytrack.parser.spdx.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.model.License;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * This class parses json metadata file that describe each license. It does not

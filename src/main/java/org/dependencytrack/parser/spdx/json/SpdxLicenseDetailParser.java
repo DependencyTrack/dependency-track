@@ -20,8 +20,13 @@ package org.dependencytrack.parser.spdx.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.model.License;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -54,7 +59,7 @@ public class SpdxLicenseDetailParser {
         final List<License> licenses = new ArrayList<>();
         final String[] dirs = {"/license-list-data/json/details", "/license-list-data/json/exceptions"};
         for (final String s: dirs) {
-            final File dir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath() + s);
+        	final File dir = new File(URLDecoder.decode(getClass().getProtectionDomain().getCodeSource().getLocation().getPath(), UTF_8.name()) + s);
             final File[] files = dir.listFiles();
             if (files != null) {
                 for (final File nextFile : files) {

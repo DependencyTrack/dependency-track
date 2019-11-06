@@ -40,8 +40,12 @@ import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.search.IndexManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -245,10 +249,10 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultNotificicationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
-            for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
-                final File file = new File(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile());
+            for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {                
                 try {
-                    final String templateContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                	final File file = new File(URLDecoder.decode(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile(), UTF_8.name()));
+                    final String templateContent = FileUtils.readFileToString(file, UTF_8);
                     final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher.getPublisherClass());
                     if (existingPublisher == null) {
                         qm.createNotificationPublisher(

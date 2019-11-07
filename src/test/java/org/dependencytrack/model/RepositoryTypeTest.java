@@ -31,6 +31,7 @@ public class RepositoryTypeTest {
         Assert.assertEquals("GEM", RepositoryType.GEM.name());
         Assert.assertEquals("PYPI", RepositoryType.PYPI.name());
         Assert.assertEquals("NUGET", RepositoryType.NUGET.name());
+        Assert.assertEquals("HEX", RepositoryType.HEX.name());
         Assert.assertEquals("UNSUPPORTED", RepositoryType.UNSUPPORTED.name());
     }
 
@@ -62,6 +63,12 @@ public class RepositoryTypeTest {
     public void testResolveNuget() throws Exception {
         PackageURL purl = new PackageURL("pkg:nuget/artifact@1.0.0");
         Assert.assertEquals(RepositoryType.NUGET, RepositoryType.resolve(purl));
+    }
+
+    @Test
+    public void testResolveHex() throws Exception {
+        PackageURL purl = new PackageURL("pkg:hex/phoenix@1.14.10");
+        Assert.assertEquals(RepositoryType.HEX, RepositoryType.resolve(purl));
     }
 
     @Test

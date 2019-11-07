@@ -213,11 +213,6 @@ public class Component implements Serializable {
     @Persistent
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     @JsonIgnore
-    private List<Scan> scans;
-
-    @Persistent
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    @JsonIgnore
     private List<Bom> boms;
 
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
@@ -409,14 +404,6 @@ public class Component implements Serializable {
 
     public void setChildren(Collection<Component> children) {
         this.children = children;
-    }
-
-    public List<Scan> getScans() {
-        return scans;
-    }
-
-    public void setScans(List<Scan> scans) {
-        this.scans = scans;
     }
 
     public List<Bom> getBoms() {

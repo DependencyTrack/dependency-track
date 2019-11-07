@@ -157,9 +157,6 @@
                             <div class="checkbox">
                                 <label><input type="checkbox" id="artifactSpdxEnableInput" data-group-name="artifact" data-property-name="spdx.enabled"> Enable SPDX</label>
                             </div>
-                            <div class="checkbox">
-                                <label><input type="checkbox" id="artifactDependencyCheckEnableInput" data-group-name="artifact" data-property-name="dependencycheck.enabled"> Enable Dependency-Check XML reports (<strong>deprecated</strong>)</label>
-                            </div>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateArtifactConfigButton" data-group-name="artifact">Update</button>
                         </div>
                         <div class="tab-pane admin-form-content" id="emailTab" data-admin-title="Email">

@@ -63,7 +63,6 @@ import java.util.UUID;
                 @Persistent(name = "resolvedLicense"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
-                @Persistent(name = "scans"),
                 @Persistent(name = "boms"),
                 @Persistent(name = "vulnerabilities"),
         })

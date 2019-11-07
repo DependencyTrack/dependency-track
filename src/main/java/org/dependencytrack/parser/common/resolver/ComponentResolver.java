@@ -16,10 +16,9 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.parser.dependencycheck.resolver;
+package org.dependencytrack.parser.common.resolver;
 
 import org.dependencytrack.model.Component;
-import org.dependencytrack.parser.dependencycheck.model.Dependency;
 import org.dependencytrack.persistence.QueryManager;
 
 /**
@@ -28,27 +27,12 @@ import org.dependencytrack.persistence.QueryManager;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class ComponentResolver implements IResolver {
+public class ComponentResolver {
 
     private final QueryManager qm;
 
     public ComponentResolver(final QueryManager qm) {
         this.qm = qm;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Component resolve(final Dependency dependency) {
-        Component component = qm.getComponentByHash(dependency.getMd5());
-        if (component != null) {
-            return component;
-        }
-        component = qm.getComponentByHash(dependency.getSha1());
-        if (component != null) {
-            return component;
-        }
-        return null;
     }
 
     public Component resolve(final Component component) {

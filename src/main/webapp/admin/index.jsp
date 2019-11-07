@@ -67,6 +67,7 @@
                     <div id="collapseRepositories" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingRepositories">
                         <div class="list-group">
                             <a data-toggle="tab" class="list-group-item" href="#repositoryGemTab">Gem</a>
+                            <a data-toggle="tab" class="list-group-item" href="#repositoryHexTab">Hex</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryMavenTab">Maven</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryNpmTab">NPM</a>
                             <a data-toggle="tab" class="list-group-item" href="#repositoryNugetTab">NuGet</a>
@@ -340,6 +341,22 @@
                         <div class="tab-pane" id="repositoryGemTab" data-admin-title="Gem Repositories">
                             <table id="repositoryGemTable" class="table table-hover detail-table" data-toggle="table"
                                    data-url="<c:url value="/api/v1/repository/GEM?orderBy=resolutionOrder&sort=asc"/>"
+                                   data-response-handler="formatRepositoryTable"
+                                   data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-detail-view="true" data-click-to-select="true" data-height="100%">
+                                <thead>
+                                <tr>
+                                    <th data-align="left" data-field="identifier">Identifier</th>
+                                    <th data-align="left" data-field="url">URL</th>
+                                    <th data-align="center" data-field="enabledLabel" data-class="tight">Enabled</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="tab-pane" id="repositoryHexTab" data-admin-title="Hex Repositories">
+                            <table id="repositoryHexTable" class="table table-hover detail-table" data-toggle="table"
+                                   data-url="<c:url value="/api/v1/repository/HEX?orderBy=resolutionOrder&sort=asc"/>"
                                    data-response-handler="formatRepositoryTable"
                                    data-query-params-type="pageSize" data-side-pagination="client" data-pagination="true"
                                    data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"

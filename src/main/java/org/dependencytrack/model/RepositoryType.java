@@ -33,6 +33,7 @@ public enum RepositoryType {
     GEM,
     PYPI,
     NUGET,
+    HEX,
     UNSUPPORTED;
 
     /**
@@ -52,6 +53,8 @@ public enum RepositoryType {
             return PYPI;
         } else if (PackageURL.StandardTypes.NUGET.equals(type)) {
             return NUGET;
+        } else if ("hex".equals(type)) { // TODO
+            return HEX;
         }
         return UNSUPPORTED;
     }

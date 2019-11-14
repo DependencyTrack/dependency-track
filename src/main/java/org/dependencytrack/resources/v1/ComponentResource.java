@@ -314,7 +314,7 @@ public class ComponentResource extends AlpineResource {
     @GET
     @Path("/internal/identify")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Requests the identification of internal components the portfolio", code = 204)
+    @ApiOperation(value = "Requests the identification of internal components in the portfolio", code = 204)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
     })

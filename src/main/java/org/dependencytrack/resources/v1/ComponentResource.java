@@ -311,10 +311,10 @@ public class ComponentResource extends AlpineResource {
         }
     }
 
-    @POST
+    @GET
     @Path("/internal/identify")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Queues task for internal component identification", code = 204)
+    @ApiOperation(value = "Requests the identification of internal components the portfolio", code = 204)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
     })

@@ -677,9 +677,7 @@ $rest.getComponent = function getProject(uuid, successCallback, failCallback) {
 $rest.identifyInternalComponents = function(successCallback, failCallback) {
     $.ajax({
         url: $rest.contextPath() + URL_COMPONENT + "/internal/identify",
-        contentType: CONTENT_TYPE_JSON,
-        dataType: DATA_TYPE,
-        type: METHOD_POST,
+        type: METHOD_GET,
         statusCode: {
             204: function(data) {
                 if (successCallback) {

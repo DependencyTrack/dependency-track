@@ -36,7 +36,7 @@ public class InternalComponentIdentificationUtilTest {
             "namesRegexProperty={2} componentName={3} shouldBeInternal={4}")
     public static Collection testParameters() {
         return Arrays.asList(new Object[][]{
-                // Neither regexes nor group / name provided
+                // neither regexes nor group / name provided
                 {"", "", "", "", false},
                 // Neither group nor name provided
                 {".*", null, ".*", null, false},
@@ -45,7 +45,19 @@ public class InternalComponentIdentificationUtilTest {
                 // group not provided, name matches
                 {".*", null, ".*", "a", true},
                 // both group and name match
-                {".*", "a", ".*", "b", true}
+                {".*", "a", ".*", "b", true},
+                // specific regex for group
+                {"^us\\.springett$", "us.springett", null, null, true},
+                // specific regex for name
+                {null, null, "^dependency-track$", "dependency-track", true},
+                // generalized, case-insensitive regex for group
+                {"(?i)^(org\\.apache)(\\.[\\w.]+)?$", "Org.Apache.Logging.Log4J", null, "log4j-test", true},
+                // same as above, but with incomplete regex
+                {"(?i)^(org\\.apache)", "Org.Apache.Logging.Log4J", null, "log4j-test", false},
+                // generalized regex for names
+                {null, "org.apache.logging.log4j", "^(log4j-)([\\w-]+)$", "log4j-test", true},
+                // same as above, but with incomplete regex
+                {null, "org.apache.logging.log4j", "^(log4j-)", "log4j-test", false},
         });
     }
 

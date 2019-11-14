@@ -173,6 +173,7 @@ public class BomUploadProcessingTask implements Subscriber {
             resolvedComponent.setSha3_256(component.getSha3_256());
             resolvedComponent.setSha3_512(component.getSha3_512());
             resolvedComponent.setPurl(component.getPurl());
+            resolvedComponent.setInternal(component.isInternal());
             resolvedComponent.setClassifier(component.getClassifier());
             resolvedComponent.setDescription(component.getDescription());
             resolvedComponent.setFilename(component.getFilename());

@@ -29,6 +29,7 @@ function formatComponentsTable(res) {
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].name) + "</a>";
         res[i].version = filterXSS(res[i].version);
         res[i].group = filterXSS(res[i].group);
+        res[i].isInternal = (res[i].isInternal) ? "<i class=\"fa fa-check-square-o\" aria-hidden=\"true\"></i>" : "";
 
         if (res[i].hasOwnProperty("resolvedLicense")) {
             let licenseurl = "../license/?licenseId=" + res[i].resolvedLicense.licenseId;

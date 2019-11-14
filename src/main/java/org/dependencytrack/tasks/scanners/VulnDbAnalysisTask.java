@@ -31,6 +31,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import us.springett.vulndbdatamirror.client.VulnDbApi;
 import us.springett.vulndbdatamirror.parser.model.Results;
 import java.util.List;
@@ -111,7 +112,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     public void analyze(final List<Component> components) {
         final VulnDbApi api = new VulnDbApi(this.apiConsumerKey, this.apiConsumerSecret, UnirestFactory.getUnirestInstance());
         for (final Component component: components) {
-            if (shouldAnalyze(component.getPurl()) && component.getCpe() != null
+            if (!component.isInternal() && shouldAnalyze(component.getPurl()) && component.getCpe() != null
                     && !isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())) {
                 int page = 1;
                 boolean more = true;

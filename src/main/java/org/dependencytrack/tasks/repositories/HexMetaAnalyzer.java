@@ -55,7 +55,7 @@ public class HexMetaAnalyzer extends AbstractMetaAnalyzer {
      */
     public boolean isApplicable(final Component component) {
         //return component.getPurl() != null && PackageURL.StandardTypes.HEX.equals(component.getPurl().getType());
-        return component.getPurl() != null && "hex".equals(component.getPurl().getType());
+        return !component.isInternal() && component.getPurl() != null && "hex".equals(component.getPurl().getType());
     }
 
     /**

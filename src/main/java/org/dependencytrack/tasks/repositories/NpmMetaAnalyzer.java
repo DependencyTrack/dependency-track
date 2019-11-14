@@ -48,7 +48,7 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(final Component component) {
-        return component.getPurl() != null && PackageURL.StandardTypes.NPM.equals(component.getPurl().getType());
+        return !component.isInternal() && component.getPurl() != null && PackageURL.StandardTypes.NPM.equals(component.getPurl().getType());
     }
 
     /**

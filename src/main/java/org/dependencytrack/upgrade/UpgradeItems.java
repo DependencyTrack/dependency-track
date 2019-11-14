@@ -33,6 +33,7 @@ class UpgradeItems {
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v340.v340Updater.class);
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v350.v350Updater.class);
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v360.v360Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v370.v370Updater.class);
     };
 
     static List<Class<? extends UpgradeItem>> getUpgradeItems() {

@@ -28,6 +28,7 @@ import org.dependencytrack.tasks.BomUploadProcessingTask;
 import org.dependencytrack.tasks.CloneProjectTask;
 import org.dependencytrack.tasks.FortifySscUploadTask;
 import org.dependencytrack.tasks.IndexTask;
+import org.dependencytrack.tasks.InternalComponentIdentificationTask;
 import org.dependencytrack.tasks.KennaSecurityUploadTask;
 import org.dependencytrack.tasks.MetricsUpdateTask;
 import org.dependencytrack.tasks.NistMirrorTask;
@@ -41,6 +42,8 @@ import org.dependencytrack.tasks.scanners.InternalAnalysisTask;
 import org.dependencytrack.tasks.scanners.NpmAuditAnalysisTask;
 import org.dependencytrack.tasks.scanners.OssIndexAnalysisTask;
 import org.dependencytrack.tasks.scanners.VulnDbAnalysisTask;
+import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -85,6 +88,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(CloneProjectEvent.class, CloneProjectTask.class);
         EVENT_SERVICE.subscribe(FortifySscUploadEventAbstract.class, FortifySscUploadTask.class);
         EVENT_SERVICE.subscribe(KennaSecurityUploadEventAbstract.class, KennaSecurityUploadTask.class);
+        EVENT_SERVICE.subscribe(InternalComponentIdentificationEvent.class, InternalComponentIdentificationTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ST.subscribe(NistMirrorEvent.class, NistMirrorTask.class);
@@ -115,6 +119,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(CloneProjectTask.class);
         EVENT_SERVICE.unsubscribe(FortifySscUploadTask.class);
         EVENT_SERVICE.unsubscribe(KennaSecurityUploadTask.class);
+        EVENT_SERVICE.unsubscribe(InternalComponentIdentificationTask.class);
         EVENT_SERVICE.shutdown();
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);

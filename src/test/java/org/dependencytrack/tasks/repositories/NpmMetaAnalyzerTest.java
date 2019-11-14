@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks.repositories;
 
+import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -38,4 +39,16 @@ public class NpmMetaAnalyzerTest {
         Assert.assertNotNull(metaModel.getLatestVersion());
         //Assert.assertNotNull(metaModel.getPublishedTimestamp()); // todo: not yet supported
     }
+
+    @Test
+    public void shouldNotBeApplicableWhenComponentIsInternal() throws MalformedPackageURLException {
+        final Component component = new Component();
+        component.setPurl(new PackageURL("pkg:npm/qunit@2.7.0"));
+        component.setInternal(true);
+
+        final NpmMetaAnalyzer analyzer = new NpmMetaAnalyzer();
+
+        Assert.assertFalse(analyzer.isApplicable(component));
+    }
+
 }

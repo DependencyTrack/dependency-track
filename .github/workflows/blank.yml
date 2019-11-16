@@ -1,0 +1,17 @@
+name: Container Analysis
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Pull the Docker image
+      run: docker pull owasp/dependency-track:snapshot
+    - name: Scan image
+      uses: anchore/scan-action@master
+      with:
+        image-reference: "owasp/dependency-track:snapshot"

@@ -15,3 +15,6 @@ jobs:
       uses: anchore/scan-action@master
       with:
         image-reference: "owasp/dependency-track:snapshot"
+        fail-build: false
+    - name: Anchore inline scan JSON results
+      run: for j in `ls ./anchore-reports/*.json`; do echo "---- ${j} ----"; cat ${j}; echo; done

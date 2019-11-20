@@ -84,7 +84,7 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.1</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.2.1</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>2.1.1</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>2.5.0</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
         <lib.lucene.version>7.7.2</lib.lucene.version>
         <lib.packageurl.version>1.1.1</lib.packageurl.version>

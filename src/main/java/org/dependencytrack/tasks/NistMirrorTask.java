@@ -97,7 +97,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             final long end = System.currentTimeMillis();
             LOGGER.info("NIST mirroring complete");
             LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
-            LOGGER.info("Time spend (parse): " + metricParseTime + "ms");
+            LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
             LOGGER.info("Time spent (total): " + (end - start) + "ms");
         }
     }

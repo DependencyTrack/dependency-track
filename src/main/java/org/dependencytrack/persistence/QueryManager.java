@@ -518,6 +518,7 @@ public class QueryManager extends AlpineQueryManager {
         deleteDependencies(project);
         deleteScans(project);
         deleteBoms(project);
+        removeProjectFromNotificationRules(project);
         delete(project.getProperties());
         delete(getScans(project));
         delete(getBoms(project));
@@ -2443,6 +2444,18 @@ public class QueryManager extends AlpineQueryManager {
             return persist(publisher);
         }
         return null;
+    }
+
+    /**
+     * Removes projects from NotificationRules
+     */
+    @SuppressWarnings("unchecked")
+    public void removeProjectFromNotificationRules(final Project project) {
+        final Query query = pm.newQuery(NotificationRule.class, "projects.contains(:project)");
+        for (final NotificationRule rule: (List<NotificationRule>) query.execute(project)) {
+            rule.getProjects().remove(project);
+            persist(rule);
+        }
     }
 
     /**

@@ -729,6 +729,7 @@ public class QueryManager extends AlpineQueryManager {
         component.setParent(transientComponent.getParent());
         component.setCpe(transientComponent.getCpe());
         component.setPurl(transientComponent.getPurl());
+        component.setInternal(transientComponent.isInternal());
         final Component result = persist(component);
         Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);

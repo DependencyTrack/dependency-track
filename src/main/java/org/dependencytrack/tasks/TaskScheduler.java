@@ -24,6 +24,7 @@ import alpine.model.ConfigProperty;
 import alpine.tasks.AlpineTaskScheduler;
 import alpine.util.BooleanUtil;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
+import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NistMirrorEvent;
@@ -77,6 +78,9 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 hour (3600000) delay
         scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);
+
+        // Creates a new event that executes every 6 hours (21600000) after an initial 1 hour (3600000) delay
+        scheduleEvent(new InternalComponentIdentificationEvent(), 3600000, 21600000);
 
         // Configurable tasks
         scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEventAbstract());

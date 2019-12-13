@@ -134,14 +134,6 @@ public class Project implements Serializable {
     private List<Tag> tags;
 
     /**
-     * Convenience field which will contain the date of the last entry in the {@link Scan} table
-     */
-    @Persistent
-    @Index(name = "PROJECT_LASTSCANIMPORT_IDX")
-    @Column(name = "LAST_SCAN_IMPORTED")
-    private Date lastScanImport;
-
-    /**
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
@@ -249,14 +241,6 @@ public class Project implements Serializable {
 
     public void setTags(List<Tag> tags) {
         this.tags = tags;
-    }
-
-    public Date getLastScanImport() {
-        return lastScanImport;
-    }
-
-    public void setLastScanImport(Date lastScanImport) {
-        this.lastScanImport = lastScanImport;
     }
 
     public Date getLastBomImport() {

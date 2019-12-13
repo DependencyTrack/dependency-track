@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class ComponentTest { 
+public class ComponentTest {
 
     @Test
     public void testId() {
@@ -70,14 +70,14 @@ public class ComponentTest {
         Component component = new Component();
         component.setFilename("foo.bar");
         Assert.assertEquals("foo.bar", component.getFilename());
-    } 
+    }
 
     @Test
     public void testExtension() {
         Component component = new Component();
         component.setExtension("bar");
         Assert.assertEquals("bar", component.getExtension());
-    } 
+    }
 
     @Test
     public void testMd5() {
@@ -85,7 +85,7 @@ public class ComponentTest {
         String hash = "299189766eddf8b5fea4954f0a63d4b1";
         component.setMd5(hash);
         Assert.assertEquals(hash, component.getMd5());
-    } 
+    }
 
     @Test
     public void testSha1() {
@@ -117,7 +117,7 @@ public class ComponentTest {
         String hash = "b59bf7eba413502f563528a9719c38cd471ca59b4fb50c1d94db0504101ea780";
         component.setSha3_256(hash);
         Assert.assertEquals(hash, component.getSha3_256());
-    } 
+    }
 
     @Test
     public void testSha3_512() {
@@ -125,7 +125,7 @@ public class ComponentTest {
         String hash = "40c72266a83cb97e6c5dbe628d3efb7fe564739e7d4c016d282c59ae14054ccd74142defa2d5d0295c7bdff0d1ea045364a595438263dd8ffd13623a685034e1";
         component.setSha3_512(hash);
         Assert.assertEquals(hash, component.getSha3_512());
-    } 
+    }
 
     @Test
     public void testCpe() throws Exception {
@@ -133,7 +133,7 @@ public class ComponentTest {
         Cpe cpe = CpeParser.parse("cpe:2.3:a:acme:product:1.0:*:*:*:*:*:*:*");
         component.setCpe(cpe.toCpe23FS());
         Assert.assertEquals("cpe:2.3:a:acme:product:1.0:*:*:*:*:*:*:*", component.getCpe());
-    } 
+    }
 
     @Test
     public void testPurl() throws Exception {
@@ -142,28 +142,28 @@ public class ComponentTest {
                 .withType("maven").withNamespace("acme").withName("product").withVersion("1.0").build();
         component.setPurl(purl);
         Assert.assertEquals(purl.toString(), component.getPurl().toString());
-    } 
+    }
 
     @Test
     public void testDescription() {
         Component component = new Component();
         component.setDescription("Component description");
         Assert.assertEquals("Component description", component.getDescription());
-    } 
+    }
 
     @Test
     public void testCopyright() {
         Component component = new Component();
         component.setCopyright("Copyright Acme");
         Assert.assertEquals("Copyright Acme", component.getCopyright());
-    } 
+    }
 
     @Test
     public void testLicense() {
         Component component = new Component();
         component.setLicense("Apache 2.0");
         Assert.assertEquals("Apache 2.0", component.getLicense());
-    } 
+    }
 
     @Test
     public void testResolvedLicense() {
@@ -171,7 +171,7 @@ public class ComponentTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         Assert.assertEquals(license, component.getResolvedLicense());
-    } 
+    }
 
     @Test
     public void testParent() {
@@ -179,7 +179,7 @@ public class ComponentTest {
         Component component = new Component();
         component.setParent(parent);
         Assert.assertEquals(parent, component.getParent());
-    } 
+    }
 
     @Test
     public void testChildren() {
@@ -193,17 +193,6 @@ public class ComponentTest {
     }
 
     @Test
-    public void testScans() {
-        List<Scan> scans = new ArrayList<>();
-        Scan scan = new Scan();
-        scans.add(scan);
-        Component component = new Component();
-        component.setScans(scans);
-        Assert.assertEquals(1, component.getScans().size());
-        Assert.assertEquals(scan, component.getScans().iterator().next());
-    } 
-
-    @Test
     public void testBoms() {
         List<Bom> boms = new ArrayList<>();
         Bom bom = new Bom();
@@ -212,7 +201,7 @@ public class ComponentTest {
         component.setBoms(boms);
         Assert.assertEquals(1, component.getBoms().size());
         Assert.assertEquals(bom, component.getBoms().iterator().next());
-    } 
+    }
 
     @Test
     public void testVulnerabilities() {
@@ -250,4 +239,4 @@ public class ComponentTest {
         component.setVersion("1.0");
         Assert.assertEquals("acme : product : 1.0", component.toString());
     }
-} 
+}

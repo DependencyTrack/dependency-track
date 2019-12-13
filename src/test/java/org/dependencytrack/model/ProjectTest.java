@@ -29,7 +29,6 @@ public class ProjectTest extends PersistenceCapableTest {
     public void testProjectPersistence() {
         Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
         Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, true, false);
-        Scan scan = qm.createScan(p1, new Date(), new Date());
         Bom bom = qm.createBom(p1, new Date(), Bom.Format.CYCLONEDX, "1.1");
 
         Assert.assertEquals("Example Project 1", p1.getName());
@@ -37,15 +36,6 @@ public class ProjectTest extends PersistenceCapableTest {
 
         Assert.assertNotNull(p1.getUuid());
         Assert.assertNotNull(p2.getUuid());
-
-        Assert.assertNotNull(scan.getProject());
-        Assert.assertEquals("Example Project 1", scan.getProject().getName());
-        Assert.assertEquals("Description 1", scan.getProject().getDescription());
-        Assert.assertEquals("1.0", scan.getProject().getVersion());
-
-        Assert.assertNotNull(scan.getUuid());
-        Assert.assertNotNull(scan.getExecuted());
-        Assert.assertNotNull(scan.getImported());
 
         Assert.assertNotNull(bom.getProject());
         Assert.assertEquals("Example Project 1", bom.getProject().getName());

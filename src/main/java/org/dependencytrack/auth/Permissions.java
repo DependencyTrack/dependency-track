@@ -27,7 +27,6 @@ package org.dependencytrack.auth;
 public enum Permissions {
 
     BOM_UPLOAD("Allows the ability to upload CycloneDX and SPDX Bill-of-Material (BOM) documents"),
-    SCAN_UPLOAD("Allows the ability to upload Dependency-Check XML reports"),
     VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, dependencies, and licenses"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
     VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities affecting projects in the portfolio"),
@@ -47,7 +46,6 @@ public enum Permissions {
 
     public static class Constants {
         public static final String BOM_UPLOAD = "BOM_UPLOAD";
-        public static final String SCAN_UPLOAD = "SCAN_UPLOAD";
         public static final String VIEW_PORTFOLIO = "VIEW_PORTFOLIO";
         public static final String PORTFOLIO_MANAGEMENT = "PORTFOLIO_MANAGEMENT";
         public static final String VULNERABILITY_ANALYSIS = "VULNERABILITY_ANALYSIS";

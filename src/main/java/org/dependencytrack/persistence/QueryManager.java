@@ -54,7 +54,6 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.Scan;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityMetrics;
@@ -476,17 +475,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Updates the last time a scan was imported.
-     * @param date the date of the last scan import
-     * @return the updated Project
-     */
-    public Project updateLastScanImport(Project p, Date date) {
-        final Project project = getObjectById(Project.class, p.getId());
-        project.setLastScanImport(date);
-        return persist(project);
-    }
-
-    /**
      * Updates the last time a bom was imported.
      * @param date the date of the last bom import
      * @param bomFormat the format and version of the bom format
@@ -516,11 +504,9 @@ public class QueryManager extends AlpineQueryManager {
         deleteAnalysisTrail(project);
         deleteMetrics(project);
         deleteDependencies(project);
-        deleteScans(project);
         deleteBoms(project);
         removeProjectFromNotificationRules(project);
         delete(project.getProperties());
-        delete(getScans(project));
         delete(getBoms(project));
         delete(project.getChildren());
         delete(project);
@@ -571,54 +557,6 @@ public class QueryManager extends AlpineQueryManager {
         final Query query = this.pm.newQuery(ProjectProperty.class, "project == :project");
         query.setOrdering("groupName asc, propertyName asc");
         return (List)query.execute(project);
-    }
-
-    /**
-     * Creates a new Scan.
-     * @param project the Project to create a Scan for
-     * @param executed the Date when the scan was executed
-     * @param imported the Date when the scan was imported
-     * @return a new Scan object
-     */
-    public Scan createScan(Project project, Date executed, Date imported) {
-        final Scan scan = new Scan();
-        scan.setExecuted(executed);
-        scan.setImported(imported);
-        scan.setProject(project);
-        return persist(scan);
-    }
-
-    /**
-     * Returns a list of all Scans for the specified Project.
-     * @param project the Project to retrieve scans for
-     * @return a List of Scans
-     */
-    @SuppressWarnings("unchecked")
-    private List<Scan> getScans(Project project) {
-        final Query query = pm.newQuery(Scan.class, "project == :project");
-        return (List<Scan>) query.execute(project);
-    }
-
-    /**
-     * Deletes scans belonging to the specified Project.
-     * @param project the Project to delete scans for
-     */
-    private void deleteScans(Project project) {
-        final Query query = pm.newQuery(Scan.class, "project == :project");
-        query.deletePersistentAll(project);
-    }
-
-    /**
-     * Deletes scans belonging to the specified Component.
-     * @param component the Component to delete scans for
-     */
-    @SuppressWarnings("unchecked")
-    private void deleteScans(Component component) {
-        final Query query = pm.newQuery(Scan.class, "components.contains(:component)");
-        for (final Scan scan: (List<Scan>) query.execute(component)) {
-            scan.getComponents().remove(component);
-            persist(scan);
-        }
     }
 
     /**
@@ -815,7 +753,6 @@ public class QueryManager extends AlpineQueryManager {
         deleteAnalysisTrail(component);
         deleteMetrics(component);
         deleteDependencies(component);
-        deleteScans(component);
         deleteBoms(component);
         delete(component);
         commitSearchIndex(commitIndex, Component.class);
@@ -2513,21 +2450,6 @@ public class QueryManager extends AlpineQueryManager {
             tag.getProjects().add(project);
         }
         pm.currentTransaction().commit();
-    }
-
-    /**
-     * Binds the two objects together in a corresponding join table.
-     * @param scan a Scan object
-     * @param component a Component object
-     */
-    public void bind(Scan scan, Component component) {
-        final boolean bound = scan.getComponents().stream().anyMatch(s -> s.getId() == scan.getId());
-        if (!bound) {
-            pm.currentTransaction().begin();
-            scan.getComponents().add(component);
-            component.getScans().add(scan);
-            pm.currentTransaction().commit();
-        }
     }
 
     /**

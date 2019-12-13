@@ -178,9 +178,9 @@ public class Component implements Serializable {
     private PackageURL purl;
 
     @Persistent
-    @Column(name = "INTERNAL")
+    @Column(name = "INTERNAL", allowsNull = "true") // New column, must allow nulls on existing databases
     @JsonProperty("isInternal")
-    private boolean internal;
+    private Boolean internal;
 
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)

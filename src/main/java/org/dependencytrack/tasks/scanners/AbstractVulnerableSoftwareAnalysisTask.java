@@ -49,9 +49,9 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * @param component the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final String targetVersion, final Component component) {
+                                       final String targetVersion, final String targetUpdate, final Component component) {
         for (final VulnerableSoftware vs: vsList) {
-            if (compareVersions(vs, targetVersion)) {
+            if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         qm.addVulnerability(vulnerability, component);
@@ -176,5 +176,31 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
         return false;
+    }
+
+    /**
+     * Evaluates the target update against the vulnerable software. The update
+     * field is optional and if the value is ANY (*), then it will return true.
+     * Otherwise, the updates are compared against each other.
+
+     * @param vs a reference to the vulnerable software to compare
+     * @param targetUpdate the update to compare
+     * @return <code>true</code> if the target update is matched; otherwise
+     * <code>false</code>
+     */
+    private static boolean compareUpdate(VulnerableSoftware vs, String targetUpdate) {
+        if (LogicalValue.NA.getAbbreviation().equals(vs.getUpdate())) {
+            return false;
+        }
+        if (vs.getUpdate() == null && targetUpdate == null) {
+            return true;
+        }
+        if (vs.getUpdate() == null || targetUpdate == null) {
+            return false;
+        }
+        if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate)) {
+            return true;
+        }
+        return compareAttributes(vs.getUpdate(), targetUpdate);
     }
 }

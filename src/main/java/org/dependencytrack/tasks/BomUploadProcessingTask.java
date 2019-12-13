@@ -40,6 +40,8 @@ import org.dependencytrack.parser.common.resolver.ComponentResolver;
 import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
+import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -191,6 +193,7 @@ public class BomUploadProcessingTask implements Subscriber {
                     + ", version:" + component.getVersion()
                     + ", purl:" +  component.getPurl()
                     + ") is not resolved. Creating new component");
+            component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
             component = qm.createComponent(component, false);
 
             final long oid = component.getId();

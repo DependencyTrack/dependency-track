@@ -25,6 +25,7 @@ import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
+import java.util.List;
 
 /**
  * Subscriber task that identifies internal components throughout the entire portfolio.
@@ -37,14 +38,23 @@ public class InternalComponentIdentificationTask implements Subscriber {
     private static final Logger LOGGER = Logger.getLogger(InternalComponentIdentificationTask.class);
 
     @Override
-    public void inform(final Event event) {
-        if (!(event instanceof InternalComponentIdentificationEvent)) {
+    public void inform(final Event e) {
+        if (!(e instanceof InternalComponentIdentificationEvent)) {
             return;
         }
-
+        final InternalComponentIdentificationEvent event = (InternalComponentIdentificationEvent)e;
         LOGGER.info("Starting internal component identification task");
+        if (event.getComponents().size() > 0) {
+            analyze(event.getComponents());
+        } else {
+            analyze(null);
+        }
+        LOGGER.info("Internal component identification task completed");
+    }
+
+    private void analyze(final List<Component> components) {
         try (final QueryManager qm = new QueryManager()) {
-            for (final Component component : qm.getAllComponents()) {
+            for (final Component component : components != null ? components : qm.getAllComponents()) {
                 final boolean internal = InternalComponentIdentificationUtil.isInternalComponent(component, qm);
                 if (internal) {
                     LOGGER.info("Component " + component + " was identified to be internal");
@@ -55,7 +65,6 @@ public class InternalComponentIdentificationTask implements Subscriber {
                 }
             }
         }
-        LOGGER.info("Internal component identification task completed");
     }
 
 }

@@ -19,6 +19,9 @@
 package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
+import org.dependencytrack.model.Component;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Defines an event triggered when internal components should be identified in the entire portfolio.
@@ -28,4 +31,19 @@ import alpine.event.framework.Event;
  */
 public class InternalComponentIdentificationEvent implements Event {
 
+    private List<Component> components = new ArrayList<>();
+
+    public InternalComponentIdentificationEvent() { }
+
+    public InternalComponentIdentificationEvent(final Component component) {
+        this.components.add(component);
+    }
+
+    public InternalComponentIdentificationEvent(final List<Component> components) {
+        this.components = components;
+    }
+
+    public List<Component> getComponents() {
+        return components;
+    }
 }

@@ -181,7 +181,6 @@ the [NOTICES.txt] [notices] file for more information.
   [Supply Chain Component Analysis]: https://www.owasp.org/index.php/Component_Analysis
   [Software Bill-of-Materials]: https://www.owasp.org/index.php/Component_Analysis#Software_Bill-of-Materials_.28SBOM.29
   [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
-  [Dependency-Check]: https://www.owasp.org/index.php/OWASP_Dependency_Check
   [CycloneDX]: https://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg

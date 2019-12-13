@@ -1,0 +1,20 @@
+name: Container Analysis
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Pull the Docker image
+      run: docker pull owasp/dependency-track:snapshot
+    - name: Scan image
+      uses: anchore/scan-action@master
+      with:
+        image-reference: "owasp/dependency-track:snapshot"
+        fail-build: false
+    - name: Anchore inline scan JSON results
+      run: for j in `ls ./anchore-reports/*.json`; do echo "---- ${j} ----"; cat ${j}; echo; done

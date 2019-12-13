@@ -36,7 +36,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
-import org.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;
+import org.dependencytrack.parser.common.resolver.ComponentResolver;
 import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;

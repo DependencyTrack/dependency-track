@@ -41,7 +41,6 @@
         <class>org.dependencytrack.model.ProjectProperty</class>
         <class>org.dependencytrack.model.Repository</class>
         <class>org.dependencytrack.model.RepositoryMetaComponent</class>
-        <class>org.dependencytrack.model.Scan</class>
         <class>org.dependencytrack.model.Tag</class>
         <class>org.dependencytrack.model.Vulnerability</class>
         <class>org.dependencytrack.model.VulnerabilityMetrics</class>

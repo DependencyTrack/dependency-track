@@ -64,7 +64,6 @@ import java.util.UUID;
                 @Persistent(name = "resolvedLicense"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
-                @Persistent(name = "scans"),
                 @Persistent(name = "boms"),
                 @Persistent(name = "vulnerabilities"),
         })
@@ -215,11 +214,6 @@ public class Component implements Serializable {
     @Persistent(mappedBy = "parent")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
-
-    @Persistent
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    @JsonIgnore
-    private List<Scan> scans;
 
     @Persistent
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
@@ -423,14 +417,6 @@ public class Component implements Serializable {
 
     public void setChildren(Collection<Component> children) {
         this.children = children;
-    }
-
-    public List<Scan> getScans() {
-        return scans;
-    }
-
-    public void setScans(List<Scan> scans) {
-        this.scans = scans;
     }
 
     public List<Bom> getBoms() {

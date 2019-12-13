@@ -37,8 +37,8 @@ public class v370Updater extends AbstractUpgradeItem {
     private static final String STMT_6 = "DELETE FROM \"SCANS_COMPONENTS\"";
     private static final String STMT_7 = "UPDATE \"PROJECT\" SET \"LAST_SCAN_IMPORTED\" = NULL";
     private static final String STMT_8 = "DELETE FROM \"CONFIGPROPERTY\" WHERE \"GROUPNAME\" = 'artifact' AND \"PROPERTYNAME\" = 'dependencycheck.enabled'";
-    private static final String STMT_9 = "UPDATE \"COMPONENT\" SET \"INTERNAL\" = TRUE WHERE \"INTERNAL\" IS NULL";
-    private static final String STMT_9_ALT = "UPDATE \"COMPONENT\" SET \"INTERNAL\" = 1 WHERE \"INTERNAL\" IS NULL";
+    private static final String STMT_9 = "UPDATE \"COMPONENT\" SET \"INTERNAL\" = FALSE WHERE \"INTERNAL\" IS NULL";
+    private static final String STMT_9_ALT = "UPDATE \"COMPONENT\" SET \"INTERNAL\" = 0 WHERE \"INTERNAL\" IS NULL";
 
     @Override
     public String getSchemaVersion() {

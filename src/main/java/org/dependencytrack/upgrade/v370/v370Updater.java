@@ -24,7 +24,6 @@ import alpine.upgrade.AbstractUpgradeItem;
 import alpine.util.DbUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 public class v370Updater extends AbstractUpgradeItem {
@@ -40,7 +39,7 @@ public class v370Updater extends AbstractUpgradeItem {
     private static final String STMT_8 = "DELETE FROM \"CONFIGPROPERTY\" WHERE \"GROUPNAME\" = 'artifact' AND \"PROPERTYNAME\" = 'dependencycheck.enabled'";
     private static final String STMT_9 = "UPDATE \"COMPONENT\" SET \"INTERNAL\" = TRUE WHERE \"INTERNAL\" IS NULL";
     private static final String STMT_9_ALT = "UPDATE \"COMPONENT\" SET \"INTERNAL\" = 1 WHERE \"INTERNAL\" IS NULL";
-   
+
     @Override
     public String getSchemaVersion() {
         return "3.7.0";
@@ -55,7 +54,7 @@ public class v370Updater extends AbstractUpgradeItem {
             LOGGER.info("Internal field is likely not boolean. Attempting component internal status update assuming bit field");
             DbUtil.executeUpdate(connection, STMT_9_ALT);
         }
-        
+
         LOGGER.info("Removing legacy SCAN_UPLOAD permission");
         final Statement q = connection.createStatement();
         final ResultSet rs = q.executeQuery(STMT_1);

@@ -364,6 +364,9 @@ public class Component implements Serializable {
     }
 
     public boolean isInternal() {
+        if (internal == null) {
+            return false;
+        }
         return internal;
     }
 

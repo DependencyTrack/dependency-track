@@ -48,7 +48,7 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(final Component component) {
-        return component.getPurl() != null && PackageURL.StandardTypes.GEM.equals(component.getPurl().getType());
+        return !component.isInternal() && component.getPurl() != null && PackageURL.StandardTypes.GEM.equals(component.getPurl().getType());
     }
 
     /**

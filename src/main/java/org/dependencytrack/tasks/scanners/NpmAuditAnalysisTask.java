@@ -109,7 +109,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
             for (Iterator<Component> iterator = backlog.iterator(); iterator.hasNext();) {
                 Component component = iterator.next();
                 final PackageURL purl = component.getPurl();
-                if (shouldAnalyze(purl)) {
+                if (!component.isInternal() && shouldAnalyze(purl)) {
                     if (!npmCandidates.containsKey(component.getName())) {
                         npmCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());

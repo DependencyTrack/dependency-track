@@ -33,11 +33,15 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
+import javax.jdo.Query;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -49,6 +53,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.regex.Pattern;
 
 /**
  * JAX-RS resources for processing components.
@@ -179,6 +184,7 @@ public class ComponentResource extends AlpineResource {
             component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
             component.setClassifier(jsonComponent.getClassifier());
             component.setPurl(jsonComponent.getPurl());
+            component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
             component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
             component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
             component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
@@ -248,6 +254,7 @@ public class ComponentResource extends AlpineResource {
                 component.setFilename(StringUtils.trimToNull(jsonComponent.getFilename()));
                 component.setClassifier(jsonComponent.getClassifier());
                 component.setPurl(jsonComponent.getPurl());
+                component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
                 component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
                 component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
                 component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
@@ -302,6 +309,19 @@ public class ComponentResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
             }
         }
+    }
+
+    @GET
+    @Path("/internal/identify")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Requests the identification of internal components in the portfolio", code = 204)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response identifyInternalComponents() {
+        Event.dispatch(new InternalComponentIdentificationEvent());
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
 }

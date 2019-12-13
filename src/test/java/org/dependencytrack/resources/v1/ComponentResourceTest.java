@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.filters.AuthenticationFilter;
 import alpine.util.UuidUtil;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -234,4 +235,12 @@ public class ComponentResourceTest extends ResourceTest {
                 .request().header(X_API_KEY, apiKey).delete();
         Assert.assertEquals(404, response.getStatus(), 0);
     }
+
+    @Test
+    public void internalComponentIdentificationTest() {
+        Response response = target(V1_COMPONENT + "/internal/identify")
+                .request().header(X_API_KEY, apiKey).get();
+        Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
 } 

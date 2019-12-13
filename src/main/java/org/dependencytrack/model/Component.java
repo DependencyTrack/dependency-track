@@ -22,6 +22,7 @@ import alpine.json.TrimmedStringDeserializer;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.PackageURL;
@@ -175,6 +176,11 @@ public class Component implements Serializable {
     @Convert(PackageURLStringConverter.class)
     @JsonSerialize(using = CustomPackageURLSerializer.class)
     private PackageURL purl;
+
+    @Persistent
+    @Column(name = "INTERNAL")
+    @JsonProperty("isInternal")
+    private boolean internal;
 
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
@@ -355,6 +361,14 @@ public class Component implements Serializable {
 
     public void setPurl(PackageURL purl) {
         this.purl = purl;
+    }
+
+    public boolean isInternal() {
+        return internal;
+    }
+
+    public void setInternal(boolean internal) {
+        this.internal = internal;
     }
 
     public String getDescription() {

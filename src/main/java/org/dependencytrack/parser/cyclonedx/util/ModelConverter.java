@@ -30,6 +30,8 @@ import org.dependencytrack.model.Component;
 import org.cyclonedx.model.Hash;
 import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -76,6 +78,8 @@ public class ModelConverter {
                 LOGGER.warn("Unable to parse PackageURL: " + cycloneDxComponent.getPurl());
             }
         }
+
+        component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
 
         if (cycloneDxComponent.getType() != null) {
             component.setClassifier(Classifier.valueOf(cycloneDxComponent.getType().name()));

@@ -126,6 +126,7 @@
                     <th data-align="left" data-field="componenthref" data-sort-name="name" data-sortable="true">Name</th>
                     <th data-align="left" data-field="version" data-sort-name="version" data-sortable="true">Version</th>
                     <th data-align="left" data-field="group" data-sort-name="group" data-sortable="true">Group</th>
+                    <th data-align="center" data-class="tight" data-field="isInternal">Internal</th>
                     <th data-align="left" data-field="license">License</th>
                     <th data-align="left" data-field="lastInheritedRiskScore" data-sortable="true" class="tight">Risk Score</th>
                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>

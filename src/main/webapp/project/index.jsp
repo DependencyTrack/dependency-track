@@ -172,6 +172,7 @@
                                     <th data-align="left" data-field="component.version">Version</th>
                                     <th data-align="left" data-field="latestVersion" data-visible="false">Latest Version</th>
                                     <th data-align="left" data-field="component.group" data-sort-name="component.group" data-sortable="true">Group</th>
+                                    <th data-align="center" data-class="tight" data-field="component.isInternal">Internal</th>
                                     <th data-align="left" data-field="component.license">License</th>
                                     <th data-align="left" data-field="component.lastInheritedRiskScore" data-sortable="true" class="tight">Risk Score</th>
                                     <th data-align="left" data-field="vulnerabilities">Vulnerabilities</th>

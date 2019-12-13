@@ -1322,6 +1322,19 @@ $(document).ready(function () {
         });
     });
 
+    $("#identifyInternalComponentsButton").on("click", function() {
+        $rest.identifyInternalComponents(
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.success("Task for internal component identification has been queued");
+            },
+            function(data) {
+                toastr.options = $common.toastrOptions;
+                toastr.warning("An error occurred queueing internal component identification task. Check server logs for details")
+            }
+        )
+    });
+
     $("#testEmailConfigButton").on("click", function() {
         let emailAddress = $("#testEmailAddress").val();
         $rest.testSmtpPublisherConfig(emailAddress,

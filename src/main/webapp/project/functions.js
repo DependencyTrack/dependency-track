@@ -39,6 +39,7 @@ function formatDependenciesTable(res) {
         let componenturl = "../component/?uuid=" + res[i].component.uuid;
         res[i].componenthref = "<a href=\"" + componenturl + "\">" + filterXSS(res[i].component.name)+ "</a>";
         res[i].component.group = filterXSS(res[i].component.group);
+        res[i].component.isInternal = (res[i].component.isInternal) ? "<i class=\"fa fa-check-square-o\" aria-hidden=\"true\"></i>" : "";
         if (res[i].component.hasOwnProperty("resolvedLicense")) {
             let licenseurl = "../license/?licenseId=" + res[i].component.resolvedLicense.licenseId;
             res[i].component.license = "<a href=\"" + licenseurl + "\">" + filterXSS(res[i].component.resolvedLicense.licenseId) + "</a>";

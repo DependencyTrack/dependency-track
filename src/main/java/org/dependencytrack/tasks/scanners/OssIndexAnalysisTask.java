@@ -135,7 +135,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
             final List<String> coordinates = new ArrayList<>();
             final List<Component> paginatedList = paginatedComponents.getPaginatedList();
             for (final Component component: paginatedList) {
-                if (shouldAnalyze(component.getPurl())) {
+                if (!component.isInternal() && shouldAnalyze(component.getPurl())) {
                     //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
                     coordinates.add(minimizePurl(component.getPurl()));
                 }

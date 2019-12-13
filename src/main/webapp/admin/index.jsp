@@ -36,6 +36,7 @@
                             <a data-toggle="tab" class="list-group-item" href="#generalConfigTab">General</a>
                             <a data-toggle="tab" class="list-group-item" href="#artifactsTab">BOM Formats</a>
                             <a data-toggle="tab" class="list-group-item" href="#emailTab">Email</a>
+                            <a data-toggle="tab" class="list-group-item" href="#internalComponentsTab">Internal Components</a>
                         </div>
                     </div>
                 </div>
@@ -192,6 +193,23 @@
                             </div>
                             <button type="button" class="btn btn-default btn-config-property" data-group-name="email" data-toggle="modal" data-target="#modalEmailTestConfiguration">Test Configuration</button>
                             <button type="button" class="btn btn-primary btn-config-property" id="updateEmailConfigButton" data-group-name="email">Update</button>
+                        </div>
+                        <div class="tab-pane admin-form-content" id="internalComponentsTab" data-admin-title="Internal Components">
+                            <h3 class="admin-section-title">Internal Components</h3>
+                            <p>
+                                Internal components will be excluded from vulnerability scans and version checks that rely on external systems.
+                                Note that the regular expressions below must be compliant with <a href="https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html">Java's regex syntax</a>.
+                            </p>
+                            <div class="form-group">
+                                <label for="internalComponentsConfigGroupsRegex">Regex for internal Component Namespaces</label>
+                                <input type="text" name="Internal Component Groups Regex" class="form-control" id="internalComponentsConfigGroupsRegex" data-group-name="internal-components" data-property-name="groups.regex">
+                            </div>
+                            <div class="form-group">
+                                <label for="internalComponentsConfigNamesRegex">Regex for internal Component Names</label>
+                                <input type="text" name="Internal Component Names Regex" class="form-control" id="internalComponentsConfigNamesRegex" data-group-name="internal-components" data-property-name="names.regex">
+                            </div>
+                            <button type="button" class="btn btn-primary btn-config-property" id="updateInternalComponentsConfiguration" data-group-name="internal-components">Update</button>
+                            <button type="button" class="btn btn-primary" id="identifyInternalComponentsButton">Identify internal components now</button>
                         </div>
                         <div class="tab-pane" id="scannerInternalTab" data-admin-title="Internal Analyzer">
                             <h3 class="admin-section-title">Internal Analyzer Configuration</h3>

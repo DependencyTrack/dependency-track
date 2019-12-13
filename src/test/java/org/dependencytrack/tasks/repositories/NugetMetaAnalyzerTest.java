@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks.repositories;
 
+import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -37,6 +38,17 @@ public class NugetMetaAnalyzerTest {
         MetaModel metaModel = analyzer.analyze(component);
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
-
     }
+
+    @Test
+    public void shouldNotBeApplicableWhenComponentIsInternal() throws MalformedPackageURLException {
+        final Component component = new Component();
+        component.setPurl(new PackageURL("pkg:nuget/NUnit@3.8.0"));
+        component.setInternal(true);
+
+        final NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
+
+        Assert.assertFalse(analyzer.isApplicable(component));
+    }
+
 }

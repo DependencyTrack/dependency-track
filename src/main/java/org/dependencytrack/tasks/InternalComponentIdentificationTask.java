@@ -1,0 +1,61 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
+package org.dependencytrack.tasks;
+
+import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
+import alpine.logging.Logger;
+import org.dependencytrack.event.InternalComponentIdentificationEvent;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.InternalComponentIdentificationUtil;
+
+/**
+ * Subscriber task that identifies internal components throughout the entire portfolio.
+ *
+ * @author nscuro
+ * @since 3.7.0
+ */
+public class InternalComponentIdentificationTask implements Subscriber {
+
+    private static final Logger LOGGER = Logger.getLogger(InternalComponentIdentificationTask.class);
+
+    @Override
+    public void inform(final Event event) {
+        if (!(event instanceof InternalComponentIdentificationEvent)) {
+            return;
+        }
+
+        LOGGER.info("Starting internal component identification task");
+        try (final QueryManager qm = new QueryManager()) {
+            for (final Component component : qm.getAllComponents()) {
+                final boolean internal = InternalComponentIdentificationUtil.isInternalComponent(component, qm);
+                if (internal) {
+                    LOGGER.info("Component " + component + " was identified to be internal");
+                }
+                if (component.isInternal() != internal) {
+                    component.setInternal(internal);
+                    qm.persist(component);
+                }
+            }
+        }
+        LOGGER.info("Internal component identification task completed");
+    }
+
+}

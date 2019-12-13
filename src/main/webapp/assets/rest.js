@@ -674,6 +674,25 @@ $rest.getComponent = function getProject(uuid, successCallback, failCallback) {
     });
 };
 
+$rest.identifyInternalComponents = function(successCallback, failCallback) {
+    $.ajax({
+        url: $rest.contextPath() + URL_COMPONENT + "/internal/identify",
+        type: METHOD_GET,
+        statusCode: {
+            204: function(data) {
+                if (successCallback) {
+                    $rest.callbackValidator(successCallback(data));
+                }
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (failCallback) {
+                $rest.callbackValidator(failCallback(xhr, ajaxOptions, thrownError));
+            }
+        }
+    })
+};
+
 /**
  * Service called when one or more components is added as a dependency to a project.
  */

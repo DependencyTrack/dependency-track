@@ -77,7 +77,7 @@ public class v370Updater extends AbstractUpgradeItem {
         LOGGER.info("Removing legacy LAST_SCAN_IMPORTED project dates");
         DbUtil.executeUpdate(connection, STMT_8);
 
-        LOGGER.info("Removing legacy SCAN dates");
+        LOGGER.info("Removing legacy SCAN data");
         DbUtil.executeUpdate(connection, STMT_9);
 
         LOGGER.info("Removing legacy Dependency-Check configuration settings");

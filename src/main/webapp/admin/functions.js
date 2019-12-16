@@ -451,7 +451,7 @@ function notificationTemplateDetailFormatter(index, row) {
  */
 function teamDetailFormatter(index, row) {
     let html = [];
-
+    let escapedTeamName = filterXSS.escapeAttrValue(row.name);
     let apiKeysHtml = "";
     if (!(row.apiKeys === undefined)) {
         for (let i = 0; i < row.apiKeys.length; i++) {
@@ -498,23 +498,25 @@ function teamDetailFormatter(index, row) {
     let membersHtml = "";
     if (!(row.ldapUsers === undefined)) {
         for (let i = 0; i < row.ldapUsers.length; i++) {
+            let escapedUsername = filterXSS.escapeAttrValue(row.ldapUsers[i].username);
             membersHtml += `
-            <li class="list-group-item" id="container-${row.uuid}-${row.ldapUsers[i].username}-membership">
-                <a href="#" onclick="removeTeamMembership('${row.uuid}', '${row.ldapUsers[i].username}')" data-toggle="tooltip" title="Remove User From Team">
+            <li class="list-group-item" id="container-${row.uuid}-${escapedUsername}-membership">
+                <a href="#" onclick="removeTeamMembership('${row.uuid}', '${escapedUsername}')" data-toggle="tooltip" title="Remove User From Team">
                     <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
                 </a>
-                ${row.ldapUsers[i].username}
+                ${escapedUsername}
             </li>`;
         }
     }
     if (!(row.managedUsers === undefined)) {
         for (let i = 0; i < row.managedUsers.length; i++) {
+            let escapedUsername = filterXSS.escapeAttrValue(row.managedUsers[i].username);
             membersHtml += `
-            <li class="list-group-item" id="container-${row.uuid}-${row.managedUsers[i].username}-membership">
-                <a href="#" onclick="removeTeamMembership('${row.uuid}', '${row.managedUsers[i].username}')" data-toggle="tooltip" title="Remove User From Team">
+            <li class="list-group-item" id="container-${row.uuid}-${escapedUsername}-membership">
+                <a href="#" onclick="removeTeamMembership('${row.uuid}', '${escapedUsername}')" data-toggle="tooltip" title="Remove User From Team">
                     <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
                 </a>
-                ${row.managedUsers[i].username}
+                ${escapedUsername}
             </li>`;
         }
     }
@@ -544,7 +546,7 @@ function teamDetailFormatter(index, row) {
     <form id="form-${row.uuid}">
         <div class="form-group">
             <label for="inputTeamName">Team Name</label>
-            <input type="text" class="form-control" id="inputTeamName-${row.uuid}" placeholder="Name" value="${row.name}" data-team-uuid="${row.uuid}">
+            <input type="text" class="form-control" id="inputTeamName-${row.uuid}" placeholder="Name" value="${escapedTeamName}" data-team-uuid="${row.uuid}">
         </div>
         <div class="form-group">
             <label for="inputApiKeys">API Keys</label>
@@ -597,22 +599,22 @@ function teamDetailFormatter(index, row) {
  */
 function ldapUserDetailFormatter(index, row) {
     let html = [];
-
+    let escapedUsername = filterXSS.escapeAttrValue(row.username);
     let teamsHtml = "";
     if (!(row.teams === undefined)) {
         for (let i = 0; i < row.teams.length; i++) {
             teamsHtml += `
             <li class="list-group-item" id="container-apikey-${row.teams[i].key}">
-                <a href="#" id="delete-${row.teams[i].uuid}" onclick="removeTeamMembership('${row.teams[i].uuid}', '${row.username}')" data-toggle="tooltip" title="Remove from Team">
+                <a href="#" id="delete-${row.teams[i].uuid}" onclick="removeTeamMembership('${row.teams[i].uuid}', '${escapedUsername}')" data-toggle="tooltip" title="Remove from Team">
                     <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
                 </a>
-                <span id="${row.username}-team-${row.teams[i].uuid}">${row.teams[i].name}</span>
+                <span id="${escapedUsername}-team-${row.teams[i].uuid}">${row.teams[i].name}</span>
             </li>`;
         }
     }
     teamsHtml += `
             <li class="list-group-item" id="container-no-apikey">
-                <a href="#" id="add-user-${row.username}-to-team" data-toggle="modal" data-target="#modalAssignTeamToUser" data-username="${row.username}" title="Add to Team">
+                <a href="#" id="add-user-${escapedUsername}-to-team" data-toggle="modal" data-target="#modalAssignTeamToUser" data-username="${escapedUsername}" title="Add to Team">
                     <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
                 </a>
                 <span>&nbsp;</span>
@@ -623,16 +625,16 @@ function ldapUserDetailFormatter(index, row) {
         for (let i = 0; i < row.permissions.length; i++) {
             permissionsHtml += `
             <li class="list-group-item" id="container-permission-${row.permissions[i].name}">
-                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermission('${row.permissions[i].name}', '${row.username}')" data-toggle="tooltip" title="Remove Permission">
+                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermission('${row.permissions[i].name}', '${escapedUsername}')" data-toggle="tooltip" title="Remove Permission">
                     <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
                 </a>
-                <span id="${row.username}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
+                <span id="${escapedUsername}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
             </li>`;
         }
     }
     permissionsHtml += `
             <li class="list-group-item" id="container-no-permission">
-                <a href="#" id="add-permission-to-${row.username}" data-toggle="modal" data-target="#modalAssignPermission" data-username="${row.username}" title="Add Permission">
+                <a href="#" id="add-permission-to-${escapedUsername}" data-toggle="modal" data-target="#modalAssignPermission" data-username="${escapedUsername}" title="Add Permission">
                     <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
                 </a>
                 <span>&nbsp;</span>
@@ -656,15 +658,15 @@ function ldapUserDetailFormatter(index, row) {
     </div>
     <div class="col-sm-6 col-md-6">
         <!-- Perhaps other fields here in the future? -->
-        <button type="button" class="btn btn-danger pull-right" id="deleteUser-${row.username}" data-user-username="${row.username}">Delete User</button>
+        <button type="button" class="btn btn-danger pull-right" id="deleteUser-${escapedUsername}" data-user-username="${escapedUsername}">Delete User</button>
     </form>
     </div>
     <script type="text/javascript">
-        $("#" + $.escapeSelector("deleteUser-${row.username}")).on("click", deleteLdapUser);
-        $("#" + $.escapeSelector("add-user-${row.username}-to-team")).on("click", function () {
+        $("#" + $.escapeSelector("deleteUser-${escapedUsername}")).on("click", deleteLdapUser);
+        $("#" + $.escapeSelector("add-user-${escapedUsername}-to-team")).on("click", function () {
             $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
-        $("#" + $.escapeSelector("add-permission-to-${row.username}")).on("click", function () {
+        $("#" + $.escapeSelector("add-permission-to-${escapedUsername}")).on("click", function () {
             $("#assignPermission").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
     </script>
@@ -680,22 +682,25 @@ function ldapUserDetailFormatter(index, row) {
  */
 function managedUserDetailFormatter(index, row) {
     let html = [];
-
+    let escapedUsername = filterXSS.escapeAttrValue(row.username);
+    let escapedFullname = (row.fullname) ? filterXSS.escapeAttrValue(row.fullname) : null;
+    let escapedEmail = (row.email) ? filterXSS.escapeAttrValue(row.email) : null;
     let teamsHtml = "";
     if (!(row.teams === undefined)) {
         for (let i = 0; i < row.teams.length; i++) {
+            let escapedTeamname = filterXSS(row.teams[i].name);
             teamsHtml += `
             <li class="list-group-item" id="container-apikey-${row.teams[i].key}">
-                <a href="#" id="delete-${row.teams[i].uuid}" onclick="removeTeamMembership('${row.teams[i].uuid}', '${row.username}')" data-toggle="tooltip" title="Remove from Team">
+                <a href="#" id="delete-${row.teams[i].uuid}" onclick="removeTeamMembership('${row.teams[i].uuid}', '${escapedUsername}')" data-toggle="tooltip" title="Remove from Team">
                     <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
                 </a>
-                <span id="${row.username}-team-${row.teams[i].uuid}">${row.teams[i].name}</span>
+                <span id="${escapedUsername}-team-${row.teams[i].uuid}">${escapedTeamname}</span>
             </li>`;
         }
     }
     teamsHtml += `
             <li class="list-group-item" id="container-no-apikey">
-                <a href="#" id="add-user-${row.username}-to-team" data-toggle="modal" data-target="#modalAssignTeamToUser" data-username="${row.username}" title="Add to Team">
+                <a href="#" id="add-user-${escapedUsername}-to-team" data-toggle="modal" data-target="#modalAssignTeamToUser" data-username="${escapedUsername}" title="Add to Team">
                     <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
                 </a>
                 <span>&nbsp;</span>
@@ -706,16 +711,16 @@ function managedUserDetailFormatter(index, row) {
         for (let i = 0; i < row.permissions.length; i++) {
             permissionsHtml += `
             <li class="list-group-item" id="container-permission-${row.permissions[i].name}">
-                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermission('${row.permissions[i].name}', '${row.username}')" data-toggle="tooltip" title="Remove Permission">
+                <a href="#" id="delete-${row.permissions[i].name}" onclick="removePermission('${row.permissions[i].name}', '${escapedUsername}')" data-toggle="tooltip" title="Remove Permission">
                     <span class="glyphicon glyphicon-trash glyphicon-input-form pull-right"></span>
                 </a>
-                <span id="${row.username}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
+                <span id="${escapedUsername}-permission-${row.permissions[i].name}">${row.permissions[i].name}</span>
             </li>`;
         }
     }
     permissionsHtml += `
             <li class="list-group-item" id="container-no-permission">
-                <a href="#" id="add-permission-to-${row.username}" data-toggle="modal" data-target="#modalAssignPermission" data-username="${row.username}" title="Add Permission">
+                <a href="#" id="add-permission-to-${escapedUsername}" data-toggle="modal" data-target="#modalAssignPermission" data-username="${escapedUsername}" title="Add Permission">
                     <span class="glyphicon glyphicon-plus-sign glyphicon-input-form pull-right"></span>
                 </a>
                 <span>&nbsp;</span>
@@ -745,39 +750,39 @@ function managedUserDetailFormatter(index, row) {
     <div class="col-md-6">
         <div class="form-group">
             <label class="required" for="updateManagedUserFullnameInput">Full Name</label>
-            <input type="text" class="form-control required" value="${row.fullname}" id="updateManagedUserFullnameInput-${row.username}" data-username="${row.username}">
+            <input type="text" class="form-control required" value="${escapedFullname}" id="updateManagedUserFullnameInput-${escapedUsername}" data-username="${escapedUsername}">
         </div>
         <div class="form-group">
             <label class="required" for="updateManagedUserEmailInput">Email</label>
-            <input type="email" class="form-control required" value="${row.email}" id="updateManagedUserEmailInput-${row.username}" data-username="${row.username}">
+            <input type="email" class="form-control required" value="${escapedEmail}" id="updateManagedUserEmailInput-${escapedUsername}" data-username="${escapedUsername}">
         </div>              
         <div class="checkbox inDetailFormatterForm">
-            <label><input type="checkbox" ${forcePasswordChange} id="updateManagedUserForcePasswordChangeInput-${row.username}" data-username="${row.username}"> User must change password at next login</label>
+            <label><input type="checkbox" ${forcePasswordChange} id="updateManagedUserForcePasswordChangeInput-${escapedUsername}" data-username="${escapedUsername}"> User must change password at next login</label>
         </div>
         <div class="checkbox inDetailFormatterForm">
-            <label><input type="checkbox" ${nonExpiryPassword} id="updateManagedUserNonExpiryPasswordInput-${row.username}" data-username="${row.username}"> Password never expires</label>
+            <label><input type="checkbox" ${nonExpiryPassword} id="updateManagedUserNonExpiryPasswordInput-${escapedUsername}" data-username="${escapedUsername}"> Password never expires</label>
         </div>
         <div class="checkbox inDetailFormatterForm">
-            <label><input type="checkbox" ${suspended} id="updateManagedUserSuspendedInput-${row.username}" data-username="${row.username}"> Suspended</label>
+            <label><input type="checkbox" ${suspended} id="updateManagedUserSuspendedInput-${escapedUsername}" data-username="${escapedUsername}"> Suspended</label>
         </div>
         <div class="inDetailFormatterForm">
-            <button type="button" class="btn btn-danger pull-right" id="deleteUser-${row.username}" data-user-username="${row.username}">Delete User</button>
+            <button type="button" class="btn btn-danger pull-right" id="deleteUser-${escapedUsername}" data-user-username="${escapedUsername}">Delete User</button>
         </div>
     </form>
     </div>
     <script type="text/javascript">
-        $("#" + $.escapeSelector("deleteUser-${row.username}")).on("click", deleteManagedUser);
-        $("#" + $.escapeSelector("add-user-${row.username}-to-team")).on("click", function () {
+        $("#" + $.escapeSelector("deleteUser-${escapedUsername}")).on("click", deleteManagedUser);
+        $("#" + $.escapeSelector("add-user-${escapedUsername}-to-team")).on("click", function () {
             $("#assignTeamToUser").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
-        $("#" + $.escapeSelector("add-permission-to-${row.username}")).on("click", function () {
+        $("#" + $.escapeSelector("add-permission-to-${escapedUsername}")).on("click", function () {
             $("#assignPermission").attr("data-username", $(this).data("username")); // Assign the username to the data-username attribute of the 'Update' button
         });
-        $("#" + $.escapeSelector("updateManagedUserFullnameInput-${row.username}")).keydown($common.debounce(updateManagedUser, 750));
-        $("#" + $.escapeSelector("updateManagedUserEmailInput-${row.username}")).keydown($common.debounce(updateManagedUser, 750));
-        $("#" + $.escapeSelector("updateManagedUserForcePasswordChangeInput-${row.username}")).change($common.debounce(updateManagedUser, 750));
-        $("#" + $.escapeSelector("updateManagedUserNonExpiryPasswordInput-${row.username}")).change($common.debounce(updateManagedUser, 750));
-        $("#" + $.escapeSelector("updateManagedUserSuspendedInput-${row.username}")).change($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserFullnameInput-${escapedUsername}")).keydown($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserEmailInput-${escapedUsername}")).keydown($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserForcePasswordChangeInput-${escapedUsername}")).change($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserNonExpiryPasswordInput-${escapedUsername}")).change($common.debounce(updateManagedUser, 750));
+        $("#" + $.escapeSelector("updateManagedUserSuspendedInput-${escapedUsername}")).change($common.debounce(updateManagedUser, 750));
     </script>
 `;
     html.push(template);

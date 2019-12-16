@@ -400,7 +400,7 @@
                             <th data-align="center" data-field="state" data-checkbox="true"></th>
                             <th data-field="groupName">Group</th>
                             <th data-field="propertyName">Name</th>
-                            <th data-field="propertyValue" data-editable="true">Value</th>
+                            <th data-field="propertyValue">Value</th>
                             <th data-field="propertyType">Type</th>
                             <th data-field="description" data-visible="false">Description</th>
                         </tr>

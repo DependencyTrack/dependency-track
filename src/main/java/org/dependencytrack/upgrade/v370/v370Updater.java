@@ -82,14 +82,5 @@ public class v370Updater extends AbstractUpgradeItem {
 
         LOGGER.info("Removing legacy Dependency-Check configuration settings");
         DbUtil.executeUpdate(connection, STMT_10);
-
-        LOGGER.info("Dropping SCANS_COMPONENTS table");
-        DbUtil.dropTable(connection, "SCANS_COMPONENTS");
-
-        LOGGER.info("Dropping LAST_SCAN_IMPORTED column from PROJECT table");
-        DbUtil.dropColumn(connection, "PROJECT", "LAST_SCAN_IMPORTED");
-
-        LOGGER.info("Dropping SCANS_COMPONENTS table");
-        DbUtil.dropTable(connection, "SCAN");
     }
 }

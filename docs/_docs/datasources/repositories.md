@@ -19,6 +19,7 @@ Dependency-Track supports the following repositories:
 | Ecosystem | Repository       | Resolution Order |
 | --------- | ---------------- | ---------------- |
 | gem       | RubyGems         | 1 |
+| hex       | Hex              | 1 |
 | maven     | Maven Central    | 1 |
 |           | Atlassian Public | 2 |
 |           | JBoss Releases   | 3 |

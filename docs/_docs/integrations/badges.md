@@ -15,17 +15,21 @@ option and is disabled by default.
 <img src="/images/badge-project-nometrics.svg" width="148"/>
 
 > Enabling badge support will provide vulnerability metric information to unauthenticated users. Any anonymous
-> user with network access to Dependency-Track and knowledge of a projects UUID will be able to view the SVG badge.
+> user with network access to Dependency-Track and knowledge of a projects information will be able to view the SVG badge.
 
-### HTML Example
+SVG badges may be retrieved using either the UUID of the project, or the combination of a 
+projects name and version.
+
+### HTML Examples
 ```html
+<img src="https://dtrack.example.com/api/v1/badge/vulns/project/{name}/{version}">
 <img src="https://dtrack.example.com/api/v1/badge/vulns/project/{uuid}">
 ```
 
-### Markdown Example
+### Markdown Examples
 ```markdown
+![alt text](https://dtrack.example.com/api/v1/badge/vulns/project/{name}/{version})
 ![alt text](https://dtrack.example.com/api/v1/badge/vulns/project/{uuid})
 ```
 
-In both examples, replace `{uuid}` with actual value of the project's UUID. The project UUID is displayed as 
-part of the URL when viewing the project in Dependency-Track.
+In all examples, replace `{name}`, `{version}`, and `{uuid}` with their respective values.

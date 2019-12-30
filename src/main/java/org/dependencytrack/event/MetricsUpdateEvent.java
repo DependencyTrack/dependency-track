@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.AbstractChainableEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
+import java.util.UUID;
 
 /**
  * Defines an Event to update metrics.
@@ -29,7 +30,9 @@ import org.dependencytrack.model.Project;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class MetricsUpdateEvent implements Event {
+public class MetricsUpdateEvent extends AbstractChainableEvent {
+
+    public static final UUID PORTFOLIO_CHAIN_IDENTIFIER = UUID.fromString("1d652235-9480-4033-a24e-c748811e24d6");
 
     public enum Type {
         PORTFOLIO,
@@ -46,6 +49,7 @@ public class MetricsUpdateEvent implements Event {
     public MetricsUpdateEvent(final Object target) {
         if (target == null) {
             this.type = Type.PORTFOLIO;
+            this.setChainIdentifier(PORTFOLIO_CHAIN_IDENTIFIER);
         } else if (target instanceof Project) {
             this.type = Type.PROJECT;
         } else if (target instanceof Component) {
@@ -60,6 +64,9 @@ public class MetricsUpdateEvent implements Event {
     // For example, running metrics on vulnerabilities being tracked in the database.
     public MetricsUpdateEvent(final Type type) {
         this.type = type;
+        if (Type.PORTFOLIO == type) {
+            this.setChainIdentifier(PORTFOLIO_CHAIN_IDENTIFIER);
+        }
     }
 
     public Type getType() {

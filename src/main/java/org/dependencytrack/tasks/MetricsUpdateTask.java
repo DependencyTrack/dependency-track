@@ -66,12 +66,7 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.debug("Starting metrics update task");
             try (QueryManager qm = new QueryManager()) {
                 if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                    if (Event.isEventBeingProcessed(MetricsUpdateEvent.PORTFOLIO_CHAIN_IDENTIFIER)) {
-                        LOGGER.info("A portfolio event was received (either requested or scheduled) but another portfolio event is already in progress. Skipping.");
-                        return;
-                    } else {
-                        updatePortfolioMetrics(qm);
-                    }
+                    updatePortfolioMetrics(qm);
                 } else if (event.getTarget() instanceof Project) {
                     updateProjectMetrics(qm, ((Project) event.getTarget()).getId());
                 } else if (event.getTarget() instanceof Component) {

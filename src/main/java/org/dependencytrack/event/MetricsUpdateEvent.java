@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.AbstractChainableEvent;
+import alpine.event.framework.SingletonCapableEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
@@ -30,7 +30,7 @@ import java.util.UUID;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class MetricsUpdateEvent extends AbstractChainableEvent {
+public class MetricsUpdateEvent extends SingletonCapableEvent {
 
     public static final UUID PORTFOLIO_CHAIN_IDENTIFIER = UUID.fromString("1d652235-9480-4033-a24e-c748811e24d6");
 
@@ -50,6 +50,7 @@ public class MetricsUpdateEvent extends AbstractChainableEvent {
         if (target == null) {
             this.type = Type.PORTFOLIO;
             this.setChainIdentifier(PORTFOLIO_CHAIN_IDENTIFIER);
+            this.setSingleton(true);
         } else if (target instanceof Project) {
             this.type = Type.PROJECT;
         } else if (target instanceof Component) {
@@ -66,6 +67,7 @@ public class MetricsUpdateEvent extends AbstractChainableEvent {
         this.type = type;
         if (Type.PORTFOLIO == type) {
             this.setChainIdentifier(PORTFOLIO_CHAIN_IDENTIFIER);
+            this.setSingleton(true);
         }
     }
 

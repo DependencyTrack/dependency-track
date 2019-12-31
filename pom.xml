@@ -285,6 +285,7 @@
                 <configuration>
                     <releaseName>${project.version}</releaseName>
                     <tag>${project.version}</tag>
+                    <description>For official releases, refer to https://docs.dependencytrack.org/changelog/ for information about improvements and upgrade notes. If additional details are required, consult the closed issues for this release milestone.</description>
                     <!--
                          For snapshot pre-releases we want to override the existing snapshot
                          by deleting it first and re-uploading the artifact. Caution should

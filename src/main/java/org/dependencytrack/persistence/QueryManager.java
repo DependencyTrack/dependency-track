@@ -1760,23 +1760,30 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Returns a List of Projects affected by a specific vulnerability.
      * @param vulnerability the vulnerability to query on
+     * @param includeSuppressed if includeSuppressed is true, return all dependencies which are affected by given
+     *                          vulnerability and suppressed dependencies. If includeSuppressed is false,
+     *                          return only affected dependencies.
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")
-    public List<Project> getProjects(Vulnerability vulnerability) {
+    public List<Project> getProjects(Vulnerability vulnerability, boolean includeSuppressed) {
         final List<Project> projects = new ArrayList<>();
         for (final Component component: vulnerability.getComponents()) {
             for (final Dependency dependency: getAllDependencies(component)) {
                 boolean affected = true;
                 final Analysis globalAnalysis = getAnalysis(null, component, vulnerability);
                 final Analysis projectAnalysis = getAnalysis(dependency.getProject(), component, vulnerability);
-                if (globalAnalysis != null && globalAnalysis.isSuppressed()) {
-                    affected = false;
-                }
-                if (projectAnalysis != null && projectAnalysis.isSuppressed()) {
-                    affected = false;
-                }
-                if (affected) {
+                if (!includeSuppressed) {
+                    if (globalAnalysis != null && globalAnalysis.isSuppressed()) {
+                        affected = false;
+                    }
+                    if (projectAnalysis != null && projectAnalysis.isSuppressed()) {
+                        affected = false;
+                    }
+                    if (affected) {
+                        projects.add(dependency.getProject());
+                    }
+                } else {
                     projects.add(dependency.getProject());
                 }
             }

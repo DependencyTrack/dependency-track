@@ -81,6 +81,7 @@
 
     <properties>
         <!-- Dependency Versions -->
+        <frontend.version>0.1.7</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.1</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.2.1</lib.cvss-calculator.version>
@@ -278,6 +279,62 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>frontend-download</id>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <exec executable="npm">
+                                    <arg value="pack" />
+                                    <arg value="@dependencytrack/frontend@${frontend.version}" />
+                                    <arg value="--registry" />
+                                    <arg value="https://npm.pkg.github.com" />
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>frontend-extract</id>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <untar src="dependencytrack-frontend-${frontend.version}.tgz" compression="gzip"
+                                       dest="${project.build.directory}/frontend">
+                                    <patternset>
+                                        <include name="package/dist/**/*"/>
+                                    </patternset>
+                                </untar>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>frontend-resource-deploy</id>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <copy todir="${project.build.directory}/${project.artifactId}">
+                                    <fileset dir="${project.build.directory}/frontend/package/dist">
+                                        <include name="**/*"/>
+                                    </fileset>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>de.jutzig</groupId>
                 <artifactId>github-release-plugin</artifactId>

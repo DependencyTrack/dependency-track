@@ -66,7 +66,7 @@ public final class ManagedHttpClientFactory {
         }
     }
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
-    private static final String PROXY_PASSWORD = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_PASSWORD);
+    private static final String PROXY_PASSWORD = Config.getInstance().getPropertyOrFile(Config.AlpineKey.HTTP_PROXY_PASSWORD);
     private static final Logger LOGGER = Logger.getLogger(ManagedHttpClientFactory.class);
     private static final String USER_AGENT;
     static {

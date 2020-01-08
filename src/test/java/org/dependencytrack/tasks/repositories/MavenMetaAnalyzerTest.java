@@ -41,6 +41,22 @@ public class MavenMetaAnalyzerTest {
     }
 
     @Test
+    public void testAnalyzerForScalaComponent() throws Exception {
+        Component component = new Component();
+        
+        // Scala packages differ from others in that their name always includes the version of
+        // the Scala compiler they were built with.
+        component.setPurl(new PackageURL("pkg:maven/com.typesafe.akka/akka-actor_2.13@2.5.23"));
+
+        MavenMetaAnalyzer analyzer = new MavenMetaAnalyzer();
+        Assert.assertTrue(analyzer.isApplicable(component));
+        Assert.assertEquals(RepositoryType.MAVEN, analyzer.supportedRepositoryType());
+        MetaModel metaModel = analyzer.analyze(component);
+        Assert.assertNotNull(metaModel.getLatestVersion());
+        Assert.assertNotNull(metaModel.getPublishedTimestamp());
+    }
+
+    @Test
     public void shouldNotBeApplicableWhenComponentIsInternal() throws MalformedPackageURLException {
         final Component component = new Component();
         component.setPurl(new PackageURL("pkg:maven/junit/junit@4.12"));

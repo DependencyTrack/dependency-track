@@ -73,7 +73,7 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
     public MetaModel analyze(final Component component) {
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
-            final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName().replaceAll("\\.", "/");
+            final String mavenGavUrl = component.getPurl().getNamespace().replaceAll("\\.", "/") + "/" + component.getPurl().getName();
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try {
                 final HttpUriRequest request = new HttpGet(url);

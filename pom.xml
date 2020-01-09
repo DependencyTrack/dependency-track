@@ -354,6 +354,7 @@
                                 <include>dependency-track.war</include>
                                 <include>dependency-track-embedded.war</include>
                                 <include>checksums.xml</include>
+                                <include>bom.xml</include>
                             </includes>
                         </fileSet>
                     </fileSets>

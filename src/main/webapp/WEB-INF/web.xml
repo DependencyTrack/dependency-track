@@ -52,6 +52,10 @@
             <param-name>allowUrls</param-name>
             <param-value>/index.html,/css,/fonts,/img,/js,/static,/favicon.ico,/api,/mirror</param-value>
         </init-param>
+        <init-param>
+            <param-name>forwardTo</param-name>
+            <param-value>/index.html</param-value>
+        </init-param>
     </filter>
     <filter-mapping>
         <filter-name>WhitelistUrlFilter</filter-name>

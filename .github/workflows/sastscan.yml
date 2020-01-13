@@ -19,7 +19,7 @@ jobs:
     - name: Perform sast-scan
       uses: AppThreat/sast-scan-action@v1.0.0
       env:
-        WORKSPACE: https://github.com/prabhu/dependency-track/blob/${{ env.GITHUB_SHA }}
+        WORKSPACE: https://github.com/DependencyTrack/dependency-track/blob/master
       with:
         output: reports
       continue-on-error: true

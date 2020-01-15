@@ -288,7 +288,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <get src="https://registry.npmjs.org/@dependencytrack/frontend/-/frontend-${frontend.version}.tgz"
+                                <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip"
                                      dest="${project.build.directory}"
                                      verbose="true"/>
                             </target>
@@ -302,12 +302,9 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <untar src="${project.build.directory}/frontend-${frontend.version}.tgz" compression="gzip"
+                                <unzip src="${project.build.directory}/frontend-dist.zip"
                                        dest="${project.build.directory}/frontend">
-                                    <patternset>
-                                        <include name="package/dist/**/*"/>
-                                    </patternset>
-                                </untar>
+                                </unzip>
                             </target>
                         </configuration>
                         <goals>
@@ -320,7 +317,7 @@
                         <configuration>
                             <target>
                                 <copy todir="${project.build.directory}/${project.artifactId}">
-                                    <fileset dir="${project.build.directory}/frontend/package/dist">
+                                    <fileset dir="${project.build.directory}/frontend/dist">
                                         <include name="**/*"/>
                                     </fileset>
                                 </copy>

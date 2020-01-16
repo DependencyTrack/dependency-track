@@ -27,7 +27,7 @@ import java.sql.Connection;
 public class v380Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v380Updater.class);
-    private static final String STMT_1 = "UPDATE \"REPOSITORY\" SET \"URL\" = \"https://central.maven.org/maven2/\" WHERE \"TYPE\" = \"MAVEN\" AND \"IDENTIFIER\" = \"central\"";
+    private static final String STMT_1 = "UPDATE \"REPOSITORY\" SET \"URL\" = 'https://central.maven.org/maven2/' WHERE \"TYPE\" = 'MAVEN' AND \"IDENTIFIER\" = 'central'";
 
     @Override
     public String getSchemaVersion() {

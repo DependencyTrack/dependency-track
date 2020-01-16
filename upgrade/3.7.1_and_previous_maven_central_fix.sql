@@ -5,4 +5,4 @@ respond with a 501. This prevents Java components from being analyzed for
 being out-of-date.
 */
 
-UPDATE "REPOSITORY" SET "URL" = "https://central.maven.org/maven2/" WHERE "TYPE" = "MAVEN" AND "IDENTIFIER" = "central";
+UPDATE "REPOSITORY" SET "URL" = 'https://central.maven.org/maven2/' WHERE "TYPE" = 'MAVEN' AND "IDENTIFIER" = 'central';

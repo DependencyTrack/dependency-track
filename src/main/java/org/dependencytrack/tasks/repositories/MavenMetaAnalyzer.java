@@ -46,7 +46,7 @@ import java.io.InputStream;
 public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(MavenMetaAnalyzer.class);
-    private static final String DEFAULT_BASE_URL = "https://central.maven.org/maven2";
+    private static final String DEFAULT_BASE_URL = "https://repo1.maven.org/maven2";
     private static final String REPO_METADATA_URL = "/%s/maven-metadata.xml";
 
     MavenMetaAnalyzer() {

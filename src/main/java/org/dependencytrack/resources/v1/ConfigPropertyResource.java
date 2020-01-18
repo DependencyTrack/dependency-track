@@ -36,6 +36,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -101,5 +102,36 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             final ConfigProperty property = qm.getConfigProperty(json.getGroupName(), json.getPropertyName());
             return updatePropertyValue(qm, json, property);
         }
+    }
+
+    @POST
+    @Path("aggregate")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates an array of config properties"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "One or more config properties could not be found"),
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response updateConfigProperty(List<ConfigProperty> list) {
+        final Validator validator = super.getValidator();
+        for (ConfigProperty item: list) {
+            failOnValidationError(
+                    validator.validateProperty(item, "groupName"),
+                    validator.validateProperty(item, "propertyName"),
+                    validator.validateProperty(item, "propertyValue")
+            );
+        }
+        List<ConfigProperty> returnList = new ArrayList<>();
+        try (QueryManager qm = new QueryManager()) {
+            for (ConfigProperty item : list) {
+                final ConfigProperty property = qm.getConfigProperty(item.getGroupName(), item.getPropertyName());
+                returnList.add((ConfigProperty)updatePropertyValue(qm, item, property).getEntity());
+            }
+        }
+        return Response.ok(returnList).build();
     }
 }

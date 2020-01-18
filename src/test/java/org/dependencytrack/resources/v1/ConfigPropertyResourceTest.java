@@ -33,6 +33,9 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ConfigPropertyResourceTest extends ResourceTest {
 
@@ -179,5 +182,28 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         Assert.assertEquals("HiddenDecryptedPropertyPlaceholder", json.getString("propertyValue"));
         Assert.assertEquals("ENCRYPTEDSTRING", json.getString("propertyType"));
         Assert.assertEquals("A encrypted string", json.getString("description"));
+    }
+
+    @Test
+    public void updateConfigPropertiesAggregateTest() {
+        ConfigProperty prop1 = qm.createConfigProperty("my.group", "my.string1", "ABC", IConfigProperty.PropertyType.STRING, "A string");
+        ConfigProperty prop2 = qm.createConfigProperty("my.group", "my.string2", "DEF", IConfigProperty.PropertyType.STRING, "A string");
+        ConfigProperty prop3 = qm.createConfigProperty("my.group", "my.string3", "GHI", IConfigProperty.PropertyType.STRING, "A string");
+        prop1 = qm.detach(ConfigProperty.class, prop1.getId());
+        prop2 = qm.detach(ConfigProperty.class, prop2.getId());
+        prop3 = qm.detach(ConfigProperty.class, prop3.getId());
+        prop3.setPropertyValue("XYZ");
+        Response response = target(V1_CONFIG_PROPERTY+"/aggregate").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(Arrays.asList(prop1, prop2, prop3), MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonArray json = parseJsonArray(response);
+        JsonObject modifiedProp = json.getJsonObject(2);
+        Assert.assertNotNull(modifiedProp);
+        Assert.assertEquals("my.group", modifiedProp.getString("groupName"));
+        Assert.assertEquals("my.string3", modifiedProp.getString("propertyName"));
+        Assert.assertEquals("XYZ", modifiedProp.getString("propertyValue"));
+        Assert.assertEquals("STRING", modifiedProp.getString("propertyType"));
+        Assert.assertEquals("A string", modifiedProp.getString("description"));
     }
 }

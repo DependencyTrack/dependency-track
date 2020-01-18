@@ -66,10 +66,6 @@ public class NistMirrorTask implements LoggableSubscriber {
 
     public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
     private static final String CPE_DICTIONARY_23_XML = "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz";
-    private static final String CVE_JSON_10_MODIFIED_URL = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-modified.json.gz";
-    private static final String CVE_JSON_10_BASE_URL = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-%d.json.gz";
-    private static final String CVE_JSON_10_MODIFIED_META = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-modified.meta";
-    private static final String CVE_JSON_10_BASE_META = "https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0-%d.meta";
     private static final String CVE_JSON_11_MODIFIED_URL = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz";
     private static final String CVE_JSON_11_BASE_URL = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz";
     private static final String CVE_JSON_11_MODIFIED_META = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.meta";
@@ -112,8 +108,8 @@ public class NistMirrorTask implements LoggableSubscriber {
         doDownload(CPE_DICTIONARY_23_XML, ResourceType.CPE);
         for (int i = START_YEAR; i <= END_YEAR; i++) {
             // Download JSON 1.0 year feeds
-            final String json10BaseUrl = CVE_JSON_10_BASE_URL.replace("%d", String.valueOf(i));
-            final String cveBaseMetaUrl = CVE_JSON_10_BASE_META.replace("%d", String.valueOf(i));
+            final String json10BaseUrl = CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
+            final String cveBaseMetaUrl = CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
             doDownload(json10BaseUrl, ResourceType.CVE);
             doDownload(cveBaseMetaUrl, ResourceType.CVE);
             // Download JSON 1.1 year feeds
@@ -122,10 +118,8 @@ public class NistMirrorTask implements LoggableSubscriber {
             doDownload(json11BaseUrl, ResourceType.NONE);
             doDownload(cve11BaseMetaUrl, ResourceType.NONE);
         }
-        doDownload(CVE_JSON_10_MODIFIED_URL, ResourceType.CVE);
-        doDownload(CVE_JSON_10_MODIFIED_META, ResourceType.CVE);
-        doDownload(CVE_JSON_11_MODIFIED_URL, ResourceType.NONE);
-        doDownload(CVE_JSON_11_MODIFIED_META, ResourceType.NONE);
+        doDownload(CVE_JSON_11_MODIFIED_URL, ResourceType.CVE);
+        doDownload(CVE_JSON_11_MODIFIED_META, ResourceType.CVE);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()

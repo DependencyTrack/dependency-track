@@ -109,7 +109,9 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Updates an array of config properties"
+            value = "Updates an array of config properties",
+            response = ConfigProperty.class,
+            responseContainer = "List"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
@@ -125,11 +127,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
                     validator.validateProperty(item, "propertyValue")
             );
         }
-        List<ConfigProperty> returnList = new ArrayList<>();
+        List<Object> returnList = new ArrayList<>();
         try (QueryManager qm = new QueryManager()) {
             for (ConfigProperty item : list) {
                 final ConfigProperty property = qm.getConfigProperty(item.getGroupName(), item.getPropertyName());
-                returnList.add((ConfigProperty)updatePropertyValue(qm, item, property).getEntity());
+                returnList.add(updatePropertyValue(qm, item, property).getEntity());
             }
         }
         return Response.ok(returnList).build();

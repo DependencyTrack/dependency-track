@@ -69,11 +69,15 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The property expected a number and a number was not sent.").build();
             }
         } else if (property.getPropertyType() == IConfigProperty.PropertyType.URL) {
-            try {
-                final URL url = new URL(json.getPropertyValue());
-                property.setPropertyValue(url.toExternalForm());
-            } catch (MalformedURLException e) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("The property expected a URL but the URL was malformed.").build();
+            if (json.getPropertyValue() == null) {
+                property.setPropertyValue(null);
+            } else {
+                try {
+                    final URL url = new URL(json.getPropertyValue());
+                    property.setPropertyValue(url.toExternalForm());
+                } catch (MalformedURLException e) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("The property expected a URL but the URL was malformed.").build();
+                }
             }
         } else if (property.getPropertyType() == IConfigProperty.PropertyType.UUID) {
             if (UuidUtil.isValidUUID(json.getPropertyValue())) {

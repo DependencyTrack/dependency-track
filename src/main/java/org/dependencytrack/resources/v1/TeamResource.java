@@ -134,7 +134,7 @@ public class TeamResource extends AlpineResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Updates a team's fields including name and hakmaster",
+            value = "Updates a team's fields including",
             response = Team.class
     )
     @ApiResponses(value = {

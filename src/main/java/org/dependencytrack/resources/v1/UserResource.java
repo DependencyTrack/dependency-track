@@ -29,10 +29,13 @@ import alpine.crypto.KeyManager;
 import alpine.logging.Logger;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -42,9 +45,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.IdentifiableObject;
 import org.dependencytrack.persistence.QueryManager;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.owasp.security.logging.SecurityMarkers;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -90,7 +92,7 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Principal principal = auth.authenticate();
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
-            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal)principal);
+            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
             final KeyManager km = KeyManager.getInstance();
             final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
             final String token = jwt.createToken(principal, permissions);
@@ -207,6 +209,27 @@ public class UserResource extends AlpineResource {
     }
 
     @GET
+    @Path("oidc")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all OIDC users",
+            response = OidcUser.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of OIDC users")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response getOidcUsers() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final long totalCount = qm.getCount(OidcUser.class);
+            final List<OidcUser> users = qm.getOidcUsers();
+            return Response.ok(users).header(TOTAL_COUNT_HEADER, totalCount).build();
+        }
+    }
+
+    @GET
     @Path("self")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -224,6 +247,9 @@ public class UserResource extends AlpineResource {
                     return Response.ok(user).build();
                 } else if (super.isManagedUser()) {
                     final ManagedUser user = qm.getManagedUser(getPrincipal().getName());
+                    return Response.ok(user).build();
+                } else if (super.isOidcUser()) {
+                    final OidcUser user = qm.getOidcUser(getPrincipal().getName());
                     return Response.ok(user).build();
                 }
                 return Response.status(401).build();
@@ -251,7 +277,7 @@ public class UserResource extends AlpineResource {
                     final LdapUser user = qm.getLdapUser(getPrincipal().getName());
                     return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
                 } else if (super.isManagedUser()) {
-                    final ManagedUser user = (ManagedUser)super.getPrincipal();
+                    final ManagedUser user = (ManagedUser) super.getPrincipal();
                     if (StringUtils.isBlank(jsonUser.getFullname())) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("Full name is required.").build();
                     }

@@ -24,6 +24,7 @@ import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import alpine.logging.Logger;
 import alpine.util.BooleanUtil;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -403,6 +404,7 @@ public class QueryManager extends AlpineQueryManager {
                 project.setPurl(purl.canonicalize());
             } catch (MalformedPackageURLException e) {
                 // throw it away
+                LOGGER.error("Unable set PackageURL while cloning Project. " + e);
             }
         }
         project.setParent(source.getParent());

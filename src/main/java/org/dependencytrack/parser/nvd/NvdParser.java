@@ -129,6 +129,7 @@ public final class NvdParser {
                                         vulnerability.setCwe(cwe);
                                     } catch (NumberFormatException e) {
                                         // throw it away
+                                        LOGGER.error("An error occurred while parsing Cwe ID ", e);
                                     }
                                 }
                             }

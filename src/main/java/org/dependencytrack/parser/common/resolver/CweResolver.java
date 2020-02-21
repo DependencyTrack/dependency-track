@@ -21,6 +21,7 @@ package org.dependencytrack.parser.common.resolver;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.persistence.QueryManager;
+import alpine.logging.Logger;
 
 /**
  * Attempts to resolve an internal CWE object from a string
@@ -63,6 +64,7 @@ public class CweResolver {
                 return qm.getCweById(Integer.valueOf(lookupString));
             } catch (NumberFormatException e) {
                 // throw it away
+                LOGGER.error("An error occured while resolving Cwe. " + e.getMessage());
             }
         }
         return null;

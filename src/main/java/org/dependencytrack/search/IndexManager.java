@@ -216,7 +216,7 @@ public abstract class IndexManager implements AutoCloseable {
                     iwriter.close();
                 }
             } catch (IOException e) {
-                // do nothing...
+                LOGGER.error("Unable to close iwriter. " + e.getMessage());
             }
         }
     }

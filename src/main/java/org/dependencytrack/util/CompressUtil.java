@@ -25,6 +25,7 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.io.IOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import alpine.logging.Logger;
 
 public final class CompressUtil {
 
@@ -47,6 +48,7 @@ public final class CompressUtil {
             }
         } catch (ArchiveException | IOException e) {
             // throw it away and return the original byte array
+            LOGGER.error("Unable to decompress input file.");
         }
         return input;
     }

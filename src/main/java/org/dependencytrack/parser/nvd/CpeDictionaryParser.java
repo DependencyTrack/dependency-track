@@ -59,6 +59,11 @@ public class CpeDictionaryParser {
         LOGGER.info("Parsing " + file.getName());
         LOGGER.info("This may take several minutes");
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+        //prevent xxe vulnerability
+        // This disables DTDs entirely for that factory
+        xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        // disable external entities
+        xmlInputFactory.setProperty("javax.xml.stream.isSupportingExternalEntities", false);
         try (InputStream in = Files.newInputStream(file.toPath())) {
             final XMLEventReader xmlEventReader = xmlInputFactory.createXMLEventReader(in);
             Cpe cpe = new Cpe();

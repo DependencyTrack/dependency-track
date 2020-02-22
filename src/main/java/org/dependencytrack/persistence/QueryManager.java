@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
+import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
@@ -111,6 +112,9 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Projects
      */
     @SuppressWarnings("unchecked")
+
+    private static final Logger LOGGER = Logger.getLogger(QueryManager.class);
+
     public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive) {
         final PaginatedResult result;
         final Query query = pm.newQuery(Project.class);
@@ -403,6 +407,7 @@ public class QueryManager extends AlpineQueryManager {
                 project.setPurl(purl.canonicalize());
             } catch (MalformedPackageURLException e) {
                 // throw it away
+                LOGGER.error("An error error occurred while cloning project due to invalid source project URL. ", e);
             }
         }
         project.setParent(source.getParent());

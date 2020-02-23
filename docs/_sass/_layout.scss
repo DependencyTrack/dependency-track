@@ -77,7 +77,10 @@ body {
 
 header {
 	$emblem-size: 35px;
-	$emblem-vertical-padding: ($nav-header-height - $emblem-size) / 2;
+
+	$logo-height: 35px;
+	$logo-width: 196px;
+	$emblem-vertical-padding: ($nav-header-height - $logo-height) / 2;
 	$emblem-horizontal-padding: $space;
 
 	position: absolute;
@@ -111,8 +114,8 @@ header {
 		border-bottom: 1px solid rgba(0, 0, 0, 0.075);
 
 		img {
-			height: $emblem-size;
-			width: $emblem-size;
+			height: $logo-height;
+			width: $logo-width;
 			margin-right: $space - 5;
 		}
 	}

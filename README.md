@@ -1,6 +1,6 @@
 [![Build Status](https://github.com/DependencyTrack/dependency-track/workflows/CI%20Build/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions?workflow=CI+Build)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1d99b45c27e4d069f94d24bcce8d7e6)](https://www.codacy.com/app/DependencyTrack/dependency-track?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)[![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
-<img src="https://docs.dependencytrack.org/images/dt.svg" width="300" align="right">
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1d99b45c27e4d069f94d24bcce8d7e6)](https://www.codacy.com/app/DependencyTrack/dependency-track?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)
+[![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
 [![License][license-image]][license-url]
 [![OWASP Flagship](https://img.shields.io/badge/owasp-flagship%20project-orange.svg)](https://www.owasp.org/index.php/OWASP_Dependency_Track_Project)
 [![Website](https://img.shields.io/badge/https://-dependencytrack.org-blue.svg)](https://dependencytrack.org/)
@@ -15,7 +15,9 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/owasp/dependency-track.svg)](https://hub.docker.com/r/owasp/dependency-track/)
 
 
-# Dependency-Track
+![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-black-text.svg?sanitize=true)
+
+
 Dependency-Track is an intelligent Software [Supply Chain Component Analysis] platform that allows organizations to 
 identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
 and highly beneficial approach by leveraging the capabilities of [Software Bill-of-Materials] (SBOM). This approach 
@@ -147,7 +149,7 @@ mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker
 
 * Website: <https://dependencytrack.org/>
 * Documentation: <https://docs.dependencytrack.org/>
-* Component Analysis: <https://www.owasp.org/index.php/Component_Analysis>
+* Component Analysis: <https://owasp.org/www-community/Component_Analysis>
 
 ## Community
 
@@ -179,9 +181,8 @@ the [NOTICES.txt] [notices] file for more information.
   [Sonatype OSS Index]: https://ossindex.sonatype.org
   [VulnDB]: https://vulndb.cyberriskanalytics.com
   [Risk Based Security]: https://www.riskbasedsecurity.com
-  [Supply Chain Component Analysis]: https://www.owasp.org/index.php/Component_Analysis
-  [Software Bill-of-Materials]: https://www.owasp.org/index.php/Component_Analysis#Software_Bill-of-Materials_.28SBOM.29
-  [OWASP Wiki]: https://www.owasp.org/index.php/OWASP_Dependency_Track_Project
+  [Supply Chain Component Analysis]: https://owasp.org/www-community/Component_Analysis
+  [Software Bill-of-Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
   [CycloneDX]: https://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg

@@ -52,7 +52,7 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 [Sonatype OSS Index]: https://ossindex.sonatype.org
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com
-[Supply Chain Component Analysis]: https://www.owasp.org/index.php/Component_Analysis
-[Software Bill-of-Materials]: https://www.owasp.org/index.php/Component_Analysis#Software_Bill-of-Materials_.28SBOM.29
+[Supply Chain Component Analysis]: https://owasp.org/www-community/Component_Analysis
+[Software Bill-of-Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
 [CycloneDX]: https://cyclonedx.org
 [SPDX]: https://spdx.org/

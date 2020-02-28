@@ -56,6 +56,10 @@
             <param-name>forwardTo</param-name>
             <param-value>/index.html</param-value>
         </init-param>
+        <init-param>
+            <param-name>forwardExcludes</param-name>
+            <param-value>/api,/mirror</param-value>
+        </init-param>
     </filter>
     <filter-mapping>
         <filter-name>WhitelistUrlFilter</filter-name>

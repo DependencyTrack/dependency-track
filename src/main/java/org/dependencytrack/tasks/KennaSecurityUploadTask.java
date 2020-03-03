@@ -30,12 +30,5 @@ public class KennaSecurityUploadTask extends VulnerabilityManagementUploadTask {
     /**
      * {@inheritDoc}
      */
-    public void inform(final Event e) {
-        if (e instanceof KennaSecurityUploadEventAbstract) {
-            final KennaSecurityUploadEventAbstract event = (KennaSecurityUploadEventAbstract) e;
-            LOGGER.debug("Starting Kenna Security upload task");
-            super.inform(event, new KennaSecurityUploader());
-            LOGGER.debug("Kenna Security upload complete");
-        }
-    }
+   
 }

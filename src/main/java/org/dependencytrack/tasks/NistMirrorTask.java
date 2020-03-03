@@ -235,41 +235,7 @@ public class NistMirrorTask implements LoggableSubscriber {
         }
     }
 
-    /**
-     * Extracts a GZip file.
-     * @param file the file to extract
-     */
-    private void uncompress(final File file, final ResourceType resourceType) {
-        final byte[] buffer = new byte[1024];
-        GZIPInputStream gzis = null;
-        OutputStream out = null;
-        try {
-            LOGGER.info("Uncompressing " + file.getName());
-            gzis = new GZIPInputStream(Files.newInputStream(file.toPath()));
-            final File uncompressedFile = new File(file.getAbsolutePath().replaceAll(".gz", ""));
-            out = Files.newOutputStream(uncompressedFile.toPath());
-            int len;
-            while ((len = gzis.read(buffer)) > 0) {
-                out.write(buffer, 0, len);
-            }
-            final long start = System.currentTimeMillis();
-            if (ResourceType.CVE == resourceType) {
-                final NvdParser parser = new NvdParser();
-                parser.parse(uncompressedFile);
-            } else if (ResourceType.CPE == resourceType) {
-                final CpeDictionaryParser parser = new CpeDictionaryParser();
-                parser.parse(uncompressedFile);
-            }
-            final long end = System.currentTimeMillis();
-            metricParseTime += end - start;
-        } catch (IOException ex) {
-            mirroredWithoutErrors = false;
-            LOGGER.error("An error occurred uncompressing NVD payload", ex);
-        } finally {
-            close(gzis);
-            close(out);
-        }
-    }
+
 
     /**
      * Closes a closable object.

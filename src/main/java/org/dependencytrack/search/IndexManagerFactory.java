@@ -35,35 +35,6 @@ import org.dependencytrack.model.VulnerableSoftware;
  */
 public class IndexManagerFactory {
 
-    public static ObjectIndexer getIndexManager(final IndexEvent event) {
-        if (Config.isUnitTestsEnabled()) {
-            return new ObjectIndexer() {
-                @Override
-                public String[] getSearchFields() { return new String[0]; }
-                @Override
-                public void add(final Object object) { }
-                @Override
-                public void remove(final Object object) { }
-                @Override
-                public void commit() { }
-                @Override
-                public void reindex() { }
-            };
-        }
-        if (event.getObject() instanceof Project || Project.class == event.getIndexableClass()) {
-            return ProjectIndexer.getInstance();
-        } else if (event.getObject() instanceof Component || Component.class == event.getIndexableClass()) {
-            return ComponentIndexer.getInstance();
-        } else if (event.getObject() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
-            return VulnerabilityIndexer.getInstance();
-        } else if (event.getObject() instanceof License || License.class == event.getIndexableClass()) {
-            return LicenseIndexer.getInstance();
-        } else if (event.getObject() instanceof Cpe || Cpe.class == event.getIndexableClass()) {
-            return CpeIndexer.getInstance();
-        } else if (event.getObject() instanceof VulnerableSoftware || VulnerableSoftware.class == event.getIndexableClass()) {
-            return VulnerableSoftwareIndexer.getInstance();
-        }
-        throw new IllegalArgumentException("Unsupported indexer requested");
-    }
+
 
 }

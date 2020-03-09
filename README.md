@@ -18,13 +18,13 @@
 ![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-black-text.svg?sanitize=true)
 
 
-Dependency-Track is an intelligent Software [Supply Chain Component Analysis] platform that allows organizations to 
+Dependency-Track is an intelligent Software [Supply Chain Component Analysis] platform that allows organizations to
 identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
-and highly beneficial approach by leveraging the capabilities of [Software Bill-of-Materials] (SBOM). This approach 
+and highly beneficial approach by leveraging the capabilities of [Software Bill-of-Materials] (SBOM). This approach
 provides capabilities that traditional Software Composition Analysis (SCA) solutions cannot achieve.
 
-Dependency-Track monitors component usage across all versions of every application in its portfolio in order to 
-proactively identify risk across an organization. The platform has an API-first design and is ideal for use in 
+Dependency-Track monitors component usage across all versions of every application in its portfolio in order to
+proactively identify risk across an organization. The platform has an API-first design and is ideal for use in
 Continuous Integration (CI) and Continuous Delivery (CD) environments.
 
 **NOTICE: Always use official binary releases in production.**
@@ -102,7 +102,7 @@ docker volume create --name dependency-track
 docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track:snapshot
 ```
 
-In the event you want to delete all Dependency-Track images, containers, and volumes, the following statements 
+In the event you want to delete all Dependency-Track images, containers, and volumes, the following statements
 may be executed. NOTE: This is a destructive operation and cannot be undone.
 
 
@@ -111,6 +111,16 @@ docker rmi owasp/dependency-track
 docker rm dependency-track
 docker volume rm dependency-track:/data
 ```
+
+## Deploying on Kubernetes with Helm
+You can install on Kubernetes using the [community-maintained chart](https://github.com/evryfs/helm-charts/tree/master/charts/dependency-track) like this:
+
+```shell
+helm repo add evryfs-oss https://evryfs.github.io/helm-charts/
+helm install evryfs-oss/dependency-track --name dependency-track --namespace dependency-track
+```
+by default it will install PostgreSQL and use persistent volume claims for the data-directory used for vulnerability feeds.
+
 
 ## Deploying the Executable WAR
 Another simple way to get Dependency-Track running quickly is to automatically deploy the executable WAR. This
@@ -121,11 +131,11 @@ java -Xmx4G -jar dependency-track-embedded.war
 ```
 
 ## Deploying the Conventional WAR
-This is the most difficult to deploy option as it requires an already installed and configured Servlet 
+This is the most difficult to deploy option as it requires an already installed and configured Servlet
 container such as Apache Tomcat 8.5 and higher, however, it offers the most flexible deployment options.
 Follow the Servlet containers instructions for deploying `dependency-track.war`.
- 
- 
+
+
 ## Compiling From Sources (optional)
 To create an executable WAR that is ready to launch (recommended for most users):
 
@@ -160,9 +170,9 @@ mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
 
 ## Support
-Dependency-Track is an open source project, created by people who believe that the knowledge of using 
+Dependency-Track is an open source project, created by people who believe that the knowledge of using
 vulnerable components should be accessible to anyone with a desire to know. By supporting this project, you'll
-allow the team to outsource testing, infrastructure, further research and development efforts, and engage in 
+allow the team to outsource testing, infrastructure, further research and development efforts, and engage in
 outreach to various communities that would benefit from this technology.
 
 [![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=paypal%40owasp%2eorg&lc=US&item_name=OWASP%20Dependency-Track&no_note=0&currency_code=USD&bn=PP%2dDonationsBF)
@@ -170,7 +180,7 @@ outreach to various communities that would benefit from this technology.
 ## Copyright & License
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
 
-Permission to modify and redistribute is granted under the terms of the 
+Permission to modify and redistribute is granted under the terms of the
 [Apache License 2.0] [license-url]
 
 Dependency-Track makes use of several other open source libraries. Please see

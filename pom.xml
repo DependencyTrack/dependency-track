@@ -85,7 +85,7 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.2.1</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>2.6.0</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>2.6.5</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
         <lib.lucene.version>7.7.2</lib.lucene.version>
         <lib.packageurl.version>1.1.1</lib.packageurl.version>
@@ -240,19 +240,19 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.0.3</version>
+            <version>6.1.1</version>
         </dependency>
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
-            <version>5.8.1</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.2.4</version>
+            <version>3.3.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

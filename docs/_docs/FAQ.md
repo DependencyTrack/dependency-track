@@ -32,3 +32,9 @@ dependencies like packages, libraries, and frameworks. In the local mirror there
 So the local mirror is used, but not for dependencies represented by PURL. Dependency Track will use the Analyzer best
 suited to analyze a given dependency.
 
+#### I updated Dependency Track and now I can not upload Dependency-Check reports
+
+Starting with Dependency Track v3.6.0 support for Dependency-Check XML reports was disabled by default. It was finally
+removed with v3.7.0. The fundamental concepts of Dependency-Check and Dependency Track are different, so the support
+was dropped. A comparison can be found in the [Dependency Check Comparison](./../odt-odc-comparison/).
+

@@ -23,6 +23,7 @@ import alpine.auth.AlpineAuthenticationException;
 import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.Authenticator;
 import alpine.auth.JsonWebToken;
+import alpine.auth.OidcAuthenticationService;
 import alpine.auth.PasswordService;
 import alpine.auth.PermissionRequired;
 import alpine.crypto.KeyManager;
@@ -99,6 +100,37 @@ public class UserResource extends AlpineResource {
             return Response.ok(token).build();
         } catch (AlpineAuthenticationException e) {
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
+            if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
+                return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).entity(e.getCauseType().name()).build();
+            }
+        }
+    }
+
+    @POST
+    @Path("oidc/login")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_PLAIN)
+    @AuthenticationNotRequired
+    public Response validateOidcAccessToken(@FormParam("accessToken") final String accessToken) {
+        final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken);
+
+        if (!authService.isSpecified()) {
+            LOGGER.error("OIDC is disabled");
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        try (final QueryManager qm = new QueryManager()) {
+            final Principal principal = authService.authenticate();
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + principal.getName());
+            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
+            final KeyManager km = KeyManager.getInstance();
+            final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
+            final String token = jwt.createToken(principal, permissions);
+            return Response.ok(token).build();
+        } catch (AlpineAuthenticationException e) {
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized OIDC validate attempt");
             if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
                 return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
             } else {

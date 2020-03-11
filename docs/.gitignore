@@ -1,9 +1,0 @@
-_site/
-.sass-cache/
-.jekyll-metadata
-
-# vscode
-.settings/
-target/
-.classpath
-.project

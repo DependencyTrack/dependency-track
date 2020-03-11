@@ -1,7 +1,7 @@
 ---
 title: Frequently Asked Questions
 category: FAQ
-chapter: 9
+chapter: 10
 order:
 ---
 

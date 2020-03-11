@@ -149,7 +149,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                 final List<ComponentReport> report = submit(json);
                 processResults(report, paginatedList);
             } catch (UnirestException e) {
-                LOGGER.error("An error occurred while analyzing", e);
+                handleRequestException(LOGGER, e);
             }
             LOGGER.info("Analyzing " + coordinates.size() + " component(s)");
             doThrottleDelay();
@@ -194,7 +194,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
             final OssIndexParser parser = new OssIndexParser();
             return parser.parse(jsonResponse.getBody());
         } else {
-            LOGGER.warn("Received unexpected HTTP response " + jsonResponse.getStatus() + " " + jsonResponse.getStatusText());
+            handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, jsonResponse.getStatus(), jsonResponse.getStatusText());
         }
         return new ArrayList<>();
     }

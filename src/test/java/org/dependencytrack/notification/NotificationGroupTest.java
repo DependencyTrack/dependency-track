@@ -29,6 +29,7 @@ public class NotificationGroupTest {
         Assert.assertEquals("CONFIGURATION", NotificationGroup.CONFIGURATION.name());
         Assert.assertEquals("DATASOURCE_MIRRORING", NotificationGroup.DATASOURCE_MIRRORING.name());
         Assert.assertEquals("REPOSITORY", NotificationGroup.REPOSITORY.name());
+        Assert.assertEquals("ANALYZER", NotificationGroup.ANALYZER.name());
         Assert.assertEquals("INTEGRATION", NotificationGroup.INTEGRATION.name());
         Assert.assertEquals("INDEXING_SERVICE", NotificationGroup.INDEXING_SERVICE.name());
         // Portfolio Groups

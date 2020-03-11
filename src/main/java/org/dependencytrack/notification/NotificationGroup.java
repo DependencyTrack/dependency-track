@@ -27,6 +27,7 @@ public enum NotificationGroup {
     INTEGRATION,
     INDEXING_SERVICE,
     FILE_SYSTEM,
+    ANALYZER,
 
     // Portfolio Groups
     NEW_VULNERABILITY,

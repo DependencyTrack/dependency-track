@@ -134,7 +134,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                     final List<Advisory> advisories = submit(packageJson);
                     processResults(new ArrayList<>(npmCandidates.values()), advisories);
                 } catch (UnirestException e) {
-                    LOGGER.error("An error occurred while analyzing", e);
+                    handleRequestException(LOGGER, e);
                 }
                 LOGGER.info("Analyzing " + npmCandidates.size() + " component(s)");
             }
@@ -158,7 +158,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
             final NpmAuditParser parser = new NpmAuditParser();
             return parser.parse(jsonResponse.getBody());
         } else {
-            LOGGER.warn("Received unexpected HTTP response " + jsonResponse.getStatus() + " " + jsonResponse.getStatusText());
+            handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, jsonResponse.getStatus(), jsonResponse.getStatusText());
         }
         return new ArrayList<>();
     }

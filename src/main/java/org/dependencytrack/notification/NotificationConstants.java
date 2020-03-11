@@ -34,6 +34,7 @@ public class NotificationConstants {
         public static final String CORE_INDEXING_SERVICES = "Core Indexing Services";
         public static final String FILE_SYSTEM_ERROR = "File System Error";
         public static final String REPO_ERROR = "Repository Error";
+        public static final String ANALYZER_ERROR = "Analyzer Error";
         public static final String INTEGRATION_ERROR = "Integration Error";
         public static final String NEW_VULNERABILITY = "New Vulnerability Identified";
         public static final String NEW_VULNERABLE_DEPENDENCY = "Vulnerable Dependency Introduced";

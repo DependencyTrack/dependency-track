@@ -75,8 +75,8 @@
     </issueManagement>
 
     <ciManagement>
-        <system>travis-ci</system>
-        <url>https://travis-ci.org/DependencyTrack/dependency-track</url>
+        <system>github-actions</system>
+        <url>https://github.com/DependencyTrack/dependency-track/actions</url>
     </ciManagement>
 
     <properties>

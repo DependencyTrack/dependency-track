@@ -39,7 +39,7 @@ database container (Postgres, MySQL, or Microsoft SQL). The following is an exam
 can be used with `docker-compose` or `docker stack deploy`.
 
 ```yaml
-version: '3'
+version: '3.7'
 services:
   dtrack:
     #environment:
@@ -92,6 +92,14 @@ services:
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
     image: 'owasp/dependency-track'
+    deploy:
+      resources:
+        limits:
+          memory: 12288m
+        reservations:
+          memory: 8192m
+      restart_policy:
+        condition: on-failure
     ports:
     - '80:8080'
     volumes:

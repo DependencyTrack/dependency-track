@@ -57,7 +57,14 @@ public class InternalComponentIdentificationTask implements Subscriber {
             for (final Component component : components != null ? components : qm.getAllComponents()) {
                 final boolean internal = InternalComponentIdentificationUtil.isInternalComponent(component, qm);
                 if (internal) {
-                    LOGGER.info("Component " + component + " was identified to be internal");
+                    LOGGER.debug("Component " + component + " was identified to be internal");
+                }
+                if (component.isInternal() != internal) { // We want to log changes to a component's internal status.
+                    if (internal) {
+                        LOGGER.info("Component " + component + " was identified to be internal. It was previously not an internal component.");
+                    } else {
+                        LOGGER.info("Component " + component + " was previously identified as an internal component. It is no longer identified as internal.");
+                    }
                 }
                 if (component.isInternal() != internal) {
                     component.setInternal(internal);

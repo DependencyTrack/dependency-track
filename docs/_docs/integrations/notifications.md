@@ -32,6 +32,7 @@ Each scope contains a set of notification groups that can be used to subscribe t
 
 | Scope | Group | Description |
 | ------|-------|-------------|
+| SYSTEM | ANALYZER | Notifications generated as a result of interacting with an external source of vulnerability intelligence |
 | SYSTEM | DATASOURCE_MIRRORING | Notifications generated when performing mirroring of one of the supported datasources such as the NVD |
 | SYSTEM | INDEXING_SERVICE | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching |
 | SYSTEM | FILE_SYSTEM | Notifications generated as a result of a file system operation. These are typically only generated on error conditions |

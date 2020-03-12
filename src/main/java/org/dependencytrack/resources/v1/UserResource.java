@@ -108,29 +108,42 @@ public class UserResource extends AlpineResource {
         }
     }
 
+    /**
+     * @since 3.9.0
+     */
     @POST
-    @Path("oidc/login")
+    @Path("login/oidc")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(
+            value = "Login with OpenID Connect",
+            notes = "Upon a successful login, a JSON Web Token will be returned in the response body. This functionality requires authentication to be enabled.",
+            response = String.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "No Content"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Forbidden")
+    })
     @AuthenticationNotRequired
     public Response validateOidcAccessToken(@FormParam("accessToken") final String accessToken) {
         final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken);
 
         if (!authService.isSpecified()) {
-            LOGGER.error("OIDC is disabled");
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "An OpenID Connect login attempt was made, but OIDC is disabled or not properly configured");
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
 
         try (final QueryManager qm = new QueryManager()) {
             final Principal principal = authService.authenticate();
-            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + principal.getName());
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful OpenID Connect login / username: " + principal.getName());
             final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
             final KeyManager km = KeyManager.getInstance();
             final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
             final String token = jwt.createToken(principal, permissions);
             return Response.ok(token).build();
         } catch (AlpineAuthenticationException e) {
-            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized OIDC validate attempt");
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized OpenID Connect login attempt");
             if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
                 return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
             } else {

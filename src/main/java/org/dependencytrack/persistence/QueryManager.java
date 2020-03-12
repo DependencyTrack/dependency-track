@@ -630,6 +630,7 @@ public class QueryManager extends AlpineQueryManager {
             // data to minimize the number of round trips a client needs to make, process, and render.
             for (Component component : result.getList(Component.class)) {
                 component.setMetrics(getMostRecentComponentMetrics(component));
+                component.setUsedBy(Math.toIntExact(getDependencyCount(component)));
             }
         }
         return result;
@@ -1493,6 +1494,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities() {
+        PaginatedResult result;
         final Query query = pm.newQuery(Vulnerability.class);
         if (orderBy == null) {
             query.setOrdering("id asc");
@@ -1500,9 +1502,14 @@ public class QueryManager extends AlpineQueryManager {
         if (filter != null) {
             query.setFilter("vulnId.toLowerCase().matches(:vulnId)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
+        } else {
+            result = execute(query);
         }
-        return execute(query);
+        for (Vulnerability vulnerability: result.getList(Vulnerability.class)) {
+            vulnerability.setAffectedProjectCount(this.getProjects(vulnerability).size());
+        }
+        return result;
     }
 
     /**

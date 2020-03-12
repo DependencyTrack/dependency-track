@@ -112,7 +112,7 @@ public class UserResource extends AlpineResource {
      * @since 3.9.0
      */
     @POST
-    @Path("login/oidc")
+    @Path("oidc/login")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation(
@@ -253,6 +253,9 @@ public class UserResource extends AlpineResource {
         }
     }
 
+    /**
+     * @since 3.9.0
+     */
     @GET
     @Path("oidc")
     @Produces(MediaType.APPLICATION_JSON)

@@ -1529,12 +1529,21 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities(Component component, boolean includeSuppressed) {
-        final String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
-        final Query query = pm.newQuery(Vulnerability.class, filter);
+        PaginatedResult result;
+        final String componentFilter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
+        final Query query = pm.newQuery(Vulnerability.class);
         if (orderBy == null) {
             query.setOrdering("id asc");
         }
-        return execute(query, component);
+        if (filter != null) {
+            query.setFilter(componentFilter + " && vulnId.toLowerCase().matches(:vulnId)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            result = execute(query, component, filterString);
+        } else {
+            query.setFilter(componentFilter);
+            result = execute(query, component);
+        }
+        return result;
     }
 
     /**

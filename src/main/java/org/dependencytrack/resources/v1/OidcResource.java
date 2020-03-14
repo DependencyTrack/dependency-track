@@ -1,9 +1,11 @@
 package org.dependencytrack.resources.v1;
 
+import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.PermissionRequired;
 import alpine.model.MappedOidcGroup;
 import alpine.model.Team;
 import alpine.resources.AlpineResource;
+import alpine.util.OidcUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -33,6 +35,14 @@ import java.util.List;
 @Path("/v1/oidc")
 @Api(value = "oidc", authorizations = @Authorization(value = "X-Api-Key"))
 public class OidcResource extends AlpineResource {
+
+    @GET
+    @Path("/available")
+    @Produces(MediaType.APPLICATION_JSON)
+    @AuthenticationNotRequired
+    public Response isAvailable() {
+        return Response.ok(OidcUtil.isOidcAvailable()).build();
+    }
 
     @GET
     @Path("/team/{uuid}")

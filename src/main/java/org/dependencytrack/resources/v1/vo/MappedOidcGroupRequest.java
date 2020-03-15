@@ -1,6 +1,5 @@
 package org.dependencytrack.resources.v1.vo;
 
-import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,7 +15,7 @@ public class MappedOidcGroupRequest {
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The team must be a valid 36 character UUID")
     private String team;
 
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The dn may only contain printable characters")
+    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The group must be a valid 36 character UUID")
     private String group;
 
     @JsonCreator

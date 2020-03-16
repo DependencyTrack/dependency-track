@@ -104,19 +104,12 @@ public class NistMirrorTask implements LoggableSubscriber {
     private void getAllFiles() {
         final Date currentDate = new Date();
         LOGGER.info("Downloading files at " + currentDate);
-        // Download the CPE dictionary first
-        doDownload(CPE_DICTIONARY_23_XML, ResourceType.CPE);
         for (int i = START_YEAR; i <= END_YEAR; i++) {
-            // Download JSON 1.0 year feeds
-            final String json10BaseUrl = CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
-            final String cveBaseMetaUrl = CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
-            doDownload(json10BaseUrl, ResourceType.CVE);
-            doDownload(cveBaseMetaUrl, ResourceType.CVE);
             // Download JSON 1.1 year feeds
             final String json11BaseUrl = CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
             final String cve11BaseMetaUrl = CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
-            doDownload(json11BaseUrl, ResourceType.NONE);
-            doDownload(cve11BaseMetaUrl, ResourceType.NONE);
+            doDownload(json11BaseUrl, ResourceType.CVE);
+            doDownload(cve11BaseMetaUrl, ResourceType.CVE);
         }
         doDownload(CVE_JSON_11_MODIFIED_URL, ResourceType.CVE);
         doDownload(CVE_JSON_11_MODIFIED_META, ResourceType.CVE);

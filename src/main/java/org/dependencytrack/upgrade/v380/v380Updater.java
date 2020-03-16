@@ -28,6 +28,8 @@ public class v380Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v380Updater.class);
     private static final String STMT_1 = "UPDATE \"REPOSITORY\" SET \"URL\" = 'https://repo1.maven.org/maven2/' WHERE \"TYPE\" = 'MAVEN' AND \"IDENTIFIER\" = 'central'";
+    private static final String STMT_2 = "DELETE FROM \"VULNERABLESOFTWARE_VULNERABILITIES\"";
+    private static final String STMT_3 = "DELETE FROM \"VULNERABLESOFTWARE\"";
 
     @Override
     public String getSchemaVersion() {
@@ -39,5 +41,8 @@ public class v380Updater extends AbstractUpgradeItem {
         LOGGER.info("Updating Maven Central URL");
         DbUtil.executeUpdate(connection, STMT_1);
 
+        LOGGER.info("Purging internal vulnerable software dictionary. This will take some time...");
+        DbUtil.executeUpdate(connection, STMT_2);
+        DbUtil.executeUpdate(connection, STMT_3);
     }
 }

@@ -54,6 +54,11 @@ import java.util.List;
 public final class NvdParser {
 
     private static final Logger LOGGER = Logger.getLogger(NvdParser.class);
+    private enum Operator {
+        AND,
+        OR,
+        NONE
+    }
 
     public void parse(final File file) {
         if (!file.getName().endsWith(".json")) {
@@ -164,17 +169,21 @@ public final class NvdParser {
                     final JsonArray nodes = configurations.getJsonArray("nodes");
                     for (int j = 0; j < nodes.size(); j++) {
                         final JsonObject node = nodes.getJsonObject(j);
-                        vulnerableSoftwares.addAll(parseCpes(qm, node, synchronizeVulnerability));
+                        final List<VulnerableSoftware> vulnerableSoftwareInNode = new ArrayList<>();
+                        final Operator nodeOperator = Operator.valueOf(node.getString("operator", Operator.NONE.name()));
                         if (node.containsKey("children")) {
                             final JsonArray children = node.getJsonArray("children");
                             for (int l = 0; l < children.size(); l++) {
                                 final JsonObject child = children.getJsonObject(l);
-                                vulnerableSoftwares.addAll(parseCpes(qm, child, vulnerability));
+                                vulnerableSoftwareInNode.addAll(parseCpes(qm, child, synchronizeVulnerability));
                             }
+                        } else {
+                            vulnerableSoftwareInNode.addAll(parseCpes(qm, node, synchronizeVulnerability));
                         }
+                        vulnerableSoftwares.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
+                        qm.persist(vulnerableSoftwares);
                     }
-                    final List<VulnerableSoftware> reconciledList = reconcile(vulnerableSoftwares);
-                    synchronizeVulnerability.setVulnerableSoftware(reconciledList);
+                    synchronizeVulnerability.setVulnerableSoftware(vulnerableSoftwares);
                     qm.persist(synchronizeVulnerability);
                 }
             });
@@ -197,22 +206,25 @@ public final class NvdParser {
      * @param vulnerableSoftwareList a list of all VulnerableSoftware object for a given CVE
      * @return a reconciled list of VulnerableSoftware objects
      */
-    private List<VulnerableSoftware> reconcile(List<VulnerableSoftware> vulnerableSoftwareList) {
+    private List<VulnerableSoftware> reconcile(List<VulnerableSoftware> vulnerableSoftwareList, final Operator nodeOperator) {
         final List<VulnerableSoftware> appPartList = new ArrayList<>();
         final List<VulnerableSoftware> osPartList = new ArrayList<>();
-        for (VulnerableSoftware vulnerableSoftware: vulnerableSoftwareList) {
-            if (vulnerableSoftware.getCpe23() != null && Part.OPERATING_SYSTEM.getAbbreviation().equals(vulnerableSoftware.getPart())) {
-                osPartList.add(vulnerableSoftware);
+        if (Operator.AND == nodeOperator) {
+            for (VulnerableSoftware vulnerableSoftware: vulnerableSoftwareList) {
+                if (vulnerableSoftware.getCpe23() != null && Part.OPERATING_SYSTEM.getAbbreviation().equals(vulnerableSoftware.getPart())) {
+                    osPartList.add(vulnerableSoftware);
+                }
+                if (vulnerableSoftware.getCpe23() != null && Part.APPLICATION.getAbbreviation().equals(vulnerableSoftware.getPart())) {
+                    appPartList.add(vulnerableSoftware);
+                }
             }
-            if (vulnerableSoftware.getCpe23() != null && Part.APPLICATION.getAbbreviation().equals(vulnerableSoftware.getPart())) {
-                appPartList.add(vulnerableSoftware);
+            if (!osPartList.isEmpty() && !appPartList.isEmpty()) {
+                return appPartList;
+            } else {
+                return vulnerableSoftwareList;
             }
         }
-        if (!osPartList.isEmpty() && !appPartList.isEmpty()) {
-            return appPartList;
-        } else {
-            return vulnerableSoftwareList;
-        }
+        return vulnerableSoftwareList;
     }
 
     private void parseCveImpact(final JsonObject cveItem, final Vulnerability vuln) {
@@ -274,12 +286,10 @@ public final class NvdParser {
         try {
             vs = ModelConverter.convertCpe23UriToVulnerableSoftware(cpe23Uri);
             vs.setVulnerable(cpeMatch.getBoolean("vulnerable", true));
-            vs.addVulnerability(vulnerability);
             vs.setVersionEndExcluding(versionEndExcluding);
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionStartIncluding(versionStartIncluding);
-            vs = qm.persist(vs);
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;
         } catch (CpeParsingException | CpeEncodingException e) {

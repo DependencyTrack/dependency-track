@@ -242,6 +242,7 @@ public class Component implements Serializable {
 
     private transient ComponentMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
+    private transient int usedBy;
 
     public long getId() {
         return id;
@@ -476,6 +477,14 @@ public class Component implements Serializable {
 
     public void setLastInheritedRiskScore(Double lastInheritedRiskScore) {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
+    }
+
+    public int getUsedBy() {
+        return usedBy;
+    }
+
+    public void setUsedBy(int usedBy) {
+        this.usedBy = usedBy;
     }
 
     @Override

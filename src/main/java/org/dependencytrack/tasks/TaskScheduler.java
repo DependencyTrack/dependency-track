@@ -72,8 +72,6 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         scheduleEvent(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY), 10000, 3600000);
 
         // Creates a new event that executes every 6 hours (21600000) after an initial 6 hour delay
-        // A long initial delay is due to DependencyCheckEvent being called directly after a successful
-        // NistMirrorEvent is processed.
         scheduleEvent(new VulnerabilityAnalysisEvent(), 21600000, 21600000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 hour (3600000) delay

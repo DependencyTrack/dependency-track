@@ -44,7 +44,11 @@ public class OidcResource extends AlpineResource {
 
     @GET
     @Path("/available")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(
+            value = "Indicates if OpenID Connect is available for this application",
+            response = Boolean.class
+    )
     @AuthenticationNotRequired
     public Response isAvailable() {
         return Response.ok(OidcUtil.isOidcAvailable()).build();
@@ -100,6 +104,7 @@ public class OidcResource extends AlpineResource {
     }
 
     @DELETE
+    @Path("/groups/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes an OpenID Connect group",
@@ -110,9 +115,10 @@ public class OidcResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The group could not be found")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response deleteTeam(final OidcGroup oidcGroupRequest) {
+    public Response deleteOidcGroup(@ApiParam(value = "The UUID of the group to delete", required = true)
+                                    @PathParam("uuid") final String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            final OidcGroup group = qm.getObjectByUuid(OidcGroup.class, oidcGroupRequest.getUuid());
+            final OidcGroup group = qm.getObjectByUuid(OidcGroup.class, uuid);
             if (group != null) {
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect group deleted: " + group.getName());
                 qm.delete(group);
@@ -162,7 +168,7 @@ public class OidcResource extends AlpineResource {
             @ApiResponse(code = 409, message = "A mapping with the same team and group name already exists")
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response addMapping(final MappedOidcGroupRequest request) {
+    public Response addOidcGroupMapping(final MappedOidcGroupRequest request) {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(request, "team"),
@@ -201,7 +207,7 @@ public class OidcResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
-    public Response deleteMapping(@ApiParam(value = "The UUID of the mapping to delete", required = true)
+    public Response deleteOidcGroupMapping(@ApiParam(value = "The UUID of the mapping to delete", required = true)
                                   @PathParam("uuid") final String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final MappedOidcGroup mapping = qm.getObjectByUuid(MappedOidcGroup.class, uuid);

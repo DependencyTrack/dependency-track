@@ -44,3 +44,9 @@ Starting with Dependency Track v3.6.0 support for Dependency-Check XML reports w
 removed with v3.7.0. The fundamental concepts of Dependency-Check and Dependency Track are different, so the support
 was dropped. A comparison can be found in the [Dependency Check Comparison](./../odt-odc-comparison/).
 
+#### Dependency Track crashes when run as a container
+
+Make sure the container is allowed to allocate enough RAM. For memory requirements see
+[Deploying Docker Container](./../getting-started/deploy-docker/). A common source for limited memory is Docker for
+Windows's default memory limit of 2GB which is too less. You can change this in docker's settings.
+

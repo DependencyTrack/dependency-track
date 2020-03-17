@@ -24,7 +24,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>1.7.2-SNAPSHOT</version>
+        <version>1.7.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -81,13 +81,13 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>1.0.0-rc.1</frontend.version>
+        <frontend.version>1.0.0-rc.2</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.2.2</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>2.6.5</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
-        <lib.lucene.version>7.7.2</lib.lucene.version>
+        <lib.lucene.version>8.4.1</lib.lucene.version>
         <lib.packageurl.version>1.1.1</lib.packageurl.version>
         <lib.pebble.version>3.1.2</lib.pebble.version>
         <lib.spdx-tools.version>2.1.20</lib.spdx-tools.version>
@@ -252,7 +252,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.3.0</version>
+            <version>3.3.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

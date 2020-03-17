@@ -26,7 +26,8 @@ Sonatype OSS Index Analyzer is disabled because you need an account and need to 
 #### I have just enabled OSS Index Analyzer but still don't see results
 
 The analyzers run asynchronously. After you enable an analyzer it is not immediately run.
-You have to wait some time until the analyzers are scheduled, currently 6 hours.  
+You have to wait some time until the analyzers are scheduled, currently this is 6 hours.  
+You can also trigger the analysis of one project by re-uploading a BOM for the project.  
 Restarting Dependency Track will not run the analyzers either, it will just reset the clock.
 
 #### Why is the local NVD mirror not used?

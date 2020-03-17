@@ -23,6 +23,12 @@ enabled by default but is necessary to scan dependencies represented by
 Sonatype OSS Index Analyzer is disabled because you need an account and need to configure it first. See
 [Sonatype OSS Index Analyzer](./../datasources/ossindex/).
 
+#### I have just enabled OSS Index Analyzer but still don't see results
+
+The analyzers run asynchronously. After you enable an analyzer it is not immediately run.
+You have to wait some time until the analyzers are scheduled, currently 6 hours.  
+Restarting Dependency Track will not run the analyzers either, it will just reset the clock.
+
 #### Why is the local NVD mirror not used?
 
 The local NVD mirror is used for dependencies that are identified by a [CPE](./../terminology/#cpe). These are mostly

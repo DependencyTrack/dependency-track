@@ -2176,7 +2176,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param identifier the repository identifier
      * @return true if object exists, false if not
      */
-    private boolean repositoryExist(RepositoryType type, String identifier) {
+    public boolean repositoryExist(RepositoryType type, String identifier) {
         final Query query = pm.newQuery(Repository.class, "type == :type && identifier == :identifier");
         return singleResult(query.execute(type, identifier)) != null;
     }
@@ -2189,7 +2189,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param enabled if the repo is enabled or not
      * @return the created Repository
      */
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled) {
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal) {
         if (repositoryExist(type, identifier)) {
             return null;
         }
@@ -2208,7 +2208,26 @@ public class QueryManager extends AlpineQueryManager {
         repo.setUrl(url);
         repo.setResolutionOrder(order + 1);
         repo.setEnabled(enabled);
+        repo.setInternal(internal);
         return persist(repo);
+    }
+
+    /**
+     * Updates an existing Repository.
+     * @param uuid the uuid of the repository to update
+     * @param identifier the identifier of the repository
+     * @param url a url of the repository
+     * @param internal specifies if the repository is internal
+     * @param enabled specifies if the repository is enabled
+     * @return the updated Repository
+     */
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean enabled) {
+        final Repository repository = getObjectByUuid(Repository.class, uuid);
+        repository.setIdentifier(identifier);
+        repository.setUrl(url);
+        repository.setInternal(internal);
+        repository.setEnabled(enabled);
+        return persist(repository);
     }
 
     /**

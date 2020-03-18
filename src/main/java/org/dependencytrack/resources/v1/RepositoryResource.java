@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.auth.PermissionRequired;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
@@ -29,11 +30,18 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
+import javax.validation.Validator;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -62,6 +70,7 @@ public class RepositoryResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getRepositories() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getRepositories();
@@ -82,6 +91,7 @@ public class RepositoryResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getRepositoriesByType(
             @ApiParam(value = "The type of repositories to retrieve", required = true)
             @PathParam("type")RepositoryType type) {
@@ -128,4 +138,98 @@ public class RepositoryResource extends AlpineResource {
         }
     }
 
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates a new repository",
+            response = Repository.class,
+            code = 201
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 409, message = "A repository with the specified identifier already exists")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response createRepository(Repository jsonRepository) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonRepository, "identifier"),
+                validator.validateProperty(jsonRepository, "url")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            final boolean exists = qm.repositoryExist(jsonRepository.getType(), StringUtils.trimToNull(jsonRepository.getIdentifier()));
+            if (! exists) {
+                final Repository repository = qm.createRepository(
+                        jsonRepository.getType(),
+                        StringUtils.trimToNull(jsonRepository.getIdentifier()),
+                        StringUtils.trimToNull(jsonRepository.getUrl()),
+                        jsonRepository.isEnabled(),
+                        jsonRepository.getInternal());
+                return Response.status(Response.Status.CREATED).entity(repository).build();
+            } else {
+                return Response.status(Response.Status.CONFLICT).entity("A repository with the specified identifier already exists.").build();
+            }
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates a repository",
+            response = Repository.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the repository could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response updateRepository(Repository jsonRepository) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonRepository, "url")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            Repository repository = qm.getObjectByUuid(Repository.class, jsonRepository.getUuid());
+            if (repository != null) {
+                final String url = StringUtils.trimToNull(jsonRepository.getUrl());
+                repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
+                        jsonRepository.getInternal(),
+                        jsonRepository.isEnabled());
+                return Response.ok(repository).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the repository could not be found.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Path("/{uuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Deletes a repository",
+            code = 204
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the repository could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response deleteRepository(
+            @ApiParam(value = "The UUID of the repository to delete", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Repository repository = qm.getObjectByUuid(Repository.class, uuid);
+            if (repository != null) {
+                qm.delete(repository);
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the repository could not be found.").build();
+            }
+        }
+    }
 }

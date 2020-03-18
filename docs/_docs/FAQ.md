@@ -6,7 +6,6 @@ order:
 ---
 
 Frequently asked questions about Dependency Track functionality that may not be covered by the documentation. If you don't find an answer here, try reaching out to the Slack [channel](https://owasp.slack.com/archives/C6R3R32H4) related to dependency track.
-<!--A link will be added later when we're done to directly take the reader to the slack channel-->
 
 #### Dependency Check and Dependency Track Comparison
 

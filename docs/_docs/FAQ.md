@@ -54,3 +54,7 @@ Windows's default memory limit of 2GB which is too less. You can change this in 
 #### Why is there a delay with LDAP synchronization?
 
 For auto-provisioned accounts, LDAP synchronization is performed on-demand and utilizes the same async job scheduling queue that all other jobs use. If the system is busy processing other jobs (mirroring the NVD or processing lots of BOMs simultaneously for example), there might be a slight delay provisioning the account (which includes permission sync). If the LDAP account is manually created in DT, then synchronization has already happened and there shouldn’t be a delay.
+
+#### Breaking changes with Java 11
+
+Java 11 introduces breaking changes, which is the reason most organizations still use Java 8, and the reason why the DT Docker images still use Java 8 as well.

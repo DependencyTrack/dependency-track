@@ -213,16 +213,16 @@ public class DefaultObjectGenerator implements ServletContextListener {
     private void loadDefaultRepositories() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing default repositories to datastore");
-            qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true);
-            qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true);
-            qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true);
-            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://maven.atlassian.com/content/repositories/atlassian-public/", true);
-            qm.createRepository(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", true);
-            qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true);
-            qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true);
-            qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true);
-            qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true);
-            qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true);
+            qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false);
+            qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false);
+            qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true, false);
+            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://maven.atlassian.com/content/repositories/atlassian-public/", true, false);
+            qm.createRepository(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", true, false);
+            qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true, false);
+            qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true, false);
+            qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true, false);
+            qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true, false);
+            qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true, false);
         }
     }
 

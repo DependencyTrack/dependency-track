@@ -31,6 +31,7 @@ import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Tracks third-party metadata about component groups from external repositories
@@ -76,6 +77,17 @@ public class Repository implements Serializable {
     @Column(name = "ENABLED")
     @NotNull
     private boolean enabled;
+
+    @Persistent
+    @Column(name = "INTERNAL")
+    @NotNull
+    private Boolean internal; // New column, must allow nulls on existing databases
+
+    @Persistent(customValueStrategy = "uuid")
+    @Unique(name = "REPOSITORY_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "true")  // New column, must allow nulls on existing databases
+    @NotNull
+    private UUID uuid;
 
     public long getId() {
         return id;
@@ -125,4 +137,19 @@ public class Repository implements Serializable {
         this.enabled = enabled;
     }
 
+    public Boolean getInternal() {
+        return internal;
+    }
+
+    public void setInternal(Boolean internal) {
+        this.internal = internal;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
 }

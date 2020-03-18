@@ -5,7 +5,7 @@ chapter: 10
 order:
 ---
 
-Frequently asked questions about Dependency Track functionality that may not be covered by the documentation. If you don't find an answer here, try reaching out to the Slack channel related to dependency track.
+Frequently asked questions about Dependency Track functionality that may not be covered by the documentation. If you don't find an answer here, try reaching out to the Slack [channel](https://owasp.slack.com/archives/C6R3R32H4) related to dependency track.
 <!--A link will be added later when we're done to directly take the reader to the slack channel-->
 
 #### Dependency Check and Dependency Track Comparison
@@ -51,3 +51,6 @@ Make sure the container is allowed to allocate enough RAM. For memory requiremen
 [Deploying Docker Container](./../getting-started/deploy-docker/). A common source for limited memory is Docker for
 Windows's default memory limit of 2GB which is too less. You can change this in docker's settings.
 
+#### Why is there a delay with LDAP synchronization?
+
+For auto-provisioned accounts, LDAP synchronization is performed on-demand and utilizes the same async job scheduling queue that all other jobs use. If the system is busy processing other jobs (mirroring the NVD or processing lots of BOMs simultaneously for example), there might be a slight delay provisioning the account (which includes permission sync). If the LDAP account is manually created in DT, then synchronization has already happened and there shouldn’t be a delay.

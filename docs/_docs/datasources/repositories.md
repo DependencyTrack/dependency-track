@@ -5,16 +5,15 @@ chapter: 4
 order: 6
 ---
 
-Dependency-Track relies on integration with external repositories to help identify metadata that may be useful
-for the identification of risk. Repositories are typically used in software engineering as a way to manage and 
-automatically resolve dependencies.
+Dependency-Track relies on integration with repositories to help identify metadata that may be useful
+for the identification of risk. Package repositories to manage and automatically resolve dependencies.
 
-Dependency-Track incorporates the concept of repositories, completely independent of software engineering use-cases, 
+Dependency-Track incorporates the concept of repositories, completely independent of software engineering use-cases,
 as a way to gain additional intelligence about the components it's tracking. Dependency-Track brings the power of
-external repositories to every project the system tracks, whether the project is internally developed or commercial
+package repositories to every project the system tracks, whether the project is developed internally or commercial
 off-the-shelf software.
 
-Dependency-Track supports the following repositories:
+Dependency-Track supports the following default repositories:
 
 | Ecosystem | Repository       | Resolution Order |
 | --------- | ---------------- | ---------------- |
@@ -30,7 +29,14 @@ Dependency-Track supports the following repositories:
 | pypi      | PyPi             | 1 |
 
 
-> Future versions of Dependency-Track will support configurable repositories and additional ecosystems.
+Additional repositories can be added for each supported ecosystem. Additionally, repositories can be enabled or disabled
+as well as identified as 'internal'.
+
+![repositories](/images/screenshots/repositories.png)
+
+> Components that are identified as 'internal' will only be analyzed using 'internal' repositories. Non-internal
+> components will only be analyzed using non-internal repositories. Disabled repositories will be omitted from
+> component metadata analysis.
 
 
 ### Outdated Version Tracking

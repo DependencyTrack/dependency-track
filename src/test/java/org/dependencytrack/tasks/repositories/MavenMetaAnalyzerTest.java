@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -43,7 +42,7 @@ public class MavenMetaAnalyzerTest {
     @Test
     public void testAnalyzerForScalaComponent() throws Exception {
         Component component = new Component();
-        
+
         // Scala packages differ from others in that their name always includes the version of
         // the Scala compiler they were built with.
         component.setPurl(new PackageURL("pkg:maven/com.typesafe.akka/akka-actor_2.13@2.5.23"));
@@ -55,16 +54,4 @@ public class MavenMetaAnalyzerTest {
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
-
-    @Test
-    public void shouldNotBeApplicableWhenComponentIsInternal() throws MalformedPackageURLException {
-        final Component component = new Component();
-        component.setPurl(new PackageURL("pkg:maven/junit/junit@4.12"));
-        component.setInternal(true);
-
-        final MavenMetaAnalyzer analyzer = new MavenMetaAnalyzer();
-
-        Assert.assertFalse(analyzer.isApplicable(component));
-    }
-
 }

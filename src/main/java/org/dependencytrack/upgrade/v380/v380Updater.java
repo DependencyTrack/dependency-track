@@ -68,6 +68,14 @@ public class v380Updater extends AbstractUpgradeItem {
             LOGGER.error("An error occurred deleting the NIST directory", e);
         }
 
+        LOGGER.info("Deleting index directory");
+        try {
+            final String INDEX_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "index";
+            FileDeleteStrategy.FORCE.delete(new File(INDEX_ROOT_DIR));
+        } catch (IOException e) {
+            LOGGER.error("An error occurred deleting the index directory", e);
+        }
+
         LOGGER.info("Updating existing repositories to be non-internal");
         try {
             DbUtil.executeUpdate(connection, STMT_4);

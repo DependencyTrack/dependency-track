@@ -137,7 +137,7 @@ public class Repository implements Serializable {
         this.enabled = enabled;
     }
 
-    public Boolean getInternal() {
+    public Boolean isInternal() {
         return internal;
     }
 

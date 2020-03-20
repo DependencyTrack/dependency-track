@@ -83,19 +83,37 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
         LOGGER.debug("Analyzing component: " + component.getUuid());
         final IMetaAnalyzer analyzer = IMetaAnalyzer.build(component);
         for (final Repository repository: qm.getAllRepositoriesOrdered(analyzer.supportedRepositoryType())) {
-            analyzer.setRepositoryBaseUrl(repository.getUrl());
-            final MetaModel model = analyzer.analyze(component);
-            if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
-                // Resolution from repository was successful. Update meta model
-                final RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
-                metaComponent.setRepositoryType(repository.getType());
-                metaComponent.setNamespace(component.getPurl().getNamespace());
-                metaComponent.setName(component.getPurl().getName());
-                metaComponent.setPublished(model.getPublishedTimestamp());
-                metaComponent.setLatestVersion(model.getLatestVersion());
-                metaComponent.setLastCheck(new Date());
-                qm.synchronizeRepositoryMetaComponent(metaComponent);
-                return;
+            // Moved the identification of internal components from the isApplicable() method from the Meta Analyzers
+            // themselves (which was introduced in https://github.com/DependencyTrack/dependency-track/pull/512)
+            // and made a global decision here instead. Internal components should only be analyzed using internal
+            // repositories. Non-internal components should only be analyzed with non-internal repositories. We do not
+            // want non-internal components being analyzed with internal repositories as internal repositories are not
+            // the source of truth for these components, even if the repository acts as a proxy to the source of truth.
+            // This cannot be assumed.
+            if (repository.isEnabled() && ((component.isInternal() && repository.isInternal()) || (!component.isInternal() && !repository.isInternal()))) {
+                LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
+                        + repository.getIdentifier() + " (" + repository.getType() + ")");
+                analyzer.setRepositoryBaseUrl(repository.getUrl());
+                final MetaModel model = analyzer.analyze(component);
+                if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
+                    // Resolution from repository was successful. Update meta model
+                    final RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
+                    metaComponent.setRepositoryType(repository.getType());
+                    metaComponent.setNamespace(component.getPurl().getNamespace());
+                    metaComponent.setName(component.getPurl().getName());
+                    metaComponent.setPublished(model.getPublishedTimestamp());
+                    metaComponent.setLatestVersion(model.getLatestVersion());
+                    metaComponent.setLastCheck(new Date());
+                    qm.synchronizeRepositoryMetaComponent(metaComponent);
+                    // Since the component metadata found and captured from this repository, return from this
+                    // method without attempting to query additional repositories.
+                    LOGGER.debug("Found component metadata for: " + component.getUuid() + " using repository: "
+                            + repository.getIdentifier() + " (" + repository.getType() + ")");
+                    return;
+                }
+            } else {
+                LOGGER.debug("Skipping analysis of component: " + component.getUuid() + " using repository: "
+                        + repository.getIdentifier() + " (" + repository.getType() + ")");
             }
         }
     }

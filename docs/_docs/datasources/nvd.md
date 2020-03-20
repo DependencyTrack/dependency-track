@@ -25,21 +25,9 @@ is built into Dependency-Track and does not require further configuration. The m
 
 Directory listing is prohibited, but the index consists of identical content available from the NVD. This includes:
 
-##### JSON 1.0 feed
-* nvdcve-1.0-modified.json.gz
-* nvdcve-1.0-%d.json.gz
-* nvdcve-1.0-%d.meta
-
-(Where %d is a four digit year starting with 2002)
-
-
 ##### JSON 1.1 feed
 * nvdcve-1.1-modified.json.gz
 * nvdcve-1.1-%d.json.gz
 * nvdcve-1.1-%d.meta
 
 (Where %d is a four digit year starting with 2002)
-
-
-##### CPE
-* official-cpe-dictionary_v2.3.xml.gz

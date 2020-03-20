@@ -166,7 +166,7 @@ public class RepositoryResource extends AlpineResource {
                         StringUtils.trimToNull(jsonRepository.getIdentifier()),
                         StringUtils.trimToNull(jsonRepository.getUrl()),
                         jsonRepository.isEnabled(),
-                        jsonRepository.getInternal());
+                        jsonRepository.isInternal());
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A repository with the specified identifier already exists.").build();
@@ -197,7 +197,7 @@ public class RepositoryResource extends AlpineResource {
             if (repository != null) {
                 final String url = StringUtils.trimToNull(jsonRepository.getUrl());
                 repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
-                        jsonRepository.getInternal(),
+                        jsonRepository.isInternal(),
                         jsonRepository.isEnabled());
                 return Response.ok(repository).build();
             } else {

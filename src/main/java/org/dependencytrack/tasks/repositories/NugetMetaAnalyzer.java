@@ -54,7 +54,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(final Component component) {
-        return !component.isInternal() && component.getPurl() != null && PackageURL.StandardTypes.NUGET.equals(component.getPurl().getType());
+        return component.getPurl() != null && PackageURL.StandardTypes.NUGET.equals(component.getPurl().getType());
     }
 
     /**

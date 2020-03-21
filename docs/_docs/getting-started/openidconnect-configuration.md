@@ -5,13 +5,13 @@ chapter: 1
 order: 9
 ---
 
-Generally, Dependency-Track can be used with any Identity Provider that implements the [OpenID Connect standard](https://openid.net/connect/).
+Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect standard](https://openid.net/connect/).
 connect2id maintains a list of [public OpenID Connect Identity Providers](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk/openid-connect-providers).
 Although usage with public providers is technically possible, it's strongly recommended to only use providers
 that you or your organization have full control over. Misconfiguration may allow third parties to gain access to
 your Dependency-Track instance!
 
-Dependency-Track has been tested with multiple OpenID Connect Identity Providers. The following are
+Dependency-Track has been tested with multiple OpenID Connect identity providers. The following are
 some example configurations that are known to work. If you find that the provider of your choice does not work
 with Dependency-Track, please [file an issue](https://github.com/DependencyTrack/dependency-track/issues).
 
@@ -47,4 +47,4 @@ Dependency-Track's team synchronization feature, you'll have to create a mapper 
 ![Mapper creation](/images/screenshots/oidc-keycloak-groups-mapping.png)
 
 Depending on your setup you would use the mapper types `Group Membership` (as shown above) or `User Realm Role`.
-Make sure `Add to userinof` is enabled.
+Make sure `Add to userinfo` is enabled.

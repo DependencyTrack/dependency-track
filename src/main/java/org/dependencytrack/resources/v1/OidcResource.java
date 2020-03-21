@@ -23,12 +23,14 @@ import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,7 +57,7 @@ public class OidcResource extends AlpineResource {
     }
 
     @GET
-    @Path("/groups")
+    @Path("/group")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all OpenID Connect groups",
@@ -74,7 +76,7 @@ public class OidcResource extends AlpineResource {
     }
 
     @PUT
-    @Path("/groups")
+    @Path("/group")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -103,8 +105,40 @@ public class OidcResource extends AlpineResource {
         }
     }
 
+    @POST
+    @Path("/group")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates an OpenID Connect group",
+            response = OidcGroup.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response updateOidcGroup(final OidcGroup oidcGroupRequest) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(oidcGroupRequest, "uuid"),
+                validator.validateProperty(oidcGroupRequest, "name")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            OidcGroup oidcGroup = qm.getObjectByUuid(OidcGroup.class, oidcGroupRequest.getUuid());
+            if (oidcGroup != null) {
+                oidcGroup.setName(oidcGroupRequest.getName());
+                oidcGroup = qm.updateOidcGroup(oidcGroup);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect group updated: " + oidcGroup.getName());
+                return Response.ok(oidcGroup).build();
+            } else {
+                return Response.status(Response.Status.CONFLICT).entity("An OpenID Connect group with the specified UUID does not exists.").build();
+            }
+        }
+    }
+
     @DELETE
-    @Path("/groups/{uuid}")
+    @Path("/group/{uuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes an OpenID Connect group",
@@ -120,8 +154,9 @@ public class OidcResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final OidcGroup group = qm.getObjectByUuid(OidcGroup.class, uuid);
             if (group != null) {
-                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect group deleted: " + group.getName());
+                qm.delete(qm.getMappedOidcGroups(group));
                 qm.delete(group);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect group deleted: " + group.getName());
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The OpenID Connect group could not be found.").build();
@@ -133,8 +168,8 @@ public class OidcResource extends AlpineResource {
     @Path("/team/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns the group names of all groups mapped to the specified team",
-            response = String.class,
+            value = "Returns a list of mappings associated to the specified team",
+            response = MappedOidcGroup.class,
             responseContainer = "List"
     )
     @ApiResponses(value = {
@@ -151,6 +186,40 @@ public class OidcResource extends AlpineResource {
                 return Response.ok(mappings).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+            }
+        }
+    }
+
+    @GET
+    @Path("/group/{uuid}/team")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of teams associated with the specified group",
+            response = Team.class,
+            responseContainer = "List"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response retrieveTeamMappedByOidcGroupMapping(@ApiParam(value = "The UUID of the mapping to retrieve the team for", required = true)
+                                                         @PathParam("uuid") final String uuid) {
+        try (final QueryManager qm = new QueryManager()) {
+            final OidcGroup oidcGroup = qm.getObjectByUuid(OidcGroup.class, uuid);
+            if (oidcGroup != null) {
+                final List<MappedOidcGroup> mappedOidcGroups = qm.getMappedOidcGroups(oidcGroup);
+                final List<Team> teams = new ArrayList<>();
+                for (final MappedOidcGroup mappedOidcGroup : mappedOidcGroups) {
+                    // FIXME: This is a hack to force JDO to load the given fields as they're not part of the default fetch group
+                    mappedOidcGroup.getTeam().getUuid();
+                    mappedOidcGroup.getTeam().getName();
+
+                    teams.add(mappedOidcGroup.getTeam());
+                }
+                return Response.ok(teams).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the mapping could not be found.").build();
             }
         }
     }
@@ -192,25 +261,59 @@ public class OidcResource extends AlpineResource {
                 return Response.status(Response.Status.CONFLICT).entity("A mapping with the same team and groupName already exists.").build();
             }
         }
-
     }
 
     @DELETE
     @Path("/mapping/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Removes a mapping",
-            response = MappedOidcGroup.class
-    )
+    @ApiOperation(value = "Removes a mapping")
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response deleteOidcGroupMapping(@ApiParam(value = "The UUID of the mapping to delete", required = true)
-                                  @PathParam("uuid") final String uuid) {
+                                           @PathParam("uuid") final String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final MappedOidcGroup mapping = qm.getObjectByUuid(MappedOidcGroup.class, uuid);
+            if (mapping != null) {
+                qm.delete(mapping);
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the mapping could not be found.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Path("/mapping")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Removes a mapping")
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the mapping could not be found"),
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response deleteOidcGroupMapping(final MappedOidcGroupRequest request) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(request, "team"),
+                validator.validateProperty(request, "group")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            final Team team = qm.getObjectByUuid(Team.class, request.getTeam());
+            if (team == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
+            }
+
+            final OidcGroup group = qm.getObjectByUuid(OidcGroup.class, request.getGroup());
+            if (group == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the group could not be found.").build();
+            }
+
+            final MappedOidcGroup mapping = qm.getMappedOidcGroup(team, group);
             if (mapping != null) {
                 qm.delete(mapping);
                 return Response.status(Response.Status.NO_CONTENT).build();

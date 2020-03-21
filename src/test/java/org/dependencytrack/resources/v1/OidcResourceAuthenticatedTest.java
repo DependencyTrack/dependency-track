@@ -35,7 +35,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
         oidcGroup.setName("groupName");
         qm.persist(oidcGroup);
 
-        final Response response = target(V1_OIDC + "/groups")
+        final Response response = target(V1_OIDC + "/group")
                 .request().header(X_API_KEY, apiKey).get();
 
         assertThat(response.getStatus()).isEqualTo(200);
@@ -47,7 +47,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void retrieveOidcGroupsShouldReturnEmptyListWhenNoGroupsWhereFound() {
-        final Response response = target(V1_OIDC + "/groups")
+        final Response response = target(V1_OIDC + "/group")
                 .request().header(X_API_KEY, apiKey).get();
 
         assertThat(response.getStatus()).isEqualTo(200);
@@ -61,7 +61,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
         final OidcGroup oidcGroup = new OidcGroup();
         oidcGroup.setName("groupName");
 
-        final Response response = target(V1_OIDC + "/groups")
+        final Response response = target(V1_OIDC + "/group")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(oidcGroup, MediaType.APPLICATION_JSON));
@@ -81,7 +81,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
         final OidcGroup oidcGroup = new OidcGroup();
         oidcGroup.setName("groupName");
 
-        final Response response = target(V1_OIDC + "/groups")
+        final Response response = target(V1_OIDC + "/group")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(oidcGroup, MediaType.APPLICATION_JSON));
@@ -94,7 +94,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
         final OidcGroup oidcGroup = new OidcGroup();
         oidcGroup.setName(" ");
 
-        final Response response = target(V1_OIDC + "/groups")
+        final Response response = target(V1_OIDC + "/group")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(oidcGroup, MediaType.APPLICATION_JSON));
@@ -106,7 +106,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     public void deleteOidcGroupShouldDeleteGroupAndIndicateNoContent() {
         final OidcGroup existingOidcGroup = qm.createOidcGroup("groupName");
 
-        final Response response = target(V1_OIDC + "/groups/" + existingOidcGroup.getUuid())
+        final Response response = target(V1_OIDC + "/group/" + existingOidcGroup.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -117,7 +117,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     public void deleteOidcGroupShouldIndicateNotFoundWhenGroupDoesNotExist() {
-        final Response response = target(V1_OIDC + "/groups/" + UUID.randomUUID())
+        final Response response = target(V1_OIDC + "/group/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();

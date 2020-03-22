@@ -126,7 +126,7 @@ public class UserResource extends AlpineResource {
             @ApiResponse(code = 403, message = "Forbidden")
     })
     @AuthenticationNotRequired
-    public Response validateOidcAccessToken(@ApiParam(value = "", required = true)
+    public Response validateOidcAccessToken(@ApiParam(value = "An OAuth2 access token", required = true)
                                             @FormParam("accessToken") final String accessToken) {
         final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken);
 

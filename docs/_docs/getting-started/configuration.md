@@ -282,10 +282,12 @@ alpine.ldap.team.synchronization=false
 alpine.oidc.enabled=false
 
 # Optional
-# Defines the URI where OpenID Connect provider configuration can be retrieved from.
-# This URI typically has the form of https://your-oidc-provider.com/.well-known/openid-configuration
-# See also: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig
-alpine.oidc.discovery.uri=
+# Defines the issuer URL to be used for OpenID Connect.
+# This issuer MUST support provider configuration via the /.well-known/openid-configuration endpoint.
+# See also:
+# - https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
+# - https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig
+alpine.oidc.issuer=
 
 # Optional
 # Defines the name of the claim that contains the username in the provider's userinfo endpoint.
@@ -320,7 +322,6 @@ alpine.oidc.team.synchronization=false
 # When using a customizable / on-demand hosted identity provider, name, content, and inclusion in the userinfo endpoint
 # will most likely need to be configured.
 alpine.oidc.teams.claim=groups
-
 ```
 
 #### Proxy Configuration

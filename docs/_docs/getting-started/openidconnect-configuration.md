@@ -19,7 +19,7 @@ with Dependency-Track, please [file an issue](https://github.com/DependencyTrack
 
 ```ini
 alpine.oidc.enabled=true
-alpine.oidc.discovery.uri=https://gitlab.com/.well-known/openid-configuration
+alpine.oidc.issuer=https://gitlab.com
 alpine.oidc.user.provisioning=true
 alpine.oidc.username.claim=nickname
 alpine.oidc.team.synchronization=true
@@ -33,7 +33,7 @@ Please refer to the official documentation on [how to use GitLab as OpenID Conne
 
 ```ini
 alpine.oidc.enabled=true
-alpine.oidc.discovery.uri=http://localhost:8080/auth/realms/master/.well-known/openid-configuration
+alpine.oidc.issuer=http://localhost:8080/auth/realms/master
 alpine.oidc.user.provisioning=true
 alpine.oidc.username.claim=preferred_username
 alpine.oidc.team.synchronization=true

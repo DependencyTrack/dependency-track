@@ -30,7 +30,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveOidcGroupsShouldReturnListOfGroups() {
+    public void retrieveGroupsShouldReturnListOfGroups() {
         final OidcGroup oidcGroup = new OidcGroup();
         oidcGroup.setName("groupName");
         qm.persist(oidcGroup);
@@ -46,7 +46,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveOidcGroupsShouldReturnEmptyListWhenNoGroupsWhereFound() {
+    public void retrieveGroupsShouldReturnEmptyListWhenNoGroupsWhereFound() {
         final Response response = target(V1_OIDC + "/group")
                 .request().header(X_API_KEY, apiKey).get();
 
@@ -57,7 +57,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void createOidcGroupShouldReturnCreatedGroup() {
+    public void createGroupShouldReturnCreatedGroup() {
         final OidcGroup oidcGroup = new OidcGroup();
         oidcGroup.setName("groupName");
 
@@ -75,7 +75,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void createOidcGroupShouldIndicateConflictWhenGroupAlreadyExists() {
+    public void createGroupShouldIndicateConflictWhenGroupAlreadyExists() {
         qm.createOidcGroup("groupName");
 
         final OidcGroup oidcGroup = new OidcGroup();
@@ -90,7 +90,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void createOidcGroupShouldIndicateBadRequestWhenRequestIsInvalid() {
+    public void createGroupShouldIndicateBadRequestWhenRequestIsInvalid() {
         final OidcGroup oidcGroup = new OidcGroup();
         oidcGroup.setName(" ");
 
@@ -103,7 +103,50 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void deleteOidcGroupShouldDeleteGroupAndIndicateNoContent() {
+    public void updateGroupShouldUpdateAndReturnGroup() {
+        final OidcGroup existingGroup = qm.createOidcGroup("groupName");
+
+        final OidcGroup jsonGroup = new OidcGroup();
+        jsonGroup.setUuid(existingGroup.getUuid());
+        jsonGroup.setName("newGroupName");
+
+        final Response response = target(V1_OIDC + "/group").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonGroup, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonObject groupObject = parseJsonObject(response);
+        assertThat(groupObject.getString("uuid")).isEqualTo(jsonGroup.getUuid().toString());
+        assertThat(groupObject.getString("name")).isEqualTo("newGroupName");
+    }
+
+    @Test
+    public void updateGroupShouldIndicateBadRequestWhenRequestBodyIsInvalid() {
+        final OidcGroup jsonGroup = new OidcGroup();
+
+        final Response response = target(V1_OIDC + "/group").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonGroup, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    public void updateGroupShouldIndicateNotFoundWhenGroupDoesNotExist() {
+        final OidcGroup jsonGroup = new OidcGroup();
+        jsonGroup.setUuid(UUID.randomUUID());
+        jsonGroup.setName("groupName");
+
+        final Response response = target(V1_OIDC + "/group").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonGroup, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void deleteGroupShouldDeleteGroupAndIndicateNoContent() {
         final OidcGroup existingOidcGroup = qm.createOidcGroup("groupName");
 
         final Response response = target(V1_OIDC + "/group/" + existingOidcGroup.getUuid())
@@ -116,7 +159,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void deleteOidcGroupShouldIndicateNotFoundWhenGroupDoesNotExist() {
+    public void deleteGroupShouldIndicateNotFoundWhenGroupDoesNotExist() {
         final Response response = target(V1_OIDC + "/group/" + UUID.randomUUID())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -126,34 +169,31 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void retrieveOidcGroupMappingShouldReturnAllGroupMappingsForATeam() {
+    public void retrieveTeamsMappedToGroupShouldReturnTeamsMappedToSpecifiedGroup() {
+        final OidcGroup oidcGroup = qm.createOidcGroup("groupName");
         final Team team = qm.createTeam("teamName", false);
-        final OidcGroup group = qm.createOidcGroup("groupName");
-        qm.createMappedOidcGroup(team, group);
+        qm.createMappedOidcGroup(team, oidcGroup);
 
-        final Response response = target(V1_OIDC + "/team/" + team.getUuid())
+        final Response response = target(V1_OIDC + "/group/" + oidcGroup.getUuid() + "/team")
                 .request().header(X_API_KEY, apiKey).get();
 
         assertThat(response.getStatus()).isEqualTo(200);
 
-        final JsonArray mappingsArray = parseJsonArray(response);
-        assertThat(mappingsArray).hasSize(1);
-        assertThat(mappingsArray.getJsonObject(0).getJsonObject("id")).isNull();
-        assertThat(mappingsArray.getJsonObject(0).getString("uuid")).isNotEmpty();
-        assertThat(mappingsArray.getJsonObject(0).getJsonObject("team")).isNull();
-        assertThat(mappingsArray.getJsonObject(0).getJsonObject("group")).isNotNull();
+        final JsonArray teamsArray = parseJsonArray(response);
+        assertThat(teamsArray).hasSize(1);
+        assertThat(teamsArray.getJsonObject(0).getString("name")).isEqualTo("teamName");
     }
 
     @Test
-    public void retrieveOidcGroupMappingsShouldIndicateNotFoundWhenTeamDoesNotExist() {
-        final Response response = target(V1_OIDC + "/team/" + UUID.randomUUID())
+    public void retrieveTeamsMappedToGroupShouldIndicateNotFoundWhenGroupDoesNotExit() {
+        final Response response = target(V1_OIDC + "/group/" + UUID.randomUUID() + "/team")
                 .request().header(X_API_KEY, apiKey).get();
 
         assertThat(response.getStatus()).isEqualTo(404);
     }
 
     @Test
-    public void addOidcGroupMappingShouldIndicateBadRequestWhenRequestIsInvalid() {
+    public void addMappingShouldIndicateBadRequestWhenRequestIsInvalid() {
         final MappedOidcGroupRequest request = new MappedOidcGroupRequest("not-a-uuid", "not-a-uuid");
 
         final Response response = target(V1_OIDC + "/mapping")
@@ -165,7 +205,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void addOidcGroupMappingShouldIndicateNotFoundWhenTeamDoesNotExist() {
+    public void addMappingShouldIndicateNotFoundWhenTeamDoesNotExist() {
         final OidcGroup group = qm.createOidcGroup("groupName");
 
         final MappedOidcGroupRequest request = new MappedOidcGroupRequest(UUID.randomUUID().toString(), group.getUuid().toString());
@@ -179,7 +219,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void addOidcGroupMappingShouldIndicateNotFoundWhenGroupDoesNotExist() {
+    public void addMappingShouldIndicateNotFoundWhenGroupDoesNotExist() {
         final Team team = qm.createTeam("teamName", false);
 
         final MappedOidcGroupRequest request = new MappedOidcGroupRequest(team.getUuid().toString(), UUID.randomUUID().toString());
@@ -193,7 +233,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void addOidcGroupMappingShouldIndicateConflictWhenMappingAlreadyExists() {
+    public void addMappingShouldIndicateConflictWhenMappingAlreadyExists() {
         final Team team = qm.createTeam("teamName", false);
         final OidcGroup group = qm.createOidcGroup("groupName");
         qm.createMappedOidcGroup(team, group);
@@ -209,7 +249,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void addOidcGroupMappingShouldReturnCreatedMapping() {
+    public void addMappingShouldReturnCreatedMapping() {
         final Team team = qm.createTeam("teamName", false);
         final OidcGroup group = qm.createOidcGroup("groupName");
 
@@ -230,7 +270,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void deleteOidcGroupMappingShouldDeleteMappingAndIndicateNoContent() {
+    public void deleteMappingByUuidShouldDeleteMappingAndIndicateNoContent() {
         final Team team = qm.createTeam("teamName", false);
         final OidcGroup group = qm.createOidcGroup("groupName");
         final MappedOidcGroup mapping = qm.createMappedOidcGroup(team, group);
@@ -245,9 +285,57 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
-    public void deleteOidcGroupMappingShouldIndicateNotFoundWhenMappingDoesNotExist() {
+    public void deleteMappingByUuidShouldIndicateNotFoundWhenMappingDoesNotExist() {
         final Response response = target(V1_OIDC + "/mapping/" + UUID.randomUUID())
                 .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void deleteMappingShouldDeleteMappingAndIndicateNoContent() {
+        final OidcGroup oidcGroup = qm.createOidcGroup("groupName");
+        final Team team = qm.createTeam("teamName", false);
+        final MappedOidcGroup mapping = qm.createMappedOidcGroup(team, oidcGroup);
+
+        final Response response = target(V1_OIDC + "/group/" + oidcGroup.getUuid() + "/team/" + team.getUuid() + "/mapping").request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(204);
+        assertThat(qm.getObjectByUuid(MappedOidcGroup.class, mapping.getUuid())).isNull();
+    }
+
+    @Test
+    public void deleteMappingShouldIndicateNotFoundWhenTeamDoesNotExist() {
+        final OidcGroup oidcGroup = qm.createOidcGroup("groupName");
+
+        final Response response = target(V1_OIDC + "/group/" + oidcGroup.getUuid() + "/team/" + UUID.randomUUID() + "/mapping").request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void deleteMappingShouldIndicateNotFoundWhenGroupDoesNotExist() {
+        final Team team = qm.createTeam("teamName", false);
+
+        final Response response = target(V1_OIDC + "/group/" + UUID.randomUUID() + "/team/" + team.getUuid() + "/mapping").request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    public void deleteMappingShouldIndicateNotFoundWhenMappingDoesNotExist() {
+        final OidcGroup oidcGroup = qm.createOidcGroup("groupName");
+        final Team team = qm.createTeam("teamName", false);
+
+        final Response response = target(V1_OIDC + "/group/" + oidcGroup.getUuid() + "/team/" + team.getUuid() + "/mapping").request()
                 .header(X_API_KEY, apiKey)
                 .delete();
 

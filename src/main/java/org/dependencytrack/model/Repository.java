@@ -22,12 +22,8 @@ import alpine.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Unique;
+
+import javax.jdo.annotations.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -84,7 +80,7 @@ public class Repository implements Serializable {
     private Boolean internal; // New column, must allow nulls on existing databases
 
     @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "REPOSITORY_UUID_IDX")
+    @Index(name = "REPOSITORY_UUID_IDX") // Cannot be @Unique. Microsoft SQL Server throws an exception
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "true")  // New column, must allow nulls on existing databases
     @NotNull
     private UUID uuid;

@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.auth.PermissionRequired;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
 import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
 import alpine.validation.RegexSequence;
@@ -165,7 +166,7 @@ public class AnalysisResource extends AlpineResource {
             }
 
             String commenter = null;
-            if (getPrincipal() instanceof LdapUser || getPrincipal() instanceof ManagedUser) {
+            if (getPrincipal() instanceof LdapUser || getPrincipal() instanceof ManagedUser || getPrincipal() instanceof OidcUser) {
                 commenter = ((UserPrincipal) getPrincipal()).getUsername();
             }
 

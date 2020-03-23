@@ -325,6 +325,9 @@ public class UserResource extends AlpineResource {
                 if (super.isLdapUser()) {
                     final LdapUser user = qm.getLdapUser(getPrincipal().getName());
                     return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
+                } else if (super.isOidcUser()) {
+                    final OidcUser user = qm.getOidcUser(getPrincipal().getName());
+                    return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
                 } else if (super.isManagedUser()) {
                     final ManagedUser user = (ManagedUser) super.getPrincipal();
                     if (StringUtils.isBlank(jsonUser.getFullname())) {

@@ -30,7 +30,7 @@ elif [ -d ".svn" ]; then
 fi
 
 # Default build produces traditional war. Exit on failure.
-mvn clean package
+mvn clean package -Dmaven.test.skip=true
 if [[ "$?" -ne 0 ]] ; then
   echo 'Aborting release due to build failure'; exit $rc
 fi

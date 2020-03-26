@@ -1,0 +1,9 @@
+docs/_site/
+docs/.sass-cache/
+docs/.jekyll-metadata
+
+# vscode
+.settings/
+target/
+.classpath
+.project

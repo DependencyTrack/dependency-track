@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -84,7 +85,7 @@ public class Repository implements Serializable {
     private Boolean internal; // New column, must allow nulls on existing databases
 
     @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "REPOSITORY_UUID_IDX")
+    @Index(name = "REPOSITORY_UUID_IDX") // Cannot be @Unique. Microsoft SQL Server throws an exception
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "true")  // New column, must allow nulls on existing databases
     @NotNull
     private UUID uuid;

@@ -52,7 +52,7 @@ services:
     # - ALPINE_DATABASE_MODE=external
     # - ALPINE_DATABASE_URL=jdbc:postgresql://postgres10:5432/dtrack
     # - ALPINE_DATABASE_DRIVER=org.postgresql.Driver
-    # - ALPINE_DATABASE_DRIVER_PATH=/extlib/postgresql-42.2.5.jar
+    # - ALPINE_DATABASE_DRIVER_PATH=/extlib/postgresql-42.2.11.jar
     # - ALPINE_DATABASE_USERNAME=dtrack
     # - ALPINE_DATABASE_PASSWORD=changeme
     # - ALPINE_DATABASE_POOL_ENABLED=true
@@ -115,7 +115,7 @@ with `ALPINE_DATABASE_DRIVER_PATH`.
 | ------------- | ----------------------------------------- |
 | Microsoft SQL | /extlib/mssql-jdbc-7.1.3.jre8-preview.jar |
 | MySQL         | /extlib/mysql-connector-java-5.1.47.jar   |
-| PostgreSQL    | /extlib/postgresql-42.2.5.jar             |
+| PostgreSQL    | /extlib/postgresql-42.2.11.jar            |
 
 The inclusion of drivers does not preclude the use of other driver versions. They are
 bundled as a matter of convenience.

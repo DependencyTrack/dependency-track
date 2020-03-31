@@ -528,6 +528,63 @@ public class UserResource extends AlpineResource {
         }
     }
 
+    @PUT
+    @Path("oidc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates a new user that references an existing OpenID Connect user.",
+            response = OidcUser.class,
+            code = 201
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Username cannot be null or blank."),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 409, message = "A user with the same username already exists. Cannot create new user")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response createOidcUser(final OidcUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            if (StringUtils.isBlank(jsonUser.getUsername())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
+            }
+            OidcUser user = qm.getOidcUser(jsonUser.getUsername());
+            if (user == null) {
+                user = qm.createOidcUser(jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user created: " + jsonUser.getUsername());
+                return Response.status(Response.Status.CREATED).entity(user).build();
+            } else {
+                return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Path("oidc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Deletes an OpenID Connect user.",
+            code = 204
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The user could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response deleteOidcUser(final OidcUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            final OidcUser user = qm.getOidcUser(jsonUser.getUsername());
+            if (user != null) {
+                qm.delete(user);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + jsonUser.getUsername());
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
+            }
+        }
+    }
+
     @POST
     @Path("/{username}/membership")
     @Consumes(MediaType.APPLICATION_JSON)

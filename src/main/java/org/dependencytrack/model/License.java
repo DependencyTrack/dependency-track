@@ -28,10 +28,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
 import javax.jdo.annotations.FetchGroups;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
+import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -42,6 +44,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -63,6 +66,7 @@ import java.util.UUID;
                 @Persistent(name = "fsfLibre"),
                 @Persistent(name = "deprecatedLicenseId"),
                 @Persistent(name = "seeAlso"),
+                @Persistent(name = "licenseGroups"),
                 @Persistent(name = "uuid"),
         }),
         @FetchGroup(name = "CONCISE", members = {
@@ -187,6 +191,16 @@ public class License implements Serializable {
     @JsonDeserialize(using = TrimmedStringArrayDeserializer.class)
     private String[] seeAlso;
 
+    /**
+     * Specifies zero-to-n license groups this license is part of.
+     */
+    @Persistent(mappedBy = "licenses")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
+    private List<LicenseGroup> licenseGroups;
+
+    /**
+     * The unique identifier of the object.
+     */
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "LICENSE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -283,6 +297,14 @@ public class License implements Serializable {
         } else {
             this.seeAlso = null;
         }
+    }
+
+    public List<LicenseGroup> getLicenseGroups() {
+        return licenseGroups;
+    }
+
+    public void setLicenseGroups(List<LicenseGroup> licenseGroups) {
+        this.licenseGroups = licenseGroups;
     }
 
     public UUID getUuid() {

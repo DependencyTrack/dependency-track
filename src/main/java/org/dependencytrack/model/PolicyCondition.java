@@ -1,0 +1,148 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
+package org.dependencytrack.model;
+
+import alpine.validation.RegexSequence;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import javax.jdo.annotations.Column;
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.UUID;
+
+/**
+ * Defines a Model class for defining a policy condition.
+ *
+ * @author Steve Springett
+ * @since 3.9.0
+ */
+@PersistenceCapable
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class PolicyCondition implements Serializable {
+
+    public enum Condition {
+        IS,
+        IS_NOT,
+        MATCHES,
+        NO_MATCH,
+        NUMERIC_GREATER_THAN,
+        NUMERIC_LESS_THAN,
+        NUMERIC_EQUAL,
+        NUMERIC_NOT_EQUAL,
+        NUMERIC_GREATER_THAN_OR_EQUAL,
+        NUMERIC_LESSER_THAN_OR_EQUAL
+    }
+
+    public enum Subject {
+        AGE,
+        ANALYZER,
+        BOM,
+        COMPONENT_GROUP,
+        COMPONENT_NAME,
+        COMPONENT_VERSION,
+        LICENSE,
+        LICENSE_GROUP,
+        PACKAGE_URL
+    }
+
+    @PrimaryKey
+    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
+    @JsonIgnore
+    private long id;
+
+    @Persistent
+    @Column(name = "CONDITION", allowsNull = "false")
+    @NotBlank
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The condition may only contain printable characters")
+    private Condition condition;
+
+    @Persistent
+    @Column(name = "SUBJECT", allowsNull = "false")
+    @NotBlank
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The subject may only contain printable characters")
+    private Subject subject;
+
+    @Persistent
+    @Column(name = "VALUE", allowsNull = "false")
+    @NotBlank
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The value may only contain printable characters")
+    private String value;
+
+    /**
+     * The unique identifier of the object.
+     */
+    @Persistent(customValueStrategy = "uuid")
+    @Unique(name = "POLICYCONDITION_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
+    @NotNull
+    private UUID uuid;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public Condition getCondition() {
+        return condition;
+    }
+
+    public void setCondition(Condition condition) {
+        this.condition = condition;
+    }
+
+    public Subject getSubject() {
+        return subject;
+    }
+
+    public void setSubject(Subject subject) {
+        this.subject = subject;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+}

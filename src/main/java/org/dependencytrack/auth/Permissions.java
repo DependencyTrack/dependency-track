@@ -32,7 +32,8 @@ public enum Permissions {
     VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities affecting projects in the portfolio"),
     ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys"),
     SYSTEM_CONFIGURATION("Allows the configuration of the system including notifications, repositories, and email settings"),
-    PROJECT_CREATION_UPLOAD("Provides the ability to optionally create project (if non-existent) on BOM or scan upload");
+    PROJECT_CREATION_UPLOAD("Provides the ability to optionally create project (if non-existent) on BOM or scan upload"),
+    POLICY_MANAGEMENT("Allows the creation, modification, and deletion of policy");
 
     private final String description;
 
@@ -52,6 +53,7 @@ public enum Permissions {
         public static final String ACCESS_MANAGEMENT = "ACCESS_MANAGEMENT";
         public static final String SYSTEM_CONFIGURATION = "SYSTEM_CONFIGURATION";
         public static final String PROJECT_CREATION_UPLOAD = "PROJECT_CREATION_UPLOAD";
+        public static final String POLICY_MANAGEMENT = "POLICY_MANAGEMENT";
     }
 
 }

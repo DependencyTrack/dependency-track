@@ -33,8 +33,11 @@
         <class>org.dependencytrack.model.Dependency</class>
         <class>org.dependencytrack.model.DependencyMetrics</class>
         <class>org.dependencytrack.model.License</class>
+        <class>org.dependencytrack.model.LicenseGroup</class>
         <class>org.dependencytrack.model.NotificationPublisher</class>
         <class>org.dependencytrack.model.NotificationRule</class>
+        <class>org.dependencytrack.model.Policy</class>
+        <class>org.dependencytrack.model.PolicyCondition</class>
         <class>org.dependencytrack.model.PortfolioMetrics</class>
         <class>org.dependencytrack.model.Project</class>
         <class>org.dependencytrack.model.ProjectMetrics</class>

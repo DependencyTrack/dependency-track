@@ -27,7 +27,7 @@ public class PermissionsTest {
 
     @Test
     public void testPermissionEnums() {
-        Assert.assertEquals(7, Permissions.values().length);
+        Assert.assertEquals(8, Permissions.values().length);
         Assert.assertEquals("BOM_UPLOAD", Permissions.BOM_UPLOAD.name());
         Assert.assertEquals("VIEW_PORTFOLIO", Permissions.VIEW_PORTFOLIO.name());
         Assert.assertEquals("PORTFOLIO_MANAGEMENT", Permissions.PORTFOLIO_MANAGEMENT.name());
@@ -35,6 +35,7 @@ public class PermissionsTest {
         Assert.assertEquals("ACCESS_MANAGEMENT", Permissions.ACCESS_MANAGEMENT.name());
         Assert.assertEquals("SYSTEM_CONFIGURATION", Permissions.SYSTEM_CONFIGURATION.name());
         Assert.assertEquals("PROJECT_CREATION_UPLOAD", Permissions.PROJECT_CREATION_UPLOAD.name());
+        Assert.assertEquals("POLICY_MANAGEMENT", Permissions.POLICY_MANAGEMENT.name());
     }
 
     @Test
@@ -46,5 +47,6 @@ public class PermissionsTest {
         Assert.assertEquals("ACCESS_MANAGEMENT", ACCESS_MANAGEMENT);
         Assert.assertEquals("SYSTEM_CONFIGURATION", SYSTEM_CONFIGURATION);
         Assert.assertEquals("PROJECT_CREATION_UPLOAD", PROJECT_CREATION_UPLOAD);
+        Assert.assertEquals("POLICY_MANAGEMENT", POLICY_MANAGEMENT);
     }
 }

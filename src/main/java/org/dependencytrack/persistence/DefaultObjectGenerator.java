@@ -37,6 +37,7 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
+import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.search.IndexManager;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -88,6 +89,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultPermissions();
         loadDefaultPersonas();
         loadDefaultLicenses();
+        loadDefaultLicenseGroups();
         loadDefaultRepositories();
         loadDefaultNotificicationPublishers();
         loadDefaultConfigProperties();
@@ -127,6 +129,25 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 LOGGER.error(e.getMessage());
             }
             qm.commitSearchIndex(License.class);
+        }
+    }
+
+    /**
+     * Loads the default license groups into the database if no license groups exists.
+     */
+    private void loadDefaultLicenseGroups() {
+        try (QueryManager qm = new QueryManager()) {
+            final DefaultLicenseGroupImporter importer = new DefaultLicenseGroupImporter(qm);
+            if (! importer.shouldImport()) {
+                return;
+            }
+            LOGGER.info("Adding default license group definitions to datastore");
+            try {
+                importer.loadDefaults();
+            } catch (IOException e) {
+                LOGGER.error("An error occurred loading default license group definitions");
+                LOGGER.error(e.getMessage());
+            }
         }
     }
 

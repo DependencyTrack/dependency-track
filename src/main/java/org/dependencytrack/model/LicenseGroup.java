@@ -82,7 +82,6 @@ public class LicenseGroup implements Serializable {
      */
     @Persistent
     @Column(name = "RISKWEIGHT")
-    @NotNull
     private int riskWeight;
 
     /**

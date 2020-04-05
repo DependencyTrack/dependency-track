@@ -36,6 +36,7 @@ import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -125,6 +126,37 @@ public class PolicyResource extends AlpineResource {
                 return Response.status(Response.Status.CREATED).entity(policy).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A policy with the specified name already exists.").build();
+            }
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Updates a policy",
+            response = Policy.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The policy could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
+    public Response updatePolicy(Policy jsonPolicy) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonPolicy, "name")
+        );
+        try (QueryManager qm = new QueryManager()) {
+            Policy policy = qm.getObjectByUuid(Policy.class, jsonPolicy.getUuid());
+            if (policy != null) {
+                policy.setName(StringUtils.trimToNull(jsonPolicy.getName()));
+                policy.setOperator(jsonPolicy.getOperator());
+                policy.setViolationState(jsonPolicy.getViolationState());
+                policy = qm.persist(policy);
+                return Response.ok(policy).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
             }
         }
     }

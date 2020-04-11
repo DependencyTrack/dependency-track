@@ -31,33 +31,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentAnalysisCache;
-import org.dependencytrack.model.ComponentMetrics;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cpe;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.Dependency;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.License;
-import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.model.PortfolioMetrics;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectMetrics;
-import org.dependencytrack.model.ProjectProperty;
-import org.dependencytrack.model.Repository;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityMetrics;
-import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.NotificationUtil;
 import javax.jdo.FetchPlan;
@@ -864,6 +838,88 @@ public class QueryManager extends AlpineQueryManager {
             result = createLicense(license, commitIndex);
         }
         return result;
+    }
+
+    /**
+     * Returns a List of all Policy objects.
+     * @return a List of all Policy objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getPolicies() {
+        final Query query = pm.newQuery(Policy.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:filter)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
+    }
+
+    /**
+     * Returns a policy by it's name.
+     * @param name the name of the policy (required)
+     * @return a Policy object, or null if not found
+     */
+    public Policy getPolicy(final String name) {
+        final Query query = pm.newQuery(Policy.class, "name == :name");
+        return singleResult(query.execute(name));
+    }
+
+    /**
+     * Creates a new Policy.
+     * @param name the name of the policy to create
+     * @param operator the operator
+     * @param violationState the violation state
+     * @return the created Policy
+     */
+    public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState) {
+        final Policy policy = new Policy();
+        policy.setName(name);
+        policy.setOperator(operator);
+        policy.setViolationState(violationState);
+        return persist(policy);
+    }
+
+    /**
+     * Returns a List of all LicenseGroup objects.
+     * @return a List of all LicenseGroup objects
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getLicenseGroups() {
+        final Query query = pm.newQuery(LicenseGroup.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:filter)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            return execute(query, filterString);
+        }
+        return execute(query);
+    }
+
+    /**
+     * Returns a license group by it's name.
+     * @param name the name of the license group (required)
+     * @return a LicenseGroup object, or null if not found
+     */
+    public LicenseGroup getLicenseGroup(final String name) {
+        final Query query = pm.newQuery(LicenseGroup.class, "name == :name");
+        return singleResult(query.execute(name));
+    }
+
+    /**
+     * Creates a new LicenseGroup.
+     * @param name the name of the license group to create
+     * @return the created LicenseGroup
+     */
+    public LicenseGroup createLicenseGroup(String name) {
+        final LicenseGroup licenseGroup = new LicenseGroup();
+        licenseGroup.setName(name);
+        return persist(licenseGroup);
     }
 
     /**

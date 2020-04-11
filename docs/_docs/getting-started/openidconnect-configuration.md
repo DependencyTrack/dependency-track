@@ -38,7 +38,7 @@ alpine.oidc.user.provisioning=true
 alpine.oidc.username.claim=preferred_username
 alpine.oidc.team.synchronization=true
 alpine.oidc.always.sync.teams=true
-alpine.oidc.teams.claim=group
+alpine.oidc.teams.claim=groups
 ```
 
 Keycloak does not include group or role information in its UserInfo endpoint per default. If you want to use 

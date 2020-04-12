@@ -38,6 +38,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -102,9 +103,7 @@ public class Policy implements Serializable {
     /**
      * A list of zero-to-n policy conditions.
      */
-    @Persistent(table = "POLICY_POLICYCONDITION", defaultFetchGroup = "true")
-    @Join(column = "POLICY_ID")
-    @Element(column = "POLICYCONDITION_ID")
+    @Persistent(mappedBy = "policy", defaultFetchGroup = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<PolicyCondition> policyConditions;
 
@@ -164,6 +163,13 @@ public class Policy implements Serializable {
 
     public void setPolicyConditions(List<PolicyCondition> policyConditions) {
         this.policyConditions = policyConditions;
+    }
+
+    public void addPolicyCondition(PolicyCondition policyCondition) {
+        if (this.policyConditions == null) {
+            this.policyConditions = new ArrayList<>();
+        }
+        this.policyConditions.add(policyCondition);
     }
 
     public List<Project> getProjects() {

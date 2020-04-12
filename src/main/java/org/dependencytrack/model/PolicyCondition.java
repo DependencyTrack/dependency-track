@@ -46,7 +46,7 @@ import java.util.UUID;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PolicyCondition implements Serializable {
 
-    public enum Condition {
+    public enum Operator {
         IS,
         IS_NOT,
         MATCHES,
@@ -77,11 +77,15 @@ public class PolicyCondition implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "CONDITION", allowsNull = "false")
+    @Column(name = "POLICY_ID", allowsNull = "false")
+    private Policy policy;
+
+    @Persistent
+    @Column(name = "OPERATOR", allowsNull = "false")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The condition may only contain printable characters")
-    private Condition condition;
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The operator may only contain printable characters")
+    private Operator operator;
 
     @Persistent
     @Column(name = "SUBJECT", allowsNull = "false")
@@ -114,12 +118,20 @@ public class PolicyCondition implements Serializable {
         this.id = id;
     }
 
-    public Condition getCondition() {
-        return condition;
+    public Policy getPolicy() {
+        return policy;
     }
 
-    public void setCondition(Condition condition) {
-        this.condition = condition;
+    public void setPolicy(Policy policy) {
+        this.policy = policy;
+    }
+
+    public Operator getOperator() {
+        return operator;
+    }
+
+    public void setOperator(Operator operator) {
+        this.operator = operator;
     }
 
     public Subject getSubject() {

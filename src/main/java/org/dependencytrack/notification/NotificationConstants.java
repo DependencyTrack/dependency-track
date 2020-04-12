@@ -46,7 +46,7 @@ public class NotificationConstants {
         public static final String ANALYSIS_DECISION_SUPPRESSED = "Analysis Decision: Finding Suppressed";
         public static final String ANALYSIS_DECISION_UNSUPPRESSED = "Analysis Decision: Finding UnSuppressed";
         public static final String BOM_CONSUMED = "Bill-of-Materials Consumed";
-        public static final String BOM_PROCESSED = "Bill-of-Materials Processed}";
+        public static final String BOM_PROCESSED = "Bill-of-Materials Processed";
     }
 
 }

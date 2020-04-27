@@ -240,7 +240,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.1.1</version>
+            <version>6.2.0</version>
         </dependency>
         <!-- Test Dependencies -->
         <dependency>

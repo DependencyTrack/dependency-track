@@ -42,7 +42,7 @@ import org.dependencytrack.parser.npm.NpmAdvisoriesParser;
 import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.parser.npm.model.AdvisoryResults;
 import org.dependencytrack.persistence.QueryManager;
-import java.time.OffsetDateTime;
+import org.dependencytrack.util.DateUtil;
 import java.util.Date;
 
 /**
@@ -103,7 +103,13 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
                     final AdvisoryResults results = parser.parse(jsonResponse.getBody());
                     updateDatasource(results);
                     more = results.getNext() != null;
-                    url = NPM_BASE_URL + results.getNext();
+                    // Workaround for breaking changes made to NPM Advisories API documented in:
+                    // https://github.com/DependencyTrack/dependency-track/issues/676
+                    if (more) {
+                        final String queryString = results.getNext().substring(results.getNext().indexOf("?"));
+                        url = NPM_BASE_URL + NPM_ADVISORY_START + queryString;
+                    }
+                    //url = NPM_BASE_URL + results.getNext(); // No longer works
                 } else {
                     final String error = "An unexpected response received from NPM while performing mirror. Response: "
                             + jsonResponse.getStatus() + " " + jsonResponse.getStatusText() + " - Aborting";
@@ -160,13 +166,24 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
         vuln.setSubTitle(advisory.getModuleName());
 
         if (StringUtils.isNotBlank(advisory.getCreated())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getCreated());
-            vuln.setCreated(Date.from(odt.toInstant()));
-            vuln.setPublished(Date.from(odt.toInstant())); // Advisory does not have published, use created instead.
+            // final OffsetDateTime odt = OffsetDateTime.parse(advisory.getCreated());
+            // vuln.setCreated(Date.from(odt.toInstant()));
+            // vuln.setPublished(Date.from(odt.toInstant())); // Advisory does not have published, use created instead.
+
+            // NPM introduced breaking API changes and no longer support ISO 8601 dates with offsets as documented in:
+            // https://github.com/DependencyTrack/dependency-track/issues/676
+            final Date date = DateUtil.fromISO8601(advisory.getCreated());
+            vuln.setCreated(date);
+            vuln.setPublished(date); // Advisory does not have published, use created instead.
         }
         if (StringUtils.isNotBlank(advisory.getUpdated())) {
-            final OffsetDateTime odt = OffsetDateTime.parse(advisory.getUpdated());
-            vuln.setUpdated(Date.from(odt.toInstant()));
+            // final OffsetDateTime odt = OffsetDateTime.parse(advisory.getUpdated());
+            // vuln.setUpdated(Date.from(odt.toInstant()));
+
+            // NPM introduced breaking API changes and no longer support ISO 8601 dates with offsets as documented in:
+            // https://github.com/DependencyTrack/dependency-track/issues/676
+            final Date date = DateUtil.fromISO8601(advisory.getUpdated());
+            vuln.setUpdated(date);
         }
 
         vuln.setCredits(advisory.getFoundBy());

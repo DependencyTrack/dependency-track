@@ -88,4 +88,11 @@ public final class DateUtil {
         df.setTimeZone(tz);
         return df.format(date);
     }
+
+    public static Date fromISO8601(final String dateString) {
+        if (dateString == null) {
+            return null;
+        }
+        return javax.xml.bind.DatatypeConverter.parseDateTime(dateString).getTime();
+    }
 }

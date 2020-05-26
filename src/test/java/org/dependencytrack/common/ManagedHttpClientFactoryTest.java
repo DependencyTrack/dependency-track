@@ -36,6 +36,7 @@ public class ManagedHttpClientFactoryTest {
     @Before
     public void before() {
         environmentVariables.set("http_proxy", "http://acme\\username:password@127.0.0.1:1080");
+        environmentVariables.set("no_proxy", "localhost:443,127.0.0.1:8080");
     }
 
     @Test
@@ -54,6 +55,7 @@ public class ManagedHttpClientFactoryTest {
         Assert.assertEquals("acme", proxyInfo.getDomain());
         Assert.assertEquals("username", proxyInfo.getUsername());
         Assert.assertEquals("password", proxyInfo.getPassword());
+        Assert.assertArrayEquals(new String[]{"localhost:443", "127.0.0.1:8080"}, proxyInfo.getNoProxy());
     }
 
     @Test

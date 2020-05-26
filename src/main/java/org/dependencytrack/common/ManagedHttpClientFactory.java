@@ -115,6 +115,9 @@ public final class ManagedHttpClientFactory {
                 final HttpRequest request,
                 final HttpContext context) throws HttpException {
                     String[] noProxyList = proxyInfo.noProxy;
+                    if (noProxyList == null) {
+                        return super.determineRoute(host, request, context);
+                    }
                     if (noProxyList.equals(new String[]{"*"})) {
                         return new HttpRoute(host);
                     }

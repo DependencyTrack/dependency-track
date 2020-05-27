@@ -81,6 +81,18 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
     }
 
     @Test
+    public void validateOidcAccessTokenOidcNotAvailableTest() {
+        final Form form = new Form();
+        form.param("accessToken", "accessToken");
+
+        final Response response = target(V1_USER + "/oidc/login").request()
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        // OIDC is disabled by default
+        Assert.assertEquals(204, response.getStatus());
+    }
+
+    @Test
     public void forceChangePasswordTest() {
         Form form = new Form();
         form.param("username", "testuser");

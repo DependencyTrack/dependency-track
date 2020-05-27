@@ -22,6 +22,7 @@ import alpine.auth.PasswordService;
 import alpine.filters.AuthenticationFilter;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
 import alpine.model.Team;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.IdentifiableObject;
@@ -466,6 +467,33 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
                 .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
         // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
         Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void createOidcUserTest() {
+        final OidcUser user = new OidcUser();
+        user.setUsername("blackbeard");
+        Response response = target(V1_USER + "/oidc").request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(user, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("blackbeard", json.getString("username"));
+    }
+
+    @Test
+    public void createOidcUserDuplicateUsernameTest() {
+        qm.createOidcUser("blackbeard");
+        final OidcUser user = new OidcUser();
+        user.setUsername("blackbeard");
+        Response response = target(V1_USER + "/oidc").request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(user, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(409, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("A user with the same username already exists. Cannot create new user.", body);
     }
 
     @Test

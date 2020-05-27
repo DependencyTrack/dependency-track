@@ -23,16 +23,20 @@ import alpine.auth.AlpineAuthenticationException;
 import alpine.auth.AuthenticationNotRequired;
 import alpine.auth.Authenticator;
 import alpine.auth.JsonWebToken;
+import alpine.auth.OidcAuthenticationService;
 import alpine.auth.PasswordService;
 import alpine.auth.PermissionRequired;
 import alpine.crypto.KeyManager;
 import alpine.logging.Logger;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.resources.AlpineResource;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -42,9 +46,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.IdentifiableObject;
 import org.dependencytrack.persistence.QueryManager;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.owasp.security.logging.SecurityMarkers;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -90,13 +93,58 @@ public class UserResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Principal principal = auth.authenticate();
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
-            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal)principal);
+            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
             final KeyManager km = KeyManager.getInstance();
             final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
             final String token = jwt.createToken(principal, permissions);
             return Response.ok(token).build();
         } catch (AlpineAuthenticationException e) {
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
+            if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
+                return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).entity(e.getCauseType().name()).build();
+            }
+        }
+    }
+
+    /**
+     * @since 3.9.0
+     */
+    @POST
+    @Path("oidc/login")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(
+            value = "Login with OpenID Connect",
+            notes = "Upon a successful login, a JSON Web Token will be returned in the response body. This functionality requires authentication to be enabled.",
+            response = String.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "No Content"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Forbidden")
+    })
+    @AuthenticationNotRequired
+    public Response validateOidcAccessToken(@ApiParam(value = "An OAuth2 access token", required = true)
+                                            @FormParam("accessToken") final String accessToken) {
+        final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken);
+
+        if (!authService.isSpecified()) {
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "An OpenID Connect login attempt was made, but OIDC is disabled or not properly configured");
+            return Response.status(Response.Status.NO_CONTENT).build();
+        }
+
+        try (final QueryManager qm = new QueryManager()) {
+            final Principal principal = authService.authenticate();
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful OpenID Connect login / username: " + principal.getName());
+            final List<Permission> permissions = qm.getEffectivePermissions((UserPrincipal) principal);
+            final KeyManager km = KeyManager.getInstance();
+            final JsonWebToken jwt = new JsonWebToken(km.getSecretKey());
+            final String token = jwt.createToken(principal, permissions);
+            return Response.ok(token).build();
+        } catch (AlpineAuthenticationException e) {
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized OpenID Connect login attempt");
             if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
                 return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
             } else {
@@ -206,6 +254,30 @@ public class UserResource extends AlpineResource {
         }
     }
 
+    /**
+     * @since 3.9.0
+     */
+    @GET
+    @Path("oidc")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all OIDC users",
+            response = OidcUser.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of OIDC users")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response getOidcUsers() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final long totalCount = qm.getCount(OidcUser.class);
+            final List<OidcUser> users = qm.getOidcUsers();
+            return Response.ok(users).header(TOTAL_COUNT_HEADER, totalCount).build();
+        }
+    }
+
     @GET
     @Path("self")
     @Produces(MediaType.APPLICATION_JSON)
@@ -224,6 +296,9 @@ public class UserResource extends AlpineResource {
                     return Response.ok(user).build();
                 } else if (super.isManagedUser()) {
                     final ManagedUser user = qm.getManagedUser(getPrincipal().getName());
+                    return Response.ok(user).build();
+                } else if (super.isOidcUser()) {
+                    final OidcUser user = qm.getOidcUser(getPrincipal().getName());
                     return Response.ok(user).build();
                 }
                 return Response.status(401).build();
@@ -250,8 +325,11 @@ public class UserResource extends AlpineResource {
                 if (super.isLdapUser()) {
                     final LdapUser user = qm.getLdapUser(getPrincipal().getName());
                     return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
+                } else if (super.isOidcUser()) {
+                    final OidcUser user = qm.getOidcUser(getPrincipal().getName());
+                    return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
                 } else if (super.isManagedUser()) {
-                    final ManagedUser user = (ManagedUser)super.getPrincipal();
+                    final ManagedUser user = (ManagedUser) super.getPrincipal();
                     if (StringUtils.isBlank(jsonUser.getFullname())) {
                         return Response.status(Response.Status.BAD_REQUEST).entity("Full name is required.").build();
                     }
@@ -443,6 +521,63 @@ public class UserResource extends AlpineResource {
             if (user != null) {
                 qm.delete(user);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + jsonUser.getUsername());
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();
+            }
+        }
+    }
+
+    @PUT
+    @Path("oidc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates a new user that references an existing OpenID Connect user.",
+            response = OidcUser.class,
+            code = 201
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Username cannot be null or blank."),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 409, message = "A user with the same username already exists. Cannot create new user")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response createOidcUser(final OidcUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            if (StringUtils.isBlank(jsonUser.getUsername())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
+            }
+            OidcUser user = qm.getOidcUser(jsonUser.getUsername());
+            if (user == null) {
+                user = qm.createOidcUser(jsonUser.getUsername());
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user created: " + jsonUser.getUsername());
+                return Response.status(Response.Status.CREATED).entity(user).build();
+            } else {
+                return Response.status(Response.Status.CONFLICT).entity("A user with the same username already exists. Cannot create new user.").build();
+            }
+        }
+    }
+
+    @DELETE
+    @Path("oidc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Deletes an OpenID Connect user.",
+            code = 204
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The user could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    public Response deleteOidcUser(final OidcUser jsonUser) {
+        try (QueryManager qm = new QueryManager()) {
+            final OidcUser user = qm.getOidcUser(jsonUser.getUsername());
+            if (user != null) {
+                qm.delete(user);
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "OpenID Connect user deleted: " + jsonUser.getUsername());
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The user could not be found.").build();

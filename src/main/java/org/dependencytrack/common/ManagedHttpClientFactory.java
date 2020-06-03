@@ -60,6 +60,7 @@ import java.net.URLDecoder;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Map;
 
 public final class ManagedHttpClientFactory {
@@ -73,7 +74,7 @@ public final class ManagedHttpClientFactory {
     }
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getPropertyOrFile(Config.AlpineKey.HTTP_PROXY_PASSWORD);
-    //private static final String NO_PROXY = Config.getInstance().getProperty(Config.AlpineKey.NO_PROXY);
+    private static final String NO_PROXY = Config.getInstance().getProperty(Config.AlpineKey.NO_PROXY);
     private static final Logger LOGGER = Logger.getLogger(ManagedHttpClientFactory.class);
     private static final String USER_AGENT;
     static {
@@ -114,11 +115,10 @@ public final class ManagedHttpClientFactory {
                 final HttpHost host,
                 final HttpRequest request,
                 final HttpContext context) throws HttpException {
-                    String[] noProxyList = proxyInfo.noProxy;
-                    if (noProxyList == null) {
-                        return super.determineRoute(host, request, context);
-                    }
-                    if (noProxyList.equals(new String[]{"*"})) {
+                    String[] noProxyList;
+                    noProxyList = proxyInfo.noProxy;
+                    if (noProxyList == null) return super.determineRoute(host, request, context);
+                    if (Arrays.equals(noProxyList, new String[]{"*"})) {
                         return new HttpRoute(host);
                     }
                     String hostname = host.getHostName();
@@ -219,9 +219,9 @@ public final class ManagedHttpClientFactory {
             if (PROXY_PASSWORD != null) {
                 proxyInfo.password = StringUtils.trimToNull(PROXY_PASSWORD);
             }
-//            if (NO_PROXY != null) {
-//                proxyInfo.noProxy = NO_PROXY.split(",");
-//            }
+            if (NO_PROXY != null) {
+                proxyInfo.noProxy = NO_PROXY.split(",");
+            }
         }
         return proxyInfo;
     }
@@ -240,11 +240,12 @@ public final class ManagedHttpClientFactory {
         } catch (MalformedURLException | SecurityException | UnsupportedEncodingException e) {
             LOGGER.warn("Could not parse proxy settings from environment", e);
         }
-
-        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-            if ("NO_PROXY".equals(entry.getKey().toUpperCase())) {
-                proxyInfo.noProxy = System.getenv(entry.getKey()).split(",");
-                break;
+        if (proxyInfo != null) {
+            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+                if ("NO_PROXY".equals(entry.getKey().toUpperCase())) {
+                    proxyInfo.noProxy = System.getenv(entry.getKey()).split(",");
+                    break;
+                }
             }
         }
         return proxyInfo;

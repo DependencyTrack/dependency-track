@@ -82,6 +82,7 @@ services:
     # - ALPINE_HTTP_PROXY_PORT=8888
     # - ALPINE_HTTP_PROXY_USERNAME=
     # - ALPINE_HTTP_PROXY_PASSWORD=
+    # - ALPINE_NO_PROXY=
     #
     # Optional Cross-Origin Resource Sharing (CORS) Headers
     # - ALPINE_CORS_ENABLED=true

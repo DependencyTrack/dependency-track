@@ -94,6 +94,42 @@ public final class ManagedHttpClientFactory {
     }
 
     /**
+     * Determines proxy should be used or not for a given URL
+     * @param noProxyList list of URLs to be exempted from proxy
+     * @param host the URL that is being called by this application
+     * @return true if proxy is to be be used, false if not
+     */
+    public static boolean isProxy(String[] noProxyList, HttpHost host) {
+        if (noProxyList == null) {
+            return true;
+        }
+        if (Arrays.equals(noProxyList, new String[]{"*"})) {
+            return false;
+        }
+        String hostname = host.getHostName();
+        int hostPort = host.getPort();
+        for (String bypassURL: noProxyList) {
+            String[] bypassURLList = bypassURL.split(":");
+            String byPassHost = bypassURLList[0];
+            int byPassPort = -1;
+            if (bypassURLList.length == 2) {
+                byPassPort = Integer.parseInt(bypassURLList[1]);
+            }
+            if (hostPort == byPassPort || byPassPort == -1) {
+                if (hostname.equalsIgnoreCase(byPassHost)) {
+                    return false;
+                }
+                int hl = hostname.length();
+                int bl = byPassHost.length();
+                if (hl > bl && hostname.substring(hl - bl - 1).equalsIgnoreCase("." + byPassHost)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Factory method that create a PooledHttpClient object. This method will attempt to use
      * proxy settings defined in application.properties first. If they are not set,
      * this method will attempt to use proxy settings from the environment by looking
@@ -115,33 +151,10 @@ public final class ManagedHttpClientFactory {
                 final HttpHost host,
                 final HttpRequest request,
                 final HttpContext context) throws HttpException {
-                    String[] noProxyList;
-                    noProxyList = proxyInfo.noProxy;
-                    if (noProxyList == null) return super.determineRoute(host, request, context);
-                    if (Arrays.equals(noProxyList, new String[]{"*"})) {
-                        return new HttpRoute(host);
+                    if (isProxy(proxyInfo.noProxy, host)){
+                        return super.determineRoute(host, request, context);
                     }
-                    String hostname = host.getHostName();
-                    int hostPort = host.getPort();
-                    for (String bypassURL: noProxyList) {
-                        String[] bypassURLList = bypassURL.split(":");
-                        String byPassHost = bypassURLList[0];
-                        int byPassPort = -1;
-                        if (bypassURLList.length == 2) {
-                            byPassPort = Integer.parseInt(bypassURLList[1]);
-                        }
-                        if (hostPort == byPassPort || byPassPort == -1) {
-                            if (hostname.equalsIgnoreCase(byPassHost)) {
-                                return new HttpRoute(host);
-                            }
-                            int hl = hostname.length();
-                            int bl = byPassHost.length();
-                            if (hl > bl && hostname.substring(hl - bl - 1).equalsIgnoreCase("." + byPassHost)) {
-                                return new HttpRoute(host);
-                            }
-                        }
-                    }
-                    return super.determineRoute(host, request, context);
+                    return new HttpRoute(host);
                 }
             };
             clientBuilder.setRoutePlanner(routePlanner);

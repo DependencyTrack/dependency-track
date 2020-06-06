@@ -261,7 +261,7 @@ alpine.ldap.team.synchronization=false
 # alpine.http.proxy.port=8888
 # alpine.http.proxy.username=
 # alpine.http.proxy.password=
-# alpine.no.proxy=
+# alpine.no.proxy=localhost:443,127.0.0.1:8080,example.com,www.example.net
 
 # Optional
 # Cross-Origin Resource Sharing (CORS) headers to include in REST responses.
@@ -282,8 +282,13 @@ alpine.ldap.team.synchronization=false
 
 Proxy support can be configured in one of two ways, using the proxy settings defined
 in `application.properties` or through environment variables. By default, the system
-will attempt to read the `https_proxy` and `http_proxy` environment variables. If one 
+will attempt to read the `https_proxy`, `http_proxy` and `no_proxy` environment variables. If one 
 of these are set, Dependency-Track will use them automatically.
+
+no_proxy specifies URLs that should be excluded from proxying (on servers that should be contacted directly).
+This can be a comma-separated list of hostnames, domain names, or a mixture of both.
+If a port number is specified for a URL, only the requests with that port number to that URL will be proxied.
+no_proxy can also set to be a single asterisk ('*') to match all hosts.
 
 Dependency-Track supports proxies that require BASIC, DIGEST, and NTLM authentication.
 

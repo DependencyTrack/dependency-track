@@ -50,6 +50,14 @@ Make sure the container is allowed to allocate enough RAM. For memory requiremen
 [Deploying Docker Container](./../getting-started/deploy-docker/). A common source for limited memory is Docker for
 Windows's default memory limit of 2GB which is too less. You can change this in docker's settings.
 
+#### Dependency Track stops working after 1-2 weeks
+
+This might happen if your OS cleans-up temp storage without checking for open files.
+This has been observed with Windows and CentOS.
+Deleting temporary files is a problem for the embedded Jetty server used by Dependency Track.
+When launching Dependency Track, try adding `-Djava.io.tmpdir=/path/to/tmpdir` to the command and specify an
+alternative path to where you want DT temp files to reside.
+
 #### Why is there a delay with LDAP synchronization?
 
 For auto-provisioned accounts, LDAP synchronization is performed on-demand and utilizes the same async job scheduling queue that all other jobs use. If the system is busy processing other jobs (mirroring the NVD or processing lots of BOMs simultaneously for example), there might be a slight delay provisioning the account (which includes permission sync). If the LDAP account is manually created in DT, then synchronization has already happened and there shouldn’t be a delay.

@@ -66,6 +66,7 @@ public class ManagedHttpClientFactoryTest {
         Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("example.com",8080)));
         Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("www.example.com",443)));
         Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("foo.example.com",80)));
+        Assert.assertTrue(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("fooexample.com",80)));
         Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("foo.bar.example.com",8000)));
         Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("www.example.net",80)));
         Assert.assertTrue(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("foo.example.net",80)));

@@ -11,6 +11,7 @@ Some of the custom tools that have been shared back to the community are as foll
 
 | Name | Language | URL |
 |:---------|:--------|:--------|
-| dtrack-audit | Go | https://github.com/ozonru/dtrack-audit |
-| dependency-track-maven-plugin | Java | https://github.com/pmckeown/dependency-track-maven-plugin |
-| dtrack-auditor | Python | https://github.com/thinksabin/DTrackAuditor |
+| dtrack-audit | Go | <https://github.com/ozonru/dtrack-audit/> |
+| dependency-track-maven-plugin | Java | <https://github.com/pmckeown/dependency-track-maven-plugin/> |
+| dtrack-auditor | Python | <https://github.com/thinksabin/DTrackAuditor/> |
+

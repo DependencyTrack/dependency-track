@@ -1,5 +1,5 @@
 ---
-name: Ask a question - Slack Only - Do not create issues for questions
+name: Ask a question - Use Slack instead - Do not create issues for questions
 about: Have a question about Dependency-Track?
 title: ''
 labels: question

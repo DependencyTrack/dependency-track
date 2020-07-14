@@ -94,6 +94,7 @@
         <lib.unirest.version>2.4.00</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- Maven Plugin Properties -->
+        <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.github-release-plugin.version>1.4.0</plugin.github-release-plugin.version>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <!-- SonarCloud properties -->

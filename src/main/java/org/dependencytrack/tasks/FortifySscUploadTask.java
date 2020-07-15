@@ -30,12 +30,5 @@ public class FortifySscUploadTask extends VulnerabilityManagementUploadTask {
     /**
      * {@inheritDoc}
      */
-    public void inform(final Event e) {
-        if (e instanceof FortifySscUploadEventAbstract) {
-            final FortifySscUploadEventAbstract event = (FortifySscUploadEventAbstract) e;
-            LOGGER.debug("Starting Fortify Software Security Center upload task");
-            super.inform(event, new FortifySscUploader());
-            LOGGER.debug("Fortify Software Security Center upload complete");
-        }
-    }
+
 }

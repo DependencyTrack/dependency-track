@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "title": "test",
+    "owner": "fatih"
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "title": "asd",
+        "thumbnail": "./public/content/images/thumbnail.jpg",
+        "id": 0
+      }
+    ],
+    "reviewer": "sercan"
+  }
+}

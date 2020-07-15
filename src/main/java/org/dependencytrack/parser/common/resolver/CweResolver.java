@@ -18,9 +18,11 @@
  */
 package org.dependencytrack.parser.common.resolver;
 
+import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.CompressUtil;
 
 /**
  * Attempts to resolve an internal CWE object from a string
@@ -32,6 +34,8 @@ import org.dependencytrack.persistence.QueryManager;
 public class CweResolver {
 
     private final QueryManager qm;
+
+    private static final Logger LOGGER = Logger.getLogger(CweResolver.class);
 
     public CweResolver(final QueryManager qm) {
         this.qm = qm;
@@ -63,6 +67,8 @@ public class CweResolver {
                 return qm.getCweById(Integer.valueOf(lookupString));
             } catch (NumberFormatException e) {
                 // throw it away
+                LOGGER.error("Invalid CWE ID. ", e);
+
             }
         }
         return null;

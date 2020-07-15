@@ -96,16 +96,7 @@ public class CpeReference implements Serializable {
         this.href = href;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof CpeReference)) return false;
-        CpeReference reference = (CpeReference) o;
-        return id == reference.id &&
-                Objects.equals(cpe, reference.cpe) &&
-                Objects.equals(name, reference.name) &&
-                Objects.equals(href, reference.href);
-    }
+
 
     @Override
     public int hashCode() {

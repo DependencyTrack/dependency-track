@@ -25,6 +25,8 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.io.IOUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import alpine.logging.Logger;
+import org.dependencytrack.parser.nvd.CpeDictionaryParser;
 
 public final class CompressUtil {
 
@@ -38,6 +40,9 @@ public final class CompressUtil {
      * @param input the
      * @return a byte array
      */
+
+    private static final Logger LOGGER = Logger.getLogger(CompressUtil.class);
+
     public static byte[] optionallyDecompress(final byte[] input) {
         try (final ByteArrayInputStream bis = new ByteArrayInputStream(input);
              final ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(bis)) {
@@ -47,6 +52,7 @@ public final class CompressUtil {
             }
         } catch (ArchiveException | IOException e) {
             // throw it away and return the original byte array
+            LOGGER.debug("An error occurred while decompressing. " + e);
         }
         return input;
     }

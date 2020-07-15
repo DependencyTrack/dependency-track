@@ -33,43 +33,7 @@ public class HttpClientPool {
 
     private static final Logger LOGGER = Logger.getLogger(HttpClientPool.class);
 
-    // Single-element enum to implement Singleton.
-    private enum Singleton {
-        Client;
 
-        // The thread-safe client.
-        private final CloseableHttpClient threadSafeClient;
-        // The pool monitor.
-        private final IdleConnectionMonitor monitor;
-
-        // The constructor creates it - thus late
-        Singleton() {
-            final ManagedHttpClient pooledHttpClient = ManagedHttpClientFactory.newManagedHttpClient();
-            threadSafeClient = pooledHttpClient.getHttpClient();
-            PoolingHttpClientConnectionManager cm = pooledHttpClient.getConnectionManager();
-
-            // Start up an eviction thread.
-            monitor = new IdleConnectionMonitor(cm);
-            // Start up the monitor.
-            Thread monitorThread = new Thread(monitor);
-            monitorThread.setDaemon(true);
-            monitorThread.start();
-        }
-
-        public CloseableHttpClient get() {
-            return threadSafeClient;
-        }
-    }
-
-    public static CloseableHttpClient getClient() {
-        // The thread safe client is held by the singleton.
-        return Singleton.Client.get();
-    }
-
-    public static void shutdown() throws InterruptedException, IOException {
-        // Shutdown the monitor.
-        Singleton.Client.monitor.shutdown();
-    }
 
     // Watches for stale connections and evicts them.
     private static class IdleConnectionMonitor implements Runnable {
@@ -82,24 +46,6 @@ public class HttpClientPool {
             this.cm = cm;
         }
 
-        public void run() {
-            try {
-                // Holds the stop request that stopped the process.
-                Stop stopRequest;
-                // Every 5 seconds.
-                while ((stopRequest = stopSignal.poll(5, TimeUnit.SECONDS)) == null) {
-                    // Close expired connections
-                    cm.closeExpiredConnections();
-                    // Optionally, close connections that have been idle too long.
-                    cm.closeIdleConnections(60, TimeUnit.SECONDS);
-                    LOGGER.debug("Stats: " + cm.getTotalStats().toString());
-                }
-                // Acknowledge the stop request.
-                stopRequest.stopped();
-            } catch (InterruptedException ex) {
-                // terminate
-            }
-        }
 
         // Pushed up the queue.
         private static class Stop {

@@ -46,41 +46,5 @@ public class v370Updater extends AbstractUpgradeItem {
         return "3.7.0";
     }
 
-    @Override
-    public void executeUpgrade(final AlpineQueryManager alpineQueryManager, final Connection connection) throws Exception {
-        LOGGER.info("Updating existing components to be non-internal");
-        try {
-            DbUtil.executeUpdate(connection, STMT_1);
-        } catch (Exception e) {
-            LOGGER.info("Internal field is likely not boolean. Attempting component internal status update assuming bit field");
-            DbUtil.executeUpdate(connection, STMT_1_ALT);
-        }
-
-        LOGGER.info("Removing legacy SCAN_UPLOAD permission");
-        final Statement q = connection.createStatement();
-        final ResultSet rs = q.executeQuery(STMT_2);
-        while(rs.next()) {
-            final long id = rs.getLong(1);
-            LOGGER.info("Removing SCAN_UPLOAD from the TEAMS_PERMISSIONS table");
-            DbUtil.executeUpdate(connection, String.format(STMT_3, id));
-            LOGGER.info("Removing SCAN_UPLOAD from the LDAPUSERS_PERMISSIONS table");
-            DbUtil.executeUpdate(connection, String.format(STMT_4, id));
-            LOGGER.info("Removing SCAN_UPLOAD from the MANAGEDUSERS_PERMISSIONS table");
-            DbUtil.executeUpdate(connection, String.format(STMT_5, id));
-            LOGGER.info("Removing SCAN_UPLOAD from the PERMISSION table");
-            DbUtil.executeUpdate(connection, String.format(STMT_6, id));
-        }
-
-        LOGGER.info("Removing legacy SCANS_COMPONENTS data");
-        DbUtil.executeUpdate(connection, STMT_7);
-
-        LOGGER.info("Removing legacy LAST_SCAN_IMPORTED project dates");
-        DbUtil.executeUpdate(connection, STMT_8);
-
-        LOGGER.info("Removing legacy SCAN data");
-        DbUtil.executeUpdate(connection, STMT_9);
-
-        LOGGER.info("Removing legacy Dependency-Check configuration settings");
-        DbUtil.executeUpdate(connection, STMT_10);
-    }
+    
 }

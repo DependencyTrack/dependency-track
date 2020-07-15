@@ -41,26 +41,5 @@ public class NpmAdvisoriesParser extends BaseAdvisoryParser {
      * @param jsonNode the JSON node to parse
      * @return an AdvisoryResults object
      */
-    public AdvisoryResults parse(final JsonNode jsonNode) {
-        LOGGER.debug("Parsing JSON node");
 
-        final AdvisoryResults advisoryResults = new AdvisoryResults();
-        final JSONObject root = jsonNode.getObject();
-        advisoryResults.setTotal(root.getInt("total"));
-
-        final JSONObject urls = root.optJSONObject("urls");
-        if (urls != null) {
-            advisoryResults.setNext(urls.optString("next", null));
-            advisoryResults.setPrevious(urls.optString("prev", null));
-        }
-        final JSONArray advisories = root.getJSONArray("objects");
-
-        if (advisories != null) {
-            for (int i = 0; i < advisories.length(); i++) {
-                final Advisory advisory = parse(advisories.getJSONObject(i));
-                advisoryResults.add(advisory);
-            }
-        }
-        return advisoryResults;
-    }
 }

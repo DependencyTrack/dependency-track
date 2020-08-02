@@ -28,10 +28,10 @@ import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import us.springett.vulndbdatamirror.client.VulnDbApi;
 import us.springett.vulndbdatamirror.parser.model.Results;
 import java.util.List;
@@ -49,6 +49,10 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private final int PAGE_SIZE = 100;
     private String apiConsumerKey;
     private String apiConsumerSecret;
+
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return AnalyzerIdentity.VULNDB_ANALYZER;
+    }
 
     /**
      * {@inheritDoc}
@@ -131,6 +135,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
         }
     }
 
+    @SuppressWarnings("unchecked")
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             for (us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln : (List<us.springett.vulndbdatamirror.parser.model.Vulnerability>) results.getResults()) {
@@ -140,7 +145,8 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 } else {
                     vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 }
-                qm.addVulnerability(vulnerability, component);
+                final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
+                qm.addVulnerability(vulnerability, component, findingAttribution);
             }
             updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe());
             return results.getPage() * PAGE_SIZE < results.getTotal();

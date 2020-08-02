@@ -36,7 +36,6 @@ import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.parser.nvd.CpeDictionaryParser;
 import org.dependencytrack.parser.nvd.NvdParser;
 import java.io.Closeable;
 import java.io.File;
@@ -248,9 +247,6 @@ public class NistMirrorTask implements LoggableSubscriber {
             final long start = System.currentTimeMillis();
             if (ResourceType.CVE == resourceType) {
                 final NvdParser parser = new NvdParser();
-                parser.parse(uncompressedFile);
-            } else if (ResourceType.CPE == resourceType) {
-                final CpeDictionaryParser parser = new CpeDictionaryParser();
                 parser.parse(uncompressedFile);
             }
             final long end = System.currentTimeMillis();

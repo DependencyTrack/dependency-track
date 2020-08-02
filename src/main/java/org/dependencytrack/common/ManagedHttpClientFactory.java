@@ -76,7 +76,8 @@ public final class ManagedHttpClientFactory {
                 + SystemUtil.getOsArchitecture() + "; "
                 + SystemUtil.getOsName() + "; "
                 + SystemUtil.getOsVersion()
-                + ")";
+                + ") ManagedHttpClient/"
+                + Config.getInstance().getSystemUuid();
     }
 
     private ManagedHttpClientFactory() { }

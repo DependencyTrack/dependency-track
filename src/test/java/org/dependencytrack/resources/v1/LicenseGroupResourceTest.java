@@ -16,27 +16,8 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.notification;
 
-public enum NotificationGroup {
+package org.dependencytrack.resources.v1;
 
-    // System Groups
-    CONFIGURATION,
-    DATASOURCE_MIRRORING,
-    REPOSITORY,
-    INTEGRATION,
-    INDEXING_SERVICE,
-    FILE_SYSTEM,
-    ANALYZER,
-
-    // Portfolio Groups
-    NEW_VULNERABILITY,
-    NEW_VULNERABLE_DEPENDENCY,
-    //NEW_OUTDATED_COMPONENT,
-    //FIXED_VULNERABILITY,
-    //FIXED_OUTDATED,
-    //GLOBAL_AUDIT_CHANGE,
-    PROJECT_AUDIT_CHANGE,
-    BOM_CONSUMED,
-    BOM_PROCESSED
+public class LicenseGroupResourceTest {
 }

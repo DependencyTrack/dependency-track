@@ -37,7 +37,6 @@ import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
@@ -100,8 +99,7 @@ public class BomResource extends AlpineResource {
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
-            final List<Dependency> dependencies = qm.getAllDependencies(project);
-            final List<Component> components = dependencies.stream().map(Dependency::getComponent).collect(Collectors.toList());
+            final List<Component> components = qm.getAllComponents(project);
             final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
             try {
                 Bom bom = new Bom();

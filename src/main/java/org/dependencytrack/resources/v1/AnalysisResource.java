@@ -101,7 +101,7 @@ public class AnalysisResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();
             }
 
-            Analysis analysis = qm.getAnalysis(project, component, vulnerability);
+            final Analysis analysis = qm.getAnalysis(component, vulnerability);
             return Response.ok(analysis).build();
         }
     }
@@ -172,22 +172,22 @@ public class AnalysisResource extends AlpineResource {
 
             boolean analysisStateChange = false;
             boolean suppressionChange = false;
-            Analysis analysis = qm.getAnalysis(project, component, vulnerability);
+            Analysis analysis = qm.getAnalysis(component, vulnerability);
             if (analysis != null) {
                 if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
                     // The analysis state has changed. Add an additional comment to the trail.
                     analysisStateChange = true;
                     final String message = analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
-                    analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
+                    analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.isSuppressed());
                 } else if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
                     suppressionChange = true;
                     final String message = (request.isSuppressed()) ? "Suppressed" : "Unsuppressed";
                     qm.makeAnalysisComment(analysis, message, commenter);
-                    analysis = qm.makeAnalysis(project, component, vulnerability, analysis.getAnalysisState(), request.isSuppressed());
+                    analysis = qm.makeAnalysis(component, vulnerability, analysis.getAnalysisState(), request.isSuppressed());
                 }
             } else {
-                analysis = qm.makeAnalysis(project, component, vulnerability, request.getAnalysisState(), request.isSuppressed());
+                analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.isSuppressed());
                 analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
                 if (AnalysisState.NOT_SET != request.getAnalysisState()) {
                     final String message = AnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();

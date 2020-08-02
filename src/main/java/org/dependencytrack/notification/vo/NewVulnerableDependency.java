@@ -18,22 +18,22 @@
  */
 package org.dependencytrack.notification.vo;
 
-import org.dependencytrack.model.Dependency;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
 import java.util.List;
 
 public class NewVulnerableDependency {
 
     private final List<Vulnerability> vulnerabilities;
-    private final Dependency dependency;
+    private final Component component;
 
-    public NewVulnerableDependency(final Dependency dependency, final List<Vulnerability> vulnerabilities) {
+    public NewVulnerableDependency(final Component component, final List<Vulnerability> vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
-        this.dependency = dependency;
+        this.component = component;
     }
 
-    public Dependency getDependency() {
-        return dependency;
+    public Component getComponent() {
+        return component;
     }
 
     public List<Vulnerability> getVulnerabilities() {

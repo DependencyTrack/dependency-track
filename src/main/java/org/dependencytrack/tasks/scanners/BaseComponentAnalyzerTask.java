@@ -125,7 +125,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                 final Date now = new Date();
                 if (now.getTime() > cac.getLastOccurrence().getTime()) {
                     final long delta = now.getTime() - cac.getLastOccurrence().getTime();
-                    isCacheCurrent = delta <= 3600000; // TODO: Default to 1 hour. Make this configurable in a future release
+                    isCacheCurrent = delta <= 86400000; // TODO: Default to 24 hours. Make this configurable in a future release
                 }
             }
             if (isCacheCurrent) {

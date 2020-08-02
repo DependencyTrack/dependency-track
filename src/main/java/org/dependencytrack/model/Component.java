@@ -25,12 +25,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.persistence.PackageURLStringConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Convert;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.FetchGroup;
@@ -61,6 +60,7 @@ import java.util.UUID;
 @PersistenceCapable
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
+                @Persistent(name = "project"),
                 @Persistent(name = "resolvedLicense"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
@@ -84,6 +84,18 @@ public class Component implements Serializable {
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
+
+    @Persistent
+    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
+    private String author;
+
+    @Persistent
+    @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
+    private String publisher;
 
     @Persistent
     @Column(name = "GROUP", jdbcType = "VARCHAR")
@@ -147,6 +159,12 @@ public class Component implements Serializable {
     private String sha256;
 
     @Persistent
+    @Index(name = "COMPONENT_SHA384_IDX")
+    @Column(name = "SHA_384", jdbcType = "VARCHAR", length = 96)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The SHA-384 hash must be a valid 96 character HEX number")
+    private String sha384;
+
+    @Persistent
     @Index(name = "COMPONENT_SHA512_IDX")
     @Column(name = "SHA_512", jdbcType = "VARCHAR", length = 128)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA-512 hash must be a valid 128 character HEX number")
@@ -159,10 +177,40 @@ public class Component implements Serializable {
     private String sha3_256;
 
     @Persistent
+    @Index(name = "COMPONENT_SHA3_384_IDX")
+    @Column(name = "SHA3_384", jdbcType = "VARCHAR", length = 96)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The SHA3-384 hash must be a valid 96 character HEX number")
+    private String sha3_384;
+
+    @Persistent
     @Index(name = "COMPONENT_SHA3_512_IDX")
     @Column(name = "SHA3_512", jdbcType = "VARCHAR", length = 128)
     @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA3-512 hash must be a valid 128 character HEX number")
     private String sha3_512;
+
+    @Persistent
+    @Index(name = "COMPONENT_BLAKE2B_256_IDX")
+    @Column(name = "BLAKE2B_256", jdbcType = "VARCHAR", length = 64)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The BLAKE2b hash must be a valid 64 character HEX number")
+    private String blake2b_256;
+
+    @Persistent
+    @Index(name = "COMPONENT_BLAKE2B_384_IDX")
+    @Column(name = "BLAKE2B_384", jdbcType = "VARCHAR", length = 96)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The BLAKE2b hash must be a valid 96 character HEX number")
+    private String blake2b_384;
+
+    @Persistent
+    @Index(name = "COMPONENT_BLAKE2B_512_IDX")
+    @Column(name = "BLAKE2B_512", jdbcType = "VARCHAR", length = 128)
+    @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The BLAKE2b hash must be a valid 128 character HEX number")
+    private String blake2b_512;
+
+    @Persistent
+    @Index(name = "COMPONENT_BLAKE3_IDX")
+    @Column(name = "BLAKE3", jdbcType = "VARCHAR", length = 255)
+    @Pattern(regexp = RegexSequence.Definition.HEXADECIMAL, message = "The BLAKE3 hash must be a valid HEX number")
+    private String blake3;
 
     @Persistent
     @Size(max = 255)
@@ -170,15 +218,32 @@ public class Component implements Serializable {
     @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
 
-    @Persistent(defaultFetchGroup = "true")
+    @Persistent(defaultFetchGroup = "true", types = {String.class})
+    @Index(name = "COMPONENT_PURL_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
-    @Convert(PackageURLStringConverter.class)
+    //@Convert(PackageURLStringConverter.class)
+    //@Extension(vendorName="datanucleus", key="type-converter-name", value="purl-serialise")
     @JsonSerialize(using = CustomPackageURLSerializer.class)
-    private PackageURL purl;
+    private String purl;
+
+    @Persistent(defaultFetchGroup = "true", types = {String.class})
+    @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
+    //@Convert(PackageURLStringConverter.class)
+    //@Extension(vendorName="datanucleus", key="type-converter-name", value="purl-serialise")
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
+    private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
 
     @Persistent
-    @Column(name = "INTERNAL", allowsNull = "true") // New column, must allow nulls on existing databases
+    @Index(name = "COMPONENT_SWID_TAGID_IDX")
+    @Size(max = 255)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The SWID tagId may only contain printable characters")
+    private String swidTagId;
+
+    @Persistent
+    @Column(name = "INTERNAL", allowsNull = "false")
     @JsonProperty("isInternal")
     private Boolean internal;
 
@@ -226,8 +291,13 @@ public class Component implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "PROJECT_ID", allowsNull = "false")
+    @NotNull
+    private Project project;
+
     /**
-     * Convenience field which stores the Inherited Risk Score (IRS) of the last metric in the {@link ComponentMetrics} table
+     * Convenience field which stores the Inherited Risk Score (IRS) of the last metric in the {@link DependencyMetrics} table
      */
     @Persistent
     @Index(name = "COMPONENT_LAST_RISKSCORE_IDX")
@@ -240,7 +310,7 @@ public class Component implements Serializable {
     @NotNull
     private UUID uuid;
 
-    private transient ComponentMetrics metrics;
+    private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient int usedBy;
 
@@ -250,6 +320,22 @@ public class Component implements Serializable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
     }
 
     public String getGroup() {
@@ -324,6 +410,14 @@ public class Component implements Serializable {
         this.sha256 = sha256;
     }
 
+    public String getSha384() {
+        return sha384;
+    }
+
+    public void setSha384(String sha384) {
+        this.sha384 = sha384;
+    }
+
     public String getSha512() {
         return sha512;
     }
@@ -340,12 +434,52 @@ public class Component implements Serializable {
         this.sha3_256 = sha3_256;
     }
 
+    public String getSha3_384() {
+        return sha3_384;
+    }
+
+    public void setSha3_384(String sha3_384) {
+        this.sha3_384 = sha3_384;
+    }
+
     public String getSha3_512() {
         return sha3_512;
     }
 
     public void setSha3_512(String sha3_512) {
         this.sha3_512 = sha3_512;
+    }
+
+    public String getBlake2b_256() {
+        return blake2b_256;
+    }
+
+    public void setBlake2b_256(String blake2b_256) {
+        this.blake2b_256 = blake2b_256;
+    }
+
+    public String getBlake2b_384() {
+        return blake2b_384;
+    }
+
+    public void setBlake2b_384(String blake2b_384) {
+        this.blake2b_384 = blake2b_384;
+    }
+
+    public String getBlake2b_512() {
+        return blake2b_512;
+    }
+
+    public void setBlake2b_512(String blake2b_512) {
+        this.blake2b_512 = blake2b_512;
+    }
+
+    public String getBlake3() {
+        return blake3;
+    }
+
+    public void setBlake3(String blake3) {
+        this.blake3 = blake3;
     }
 
     public String getCpe() {
@@ -357,11 +491,37 @@ public class Component implements Serializable {
     }
 
     public PackageURL getPurl() {
-        return purl;
+        try {
+            return new PackageURL(purl);
+        } catch (MalformedPackageURLException e) {
+            return null;
+        }
+        //return purl;
     }
 
     public void setPurl(PackageURL purl) {
-        this.purl = purl;
+        this.purl = purl.canonicalize();
+    }
+
+    public PackageURL getPurlCoordinates() {
+        try {
+            return new PackageURL(purlCoordinates);
+        } catch (MalformedPackageURLException e) {
+            return null;
+        }
+        //return purlCoordinates;
+    }
+
+    public void setPurlCoordinates(PackageURL purlCoordinates) {
+        this.purlCoordinates = purlCoordinates.canonicalize();
+    }
+
+    public String getSwidTagId() {
+        return swidTagId;
+    }
+
+    public void setSwidTagId(String swidTagId) {
+        this.swidTagId = swidTagId;
     }
 
     public boolean isInternal() {
@@ -447,6 +607,14 @@ public class Component implements Serializable {
         this.vulnerabilities.remove(vulnerability);
     }
 
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
     public UUID getUuid() {
         return uuid;
     }
@@ -455,11 +623,11 @@ public class Component implements Serializable {
         this.uuid = uuid;
     }
 
-    public ComponentMetrics getMetrics() {
+    public DependencyMetrics getMetrics() {
         return metrics;
     }
 
-    public void setMetrics(ComponentMetrics metrics) {
+    public void setMetrics(DependencyMetrics metrics) {
         this.metrics = metrics;
     }
 

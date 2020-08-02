@@ -39,6 +39,7 @@ import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
@@ -69,6 +70,10 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
 
     public OssIndexAnalysisTask() {
         super(100, 5);
+    }
+
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return AnalyzerIdentity.OSSINDEX_ANALYZER;
     }
 
     /**
@@ -217,7 +222,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
                                 if (vulnerability != null) {
                                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                    qm.addVulnerability(vulnerability, component);
+                                    final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
+                                    qm.addVulnerability(vulnerability, component, findingAttribution);
                                 } else {
                                     /*
                                     The vulnerability reported by OSS Index is not in Dependency-Track yet. This could be
@@ -226,7 +232,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                      */
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                    qm.addVulnerability(vulnerability, component);
+                                    final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
+                                    qm.addVulnerability(vulnerability, component, findingAttribution);
                                 }
                             } else {
                                 /*
@@ -237,7 +244,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                qm.addVulnerability(vulnerability, component);
+                                final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
+                                qm.addVulnerability(vulnerability, component, findingAttribution);
                             }
                         }
                         Event.dispatch(new MetricsUpdateEvent(component));

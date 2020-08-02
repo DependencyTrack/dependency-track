@@ -134,7 +134,7 @@ public class NotificationRouter implements Subscriber {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0) {
                             for (final Project project : rule.getProjects()) {
-                                if (project.getUuid().equals(subject.getDependency().getProject().getUuid())) {
+                                if (project.getUuid().equals(subject.getComponent().getProject().getUuid())) {
                                     rules.add(rule);
                                 }
                             }

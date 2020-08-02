@@ -41,6 +41,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
 
     private static final Logger LOGGER = Logger.getLogger(InternalAnalysisTask.class);
 
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return AnalyzerIdentity.INTERNAL_ANALYZER;
+    }
+
     /**
      * {@inheritDoc}
      */

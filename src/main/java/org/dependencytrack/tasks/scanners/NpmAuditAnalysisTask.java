@@ -31,6 +31,7 @@ import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NpmAuditAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.npm.NpmAuditParser;
 import org.dependencytrack.parser.npm.model.Advisory;
@@ -54,6 +55,10 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
 
     private static final String API_BASE_URL = "https://registry.npmjs.org/-/npm/v1/security/audits";
     private static final Logger LOGGER = Logger.getLogger(NpmAuditAnalysisTask.class);
+
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return AnalyzerIdentity.NPM_AUDIT_ANALYZER;
+    }
 
     /**
      * {@inheritDoc}
@@ -171,10 +176,11 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
         try (QueryManager qm = new QueryManager()) {
             for (final Advisory advisory: advisories) {
                 final Component component = getComponentFromAdvisory(components, advisory);
-                final Vulnerability vulnerabiity = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
-                if (component != null && vulnerabiity != null) {
-                    NotificationUtil.analyzeNotificationCriteria(vulnerabiity, component);
-                    qm.addVulnerability(vulnerabiity, component);
+                final Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
+                if (component != null && vulnerability != null) {
+                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                    final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
+                    qm.addVulnerability(vulnerability, component, findingAttribution);
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));
             }

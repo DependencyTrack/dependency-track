@@ -20,7 +20,6 @@ package org.dependencytrack.event;
 
 import alpine.event.framework.SingletonCapableEvent;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
 import java.util.UUID;
 
@@ -38,7 +37,6 @@ public class MetricsUpdateEvent extends SingletonCapableEvent {
         PORTFOLIO,
         PROJECT,
         COMPONENT,
-        DEPENDENCY,
         VULNERABILITY
     }
 
@@ -55,8 +53,6 @@ public class MetricsUpdateEvent extends SingletonCapableEvent {
             this.type = Type.PROJECT;
         } else if (target instanceof Component) {
             this.type = Type.COMPONENT;
-        } else if (target instanceof Dependency) {
-            this.type = Type.DEPENDENCY;
         }
         this.target = target;
     }

@@ -16,27 +16,17 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.notification;
+package org.dependencytrack.tasks.scanners;
 
-public enum NotificationGroup {
-
-    // System Groups
-    CONFIGURATION,
-    DATASOURCE_MIRRORING,
-    REPOSITORY,
-    INTEGRATION,
-    INDEXING_SERVICE,
-    FILE_SYSTEM,
-    ANALYZER,
-
-    // Portfolio Groups
-    NEW_VULNERABILITY,
-    NEW_VULNERABLE_DEPENDENCY,
-    //NEW_OUTDATED_COMPONENT,
-    //FIXED_VULNERABILITY,
-    //FIXED_OUTDATED,
-    //GLOBAL_AUDIT_CHANGE,
-    PROJECT_AUDIT_CHANGE,
-    BOM_CONSUMED,
-    BOM_PROCESSED
+/**
+ * Specifies identities of all supported analyzers.
+ *
+ * @since 4.0.0
+ */
+public enum AnalyzerIdentity {
+    INTERNAL_ANALYZER,
+    OSSINDEX_ANALYZER,
+    NPM_AUDIT_ANALYZER,
+    VULNDB_ANALYZER,
+    NONE
 }

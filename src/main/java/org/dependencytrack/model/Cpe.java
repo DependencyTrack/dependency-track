@@ -22,10 +22,8 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
-import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -34,7 +32,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -141,10 +138,6 @@ public class Cpe implements ICpe, Serializable {
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The other may only contain printable characters")
     private String other;
-
-    @Persistent(mappedBy = "cpe")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    private Collection<CpeReference> references;
 
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "CPE_UUID_IDX")
@@ -270,14 +263,6 @@ public class Cpe implements ICpe, Serializable {
 
     public void setOther(String other) {
         this.other = other;
-    }
-
-    public Collection<CpeReference> getReferences() {
-        return references;
-    }
-
-    public void setReferences(Collection<CpeReference> references) {
-        this.references = references;
     }
 
     public UUID getUuid() {

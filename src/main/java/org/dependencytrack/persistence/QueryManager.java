@@ -33,7 +33,6 @@ import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.util.NotificationUtil;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -403,16 +402,10 @@ public class QueryManager extends AlpineQueryManager {
         }
 
         if (includeDependencies) {
-            final List<Dependency> sourceDependencies = getAllDependencies(source);
-            if (sourceDependencies != null) {
-                for (final Dependency sourceDependency: sourceDependencies) {
-                    final Dependency dependency = new Dependency();
-                    dependency.setProject(project);
-                    dependency.setComponent(sourceDependency.getComponent());
-                    dependency.setAddedBy(sourceDependency.getAddedBy());
-                    dependency.setAddedOn(sourceDependency.getAddedOn());
-                    dependency.setNotes(sourceDependency.getNotes());
-                    persist(dependency);
+            final List<Component> sourceComponents = getAllComponents(source);
+            if (sourceComponents != null) {
+                for (final Component sourceComponent: sourceComponents) {
+                    cloneComponent(sourceComponent, false);
                 }
             }
         }
@@ -477,7 +470,7 @@ public class QueryManager extends AlpineQueryManager {
 
         deleteAnalysisTrail(project);
         deleteMetrics(project);
-        deleteDependencies(project);
+        deleteComponents(project);
         deleteBoms(project);
         removeProjectFromNotificationRules(project);
         delete(project.getProperties());
@@ -603,8 +596,7 @@ public class QueryManager extends AlpineQueryManager {
             // Populate each Component object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
             for (Component component : result.getList(Component.class)) {
-                component.setMetrics(getMostRecentComponentMetrics(component));
-                component.setUsedBy(Math.toIntExact(getDependencyCount(component)));
+                component.setMetrics(getMostRecentDependencyMetrics(component));
             }
         }
         return result;
@@ -631,11 +623,11 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a Component by its hash. Supports MD5, SHA-1, SHA-256, SHA-512, SHA3-256, and SHA3-512 hashes.
+     * Returns Components by their hash. Supports MD5, SHA-1, SHA-256, SHA-512, SHA3-256, and SHA3-512 hashes.
      * @param hash the hash of the component to retrieve
-     * @return a Component, or null if not found
+     * @return a list of components
      */
-    public Component getComponentByHash(String hash) {
+    public PaginatedResult getComponentByHash(String hash) {
         if (hash == null) {
             return null;
         }
@@ -651,19 +643,7 @@ public class QueryManager extends AlpineQueryManager {
         } else {
             return null;
         }
-        return singleResult(query.execute(hash));
-    }
-
-    /**
-     * Returns a Component by group, name, and version.
-     * @param group the group of the component to retrieve
-     * @param name the name of the component to retrieve
-     * @param version the version of the component to retrieve
-     * @return a Component, or null if not found
-     */
-    public Component getComponentByAttributes(String group, String name, String version) {
-        final Query query = pm.newQuery(Component.class, "group == :group && name == :name && version == :version");
-        return singleResult(query.execute(group, name, version));
+        return execute(query, hash);
     }
 
     /**
@@ -677,6 +657,40 @@ public class QueryManager extends AlpineQueryManager {
         Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
         return result;
+    }
+
+    public Component cloneComponent(Component sourceComponent, boolean commitIndex) {
+        final Component component = new Component();
+        component.setGroup(sourceComponent.getGroup());
+        component.setName(sourceComponent.getName());
+        component.setVersion(sourceComponent.getVersion());
+        component.setClassifier(sourceComponent.getClassifier());
+        component.setFilename(sourceComponent.getFilename());
+        component.setExtension(sourceComponent.getExtension());
+        component.setMd5(sourceComponent.getMd5());
+        component.setSha1(sourceComponent.getSha1());
+        component.setSha256(sourceComponent.getSha256());
+        component.setSha384(sourceComponent.getSha384());
+        component.setSha512(sourceComponent.getSha512());
+        component.setSha3_256(sourceComponent.getSha3_256());
+        component.setSha3_384(sourceComponent.getSha3_384());
+        component.setSha3_512(sourceComponent.getSha3_512());
+        component.setBlake2b_256(sourceComponent.getBlake2b_256());
+        component.setBlake2b_384(sourceComponent.getBlake2b_384());
+        component.setBlake2b_512(sourceComponent.getBlake2b_512());
+        component.setBlake3(sourceComponent.getBlake3());
+        component.setCpe(sourceComponent.getCpe());
+        component.setPurl(sourceComponent.getPurl());
+        component.setPurlCoordinates(sourceComponent.getPurlCoordinates());
+        component.setInternal(sourceComponent.isInternal());
+        component.setDescription(sourceComponent.getDescription());
+        component.setCopyright(sourceComponent.getCopyright());
+        component.setLicense(sourceComponent.getLicense());
+        component.setResolvedLicense(sourceComponent.getResolvedLicense());
+        // TODO Add support for parent component and children components
+        component.setVulnerabilities(sourceComponent.getVulnerabilities());
+        component.setProject(sourceComponent.getProject());
+        return createComponent(component, commitIndex);
     }
 
     /**
@@ -712,6 +726,16 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Deletes all components for the specified Project.
+     * @param project the Project to delete components of
+     */
+    @SuppressWarnings("unchecked")
+    private void deleteComponents(Project project) {
+        final Query query = pm.newQuery(Component.class, "project == :project");
+        query.deletePersistentAll(project);
+    }
+
+    /**
      * Deletes a Component and all objects dependant on the component.
      * @param component the Component to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
@@ -728,7 +752,6 @@ public class QueryManager extends AlpineQueryManager {
 
         deleteAnalysisTrail(component);
         deleteMetrics(component);
-        deleteDependencies(component);
         deleteBoms(component);
         delete(component);
         commitSearchIndex(commitIndex, Component.class);
@@ -1071,12 +1094,13 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the component affected by the vulnerabiity
      */
     @SuppressWarnings("unchecked")
-    public void addVulnerability(Vulnerability vulnerability, Component component) {
+    public void addVulnerability(Vulnerability vulnerability, Component component, FindingAttribution findingAttribution) {
         vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
         component = getObjectById(Component.class, component.getId());
         if (!contains(vulnerability, component)) {
             pm.currentTransaction().begin();
             component.addVulnerability(vulnerability);
+            persist(findingAttribution);
             pm.currentTransaction().commit();
         }
     }
@@ -1292,67 +1316,44 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Checks if the specified Dependency exists or not. If not, creates
-     * a new Dependency with the specified project and component. In both
-     * cases, the Dependency will be returned.
-     * @param project the Project
-     * @param component the Component
-     * @param addedBy optional string representation of a username
-     * @param notes any notes on why the dependency exists or its usage
-     * @return a Dependency object
+     * Returns a component by matching its identity information.
+     * @param project the Project the component is a dependency of
+     * @param cid the identity values of the component
+     * @return a Component object, or null if not found
      */
-    public Dependency createDependencyIfNotExist(Project project, Component component, String addedBy, String notes) {
-        final List<Dependency> dependencies = getDependencies(project, component);
-
-        // Holder for possible duplicate dependencies
-        final List<Dependency> duplicates = new ArrayList<>();
-
-        // Holder for an existing Dependency (if present)
-        Dependency existingDependency = null;
-
-        if (CollectionUtils.isNotEmpty(dependencies)) {
-            // Ensure that only one dependency object exists
-            if (dependencies.size() > 1) {
-                // Iterate through the duplicates and add them to the list of dependencies to be deleted
-                for (int i = 1; i < dependencies.size(); i++) {
-                    duplicates.add(dependencies.get(i));
-                }
+    public Component matchIdentity(final Project project, final ComponentIdentity cid) {
+        PackageURL purlCoordinates = null;
+        if (cid.getPurl() != null) {
+            try {
+                final PackageURL purl = cid.getPurl();
+                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null);
+            } catch (MalformedPackageURLException e) { // throw it away
             }
-            // Return the first dependency found - all others will be deleted
-            existingDependency = dependencies.get(0);
         }
-        delete(duplicates);
+        //final Query query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe)) || (group == :group && name == :name && version == :version)");
+        //return singleResult(query.executeWithArray(project, cid.getPurl(), purlCoordinates, null, cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion())); // TODO SWID
+        final Query query = pm.newQuery(Component.class, "project == :project && (purl != null && purl == :purl)");
+        return singleResult(query.execute(project, cid.getPurl().canonicalize())); // TODO SWID
 
-        if (existingDependency != null) {
-            return existingDependency;
-        }
-
-        Dependency dependency = getDependency(project, component);
-        if (dependency != null) {
-            return dependency;
-        }
-        dependency = new Dependency();
-        dependency.setProject(project);
-        dependency.setComponent(component);
-        dependency.setAddedBy(addedBy);
-        dependency.setAddedOn(new Date());
-        dependency.setNotes(notes);
-        dependency = persist(dependency);
-        NotificationUtil.analyzeNotificationCriteria(this, dependency);
-        return dependency;
     }
 
     /**
-     * Checks if the specified Dependency exists or not. If so, removes
-     * the component as a dependency of the project.
-     * @param project the Project
-     * @param component the Component
+     * Returns a List of components by matching identity information.
+     * @param cid the identity values of the component
+     * @return a List of Component objects
      */
-    public void removeDependencyIfExist(Project project, Component component) {
-        final Dependency dependency = getDependency(project, component);
-        if (dependency != null) {
-            delete(dependency);
+    @SuppressWarnings("unchecked")
+    public List<Component> matchIdentity(final ComponentIdentity cid) {
+        String purlCoordinates = null;
+        if (cid.getPurl() != null) {
+            try {
+                final PackageURL purl = cid.getPurl();
+                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
+            } catch (MalformedPackageURLException e) { // throw it away
+            }
         }
+        final Query query = pm.newQuery(Component.class, "(purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version)");
+        return (List<Component>) query.executeWithArray(cid.getPurl().canonicalize(), purlCoordinates, null, cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()); // TODO SWID
     }
 
     /**
@@ -1360,53 +1361,41 @@ public class QueryManager extends AlpineQueryManager {
      * of the specified project and removes the dependency relationship for components
      * that are not in the list of specified components.
      * @param project the project to bind components to
+     * @param existingProjectComponents the complete list of existing dependent components
      * @param components the complete list of components that should be dependencies of the project
      */
-    public void reconcileDependencies(Project project, List<Component> components) {
-        // Holds a list of all Components that are existing dependencies of the specified project
-        final List<Component> existingProjectDependencies = new ArrayList<>();
-        getAllDependencies(project).forEach(item -> existingProjectDependencies.add(item.getComponent()));
-        reconcileDependencies(project, existingProjectDependencies, components);
-    }
-
-    /**
-     * Intelligently adds dependencies for components that are not already a dependency
-     * of the specified project and removes the dependency relationship for components
-     * that are not in the list of specified components.
-     * @param project the project to bind components to
-     * @param existingProjectDependencies the complete list of existing dependent components
-     * @param components the complete list of components that should be dependencies of the project
-     */
-    public void reconcileDependencies(Project project, List<Component> existingProjectDependencies, List<Component> components) {
+    public void reconcileComponents(Project project, List<Component> existingProjectComponents, List<Component> components) {
         // Removes components as dependencies to the project for all
         // components not included in the list provided
-        for (final Component existingDependency: existingProjectDependencies) {
+        List<Component> markedForDeletion = new ArrayList<>();
+        for (final Component existingComponent: existingProjectComponents) {
             boolean keep = false;
             for (final Component component: components) {
-                if (component.getId() == existingDependency.getId()) {
+                if (component.getId() == existingComponent.getId()) {
                     keep = true;
                 }
             }
             if (!keep) {
-                removeDependencyIfExist(project, existingDependency);
+                markedForDeletion.add(existingComponent);
             }
         }
-        components.forEach(component -> createDependencyIfNotExist(project, component, null, null));
+        if (!markedForDeletion.isEmpty()) {
+            this.delete(markedForDeletion);
+        }
     }
 
     /**
-     * Returns a List of all Dependency for the specified Project.
+     * Returns a List of all Components for the specified Project.
      * This method if designed NOT to provide paginated results.
      * @param project the Project to retrieve dependencies of
-     * @return a List of Dependency objects
+     * @return a List of Component objects
      */
     @SuppressWarnings("unchecked")
-    public List<Dependency> getAllDependencies(Project project) {
-        final Query query = pm.newQuery(Dependency.class, "project == :project");
+    public List<Component> getAllComponents(Project project) {
+        final Query query = pm.newQuery(Component.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
-        query.setOrdering("component.name asc");
-        return (List<Dependency>)query.execute(project);
+        query.setOrdering("name asc");
+        return (List<Component>)query.execute(project);
     }
 
     /**
@@ -1415,159 +1404,36 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Dependency objects
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getDependencies(final Project project, final boolean includeMetrics) {
+    public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
         final PaginatedResult result;
-        final Query query = pm.newQuery(Dependency.class, "project == :project");
+        final Query query = pm.newQuery(Component.class, "project == :project");
         query.getFetchPlan().setMaxFetchDepth(2);
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
         if (orderBy == null) {
-            query.setOrdering("component.name asc, component.version desc");
+            query.setOrdering("name asc, version desc");
         }
         if (filter != null) {
-            query.setFilter("project == :project && component.name.toLowerCase().matches(:name)");
+            query.setFilter("project == :project && name.toLowerCase().matches(:name)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             result = execute(query, project, filterString);
         } else {
             result = execute(query, project);
         }
         if (includeMetrics) {
-            // Populate each Dependency object in the paginated result with transitive related
+            // Populate each Component object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
-            for (Dependency dependency : result.getList(Dependency.class)) {
-                dependency.setMetrics(getMostRecentDependencyMetrics(dependency));
-                final PackageURL purl = dependency.getComponent().getPurl();
+            for (Component component : result.getList(Component.class)) {
+                component.setMetrics(getMostRecentDependencyMetrics(component));
+                final PackageURL purl = component.getPurl();
                 if (purl != null) {
                     final RepositoryType type = RepositoryType.resolve(purl);
                     if (RepositoryType.UNSUPPORTED != type) {
                         final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
-                        dependency.getComponent().setRepositoryMeta(repoMetaComponent);
+                        component.setRepositoryMeta(repoMetaComponent);
                     }
                 }
             }
         }
         return result;
-    }
-
-    /**
-     * Returns a List of Dependency for the specified Project.
-     * @param project the Project to retrieve dependencies of
-     * @return a List of Dependency objects
-     */
-    @SuppressWarnings("unchecked")
-    public PaginatedResult getDependencies(Project project) {
-        return getDependencies(project, false);
-    }
-
-    /**
-     * Returns a List of Dependency for the specified Component.
-     * @param component the Component to retrieve dependencies of
-     * @return a List of Dependency objects
-     */
-    @SuppressWarnings("unchecked")
-    public PaginatedResult getDependencies(Component component) {
-        final Query query = pm.newQuery(Dependency.class, "component == :component");
-        query.setOrdering("id asc");
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
-        return execute(query, component);
-    }
-
-    /**
-     * Returns a List of Dependency for the specified Component.
-     * This method if designed NOT to provide paginated results.
-     * @param component the Component to retrieve dependencies of
-     * @return a List of Dependency objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Dependency> getAllDependencies(Component component) {
-        component = getObjectById(Component.class, component.getId());
-        final Query query = pm.newQuery(Dependency.class, "component == :component");
-        query.setOrdering("id asc");
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
-        return (List<Dependency>)query.execute(component);
-    }
-
-    /**
-     * Deletes all dependencies for the specified Project.
-     * @param project the Project to delete dependencies of
-     */
-    @SuppressWarnings("unchecked")
-    private void deleteDependencies(Project project) {
-        final Query query = pm.newQuery(Dependency.class, "project == :project");
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.PROJECT_ONLY.name());
-        query.deletePersistentAll(project);
-    }
-
-    /**
-     * Deletes all dependencies for the specified Component.
-     * @param component the Component to delete dependencies of
-     */
-    @SuppressWarnings("unchecked")
-    private void deleteDependencies(Component component) {
-        final Query query = pm.newQuery(Dependency.class, "component == :component");
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.COMPONENT_ONLY.name());
-        query.deletePersistentAll(component);
-    }
-
-    /**
-     * Returns the number of Dependency objects for the specified Project.
-     * @param project the Project to retrieve dependencies of
-     * @return the total number of dependencies for the project
-     */
-    @SuppressWarnings("unchecked")
-    public long getDependencyCount(Project project) {
-        final Query query = pm.newQuery(Dependency.class, "project == :project");
-        return getCount(query, project);
-    }
-
-    /**
-     * Returns the number of Dependency objects for the specified Component.
-     * @param component the Component to retrieve dependencies of
-     * @return the total number of dependencies for the component
-     */
-    @SuppressWarnings("unchecked")
-    public long getDependencyCount(Component component) {
-        final Query query = pm.newQuery(Dependency.class, "component == :component");
-        return getCount(query, component);
-    }
-
-    /**
-     * Returns a Dependency for the specified Project and Component.
-     * @param project the Project the component is part of
-     * @param component the Component
-     * @return a Dependency object, or null if not found
-     */
-    public Dependency getDependency(Project project, Component component) {
-        return singleResult(getDependencies(project, component));
-    }
-
-    /**
-     * Returns a List of Dependencies for the specified Project and Component.
-     *
-     * There should NEVER be duplicate dependencies. But this method is intended
-     * to check for them and return the list. This is a private method and should
-     * never be accessed outside the QueryManager.
-     *
-     * @param project the Project the component is part of
-     * @param component the Component
-     * @return a List of Dependency objects, or null if not found
-     */
-    @SuppressWarnings("unchecked")
-    private List<Dependency> getDependencies(Project project, Component component) {
-        final Query query = pm.newQuery(Dependency.class, "project == :project && component == :component");
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
-        return (List<Dependency>) query.execute(project, component);
-    }
-
-    /**
-     * Returns a fully refreshed Dependency object with all fetch groups returned.
-     *
-     * @param dependency the dependency to fully refresh
-     * @return a Dependency object, or null if not found
-     */
-    public Dependency getDependency(Dependency dependency) {
-        final Query query = pm.newQuery(Dependency.class, "id == :id");
-        query.getFetchPlan().addGroup(Dependency.FetchGroup.ALL.name());
-        return singleResult(query.execute(dependency.getId()));
     }
 
     /**
@@ -1653,37 +1519,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns a List of Vulnerability for the specified Dependency and excludes suppressed vulnerabilities.
-     * This method if designed NOT to provide paginated results.
-     * @param dependency the Dependency to retrieve vulnerabilities of
-     * @return a List of Vulnerability objects
-     */
-    @SuppressWarnings("unchecked")
-    public List<Vulnerability> getAllVulnerabilities(Dependency dependency) {
-        return getAllVulnerabilities(dependency, false);
-    }
-
-    /**
-     * Returns a List of Vulnerability for the specified Dependency.
-     * This method if designed NOT to provide paginated results.
-     * @param dependency the Dependency to retrieve vulnerabilities of
-     * @return a List of Vulnerability objects
-     */
-    @SuppressWarnings("unchecked")
-    private List<Vulnerability> getAllVulnerabilities(Dependency dependency, boolean includeSuppressed) {
-        final String filter;
-        if (includeSuppressed) {
-            filter = "components.contains(:component)";
-        } else {
-            filter = "components.contains(:component)" + generateExcludeSuppressed(
-                    dependency.getProject(), dependency.getComponent()
-            );
-        }
-        final Query query = pm.newQuery(Vulnerability.class, filter);
-        return (List<Vulnerability>)query.execute(dependency.getComponent());
-    }
-
-    /**
      * Returns the number of Vulnerability objects for the specified Project.
      * @param project the Project to retrieve vulnerabilities of
      * @return the total number of vulnerabilities for the project
@@ -1692,12 +1527,12 @@ public class QueryManager extends AlpineQueryManager {
     public long getVulnerabilityCount(Project project, boolean includeSuppressed) {
         long total = 0;
         long suppressed = 0;
-        final List<Dependency> dependencies = getAllDependencies(project);
-        for (final Dependency dependency: dependencies) {
-            total += getCount(pm.newQuery(Vulnerability.class, "components.contains(:component)"), dependency.getComponent());
+        final List<Component> components = getAllComponents(project);
+        for (final Component component: components) {
+            total += getCount(pm.newQuery(Vulnerability.class, "components.contains(:component)"), component);
             if (! includeSuppressed) {
-                suppressed += getSuppressedCount(dependency.getComponent()); // account for globally suppressed components
-                suppressed += getSuppressedCount(project, dependency.getComponent()); // account for per-project/component
+                suppressed += getSuppressedCount(component); // account for globally suppressed components
+                suppressed += getSuppressedCount(project, component); // account for per-project/component
             }
         }
         return total - suppressed;
@@ -1714,13 +1549,13 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public List<Vulnerability> getVulnerabilities(Project project, boolean includeSuppressed) {
         final List<Vulnerability> vulnerabilities = new ArrayList<>();
-        final List<Dependency> dependencies = getAllDependencies(project);
-        for (final Dependency dependency: dependencies) {
+        final List<Component> components = getAllComponents(project);
+        for (final Component component: components) {
             final Collection<Vulnerability> componentVulns = pm.detachCopyAll(
-                    getAllVulnerabilities(dependency, includeSuppressed)
+                    getAllVulnerabilities(component, includeSuppressed)
             );
             for (final Vulnerability componentVuln: componentVulns) {
-                componentVuln.setComponents(Collections.singletonList(pm.detachCopy(dependency.getComponent())));
+                componentVuln.setComponents(Collections.singletonList(pm.detachCopy(component)));
             }
             vulnerabilities.addAll(componentVulns);
         }
@@ -1864,19 +1699,13 @@ public class QueryManager extends AlpineQueryManager {
     public List<Project> getProjects(Vulnerability vulnerability) {
         final List<Project> projects = new ArrayList<>();
         for (final Component component: vulnerability.getComponents()) {
-            for (final Dependency dependency: getAllDependencies(component)) {
-                boolean affected = true;
-                final Analysis globalAnalysis = getAnalysis(null, component, vulnerability);
-                final Analysis projectAnalysis = getAnalysis(dependency.getProject(), component, vulnerability);
-                if (globalAnalysis != null && globalAnalysis.isSuppressed()) {
-                    affected = false;
-                }
-                if (projectAnalysis != null && projectAnalysis.isSuppressed()) {
-                    affected = false;
-                }
-                if (affected) {
-                    projects.add(dependency.getProject());
-                }
+            boolean affected = true;
+            final Analysis projectAnalysis = getAnalysis(component, vulnerability);
+            if (projectAnalysis != null && projectAnalysis.isSuppressed()) {
+                affected = false;
+            }
+            if (affected) {
+                projects.add(component.getProject());
             }
         }
         // Force removal of duplicates by taking the List and populating a Set and back again.
@@ -1899,33 +1728,30 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Returns a Analysis for the specified Project, Component, and Vulnerability.
-     * @param project the Project
      * @param component the Component
      * @param vulnerability the Vulnerability
      * @return a Analysis object, or null if not found
      */
-    public Analysis getAnalysis(Project project, Component component, Vulnerability vulnerability) {
-        final Query query = pm.newQuery(Analysis.class, "project == :project && component == :component && vulnerability == :vulnerability");
-        return singleResult(query.execute(project, component, vulnerability));
+    public Analysis getAnalysis(Component component, Vulnerability vulnerability) {
+        final Query query = pm.newQuery(Analysis.class, "component == :component && vulnerability == :vulnerability");
+        return singleResult(query.execute(component, vulnerability));
     }
 
     /**
      * Documents a new analysis. Creates a new Analysis object if one doesn't already exists and appends
      * the specified comment along with a timestamp in the AnalysisComment trail.
-     * @param project the Project
      * @param component the Component
      * @param vulnerability the Vulnerability
      * @return an Analysis object
      */
-    public Analysis makeAnalysis(Project project, Component component, Vulnerability vulnerability,
+    public Analysis makeAnalysis(Component component, Vulnerability vulnerability,
                                  AnalysisState analysisState, Boolean isSuppressed) {
         if (analysisState == null) {
             analysisState = AnalysisState.NOT_SET;
         }
-        Analysis analysis = getAnalysis(project, component, vulnerability);
+        Analysis analysis = getAnalysis(component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
-            analysis.setProject(project);
             analysis.setComponent(component);
             analysis.setVulnerability(vulnerability);
         }
@@ -1934,7 +1760,7 @@ public class QueryManager extends AlpineQueryManager {
         }
         analysis.setAnalysisState(analysisState);
         analysis = persist(analysis);
-        return getAnalysis(analysis.getProject(), analysis.getComponent(), analysis.getVulnerability());
+        return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
     }
 
     /**
@@ -1989,7 +1815,7 @@ public class QueryManager extends AlpineQueryManager {
             final Finding finding = new Finding(project.getUuid(), o);
             final Component component = getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
-            final Analysis analysis = getAnalysis(null, component, vulnerability);
+            final Analysis analysis = getAnalysis(component, vulnerability);
             if (analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 finding.getVulnerability().put("description", vulnerability.getDescription());
@@ -2078,60 +1904,26 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Retrieves the most recent ComponentMetrics.
+     * Retrieves the most recent DependencyMetrics.
      * @param component the Component to retrieve metrics for
-     * @return a ComponentMetrics object
+     * @return a DependencyMetrics object
      */
-    public ComponentMetrics getMostRecentComponentMetrics(Component component) {
-        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
+    public DependencyMetrics getMostRecentDependencyMetrics(Component component) {
+        final Query query = pm.newQuery(DependencyMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
         return singleResult(query.execute(component));
     }
 
     /**
-     * Retrieves ComponentMetrics in descending order starting with the most recent.
+     * Retrieves DependencyMetrics in descending order starting with the most recent.
      * @param component the Component to retrieve metrics for
      * @return a PaginatedResult object
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getComponentMetrics(Component component) {
-        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
+    public PaginatedResult getDependencyMetrics(Component component) {
+        final Query query = pm.newQuery(DependencyMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
         return execute(query, component);
-    }
-
-    /**
-     * Retrieves ComponentMetrics in ascending order starting with the oldest since the date specified.
-     * @return a List of metrics
-     */
-    @SuppressWarnings("unchecked")
-    public List<ComponentMetrics> getComponentMetricsSince(Component component, Date since) {
-        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component && lastOccurrence >= :since");
-        query.setOrdering("lastOccurrence asc");
-        return (List<ComponentMetrics>)query.execute(component, since);
-    }
-
-    /**
-     * Retrieves the most recent DependencyMetrics.
-     * @param dependency the Dependency to retrieve metrics for
-     * @return a DependencyMetrics object
-     */
-    public DependencyMetrics getMostRecentDependencyMetrics(Dependency dependency) {
-        final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component");
-        query.setOrdering("lastOccurrence desc");
-        return singleResult(query.execute(dependency.getProject(), dependency.getComponent()));
-    }
-
-    /**
-     * Retrieves DependencyMetrics in descending order starting with the most recent.
-     * @param dependency the Dependency to retrieve metrics for
-     * @return a PaginatedResult object
-     */
-    @SuppressWarnings("unchecked")
-    public PaginatedResult getDependencyMetrics(Dependency dependency) {
-        final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component");
-        query.setOrdering("lastOccurrence desc");
-        return execute(query, dependency.getProject(), dependency.getComponent());
     }
 
     /**
@@ -2139,10 +1931,10 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of metrics
      */
     @SuppressWarnings("unchecked")
-    public List<DependencyMetrics> getDependencyMetricsSince(Dependency dependency, Date since) {
-        final Query query = pm.newQuery(DependencyMetrics.class, "project == :project && component == :component && lastOccurrence >= :since");
+    public List<DependencyMetrics> getDependencyMetricsSince(Component component, Date since) {
+        final Query query = pm.newQuery(DependencyMetrics.class, "component == :component && lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
-        return (List<DependencyMetrics>)query.execute(dependency.getProject(), dependency.getComponent(), since);
+        return (List<DependencyMetrics>)query.execute(component, since);
     }
 
     /**
@@ -2188,11 +1980,8 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the Component to delete metrics for
      */
     private void deleteMetrics(Component component) {
-        final Query query = pm.newQuery(ComponentMetrics.class, "component == :component");
+        final Query query = pm.newQuery(DependencyMetrics.class, "component == :component");
         query.deletePersistentAll(component);
-
-        final Query query2 = pm.newQuery(DependencyMetrics.class, "component == :component");
-        query2.deletePersistentAll(component);
     }
 
     /**

@@ -28,8 +28,6 @@ import alpine.resources.Pagination;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentMetrics;
-import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
@@ -71,8 +69,6 @@ public class MetricsUpdateTask implements Subscriber {
                     updateProjectMetrics(qm, ((Project) event.getTarget()).getId());
                 } else if (event.getTarget() instanceof Component) {
                     updateComponentMetrics(qm, ((Component) event.getTarget()).getId());
-                } else if (event.getTarget() instanceof Dependency) {
-                    updateDependencyMetrics(qm, ((Dependency) event.getTarget()).getId());
                 } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
                     updateVulnerabilitiesMetrics(qm);
                 }
@@ -121,12 +117,6 @@ public class MetricsUpdateTask implements Subscriber {
             // All vulnerabilities
             portfolioCounters.vulnerabilities += projectMetrics.severitySum();
 
-            // All dependant components
-            portfolioCounters.dependencies += projectMetrics.dependencies;
-
-            // Only vulnerable components
-            portfolioCounters.vulnerableDependencies += projectMetrics.vulnerableDependencies;
-
             // Only vulnerable projects
             if (projectMetrics.severitySum() > 0) {
                 portfolioCounters.vulnerableProjects++;
@@ -141,7 +131,7 @@ public class MetricsUpdateTask implements Subscriber {
         final AlpineRequest alpineRequest = new AlpineRequest(
                 null, new Pagination(Pagination.Strategy.OFFSET, 0, 1000), null, "id", OrderDirection.ASCENDING
         );
-        // Page through a list of components (these are global component objects - not dependencies)
+        // Page through a list of components
         try (QueryManager qm2 = new QueryManager(alpineRequest)) {
             final long total = qm2.getCount(Component.class);
             LOGGER.debug("Retrieving and paginating through all components. " + total + " total");
@@ -180,8 +170,6 @@ public class MetricsUpdateTask implements Subscriber {
                 && last.getInheritedRiskScore() == portfolioCounters.getInheritedRiskScore()
                 && last.getComponents() == portfolioCounters.components
                 && last.getVulnerableComponents() == portfolioCounters.vulnerableComponents
-                && last.getDependencies() == portfolioCounters.dependencies
-                && last.getVulnerableDependencies() == portfolioCounters.vulnerableDependencies
                 && last.getSuppressed() == portfolioCounters.suppressions
                 && last.getFindingsTotal() == portfolioCounters.findingsTotal
                 && last.getFindingsAudited() == portfolioCounters.findingsAudited
@@ -205,8 +193,6 @@ public class MetricsUpdateTask implements Subscriber {
             portfolioMetrics.setVulnerabilities(portfolioCounters.vulnerabilities);
             portfolioMetrics.setComponents(portfolioCounters.components);
             portfolioMetrics.setVulnerableComponents(portfolioCounters.vulnerableComponents);
-            portfolioMetrics.setDependencies(portfolioCounters.dependencies);
-            portfolioMetrics.setVulnerableDependencies(portfolioCounters.vulnerableDependencies);
             portfolioMetrics.setSuppressed(portfolioCounters.suppressions);
             portfolioMetrics.setFindingsTotal(portfolioCounters.findingsTotal);
             portfolioMetrics.setFindingsAudited(portfolioCounters.findingsAudited);
@@ -245,33 +231,26 @@ public class MetricsUpdateTask implements Subscriber {
         // Holds the metrics returned from all components that are dependencies of the project
         final List<MetricCounters> countersList = new ArrayList<>();
 
-        // Retrieve all component dependencies for the project
-        LOGGER.debug("Retrieving all dependencies for project: " + project.getUuid());
-        final List<Dependency> dependencies = qm.getAllDependencies(project);
-        LOGGER.debug("Project metrics will include " + dependencies.size() + " dependencies");
+        // Retrieve all components for the project
+        LOGGER.debug("Retrieving all components for project: " + project.getUuid());
+        final List<Component> components = qm.getAllComponents(project);
+        LOGGER.debug("Project metrics will include " + components.size() + " components");
 
         LOGGER.debug("Iterating through dependencies");
         // Iterate through all dependencies
-        for (final Dependency dependency: dependencies) {
-
-            // Get the component
-            final Component component = dependency.getComponent();
-
-            // Update the dependency metrics
-            final MetricCounters dependencyMetrics = updateDependencyMetrics(qm, dependency.getId());
-
+        for (final Component component: components) {
             // Update the component metrics
-            updateComponentMetrics(qm, component.getId());
+            final MetricCounters componentMetrics = updateComponentMetrics(qm, component.getId());
 
-            // Adds the metrics from the dependency to the list of metrics for the project
-            countersList.add(dependencyMetrics);
+            // Adds the metrics from the component to the list of metrics for the project
+            countersList.add(componentMetrics);
         }
-        LOGGER.debug("Dependency iteration complete");
+        LOGGER.debug("Component iteration complete");
 
         // Iterate through the metrics from all components that are dependencies of the project
         for (final MetricCounters depMetric: countersList) {
             // Add individual component metrics to the overall project metrics
-            counters.dependencies++;
+            counters.components++;
             counters.critical += depMetric.critical;
             counters.high += depMetric.high;
             counters.medium += depMetric.medium;
@@ -280,7 +259,7 @@ public class MetricsUpdateTask implements Subscriber {
             counters.vulnerabilities += depMetric.severitySum();
 
             if (depMetric.severitySum() > 0) {
-                counters.vulnerableDependencies++;
+                counters.vulnerableComponents++;
             }
         }
 
@@ -308,8 +287,8 @@ public class MetricsUpdateTask implements Subscriber {
                 && last.getFindingsAudited() == counters.findingsAudited
                 && last.getFindingsUnaudited() == counters.findingsUnaudited
                 && last.getInheritedRiskScore() == counters.getInheritedRiskScore()
-                && last.getComponents() == counters.dependencies // at a project level, the field is actually 'components'
-                && last.getVulnerableComponents() == counters.vulnerableDependencies) {
+                && last.getComponents() == counters.components
+                && last.getVulnerableComponents() == counters.vulnerableComponents) {
 
             LOGGER.debug("Metrics are unchanged for project: " + project.getUuid() + ". Updating last occurrence");
             // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
@@ -331,8 +310,8 @@ public class MetricsUpdateTask implements Subscriber {
             projectMetrics.setLow(counters.low);
             projectMetrics.setUnassigned(counters.unassigned);
             projectMetrics.setVulnerabilities(counters.vulnerabilities);
-            projectMetrics.setComponents(counters.dependencies);
-            projectMetrics.setVulnerableComponents(counters.vulnerableDependencies);
+            projectMetrics.setComponents(counters.components);
+            projectMetrics.setVulnerableComponents(counters.vulnerableComponents);
             projectMetrics.setSuppressed(counters.suppressions);
             projectMetrics.setFindingsTotal(counters.findingsTotal);
             projectMetrics.setFindingsAudited(counters.findingsAudited);
@@ -379,7 +358,7 @@ public class MetricsUpdateTask implements Subscriber {
         counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
         // Query for an existing ComponentMetrics
-        final ComponentMetrics last = qm.getMostRecentComponentMetrics(component);
+        final DependencyMetrics last = qm.getMostRecentDependencyMetrics(component);
         if (last != null
                 && last.getCritical() == counters.critical
                 && last.getHigh() == counters.high
@@ -405,7 +384,8 @@ public class MetricsUpdateTask implements Subscriber {
             qm.persist(component);
         } else {
             LOGGER.debug("Metrics have changed (or were never previously measured) for component: " + component.getUuid());
-            final ComponentMetrics componentMetrics = new ComponentMetrics();
+            final DependencyMetrics componentMetrics = new DependencyMetrics();
+            componentMetrics.setProject(component.getProject());
             componentMetrics.setComponent(component);
             componentMetrics.setCritical(counters.critical);
             componentMetrics.setHigh(counters.high);
@@ -429,82 +409,6 @@ public class MetricsUpdateTask implements Subscriber {
             qm.persist(component);
         }
         LOGGER.debug("Completed metrics update for component: " + component.getUuid());
-        return counters;
-    }
-
-    /**
-     * Performs metric updates on a specific dependency.
-     * @param qm a QueryManager instance
-     * @param oid object ID of the dependency to perform metric updates on
-     * @return MetricCounters
-     */
-    private MetricCounters updateDependencyMetrics(final QueryManager qm, final long oid) {
-        final Dependency dependency = qm.getObjectById(Dependency.class, oid);
-        LOGGER.debug("Executing metrics update for dependency: " + dependency.getId());
-        final Date measuredAt = new Date();
-
-        final MetricCounters counters = new MetricCounters();
-        final Project project = dependency.getProject();
-        final Component component = dependency.getComponent();
-
-        LOGGER.debug("Retrieving vulnerabilities for dependency: " + dependency.getId());
-        // Retrieve the non-suppressed vulnerabilities for the component
-        for (final Vulnerability vuln: qm.getAllVulnerabilities(dependency)) {
-            counters.updateSeverity(vuln.getSeverity());
-        }
-        LOGGER.debug("Retrieving existing suppression count for dependency: " + dependency.getId());
-        counters.suppressions = toIntExact(qm.getSuppressedCount(project, component));
-
-        // For the time being finding and vulnerability counts are the same.
-        // However, vulns may be defined as 'confirmed' in a future release.
-        counters.findingsTotal = counters.severitySum();
-        LOGGER.debug("Retrieving existing audited count for dependency: " + dependency.getId());
-        counters.findingsAudited = toIntExact(qm.getAuditedCount(project, component));
-        counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
-
-        LOGGER.debug("Retrieving most recent metrics for dependency: " + dependency.getId());
-        // Query for an existing DependencyMetrics
-        final DependencyMetrics last = qm.getMostRecentDependencyMetrics(dependency);
-        if (last != null
-                && last.getCritical() == counters.critical
-                && last.getHigh() == counters.high
-                && last.getMedium() == counters.medium
-                && last.getLow() == counters.low
-                && last.getUnassigned() == counters.unassigned
-                && last.getVulnerabilities() == counters.severitySum()
-                && last.getSuppressed() == counters.suppressions
-                && last.getFindingsTotal() == counters.findingsTotal
-                && last.getFindingsAudited() == counters.findingsAudited
-                && last.getFindingsUnaudited() == counters.findingsUnaudited
-                && last.getInheritedRiskScore() == counters.getInheritedRiskScore()) {
-
-            LOGGER.debug("Metrics are unchanged for dependency: " + dependency.getId() + ". Updating last occurrence");
-            // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
-            last.setLastOccurrence(measuredAt);
-            LOGGER.debug("Persisting metrics for dependency: " + dependency.getId());
-            qm.persist(last);
-        } else {
-            LOGGER.debug("Metrics have changed (or were never previously measured) for dependency: " + dependency.getId());
-            final DependencyMetrics dependencyMetrics = new DependencyMetrics();
-            dependencyMetrics.setProject(project);
-            dependencyMetrics.setComponent(component);
-            dependencyMetrics.setCritical(counters.critical);
-            dependencyMetrics.setHigh(counters.high);
-            dependencyMetrics.setMedium(counters.medium);
-            dependencyMetrics.setLow(counters.low);
-            dependencyMetrics.setUnassigned(counters.unassigned);
-            dependencyMetrics.setVulnerabilities(counters.severitySum());
-            dependencyMetrics.setSuppressed(counters.suppressions);
-            dependencyMetrics.setFindingsTotal(counters.findingsTotal);
-            dependencyMetrics.setFindingsAudited(counters.findingsAudited);
-            dependencyMetrics.setFindingsUnaudited(counters.findingsUnaudited);
-            dependencyMetrics.setInheritedRiskScore(counters.getInheritedRiskScore());
-            dependencyMetrics.setFirstOccurrence(measuredAt);
-            dependencyMetrics.setLastOccurrence(measuredAt);
-            LOGGER.debug("Persisting metrics for dependency: " + dependency.getId());
-            qm.persist(dependencyMetrics);
-        }
-        LOGGER.debug("Completed metrics update for dependency: " + dependency.getId());
         return counters;
     }
 
@@ -596,9 +500,8 @@ public class MetricsUpdateTask implements Subscriber {
     private class MetricCounters {
 
         private int critical, high, medium, low, unassigned;
-        private int projects, vulnerableProjects, components, vulnerableComponents, dependencies,
-                vulnerableDependencies, vulnerabilities, suppressions, findingsTotal, findingsAudited,
-                findingsUnaudited;
+        private int projects, vulnerableProjects, components, vulnerableComponents,
+                vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited;
 
         /**
          * Increments critical, high, medium, low counters based on the specified severity.

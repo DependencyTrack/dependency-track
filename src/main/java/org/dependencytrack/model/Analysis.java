@@ -92,16 +92,13 @@ public class Analysis implements Serializable {
         return project;
     }
 
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
     public Component getComponent() {
         return component;
     }
 
     public void setComponent(Component component) {
         this.component = component;
+        this.project = component.getProject();
     }
 
     public Vulnerability getVulnerability() {

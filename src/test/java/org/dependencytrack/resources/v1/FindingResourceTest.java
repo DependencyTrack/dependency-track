@@ -22,9 +22,11 @@ import alpine.Config;
 import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -50,26 +52,20 @@ public class FindingResourceTest extends ResourceTest {
     public void getFindingsByProjectTest() {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Component c1 = createComponent("Component A", "1.0");
-        Component c2 = createComponent("Component B", "1.0");
-        Component c3 = createComponent("Component C", "1.0");
-        Component c4 = createComponent("Component D", "1.0");
-        Component c5 = createComponent("Component E", "1.0");
-        Component c6 = createComponent("Component F", "1.0");
-        qm.createDependencyIfNotExist(p1, c1, null, null);
-        qm.createDependencyIfNotExist(p1, c2, null, null);
-        qm.createDependencyIfNotExist(p1, c3, null, null);
-        qm.createDependencyIfNotExist(p2, c4, null, null);
-        qm.createDependencyIfNotExist(p2, c5, null, null);
-        qm.createDependencyIfNotExist(p2, c6, null, null);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1, "Component C", "1.0");
+        Component c4 = createComponent(p2, "Component D", "1.0");
+        Component c5 = createComponent(p2, "Component E", "1.0");
+        Component c6 = createComponent(p2, "Component F", "1.0");
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
         Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
         Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
-        qm.addVulnerability(v1, c1);
-        qm.addVulnerability(v2, c1);
-        qm.addVulnerability(v3, c2);
-        qm.addVulnerability(v4, c5);
+        qm.addVulnerability(v1, c1, new FindingAttribution(c1, v1, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v2, c1, new FindingAttribution(c1, v2, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v3, c2, new FindingAttribution(c2, v3, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v4, c5, new FindingAttribution(c5, v4, AnalyzerIdentity.NONE));
         Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -113,26 +109,20 @@ public class FindingResourceTest extends ResourceTest {
     public void exportFindingsByProjectTest() {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Project p2 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Component c1 = createComponent("Component A", "1.0");
-        Component c2 = createComponent("Component B", "1.0");
-        Component c3 = createComponent("Component C", "1.0");
-        Component c4 = createComponent("Component D", "1.0");
-        Component c5 = createComponent("Component E", "1.0");
-        Component c6 = createComponent("Component F", "1.0");
-        qm.createDependencyIfNotExist(p1, c1, null, null);
-        qm.createDependencyIfNotExist(p1, c2, null, null);
-        qm.createDependencyIfNotExist(p1, c3, null, null);
-        qm.createDependencyIfNotExist(p2, c4, null, null);
-        qm.createDependencyIfNotExist(p2, c5, null, null);
-        qm.createDependencyIfNotExist(p2, c6, null, null);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        Component c2 = createComponent(p1, "Component B", "1.0");
+        Component c3 = createComponent(p1, "Component C", "1.0");
+        Component c4 = createComponent(p2, "Component D", "1.0");
+        Component c5 = createComponent(p2, "Component E", "1.0");
+        Component c6 = createComponent(p2, "Component F", "1.0");
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
         Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
         Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
-        qm.addVulnerability(v1, c1);
-        qm.addVulnerability(v2, c1);
-        qm.addVulnerability(v3, c2);
-        qm.addVulnerability(v4, c5);
+        qm.addVulnerability(v1, c1, new FindingAttribution(c1, v1, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v2, c1, new FindingAttribution(c1, v2, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v3, c2, new FindingAttribution(c2, v3, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v4, c5, new FindingAttribution(c2, v4, AnalyzerIdentity.NONE));
         Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -180,8 +170,9 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("The project could not be found.", body);
     }
 
-    private Component createComponent(String name, String version) {
+    private Component createComponent(Project project, String name, String version) {
         Component component = new Component();
+        component.setProject(project);
         component.setName(name);
         component.setVersion(version);
         return qm.createComponent(component, false);

@@ -243,7 +243,7 @@ public class Component implements Serializable {
     private String swidTagId;
 
     @Persistent
-    @Column(name = "INTERNAL", allowsNull = "false")
+    @Column(name = "INTERNAL", allowsNull = "true")
     @JsonProperty("isInternal")
     private Boolean internal;
 
@@ -500,7 +500,9 @@ public class Component implements Serializable {
     }
 
     public void setPurl(PackageURL purl) {
-        this.purl = purl.canonicalize();
+        if (purl != null) {
+            this.purl = purl.canonicalize();
+        }
     }
 
     public PackageURL getPurlCoordinates() {

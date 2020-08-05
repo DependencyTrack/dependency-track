@@ -23,7 +23,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AnalysisTest { 
+public class AnalysisTest {
 
     @Test
     public void testId() {
@@ -33,19 +33,15 @@ public class AnalysisTest {
     }
 
     @Test
-    public void testProject() {
-        Project project = new Project();
-        Analysis analysis = new Analysis();
-        analysis.setProject(project);
-        Assert.assertEquals(project, analysis.getProject());
-    }
-
-    @Test
     public void testComponent() {
+        Project project = new Project();
         Component component = new Component();
+        component.setProject(project);
         Analysis analysis = new Analysis();
         analysis.setComponent(component);
         Assert.assertEquals(component, analysis.getComponent());
+        Assert.assertEquals(project, analysis.getProject());
+        Assert.assertEquals(project, analysis.getComponent().getProject());
     }
 
     @Test
@@ -82,4 +78,4 @@ public class AnalysisTest {
         analysis.setSuppressed(false);
         Assert.assertFalse(analysis.isSuppressed());
     }
-} 
+}

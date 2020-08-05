@@ -56,10 +56,10 @@ public class BomResourceTest extends ResourceTest {
     public void exportProjectAsCycloneDxTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component c = new Component();
+        c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
         Component component = qm.createComponent(c, false);
-        qm.createDependencyIfNotExist(project, component, null, null);
         Response response = target(V1_BOM + "/cyclonedx/project/" + project.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -82,7 +82,9 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void exportComponentsAsCycloneDxTest() {
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
         Component c = new Component();
+        c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
         qm.createComponent(c, false);
@@ -97,7 +99,9 @@ public class BomResourceTest extends ResourceTest {
 
     @Test
     public void exportComponentAsCycloneDx() {
+        Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
         Component c = new Component();
+        c.setProject(project);
         c.setName("sample-component");
         c.setVersion("1.0");
         Component component = qm.createComponent(c, false);

@@ -168,7 +168,7 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
                 validator.validateProperty(jsonComponent, "sha256"),
-                validator.validateProperty(jsonComponent, "sha385"),
+                validator.validateProperty(jsonComponent, "sha384"),
                 validator.validateProperty(jsonComponent, "sha512"),
                 validator.validateProperty(jsonComponent, "sha3_256"),
                 validator.validateProperty(jsonComponent, "sha3_384"),

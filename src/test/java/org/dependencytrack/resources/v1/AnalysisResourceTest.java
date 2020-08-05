@@ -55,6 +55,7 @@ public class AnalysisResourceTest extends ResourceTest {
     public void retrieveAnalysisTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
+        component.setProject(project);
         component.setName("Acme Component");
         component.setVersion("1.0");
         qm.createComponent(component, false);
@@ -66,7 +67,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(components);
         qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(project, component, vulnerability, AnalysisState.NOT_AFFECTED, true);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED, true);
         Response response = target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
@@ -84,8 +85,9 @@ public class AnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisInvalidProjectUuidTest() {
-        qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
+        component.setProject(project);
         component.setName("Acme Component");
         component.setVersion("1.0");
         qm.createComponent(component, false);
@@ -114,6 +116,7 @@ public class AnalysisResourceTest extends ResourceTest {
     public void retrieveAnalysisInvalidComponentUuidTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
+        component.setProject(project);
         component.setName("Acme Component");
         component.setVersion("1.0");
         qm.createComponent(component, false);
@@ -142,6 +145,7 @@ public class AnalysisResourceTest extends ResourceTest {
     public void retrieveAnalysisInvalidVulnerabilityUuidTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
+        component.setProject(project);
         component.setName("Acme Component");
         component.setVersion("1.0");
         qm.createComponent(component, false);
@@ -167,43 +171,10 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateGlobalAnalysisTest() {
-        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        Component component = new Component();
-        component.setName("Acme Component");
-        component.setVersion("1.0");
-        qm.createComponent(component, false);
-        List<Component> components = new ArrayList<>();
-        components.add(component);
-        Vulnerability vulnerability = new Vulnerability();
-        vulnerability.setVulnId("INT-001");
-        vulnerability.setSource(Vulnerability.Source.INTERNAL);
-        vulnerability.setSeverity(Severity.HIGH);
-        vulnerability.setComponents(components);
-        qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(null, component, vulnerability, AnalysisState.NOT_AFFECTED, true);
-        AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
-        Response response = target(V1_ANALYSIS + "/global")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(AnalysisState.NOT_AFFECTED.name(), json.getString("analysisState"));
-        Assert.assertTrue(json.getBoolean("isSuppressed"));
-        Analysis globalAnalysis = qm.getAnalysis(null, component, vulnerability);
-        Assert.assertNull(globalAnalysis.getProject());
-        Assert.assertEquals(component.getUuid(), globalAnalysis.getComponent().getUuid());
-        Assert.assertEquals(vulnerability.getUuid(), globalAnalysis.getVulnerability().getUuid());
-    }
-
-    @Test
     public void updateAnalysisTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
+        component.setProject(project);
         component.setName("Acme Component");
         component.setVersion("1.0");
         qm.createComponent(component, false);
@@ -215,7 +186,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(components);
         qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(project, component, vulnerability, AnalysisState.NOT_AFFECTED, true);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED, true);
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
         Response response = target(V1_ANALYSIS)
@@ -228,7 +199,7 @@ public class AnalysisResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals(AnalysisState.NOT_AFFECTED.name(), json.getString("analysisState"));
         Assert.assertTrue(json.getBoolean("isSuppressed"));
-        Analysis analysis = qm.getAnalysis(project, component, vulnerability);
+        Analysis analysis = qm.getAnalysis(component, vulnerability);
         Assert.assertEquals(project.getUuid(), analysis.getProject().getUuid());
         Assert.assertEquals(component.getUuid(), analysis.getComponent().getUuid());
         Assert.assertEquals(vulnerability.getUuid(), analysis.getVulnerability().getUuid());
@@ -238,6 +209,7 @@ public class AnalysisResourceTest extends ResourceTest {
     public void updateAnalysisChangeStateTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         Component component = new Component();
+        component.setProject(project);
         component.setName("Acme Component");
         component.setVersion("1.0");
         qm.createComponent(component, false);
@@ -249,7 +221,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(components);
         qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(project, component, vulnerability, AnalysisState.IN_TRIAGE, false);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, false);
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
         Response response = target(V1_ANALYSIS)
@@ -267,7 +239,7 @@ public class AnalysisResourceTest extends ResourceTest {
         Assert.assertEquals("IN_TRIAGE → NOT_AFFECTED", json.getJsonArray("analysisComments").getJsonObject(0).getString("comment"));
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(1).getJsonNumber("timestamp"));
         Assert.assertEquals("Not an issue", json.getJsonArray("analysisComments").getJsonObject(1).getString("comment"));
-        Analysis analysis = qm.getAnalysis(project, component, vulnerability);
+        Analysis analysis = qm.getAnalysis(component, vulnerability);
         Assert.assertEquals(project.getUuid(), analysis.getProject().getUuid());
         Assert.assertEquals(component.getUuid(), analysis.getComponent().getUuid());
         Assert.assertEquals(vulnerability.getUuid(), analysis.getVulnerability().getUuid());

@@ -416,7 +416,6 @@ public class QueryManager extends AlpineQueryManager {
                 for (final Analysis sourceAnalysis: analyses) {
                     Analysis analysis = new Analysis();
                     analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
-                    analysis.setProject(project);
                     analysis.setComponent(sourceAnalysis.getComponent());
                     analysis.setVulnerability(sourceAnalysis.getVulnerability());
                     analysis.setSuppressed(sourceAnalysis.isSuppressed());
@@ -1098,9 +1097,9 @@ public class QueryManager extends AlpineQueryManager {
         vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
         component = getObjectById(Component.class, component.getId());
         if (!contains(vulnerability, component)) {
+            persist(findingAttribution);
             pm.currentTransaction().begin();
             component.addVulnerability(vulnerability);
-            persist(findingAttribution);
             pm.currentTransaction().commit();
         }
     }
@@ -1478,7 +1477,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     public PaginatedResult getVulnerabilities(Component component, boolean includeSuppressed) {
         PaginatedResult result;
-        final String componentFilter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
+        final String componentFilter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component.getProject(), component);
         final Query query = pm.newQuery(Vulnerability.class);
         if (orderBy == null) {
             query.setOrdering("id asc");
@@ -1513,7 +1512,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     private List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
-        final String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component);
+        final String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component.getProject(), component);
         final Query query = pm.newQuery(Vulnerability.class, filter);
         return (List<Vulnerability>)query.execute(component);
     }
@@ -1651,16 +1650,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Generates partial JDOQL statement excluding suppressed vulnerabilities for this component (global).
-     * @param component the component to query on
-     * @return a partial where clause
-     */
-    @SuppressWarnings("unchecked")
-    private String generateExcludeSuppressed(Component component) {
-        return generateExcludeSuppressed(null, component);
-    }
-
-    /**
      * Generates partial JDOQL statement excluding suppressed vulnerabilities for this project.
      * @param project the project to query on
      * @return a partial where clause
@@ -1680,7 +1669,7 @@ public class QueryManager extends AlpineQueryManager {
     @SuppressWarnings("unchecked")
     private String generateExcludeSuppressed(Project project, Component component) {
         // Retrieve a list of all suppressed vulnerabilities
-        final Query analysisQuery = pm.newQuery(Analysis.class, "(project == :project || project == null) && component == :component && suppressed == true");
+        final Query analysisQuery = pm.newQuery(Analysis.class, "project == :project && component == :component && suppressed == true");
         final List<Analysis> analysisList = (List<Analysis>)analysisQuery.execute(project, component);
         // Construct exclude clause based on above results
         String excludeClause = analysisList.stream().map(analysis -> "id != " + analysis.getVulnerability().getId() + " && ").collect(Collectors.joining());

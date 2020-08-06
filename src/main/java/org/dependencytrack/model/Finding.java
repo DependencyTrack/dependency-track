@@ -88,6 +88,7 @@ public class Finding implements Serializable {
         optValue(component, "group", o[2]);
         optValue(component, "version", o[3]);
         optValue(component, "purl", o[4]);
+        optValue(component, "project", project.toString());
 
         optValue(vulnerability, "uuid", o[5]);
         optValue(vulnerability, "source", o[6]);

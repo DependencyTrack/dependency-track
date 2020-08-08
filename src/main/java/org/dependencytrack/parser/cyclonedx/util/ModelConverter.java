@@ -35,6 +35,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ModelConverter {
@@ -214,5 +215,27 @@ public class ModelConverter {
         */
 
         return cycloneComponent;
+    }
+
+    public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
+        final org.cyclonedx.model.Metadata metadata = new org.cyclonedx.model.Metadata();
+        final org.cyclonedx.model.Tool tool = new org.cyclonedx.model.Tool();
+        tool.setVendor("OWASP");
+        tool.setName(alpine.Config.getInstance().getApplicationName());
+        tool.setVersion(alpine.Config.getInstance().getApplicationVersion());
+        metadata.setTools(Collections.singletonList(tool));
+        if (project != null) {
+            final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+            cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
+            cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
+            cycloneComponent.setDescription(StringUtils.trimToNull(project.getDescription()));
+            cycloneComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
+
+            if (project.getPurl() != null) {
+                cycloneComponent.setPurl(project.getPurl());
+            }
+            metadata.setComponent(cycloneComponent);
+        }
+        return metadata;
     }
 }

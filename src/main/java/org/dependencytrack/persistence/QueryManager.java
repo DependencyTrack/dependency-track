@@ -1312,7 +1312,7 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         //final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe)) || (group == :group && name == :name && version == :version)");
-        //return singleResult(query.executeWithArray(project, cid.getPurl(), purlCoordinates, null, cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion())); // TODO SWID
+        //return singleResult(query.executeWithArray(project, cid.getPurl(), purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
         final Query<Component> query = pm.newQuery(Component.class, "project == :project && (purl != null && purl == :purl)");
         return singleResult(query.execute(project, cid.getPurl().canonicalize())); // TODO SWID
     }

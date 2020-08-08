@@ -61,7 +61,7 @@ public class ComponentIdentity {
             // throw it away
         }
         this.cpe = component.getCpe();
-        //this.swidTagId = component.getSwidTagId(); // TODO SWID
+        this.swidTagId = (component.getSwid() != null) ? component.getSwid().getTagId() : null;
         this.group = component.getGroup();
         this.name = component.getName();
         this.version = component.getVersion();

@@ -23,7 +23,8 @@ import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.cyclonedx.BomParser;
+import org.cyclonedx.BomParserFactory;
+import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
@@ -72,17 +73,16 @@ public class BomUploadProcessingTask implements Subscriber {
 
                 // Holds a list of all Components that are existing dependencies of the specified project
                 final List<Component> existingProjectComponents = qm.getAllComponents(project);
-
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 final Bom.Format bomFormat;
                 final String bomSpecVersion;
-                if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
+                if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
                         LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
-                        final BomParser parser = new BomParser();
+                        final Parser parser = BomParserFactory.createParser(bomBytes);
                         final org.cyclonedx.model.Bom bom = parser.parse(bomBytes);
-                        bomSpecVersion = bom.getSchemaVersion();
+                        bomSpecVersion = bom.getSpecVersion();
                         components = ModelConverter.convert(qm, bom, project);
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");

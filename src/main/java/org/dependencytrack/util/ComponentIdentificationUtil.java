@@ -43,9 +43,9 @@ public class ComponentIdentificationUtil {
         if (isMatch(a.getPurlCoordinates(), b.getPurl())) {
             return true;
         }
-        //if (isMatch(a.getSwidTagId(), b.getSwidTagId())) { // TODO
-        //    return true;
-        //}
+        if (b.getSwid() != null && isMatch(a.getSwidTagId(), b.getSwid().getTagId())) {
+            return true;
+        }
         if (isMatch(a.getCpe(), b.getCpe())) {
             return true;
         }

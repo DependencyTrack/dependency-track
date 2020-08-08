@@ -30,9 +30,9 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.cyclonedx.BomGenerator;
 import org.cyclonedx.BomGeneratorFactory;
 import org.cyclonedx.CycloneDxSchema;
+import org.cyclonedx.generators.xml.BomXmlGenerator;
 import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
@@ -105,10 +105,11 @@ public class BomResource extends AlpineResource {
                 Bom bom = new Bom();
                 bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
+                bom.setMetadata(ModelConverter.createMetadata(project));
                 bom.setComponents(cycloneComponents);
-                final BomGenerator bomGenerator = BomGeneratorFactory.create(CycloneDxSchema.Version.VERSION_11, bom);
-                bomGenerator.generate();
-                return Response.ok(bomGenerator.toXmlString()).build();
+                final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
+                bomXmlGenerator.generate();
+                return Response.ok(bomXmlGenerator.toXmlString()).build();
             } catch (ParserConfigurationException | TransformerException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -133,12 +134,13 @@ public class BomResource extends AlpineResource {
             final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
             try {
                 Bom bom = new Bom();
-                bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
+                bom.setSerialNumber("url:ufuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
+                bom.setMetadata(ModelConverter.createMetadata(null));
                 bom.setComponents(cycloneComponents);
-                final BomGenerator bomGenerator = BomGeneratorFactory.create(CycloneDxSchema.Version.VERSION_11, bom);
-                bomGenerator.generate();
-                return Response.ok(bomGenerator.toXmlString()).build();
+                final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
+                bomXmlGenerator.generate();
+                return Response.ok(bomXmlGenerator.toXmlString()).build();
             } catch (ParserConfigurationException | TransformerException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -159,7 +161,7 @@ public class BomResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response exportComponentAsCycloneDx (
-            @ApiParam(value = "The UUID of the project to export", required = true)
+            @ApiParam(value = "The UUID of the component to export", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
@@ -172,10 +174,11 @@ public class BomResource extends AlpineResource {
                 Bom bom = new Bom();
                 bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
+                bom.setMetadata(ModelConverter.createMetadata(null));
                 bom.setComponents(cycloneComponents);
-                final BomGenerator bomGenerator = BomGeneratorFactory.create(CycloneDxSchema.Version.VERSION_11, bom);
-                bomGenerator.generate();
-                return Response.ok(bomGenerator.toXmlString()).build();
+                final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
+                bomXmlGenerator.generate();
+                return Response.ok(bomXmlGenerator.toXmlString()).build();
             } catch (ParserConfigurationException | TransformerException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -188,7 +191,7 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported bill of material format document",
-            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
+            notes = "Expects CycloneDX or SPDX (tag or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

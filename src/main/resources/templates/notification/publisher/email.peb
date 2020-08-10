@@ -46,6 +46,16 @@ Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 Project:           {{ subject.project.toString }}
 Project URL:       {{ baseUrl }}/project/?uuid={{ subject.project.uuid }}
+{% elseif notification.group == "BOM_CONSUMED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "BOM_PROCESSED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
 {% else %}
 Level:     {{ notification.level }}
 Scope:     {{ notification.scope }}

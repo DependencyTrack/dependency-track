@@ -1303,18 +1303,18 @@ public class QueryManager extends AlpineQueryManager {
      * @return a Component object, or null if not found
      */
     public Component matchIdentity(final Project project, final ComponentIdentity cid) {
-        PackageURL purlCoordinates = null;
+        String purlString = null;
+        String purlCoordinates = null;
         if (cid.getPurl() != null) {
             try {
                 final PackageURL purl = cid.getPurl();
-                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null);
+                purlString = cid.getPurl().canonicalize();
+                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
             } catch (MalformedPackageURLException e) { // throw it away
             }
         }
-        //final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe)) || (group == :group && name == :name && version == :version)");
-        //return singleResult(query.executeWithArray(project, cid.getPurl(), purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && (purl != null && purl == :purl)");
-        return singleResult(query.execute(project, cid.getPurl().canonicalize())); // TODO SWID
+        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe)) || (group == :group && name == :name && version == :version)");
+        return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
     }
 
     /**

@@ -218,22 +218,16 @@ public class Component implements Serializable {
     @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
 
-    @Persistent(defaultFetchGroup = "true", types = {String.class})
+    @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
-    //@Convert(PackageURLStringConverter.class)
-    //@Extension(vendorName="datanucleus", key="type-converter-name", value="purl-serialise")
-    @JsonSerialize(using = CustomPackageURLSerializer.class)
     private String purl;
 
-    @Persistent(defaultFetchGroup = "true", types = {String.class})
+    @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
     @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
-    //@Convert(PackageURLStringConverter.class)
-    //@Extension(vendorName="datanucleus", key="type-converter-name", value="purl-serialise")
-    @JsonSerialize(using = CustomPackageURLSerializer.class)
     private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
 
     @Persistent
@@ -490,13 +484,13 @@ public class Component implements Serializable {
         this.cpe = StringUtils.abbreviate(cpe, 255);
     }
 
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
     public PackageURL getPurl() {
         try {
             return new PackageURL(purl);
         } catch (MalformedPackageURLException e) {
             return null;
         }
-        //return purl;
     }
 
     public void setPurl(PackageURL purl) {
@@ -505,13 +499,13 @@ public class Component implements Serializable {
         }
     }
 
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
     public PackageURL getPurlCoordinates() {
         try {
             return new PackageURL(purlCoordinates);
         } catch (MalformedPackageURLException e) {
             return null;
         }
-        //return purlCoordinates;
     }
 
     public void setPurlCoordinates(PackageURL purlCoordinates) {

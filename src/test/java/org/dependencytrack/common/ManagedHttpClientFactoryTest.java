@@ -20,6 +20,7 @@ package org.dependencytrack.common;
 
 import alpine.Config;
 import alpine.util.SystemUtil;
+import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Assert;
@@ -36,6 +37,7 @@ public class ManagedHttpClientFactoryTest {
     @Before
     public void before() {
         environmentVariables.set("http_proxy", "http://acme\\username:password@127.0.0.1:1080");
+        environmentVariables.set("no_proxy", "localhost:443,127.0.0.1:8080,example.com,www.example.net");
     }
 
     @Test
@@ -47,13 +49,30 @@ public class ManagedHttpClientFactoryTest {
     }
 
     @Test
-    public void proxyIntoTest() {
+    public void proxyInfoTest() {
         ManagedHttpClientFactory.ProxyInfo proxyInfo = ManagedHttpClientFactory.createProxyInfo();
         Assert.assertEquals("127.0.0.1", proxyInfo.getHost());
         Assert.assertEquals(1080, proxyInfo.getPort());
         Assert.assertEquals("acme", proxyInfo.getDomain());
         Assert.assertEquals("username", proxyInfo.getUsername());
         Assert.assertEquals("password", proxyInfo.getPassword());
+        Assert.assertArrayEquals(new String[]{"localhost:443", "127.0.0.1:8080", "example.com", "www.example.net"}, proxyInfo.getNoProxy());
+    }
+
+    @Test
+    public void isProxyTest() {
+        ManagedHttpClientFactory.ProxyInfo proxyInfo = ManagedHttpClientFactory.createProxyInfo();
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("example.com",443)));
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("example.com",8080)));
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("www.example.com",443)));
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("foo.example.com",80)));
+        Assert.assertTrue(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("fooexample.com",80)));
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("foo.bar.example.com",8000)));
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("www.example.net",80)));
+        Assert.assertTrue(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("foo.example.net",80)));
+        Assert.assertTrue(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("example.org",443)));
+        Assert.assertFalse(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("127.0.0.1",8080)));
+        Assert.assertTrue(ManagedHttpClientFactory.isProxy(proxyInfo.getNoProxy(), new HttpHost("127.0.0.1",8000)));
     }
 
     @Test

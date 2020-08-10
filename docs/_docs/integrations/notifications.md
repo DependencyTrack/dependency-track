@@ -47,19 +47,19 @@ Each scope contains a set of notification groups that can be used to subscribe t
 
 ## Configuring Notifications
 Creating notifications can be performed from the administrative page which requires the SYSTEM_CONFIGURATION permission.
-Notifications are configured in two easy steps. First create a new alert by specifying the name, scope, notification level, 
-and publisher to use. 
+Notifications are configured in two easy steps. First create a new alert by specifying the name, scope, notification level,
+and publisher to use.
 
 ![create notification](/images/screenshots/notifications-create.png)
 
-Once the alert is created it can be configured. Start with selecting from the list of available notification groups 
-to notify on. Then specify the destination. The destination may be an email address (when the Email publisher is used), 
-or a URL. In the case of Slack and Microsoft Teams, this will be the incoming webhook URL generated from each respective 
+Once the alert is created it can be configured. Start with selecting from the list of available notification groups
+to notify on. Then specify the destination. The destination may be a comma speparated list of email addresses (when the Email publisher is used),
+or a URL. In the case of Slack and Microsoft Teams, this will be the incoming webhook URL generated from each respective
 platform. In the case of the Outbound Webhook publisher, this will be a URL to which to publish the notification.
 
 ![configure notification](/images/screenshots/notifications-configure.png)
 
-By default, portfolio notifications are published regardless of which project is affected. This behavior can be altered 
+By default, portfolio notifications are published regardless of which project is affected. This behavior can be altered
 by optionally limiting the projects. Expand the 'Limit To' button to reveal and configure the list of projects.
 
 ## Outbound Webhooks
@@ -70,7 +70,7 @@ Notifications are sent via HTTP(S) POST and contain a JSON payload. The payload 
 
 | Field | Description |
 | ------|-------------|
-| level | One of INFORMATIONAL, WARNING, or ERROR | 
+| level | One of INFORMATIONAL, WARNING, or ERROR |
 | scope | The high-level type of notification. One of SYSTEM or PORTFOLIO |
 | group | The specific type of notification |
 | timestamp | The timestamp the notification was generated |
@@ -79,7 +79,7 @@ Notifications are sent via HTTP(S) POST and contain a JSON payload. The payload 
 | subject | An optional object containing specifics of the notification |
 
 
-> The format of the subject object will vary depending on the scope and group of notification. Not all fields in the 
+> The format of the subject object will vary depending on the scope and group of notification. Not all fields in the
 > subject will be present at all times. Some fields are optional since the underlying fields in the datamodel are optional.
 
 #### NEW_VULNERABILITY
@@ -197,7 +197,7 @@ This type of notification will always contain:
 * 1 analysis
 * 1 or more affected projects
 
-In the case of PROJECT_AUDIT_CHANGE, the list of affected projects will always be equal to 1, whereas 
+In the case of PROJECT_AUDIT_CHANGE, the list of affected projects will always be equal to 1, whereas
 GLOBAL_AUDIT_CHANGE notifications will list all projects that are currently affected.
 
 Audit change notifications are fired whenever the analysis state changes or when the finding is suppressed or unsuppressed.

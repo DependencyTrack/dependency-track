@@ -49,9 +49,9 @@ public class SendMailPublisher implements Publisher {
             LOGGER.warn("No configuration found. Skipping notification.");
             return;
         }
-        final String destination = config.getString("destination");
+        final String[] destinations = parseDestination(config);
         final String content = prepareTemplate(notification, TEMPLATE);
-        if (destination == null || content == null) {
+        if (destinations == null || content == null) {
             LOGGER.warn("A destination or template was not found. Skipping notification");
             return;
         }
@@ -73,7 +73,7 @@ public class SendMailPublisher implements Publisher {
             final String password = (smtpPass.getPropertyValue() != null) ? DataEncryption.decryptAsString(smtpPass.getPropertyValue()) : null;
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom.getPropertyValue())
-                    .to(destination)
+                    .to(destinations)
                     .subject("[Dependency-Track] " + notification.getTitle())
                     .body(content)
                     .host(smtpHostname.getPropertyValue())
@@ -87,5 +87,14 @@ public class SendMailPublisher implements Publisher {
         } catch (Exception e) {
             LOGGER.error("An error occurred sending output email notification", e);
         }
+  }
+
+
+  static String[] parseDestination(final JsonObject config) {
+    String destinationString = config.getString("destination");
+    if ((destinationString == null) || destinationString.isEmpty()) {
+      return null;
     }
+    return destinationString.split(",");
+  }
 }

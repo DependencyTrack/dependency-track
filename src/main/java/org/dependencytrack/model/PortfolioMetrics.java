@@ -89,14 +89,6 @@ public class PortfolioMetrics implements Serializable {
     private int vulnerableComponents;
 
     @Persistent
-    @Column(name = "DEPENDENCIES", allowsNull = "true") // New column, must allow nulls on existing databases
-    private Integer dependencies;
-
-    @Persistent
-    @Column(name = "VULNERABLEDEPENDENCIES", allowsNull = "true") // New column, must allow nulls on existing databases
-    private Integer vulnerableDependencies;
-
-    @Persistent
     @Column(name = "SUPPRESSED")
     private int suppressed;
 
@@ -214,22 +206,6 @@ public class PortfolioMetrics implements Serializable {
 
     public void setVulnerableComponents(int vulnerableComponents) {
         this.vulnerableComponents = vulnerableComponents;
-    }
-
-    public int getDependencies() {
-        return dependencies;
-    }
-
-    public void setDependencies(int dependencies) {
-        this.dependencies = dependencies;
-    }
-
-    public int getVulnerableDependencies() {
-        return vulnerableDependencies;
-    }
-
-    public void setVulnerableDependencies(int vulnerableDependencies) {
-        this.vulnerableDependencies = vulnerableDependencies;
     }
 
     public int getSuppressed() {

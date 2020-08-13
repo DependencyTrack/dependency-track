@@ -20,9 +20,7 @@ package org.dependencytrack.model;
 
 import org.junit.Assert;
 import org.junit.Test;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 public class BomTest {
@@ -48,17 +46,6 @@ public class BomTest {
         Bom bom = new Bom();
         bom.setProject(project);
         Assert.assertEquals(project, bom.getProject());
-    }
-
-    @Test
-    public void testComponents() {
-        List<Component> components = new ArrayList<>();
-        Component component = new Component();
-        components.add(component);
-        Bom bom = new Bom();
-        bom.setComponents(components);
-        Assert.assertEquals(components.size(), bom.getComponents().size());
-        Assert.assertEquals(component, bom.getComponents().get(0));
     }
 
     @Test

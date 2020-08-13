@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.notification.vo;
 
-import org.dependencytrack.model.Dependency;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,12 +29,12 @@ public class NewVulnerableDependencyTest {
 
     @Test
     public void testVo() {
-        Dependency dependency = new Dependency();
+        Component component = new Component();
         List<Vulnerability> vulns = new ArrayList<>();
         Vulnerability vuln = new Vulnerability();
         vulns.add(vuln);
-        NewVulnerableDependency vo = new NewVulnerableDependency(dependency, vulns);
-        Assert.assertEquals(dependency, vo.getDependency());
+        NewVulnerableDependency vo = new NewVulnerableDependency(component, vulns);
+        Assert.assertEquals(component, vo.getComponent());
         Assert.assertEquals(1, vo.getVulnerabilities().size());
         Assert.assertEquals(vuln, vo.getVulnerabilities().get(0));
     }

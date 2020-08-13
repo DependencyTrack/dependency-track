@@ -31,6 +31,12 @@ import java.util.List;
 public interface ScanTask {
 
     /**
+     * Returns the name of the analyzer.
+     * @since 4.0.0
+     */
+    AnalyzerIdentity getAnalyzerIdentity();
+
+    /**
      * Analyzes all components in the portfolio.
      * @since 3.0.0
      */

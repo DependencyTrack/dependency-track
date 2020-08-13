@@ -19,7 +19,6 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Dependency;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.Assert;
@@ -57,14 +56,6 @@ public class MetricsUpdateEventTest {
         MetricsUpdateEvent event = new MetricsUpdateEvent(component);
         Assert.assertEquals(component, event.getTarget());
         Assert.assertEquals(MetricsUpdateEvent.Type.COMPONENT, event.getType());
-    }
-
-    @Test
-    public void testDependencyEvent() {
-        Dependency dependency = new Dependency();
-        MetricsUpdateEvent event = new MetricsUpdateEvent(dependency);
-        Assert.assertEquals(dependency, event.getTarget());
-        Assert.assertEquals(MetricsUpdateEvent.Type.DEPENDENCY, event.getType());
     }
 
     @Test

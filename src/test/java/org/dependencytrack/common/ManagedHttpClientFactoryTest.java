@@ -83,7 +83,7 @@ public class ManagedHttpClientFactoryTest {
                 + SystemUtil.getOsArchitecture() + "; "
                 + SystemUtil.getOsName() + "; "
                 + SystemUtil.getOsVersion()
-                + ")";
-        Assert.assertEquals(expected, ManagedHttpClientFactory.getUserAgent());
+                + ") ManagedHttpClient/";
+        Assert.assertTrue(ManagedHttpClientFactory.getUserAgent().startsWith(expected));
     }
 }

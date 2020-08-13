@@ -193,17 +193,6 @@ public class ComponentTest {
     }
 
     @Test
-    public void testBoms() {
-        List<Bom> boms = new ArrayList<>();
-        Bom bom = new Bom();
-        boms.add(bom);
-        Component component = new Component();
-        component.setBoms(boms);
-        Assert.assertEquals(1, component.getBoms().size());
-        Assert.assertEquals(bom, component.getBoms().iterator().next());
-    }
-
-    @Test
     public void testVulnerabilities() {
         List<Vulnerability> vulns = new ArrayList<>();
         Vulnerability vuln = new Vulnerability();

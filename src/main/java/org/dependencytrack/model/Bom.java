@@ -21,11 +21,7 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Element;
-import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Join;
-import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -33,7 +29,6 @@ import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -92,12 +87,6 @@ public class Bom implements Serializable {
     @NotNull
     private Project project;
 
-    @Persistent(table = "BOMS_COMPONENTS", mappedBy = "boms")
-    @Join(column = "BOM_ID")
-    @Element(column = "COMPONENT_ID", dependent = "false")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    private List<Component> components;
-
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "BOM_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -142,14 +131,6 @@ public class Bom implements Serializable {
 
     public void setProject(Project project) {
         this.project = project;
-    }
-
-    public List<Component> getComponents() {
-        return components;
-    }
-
-    public void setComponents(List<Component> components) {
-        this.components = components;
     }
 
     public UUID getUuid() {

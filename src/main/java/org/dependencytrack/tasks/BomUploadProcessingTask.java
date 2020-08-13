@@ -23,7 +23,8 @@ import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.cyclonedx.BomParser;
+import org.cyclonedx.BomParserFactory;
+import org.cyclonedx.parsers.Parser;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
@@ -36,12 +37,10 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
-import org.dependencytrack.parser.common.resolver.ComponentResolver;
 import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -73,20 +72,18 @@ public class BomUploadProcessingTask implements Subscriber {
                 final List<Component> flattenedComponents = new ArrayList<>();
 
                 // Holds a list of all Components that are existing dependencies of the specified project
-                final List<Component> existingProjectDependencies = new ArrayList<>();
-                qm.getAllDependencies(project).forEach(item -> existingProjectDependencies.add(item.getComponent()));
-
+                final List<Component> existingProjectComponents = qm.getAllComponents(project);
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 final Bom.Format bomFormat;
                 final String bomSpecVersion;
-                if (bomString.startsWith("<?xml") && bomString.contains("<bom") && bomString.contains("http://cyclonedx.org/schema/bom")) {
+                if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
                         LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
-                        final BomParser parser = new BomParser();
+                        final Parser parser = BomParserFactory.createParser(bomBytes);
                         final org.cyclonedx.model.Bom bom = parser.parse(bomBytes);
-                        bomSpecVersion = bom.getSchemaVersion();
-                        components = ModelConverter.convert(qm, bom);
+                        bomSpecVersion = bom.getSpecVersion();
+                        components = ModelConverter.convert(qm, bom, project);
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;
@@ -116,10 +113,10 @@ public class BomUploadProcessingTask implements Subscriber {
                 final Date date = new Date();
                 final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion);
                 for (final Component component: components) {
-                    processComponent(qm, bom, project, component, flattenedComponents);
+                    processComponent(qm, bom, component, flattenedComponents);
                 }
                 LOGGER.debug("Reconciling dependencies for project " + event.getProjectUuid());
-                qm.reconcileDependencies(project, existingProjectDependencies, flattenedComponents);
+                qm.reconcileComponents(project, existingProjectComponents, flattenedComponents);
                 LOGGER.debug("Updating last import date for project " + event.getProjectUuid());
                 qm.updateLastBomImport(project, date, bomFormat.getFormatShortName() + " " + bomSpecVersion);
                 // Instead of firing off a new VulnerabilityAnalysisEvent, chain the VulnerabilityAnalysisEvent to
@@ -149,78 +146,18 @@ public class BomUploadProcessingTask implements Subscriber {
         }
     }
 
-    private void processComponent(final QueryManager qm, final Bom bom, final Project project, Component component,
+    private void processComponent(final QueryManager qm, final Bom bom, Component component,
                                   final List<Component> flattenedComponents) {
-        LOGGER.debug("Processing component (group:" + component.getGroup()
-                + ", name:" + component.getName()
-                + ", version:" + component.getVersion()
-                + ", purl:" +  component.getPurl()
-                + ") for project: " + project.getUuid().toString());
-        final ComponentResolver cr = new ComponentResolver(qm);
-        final Component resolvedComponent = cr.resolve(component);
-        if (resolvedComponent != null) {
-            LOGGER.debug("Component (group:" + component.getGroup()
-                    + ", name:" + component.getName()
-                    + ", version:" + component.getVersion()
-                    + ", purl:" +  component.getPurl()
-                    + ") has been resolved");
-            final long oid = resolvedComponent.getId();
-            resolvedComponent.setName(component.getName());
-            resolvedComponent.setGroup(component.getGroup());
-            resolvedComponent.setVersion(component.getVersion());
-            resolvedComponent.setMd5(component.getMd5());
-            resolvedComponent.setSha1(component.getSha1());
-            resolvedComponent.setSha256(component.getSha256());
-            resolvedComponent.setSha512(component.getSha512());
-            resolvedComponent.setSha3_256(component.getSha3_256());
-            resolvedComponent.setSha3_512(component.getSha3_512());
-            resolvedComponent.setPurl(component.getPurl());
-            resolvedComponent.setInternal(component.isInternal());
-            resolvedComponent.setClassifier(component.getClassifier());
-            resolvedComponent.setDescription(component.getDescription());
-            resolvedComponent.setFilename(component.getFilename());
-            resolvedComponent.setExtension(component.getExtension());
-            resolvedComponent.setLicense(component.getLicense());
-            resolvedComponent.setCpe(component.getCpe());
-            resolvedComponent.setResolvedLicense(component.getResolvedLicense());
-            qm.persist(resolvedComponent);
-            bind(qm, project, resolvedComponent);
-            qm.bind(bom, resolvedComponent);
-            // IMPORTANT: refreshing the object by querying for it again is critical.
-            flattenedComponents.add(qm.getObjectById(Component.class, oid));
-        } else {
-            LOGGER.debug("Component (group:" + component.getGroup()
-                    + ", name:" + component.getName()
-                    + ", version:" + component.getVersion()
-                    + ", purl:" +  component.getPurl()
-                    + ") is not resolved. Creating new component");
-            component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
-            component = qm.createComponent(component, false);
-
-            final long oid = component.getId();
-            bind(qm, project, component);
-            qm.bind(bom, component);
-            // Refreshing the object by querying for it again is preventative
-            flattenedComponents.add(qm.getObjectById(Component.class, oid));
-            Event.dispatch(new RepositoryMetaEvent(component));
-        }
+        component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
+        component = qm.createComponent(component, false);
+        final long oid = component.getId();
+        // Refreshing the object by querying for it again is preventative
+        flattenedComponents.add(qm.getObjectById(Component.class, oid));
+        Event.dispatch(new RepositoryMetaEvent(component));
         if (component.getChildren() != null) {
-            for (final Component child: component.getChildren()) {
-                processComponent(qm, bom, project, child, flattenedComponents);
+            for (final Component child : component.getChildren()) {
+                processComponent(qm, bom, child, flattenedComponents);
             }
         }
     }
-
-    /**
-     * Recursively bind component and all children to a project.
-     */
-    private void bind(final QueryManager qm, final Project project, final Component component) {
-        qm.createDependencyIfNotExist(project, component, null, null);
-        if (component.getChildren() != null) {
-            for (final Component c: component.getChildren()) {
-                bind(qm, project, c);
-            }
-        }
-    }
-
 }

@@ -25,17 +25,18 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.LicenseChoice;
+import org.cyclonedx.model.Hash;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
-import org.cyclonedx.model.Hash;
+import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class ModelConverter {
 
@@ -51,19 +52,26 @@ public class ModelConverter {
      * @param bom the Bom to convert
      * @return a List of Component object
      */
-    public static List<Component> convert(final QueryManager qm, final Bom bom) {
+    public static List<Component> convert(final QueryManager qm, final Bom bom, final Project project) {
         final List<Component> components = new ArrayList<>();
         for (int i = 0; i < bom.getComponents().size(); i++) {
             final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
             if (cycloneDxComponent != null) {
-                components.add(convert(qm, cycloneDxComponent));
+                components.add(convert(qm, cycloneDxComponent, project));
             }
         }
         return components;
     }
 
-    public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent) {
-        final Component component = new Component();
+    @SuppressWarnings("deprecation")
+    public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent, final Project project) {
+        Component component = qm.matchIdentity(project, new ComponentIdentity(cycloneDxComponent));
+        if (component == null) {
+            component = new Component();
+            component.setProject(project);
+        }
+        //component.setAuthor(StringUtils.trimToNull(cycloneDxComponent.getAuthor())); // TODO
+        component.setPublisher(StringUtils.trimToNull(cycloneDxComponent.getPublisher()));
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
         component.setVersion(StringUtils.trimToNull(cycloneDxComponent.getVersion()));
@@ -127,7 +135,7 @@ public class ModelConverter {
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
                 final org.cyclonedx.model.Component cycloneDxChildComponent = cycloneDxComponent.getComponents().get(i);
                 if (cycloneDxChildComponent != null) {
-                    components.add(convert(qm, cycloneDxChildComponent));
+                    components.add(convert(qm, cycloneDxChildComponent, project));
                 }
             }
             if (CollectionUtils.isNotEmpty(components)) {
@@ -137,6 +145,7 @@ public class ModelConverter {
         return component;
     }
 
+    @SuppressWarnings("deprecation")
     public static org.cyclonedx.model.Component convert(final QueryManager qm, final Component component) {
         final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
         cycloneComponent.setGroup(StringUtils.trimToNull(component.getGroup()));
@@ -206,5 +215,27 @@ public class ModelConverter {
         */
 
         return cycloneComponent;
+    }
+
+    public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
+        final org.cyclonedx.model.Metadata metadata = new org.cyclonedx.model.Metadata();
+        final org.cyclonedx.model.Tool tool = new org.cyclonedx.model.Tool();
+        tool.setVendor("OWASP");
+        tool.setName(alpine.Config.getInstance().getApplicationName());
+        tool.setVersion(alpine.Config.getInstance().getApplicationVersion());
+        metadata.setTools(Collections.singletonList(tool));
+        if (project != null) {
+            final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+            cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
+            cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
+            cycloneComponent.setDescription(StringUtils.trimToNull(project.getDescription()));
+            cycloneComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
+
+            if (project.getPurl() != null) {
+                cycloneComponent.setPurl(project.getPurl());
+            }
+            metadata.setComponent(cycloneComponent);
+        }
+        return metadata;
     }
 }

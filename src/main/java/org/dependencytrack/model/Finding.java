@@ -64,12 +64,11 @@ public class Finding implements Serializable {
             "\"ANALYSIS\".\"STATE\" AS \"ANALYSIS_STATE\", " +
             "\"ANALYSIS\".\"SUPPRESSED\" AS \"ANALYSIS_SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
-            "INNER JOIN \"DEPENDENCY\" ON (\"COMPONENT\".\"ID\" = \"DEPENDENCY\".\"COMPONENT_ID\") " +
-            "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"DEPENDENCY\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
+            "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "LEFT JOIN \"CWE\"  ON (\"VULNERABILITY\".\"CWE\" = \"CWE\".\"ID\") " +
-            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"DEPENDENCY\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
-            "WHERE \"DEPENDENCY\".\"PROJECT_ID\" = ?";
+            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
+            "WHERE \"COMPONENT\".\"PROJECT_ID\" = ?";
 
     private UUID project;
     private Map<String, Object> component = new LinkedHashMap<>();
@@ -89,6 +88,7 @@ public class Finding implements Serializable {
         optValue(component, "group", o[2]);
         optValue(component, "version", o[3]);
         optValue(component, "purl", o[4]);
+        optValue(component, "project", project.toString());
 
         optValue(vulnerability, "uuid", o[5]);
         optValue(vulnerability, "source", o[6]);

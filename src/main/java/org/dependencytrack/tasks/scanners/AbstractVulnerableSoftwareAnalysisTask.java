@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.scanners;
 
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
@@ -54,7 +55,8 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
-                        qm.addVulnerability(vulnerability, component);
+                        final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
+                        qm.addVulnerability(vulnerability, component, findingAttribution);
                     }
                 }
             }

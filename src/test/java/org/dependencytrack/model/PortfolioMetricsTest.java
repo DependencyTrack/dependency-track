@@ -102,20 +102,6 @@ public class PortfolioMetricsTest {
     }
 
     @Test
-    public void testDependencies() {
-        PortfolioMetrics metric = new PortfolioMetrics();
-        metric.setDependencies(95);
-        Assert.assertEquals(95, metric.getDependencies());
-    }
-
-    @Test
-    public void testVulnerableDependencies() {
-        PortfolioMetrics metric = new PortfolioMetrics();
-        metric.setVulnerableDependencies(94);
-        Assert.assertEquals(94, metric.getVulnerableDependencies());
-    }
-
-    @Test
     public void testSuppressed() {
         PortfolioMetrics metric = new PortfolioMetrics();
         metric.setSuppressed(5);
@@ -165,4 +151,4 @@ public class PortfolioMetricsTest {
         metric.setLastOccurrence(date);
         Assert.assertEquals(date, metric.getLastOccurrence());
     }
-} 
+}

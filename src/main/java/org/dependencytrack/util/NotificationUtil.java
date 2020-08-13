@@ -20,10 +20,9 @@ package org.dependencytrack.util;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Dependency;
+import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
@@ -39,7 +38,6 @@ import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,9 +56,9 @@ public final class NotificationUtil {
                 // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
                 // it warrants a Notification be dispatched.
                 final Set<Project> affectedProjects = new HashSet<>();
-                final List<Dependency> dependencies = qm.detach(qm.getAllDependencies(component));
-                for (final Dependency dependency : dependencies) {
-                    affectedProjects.add(dependency.getProject());
+                final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
+                for (final Component c : components) {
+                    affectedProjects.add(c.getProject());
                 }
 
                 vulnerability = qm.detach(Vulnerability.class, vulnerability.getId());
@@ -77,7 +75,7 @@ public final class NotificationUtil {
             }
         }
     }
-
+/*
     public static void analyzeNotificationCriteria(final QueryManager qm, final Dependency newDependency) {
         Dependency dependency = qm.getDependency(newDependency);
         final List<Vulnerability> vulnerabilities = qm.detach(qm.getAllVulnerabilities(dependency));
@@ -104,24 +102,14 @@ public final class NotificationUtil {
             );
         }
     }
-
+*/
     public static void analyzeNotificationCriteria(final QueryManager qm, Analysis analysis,
                                                    final boolean analysisStateChange, final boolean suppressionChange) {
         if (analysisStateChange || suppressionChange) {
             final NotificationGroup notificationGroup;
             final Set<Project> affectedProjects = new HashSet<>();
-            if (analysis.getProject() != null) {
-                // This was an analysis decision affecting a single project
-                notificationGroup = NotificationGroup.PROJECT_AUDIT_CHANGE;
-                affectedProjects.add(analysis.getProject());
-            } else {
-                // This was a global analysis decision affecting all projects
-                notificationGroup = NotificationGroup.GLOBAL_AUDIT_CHANGE;
-
-                for (final Dependency dependency : qm.getAllDependencies(analysis.getComponent())) {
-                    affectedProjects.add(qm.detach(Project.class, dependency.getProject().getId()));
-                }
-            }
+            notificationGroup = NotificationGroup.PROJECT_AUDIT_CHANGE;
+            affectedProjects.add(analysis.getProject());
 
             String title = null;
             if (analysisStateChange) {
@@ -254,11 +242,11 @@ public final class NotificationUtil {
 
     public static JsonObject toJson(final NewVulnerableDependency vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        if (vo.getDependency().getProject() != null) {
-            builder.add("project", toJson(vo.getDependency().getProject()));
+        if (vo.getComponent().getProject() != null) {
+            builder.add("project", toJson(vo.getComponent().getProject()));
         }
-        if (vo.getDependency().getComponent() != null) {
-            builder.add("component", toJson(vo.getDependency().getComponent()));
+        if (vo.getComponent() != null) {
+            builder.add("component", toJson(vo.getComponent()));
         }
         if (vo.getVulnerabilities() != null && vo.getVulnerabilities().size() > 0) {
             final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
@@ -316,7 +304,7 @@ public final class NotificationUtil {
         return content;
     }
 
-    private static String generateNotificationContent(final Dependency dependency, final List<Vulnerability> vulnerabilities) {
+    private static String generateNotificationContent(final Component component, final List<Vulnerability> vulnerabilities) {
         final String content;
         if (vulnerabilities.size() == 1) {
             content = "A dependency was introduced that contains 1 known vulnerability";

@@ -20,65 +20,70 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Order;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.List;
+import java.util.Date;
+import java.util.UUID;
 
 /**
- * The Analysis model tracks human auditing decisions for vulnerabilities found
- * on a given dependency.
+ * Model class for tracking the attribution of vulnerability identification.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 4.0.0
  */
 @PersistenceCapable
-@Unique(name="ANALYSIS_COMPOSITE_IDX", members={"project", "component", "vulnerability"})
+@Index(name = "FINDINGATTRIBUTION_COMPOUND_IDX", members = {"component", "vulnerability"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Analysis implements Serializable {
+public class FindingAttribution implements Serializable {
+
+    private static final long serialVersionUID = -2609603709255246845L;
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
 
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "PROJECT_ID")
-    @JsonIgnore
-    private Project project;
+    @Persistent
+    @Column(name = "ATTRIBUTED_ON", allowsNull = "false")
+    @NotNull
+    private Date attributedOn;
+
+    @Persistent
+    @Column(name = "ANALYZERIDENTITY", allowsNull = "false")
+    private AnalyzerIdentity analyzerIdentity;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "COMPONENT_ID")
-    @JsonIgnore
+    @Column(name = "COMPONENT_ID", allowsNull = "false")
+    @NotNull
     private Component component;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "VULNERABILITY_ID", allowsNull = "false")
     @NotNull
-    @JsonIgnore
     private Vulnerability vulnerability;
 
-    @Persistent(defaultFetchGroup = "true")
-    @Column(name = "STATE", jdbcType = "VARCHAR", allowsNull = "false")
+    @Persistent(customValueStrategy = "uuid")
+    @Unique(name = "FINDINGATTRIBUTION_UUID_IDX")
+    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
-    private AnalysisState analysisState;
+    private UUID uuid;
 
-    @Persistent(mappedBy = "analysis", defaultFetchGroup = "true")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
-    private List<AnalysisComment> analysisComments;
+    public FindingAttribution() {}
 
-    @Persistent
-    @Column(name = "SUPPRESSED")
-    @JsonProperty(value = "isSuppressed")
-    private boolean suppressed;
+    public FindingAttribution(Component component, Vulnerability vulnerability, AnalyzerIdentity analyzerIdentity) {
+        this.component = component;
+        this.vulnerability = vulnerability;
+        this.analyzerIdentity = analyzerIdentity;
+        this.attributedOn = new Date();
+    }
 
     public long getId() {
         return id;
@@ -88,8 +93,20 @@ public class Analysis implements Serializable {
         this.id = id;
     }
 
-    public Project getProject() {
-        return project;
+    public Date getAttributedOn() {
+        return attributedOn;
+    }
+
+    public void setAttributedOn(Date attributedOn) {
+        this.attributedOn = attributedOn;
+    }
+
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return analyzerIdentity;
+    }
+
+    public void setAnalyzerIdentity(AnalyzerIdentity analyzerIdentity) {
+        this.analyzerIdentity = analyzerIdentity;
     }
 
     public Component getComponent() {
@@ -98,7 +115,6 @@ public class Analysis implements Serializable {
 
     public void setComponent(Component component) {
         this.component = component;
-        this.project = component.getProject();
     }
 
     public Vulnerability getVulnerability() {
@@ -109,27 +125,11 @@ public class Analysis implements Serializable {
         this.vulnerability = vulnerability;
     }
 
-    public AnalysisState getAnalysisState() {
-        return analysisState;
+    public UUID getUuid() {
+        return uuid;
     }
 
-    public void setAnalysisState(AnalysisState analysisState) {
-        this.analysisState = analysisState;
-    }
-
-    public List<AnalysisComment> getAnalysisComments() {
-        return analysisComments;
-    }
-
-    public void setAnalysisComments(List<AnalysisComment> analysisComments) {
-        this.analysisComments = analysisComments;
-    }
-
-    public boolean isSuppressed() {
-        return suppressed;
-    }
-
-    public void setSuppressed(boolean suppressed) {
-        this.suppressed = suppressed;
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 }

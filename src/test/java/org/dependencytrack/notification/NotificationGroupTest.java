@@ -38,7 +38,7 @@ public class NotificationGroupTest {
         //Assert.assertEquals("NEW_OUTDATED_COMPONENT", NotificationGroup.NEW_OUTDATED_COMPONENT.name());
         //Assert.assertEquals("FIXED_VULNERABILITY", NotificationGroup.FIXED_VULNERABILITY.name());
         //Assert.assertEquals("FIXED_OUTDATED", NotificationGroup.FIXED_OUTDATED.name());
-        Assert.assertEquals("GLOBAL_AUDIT_CHANGE", NotificationGroup.GLOBAL_AUDIT_CHANGE.name());
+        //Assert.assertEquals("GLOBAL_AUDIT_CHANGE", NotificationGroup.GLOBAL_AUDIT_CHANGE.name());
         Assert.assertEquals("PROJECT_AUDIT_CHANGE", NotificationGroup.PROJECT_AUDIT_CHANGE.name());
     }
 }

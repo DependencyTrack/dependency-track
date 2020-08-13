@@ -1100,7 +1100,7 @@ public class QueryManager extends AlpineQueryManager {
      */
     public FindingAttribution getFindingAttribution(Vulnerability vulnerability, Component component) {
         final Query<FindingAttribution> query = pm.newQuery(FindingAttribution.class, "vulnerability == :vulnerability && component == :component");
-        return (FindingAttribution) query.execute(vulnerability, component);
+        return singleResult(query.execute(vulnerability, component));
     }
 
     /**

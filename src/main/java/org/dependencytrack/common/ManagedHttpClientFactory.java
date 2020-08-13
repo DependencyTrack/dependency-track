@@ -22,7 +22,9 @@ import alpine.Config;
 import alpine.logging.Logger;
 import alpine.util.SystemUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -32,6 +34,8 @@ import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -44,7 +48,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
@@ -54,6 +60,7 @@ import java.net.URLDecoder;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Map;
 
 public final class ManagedHttpClientFactory {
@@ -67,6 +74,7 @@ public final class ManagedHttpClientFactory {
     }
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getPropertyOrFile(Config.AlpineKey.HTTP_PROXY_PASSWORD);
+    private static final String NO_PROXY = Config.getInstance().getProperty(Config.AlpineKey.NO_PROXY);
     private static final Logger LOGGER = Logger.getLogger(ManagedHttpClientFactory.class);
     private static final String USER_AGENT;
     static {
@@ -90,7 +98,7 @@ public final class ManagedHttpClientFactory {
      * Factory method that create a PooledHttpClient object. This method will attempt to use
      * proxy settings defined in application.properties first. If they are not set,
      * this method will attempt to use proxy settings from the environment by looking
-     * for 'https_proxy' and 'http_proxy'.
+     * for 'https_proxy', 'http_proxy' and 'no_proxy'.
      * @return a PooledHttpClient object with optional proxy settings
      */
     public static ManagedHttpClient newManagedHttpClient() {
@@ -102,7 +110,19 @@ public final class ManagedHttpClientFactory {
         final ProxyInfo proxyInfo = createProxyInfo();
 
         if (proxyInfo != null) {
-            clientBuilder.setProxy(new HttpHost(proxyInfo.host, proxyInfo.port));
+            HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner(new HttpHost(proxyInfo.host, proxyInfo.port)) {
+                @Override
+                public HttpRoute determineRoute(
+                        final HttpHost host,
+                        final HttpRequest request,
+                        final HttpContext context) throws HttpException {
+                    if (isProxy(proxyInfo.noProxy, host)) {
+                        return super.determineRoute(host, request, context);
+                    }
+                    return new HttpRoute(host);
+                }
+            };
+            clientBuilder.setRoutePlanner(routePlanner);
             if (StringUtils.isNotBlank(proxyInfo.username) && StringUtils.isNotBlank(proxyInfo.password)) {
                 if (proxyInfo.domain != null) {
                     credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(proxyInfo.username, proxyInfo.password, proxyInfo.domain, null));
@@ -110,7 +130,9 @@ public final class ManagedHttpClientFactory {
                     credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxyInfo.username, proxyInfo.password));
                 }
             }
-            // When a proxy is enabled, turn off certificate chain of trust validation and hostname verification
+        }
+        // When a proxy is enabled, turn off certificate chain of trust validation and hostname verification
+        if (proxyInfo != null && proxyInfo.noProxy == null) {
             try {
                 final SSLContext sslContext = SSLContextBuilder
                         .create()
@@ -149,6 +171,42 @@ public final class ManagedHttpClientFactory {
     }
 
     /**
+     * Determines if proxy should be used or not for a given URL
+     * @param noProxyList list of URLs to be exempted from proxy
+     * @param host the URL that is being called by this application
+     * @return true if proxy is to be be used, false if not
+     */
+    public static boolean isProxy(String[] noProxyList, HttpHost host) {
+        if (noProxyList == null) {
+            return true;
+        }
+        if (Arrays.equals(noProxyList, new String[]{"*"})) {
+            return false;
+        }
+        String hostname = host.getHostName();
+        int hostPort = host.getPort();
+        for (String bypassURL: noProxyList) {
+            String[] bypassURLList = bypassURL.split(":");
+            String byPassHost = bypassURLList[0];
+            int byPassPort = -1;
+            if (bypassURLList.length == 2) {
+                byPassPort = Integer.parseInt(bypassURLList[1]);
+            }
+            if (hostPort == byPassPort || byPassPort == -1) {
+                if (hostname.equalsIgnoreCase(byPassHost)) {
+                    return false;
+                }
+                int hl = hostname.length();
+                int bl = byPassHost.length();
+                if (hl > bl && hostname.substring(hl - bl - 1).equalsIgnoreCase("." + byPassHost)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Attempt to use application specific proxy settings if they exist.
      * Otherwise, attempt to use environment variables if they exist.
      * @return ProxyInfo object, or null if proxy is not configured
@@ -177,6 +235,9 @@ public final class ManagedHttpClientFactory {
             if (PROXY_PASSWORD != null) {
                 proxyInfo.password = StringUtils.trimToNull(PROXY_PASSWORD);
             }
+            if (NO_PROXY != null) {
+                proxyInfo.noProxy = NO_PROXY.split(",");
+            }
         }
         return proxyInfo;
     }
@@ -194,6 +255,14 @@ public final class ManagedHttpClientFactory {
             }
         } catch (MalformedURLException | SecurityException | UnsupportedEncodingException e) {
             LOGGER.warn("Could not parse proxy settings from environment", e);
+        }
+        if (proxyInfo != null) {
+            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+                if ("NO_PROXY".equals(entry.getKey().toUpperCase())) {
+                    proxyInfo.noProxy = System.getenv(entry.getKey()).split(",");
+                    break;
+                }
+            }
         }
         return proxyInfo;
     }
@@ -265,6 +334,7 @@ public final class ManagedHttpClientFactory {
         private String domain;
         private String username;
         private String password;
+        private String[] noProxy;
 
         public String getHost() {
             return host;
@@ -285,6 +355,8 @@ public final class ManagedHttpClientFactory {
         public String getPassword() {
             return password;
         }
+
+        public String[] getNoProxy() { return noProxy; }
     }
 
 }

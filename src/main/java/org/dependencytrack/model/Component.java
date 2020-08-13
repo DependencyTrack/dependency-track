@@ -47,6 +47,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -273,11 +274,6 @@ public class Component implements Serializable {
     @Persistent(mappedBy = "parent")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<Component> children;
-
-    @Persistent
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    @JsonIgnore
-    private List<Bom> boms;
 
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
     @Join(column = "COMPONENT_ID")
@@ -579,14 +575,6 @@ public class Component implements Serializable {
         this.children = children;
     }
 
-    public List<Bom> getBoms() {
-        return boms;
-    }
-
-    public void setBoms(List<Bom> boms) {
-        this.boms = boms;
-    }
-
     public List<Vulnerability> getVulnerabilities() {
         return vulnerabilities;
     }
@@ -596,6 +584,9 @@ public class Component implements Serializable {
     }
 
     public void addVulnerability(Vulnerability vulnerability) {
+        if (vulnerability == null) {
+            vulnerabilities = new ArrayList<>();
+        }
         vulnerabilities.add(vulnerability);
     }
 

@@ -92,12 +92,6 @@ public class Bom implements Serializable {
     @NotNull
     private Project project;
 
-    @Persistent(table = "BOMS_COMPONENTS", mappedBy = "boms")
-    @Join(column = "BOM_ID")
-    @Element(column = "COMPONENT_ID", dependent = "false")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    private List<Component> components;
-
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "BOM_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -142,14 +136,6 @@ public class Bom implements Serializable {
 
     public void setProject(Project project) {
         this.project = project;
-    }
-
-    public List<Component> getComponents() {
-        return components;
-    }
-
-    public void setComponents(List<Component> components) {
-        this.components = components;
     }
 
     public UUID getUuid() {

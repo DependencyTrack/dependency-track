@@ -555,19 +555,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Deletes boms belonging to the specified Component.
-     * @param component the Component to delete boms for
-     */
-    @SuppressWarnings("unchecked")
-    private void deleteBoms(Component component) {
-        final Query<Bom> query = pm.newQuery(Bom.class, "components.contains(:component)");
-        for (final Bom bom: (List<Bom>) query.execute(component)) {
-            bom.getComponents().remove(component);
-            persist(bom);
-        }
-    }
-
-    /**
      * Returns a list of all Components defined in the datastore.
      * @return a List of Components
      */
@@ -742,7 +729,7 @@ public class QueryManager extends AlpineQueryManager {
 
         deleteAnalysisTrail(component);
         deleteMetrics(component);
-        deleteBoms(component);
+        deleteFindingAttributions(component);
         delete(component);
         commitSearchIndex(commitIndex, Component.class);
     }
@@ -1080,13 +1067,11 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the component affected by the vulnerability
      */
     public void addVulnerability(Vulnerability vulnerability, Component component, FindingAttribution findingAttribution) {
-        vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
-        component = getObjectById(Component.class, component.getId());
         if (!contains(vulnerability, component)) {
-            persist(findingAttribution);
             pm.currentTransaction().begin();
             component.addVulnerability(vulnerability);
             pm.currentTransaction().commit();
+            persist(findingAttribution);
         }
     }
 
@@ -1096,13 +1081,35 @@ public class QueryManager extends AlpineQueryManager {
      * @param component the component unaffected by the vulnerabiity
      */
     public void removeVulnerability(Vulnerability vulnerability, Component component) {
-        vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
-        component = getObjectById(Component.class, component.getId());
         if (contains(vulnerability, component)) {
             pm.currentTransaction().begin();
             component.removeVulnerability(vulnerability);
             pm.currentTransaction().commit();
         }
+        final FindingAttribution fa = getFindingAttribution(vulnerability, component);
+        if (fa != null) {
+            delete(fa);
+        }
+    }
+
+    /**
+     * Returns a FindingAttribution object form a given vulnerability and component.
+     * @param vulnerability the vulnerabillity of the finding attribution
+     * @param component the component of the finding attribution
+     * @return a FindingAttribution object
+     */
+    public FindingAttribution getFindingAttribution(Vulnerability vulnerability, Component component) {
+        final Query<FindingAttribution> query = pm.newQuery(FindingAttribution.class, "vulnerability == :vulnerability && component == :component");
+        return (FindingAttribution) query.execute(vulnerability, component);
+    }
+
+    /**
+     * Deleted all FindingAttributions associated for the specified Component.
+     * @param component the Component to delete FindingAttributions for
+     */
+    private void deleteFindingAttributions(Component component) {
+        final Query<FindingAttribution> query = pm.newQuery(FindingAttribution.class, "component == :component");
+        query.deletePersistentAll(component);
     }
 
     /**
@@ -1313,7 +1320,7 @@ public class QueryManager extends AlpineQueryManager {
             } catch (MalformedPackageURLException e) { // throw it away
             }
         }
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe)) || (group == :group && name == :name && version == :version)");
+        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
         return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
     }
 
@@ -1361,7 +1368,10 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         if (!markedForDeletion.isEmpty()) {
-            this.delete(markedForDeletion);
+            for (Component c: markedForDeletion) {
+                this.recursivelyDelete(c, false);
+            }
+            //this.delete(markedForDeletion);
         }
     }
 
@@ -2302,21 +2312,6 @@ public class QueryManager extends AlpineQueryManager {
             tag.getProjects().add(project);
         }
         pm.currentTransaction().commit();
-    }
-
-    /**
-     * Binds the two objects together in a corresponding join table.
-     * @param bom a Bom object
-     * @param component a Component object
-     */
-    public void bind(Bom bom, Component component) {
-        final boolean bound = bom.getComponents().stream().anyMatch(b -> b.getId() == bom.getId());
-        if (!bound) {
-            pm.currentTransaction().begin();
-            bom.getComponents().add(component);
-            component.getBoms().add(bom);
-            pm.currentTransaction().commit();
-        }
     }
 
     /**

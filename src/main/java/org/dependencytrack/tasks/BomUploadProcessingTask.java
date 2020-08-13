@@ -151,7 +151,6 @@ public class BomUploadProcessingTask implements Subscriber {
         component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
         component = qm.createComponent(component, false);
         final long oid = component.getId();
-        qm.bind(bom, component);
         // Refreshing the object by querying for it again is preventative
         flattenedComponents.add(qm.getObjectById(Component.class, oid));
         Event.dispatch(new RepositoryMetaEvent(component));

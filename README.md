@@ -27,7 +27,12 @@ Dependency-Track monitors component usage across all versions of every applicati
 proactively identify risk across an organization. The platform has an API-first design and is ideal for use in
 Continuous Integration (CI) and Continuous Delivery (CD) environments.
 
-**NOTICE: Always use official binary releases in production.**
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=cQuk6jKTrTs">
+    <img style="border:0" width="720" height="405" src="https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/promo-glitch.png">
+  </a>
+</p>
+
 
 ## Ecosystem Overview
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
@@ -66,10 +71,9 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 
-## Screenshots
+
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
 
-For more eye-candy, visit <https://dependencytrack.org/>.
 
 ## Distributions
 Dependency-Track supports the following three deployment options:
@@ -77,6 +81,8 @@ Dependency-Track supports the following three deployment options:
 * Docker container
 * Executable WAR
 * Conventional WAR
+
+**NOTICE: Always use official binary releases in production.**
 
 ## Deploying Docker Container
 Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required

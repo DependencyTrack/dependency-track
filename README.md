@@ -71,6 +71,8 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Simple to install and configure. Get up and running in just a few minutes
 
 
+<hr>
+
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
 
 

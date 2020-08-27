@@ -59,11 +59,14 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"SEVERITY\" AS \"VULN_SEVERITY\", " +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\" AS \"VULN_CVSSV2BASESCORE\", " +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\" AS \"VULN_CVSSV3BASESCORE\", " +
+            "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\" AS \"FINDINGATTRIBUTION_ANALYZERIDENTITY\", " +
+            "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\" AS \"FINDINGATTRIBUTION_ATTRIBUTED_ON\", " +
             "\"CWE\".\"CWEID\" AS \"CWE_ID\", " +
             "\"CWE\".\"NAME\" AS \"CWE_NAME\", " +
             "\"ANALYSIS\".\"STATE\" AS \"ANALYSIS_STATE\", " +
             "\"ANALYSIS\".\"SUPPRESSED\" AS \"ANALYSIS_SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
+            "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "LEFT JOIN \"CWE\"  ON (\"VULNERABILITY\".\"CWE\" = \"CWE\".\"ID\") " +
@@ -74,6 +77,7 @@ public class Finding implements Serializable {
     private Map<String, Object> component = new LinkedHashMap<>();
     private Map<String, Object> vulnerability = new LinkedHashMap<>();
     private Map<String, Object> analysis = new LinkedHashMap<>();
+    private Map<String, Object> attribution = new LinkedHashMap<>();
 
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
@@ -100,11 +104,13 @@ public class Finding implements Serializable {
         final Severity severity = VulnerabilityUtil.getSeverity(o[12], o[13], o[14]);
         optValue(vulnerability, "severity", severity.name());
         optValue(vulnerability, "severityRank", severity.ordinal());
-        optValue(vulnerability, "cweId", o[15]);
-        optValue(vulnerability, "cweName", o[16]);
+        optValue(attribution, "analyzerIdentity", o[15]);
+        optValue(attribution, "attributedOn", o[16]);
+        optValue(vulnerability, "cweId", o[17]);
+        optValue(vulnerability, "cweName", o[18]);
 
-        optValue(analysis, "state", o[17]);
-        optValue(analysis, "isSuppressed", o[18], false);
+        optValue(analysis, "state", o[19]);
+        optValue(analysis, "isSuppressed", o[20], false);
     }
 
     public Map getComponent() {
@@ -117,6 +123,10 @@ public class Finding implements Serializable {
 
     public Map getAnalysis() {
         return analysis;
+    }
+
+    public Map getAttribution() {
+        return attribution;
     }
 
     private void optValue(Map<String, Object> map, String key, Object value, boolean defaultValue) {

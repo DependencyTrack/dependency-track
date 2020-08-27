@@ -583,7 +583,7 @@ public class Component implements Serializable {
     }
 
     public void addVulnerability(Vulnerability vulnerability) {
-        if (vulnerability == null) {
+        if (vulnerabilities == null) {
             vulnerabilities = new ArrayList<>();
         }
         vulnerabilities.add(vulnerability);

@@ -28,7 +28,6 @@ import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
@@ -145,8 +144,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 } else {
                     vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 }
-                final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
-                qm.addVulnerability(vulnerability, component, findingAttribution);
+                qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
             }
             updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe());
             return results.getPage() * PAGE_SIZE < results.getTotal();

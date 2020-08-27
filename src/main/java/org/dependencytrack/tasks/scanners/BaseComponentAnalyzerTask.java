@@ -142,8 +142,8 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     }
 
     protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText) {
-        logger.debug("HTTP Status : " + statusCode + " " + statusText);
-        logger.debug(" - Analyzer URL : " + url);
+        logger.error("HTTP Status : " + statusCode + " " + statusText);
+        logger.error(" - Analyzer URL : " + url);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.ANALYZER)

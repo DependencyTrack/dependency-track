@@ -34,6 +34,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
@@ -463,7 +464,9 @@ public class QueryManager extends AlpineQueryManager {
 
         deleteAnalysisTrail(project);
         deleteMetrics(project);
-        deleteComponents(project);
+        for (final Component c: getAllComponents(project)) {
+            recursivelyDelete(c, false);
+        }
         deleteBoms(project);
         removeProjectFromNotificationRules(project);
         delete(project.getProperties());
@@ -1066,12 +1069,13 @@ public class QueryManager extends AlpineQueryManager {
      * @param vulnerability the vulnerability to add
      * @param component the component affected by the vulnerability
      */
-    public void addVulnerability(Vulnerability vulnerability, Component component, FindingAttribution findingAttribution) {
+    public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
         if (!contains(vulnerability, component)) {
-            pm.currentTransaction().begin();
+            component = getObjectById(Component.class, component.getId());
+            vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
             component.addVulnerability(vulnerability);
-            pm.currentTransaction().commit();
-            persist(findingAttribution);
+            component = persist(component);
+            persist(new FindingAttribution(component, vulnerability, analyzerIdentity));
         }
     }
 

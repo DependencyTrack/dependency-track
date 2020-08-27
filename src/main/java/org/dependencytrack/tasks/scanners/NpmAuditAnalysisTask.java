@@ -31,7 +31,6 @@ import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NpmAuditAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.npm.NpmAuditParser;
 import org.dependencytrack.parser.npm.model.Advisory;
@@ -179,8 +178,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                 final Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
                 if (component != null && vulnerability != null) {
                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                    final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
-                    qm.addVulnerability(vulnerability, component, findingAttribution);
+                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));
             }

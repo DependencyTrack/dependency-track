@@ -65,6 +65,11 @@ public class FindingAttribution implements Serializable {
     @NotNull
     private Component component;
 
+    @Persistent(defaultFetchGroup = "false")
+    @Column(name = "PROJECT_ID", allowsNull = "false")
+    @NotNull
+    private Project project;
+
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "VULNERABILITY_ID", allowsNull = "false")
     @NotNull
@@ -80,6 +85,7 @@ public class FindingAttribution implements Serializable {
 
     public FindingAttribution(Component component, Vulnerability vulnerability, AnalyzerIdentity analyzerIdentity) {
         this.component = component;
+        this.project = component.getProject();
         this.vulnerability = vulnerability;
         this.analyzerIdentity = analyzerIdentity;
         this.attributedOn = new Date();
@@ -115,6 +121,7 @@ public class FindingAttribution implements Serializable {
 
     public void setComponent(Component component) {
         this.component = component;
+        this.project = component.getProject();
     }
 
     public Vulnerability getVulnerability() {

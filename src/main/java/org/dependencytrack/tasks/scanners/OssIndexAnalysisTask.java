@@ -26,6 +26,7 @@ import alpine.model.ConfigProperty;
 import alpine.util.Pageable;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
@@ -39,7 +40,6 @@ import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
@@ -93,20 +93,17 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
                         ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
                 );
-                if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null) {
-                    LOGGER.warn("An API username has not been specified for use with OSS Index. Skipping");
-                    return;
-                }
-                if (apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
-                    LOGGER.warn("An API Token has not been specified for use with OSS Index. Skipping");
-                    return;
-                }
-                try {
-                    apiUsername = apiUsernameProperty.getPropertyValue();
-                    apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
-                } catch (Exception ex) {
-                    LOGGER.error("An error occurred decrypting the OSS Index API Token. Skipping", ex);
-                    return;
+                if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null
+                        || apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
+                    LOGGER.warn("An API username or token has not been specified for use with OSS Index. Using anonymous access");
+                } else {
+                    try {
+                        apiUsername = apiUsernameProperty.getPropertyValue();
+                        apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                    } catch (Exception ex) {
+                        LOGGER.error("An error occurred decrypting the OSS Index API Token. Skipping", ex);
+                        return;
+                    }
                 }
             }
             final OssIndexAnalysisEvent event = (OssIndexAnalysisEvent)e;
@@ -188,13 +185,14 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
      */
     private List<ComponentReport> submit(final JSONObject payload) throws UnirestException {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> jsonResponse = ui.post(API_BASE_URL)
+        final HttpRequestWithBody request = ui.post(API_BASE_URL)
                 .header(HttpHeaders.ACCEPT, "application/json")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
-                .header(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent())
-                .basicAuth(apiUsername, apiToken)
-                .body(payload)
-                .asJson();
+                .header(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
+        if (apiUsername != null && apiToken != null) {
+            request.basicAuth(apiUsername, apiToken);
+        }
+        final HttpResponse<JsonNode> jsonResponse = request.body(payload).asJson();
         if (jsonResponse.getStatus() == 200) {
             final OssIndexParser parser = new OssIndexParser();
             return parser.parse(jsonResponse.getBody());
@@ -222,8 +220,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
                                 if (vulnerability != null) {
                                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                    final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
-                                    qm.addVulnerability(vulnerability, component, findingAttribution);
+                                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                                 } else {
                                     /*
                                     The vulnerability reported by OSS Index is not in Dependency-Track yet. This could be
@@ -232,8 +229,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                      */
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                    final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
-                                    qm.addVulnerability(vulnerability, component, findingAttribution);
+                                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                                 }
                             } else {
                                 /*
@@ -244,8 +240,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                final FindingAttribution findingAttribution = new FindingAttribution(component, vulnerability, this.getAnalyzerIdentity());
-                                qm.addVulnerability(vulnerability, component, findingAttribution);
+                                qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                             }
                         }
                         Event.dispatch(new MetricsUpdateEvent(component));

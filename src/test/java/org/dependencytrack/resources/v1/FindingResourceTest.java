@@ -62,10 +62,10 @@ public class FindingResourceTest extends ResourceTest {
         Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
         Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
         Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
-        qm.addVulnerability(v1, c1, new FindingAttribution(c1, v1, AnalyzerIdentity.NONE));
-        qm.addVulnerability(v2, c1, new FindingAttribution(c1, v2, AnalyzerIdentity.NONE));
-        qm.addVulnerability(v3, c2, new FindingAttribution(c2, v3, AnalyzerIdentity.NONE));
-        qm.addVulnerability(v4, c5, new FindingAttribution(c5, v4, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
         Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -119,10 +119,10 @@ public class FindingResourceTest extends ResourceTest {
         Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH);
         Vulnerability v3 = createVulnerability("Vuln-3", Severity.MEDIUM);
         Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
-        qm.addVulnerability(v1, c1, new FindingAttribution(c1, v1, AnalyzerIdentity.NONE));
-        qm.addVulnerability(v2, c1, new FindingAttribution(c1, v2, AnalyzerIdentity.NONE));
-        qm.addVulnerability(v3, c2, new FindingAttribution(c2, v3, AnalyzerIdentity.NONE));
-        qm.addVulnerability(v4, c5, new FindingAttribution(c2, v4, AnalyzerIdentity.NONE));
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v2, c1, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v3, c2, AnalyzerIdentity.NONE);
+        qm.addVulnerability(v4, c5, AnalyzerIdentity.NONE);
         Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);

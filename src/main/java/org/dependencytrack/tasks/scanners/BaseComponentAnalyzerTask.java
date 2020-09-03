@@ -35,6 +35,11 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
 import java.util.Date;
 
 /**
@@ -137,8 +142,41 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
-    protected void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String targetHost, String target) {
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date());
+    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component, AnalyzerIdentity analyzerIdentity) {
+        try (QueryManager qm = new QueryManager()) {
+            final ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
+            if (cac != null) {
+                final JsonObject result = cac.getResult();
+                if (result != null) {
+                    final JsonArray vulns = result.getJsonArray("vulnIds");
+                    if (vulns != null) {
+                        for (JsonNumber vulnId : vulns.getValuesAs(JsonNumber.class)) {
+                            final Vulnerability vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
+                            if (vulnerability != null) {
+                                qm.addVulnerability(vulnerability, component, analyzerIdentity);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String targetHost, String target, JsonObject result) {
+        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date(), result);
+    }
+
+    protected void addVulnerabilityToCache(Component component, Vulnerability vulnerability) {
+        if (component.getCacheResult() == null) {
+            final JsonArray vulns = Json.createArrayBuilder().add(vulnerability.getId()).build();
+            final JsonObject result = Json.createObjectBuilder().add("vulnIds", vulns).build();
+            component.setCacheResult(result);
+        } else {
+            final JsonObject result = component.getCacheResult();
+            final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder(result.getJsonArray("vulnIds"));
+            final JsonArray vulns = vulnsBuilder.add(Json.createValue(vulnerability.getId())).build();
+            component.setCacheResult(Json.createObjectBuilder(result).add("vulnIds", vulns).build());
+        }
     }
 
     protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText) {

@@ -20,42 +20,23 @@ package org.dependencytrack.tasks.scanners;
 
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
-import java.util.List;
 
-/**
- * An interface that defines vulnerability scanners that are implemented as Subscribers.
- *
- * @author Steve Springett
- * @since 3.0.0
- */
-public interface ScanTask {
+public interface CacheableScanTask extends ScanTask {
 
     /**
-     * Returns the name of the analyzer.
-     * @since 4.0.0
-     */
-    AnalyzerIdentity getAnalyzerIdentity();
-
-    /**
-     * Analyzes all components in the portfolio.
-     * @since 3.0.0
-     */
-    void analyze();
-
-    /**
-     * Analyzes only the specified components.
-     * @param componens the components to analyze
-     * @since 3.0.0
-     */
-    void analyze(List<Component> componens);
-
-    /**
-     * Determines if the analyzer is capable of analyzing
-     * a component with the specified PackageURL
+     * Determines if the analyzer should be executed
+     * against a component with the specified PackageURL
      * @param packageUrl a PackageURL
-     * @return true if the analyzer is capable of analyzing this type, false if not
+     * @return true if the analyzer should be executed, false if not
      * @since 4.0.0
      */
-    boolean isCapable(PackageURL packageUrl);
+    boolean shouldAnalyze(PackageURL packageUrl);
+
+    /**
+     * Analyzes the specified component from local {@link org.dependencytrack.model.ComponentAnalysisCache}.
+     * @param component component the Component to analyze from cache
+     * @since 4.0.0
+     */
+    void applyAnalysisFromCache(final Component component);
 
 }

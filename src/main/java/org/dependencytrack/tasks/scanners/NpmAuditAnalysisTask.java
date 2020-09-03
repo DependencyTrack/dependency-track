@@ -50,7 +50,7 @@ import java.util.Map;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
+public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements CacheableScanTask, Subscriber {
 
     private static final String API_BASE_URL = "https://registry.npmjs.org/-/npm/v1/security/audits";
     private static final Logger LOGGER = Logger.getLogger(NpmAuditAnalysisTask.class);
@@ -79,16 +79,35 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
     }
 
     /**
-     * Determines if the {@link NpmAuditAnalysisTask} is suitable for analysis based on the PackageURL.
+     * Determines if the {@link NpmAuditAnalysisTask} is capable of analyzing the specified PackageURL.
+     *
+     * @param purl the PackageURL to analyze
+     * @return true if NpmAuditAnalysisTask should analyze, false if not
+     */
+    public boolean isCapable(final PackageURL purl) {
+        if (purl == null) {
+            return false;
+        }
+        return "npm".equals(purl.getType());
+    }
+
+    /**
+     * Determines if the {@link NpmAuditAnalysisTask} should analyze the specified PackageURL.
      *
      * @param purl the PackageURL to analyze
      * @return true if NpmAuditAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(final PackageURL purl) {
-        if (purl == null) {
-            return false;
-        }
-        return "npm".equals(purl.getType()) && !isCacheCurrent(Vulnerability.Source.NPM, API_BASE_URL, purl.toString());
+        return !isCacheCurrent(Vulnerability.Source.NPM, API_BASE_URL, purl.toString());
+    }
+
+    /**
+     * Analyzes the specified component from local {@link org.dependencytrack.model.ComponentAnalysisCache}.
+     *
+     * @param component component the Component to analyze from cache
+     */
+    public void applyAnalysisFromCache(final Component component) {
+        applyAnalysisFromCache(Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity());
     }
 
     /**
@@ -111,9 +130,9 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
             final JSONObject npmDependencies = new JSONObject();
 
             for (Iterator<Component> iterator = backlog.iterator(); iterator.hasNext();) {
-                Component component = iterator.next();
+                final Component component = iterator.next();
                 final PackageURL purl = component.getPurl();
-                if (!component.isInternal() && shouldAnalyze(purl)) {
+                if (!component.isInternal() && isCapable(purl)) {
                     if (!npmCandidates.containsKey(component.getName())) {
                         npmCandidates.put(component.getName(), component);
                         npmRequires.put(purl.getName(), purl.getVersion());
@@ -179,11 +198,12 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements S
                 if (component != null && vulnerability != null) {
                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                    addVulnerabilityToCache(component, vulnerability);
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));
             }
             for (final Component component: components) {
-                updateAnalysisCacheStats(qm, Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString());
+                updateAnalysisCacheStats(qm, Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
             }
         }
     }

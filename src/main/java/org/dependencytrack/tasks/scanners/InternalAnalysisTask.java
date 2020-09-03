@@ -65,12 +65,12 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
     }
 
     /**
-     * Determines if the {@link InternalAnalysisTask} is suitable for analysis based on the PackageURL.
+     * Determines if the {@link InternalAnalysisTask} is capable of analyzing the specified PackageURL.
      *
      * @param purl the PackageURL to analyze
-     * @return true if CpeAnalysisTask should analyze, false if not
+     * @return true if InternalAnalysisTask should analyze, false if not
      */
-    public boolean shouldAnalyze(final PackageURL purl) {
+    public boolean isCapable(final PackageURL purl) {
         return true;
     }
 

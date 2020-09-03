@@ -24,18 +24,7 @@ import alpine.event.framework.SingleThreadedEventService;
 import alpine.logging.Logger;
 import alpine.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
-import org.dependencytrack.tasks.BomUploadProcessingTask;
-import org.dependencytrack.tasks.CloneProjectTask;
-import org.dependencytrack.tasks.FortifySscUploadTask;
-import org.dependencytrack.tasks.IndexTask;
-import org.dependencytrack.tasks.InternalComponentIdentificationTask;
-import org.dependencytrack.tasks.KennaSecurityUploadTask;
-import org.dependencytrack.tasks.MetricsUpdateTask;
-import org.dependencytrack.tasks.NistMirrorTask;
-import org.dependencytrack.tasks.NpmAdvisoryMirrorTask;
-import org.dependencytrack.tasks.TaskScheduler;
-import org.dependencytrack.tasks.VulnDbSyncTask;
-import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
+import org.dependencytrack.tasks.*;
 import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
 import org.dependencytrack.tasks.scanners.InternalAnalysisTask;
 import org.dependencytrack.tasks.scanners.NpmAuditAnalysisTask;
@@ -87,6 +76,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(FortifySscUploadEventAbstract.class, FortifySscUploadTask.class);
         EVENT_SERVICE.subscribe(KennaSecurityUploadEventAbstract.class, KennaSecurityUploadTask.class);
         EVENT_SERVICE.subscribe(InternalComponentIdentificationEvent.class, InternalComponentIdentificationTask.class);
+        EVENT_SERVICE.subscribe(ClearComponentAnalysisCacheEvent.class, ClearComponentAnalysisCacheTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
         EVENT_SERVICE_ST.subscribe(NistMirrorEvent.class, NistMirrorTask.class);

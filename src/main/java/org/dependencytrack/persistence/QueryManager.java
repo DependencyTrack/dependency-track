@@ -35,10 +35,10 @@ import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
-
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -2283,7 +2283,7 @@ public class QueryManager extends AlpineQueryManager {
         return singleResult(query.executeWithArray(cacheType, targetHost, targetType, target));
     }
 
-    public void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence) {
+    public void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
         ComponentAnalysisCache cac = getComponentAnalysisCache(cacheType, targetHost, targetType, target);
         if (cac == null) {
             cac = new ComponentAnalysisCache();
@@ -2293,7 +2293,15 @@ public class QueryManager extends AlpineQueryManager {
             cac.setTarget(target);
         }
         cac.setLastOccurrence(lastOccurrence);
+        if (result != null) {
+            cac.setResult(result);
+        }
         persist(cac);
+    }
+
+    public void clearComponentAnalysisCache() {
+        final Query<ComponentAnalysisCache> query = pm.newQuery(ComponentAnalysisCache.class);
+        query.deletePersistentAll();
     }
 
     /**

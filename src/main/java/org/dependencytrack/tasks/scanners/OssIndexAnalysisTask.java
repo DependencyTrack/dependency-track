@@ -61,7 +61,7 @@ import java.util.List;
  * @author Steve Springett
  * @since 3.2.0
  */
-public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
+public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements CacheableScanTask, Subscriber {
 
     private static final String API_BASE_URL = "https://ossindex.sonatype.org/api/v3/component-report";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
@@ -118,13 +118,32 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
     }
 
     /**
-     * Determines if the {@link OssIndexAnalysisTask} is suitable for analysis based on the PackageURL.
+     * Determines if the {@link OssIndexAnalysisTask} is capable of analyzing the specified PackageURL.
      *
      * @param purl the PackageURL to analyze
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
+    public boolean isCapable(final PackageURL purl) {
+        return purl != null;
+    }
+
+    /**
+     * Determines if the {@link OssIndexAnalysisTask} should analyze the specified PackageURL.
+     *
+     * @param purl the PackageURL to analyze
+     * @return true if NpmAuditAnalysisTask should analyze, false if not
+     */
     public boolean shouldAnalyze(final PackageURL purl) {
-        return purl != null && !isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, purl.toString());
+        return !isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, purl.toString());
+    }
+
+    /**
+     * Analyzes the specified component from local {@link org.dependencytrack.model.ComponentAnalysisCache}.
+     *
+     * @param component component the Component to analyze from cache
+     */
+    public void applyAnalysisFromCache(final Component component) {
+        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity());
     }
 
     /**
@@ -137,9 +156,13 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
             final List<String> coordinates = new ArrayList<>();
             final List<Component> paginatedList = paginatedComponents.getPaginatedList();
             for (final Component component: paginatedList) {
-                if (!component.isInternal() && shouldAnalyze(component.getPurl())) {
-                    //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
-                    coordinates.add(minimizePurl(component.getPurl()));
+                if (!component.isInternal() && isCapable(component.getPurl())) {
+                    if (!isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString())) {
+                        //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
+                        coordinates.add(minimizePurl(component.getPurl()));
+                    } else {
+                        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity());
+                    }
                 }
             }
             if (CollectionUtils.isEmpty(coordinates)) {
@@ -221,6 +244,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                 if (vulnerability != null) {
                                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                    addVulnerabilityToCache(component, vulnerability);
                                 } else {
                                     /*
                                     The vulnerability reported by OSS Index is not in Dependency-Track yet. This could be
@@ -230,6 +254,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                     NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                    addVulnerabilityToCache(component, vulnerability);
                                 }
                             } else {
                                 /*
@@ -241,11 +266,12 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements S
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                addVulnerabilityToCache(component, vulnerability);
                             }
                         }
                         Event.dispatch(new MetricsUpdateEvent(component));
                     }
-                    updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString());
+                    updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                 }
             }
         }

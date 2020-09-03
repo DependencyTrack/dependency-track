@@ -27,8 +27,14 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonWriter;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Date;
 import java.util.UUID;
 
@@ -80,6 +86,10 @@ public class ComponentAnalysisCache implements Serializable {
     @Column(name = "TARGET", allowsNull = "false")
     @NotNull
     private String target;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESULT", allowsNull = "true", jdbcType = "CLOB")
+    private String result;
 
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "COMPONENTANALYSISCACHE_UUID_IDX")
@@ -134,6 +144,32 @@ public class ComponentAnalysisCache implements Serializable {
 
     public void setTarget(String target) {
         this.target = target;
+    }
+
+    public JsonObject getResult() {
+        if (result != null) {
+            try (final StringReader sr = new StringReader(result);
+                 final JsonReader jr = Json.createReader(sr)) {
+                return jr.readObject();
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public void setResult(JsonObject jsonObject) {
+        if (jsonObject == null) {
+            result = null;
+        } else {
+            try (final StringWriter sw = new StringWriter();
+                 final JsonWriter jw = Json.createWriter(sw)) {
+                jw.write(jsonObject);
+                result = sw.toString();
+            } catch (Exception e) {
+                result = null;
+            }
+        }
     }
 
     public UUID getUuid() {

@@ -37,6 +37,7 @@ import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.json.JSONObject;
+import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -132,11 +133,12 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
             for (Iterator<Component> iterator = backlog.iterator(); iterator.hasNext();) {
                 final Component component = iterator.next();
                 final PackageURL purl = component.getPurl();
+                final String npmPackageName = purlToNpmName(component.getPurl());
                 if (!component.isInternal() && isCapable(purl)) {
-                    if (!npmCandidates.containsKey(component.getName())) {
-                        npmCandidates.put(component.getName(), component);
-                        npmRequires.put(purl.getName(), purl.getVersion());
-                        npmDependencies.put(purl.getName(), new JSONObject().put("version", purl.getVersion()));
+                    if (!npmCandidates.containsKey(npmPackageName)) {
+                        npmCandidates.put(npmPackageName, component);
+                        npmRequires.put(npmPackageName, purl.getVersion());
+                        npmDependencies.put(npmPackageName, new JSONObject().put("version", purl.getVersion()));
                         iterator.remove(); // Remove the current component being iterated on
                     }
                 } else {
@@ -215,13 +217,26 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
         for (final Component component: components) {
             final PackageURL purl = component.getPurl();
             if (purl != null) {
-                if (purl.getName().equalsIgnoreCase(advisory.getModuleName())
+                final String npmPackageName = purlToNpmName(purl);
+                if (npmPackageName.equalsIgnoreCase(advisory.getModuleName())
                         && purl.getVersion().equalsIgnoreCase(advisory.getVersion())) {
                     return component;
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * Converts a Package URL into an optionally scoped NPM package name.
+     */
+    private String purlToNpmName(PackageURL purl) {
+        String s = "";
+        if (purl.getNamespace() != null) {
+            s += URLDecoder.decode(purl.getNamespace()) + "/";
+        }
+        s += purl.getName();
+        return s;
     }
 
     /**

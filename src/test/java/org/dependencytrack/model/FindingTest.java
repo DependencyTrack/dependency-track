@@ -18,18 +18,21 @@
  */
 package org.dependencytrack.model;
 
+import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
 public class FindingTest {
 
     private UUID projectUuid = UUID.randomUUID();
+    private Date attributedOn = new Date();
     private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "component-purl", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
-            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4", "79",
-            "XSS", AnalysisState.NOT_AFFECTED, true);
+            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4",
+            AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, "79", "XSS", AnalysisState.NOT_AFFECTED, true);
 
     @Test
     public void testComponent() {
@@ -62,10 +65,10 @@ public class FindingTest {
         Map map = finding.getAnalysis();
         Assert.assertEquals(AnalysisState.NOT_AFFECTED, map.get("state"));
         Assert.assertEquals(true, map.get("isSuppressed"));
-    } 
+    }
 
     @Test
     public void testMatrix() {
         Assert.assertEquals(projectUuid + ":component-uuid" + ":vuln-uuid", finding.getMatrix());
-    } 
+    }
 }

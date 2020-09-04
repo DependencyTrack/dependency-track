@@ -23,6 +23,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
+import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.util.Convert;
 import us.springett.parsers.cpe.values.LogicalValue;
 import java.util.List;
@@ -54,6 +55,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
+                        NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
                         qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                     }
                 }

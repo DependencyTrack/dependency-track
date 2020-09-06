@@ -860,6 +860,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of all Policy objects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of all Policy objects
+     */
+    public List<Policy> getAllPolicies() {
+        final Query<Policy> query = pm.newQuery(Policy.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        return query.executeResultList(Policy.class);
+    }
+
+    /**
      * Returns a policy by it's name.
      * @param name the name of the policy (required)
      * @return a Policy object, or null if not found
@@ -946,6 +959,17 @@ public class QueryManager extends AlpineQueryManager {
         final LicenseGroup licenseGroup = new LicenseGroup();
         licenseGroup.setName(name);
         return persist(licenseGroup);
+    }
+
+    /**
+     * Determines if the specified LicenseGroup contains the specified License.
+     * @param lg the LicenseGroup to query
+     * @param license the License to query for
+     * @return true if License is part of LicenseGroup, false if not
+     */
+    public boolean doesLicenseGroupContainLicense(final LicenseGroup lg, final License license) {
+        final Query<LicenseGroup> query = pm.newQuery(LicenseGroup.class, "id == :id && licenses.contains(:license)");
+        return singleResult(query.execute(lg.getId(), license)) != null;
     }
 
     /**

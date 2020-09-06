@@ -968,8 +968,9 @@ public class QueryManager extends AlpineQueryManager {
      * @return true if License is part of LicenseGroup, false if not
      */
     public boolean doesLicenseGroupContainLicense(final LicenseGroup lg, final License license) {
+        final License l = getObjectById(License.class, license.getId());
         final Query<LicenseGroup> query = pm.newQuery(LicenseGroup.class, "id == :id && licenses.contains(:license)");
-        return singleResult(query.execute(lg.getId(), license)) != null;
+        return singleResult(query.execute(lg.getId(), l)) != null;
     }
 
     /**

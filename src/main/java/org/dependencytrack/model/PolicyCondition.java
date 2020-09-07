@@ -39,7 +39,7 @@ import java.util.UUID;
  * Defines a Model class for defining a policy condition.
  *
  * @author Steve Springett
- * @since 3.9.0
+ * @since 4.0.0
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)

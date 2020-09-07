@@ -39,7 +39,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Imports default LicenseGroup objects into the datastore.
  *
  * @author Steve Springett
- * @since 3.9.0
+ * @since 4.0.0
  */
 public class DefaultLicenseGroupImporter implements IDefaultObjectImporter {
 

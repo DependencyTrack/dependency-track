@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * JAX-RS resources for processing OpenID Connect group mapping requests.
  *
- * @since 3.9.0
+ * @since 4.0.0
  */
 @Path("/v1/oidc")
 @Api(value = "oidc", authorizations = @Authorization(value = "X-Api-Key"))

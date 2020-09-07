@@ -50,7 +50,7 @@ import java.util.List;
  * JAX-RS resources for processing license groups.
  *
  * @author Steve Springett
- * @since 3.9.0
+ * @since 4.0.0
  */
 @Path("/v1/licenseGroup")
 @Api(value = "licenseGroup", authorizations = @Authorization(value = "X-Api-Key"))

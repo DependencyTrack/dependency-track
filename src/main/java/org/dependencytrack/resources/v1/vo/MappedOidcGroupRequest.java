@@ -8,7 +8,7 @@ import javax.validation.constraints.Pattern;
 /**
  * Defines a custom request object used when adding a new MappedOidcGroup.
  *
- * @since 3.9.0
+ * @since 4.0.0
  */
 public class MappedOidcGroupRequest {
 

@@ -109,7 +109,7 @@ public class UserResource extends AlpineResource {
     }
 
     /**
-     * @since 3.9.0
+     * @since 4.0.0
      */
     @POST
     @Path("oidc/login")
@@ -255,7 +255,7 @@ public class UserResource extends AlpineResource {
     }
 
     /**
-     * @since 3.9.0
+     * @since 4.0.0
      */
     @GET
     @Path("oidc")

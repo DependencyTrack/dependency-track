@@ -48,7 +48,7 @@ import javax.ws.rs.core.Response;
  * JAX-RS resources for processing policies.
  *
  * @author Steve Springett
- * @since 3.9.0
+ * @since 4.0.0
  */
 @Path("/v1/policy")
 @Api(value = "policy", authorizations = @Authorization(value = "X-Api-Key"))

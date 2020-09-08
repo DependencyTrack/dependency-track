@@ -76,7 +76,7 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         license = qm.persist(license);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.COMPONENT_NAME, PolicyCondition.Operator.IS, license.getUuid().toString());
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.IS, license.getUuid().toString());
         Component component = new Component();
         component.setResolvedLicense(license);
         PolicyEvaluator evaluator = new LicensePolicyEvaluator();

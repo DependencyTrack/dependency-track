@@ -924,6 +924,16 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Adds a policy violation
+     * @param pv the policy violation to add
+     */
+    public void addPolicyViolationIfNotExist(final PolicyViolation pv) {
+        //final PolicyViolation pv = new PolicyViolation();
+        // TODO: query PV to determine if it already exists. If not, then add it. If so, skip
+        persist(pv);
+    }
+
+    /**
      * Returns a List of all LicenseGroup objects.
      * @return a List of all LicenseGroup objects
      */

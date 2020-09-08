@@ -24,19 +24,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.UUID;
 
 /**
- * Defines a Model class for defining a policy condition.
+ * Defines a Model class for defining a policy violation.
  *
  * @author Steve Springett
  * @since 4.0.0
@@ -44,29 +45,12 @@ import java.util.UUID;
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PolicyCondition implements Serializable {
+public class PolicyViolation implements Serializable {
 
-    public enum Operator {
-        IS,
-        IS_NOT,
-        MATCHES,
-        NO_MATCH,
-        NUMERIC_GREATER_THAN,
-        NUMERIC_LESS_THAN,
-        NUMERIC_EQUAL,
-        NUMERIC_NOT_EQUAL,
-        NUMERIC_GREATER_THAN_OR_EQUAL,
-        NUMERIC_LESSER_THAN_OR_EQUAL
-    }
-
-    public enum Subject {
-        //AGE,
-        //ANALYZER,
-        //BOM,
-        COORDINATES,
+    public enum Type {
         LICENSE,
-        LICENSE_GROUP,
-        PACKAGE_URL
+        SECURITY,
+        COMPONENT_METADATA
     }
 
     @PrimaryKey
@@ -75,35 +59,38 @@ public class PolicyCondition implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "POLICY_ID", allowsNull = "false")
-    private Policy policy;
+    @Column(name = "TYPE", allowsNull = "false")
+    private Type type;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "PROJECT_ID", allowsNull = "false")
+    @Index(name = "POLICYVIOLATION_PROJECT_IDX")
+    private Project project;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "COMPONENT_ID", allowsNull = "false")
+    @Index(name = "POLICYVIOLATION_COMPONENT_IDX")
+    private Component component;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "POLICYCONDITION_ID", allowsNull = "false")
+    private PolicyCondition policyCondition;
 
     @Persistent
-    @Column(name = "OPERATOR", allowsNull = "false")
-    @NotBlank
-    @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The operator may only contain printable characters")
-    private Operator operator;
+    @Column(name = "TIMESTAMP", allowsNull = "false")
+    private Date timestamp;
 
     @Persistent
-    @Column(name = "SUBJECT", allowsNull = "false")
-    @NotBlank
+    @Column(name = "TEXT")
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The subject may only contain printable characters")
-    private Subject subject;
-
-    @Persistent
-    @Column(name = "VALUE", allowsNull = "false")
-    @NotBlank
-    @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The value may only contain printable characters")
-    private String value;
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The text may only contain printable characters")
+    private String text;
 
     /**
      * The unique identifier of the object.
      */
     @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "POLICYCONDITION_UUID_IDX")
+    @Unique(name = "POLICYVIOLATION_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
@@ -116,36 +103,49 @@ public class PolicyCondition implements Serializable {
         this.id = id;
     }
 
-    public Policy getPolicy() {
-        return policy;
+    public Type getType() {
+        return type;
     }
 
-    public void setPolicy(Policy policy) {
-        this.policy = policy;
+    public void setType(Type type) {
+        this.type = type;
     }
 
-    public Operator getOperator() {
-        return operator;
+    public Component getComponent() {
+        return component;
     }
 
-    public void setOperator(Operator operator) {
-        this.operator = operator;
+    public void setComponent(Component component) {
+        this.component = component;
+        this.project = component.getProject();
     }
 
-    public Subject getSubject() {
-        return subject;
+    public Project getProject() {
+        return project;
     }
 
-    public void setSubject(Subject subject) {
-        this.subject = subject;
+    public PolicyCondition getPolicyCondition() {
+        return policyCondition;
     }
 
-    public String getValue() {
-        return value;
+    public void setPolicyCondition(PolicyCondition policyCondition) {
+        this.policyCondition = policyCondition;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     public UUID getUuid() {
@@ -156,3 +156,5 @@ public class PolicyCondition implements Serializable {
         this.uuid = uuid;
     }
 }
+
+

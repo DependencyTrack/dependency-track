@@ -46,6 +46,8 @@ public class PolicyEngine {
         evaluators.add(new LicenseGroupPolicyEvaluator());
         evaluators.add(new LicensePolicyEvaluator());
         evaluators.add(new PackageURLPolicyEvaluator());
+        evaluators.add(new CpePolicyEvaluator());
+        evaluators.add(new SwidTagIdPolicyEvaluator());
     }
 
     public void evaluate(List<Component> components) {

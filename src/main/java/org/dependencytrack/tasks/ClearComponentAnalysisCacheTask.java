@@ -40,8 +40,9 @@ public class ClearComponentAnalysisCacheTask implements LoggableSubscriber {
     public void inform(final Event e) {
         if (e instanceof ClearComponentAnalysisCacheEvent) {
             LOGGER.info("Clearing ComponentAnalysisCache");
-            QueryManager qm = new QueryManager();
-            qm.clearComponentAnalysisCache();
+            try (QueryManager qm = new QueryManager()) {
+                qm.clearComponentAnalysisCache();
+            }
         }
     }
 }

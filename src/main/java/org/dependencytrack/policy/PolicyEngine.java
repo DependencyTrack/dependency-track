@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.policy;
 
+import alpine.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
@@ -39,6 +40,8 @@ import java.util.Optional;
  */
 public class PolicyEngine {
 
+    private static final Logger LOGGER = Logger.getLogger(PolicyEngine.class);
+
     private final List<PolicyEvaluator> evaluators = new ArrayList<>();
 
     public PolicyEngine() {
@@ -51,11 +54,13 @@ public class PolicyEngine {
     }
 
     public void evaluate(List<Component> components) {
+        LOGGER.info("Evaluating " + components.size() + " component(s) against applicable policies");
         try (final QueryManager qm = new QueryManager()) {
             final List<Policy> policies = qm.getAllPolicies();
             for (final Component component: components) {
                 for (final Policy policy : policies) {
                     if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
+                        LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
                         final List<PolicyConditionViolation> violations = new ArrayList<>();
                         for (final PolicyEvaluator evaluator : evaluators) {
                             evaluate(evaluator, policy, component, violations);
@@ -73,6 +78,7 @@ public class PolicyEngine {
                 }
             }
         }
+        LOGGER.info("Policy analysis complete");
     }
 
     private boolean isPolicyAssignedToProject(Policy policy, Project project) {
@@ -103,6 +109,8 @@ public class PolicyEngine {
         switch(subject) {
             case COORDINATES:
             case PACKAGE_URL:
+            case CPE:
+            case SWID_TAGID:
                 return PolicyViolation.Type.COMPONENT_METADATA;
             case LICENSE:
             case LICENSE_GROUP:

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.policy;
 
+import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Coordinates;
@@ -34,6 +35,8 @@ import java.util.Optional;
  */
 public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
 
+    private static final Logger LOGGER = Logger.getLogger(CoordinatesPolicyEvaluator.class);
+
     /**
      * {@inheritDoc}
      */
@@ -48,6 +51,7 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
     @Override
     public Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
+            LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Coordinates coordinates = parseCoordinatesDefinition(condition);
 
             if (hasViolations(condition.getOperator(), coordinates.getGroup(), component.getGroup())

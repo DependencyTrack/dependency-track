@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.policy;
 
+import alpine.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
@@ -30,6 +31,8 @@ import java.util.Optional;
  * @since 4.0.0
  */
 public class CpePolicyEvaluator extends AbstractPolicyEvaluator {
+
+    private static final Logger LOGGER = Logger.getLogger(CpePolicyEvaluator.class);
 
     /**
      * {@inheritDoc}
@@ -48,6 +51,7 @@ public class CpePolicyEvaluator extends AbstractPolicyEvaluator {
             return Optional.empty();
         }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
+            LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             if (PolicyCondition.Operator.MATCHES == condition.getOperator()) {
                 if (component.getCpe() != null && component.getCpe().contains(condition.getValue())) {
                     return Optional.of(new PolicyConditionViolation(condition, component));

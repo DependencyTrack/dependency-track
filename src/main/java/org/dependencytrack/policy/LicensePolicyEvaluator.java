@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.policy;
 
+import alpine.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Policy;
@@ -31,6 +32,8 @@ import java.util.Optional;
  * @since 4.0.0
  */
 public class LicensePolicyEvaluator extends AbstractPolicyEvaluator {
+
+    private static final Logger LOGGER = Logger.getLogger(LicensePolicyEvaluator.class);
 
     /**
      * {@inheritDoc}
@@ -50,6 +53,7 @@ public class LicensePolicyEvaluator extends AbstractPolicyEvaluator {
             return Optional.empty();
         }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
+            LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final License l = qm.getObjectByUuid(License.class, condition.getValue());
             if (l != null && PolicyCondition.Operator.IS == condition.getOperator()) {
                 if (component.getResolvedLicense().getId() == l.getId()) {

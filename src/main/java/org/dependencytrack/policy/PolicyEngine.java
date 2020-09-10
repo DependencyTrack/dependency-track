@@ -111,7 +111,7 @@ public class PolicyEngine {
             case PACKAGE_URL:
             case CPE:
             case SWID_TAGID:
-                return PolicyViolation.Type.COMPONENT_METADATA;
+                return PolicyViolation.Type.OPERATIONAL;
             case LICENSE:
             case LICENSE_GROUP:
                 return PolicyViolation.Type.LICENSE;

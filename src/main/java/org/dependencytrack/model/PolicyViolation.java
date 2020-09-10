@@ -50,7 +50,7 @@ public class PolicyViolation implements Serializable {
     public enum Type {
         LICENSE,
         SECURITY,
-        COMPONENT_METADATA
+        OPERATIONAL
     }
 
     @PrimaryKey

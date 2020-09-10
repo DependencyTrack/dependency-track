@@ -46,6 +46,22 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void hasMatchWithoutGroup() {
+        String def = "{ 'name': 'Test Component', 'version': '1.0.0' }";
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0.0");
+        PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
+        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
+        Assert.assertTrue(optional.isPresent());
+        PolicyConditionViolation violation = optional.get();
+        Assert.assertEquals(component, violation.getComponent());
+        Assert.assertEquals(condition, violation.getPolicyCondition());
+    }
+
+    @Test
     public void hasWildcardMatch() {
         String def = "{ 'group': '*', 'name': 'Test Component', 'version': '1.0.0' }";
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
@@ -133,7 +149,7 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
     public void wrongSubject() {
         String def = "{ 'name': 'Test Component' }";
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, def);
         Component component = new Component();
         component.setName("Test Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();

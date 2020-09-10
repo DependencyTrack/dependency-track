@@ -36,6 +36,7 @@
         <class>org.dependencytrack.model.NotificationRule</class>
         <class>org.dependencytrack.model.Policy</class>
         <class>org.dependencytrack.model.PolicyCondition</class>
+        <class>org.dependencytrack.model.PolicyViolation</class>
         <class>org.dependencytrack.model.PortfolioMetrics</class>
         <class>org.dependencytrack.model.Project</class>
         <class>org.dependencytrack.model.ProjectMetrics</class>

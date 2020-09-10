@@ -54,16 +54,19 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Coordinates coordinates = parseCoordinatesDefinition(condition);
 
-            if (hasViolations(condition.getOperator(), coordinates.getGroup(), component.getGroup())
-                    && hasViolations(condition.getOperator(), coordinates.getName(), component.getName())
-                    && hasViolations(condition.getOperator(), coordinates.getVersion(), component.getVersion())) {
+            if (matches(condition.getOperator(), coordinates.getGroup(), component.getGroup())
+                    && matches(condition.getOperator(), coordinates.getName(), component.getName())
+                    && matches(condition.getOperator(), coordinates.getVersion(), component.getVersion())) {
                 return Optional.of(new PolicyConditionViolation(condition, component));
             }
         }
         return Optional.empty();
     }
 
-    private boolean hasViolations(final PolicyCondition.Operator operator, final String conditionValue, final String part) {
+    private boolean matches(final PolicyCondition.Operator operator, final String conditionValue, final String part) {
+        if (conditionValue == null && part == null) {
+            return true;
+        }
         final String p = StringUtils.trimToNull(part);
         if (PolicyCondition.Operator.MATCHES == operator) {
             if (p != null) {
@@ -100,7 +103,7 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
      */
     private Coordinates parseCoordinatesDefinition(final PolicyCondition condition) {
         if (condition.getValue() == null) {
-            return null;
+            return new Coordinates(null, null, null);
         }
         final JSONObject def = new JSONObject(condition.getValue());
         return new Coordinates(

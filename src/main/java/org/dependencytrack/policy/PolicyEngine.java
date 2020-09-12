@@ -53,26 +53,24 @@ public class PolicyEngine {
         evaluators.add(new SwidTagIdPolicyEvaluator());
     }
 
-    public void evaluate(List<Component> components) {
+    public void evaluate(final QueryManager qm, final List<Component> components) {
         LOGGER.info("Evaluating " + components.size() + " component(s) against applicable policies");
-        try (final QueryManager qm = new QueryManager()) {
-            final List<Policy> policies = qm.getAllPolicies();
-            for (final Component component: components) {
-                for (final Policy policy : policies) {
-                    if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
-                        LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
-                        final List<PolicyConditionViolation> violations = new ArrayList<>();
-                        for (final PolicyEvaluator evaluator : evaluators) {
-                            evaluate(evaluator, policy, component, violations);
+        final List<Policy> policies = qm.getAllPolicies();
+        for (final Component component: components) {
+            for (final Policy policy : policies) {
+                if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
+                    LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
+                    final List<PolicyConditionViolation> violations = new ArrayList<>();
+                    for (final PolicyEvaluator evaluator : evaluators) {
+                        evaluate(evaluator, policy, component, violations);
+                    }
+                    if (Policy.Operator.ANY == policy.getOperator()) {
+                        if (violations.size() > 0) {
+                            createPolicyViolations(qm, violations);
                         }
-                        if (Policy.Operator.ANY == policy.getOperator()) {
-                            if (violations.size() > 0) {
-                                createPolicyViolations(qm, violations);
-                            }
-                        } else if (Policy.Operator.ALL == policy.getOperator()) {
-                            if (violations.size() == policy.getPolicyConditions().size()) {
-                                createPolicyViolations(qm, violations);
-                            }
+                    } else if (Policy.Operator.ALL == policy.getOperator()) {
+                        if (violations.size() == policy.getPolicyConditions().size()) {
+                            createPolicyViolations(qm, violations);
                         }
                     }
                 }

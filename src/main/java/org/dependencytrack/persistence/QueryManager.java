@@ -733,6 +733,7 @@ public class QueryManager extends AlpineQueryManager {
         deleteAnalysisTrail(component);
         deleteMetrics(component);
         deleteFindingAttributions(component);
+        deletePolicyViolations(component);
         delete(component);
         commitSearchIndex(commitIndex, Component.class);
     }
@@ -934,6 +935,33 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of all Policy objects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of all Policy objects
+     */
+    public List<PolicyViolation> getAllPolicyViolations() {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
+        }
+        return query.executeResultList(PolicyViolation.class);
+    }
+
+    /**
+     * Returns a List of all Policy objects for a specific component.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of all Policy objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<PolicyViolation> getAllPolicyViolations(final Component component) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component.id == :cid");
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
+        }
+        return (List<PolicyViolation>)query.execute(component.getId());
+    }
+
+    /**
      * Returns a List of all LicenseGroup objects.
      * @return a List of all LicenseGroup objects
      */
@@ -1106,8 +1134,6 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
         if (!contains(vulnerability, component)) {
-            component = getObjectById(Component.class, component.getId());
-            vulnerability = getObjectById(Vulnerability.class, vulnerability.getId());
             component.addVulnerability(vulnerability);
             component = persist(component);
             persist(new FindingAttribution(component, vulnerability, analyzerIdentity));
@@ -1148,6 +1174,15 @@ public class QueryManager extends AlpineQueryManager {
      */
     private void deleteFindingAttributions(Component component) {
         final Query<FindingAttribution> query = pm.newQuery(FindingAttribution.class, "component == :component");
+        query.deletePersistentAll(component);
+    }
+
+    /**
+     * Deleted all PolicyViolation associated for the specified Component.
+     * @param component the Component to delete PolicyViolation for
+     */
+    private void deletePolicyViolations(Component component) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component == :component");
         query.deletePersistentAll(component);
     }
 

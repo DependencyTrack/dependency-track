@@ -928,10 +928,11 @@ public class QueryManager extends AlpineQueryManager {
      * Adds a policy violation
      * @param pv the policy violation to add
      */
-    public void addPolicyViolationIfNotExist(final PolicyViolation pv) {
-        //final PolicyViolation pv = new PolicyViolation();
-        // TODO: query PV to determine if it already exists. If not, then add it. If so, skip
-        persist(pv);
+    public synchronized void addPolicyViolationIfNotExist(final PolicyViolation pv) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "type == :type && component == :component && policyCondition == :policyCondition");
+        if (singleResult(query.execute(pv.getType(), pv.getComponent(), pv.getPolicyCondition())) == null) {
+            persist(pv);
+        }
     }
 
     /**

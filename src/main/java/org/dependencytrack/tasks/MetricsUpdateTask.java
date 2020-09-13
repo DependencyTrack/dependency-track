@@ -22,9 +22,6 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import alpine.resources.OrderDirection;
-import alpine.resources.Pagination;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.Component;
@@ -100,9 +97,13 @@ public class MetricsUpdateTask implements Subscriber {
         // Iterate through all projects
         LOGGER.debug("Iterating through projects");
         for (final Project project: projects) {
-            // Update the projects metrics
-            final MetricCounters projectMetrics = updateProjectMetrics(qm, project.getId());
-            projectCountersList.add(projectMetrics);
+            try {
+                // Update the projects metrics
+                final MetricCounters projectMetrics = updateProjectMetrics(qm, project.getId());
+                projectCountersList.add(projectMetrics);
+            } catch (Exception e) {
+                LOGGER.error("An unexpected error occurred while updating portfolio metrics and iterating through projects. The error occurred while updating metrics for project: " + project.getUuid().toString(), e);
+            }
         }
 
         LOGGER.debug("Project iteration complete. Iterating through all project metrics");
@@ -143,31 +144,6 @@ public class MetricsUpdateTask implements Subscriber {
         LOGGER.debug("Retrieving total suppression count for portfolio");
         // Total number of suppressions regardless if they are dependencies or components not associated to a project
         portfolioCounters.suppressions = toIntExact(qm.getSuppressedCount());
-
-        // There will be a high probability of having a large number of components. Setup paging.
-        final AlpineRequest alpineRequest = new AlpineRequest(
-                null, new Pagination(Pagination.Strategy.OFFSET, 0, 1000), null, "id", OrderDirection.ASCENDING
-        );
-        // Page through a list of components
-        try (QueryManager qm2 = new QueryManager(alpineRequest)) {
-            final long total = qm2.getCount(Component.class);
-            LOGGER.debug("Retrieving and paginating through all components. " + total + " total");
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm2.getComponents();
-                portfolioCounters.components = toIntExact(result.getTotal());
-                LOGGER.debug("Processing " + result.getObjects().size() + " components");
-                for (final Component component: result.getList(Component.class)) {
-                    final MetricCounters componentMetrics = updateComponentMetrics(qm2, component.getId());
-                    // Only vulnerable components
-                    if (componentMetrics.severitySum() > 0) {
-                        portfolioCounters.vulnerableComponents++;
-                    }
-                }
-                count += result.getObjects().size();
-                qm2.advancePagination();
-            }
-        }
 
         // For the time being finding and vulnerability counts are the same.
         // However, vulns may be defined as 'confirmed' in a future release.
@@ -286,11 +262,14 @@ public class MetricsUpdateTask implements Subscriber {
         LOGGER.debug("Iterating through dependencies");
         // Iterate through all dependencies
         for (final Component component: components) {
-            // Update the component metrics
-            final MetricCounters componentMetrics = updateComponentMetrics(qm, component.getId());
-
-            // Adds the metrics from the component to the list of metrics for the project
-            countersList.add(componentMetrics);
+            try {
+                // Update the component metrics
+                final MetricCounters componentMetrics = updateComponentMetrics(qm, component.getId());
+                // Adds the metrics from the component to the list of metrics for the project
+                countersList.add(componentMetrics);
+            } catch (Exception e) {
+                LOGGER.error("An unexpected error occurred while updating project metrics and iterating through components. The error occurred while updating metrics for project: " + project.getUuid().toString() + " and component: " + component.getUuid().toString(), e);
+            }
         }
         LOGGER.debug("Component iteration complete");
 

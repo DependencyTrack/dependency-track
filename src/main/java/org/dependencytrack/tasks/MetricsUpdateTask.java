@@ -29,6 +29,8 @@ import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
@@ -121,6 +123,21 @@ public class MetricsUpdateTask implements Subscriber {
             if (projectMetrics.severitySum() > 0) {
                 portfolioCounters.vulnerableProjects++;
             }
+            portfolioCounters.policyViolationsFail += projectMetrics.policyViolationsFail;
+            portfolioCounters.policyViolationsWarn += projectMetrics.policyViolationsWarn;
+            portfolioCounters.policyViolationsInfo += projectMetrics.policyViolationsInfo;
+            portfolioCounters.policyViolationsTotal += projectMetrics.policyViolationsTotal;
+            portfolioCounters.policyViolationsAudited += projectMetrics.policyViolationsAudited;
+            portfolioCounters.policyViolationsUnaudited += projectMetrics.policyViolationsUnaudited;
+            portfolioCounters.policyViolationsSecurityTotal += projectMetrics.policyViolationsSecurityTotal;
+            portfolioCounters.policyViolationsSecurityAudited += projectMetrics.policyViolationsSecurityAudited;
+            portfolioCounters.policyViolationsSecurityUnaudited += projectMetrics.policyViolationsSecurityUnaudited;
+            portfolioCounters.policyViolationsLicenseTotal += projectMetrics.policyViolationsLicenseTotal;
+            portfolioCounters.policyViolationsLicenseAudited += projectMetrics.policyViolationsLicenseAudited;
+            portfolioCounters.policyViolationsLicenseUnaudited += projectMetrics.policyViolationsLicenseUnaudited;
+            portfolioCounters.policyViolationsOperationalTotal += projectMetrics.policyViolationsOperationalTotal;
+            portfolioCounters.policyViolationsOperationalAudited += projectMetrics.policyViolationsOperationalAudited;
+            portfolioCounters.policyViolationsOperationalUnaudited += projectMetrics.policyViolationsOperationalUnaudited;
         }
         LOGGER.debug("Project metric iteration complete");
         LOGGER.debug("Retrieving total suppression count for portfolio");
@@ -168,6 +185,21 @@ public class MetricsUpdateTask implements Subscriber {
                 && last.getUnassigned() == portfolioCounters.unassigned
                 && last.getVulnerabilities() == portfolioCounters.vulnerabilities
                 && last.getInheritedRiskScore() == portfolioCounters.getInheritedRiskScore()
+                && last.getPolicyViolationsFail() == portfolioCounters.policyViolationsFail
+                && last.getPolicyViolationsWarn() == portfolioCounters.policyViolationsWarn
+                && last.getPolicyViolationsInfo() == portfolioCounters.policyViolationsInfo
+                && last.getPolicyViolationsTotal() == portfolioCounters.policyViolationsTotal
+                && last.getPolicyViolationsAudited() == portfolioCounters.policyViolationsAudited
+                && last.getPolicyViolationsUnaudited() == portfolioCounters.policyViolationsUnaudited
+                && last.getPolicyViolationsSecurityTotal() == portfolioCounters.policyViolationsSecurityTotal
+                && last.getPolicyViolationsSecurityAudited() == portfolioCounters.policyViolationsSecurityAudited
+                && last.getPolicyViolationsSecurityUnaudited() == portfolioCounters.policyViolationsSecurityUnaudited
+                && last.getPolicyViolationsLicenseTotal() == portfolioCounters.policyViolationsLicenseTotal
+                && last.getPolicyViolationsLicenseAudited() == portfolioCounters.policyViolationsLicenseAudited
+                && last.getPolicyViolationsLicenseUnaudited() == portfolioCounters.policyViolationsLicenseUnaudited
+                && last.getPolicyViolationsOperationalTotal() == portfolioCounters.policyViolationsOperationalTotal
+                && last.getPolicyViolationsOperationalAudited() == portfolioCounters.policyViolationsOperationalAudited
+                && last.getPolicyViolationsOperationalUnaudited() == portfolioCounters.policyViolationsOperationalUnaudited
                 && last.getComponents() == portfolioCounters.components
                 && last.getVulnerableComponents() == portfolioCounters.vulnerableComponents
                 && last.getSuppressed() == portfolioCounters.suppressions
@@ -207,6 +239,21 @@ public class MetricsUpdateTask implements Subscriber {
                             portfolioCounters.low,
                             portfolioCounters.unassigned)
             );
+            portfolioMetrics.setPolicyViolationsFail(portfolioCounters.policyViolationsFail);
+            portfolioMetrics.setPolicyViolationsWarn(portfolioCounters.policyViolationsWarn);
+            portfolioMetrics.setPolicyViolationsInfo(portfolioCounters.policyViolationsInfo);
+            portfolioMetrics.setPolicyViolationsTotal(portfolioCounters.policyViolationsTotal);
+            portfolioMetrics.setPolicyViolationsAudited(portfolioCounters.policyViolationsAudited);
+            portfolioMetrics.setPolicyViolationsUnaudited(portfolioCounters.policyViolationsUnaudited);
+            portfolioMetrics.setPolicyViolationsSecurityTotal(portfolioCounters.policyViolationsSecurityTotal);
+            portfolioMetrics.setPolicyViolationsSecurityAudited(portfolioCounters.policyViolationsSecurityAudited);
+            portfolioMetrics.setPolicyViolationsSecurityUnaudited(portfolioCounters.policyViolationsSecurityUnaudited);
+            portfolioMetrics.setPolicyViolationsLicenseTotal(portfolioCounters.policyViolationsLicenseTotal);
+            portfolioMetrics.setPolicyViolationsLicenseAudited(portfolioCounters.policyViolationsLicenseAudited);
+            portfolioMetrics.setPolicyViolationsLicenseUnaudited(portfolioCounters.policyViolationsLicenseUnaudited);
+            portfolioMetrics.setPolicyViolationsOperationalTotal(portfolioCounters.policyViolationsOperationalTotal);
+            portfolioMetrics.setPolicyViolationsOperationalAudited(portfolioCounters.policyViolationsOperationalAudited);
+            portfolioMetrics.setPolicyViolationsOperationalUnaudited(portfolioCounters.policyViolationsOperationalUnaudited);
             portfolioMetrics.setFirstOccurrence(measuredAt);
             portfolioMetrics.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting portfolio metrics");
@@ -261,6 +308,21 @@ public class MetricsUpdateTask implements Subscriber {
             if (depMetric.severitySum() > 0) {
                 counters.vulnerableComponents++;
             }
+            counters.policyViolationsFail += depMetric.policyViolationsFail;
+            counters.policyViolationsWarn += depMetric.policyViolationsWarn;
+            counters.policyViolationsInfo += depMetric.policyViolationsInfo;
+            counters.policyViolationsTotal += depMetric.policyViolationsTotal;
+            counters.policyViolationsAudited += depMetric.policyViolationsAudited;
+            counters.policyViolationsUnaudited += depMetric.policyViolationsUnaudited;
+            counters.policyViolationsSecurityTotal += depMetric.policyViolationsSecurityTotal;
+            counters.policyViolationsSecurityAudited += depMetric.policyViolationsSecurityAudited;
+            counters.policyViolationsSecurityUnaudited += depMetric.policyViolationsSecurityUnaudited;
+            counters.policyViolationsLicenseTotal += depMetric.policyViolationsLicenseTotal;
+            counters.policyViolationsLicenseAudited += depMetric.policyViolationsLicenseAudited;
+            counters.policyViolationsLicenseUnaudited += depMetric.policyViolationsLicenseUnaudited;
+            counters.policyViolationsOperationalTotal += depMetric.policyViolationsOperationalTotal;
+            counters.policyViolationsOperationalAudited += depMetric.policyViolationsOperationalAudited;
+            counters.policyViolationsOperationalUnaudited += depMetric.policyViolationsOperationalUnaudited;
         }
 
         // For the time being finding and vulnerability counts are the same.
@@ -287,6 +349,21 @@ public class MetricsUpdateTask implements Subscriber {
                 && last.getFindingsAudited() == counters.findingsAudited
                 && last.getFindingsUnaudited() == counters.findingsUnaudited
                 && last.getInheritedRiskScore() == counters.getInheritedRiskScore()
+                && last.getPolicyViolationsFail() == counters.policyViolationsFail
+                && last.getPolicyViolationsWarn() == counters.policyViolationsWarn
+                && last.getPolicyViolationsInfo() == counters.policyViolationsInfo
+                && last.getPolicyViolationsTotal() == counters.policyViolationsTotal
+                && last.getPolicyViolationsAudited() == counters.policyViolationsAudited
+                && last.getPolicyViolationsUnaudited() == counters.policyViolationsUnaudited
+                && last.getPolicyViolationsSecurityTotal() == counters.policyViolationsSecurityTotal
+                && last.getPolicyViolationsSecurityAudited() == counters.policyViolationsSecurityAudited
+                && last.getPolicyViolationsSecurityUnaudited() == counters.policyViolationsSecurityUnaudited
+                && last.getPolicyViolationsLicenseTotal() == counters.policyViolationsLicenseTotal
+                && last.getPolicyViolationsLicenseAudited() == counters.policyViolationsLicenseAudited
+                && last.getPolicyViolationsLicenseUnaudited() == counters.policyViolationsLicenseUnaudited
+                && last.getPolicyViolationsOperationalTotal() == counters.policyViolationsOperationalTotal
+                && last.getPolicyViolationsOperationalAudited() == counters.policyViolationsOperationalAudited
+                && last.getPolicyViolationsOperationalUnaudited() == counters.policyViolationsOperationalUnaudited
                 && last.getComponents() == counters.components
                 && last.getVulnerableComponents() == counters.vulnerableComponents) {
 
@@ -317,6 +394,21 @@ public class MetricsUpdateTask implements Subscriber {
             projectMetrics.setFindingsAudited(counters.findingsAudited);
             projectMetrics.setFindingsUnaudited(counters.findingsUnaudited);
             projectMetrics.setInheritedRiskScore(counters.getInheritedRiskScore());
+            projectMetrics.setPolicyViolationsFail(counters.policyViolationsFail);
+            projectMetrics.setPolicyViolationsWarn(counters.policyViolationsWarn);
+            projectMetrics.setPolicyViolationsInfo(counters.policyViolationsInfo);
+            projectMetrics.setPolicyViolationsTotal(counters.policyViolationsTotal);
+            projectMetrics.setPolicyViolationsAudited(counters.policyViolationsAudited);
+            projectMetrics.setPolicyViolationsUnaudited(counters.policyViolationsUnaudited);
+            projectMetrics.setPolicyViolationsSecurityTotal(counters.policyViolationsSecurityTotal);
+            projectMetrics.setPolicyViolationsSecurityAudited(counters.policyViolationsSecurityAudited);
+            projectMetrics.setPolicyViolationsSecurityUnaudited(counters.policyViolationsSecurityUnaudited);
+            projectMetrics.setPolicyViolationsLicenseTotal(counters.policyViolationsLicenseTotal);
+            projectMetrics.setPolicyViolationsLicenseAudited(counters.policyViolationsLicenseAudited);
+            projectMetrics.setPolicyViolationsLicenseUnaudited(counters.policyViolationsLicenseUnaudited);
+            projectMetrics.setPolicyViolationsOperationalTotal(counters.policyViolationsOperationalTotal);
+            projectMetrics.setPolicyViolationsOperationalAudited(counters.policyViolationsOperationalAudited);
+            projectMetrics.setPolicyViolationsOperationalUnaudited(counters.policyViolationsOperationalUnaudited);
             projectMetrics.setFirstOccurrence(measuredAt);
             projectMetrics.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting metrics for project: " + project.getUuid());
@@ -357,6 +449,31 @@ public class MetricsUpdateTask implements Subscriber {
         counters.findingsAudited = toIntExact(qm.getAuditedCount(component));
         counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
+        for (final PolicyViolation violation: qm.getAllPolicyViolations(component)) {
+            // Assign violation states
+            if (Policy.ViolationState.FAIL == violation.getPolicyCondition().getPolicy().getViolationState()) {
+                counters.policyViolationsFail++;
+            } else if (Policy.ViolationState.WARN == violation.getPolicyCondition().getPolicy().getViolationState()) {
+                counters.policyViolationsWarn++;
+            } else if (Policy.ViolationState.INFO == violation.getPolicyCondition().getPolicy().getViolationState()) {
+                counters.policyViolationsInfo++;
+            }
+            // Assign violation types
+            if (PolicyViolation.Type.LICENSE == violation.getType()) {
+                counters.policyViolationsLicenseTotal++;
+                //counters.policyViolationsLicenseAudited = qm.getAuditedCount(violation, component);
+                counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
+            } else if (PolicyViolation.Type.SECURITY == violation.getType()) {
+                counters.policyViolationsSecurityTotal++;
+                //counters.policyViolationsSecurityAudited = qm.getAuditedCount(violation, component);
+                counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
+            } else if (PolicyViolation.Type.OPERATIONAL == violation.getType()) {
+                counters.policyViolationsOperationalTotal++;
+                //counters.policyViolationsOperationalAudited = qm.getAuditedCount(violation, component);
+                counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
+            }
+        }
+
         // Query for an existing ComponentMetrics
         final DependencyMetrics last = qm.getMostRecentDependencyMetrics(component);
         if (last != null
@@ -370,7 +487,22 @@ public class MetricsUpdateTask implements Subscriber {
                 && last.getFindingsTotal() == counters.findingsTotal
                 && last.getFindingsAudited() == counters.findingsAudited
                 && last.getFindingsUnaudited() == counters.findingsUnaudited
-                && last.getInheritedRiskScore() == counters.getInheritedRiskScore()) {
+                && last.getInheritedRiskScore() == counters.getInheritedRiskScore()
+                && last.getPolicyViolationsFail() == counters.policyViolationsFail
+                && last.getPolicyViolationsWarn() == counters.policyViolationsWarn
+                && last.getPolicyViolationsInfo() == counters.policyViolationsInfo
+                && last.getPolicyViolationsTotal() == counters.policyViolationsTotal
+                && last.getPolicyViolationsAudited() == counters.policyViolationsAudited
+                && last.getPolicyViolationsUnaudited() == counters.policyViolationsUnaudited
+                && last.getPolicyViolationsSecurityTotal() == counters.policyViolationsSecurityTotal
+                && last.getPolicyViolationsSecurityAudited() == counters.policyViolationsSecurityAudited
+                && last.getPolicyViolationsSecurityUnaudited() == counters.policyViolationsSecurityUnaudited
+                && last.getPolicyViolationsLicenseTotal() == counters.policyViolationsLicenseTotal
+                && last.getPolicyViolationsLicenseAudited() == counters.policyViolationsLicenseAudited
+                && last.getPolicyViolationsLicenseUnaudited() == counters.policyViolationsLicenseUnaudited
+                && last.getPolicyViolationsOperationalTotal() == counters.policyViolationsOperationalTotal
+                && last.getPolicyViolationsOperationalAudited() == counters.policyViolationsOperationalAudited
+                && last.getPolicyViolationsOperationalUnaudited() == counters.policyViolationsOperationalUnaudited) {
 
             LOGGER.debug("Metrics are unchanged for component: " + component.getUuid() + ". Updating last occurrence");
             // Matches... Update the last occurrence timestamp instead of creating a new record with the same info
@@ -398,6 +530,21 @@ public class MetricsUpdateTask implements Subscriber {
             componentMetrics.setFindingsAudited(counters.findingsAudited);
             componentMetrics.setFindingsUnaudited(counters.findingsUnaudited);
             componentMetrics.setInheritedRiskScore(counters.getInheritedRiskScore());
+            componentMetrics.setPolicyViolationsFail(counters.policyViolationsFail);
+            componentMetrics.setPolicyViolationsWarn(counters.policyViolationsWarn);
+            componentMetrics.setPolicyViolationsInfo(counters.policyViolationsInfo);
+            componentMetrics.setPolicyViolationsTotal(counters.policyViolationsTotal);
+            componentMetrics.setPolicyViolationsAudited(counters.policyViolationsAudited);
+            componentMetrics.setPolicyViolationsUnaudited(counters.policyViolationsUnaudited);
+            componentMetrics.setPolicyViolationsSecurityTotal(counters.policyViolationsSecurityTotal);
+            componentMetrics.setPolicyViolationsSecurityAudited(counters.policyViolationsSecurityAudited);
+            componentMetrics.setPolicyViolationsSecurityUnaudited(counters.policyViolationsSecurityUnaudited);
+            componentMetrics.setPolicyViolationsLicenseTotal(counters.policyViolationsLicenseTotal);
+            componentMetrics.setPolicyViolationsLicenseAudited(counters.policyViolationsLicenseAudited);
+            componentMetrics.setPolicyViolationsLicenseUnaudited(counters.policyViolationsLicenseUnaudited);
+            componentMetrics.setPolicyViolationsOperationalTotal(counters.policyViolationsOperationalTotal);
+            componentMetrics.setPolicyViolationsOperationalAudited(counters.policyViolationsOperationalAudited);
+            componentMetrics.setPolicyViolationsOperationalUnaudited(counters.policyViolationsOperationalUnaudited);
             componentMetrics.setFirstOccurrence(measuredAt);
             componentMetrics.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting metrics for component: " + component.getUuid());
@@ -501,7 +648,12 @@ public class MetricsUpdateTask implements Subscriber {
 
         private int critical, high, medium, low, unassigned;
         private int projects, vulnerableProjects, components, vulnerableComponents,
-                vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited;
+                vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited,
+                policyViolationsFail, policyViolationsWarn, policyViolationsInfo, policyViolationsTotal,
+                policyViolationsAudited, policyViolationsUnaudited, policyViolationsSecurityTotal,
+                policyViolationsSecurityAudited, policyViolationsSecurityUnaudited, policyViolationsLicenseTotal,
+                policyViolationsLicenseAudited, policyViolationsLicenseUnaudited, policyViolationsOperationalTotal,
+                policyViolationsOperationalAudited, policyViolationsOperationalUnaudited;
 
         /**
          * Increments critical, high, medium, low counters based on the specified severity.

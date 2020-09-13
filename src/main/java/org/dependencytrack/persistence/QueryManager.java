@@ -925,14 +925,47 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Intelligently adds dependencies for components that are not already a dependency
+     * of the specified project and removes the dependency relationship for components
+     * that are not in the list of specified components.
+     * @param component the project to bind components to
+     * @param policyViolations the complete list of existing dependent components
+     */
+    public synchronized void reconcilePolicyViolations(final Component component, final List<PolicyViolation> policyViolations) {
+        // Removes violations as dependencies to the project for all
+        // components not included in the list provided
+        List<PolicyViolation> markedForDeletion = new ArrayList<>();
+        for (final PolicyViolation existingViolation: getAllPolicyViolations(component)) {
+            boolean keep = false;
+            for (final PolicyViolation violation: policyViolations) {
+                if (violation.getType() == existingViolation.getType()
+                        && violation.getPolicyCondition().getId() == existingViolation.getPolicyCondition().getId()
+                        && violation.getComponent().getId() == existingViolation.getComponent().getId())
+                {
+                    keep = true;
+                    break;
+                }
+            }
+            if (!keep) {
+                markedForDeletion.add(existingViolation);
+            }
+        }
+        if (!markedForDeletion.isEmpty()) {
+            delete(markedForDeletion);
+        }
+    }
+
+    /**
      * Adds a policy violation
      * @param pv the policy violation to add
      */
-    public synchronized void addPolicyViolationIfNotExist(final PolicyViolation pv) {
+    public synchronized PolicyViolation addPolicyViolationIfNotExist(final PolicyViolation pv) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "type == :type && component == :component && policyCondition == :policyCondition");
-        if (singleResult(query.execute(pv.getType(), pv.getComponent(), pv.getPolicyCondition())) == null) {
-            persist(pv);
+        PolicyViolation result = singleResult(query.execute(pv.getType(), pv.getComponent(), pv.getPolicyCondition()));
+        if (result == null) {
+            result = persist(pv);
         }
+        return result;
     }
 
     /**
@@ -1185,6 +1218,16 @@ public class QueryManager extends AlpineQueryManager {
     private void deletePolicyViolations(Component component) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component == :component");
         query.deletePersistentAll(component);
+    }
+
+    /**
+     * Deleted all PolicyViolation associated for the specified PolicyCondition.
+     * @param policyCondition the PolicyCondition to delete PolicyViolation for
+     */
+    public void deletePolicyCondition(PolicyCondition policyCondition) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "policyCondition == :policyCondition");
+        query.deletePersistentAll(policyCondition);
+        delete(policyCondition);
     }
 
     /**

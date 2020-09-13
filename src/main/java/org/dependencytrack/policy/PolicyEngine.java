@@ -58,22 +58,24 @@ public class PolicyEngine {
         final List<Policy> policies = qm.getAllPolicies();
         for (final Component component: components) {
             for (final Policy policy : policies) {
+                final List<PolicyViolation> policyViolations = new ArrayList<>();
                 if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
                     LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
-                    final List<PolicyConditionViolation> violations = new ArrayList<>();
+                    final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
                     for (final PolicyEvaluator evaluator : evaluators) {
-                        evaluate(evaluator, policy, component, violations);
+                        evaluate(evaluator, policy, component, policyConditionViolations);
                     }
                     if (Policy.Operator.ANY == policy.getOperator()) {
-                        if (violations.size() > 0) {
-                            createPolicyViolations(qm, violations);
+                        if (policyConditionViolations.size() > 0) {
+                            policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                         }
                     } else if (Policy.Operator.ALL == policy.getOperator()) {
-                        if (violations.size() == policy.getPolicyConditions().size()) {
-                            createPolicyViolations(qm, violations);
+                        if (policyConditionViolations.size() == policy.getPolicyConditions().size()) {
+                            policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                         }
                     }
                 }
+                qm.reconcilePolicyViolations(component, policyViolations);
             }
         }
         LOGGER.info("Policy analysis complete");
@@ -91,16 +93,18 @@ public class PolicyEngine {
         optional.ifPresent(violations::add);
     }
 
-    private void createPolicyViolations(final QueryManager qm, final List<PolicyConditionViolation> pcvList) {
+    private List<PolicyViolation> createPolicyViolations(final QueryManager qm, final List<PolicyConditionViolation> pcvList) {
+        final List<PolicyViolation> policyViolations = new ArrayList<>();
         for (PolicyConditionViolation pcv: pcvList) {
             final PolicyViolation pv = new PolicyViolation();
             pv.setComponent(pcv.getComponent());
             pv.setPolicyCondition(pcv.getPolicyCondition());
             pv.setType(determineViolationType(pcv.getPolicyCondition().getSubject()));
             pv.setTimestamp(new Date());
-            qm.addPolicyViolationIfNotExist(pv);
+            policyViolations.add(qm.addPolicyViolationIfNotExist(pv));
             // TODO: Create notifications (NotificationUtil) if the policy did not previously exist.
         }
+        return policyViolations;
     }
 
     private PolicyViolation.Type determineViolationType(final PolicyCondition.Subject subject) {

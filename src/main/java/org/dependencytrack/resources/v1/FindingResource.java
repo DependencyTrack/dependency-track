@@ -69,7 +69,7 @@ public class FindingResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 final long totalCount = qm.getVulnerabilityCount(project, true);
-                final List<Finding> findings = qm.getFindings(project);
+                final List<Finding> findings = qm.getFindings(project, true);
                 return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();

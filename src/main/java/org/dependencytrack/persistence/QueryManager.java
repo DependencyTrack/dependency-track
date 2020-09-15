@@ -1889,6 +1889,17 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project) {
+        return getFindings(project, false);
+    }
+
+    /**
+     * Returns a List of Finding objects for the specified project.
+     * @param project the project to retrieve findings for
+     * @param includeSuppressed determines if suppressed vulnerabilities should be included or not
+     * @return a List of Finding objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Finding> getFindings(Project project, boolean includeSuppressed) {
         final Query<Object[]> query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, Finding.QUERY);
         query.setParameters(project.getId());
         final List<Object[]> list = query.executeList();
@@ -1898,7 +1909,7 @@ public class QueryManager extends AlpineQueryManager {
             final Component component = getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
             final Analysis analysis = getAnalysis(component, vulnerability);
-            if (analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
+            if (includeSuppressed || analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 finding.getVulnerability().put("description", vulnerability.getDescription());
                 finding.getVulnerability().put("recommendation", vulnerability.getRecommendation());

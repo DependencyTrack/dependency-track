@@ -22,6 +22,7 @@ import alpine.auth.PermissionRequired;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
@@ -35,6 +36,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -64,12 +66,14 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
-    public Response getFindingsByProject(@PathParam("uuid") String uuid) {
+    public Response getFindingsByProject(@PathParam("uuid") String uuid,
+                                         @ApiParam(value = "Optionally includes suppressed findings")
+                                         @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final long totalCount = qm.getVulnerabilityCount(project, true);
-                final List<Finding> findings = qm.getFindings(project, true);
+                final long totalCount = qm.getVulnerabilityCount(project, suppressed);
+                final List<Finding> findings = qm.getFindings(project, suppressed);
                 return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();

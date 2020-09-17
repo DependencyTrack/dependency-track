@@ -429,6 +429,8 @@ public class MetricsUpdateTask implements Subscriber {
         counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
         for (final PolicyViolation violation: qm.getAllPolicyViolations(component)) {
+            counters.policyViolationsTotal++;
+
             // Assign violation states
             if (Policy.ViolationState.FAIL == violation.getPolicyCondition().getPolicy().getViolationState()) {
                 counters.policyViolationsFail++;

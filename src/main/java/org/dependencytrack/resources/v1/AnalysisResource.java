@@ -106,23 +106,6 @@ public class AnalysisResource extends AlpineResource {
         }
     }
 
-    @Path("/global")
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Records an analysis decision",
-            response = Analysis.class
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The component or vulnerability could not be found")
-    })
-    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.VULNERABILITY_ANALYSIS})
-    public Response updateGlobalAnalysis(AnalysisRequest request) {
-        return performAnalysis(request, true);
-    }
-
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -136,10 +119,6 @@ public class AnalysisResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response updateAnalysis(AnalysisRequest request) {
-        return performAnalysis(request, false);
-    }
-
-    private Response performAnalysis(AnalysisRequest request, boolean global) {
         final Validator validator = getValidator();
         failOnValidationError(
                 validator.validateProperty(request, "project"),
@@ -149,11 +128,8 @@ public class AnalysisResource extends AlpineResource {
                 validator.validateProperty(request, "comment")
         );
         try (QueryManager qm = new QueryManager()) {
-            Project project = null;
-            if (!global) {
-                project = qm.getObjectByUuid(Project.class, request.getProject());
-            }
-            if (!global && project == null) {
+            final Project project = qm.getObjectByUuid(Project.class, request.getProject());
+            if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
             final Component component = qm.getObjectByUuid(Component.class, request.getComponent());

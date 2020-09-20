@@ -996,6 +996,76 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of all Policy objects for a specific component.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of all Policy objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<PolicyViolation> getAllPolicyViolations(final Project project) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project.id == :pid");
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, component.name, component.version");
+        }
+        return (List<PolicyViolation>)query.execute(project.getId());
+    }
+
+    /**
+     * Returns a List of all Policy violations for a specific project.
+     * @param project the project to retrieve violations for
+     * @return a List of all Policy violations
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getPolicyViolations(final Project project) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project.id == :pid");
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, component.name, component.version");
+        }
+        final PaginatedResult result = execute(query, project.getId());
+        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+            violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
+            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+        }
+        return result;
+    }
+
+    /**
+     * Returns a List of all Policy violations for a specific component.
+     * @param component the component to retrieve violations for
+     * @return a List of all Policy violations
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getPolicyViolations(final Component component) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component.id == :cid");
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc");
+        }
+        final PaginatedResult result = execute(query, component.getId());
+        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+            violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
+            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+        }
+        return result;
+    }
+
+    /**
+     * Returns a List of all Policy violations for the entire portfolio.
+     * @return a List of all Policy violations
+     */
+    @SuppressWarnings("unchecked")
+    public PaginatedResult getPolicyViolations() {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
+        }
+        final PaginatedResult result = execute(query);
+        for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
+            violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
+            violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+        }
+        return result;
+    }
+
+    /**
      * Returns a List of all LicenseGroup objects.
      * @return a List of all LicenseGroup objects
      */

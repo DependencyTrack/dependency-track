@@ -70,7 +70,7 @@ public class ViolationAnalysis implements Serializable {
     @NotNull
     private ViolationAnalysisState analysisState;
 
-    @Persistent(mappedBy = "analysis", defaultFetchGroup = "true")
+    @Persistent(mappedBy = "violationAnalysis", defaultFetchGroup = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
     private List<ViolationAnalysisComment> analysisComments;
 

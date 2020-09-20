@@ -29,7 +29,8 @@ public enum Permissions {
     BOM_UPLOAD("Allows the ability to upload CycloneDX and SPDX Bill-of-Material (BOM) documents"),
     VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, dependencies, and licenses"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
-    VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities affecting projects in the portfolio"),
+    VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities"),
+    POLICY_VIOLATION_ANALYSIS("Provides the ability to make analysis decisions on policy violations"),
     ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys"),
     SYSTEM_CONFIGURATION("Allows the configuration of the system including notifications, repositories, and email settings"),
     PROJECT_CREATION_UPLOAD("Provides the ability to optionally create project (if non-existent) on BOM or scan upload"),
@@ -50,6 +51,7 @@ public enum Permissions {
         public static final String VIEW_PORTFOLIO = "VIEW_PORTFOLIO";
         public static final String PORTFOLIO_MANAGEMENT = "PORTFOLIO_MANAGEMENT";
         public static final String VULNERABILITY_ANALYSIS = "VULNERABILITY_ANALYSIS";
+        public static final String POLICY_VIOLATION_ANALYSIS = "POLICY_VIOLATION_ANALYSIS";
         public static final String ACCESS_MANAGEMENT = "ACCESS_MANAGEMENT";
         public static final String SYSTEM_CONFIGURATION = "SYSTEM_CONFIGURATION";
         public static final String PROJECT_CREATION_UPLOAD = "PROJECT_CREATION_UPLOAD";

@@ -45,6 +45,11 @@ public class NotificationConstants {
         public static final String ANALYSIS_DECISION_NOT_SET = "Analysis Decision: Marking Finding as NOT SET";
         public static final String ANALYSIS_DECISION_SUPPRESSED = "Analysis Decision: Finding Suppressed";
         public static final String ANALYSIS_DECISION_UNSUPPRESSED = "Analysis Decision: Finding UnSuppressed";
+        public static final String VIOLATIONANALYSIS_DECISION_ACCEPTED = "Violation Analysis Decision: Risk Accepted";
+        public static final String VIOLATIONANALYSIS_DECISION_REJECTED = "Violation Analysis Decision: Risk Rejected";
+        public static final String VIOLATIONANALYSIS_DECISION_NOT_SET = "Violation Analysis Decision: Marking Finding as NOT SET";
+        public static final String VIOLATIONANALYSIS_DECISION_SUPPRESSED = "Violation Analysis Decision: Violation Suppressed";
+        public static final String VIOLATIONANALYSIS_DECISION_UNSUPPRESSED = "Violation Analysis Decision: Violation UnSuppressed";
         public static final String BOM_CONSUMED = "Bill-of-Materials Consumed";
         public static final String BOM_PROCESSED = "Bill-of-Materials Processed";
     }

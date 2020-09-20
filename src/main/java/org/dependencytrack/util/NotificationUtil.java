@@ -20,19 +20,11 @@ package org.dependencytrack.util;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.vo.AnalysisDecisionChange;
-import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
-import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.*;
 import org.dependencytrack.persistence.QueryManager;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -147,6 +139,45 @@ public final class NotificationUtil {
                     .content(generateNotificationContent(analysis))
                     .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
                             analysis.getComponent(), affectedProjects, analysis))
+            );
+        }
+    }
+
+    public static void analyzeNotificationCriteria(final QueryManager qm, ViolationAnalysis violationAnalysis,
+                                                   final boolean analysisStateChange, final boolean suppressionChange) {
+        if (analysisStateChange || suppressionChange) {
+            final NotificationGroup notificationGroup;
+            notificationGroup = NotificationGroup.PROJECT_AUDIT_CHANGE;
+            String title = null;
+            if (analysisStateChange) {
+                switch (violationAnalysis.getAnalysisState()) {
+                    case ACCEPTED:
+                        title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_ACCEPTED;
+                        break;
+                    case REJECTED:
+                        title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_REJECTED;
+                        break;
+                    case NOT_SET:
+                        title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_NOT_SET;
+                        break;
+                }
+            } else if (suppressionChange) {
+                if (violationAnalysis.isSuppressed()) {
+                    title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_SUPPRESSED;
+                } else {
+                    title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_UNSUPPRESSED;
+                }
+            }
+
+            violationAnalysis = qm.detach(ViolationAnalysis.class, violationAnalysis.getId());
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(notificationGroup)
+                    .title(title)
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(violationAnalysis))
+                    .subject(new ViolationAnalysisDecisionChange(violationAnalysis.getPolicyViolation(),
+                            violationAnalysis.getComponent(), violationAnalysis))
             );
         }
     }
@@ -304,6 +335,17 @@ public final class NotificationUtil {
         return content;
     }
 
+    // TODO
+    private static String generateNotificationContent(final PolicyViolation policyViolation) {
+        final String content = null;
+        if (policyViolation.getPolicyCondition().getSubject() != null) {
+            //content = policyViolation.getText();
+        } else {
+            //content = (vulnerability.getTitle() != null) ? vulnerability.getVulnId() + ": " +vulnerability.getTitle() : vulnerability.getVulnId();
+        }
+        return content;
+    }
+
     private static String generateNotificationContent(final Component component, final List<Vulnerability> vulnerabilities) {
         final String content;
         if (vulnerabilities.size() == 1) {
@@ -322,5 +364,9 @@ public final class NotificationUtil {
             content = "An analysis decision was made to a finding on a component affecting all projects that have a dependency on the component";
         }
         return content;
+    }
+
+    private static String generateNotificationContent(final ViolationAnalysis violationAnalysis) {
+        return "An violation analysis decision was made to a policy violation affecting a project";
     }
 }

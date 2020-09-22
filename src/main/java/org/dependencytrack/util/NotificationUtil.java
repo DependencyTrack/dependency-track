@@ -152,7 +152,7 @@ public final class NotificationUtil {
             if (analysisStateChange) {
                 switch (violationAnalysis.getAnalysisState()) {
                     case APPROVED:
-                        title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_ACCEPTED;
+                        title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_APPROVED;
                         break;
                     case REJECTED:
                         title = NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_REJECTED;

@@ -25,7 +25,7 @@ package org.dependencytrack.model;
  * @since 4.0.0
  */
 public enum ViolationAnalysisState {
-    ACCEPTED,
+    APPROVED,
     REJECTED,
     NOT_SET
 }

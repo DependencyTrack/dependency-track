@@ -41,7 +41,6 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
 import org.dependencytrack.util.NotificationUtil;
-
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -58,7 +57,7 @@ import javax.ws.rs.core.Response;
  * @author Steve Springett
  * @since 4.0.0
  */
-@Path("/v1/analysis/violation")
+@Path("/v1/violation/analysis")
 @Api(value = "violationanalysis", authorizations = @Authorization(value = "X-Api-Key"))
 public class ViolationAnalysisResource extends AlpineResource {
 
@@ -76,7 +75,7 @@ public class ViolationAnalysisResource extends AlpineResource {
     public Response retrieveAnalysis(@ApiParam(value = "The UUID of the component", required = true)
                                      @QueryParam("component") String componentUuid,
                                      @ApiParam(value = "The UUID of the policy violation", required = true)
-                                     @QueryParam("violation") String violationUuid) {
+                                     @QueryParam("policyViolation") String violationUuid) {
         failOnValidationError(
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, violationUuid, "Policy violation is not a valid UUID")

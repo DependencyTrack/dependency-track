@@ -57,8 +57,8 @@ public class PolicyEngine {
         LOGGER.info("Evaluating " + components.size() + " component(s) against applicable policies");
         final List<Policy> policies = qm.getAllPolicies();
         for (final Component component: components) {
+            final List<PolicyViolation> policyViolations = new ArrayList<>();
             for (final Policy policy : policies) {
-                final List<PolicyViolation> policyViolations = new ArrayList<>();
                 if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
                     LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
                     final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
@@ -75,8 +75,8 @@ public class PolicyEngine {
                         }
                     }
                 }
-                qm.reconcilePolicyViolations(component, policyViolations);
             }
+            qm.reconcilePolicyViolations(component, policyViolations);
         }
         LOGGER.info("Policy analysis complete");
     }

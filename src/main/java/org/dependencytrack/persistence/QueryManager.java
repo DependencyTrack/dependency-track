@@ -984,6 +984,20 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a List of all Policy objects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of all Policy objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<PolicyViolation> getAllPolicyViolations(final PolicyCondition policyCondition) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "policyCondition.id == :pid");
+        if (orderBy == null) {
+            query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
+        }
+        return (List<PolicyViolation>)query.execute(policyCondition.getId());
+    }
+
+    /**
      * Returns a List of all Policy objects for a specific component.
      * This method if designed NOT to provide paginated results.
      * @return a List of all Policy objects
@@ -1139,6 +1153,15 @@ public class QueryManager extends AlpineQueryManager {
     private void deleteViolationAnalysisTrail(Project project) {
         final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class, "project == :project");
         query.deletePersistentAll(project);
+    }
+
+    /**
+     * Deleted all violation analysis and comments associated for the specified Policy Condition.
+     * @param policyViolation policy violation to delete violation analysis for
+     */
+    private void deleteViolationAnalysisTrail(PolicyViolation policyViolation) {
+        final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class, "policyViolation.id == :pid");
+        query.deletePersistentAll(policyViolation.getId());
     }
 
     /**
@@ -1371,8 +1394,11 @@ public class QueryManager extends AlpineQueryManager {
      * @param policyCondition the PolicyCondition to delete PolicyViolation for
      */
     public void deletePolicyCondition(PolicyCondition policyCondition) {
-        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "policyCondition == :policyCondition");
-        query.deletePersistentAll(policyCondition);
+        final List<PolicyViolation> violations = getAllPolicyViolations(policyCondition);
+        for (PolicyViolation violation: violations) {
+            deleteViolationAnalysisTrail(violation);
+        }
+        delete(violations);
         delete(policyCondition);
     }
 

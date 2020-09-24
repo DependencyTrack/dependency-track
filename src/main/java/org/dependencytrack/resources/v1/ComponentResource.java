@@ -164,6 +164,7 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
                 validator.validateProperty(jsonComponent, "cpe"),
+                validator.validateProperty(jsonComponent, "swidTagId"),
                 validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
@@ -198,6 +199,7 @@ public class ComponentResource extends AlpineResource {
             component.setPurl(jsonComponent.getPurl());
             component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
             component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
+            component.setSwidTagId(StringUtils.trimToNull(jsonComponent.getSwidTagId()));
             component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
             component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
             component.setSha1(StringUtils.trimToNull(jsonComponent.getSha1()));
@@ -246,6 +248,7 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
                 validator.validateProperty(jsonComponent, "cpe"),
+                validator.validateProperty(jsonComponent, "swidTagId"),
                 validator.validateProperty(jsonComponent, "copyright"),
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
@@ -272,6 +275,7 @@ public class ComponentResource extends AlpineResource {
                 component.setPurl(jsonComponent.getPurl());
                 component.setInternal(InternalComponentIdentificationUtil.isInternalComponent(component, qm));
                 component.setCpe(StringUtils.trimToNull(jsonComponent.getCpe()));
+                component.setSwidTagId(StringUtils.trimToNull(jsonComponent.getSwidTagId()));
                 component.setCopyright(StringUtils.trimToNull(jsonComponent.getCopyright()));
                 component.setMd5(StringUtils.trimToNull(jsonComponent.getMd5()));
                 component.setSha1(StringUtils.trimToNull(jsonComponent.getSha1()));

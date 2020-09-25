@@ -62,7 +62,7 @@ key length is lower than the actual value. If UTF-8 support is required, do not 
 alpine.database.mode=external
 alpine.database.url=jdbc:postgresql://localhost:5432/dtrack
 alpine.database.driver=org.postgresql.Driver
-alpine.database.driver.path=~/path/to/postgresql-42.2.1.jar
+alpine.database.driver.path=~/path/to/postgresql-42.2.11.jar
 alpine.database.username=dtrack
 alpine.database.password=password
 ```

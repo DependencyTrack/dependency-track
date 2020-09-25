@@ -19,11 +19,14 @@
 package org.dependencytrack.parser.spdx.rdf;
 
 import alpine.logging.Logger;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.exception.ParseException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.spdx.rdfparser.InvalidSPDXAnalysisException;
 import org.spdx.rdfparser.SPDXDocumentFactory;
@@ -34,6 +37,7 @@ import org.spdx.rdfparser.license.ExtractedLicenseInfo;
 import org.spdx.rdfparser.license.SpdxListedLicense;
 import org.spdx.rdfparser.model.Checksum;
 import org.spdx.rdfparser.model.DoapProject;
+import org.spdx.rdfparser.model.ExternalRef;
 import org.spdx.rdfparser.model.SpdxDocument;
 import org.spdx.rdfparser.model.SpdxFile;
 import org.spdx.rdfparser.model.SpdxPackage;
@@ -81,14 +85,14 @@ public class SpdxDocumentParser {
         return false;
     }
 
-    public List<Component> parse(final byte[] spdx) throws ParseException {
+    public List<Component> parse(final byte[] spdx, final Project project) throws ParseException {
         specVersion = null;
         final String spdxString = new String(spdx, StandardCharsets.UTF_8);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(spdx)) {
             if (spdxString.contains("<rdf:RDF") && spdxString.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns")) {
-                return parse(inputStream, DocumentType.RDF);
+                return parse(inputStream, DocumentType.RDF, project);
             } else if (spdxString.contains("SPDXVersion:")) {
-                return parse(inputStream, DocumentType.TAG);
+                return parse(inputStream, DocumentType.TAG, project);
             }
         } catch (IOException e) {
             LOGGER.error("Error parsing SPDX document", e);
@@ -102,7 +106,7 @@ public class SpdxDocumentParser {
     use of the deprecated methods is required.
     */
     @SuppressWarnings("deprecation")
-    public List<Component> parse(final InputStream inputStream, final DocumentType type) throws ParseException {
+    public List<Component> parse(final InputStream inputStream, final DocumentType type, final Project project) throws ParseException {
         specVersion = null;
         /*
          * Attempt to read in the document.
@@ -161,6 +165,7 @@ public class SpdxDocumentParser {
 
             for (final SpdxPackage spdxPackage: allPackages) {
                 final Component component = new Component();
+                component.setProject(project);
                 component.setName(StringUtils.trimToNull(spdxPackage.getName()));
                 component.setDescription(StringUtils.trimToNull(spdxPackage.getDescription()));
                 component.setGroup(StringUtils.trimToNull(spdxPackage.getOriginator()));
@@ -180,11 +185,25 @@ public class SpdxDocumentParser {
                 } else if (concludedLicense != null) {
                     processLicenses(component, concludedLicense);
                 }
+                if (spdxPackage.getExternalRefs() != null) {
+                    for (final ExternalRef ref : spdxPackage.getExternalRefs()) {
+                        if (ref.getReferenceType().toString().equals("cpe23Type") || ref.getReferenceType().toString().equals("cpe22Type")) {
+                            component.setCpe(ref.getReferenceLocator());
+                        } else if (ref.getReferenceType().toString().equals("purl")) {
+                            try {
+                                component.setPurl(new PackageURL(ref.getReferenceLocator()));
+                            } catch (MalformedPackageURLException e) {
+                                LOGGER.warn("An error occurred parsing the specified Package URL: " + ref.getReferenceLocator(), e);
+                            }
+                        }
+                    }
+                }
                 components.add(component);
             }
 
             for (final SpdxFile spdxFile: allFiles) {
                 final Component component = new Component();
+                component.setProject(project);
                 component.setFilename(spdxFile.getName());
                 component.setName(spdxFile.getName());
                 // Populate checksums
@@ -194,8 +213,8 @@ public class SpdxDocumentParser {
                 final AnyLicenseInfo concludedLicense = spdxFile.getLicenseConcluded();
                 processLicenses(component, concludedLicense);
                 // artifactOf is deprecated in SPDX 2.1
-                for (final DoapProject project: spdxFile.getArtifactOf()) {
-                    component.setName(project.getName());
+                for (final DoapProject doapProject: spdxFile.getArtifactOf()) {
+                    component.setName(doapProject.getName());
                 }
                 components.add(component);
             }
@@ -214,6 +233,10 @@ public class SpdxDocumentParser {
                 component.setSha1(StringUtils.trimToNull(checksum.getValue()));
             } else if (alg == Checksum.ChecksumAlgorithm.checksumAlgorithm_sha256) {
                 component.setSha256(StringUtils.trimToNull(checksum.getValue()));
+            } else if (alg == Checksum.ChecksumAlgorithm.checksumAlgorithm_sha384) {
+                component.setSha384(StringUtils.trimToNull(checksum.getValue()));
+            } else if (alg == Checksum.ChecksumAlgorithm.checksumAlgorithm_sha512) {
+                component.setSha512(StringUtils.trimToNull(checksum.getValue()));
             }
         }
     }

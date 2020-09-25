@@ -90,7 +90,7 @@
         <lib.lucene.version>8.5.1</lib.lucene.version>
         <lib.packageurl.version>1.1.1</lib.packageurl.version>
         <lib.pebble.version>3.1.4</lib.pebble.version>
-        <lib.spdx-tools.version>2.1.20</lib.spdx-tools.version>
+        <lib.spdx-tools.version>2.2.3</lib.spdx-tools.version>
         <lib.unirest.version>2.4.00</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- Maven Plugin Properties -->

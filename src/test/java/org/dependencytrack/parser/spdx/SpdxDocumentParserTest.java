@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.spdx;
 
 import org.apache.commons.io.IOUtils;
+import org.dependencytrack.model.Project;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,8 +27,6 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
-import org.dependencytrack.persistence.QueryManager;
-
 import java.util.List;
 
 public class SpdxDocumentParserTest extends PersistenceCapableTest {
@@ -42,7 +41,8 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
     public void testSpdxRdf21() throws Exception {
         final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
         final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXRdfExample-v2.1.rdf"));
-        final List<Component> components = parser.parse(bom);
+        final Project project = new Project();
+        final List<Component> components = parser.parse(bom, project);
         Assert.assertEquals(6, components.size());
         for (int i = 0; i < components.size(); i++) {
             final Component component = components.get(i);
@@ -67,7 +67,8 @@ public class SpdxDocumentParserTest extends PersistenceCapableTest {
     public void testSpdxTag21() throws Exception {
         final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
         final byte[] bom = IOUtils.toByteArray(this.getClass().getResourceAsStream("/SPDXTagExample-v2.1.spdx"));
-        final List<Component> components = parser.parse(bom);
+        final Project project = new Project();
+        final List<Component> components = parser.parse(bom, project);
         Assert.assertEquals(6, components.size());
         for (int i = 0; i < components.size(); i++) {
             final Component component = components.get(i);

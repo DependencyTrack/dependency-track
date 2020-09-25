@@ -93,8 +93,8 @@ public class BomUploadProcessingTask implements Subscriber {
                         LOGGER.info("Processing SPDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.SPDX;
                         final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
-                        bomSpecVersion = parser.getSpecVersion();
                         components = parser.parse(bomBytes, project);
+                        bomSpecVersion = parser.getSpecVersion(); // Must come after the parsing is performed
                     } else {
                         LOGGER.warn("A SPDX BOM was uploaded but accepting SPDX BOMs is disabled. Aborting");
                         return;

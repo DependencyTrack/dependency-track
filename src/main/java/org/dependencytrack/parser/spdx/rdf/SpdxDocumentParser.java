@@ -118,7 +118,7 @@ public class SpdxDocumentParser {
                 final List<String> warnings = new ArrayList<>();
                 final SpdxDocumentContainer docContainer = TagToRDF.convertTagFileToRdf(inputStream, "RDF/XML", warnings);
                 doc = docContainer.getSpdxDocument();
-                specVersion = doc.getSpecVersion();
+                specVersion = doc.getSpecVersion().replace("SPDX-", "");
                 for (final String warning: warnings) {
                     LOGGER.warn(warning);
                 }
@@ -129,7 +129,7 @@ public class SpdxDocumentParser {
         } else {
             try {
                 doc = SPDXDocumentFactory.createSpdxDocument(inputStream, "http://spdx.org", "RDF/XML");
-                specVersion = doc.getSpecVersion();
+                specVersion = doc.getSpecVersion().replace("SPDX-", "");
             } catch (InvalidSPDXAnalysisException e) {
                 LOGGER.warn("Unable to read SPDX RDF Document", e);
                 throw new ParseException("Unable to read SPDX RDF Document", e);

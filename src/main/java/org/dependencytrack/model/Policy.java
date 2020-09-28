@@ -117,13 +117,6 @@ public class Policy implements Serializable {
     private List<Project> projects;
 
     /**
-     * Specified if the policy is applicable to all projects in the portfolio (global) or not.
-     */
-    @Persistent
-    @Column(name = "GLOBAL", allowsNull = "false")
-    private boolean global;
-
-    /**
      * The unique identifier of the object.
      */
     @Persistent(customValueStrategy = "uuid")
@@ -184,25 +177,11 @@ public class Policy implements Serializable {
     }
 
     public void setProjects(List<Project> projects) {
-        if (projects != null && projects.size() > 0) {
-            this.global = false;
-        }
         this.projects = projects;
     }
 
     public boolean isGlobal() {
-        return global;
-    }
-
-    public void setGlobal(boolean global) {
-        if (global) {
-            this.projects = null;
-        }
-        this.global = global;
-    }
-
-    public boolean isActive() {
-        return this.global || (this.projects != null && this.projects.size() > 0);
+        return (projects == null || projects.size() == 0);
     }
 
     public UUID getUuid() {

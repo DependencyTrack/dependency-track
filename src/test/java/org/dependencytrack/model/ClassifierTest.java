@@ -28,7 +28,10 @@ public class ClassifierTest {
         Assert.assertEquals("APPLICATION", Classifier.APPLICATION.name());
         Assert.assertEquals("FRAMEWORK", Classifier.FRAMEWORK.name());
         Assert.assertEquals("LIBRARY", Classifier.LIBRARY.name());
+        Assert.assertEquals("CONTAINER", Classifier.CONTAINER.name());
         Assert.assertEquals("OPERATING_SYSTEM", Classifier.OPERATING_SYSTEM.name());
         Assert.assertEquals("DEVICE", Classifier.DEVICE.name());
+        Assert.assertEquals("FIRMWARE", Classifier.FIRMWARE.name());
+        Assert.assertEquals("FILE", Classifier.FILE.name());
     }
-} 
+}

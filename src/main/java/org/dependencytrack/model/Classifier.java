@@ -28,7 +28,9 @@ public enum Classifier {
     APPLICATION,
     FRAMEWORK,
     LIBRARY,
+    CONTAINER,
     OPERATING_SYSTEM,
     DEVICE,
+    FIRMWARE,
     FILE
 }

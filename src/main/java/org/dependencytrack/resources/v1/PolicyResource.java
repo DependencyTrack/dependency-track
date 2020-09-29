@@ -31,6 +31,7 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -43,6 +44,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * JAX-RS resources for processing policies.
@@ -185,6 +187,82 @@ public class PolicyResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the policy could not be found.").build();
             }
+        }
+    }
+
+    @POST
+    @Path("/{policyUuid}/project/{projectUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Adds a project to a policy",
+            response = Policy.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The policy already has the specified project assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The policy or project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
+    public Response addProjectToPolicy(
+            @ApiParam(value = "The UUID of the policy to add a project to", required = true)
+            @PathParam("policyUuid") String policyUuid,
+            @ApiParam(value = "The UUID of the project to add to the rule", required = true)
+            @PathParam("projectUuid") String projectUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
+            if (policy == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
+            }
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            final List<Project> projects = policy.getProjects();
+            if (projects != null && !projects.contains(project)) {
+                policy.getProjects().add(project);
+                qm.persist(policy);
+                return Response.ok(policy).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{policyUuid}/project/{projectUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Removes a project from a policy",
+            response = Policy.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The policy does not have the specified project assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The policy or project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
+    public Response removeProjectFromPolicy(
+            @ApiParam(value = "The UUID of the policy to remove the project from", required = true)
+            @PathParam("policyUuid") String policyUuid,
+            @ApiParam(value = "The UUID of the project to remove from the policy", required = true)
+            @PathParam("projectUuid") String projectUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
+            if (policy == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
+            }
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            if (project == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            final List<Project> projects = policy.getProjects();
+            if (projects != null && projects.contains(project)) {
+                policy.getProjects().remove(project);
+                qm.persist(policy);
+                return Response.ok(policy).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
         }
     }
 }

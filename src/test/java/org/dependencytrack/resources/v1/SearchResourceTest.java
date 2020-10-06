@@ -41,7 +41,51 @@ public class SearchResourceTest extends ResourceTest {
 
     @Test
     public void searchTest() {
-        Response response = target(V1_SEARCH + "/tomcat").request()
+        Response response = target(V1_SEARCH).queryParam("query", "tomcat").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+    }
+
+    @Test
+    public void searchProjectTest() {
+        Response response = target(V1_SEARCH + "/project").queryParam("query", "acme").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+    }
+
+    @Test
+    public void searchComponentTest() {
+        Response response = target(V1_SEARCH + "/component").queryParam("query", "bootstrap").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+    }
+
+    @Test
+    public void searchLicenseTest() {
+        Response response = target(V1_SEARCH + "/license").queryParam("query", "Apache").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+    }
+
+    @Test
+    public void searchVulnerabilityTest() {
+        Response response = target(V1_SEARCH + "/vulnerability").queryParam("query", "CVE-2020").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assert.assertEquals(200, response.getStatus(), 0);

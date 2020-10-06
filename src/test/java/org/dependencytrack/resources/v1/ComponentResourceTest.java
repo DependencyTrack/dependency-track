@@ -114,18 +114,6 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByInvalid2HashTest() {
-        Response response = target(V1_COMPONENT + "/hash/777")
-                .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(1, json.size());
-        Assert.assertEquals("Invalid MD5, SHA-1, SHA-256, SHA-512, SHA3-256, or SHA3-512 hash.", json.getJsonObject(0).getString("message"));
-    }
-
-    @Test
     public void createComponentTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();

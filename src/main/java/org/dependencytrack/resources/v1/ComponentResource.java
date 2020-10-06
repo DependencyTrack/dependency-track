@@ -22,8 +22,8 @@ import alpine.auth.PermissionRequired;
 import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
-import alpine.validation.RegexSequence;
-import alpine.validation.ValidationTask;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -37,6 +37,7 @@ import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
@@ -50,6 +51,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -114,6 +116,45 @@ public class ComponentResource extends AlpineResource {
     }
 
     @GET
+    @Path("/identity")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
+            responseContainer = "List",
+            response = Component.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getComponentByIdentity(@ApiParam(value = "The group of the component")
+                                           @QueryParam("group") String group,
+                                           @ApiParam(value = "The name of the component")
+                                           @QueryParam("name") String name,
+                                           @ApiParam(value = "The version of the vulnerability")
+                                           @QueryParam("version") String version,
+                                           @ApiParam(value = "The purl of the component")
+                                           @QueryParam("purl") String purl,
+                                           @ApiParam(value = "The cpe of the component")
+                                           @QueryParam("cpe") String cpe,
+                                           @ApiParam(value = "The swidTagId of the component")
+                                           @QueryParam("swidTagId") String swidTagId) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            PackageURL packageURL = null;
+            if (purl != null) {
+                try {
+                    packageURL = new PackageURL(purl);
+                } catch (MalformedPackageURLException e) {
+                    // throw it away
+                }
+            }
+            final ComponentIdentity identity = new ComponentIdentity(packageURL, cpe, swidTagId, group, name, version);
+            final PaginatedResult result = qm.getComponents(identity);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @GET
     @Path("/hash/{hash}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -126,12 +167,9 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByHash(
-            @ApiParam(value = "The MD5, SHA-1, SHA-256, SHA-512, SHA3-256, or SHA3-512 hash of the component to retrieve", required = true)
+            @ApiParam(value = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, or BLAKE3 hash of the component to retrieve", required = true)
             @PathParam("hash") String hash) {
-        try (QueryManager qm = new QueryManager()) {
-            failOnValidationError(
-                    new ValidationTask(RegexSequence.Pattern.HASH_MD5_SHA1_SHA256_SHA512, hash, "Invalid MD5, SHA-1, SHA-256, SHA-512, SHA3-256, or SHA3-512 hash.")
-            );
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponentByHash(hash);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }

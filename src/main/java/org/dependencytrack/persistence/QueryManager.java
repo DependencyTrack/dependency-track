@@ -39,14 +39,7 @@ import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.json.JsonObject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -605,7 +598,7 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Returns Components by their hash. Supports MD5, SHA-1, SHA-256, SHA-512, SHA3-256, and SHA3-512 hashes.
+     * Returns Components by their hash.
      * @param hash the hash of the component to retrieve
      * @return a list of components
      */
@@ -619,13 +612,68 @@ public class QueryManager extends AlpineQueryManager {
         } else if (hash.length() == 40) {
             query = pm.newQuery(Component.class, "sha1 == :hash");
         } else if (hash.length() == 64) {
-            query = pm.newQuery(Component.class, "sha256 == :hash || sha3_256 == :hash");
+            query = pm.newQuery(Component.class, "sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash");
+        } else if (hash.length() == 96) {
+            query = pm.newQuery(Component.class, "sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash");
         } else if (hash.length() == 128) {
-            query = pm.newQuery(Component.class, "sha512 == :hash || sha3_512 == :hash");
+            query = pm.newQuery(Component.class, "sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash");
         } else {
-            return null;
+            query = pm.newQuery(Component.class, "blake3 == :hash");
         }
         return execute(query, hash);
+    }
+
+    /**
+     * Returns Components by their identity.
+     * @param identity the ComponentIdentity to query against
+     * @return a list of components
+     */
+    public PaginatedResult getComponents(ComponentIdentity identity) {
+        if (identity == null) {
+            return null;
+        }
+        final Query<Component> query;
+        if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
+            final Map<String, String> map = new HashMap<>();
+            String filter = "";
+            if (identity.getGroup() != null) {
+                filter += " group.toLowerCase().matches(:group) ";
+                final String filterString = ".*" + identity.getGroup().toLowerCase() + ".*";
+                map.put("group", filterString);
+            }
+            if (identity.getName() != null) {
+                if (identity.getGroup() != null) {
+                    filter += " && ";
+                }
+                filter += " name.toLowerCase().matches(:name) ";
+                final String filterString = ".*" + identity.getName().toLowerCase() + ".*";
+                map.put("name", filterString);
+            }
+            if (identity.getVersion() != null) {
+                if (identity.getGroup() != null || identity.getName() != null) {
+                    filter += " && ";
+                }
+                filter += " version.toLowerCase().matches(:version) ";
+                final String filterString = ".*" + identity.getVersion().toLowerCase() + ".*";
+                map.put("version", filterString);
+            }
+            query = pm.newQuery(Component.class, filter);
+            return execute(query, map);
+        } else if (identity.getPurl() != null) {
+            query = pm.newQuery(Component.class, "purl.toLowerCase().matches(:purl)");
+            final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
+            return execute(query, filterString);
+        } else if (identity.getCpe() != null) {
+            query = pm.newQuery(Component.class, "cpe.toLowerCase().matches(:cpe)");
+            final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
+            return execute(query, filterString);
+        } else if (identity.getSwidTagId() != null) {
+            query = pm.newQuery(Component.class, "swidTagId.toLowerCase().matches(:swidTagId)");
+            final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
+            return execute(query, filterString);
+        } else {
+            return new PaginatedResult();
+        }
     }
 
     /**

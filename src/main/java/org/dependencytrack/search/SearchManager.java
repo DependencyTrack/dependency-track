@@ -132,6 +132,22 @@ public class SearchManager {
         return searchResult;
     }
 
+    public SearchResult searchProjectIndex(final String queryString, final int limit) {
+        return searchIndex(ProjectIndexer.getInstance(), queryString, limit);
+    }
+
+    public SearchResult searchComponentIndex(final String queryString, final int limit) {
+        return searchIndex(ComponentIndexer.getInstance(), queryString, limit);
+    }
+
+    public SearchResult searchLicenseIndex(final String queryString, final int limit) {
+        return searchIndex(LicenseIndexer.getInstance(), queryString, limit);
+    }
+
+    public SearchResult searchVulnerabilityIndex(final String queryString, final int limit) {
+        return searchIndex(VulnerabilityIndexer.getInstance(), queryString, limit);
+    }
+
     /**
      * Escapes special characters used in Lucene query syntax.
      * + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /

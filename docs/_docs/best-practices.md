@@ -52,6 +52,3 @@ Findings in Dependency-Track are intended to be a source-of-truth, but they're n
 in a silo. Dependency-Track has an API-first design intended to promote integration with other systems.
 By leveraging these capabilities, organizations benefit from increased software transparency and ultimately 
 reduce risk to stakeholders.
-
-### More Information
-* [Component Analysis](https://www.owasp.org/index.php/Component_Analysis) (OWASP)

@@ -87,7 +87,7 @@
         <lib.cvss-calculator.version>1.3.0</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>3.0.5</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
-        <lib.lucene.version>8.6.2</lib.lucene.version>
+        <lib.lucene.version>8.6.3</lib.lucene.version>
         <lib.packageurl.version>1.1.1</lib.packageurl.version>
         <lib.pebble.version>3.1.4</lib.pebble.version>
         <lib.spdx-tools.version>2.2.3</lib.spdx-tools.version>

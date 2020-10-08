@@ -32,54 +32,36 @@ import java.util.HashMap;
 public class DefectDojoClient {
 
     private static final Logger LOGGER = Logger.getLogger(DefectDojoClient.class);
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final DefectDojoUploader uploader;
     private final URL baseURL;
 
-    public FortifySscClient(final DefectDojoUploader uploader, final URL baseURL) {
+    public DefectDojoClient(final DefectDojoUploader uploader, final URL baseURL) {
         this.uploader = uploader;
         this.baseURL = baseURL;
+        this.dateFormat = baseURL;
     }
 
-    public String generateOneTimeUploadToken(final String username, final String password) {
-        LOGGER.debug("Generating one-time upload token");
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
-        final HttpRequestWithBody request = ui.post(baseURL + "/api/v1/fileTokens");
-        final HttpResponse<JsonNode> response = request
-                .header("Content-Type", "application/json")
-                .basicAuth(username, password)
-                .body(payload)
-                .asJson();
-        if (response.getStatus() == 201) {
-            if (response.getBody() != null) {
-                final JSONObject root = response.getBody().getObject();
-                LOGGER.debug("One-time upload token retrieved");
-                return root.getJSONObject("data").getString("token");
-            }
-        } else {
-            LOGGER.warn("DefectDojo Client did not receive expected response while attempting to generate a "
-                    + "one-time-use fileupload token. HTTP response code: "
-                    + response.getStatus() + " - " + response.getStatusText());
-            uploader.handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
-        }
-        return null;
-    }
-
-    public void uploadDependencyTrackFindings(final String token, final String applicationVersion, final InputStream findingsJson) {
+    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HashMap<String, Object> params = new HashMap<>();
-        params.put("engineType", "DEPENDENCY_TRACK");
-        params.put("mat", token);
-        params.put("entityId", applicationVersion);
-        final HttpRequestWithBody request = ui.post(baseURL + "/upload/resultFileUpload.html");
+        final HttpRequestWithBody request = ui.post(baseURL + "/api/v2/import-scan");
+
         final HttpResponse<String> response = request
-                .header("accept", "application/xml")
-                .queryString(params)
-                .field("files[]", findingsJson, "findings.json")
+                .header("accept", "application/json")
+                .header("Authorization", "Token " + token)
+                .field("file", findingsJson, "findings.json")
+                .field("engagement", engagementId)
+                .field("scan_type", "Dependency Track Finding Packaging Format (FPF) Export")
+                .field("verified", "true")
+                .field("active", "true")
+                .field("minimum_severity", "Info")
+                .field("close_old_findings", "true")
+                .field("push_to_jira", "false")
+                .field("scan_date", DATE_FORMAT.format(new Date()))
                 .asString();
-        if (response.getStatus() == 200) {
-            LOGGER.debug("Successfully uploaded findings to Fortify SSC");
+        if (response.getStatus() == 201) {
+            LOGGER.debug("Successfully uploaded findings to DefectDojo");
         } else {
             LOGGER.warn("DefectDojo Client did not receive expected response while attempting to upload "
                     + "Dependency-Track findings. HTTP response code: "

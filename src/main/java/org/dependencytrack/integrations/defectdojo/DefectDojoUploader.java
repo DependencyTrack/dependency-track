@@ -35,13 +35,12 @@ import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_USERNAME;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_PASSWORD;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
-    private static final Logger LOGGER = Logger.getLogger(FortifySscUploader.class);
-    private static final String APPID_PROPERTY = "defectdojo.applicationId";
+    private static final Logger LOGGER = Logger.getLogger(DefectDojoUploader.class);
+    private static final String ENGAGEMENTID_PROPERTY = "defectdojo.engagementId";
 
     @Override
     public String name() {
@@ -61,8 +60,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public boolean isProjectConfigured(final Project project) {
-        final ProjectProperty applicationId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), APPID_PROPERTY);
-        return applicationId != null && applicationId.getPropertyValue() != null;
+        final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
+        return engagementId != null && engagementId.getPropertyValue() != null;
     }
 
     @Override
@@ -73,18 +72,12 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public void upload(final Project project, final InputStream payload) {
-        final ConfigProperty sscUrl = qm.getConfigProperty(DEFECTDOJO_URL.getGroupName(), DEFECTDOJO_URL.getPropertyName());
-        final ConfigProperty username = qm.getConfigProperty(DEFECTDOJO_USERNAME.getGroupName(), DEFECTDOJO_USERNAME.getPropertyName());
-        final ConfigProperty password = qm.getConfigProperty(DEFECTDOJO_PASSWORD.getGroupName(), DEFECTDOJO_PASSWORD.getPropertyName());
-        final ProjectProperty applicationId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), APPID_PROPERTY);
+        final ConfigProperty defectDojoUrl = qm.getConfigProperty(DEFECTDOJO_URL.getGroupName(), DEFECTDOJO_URL.getPropertyName());
+        final ConfigProperty apiKey = qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
+        final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         try {
-            final DefectDojoClient client = new DefectDojoClient(this, new URL(sscUrl.getPropertyValue()));
-            final String token = client.generateOneTimeUploadToken(
-                    username.getPropertyValue(),
-                    DataEncryption.decryptAsString(password.getPropertyValue()));
-            if (token != null) {
-                client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), payload);
-            }
+            final DefectDojoClient client = new DefectDojoClient(this, new URL(defectDojoUrl.getPropertyValue()));
+            client.uploadDependencyTrackFindings(token, engagementId.getPropertyValue(), payload);
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);
             handleException(LOGGER, e);

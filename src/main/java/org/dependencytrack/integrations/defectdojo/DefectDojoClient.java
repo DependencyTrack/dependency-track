@@ -28,6 +28,8 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 public class DefectDojoClient {
 
@@ -39,7 +41,6 @@ public class DefectDojoClient {
     public DefectDojoClient(final DefectDojoUploader uploader, final URL baseURL) {
         this.uploader = uploader;
         this.baseURL = baseURL;
-        this.dateFormat = baseURL;
     }
 
     public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson) {

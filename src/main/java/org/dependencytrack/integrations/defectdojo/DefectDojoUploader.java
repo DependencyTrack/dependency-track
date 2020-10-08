@@ -77,7 +77,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         try {
             final DefectDojoClient client = new DefectDojoClient(this, new URL(defectDojoUrl.getPropertyValue()));
-            client.uploadDependencyTrackFindings(token, engagementId.getPropertyValue(), payload);
+            client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);
             handleException(LOGGER, e);

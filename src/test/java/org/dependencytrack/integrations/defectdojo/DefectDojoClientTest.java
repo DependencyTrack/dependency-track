@@ -36,8 +36,10 @@ import java.net.URL;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static org.mockserver.model.ParameterBody.params;
+import static org.mockserver.model.Parameter.param;
 
-public class DefecftDojoClientTest {
+public class DefectDojoClientTest {
 
     private static ClientAndServer mockServer;
 
@@ -74,7 +76,7 @@ public class DefecftDojoClientTest {
                                 .withPath("/defectdojo/api/v2/import-scan")
                                 .withBody(
                                     params(
-                                        param("engagement", engagementId),
+                                        param("engagement", engagementId)
                                     )
                                 )
                 )
@@ -83,8 +85,8 @@ public class DefecftDojoClientTest {
                                 .withStatusCode(201)
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 );
-        DefecftDojoUploader uploader = new DefecftDojoUploader();
-        DefecftDojoClient client = new DefecftDojoClient(uploader, new URL("https://localhost/defectdojo"));
+        DefectDojoUploader uploader = new DefectDojoUploader();
+        DefectDojoClient client = new DefectDojoClient(uploader, new URL("https://localhost/defectdojo"));
         client.uploadDependencyTrackFindings(token, engagementId, new NullInputStream(0));
     }
 
@@ -100,7 +102,7 @@ public class DefecftDojoClientTest {
                                 .withPath("/defectdojo/api/v2/import-scan")
                                 .withBody(
                                     params(
-                                        param("engagement", engagementId),
+                                        param("engagement", engagementId)
                                     )
                                 )
                 )
@@ -109,8 +111,8 @@ public class DefecftDojoClientTest {
                                 .withStatusCode(400)
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 );
-        DefecftDojoUploader uploader = new DefecftDojoUploader();
-        DefecftDojoClient client = new DefecftDojoClient(uploader, new URL("https://localhost/defectdojo"));
+        DefectDojoUploader uploader = new DefectDojoUploader();
+        DefectDojoClient client = new DefectDojoClient(uploader, new URL("https://localhost/defectdojo"));
         client.uploadDependencyTrackFindings(token, engagementId, new NullInputStream(16));
     }
 }

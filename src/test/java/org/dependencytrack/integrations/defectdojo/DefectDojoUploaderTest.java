@@ -29,11 +29,11 @@ import java.util.ArrayList;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
 
-public class DefecftDojoUploaderTest extends PersistenceCapableTest {
+public class DefectDojoUploaderTest extends PersistenceCapableTest {
 
     @Test
     public void testIntegrationMetadata() {
-        DefecftDojoUploader extension = new DefecftDojoUploader();
+        DefectDojoUploader extension = new DefectDojoUploader();
         Assert.assertEquals("DefectDojo", extension.name());
         Assert.assertEquals("Pushes Dependency-Track findings to DefectDojo", extension.description());
     }
@@ -56,7 +56,7 @@ public class DefecftDojoUploaderTest extends PersistenceCapableTest {
                 IConfigProperty.PropertyType.STRING,
                 null
         );
-        DefecftDojoUploader extension = new DefecftDojoUploader();
+        DefectDojoUploader extension = new DefectDojoUploader();
         extension.setQueryManager(qm);
         Assert.assertTrue(extension.isEnabled());
         Assert.assertTrue(extension.isProjectConfigured(project));
@@ -65,7 +65,7 @@ public class DefecftDojoUploaderTest extends PersistenceCapableTest {
     @Test
     public void testIntegrationDisabledCases() {
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
-        DefecftDojoUploader extension = new DefecftDojoUploader();
+        DefectDojoUploader extension = new DefectDojoUploader();
         extension.setQueryManager(qm);
         Assert.assertFalse(extension.isEnabled());
         Assert.assertFalse(extension.isProjectConfigured(project));
@@ -74,7 +74,7 @@ public class DefecftDojoUploaderTest extends PersistenceCapableTest {
     @Test
     public void testIntegrationFindings() throws Exception {
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
-        DefecftDojoUploader extension = new DefecftDojoUploader();
+        DefectDojoUploader extension = new DefectDojoUploader();
         extension.setQueryManager(qm);
         InputStream in = extension.process(project, new ArrayList<>());
         Assert.assertTrue(in != null && in.available() > 0);

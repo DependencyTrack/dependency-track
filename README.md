@@ -64,7 +64,7 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports importing [CycloneDX] and [SPDX] Software Bill-of-Materials (SBOM) formats
 * Easy to read metrics for components, projects, and portfolio
-* Native support for Kenna Security, Fortify SSC, and ThreadFix
+* Native support for Kenna Security, Fortify SSC, ThreadFix and DefectDojo
 * API-first design facilitates easy integration with other systems
 * API documentation available in OpenAPI format
 * Supports internally managed users, Active Directory/LDAP, and API Keys

@@ -12,6 +12,7 @@ OSS Index does contain many vulnerabilities that are not present in the NVD.
 Dependency-Track integrates with OSS Index using it's public API. Dependency-Track does not mirror OSS Index, 
 but it does consume vulnerabilities from OSS Index on a 'as-identified' basis.
 
-> OSS Index is disabled by default as it requires an account. It's highly recommended that OSS Index is enabled
-> in order to provide accurate results. To enable OSS Index, sign up for a free account and enter the account 
-> details in Dependency-Track in the 'Analyzers' settings in the administrative console.
+> Starting with Dependency-Track v4.0, OSS Index is enabled by default and does not require an account. For prior 
+> Dependency-Track versions, OSS Index is disabled by default and requires an account. To enable OSS Index, 
+> sign up for a free account and enter the account details in Dependency-Track in the 'Analyzers' settings in the 
+> administrative console.

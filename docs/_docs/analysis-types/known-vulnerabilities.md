@@ -17,16 +17,11 @@ vulnerabilities. The platform employs several methods of vulnerability identific
 
 Each of the analyzers above can be enabled or disabled independently from one another.
 
-![configure analyzers](/images/screenshots/scanners-configure.png)
-
 ### Internal Analyzer
 
 The internal analyzer relies on a dictionary of vulnerable software. This dictionary is automatically populated when 
-NVD mirroring or VulnDB mirroring is performed. The dictionary is capable of identifying software by their CPE or 
-Package URL along with optionally describing version ranges. The internal analyzer is used by all components with 
-valid CPEs, including application, operating system, and hardware components.
-
-This analyzer may also use the [Private Vulnerability Repository]({{ site.baseurl }}{% link _docs/datasources/private-vuln-repo.md %}).
+NVD mirroring or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid CPEs, 
+including application, operating system, and hardware components.
 
 ### NPM Audit Analyzer
 
@@ -41,11 +36,12 @@ NPM is a source of vulnerability intelligence that provides its own content. Ref
 
 OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components. The service 
 supports a wide range of package management ecosystems. Dependency-Track integrates natively with OSS Index to provide 
-highly accurate results. Use of this analyzer requires a valid Package URL for the components being analyzed.
+highly accurate results. This analyzer is applicable to all components with valid Package URLs.
 
-> OSS Index is disabled by default as it requires an account. It's highly recommended that OSS Index is enabled
-> in order to provide accurate results. To enable OSS Index, sign up for a free account and enter the account 
-> details in Dependency-Track in the 'Analyzers' settings in the administrative console.
+> Starting with Dependency-Track v4.0, OSS Index is enabled by default and does not require an account. For prior 
+> Dependency-Track versions, OSS Index is disabled by default and requires an account. To enable OSS Index, 
+> sign up for a free account and enter the account details in Dependency-Track in the 'Analyzers' settings in the 
+> administrative console.
 
 OSS Index is a source of vulnerability intelligence that provides its own content. Refer to 
 [OSS Index (Datasource)]({{ site.baseurl }}{% link _docs/datasources/ossindex.md %}) for additional information.
@@ -63,4 +59,4 @@ VulnDB is a source of vulnerability intelligence that provides its own content. 
 
 Dependency-Track contains an internal limiter which prevents repeated requests to remote services when performing
 vulnerability analysis. When a components Package URL or CPE is successfully used for a given analyzer, the action
-and the timestamp is recorded and compared to the interval throttle. The interval throttle defaults to one hour.
+and the timestamp is recorded and compared to the interval throttle. The interval throttle defaults to 24 hours.

@@ -7,7 +7,11 @@ order: 1
 
 Dependency-Track can ingest CycloneDX and SPDX BOMs as part of a CI/CD pipeline. The 
 generation of CycloneDX BOMs often occur during CI or when the final application assembly 
-is being generated. 
+is being generated. CycloneDX is preferred due to the availability of ready-to-use build 
+tool integrations available. 
+
+Visit the [CycloneDX Tool Center](https://cyclonedx.org/tool-center/) for 
+information on the available tools for generating CycloneDX BOMs from various build systems.
 
 > Dependency-Track continuously monitors components for known vulnerabilities. When components are added or 
 > updated in Dependency-Track, an analysis is performed against the component. This action occurs during 

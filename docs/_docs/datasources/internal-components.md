@@ -13,6 +13,6 @@ Maven Central, and npm.js. Organizations that have a unique namespace and/or nam
 not conflict with known third-party namespaces and/or names, may opt to define internal components
 if the disclosure of such information is not desirable.
 
-> By default, components are not identifies as internal.
+> By default, components are not identified as internal.
 
 ![configure internal components](/images/screenshots/configure-internal-components.png)

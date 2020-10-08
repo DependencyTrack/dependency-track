@@ -51,6 +51,5 @@ Package URL is natively supported in the [CycloneDX](http://cyclonedx.org/) BOM 
 means to populate project dependencies, organizations benefit from the many use-cases Package URL provides, including
 leveraging repositories to identify outdated components.
 
-Refer to [Supply Chain Component Analysis]({{ site.baseurl }}{% link _docs/usage/supply-chain-component-analysis.md %}) for additional information on
-the benefits of tracking outdated components and to [Datasource Routing]({{ site.baseurl }}{% link _docs/datasources/routing.md %})
+Refer to [Datasource Routing]({{ site.baseurl }}{% link _docs/datasources/routing.md %})
 for information on Package URL and the various ways its used throughout Dependency-Track.

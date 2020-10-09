@@ -2,7 +2,7 @@
 title: Procurement
 category: Usage
 chapter: 2
-order: 4
+order: 5
 ---
 
 Dependency-Track is an ideal choice for vendor risk assessments and identifying potential risk in third-party software 

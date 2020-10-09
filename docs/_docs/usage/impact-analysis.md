@@ -2,7 +2,7 @@
 title: Impact Analysis
 category: Usage
 chapter: 2
-order: 2
+order: 3
 ---
 
 Organizations can analyze the potential for impact of a vulnerability in their environment.

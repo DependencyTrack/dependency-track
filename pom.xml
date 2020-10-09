@@ -91,7 +91,7 @@
         <lib.packageurl.version>1.1.1</lib.packageurl.version>
         <lib.pebble.version>3.1.4</lib.pebble.version>
         <lib.spdx-tools.version>2.2.3</lib.spdx-tools.version>
-        <lib.unirest.version>2.4.03</lib.unirest.version>
+        <lib.unirest.version>3.11.01</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
@@ -289,9 +289,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip"
-                                     dest="${project.build.directory}"
-                                     verbose="true"/>
+                                <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip" dest="${project.build.directory}" verbose="true"/>
                             </target>
                         </configuration>
                         <goals>
@@ -303,8 +301,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <unzip src="${project.build.directory}/frontend-dist.zip"
-                                       dest="${project.build.directory}/frontend">
+                                <unzip src="${project.build.directory}/frontend-dist.zip" dest="${project.build.directory}/frontend">
                                 </unzip>
                             </target>
                         </configuration>

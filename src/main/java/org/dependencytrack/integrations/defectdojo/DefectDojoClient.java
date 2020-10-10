@@ -46,7 +46,7 @@ public class DefectDojoClient {
     public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpRequestWithBody request = ui.post(baseURL + "/api/v2/import-scan");
+        final HttpRequestWithBody request = ui.post(baseURL + "/api/v2/import-scan/");
 
         final HttpResponse<String> response = request
                 .header("accept", "application/json")

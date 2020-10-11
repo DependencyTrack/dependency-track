@@ -51,7 +51,7 @@ public enum ConfigPropertyConstants {
     FORTIFY_SSC_URL("integrations", "fortify.ssc.url", null, PropertyType.URL, "Base URL to Fortify SSC"),
     FORTIFY_SSC_USERNAME("integrations", "fortify.ssc.username", null, PropertyType.STRING, "The username to authenticate to Fortify SSC with"),
     FORTIFY_SSC_PASSWORD("integrations", "fortify.ssc.password", null, PropertyType.ENCRYPTEDSTRING, "The password to use when authenticating to Fortify SSC"),
-    DEFECTDOJO_ENABLED("integrations", "defectdojo.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Fortify SSC integration"),
+    DEFECTDOJO_ENABLED("integrations", "defectdojo.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable DefectDojo integration"),
     DEFECTDOJO_SYNC_CADENCE("integrations", "defectdojo.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to DefectDojo"),
     DEFECTDOJO_URL("integrations", "defectdojo.url", null, PropertyType.URL, "Base URL to DefectDojo"),
     DEFECTDOJO_API_KEY("integrations", "defectdojo.apiKey", null, PropertyType.STRING, "API Key for DefectDojo"),

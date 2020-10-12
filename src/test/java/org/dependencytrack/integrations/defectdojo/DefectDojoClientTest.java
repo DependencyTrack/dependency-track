@@ -24,6 +24,7 @@ import org.dependencytrack.util.HttpUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,7 +34,6 @@ import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.verify.VerificationTimes;
 import java.net.URL;
-import org.mockito.Mockito;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
@@ -44,6 +44,7 @@ import static org.mockserver.model.Parameter.param;
 public class DefectDojoClientTest {
 
     private static ClientAndServer mockServer;
+    private static MockServerClient testClient;
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
@@ -54,6 +55,15 @@ public class DefectDojoClientTest {
     @Before
     public void before() {
         environmentVariables.set("http_proxy", "http://127.0.0.1:1080");
+        testClient = new MockServerClient("localhost", 1080);
+    }
+
+    @After
+    public void after() {
+        testClient.clear(
+                request()
+                    .withPath("/defectdojo/api/v2/import-scan/")
+        );
     }
 
     @BeforeClass
@@ -62,7 +72,7 @@ public class DefectDojoClientTest {
     }
 
     @AfterClass
-    public static void after() {
+    public static void afterClass() {
         mockServer.stop();
     }
 
@@ -70,7 +80,6 @@ public class DefectDojoClientTest {
     public void testUploadFindingsPositiveCase() throws Exception {
         String token = "db975c97-98b1-4988-8d6a-9c3e044dfff3";
         String engagementId = "12345";
-        MockServerClient testClient = new MockServerClient("localhost", 1080);
         testClient.when(
                         request()
                                 .withMethod("POST")
@@ -87,13 +96,9 @@ public class DefectDojoClientTest {
         client.uploadDependencyTrackFindings(token, engagementId, new NullInputStream(0));
         testClient.verify(
                 request()
-                .withMethod("POST")
-                .withPath("/defectdojo/api/v2/import-scan/"),
+                        .withMethod("POST")
+                        .withPath("/defectdojo/api/v2/import-scan/"),
                 VerificationTimes.exactly(1)
-        );
-        testClient.clear(
-                request()
-                    .withPath("/defectdojo/api/v2/import-scan/")
         );
     }
 
@@ -101,7 +106,6 @@ public class DefectDojoClientTest {
     public void testUploadFindingsNegativeCase() throws Exception {
         String token = "db975c97-98b1-4988-8d6a-9c3e044dfff2";
         String engagementId = "";
-        MockServerClient testClient = new MockServerClient("localhost", 1080);
         testClient.when(
                         request()
                                 .withMethod("POST")
@@ -113,23 +117,15 @@ public class DefectDojoClientTest {
                                 .withStatusCode(400)
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 );
-        DefectDojoUploader uploader = Mockito.mock(
-                DefectDojoUploader.class,
-                Mockito.CALLS_REAL_METHODS
-        );
+        DefectDojoUploader uploader = new DefectDojoUploader();
         DefectDojoClient client = new DefectDojoClient(uploader, new URL("https://localhost/defectdojo"));
         client.uploadDependencyTrackFindings(token, engagementId, new NullInputStream(16));
         testClient.verify(
                 request()
-                .withMethod("POST")
-                .withHeader(HttpHeaders.AUTHORIZATION, "Token " + token)
-                .withPath("/defectdojo/api/v2/import-scan/"),
+                        .withMethod("POST")
+                        .withHeader(HttpHeaders.AUTHORIZATION, "Token " + token)
+                        .withPath("/defectdojo/api/v2/import-scan/"),
                 VerificationTimes.exactly(1)
-        );
-        Mockito.verify(uploader, Mockito.times(1)).handleUnexpectedHttpResponse(Mockito.any(), Mockito.eq("https://localhost/defectdojo/api/v2/import-scan/"), Mockito.eq(400), Mockito.any());
-        testClient.clear(
-                request()
-                    .withPath("/defectdojo/api/v2/import-scan/")
         );
     }
 }

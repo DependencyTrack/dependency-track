@@ -32,7 +32,7 @@ USER 1000
 WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track
-CMD ["java", "$JAVA_OPTIONS", "-DdependencyTrack.logging.level=$LOGGING_LEVEL", "-jar", "dependency-track-embedded.war", "-context", "${CONTEXT}"]
+CMD ["sh", "-c", "java ${JAVA_OPTIONS} -DdependencyTrack.logging.level=$LOGGING_LEVEL -jar dependency-track-embedded.war -context ${CONTEXT}"]
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080

@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.upgrade.v400;
+package org.dependencytrack.upgrade.v410;
 
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
@@ -25,15 +25,15 @@ import alpine.util.DbUtil;
 
 import java.sql.Connection;
 
-public class v400Updater extends AbstractUpgradeItem {
+public class v410Updater extends AbstractUpgradeItem {
 
-    private static final Logger LOGGER = Logger.getLogger(v400Updater.class);
+    private static final Logger LOGGER = Logger.getLogger(v410Updater.class);
     private static final String COMPOSER_REPOSITORY = "INSERT INTO \"REPOSITORY\" (\"TYPE\", \"IDENTIFIER\", \"URL\", \"RESOLUTION_ORDER\", \"ENABLED\", \"INTERNAL\") VALUES ('COMPOSER', 'packagist', 'https://repo.packagist.org/', 1, TRUE, FALSE)";
     private static final String COMPOSER_REPOSITORY_ALT = "INSERT INTO \"REPOSITORY\" (\"TYPE\", \"IDENTIFIER\", \"URL\", \"RESOLUTION_ORDER\", \"ENABLED\", \"INTERNAL\") VALUES ('COMPOSER', 'packagist', 'https://repo.packagist.org/', 1, 1, 0)";
 
     @Override
     public String getSchemaVersion() {
-        return "4.0.0";
+        return "4.1.0";
     }
 
     @Override

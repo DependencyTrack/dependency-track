@@ -39,7 +39,7 @@ import java.text.SimpleDateFormat;
  * An IMetaAnalyzer implementation that supports Composer.
  *
  * @author Szabolcs (Szasza) Palmer
- * @since 4.0.0
+ * @since 4.1.0
  */
 public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 

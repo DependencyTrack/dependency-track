@@ -17,6 +17,7 @@ Dependency-Track supports the following default repositories:
 
 | Ecosystem | Repository       | Resolution Order |
 | --------- | ---------------- | ---------------- |
+| composer  | Packagist        | 1 |
 | gem       | RubyGems         | 1 |
 | hex       | Hex              | 1 |
 | maven     | Maven Central    | 1 |

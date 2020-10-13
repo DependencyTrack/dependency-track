@@ -52,6 +52,7 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
 * Ecosystem agnostic with built-in repository support for:
+  * Composer (PHP)
   * Gems (Ruby)
   * Hex (Erlang/Elixir)
   * Maven (Java)
@@ -87,7 +88,7 @@ Dependency-Track supports the following three deployment options:
 
 ## Deploying Docker Container
 Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required
-other than an modern version of Docker. Dependency-Track uses the following conventions:
+other than a modern version of Docker. Dependency-Track uses the following conventions:
 
 
 * The 'latest' tag, which is pulled by default if no tag is specified, will always refer to the latest stable release (3.0.0, 3.0.1, 3.1.0, etc)

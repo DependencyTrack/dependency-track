@@ -244,6 +244,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.createRepository(RepositoryType.NPM, "npm-public-registry", "https://registry.npmjs.org/", true, false);
             qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true, false);
             qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true, false);
+            qm.createRepository(RepositoryType.COMPOSER, "packagist", "https://repo.packagist.org/", true, false);
         }
     }
 
@@ -270,7 +271,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             LOGGER.info("Synchronizing notification publishers to datastore");
             for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
                 try {
-                	final File file = new File(URLDecoder.decode(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile(), UTF_8.name()));
+                    final File file = new File(URLDecoder.decode(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile(), UTF_8.name()));
                     final String templateContent = FileUtils.readFileToString(file, UTF_8);
                     final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher.getPublisherClass());
                     if (existingPublisher == null) {

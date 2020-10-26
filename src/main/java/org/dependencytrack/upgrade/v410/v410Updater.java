@@ -38,7 +38,7 @@ public class v410Updater extends AbstractUpgradeItem {
 
     @Override
     public void executeUpgrade(final AlpineQueryManager alpineQueryManager, final Connection connection) throws Exception {
-        LOGGER.info("Updating existing repositories to be non-internal");
+        LOGGER.info("Adding Composer-type repository support");
         try {
             DbUtil.executeUpdate(connection, COMPOSER_REPOSITORY);
         } catch (Exception e) {

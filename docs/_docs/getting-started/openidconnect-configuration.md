@@ -14,15 +14,6 @@ Refer to the [Docker deployment page]({{ site.baseurl }}{% link _docs/getting-st
 If configured properly, users will be able to sign in by clicking the *OpenID* button on the login page:
 ![Login page with OpenID button](/images/screenshots/oidc-login-page.png)
 
-| Backend                                                         | Frontend                                                 |
-|:----------------------------------------------------------------|:---------------------------------------------------------|
-| ALPINE_OIDC_ENABLED=true                                        | OIDC_CLIENT_ID=dependency-track                          |
-| ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example | OIDC_ISSUER=https://auth.example.com/auth/realms/example |
-| ALPINE_OIDC_USERNAME_CLAIM=preferred_username                   | OIDC_FLOW=code                                           |
-| ALPINE_OIDC_USER_PROVISIONING=true                              |                                                          |
-| ALPINE_OIDC_TEAMS_CLAIM=groups                                  |                                                          |
-| ALPINE_OIDC_TEAM_SYNCHRONIZATION=true                           |                                                          |
-
 ### Prerequisites
 
 * Issuer URL
@@ -34,7 +25,7 @@ If configured properly, users will be able to sign in by clicking the *OpenID* b
 #### Scopes
 
 Some identity providers require configuration of the scopes a client can request. 
-Dependency-Track will request access tokens with the following scopes during the authentication process:
+Dependency-Track will request the following scopes during the authentication process per default:
 
 | Scope   | Reason                                                                  |
 |:--------|:------------------------------------------------------------------------|
@@ -42,11 +33,13 @@ Dependency-Track will request access tokens with the following scopes during the
 | profile | Required for access to the user's name (+ roles and group memberships)  |
 | email   | Required for access to the user's email address                         |
 
+Requested scopes are configurable via the `OIDC_SCOPE` setting of the frontend.
+
 ### Example Configurations
 
-Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
-
+Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
 Multiple identity providers have been tested, the following are some example configurations that are known to work. 
+Note that some providers may not support specific features like team synchronization, or require further configuration.
 If you find that the provider of your choice does not work with Dependency-Track, please [file an issue](https://github.com/DependencyTrack/dependency-track/issues).
 
 #### Auth0
@@ -57,7 +50,7 @@ If you find that the provider of your choice does not work with Dependency-Track
 | alpine.oidc.username.claim=nickname                            | OIDC_ISSUER=https://example.auth0.com           |
 | alpine.oidc.teams.claim=groups<span style="color:red">*</span> |                                                 |
 
-<span style="color:red">*</span> Requires additional configuration
+<span style="color:red">*</span> Requires [additional configuration](https://auth0.com/docs/extensions/authorization-extension/use-rules-with-the-authorization-extension)
 
 #### GitLab (gitlab.com)
 
@@ -78,7 +71,7 @@ If you find that the provider of your choice does not work with Dependency-Track
 | alpine.oidc.username.claim=preferred_username                   | OIDC_ISSUER=https://auth.example.com/auth/realms/example |
 | alpine.oidc.teams.claim=groups<span style="color:red">*</span>  |                                                          |
 
-<span style="color:red">*</span> Requires additional configuration
+<span style="color:red">*</span> Requires additional configuration, see [Example setup with Keycloak](#example-setup-with-keycloak)
 
 ### Example setup with Keycloak
 
@@ -128,7 +121,32 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
 }
 ```
 
-4. Login to Dependency-Track as `admin` and navigate to *Administration -> Access Management -> OpenID Connect Groups*
+5. Configure OIDC for both backend and frontend of Dependency-Track:
+
+```yaml
+version: "3"
+
+services:
+  dtrack:
+    image: dependencytrack/dependency-track
+    environment:
+      # ...
+      - "ALPINE_OIDC_ENABLED=true"
+      - "ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example"
+      - "ALPINE_OIDC_USERNAME_CLAIM=preferred_username"
+      - "ALPINE_OIDC_TEAMS_CLAIM=groups"
+      - "ALPINE_USER_PROVISIONING=true"
+      - "ALPINE_TEAM_SYNCHRONIZATION=true"
+
+  dtrack-frontend:
+    image: dependencytrack/frontend
+    environment:
+      # ...
+      - "OIDC_ISSUER=https://auth.example.com/auth/realms/example"
+      - "OIDC_CLIENT_ID=dependency-track"
+```
+
+6. Login to Dependency-Track as `admin` and navigate to *Administration -> Access Management -> OpenID Connect Groups*
   * Create groups with names equivalent to those in Keycloak
   * Add teams that the groups should be mapped to
 ![Group mappings](/images/screenshots/oidc-groups.png)

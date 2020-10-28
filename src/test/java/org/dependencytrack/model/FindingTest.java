@@ -32,7 +32,7 @@ public class FindingTest {
     private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "component-purl", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4",
-            AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, "79", "XSS", AnalysisState.NOT_AFFECTED, true);
+            AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, "79", "XSS", AnalysisState.NOT_AFFECTED, true);
 
     @Test
     public void testComponent() {

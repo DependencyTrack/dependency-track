@@ -75,6 +75,14 @@ public class FindingAttribution implements Serializable {
     @NotNull
     private Vulnerability vulnerability;
 
+    @Persistent
+    @Column(name = "ALT_ID", allowsNull = "true")
+    private String alternateIdentifier;
+
+    @Persistent
+    @Column(name = "REFERENCE_URL", allowsNull = "true")
+    private String referenceUrl;
+
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "FINDINGATTRIBUTION_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -83,12 +91,15 @@ public class FindingAttribution implements Serializable {
 
     public FindingAttribution() {}
 
-    public FindingAttribution(Component component, Vulnerability vulnerability, AnalyzerIdentity analyzerIdentity) {
+    public FindingAttribution(Component component, Vulnerability vulnerability, AnalyzerIdentity analyzerIdentity,
+                              String alternateIdentifier, String referenceUrl) {
         this.component = component;
         this.project = component.getProject();
         this.vulnerability = vulnerability;
         this.analyzerIdentity = analyzerIdentity;
         this.attributedOn = new Date();
+        this.alternateIdentifier = alternateIdentifier;
+        this.referenceUrl = referenceUrl;
     }
 
     public long getId() {
@@ -130,6 +141,22 @@ public class FindingAttribution implements Serializable {
 
     public void setVulnerability(Vulnerability vulnerability) {
         this.vulnerability = vulnerability;
+    }
+
+    public String getAlternateIdentifier() {
+        return alternateIdentifier;
+    }
+
+    public void setAlternateIdentifier(String alternateIdentifier) {
+        this.alternateIdentifier = alternateIdentifier;
+    }
+
+    public String getReferenceUrl() {
+        return referenceUrl;
+    }
+
+    public void setReferenceUrl(String referenceUrl) {
+        this.referenceUrl = referenceUrl;
     }
 
     public UUID getUuid() {

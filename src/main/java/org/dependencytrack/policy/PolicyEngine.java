@@ -53,32 +53,39 @@ public class PolicyEngine {
         evaluators.add(new SwidTagIdPolicyEvaluator());
     }
 
-    public void evaluate(final QueryManager qm, final List<Component> components) {
+    public void evaluate(final List<Component> components) {
         LOGGER.info("Evaluating " + components.size() + " component(s) against applicable policies");
-        final List<Policy> policies = qm.getAllPolicies();
-        for (final Component component: components) {
-            final List<PolicyViolation> policyViolations = new ArrayList<>();
-            for (final Policy policy : policies) {
-                if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
-                    LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
-                    final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
-                    for (final PolicyEvaluator evaluator : evaluators) {
-                        evaluate(evaluator, policy, component, policyConditionViolations);
+        try (final QueryManager qm = new QueryManager()) {
+            final List<Policy> policies = qm.getAllPolicies();
+            for (final Component c: components) {
+                final Component component = qm.getObjectById(Component.class, c.getId());
+                this.evaluate(qm, policies, component);
+            }
+        }
+        LOGGER.info("Policy analysis complete");
+    }
+
+    private void evaluate(final QueryManager qm, final List<Policy> policies, final Component component) {
+        final List<PolicyViolation> policyViolations = new ArrayList<>();
+        for (final Policy policy : policies) {
+            if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
+                LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
+                final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
+                for (final PolicyEvaluator evaluator : evaluators) {
+                    evaluate(evaluator, policy, component, policyConditionViolations);
+                }
+                if (Policy.Operator.ANY == policy.getOperator()) {
+                    if (policyConditionViolations.size() > 0) {
+                        policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                     }
-                    if (Policy.Operator.ANY == policy.getOperator()) {
-                        if (policyConditionViolations.size() > 0) {
-                            policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
-                        }
-                    } else if (Policy.Operator.ALL == policy.getOperator()) {
-                        if (policyConditionViolations.size() == policy.getPolicyConditions().size()) {
-                            policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
-                        }
+                } else if (Policy.Operator.ALL == policy.getOperator()) {
+                    if (policyConditionViolations.size() == policy.getPolicyConditions().size()) {
+                        policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                     }
                 }
             }
-            qm.reconcilePolicyViolations(component, policyViolations);
         }
-        LOGGER.info("Policy analysis complete");
+        qm.reconcilePolicyViolations(component, policyViolations);
     }
 
     private boolean isPolicyAssignedToProject(Policy policy, Project project) {

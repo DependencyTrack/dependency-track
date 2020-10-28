@@ -1382,12 +1382,26 @@ public class QueryManager extends AlpineQueryManager {
      * Adds a vulnerability to a component.
      * @param vulnerability the vulnerability to add
      * @param component the component affected by the vulnerability
+     * @param analyzerIdentity the identify of the analyzer
      */
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
+        this.addVulnerability(vulnerability, component, analyzerIdentity, null, null);
+    }
+
+    /**
+     * Adds a vulnerability to a component.
+     * @param vulnerability the vulnerability to add
+     * @param component the component affected by the vulnerability
+     * @param analyzerIdentity the identify of the analyzer
+     * @param alternateIdentifier the optional identifier if the analyzer refers to the vulnerability by an alternative identifier
+     * @param referenceUrl the optional URL that references the occurrence of the vulnerability if uniquely identified
+     */
+    public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity,
+                                 String alternateIdentifier, String referenceUrl) {
         if (!contains(vulnerability, component)) {
             component.addVulnerability(vulnerability);
             component = persist(component);
-            persist(new FindingAttribution(component, vulnerability, analyzerIdentity));
+            persist(new FindingAttribution(component, vulnerability, analyzerIdentity, alternateIdentifier, referenceUrl));
         }
     }
 

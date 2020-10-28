@@ -61,6 +61,8 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\" AS \"VULN_CVSSV3BASESCORE\", " +
             "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\" AS \"FINDINGATTRIBUTION_ANALYZERIDENTITY\", " +
             "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\" AS \"FINDINGATTRIBUTION_ATTRIBUTED_ON\", " +
+            "\"FINDINGATTRIBUTION\".\"ALT_ID\" AS \"FINDINGATTRIBUTION_ALT_ID\", " +
+            "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\" AS \"FINDINGATTRIBUTION_REFERENCE_URL\", " +
             "\"CWE\".\"CWEID\" AS \"CWE_ID\", " +
             "\"CWE\".\"NAME\" AS \"CWE_NAME\", " +
             "\"ANALYSIS\".\"STATE\" AS \"ANALYSIS_STATE\", " +
@@ -106,11 +108,13 @@ public class Finding implements Serializable {
         optValue(vulnerability, "severityRank", severity.ordinal());
         optValue(attribution, "analyzerIdentity", o[15]);
         optValue(attribution, "attributedOn", o[16]);
-        optValue(vulnerability, "cweId", o[17]);
-        optValue(vulnerability, "cweName", o[18]);
+        optValue(attribution, "alternateIdentifier", o[17]);
+        optValue(attribution, "referenceUrl", o[18]);
+        optValue(vulnerability, "cweId", o[19]);
+        optValue(vulnerability, "cweName", o[20]);
 
-        optValue(analysis, "state", o[19]);
-        optValue(analysis, "isSuppressed", o[20], false);
+        optValue(analysis, "state", o[21]);
+        optValue(analysis, "isSuppressed", o[22], false);
     }
 
     public Map getComponent() {

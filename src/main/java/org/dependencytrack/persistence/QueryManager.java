@@ -1443,6 +1443,17 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Deletes a {@link Policy}, including all related {@link PolicyViolation}s and {@link PolicyCondition}s.
+     * @param policy the {@link Policy} to delete
+     */
+    public void deletePolicy(final Policy policy) {
+        for (final PolicyCondition condition : policy.getPolicyConditions()) {
+            deletePolicyCondition(condition);
+        }
+        delete(policy);
+    }
+
+    /**
      * Deleted all PolicyViolation associated for the specified Component.
      * @param component the Component to delete PolicyViolation for
      */

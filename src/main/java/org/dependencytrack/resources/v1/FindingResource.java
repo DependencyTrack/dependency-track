@@ -85,7 +85,7 @@ public class FindingResource extends AlpineResource {
     @Path("/project/{uuid}/export")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns a the findings for the specified project as FPF"
+            value = "Returns the findings for the specified project as FPF"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),

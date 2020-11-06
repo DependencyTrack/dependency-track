@@ -22,6 +22,10 @@ FPF's are json files and have the following sections:
 | project  | object | The project the findings are associated with |
 | findings | array  | An array of zero or more findings |
 
+
+The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
+
+
 #### Example
 
 ```json

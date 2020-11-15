@@ -47,4 +47,4 @@ ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=90.0"
 ENV CONTEXT=""
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=5m --timeout=3s CMD wget -q -O /dev/null http://127.0.0.1:8080${CONTEXT}/api/version || exit 1
+HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}/api/version || exit 1

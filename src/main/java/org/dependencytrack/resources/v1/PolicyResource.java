@@ -33,6 +33,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
+
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -182,7 +183,7 @@ public class PolicyResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, uuid);
             if (policy != null) {
-                qm.delete(policy);
+                qm.deletePolicy(policy);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the policy could not be found.").build();

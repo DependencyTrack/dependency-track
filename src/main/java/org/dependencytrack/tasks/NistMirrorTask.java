@@ -57,7 +57,9 @@ import java.util.zip.GZIPInputStream;
 public class NistMirrorTask implements LoggableSubscriber {
 
     private enum ResourceType {
-        CVE,
+        CVE_YEAR_DATA,
+        CVE_MODIFIED_DATA,
+        CVE_META,
         CPE,
         CWE,
         NONE // DO NOT PARSE THIS TYPE
@@ -107,11 +109,11 @@ public class NistMirrorTask implements LoggableSubscriber {
             // Download JSON 1.1 year feeds
             final String json11BaseUrl = CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
             final String cve11BaseMetaUrl = CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
-            doDownload(json11BaseUrl, ResourceType.CVE);
-            doDownload(cve11BaseMetaUrl, ResourceType.CVE);
+            doDownload(json11BaseUrl, ResourceType.CVE_YEAR_DATA);
+            doDownload(cve11BaseMetaUrl, ResourceType.CVE_META);
         }
-        doDownload(CVE_JSON_11_MODIFIED_URL, ResourceType.CVE);
-        doDownload(CVE_JSON_11_MODIFIED_META, ResourceType.CVE);
+        doDownload(CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
+        doDownload(CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()
@@ -165,12 +167,20 @@ public class NistMirrorTask implements LoggableSubscriber {
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
-
             if (file.exists()) {
-                final long fileSize = checkHead(urlString);
-                if (file.length() == fileSize) {
-                    LOGGER.info("Using cached version of " + filename);
-                    return;
+                if (System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
+                    if (ResourceType.CVE_YEAR_DATA == resourceType) {
+                        LOGGER.info("Retrieval of " + filename + " not necessary. Will use modified feed for updates.");
+                        return;
+                    } else if (ResourceType.CVE_META == resourceType) {
+                        return; // no need to log
+                    } else if (ResourceType.CVE_MODIFIED_DATA == resourceType) {
+                        final long fileSize = checkHead(urlString);
+                        if (file.length() == fileSize) {
+                            LOGGER.info("Using cached version of " + filename);
+                            return;
+                        }
+                    }
                 }
             }
             final long start = System.currentTimeMillis();
@@ -185,6 +195,10 @@ public class NistMirrorTask implements LoggableSubscriber {
                     try (InputStream in = response.getEntity().getContent()) {
                         file = new File(outputDir, filename);
                         FileUtils.copyInputStreamToFile(in, file);
+                        if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
+                            // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
+                            file.setLastModified(0);
+                        }
                         if (file.getName().endsWith(".gz")) {
                             uncompress(file, resourceType);
                         }
@@ -245,9 +259,10 @@ public class NistMirrorTask implements LoggableSubscriber {
                 out.write(buffer, 0, len);
             }
             final long start = System.currentTimeMillis();
-            if (ResourceType.CVE == resourceType) {
+            if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                 final NvdParser parser = new NvdParser();
                 parser.parse(uncompressedFile);
+                file.setLastModified(start);
             }
             final long end = System.currentTimeMillis();
             metricParseTime += end - start;

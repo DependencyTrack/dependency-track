@@ -1694,8 +1694,10 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final ComponentIdentity cid) {
+        String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
+            purlString = cid.getPurl().canonicalize();
             try {
                 final PackageURL purl = cid.getPurl();
                 purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
@@ -1703,7 +1705,7 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         final Query<Component> query = pm.newQuery(Component.class, "(purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version)");
-        return (List<Component>) query.executeWithArray(cid.getPurl().canonicalize(), purlCoordinates, null, cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()); // TODO SWID
+        return (List<Component>) query.executeWithArray(purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
     }
 
     /**

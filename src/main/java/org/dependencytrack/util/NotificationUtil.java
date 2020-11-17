@@ -20,11 +20,22 @@ package org.dependencytrack.util;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.vo.*;
+import org.dependencytrack.notification.vo.AnalysisDecisionChange;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -41,30 +52,28 @@ public final class NotificationUtil {
      */
     private NotificationUtil() { }
 
-    public static void analyzeNotificationCriteria(Vulnerability vulnerability, Component component) {
-        try (QueryManager qm = new QueryManager()) {
-            if (!qm.contains(vulnerability, component)) {
-                // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
-                // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
-                // it warrants a Notification be dispatched.
-                final Set<Project> affectedProjects = new HashSet<>();
-                final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
-                for (final Component c : components) {
-                    affectedProjects.add(c.getProject());
-                }
-
-                vulnerability = qm.detach(Vulnerability.class, vulnerability.getId());
-                component = qm.detach(Component.class, component.getId());
-
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.PORTFOLIO)
-                        .group(NotificationGroup.NEW_VULNERABILITY)
-                        .title(NotificationConstants.Title.NEW_VULNERABILITY)
-                        .level(NotificationLevel.INFORMATIONAL)
-                        .content(generateNotificationContent(vulnerability))
-                        .subject(new NewVulnerabilityIdentified(vulnerability, component, affectedProjects))
-                );
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component) {
+        if (!qm.contains(vulnerability, component)) {
+            // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
+            // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
+            // it warrants a Notification be dispatched.
+            final Set<Project> affectedProjects = new HashSet<>();
+            final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
+            for (final Component c : components) {
+                affectedProjects.add(c.getProject());
             }
+
+            final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());
+            final Component detachedComponent = qm.detach(Component.class, component.getId());
+
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.NEW_VULNERABILITY)
+                    .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(detachedVuln))
+                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, affectedProjects))
+            );
         }
     }
 /*

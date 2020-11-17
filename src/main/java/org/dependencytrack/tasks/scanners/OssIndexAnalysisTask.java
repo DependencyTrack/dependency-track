@@ -247,7 +247,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
                                 if (vulnerability != null) {
-                                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                     addVulnerabilityToCache(component, vulnerability);
                                 } else {
@@ -257,7 +257,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     through traditional feeds. Regardless, the vuln needs to be added to the database.
                                      */
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
-                                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                     addVulnerabilityToCache(component, vulnerability);
                                 }
@@ -269,7 +269,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 if (vulnerability == null) {
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                 }
-                                NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                 addVulnerabilityToCache(component, vulnerability);
                             }

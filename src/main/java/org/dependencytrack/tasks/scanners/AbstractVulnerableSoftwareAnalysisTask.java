@@ -55,7 +55,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
-                        NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                         qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                     }
                 }

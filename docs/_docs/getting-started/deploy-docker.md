@@ -13,9 +13,9 @@ other than a modern version of Docker.
 
 ### Container Requirements
 
-| Minimum | Recommended |
-|:---------|:--------|
-| 4.5GB RAM | 16GB RAM |
+| Minimum     | Recommended |
+| :---------- | :---------- |
+| 4.5GB RAM   | 16GB RAM    |
 | 2 CPU cores | 4 CPU cores |
 
 
@@ -115,7 +115,7 @@ with `ALPINE_DATABASE_DRIVER_PATH`.
 | Driver        | Path                                      |
 | ------------- | ----------------------------------------- |
 | Microsoft SQL | /extlib/mssql-jdbc-7.1.3.jre8-preview.jar |
-| MySQL         | /extlib/mysql-connector-java-5.1.47.jar   |
+| MySQL         | /extlib/mysql-connector-java-8.0.22.jar   |
 | PostgreSQL    | /extlib/postgresql-42.2.11.jar            |
 
 The inclusion of drivers does not preclude the use of other driver versions. They are

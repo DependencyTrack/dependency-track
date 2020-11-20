@@ -36,7 +36,7 @@ alpine.database.password=password
 alpine.database.mode=external
 alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL=false
 alpine.database.driver=com.mysql.jdbc.Driver
-alpine.database.driver.path=~/path/to/mysql-connector-java-5.1.45-bin.jar
+alpine.database.driver.path=~/path/to/mysql-connector-java-8.0.22-bin.jar
 alpine.database.username=dtrack
 alpine.database.password=password
 ```

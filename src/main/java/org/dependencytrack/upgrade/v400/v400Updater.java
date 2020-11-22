@@ -16,27 +16,24 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.upgrade.v321;
+package org.dependencytrack.upgrade.v400;
 
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
-import alpine.util.DbUtil;
 import java.sql.Connection;
-import java.sql.SQLException;
 
-public class v321Updater extends AbstractUpgradeItem {
+public class v400Updater extends AbstractUpgradeItem {
 
-    private static final Logger LOGGER = Logger.getLogger(v321Updater.class);
-    private static final String STMT_1 = "UPDATE \"VULNERABILITY\" SET \"SOURCE\" = 'NPM' WHERE \"SOURCE\" = 'NSP'";
+    private static final Logger LOGGER = Logger.getLogger(v400Updater.class);
 
+    @Override
     public String getSchemaVersion() {
-        return "3.2.1";
+        return "4.0.0";
     }
 
-    public void executeUpgrade(AlpineQueryManager qm, Connection connection) throws SQLException {
-        LOGGER.info("Migrating vulnerabilities from NSP to NPM");
-        DbUtil.executeUpdate(connection, STMT_1);
+    @Override
+    public void executeUpgrade(final AlpineQueryManager alpineQueryManager, final Connection connection) throws Exception {
+        LOGGER.info("HOOOO");
     }
-
 }

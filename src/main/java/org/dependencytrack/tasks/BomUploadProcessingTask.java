@@ -103,13 +103,14 @@ public class BomUploadProcessingTask implements Subscriber {
                     LOGGER.warn("The BOM uploaded is not in a supported format. Supported formats include CycloneDX, SPDX RDF, and SPDX Tag");
                     return;
                 }
+                final Project copyOfProject = qm.detach(Project.class, qm.getObjectById(Project.class, project.getId()).getId());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
                         .group(NotificationGroup.BOM_CONSUMED)
                         .title(NotificationConstants.Title.BOM_CONSUMED)
                         .level(NotificationLevel.INFORMATIONAL)
                         .content("A " + bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
-                        .subject(new BomConsumedOrProcessed(project, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
+                        .subject(new BomConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
                 final Date date = new Date();
                 final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion);
                 for (final Component component: components) {

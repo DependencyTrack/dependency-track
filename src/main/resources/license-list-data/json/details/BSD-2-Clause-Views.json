@@ -1,0 +1,43 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright (c) \u003cyear\u003e \u003cowner\u003e All rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\nThe views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of the copyright holders or contributors.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) \u003cyear\u003e \u003cowner\u003e All rights reserved.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\nTHIS SOFTWARE IS PROVIDED BY \u003c\u003cvar;name\u003d\"copyrightHolderAsIs\";original\u003d\"THE COPYRIGHT HOLDERS AND CONTRIBUTORS\";match\u003d\".+\"\u003e\u003e \"AS IS\" AND ANY \u003c\u003cvar;name\u003d\"express\";original\u003d\"EXPRESS\";match\u003d\"EXPRESS(ED)?\"\u003e\u003e OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL \u003c\u003cvar;name\u003d\"copyrightHolderLiability\";original\u003d\"THE COPYRIGHT HOLDER OR CONTRIBUTORS\";match\u003d\".+\"\u003e\u003e BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\nThe views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of \u003c\u003cvar;name\u003d\"copyrightHolderViews\";original\u003d\"the copyright holders or contributors.\";match\u003d\".+\"\u003e\u003e",
+  "name": "BSD 2-Clause with views sentence",
+  "licenseComments": "This is a more generalized version of BSD-2-Clause-FreeBSD, which is now deprecated. It is identical to BSD-2-Clause with the addition of the \"views and conclusions\" sentence at the end.",
+  "licenseId": "BSD-2-Clause-Views",
+  "crossRef": [
+    {
+      "isLive": false,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "http://www.freebsd.org/copyright/freebsd-license.html",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:53:32"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://people.freebsd.org/~ivoras/wine/patch-wine-nvidia.sh",
+      "order": 1,
+      "timestamp": "2020-11-25 - 21:53:32"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://github.com/protegeproject/protege/blob/master/license.txt",
+      "order": 2,
+      "timestamp": "2020-11-25 - 21:53:32"
+    }
+  ],
+  "seeAlso": [
+    "http://www.freebsd.org/copyright/freebsd-license.html",
+    "https://people.freebsd.org/~ivoras/wine/patch-wine-nvidia.sh",
+    "https://github.com/protegeproject/protege/blob/master/license.txt"
+  ],
+  "isOsiApproved": false
+}

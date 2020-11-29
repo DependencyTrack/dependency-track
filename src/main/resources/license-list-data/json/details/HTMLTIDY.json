@@ -1,0 +1,22 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "HTML Tidy License\n\nThis software and documentation is provided \"as is,\" and the copyright holders and contributing author(s) make no representations or warranties, express or implied, including but not limited to, warranties of merchantability or fitness for any particular purpose or that the use of the software or documentation will not infringe any third party patents, copyrights, trademarks or other rights.\n\nThe copyright holders and contributing author(s) will not be held liable for any direct, indirect, special or consequential damages arising out of any use of the software or documentation, even if advised of the possibility of such damage.\n\nPermission is hereby granted to use, copy, modify, and distribute this source code, or portions hereof, documentation and executables, for any purpose, without fee, subject to the following restrictions:\n\n    1. The origin of this source code must not be misrepresented.\n    2. Altered versions must be plainly marked as such and must not be misrepresented as being the original source.\n    3. This Copyright notice may not be removed or altered from any source or altered source distribution.\n\nThe copyright holders and contributing author(s) specifically permit, without fee, and encourage the use of this source code as a component for supporting the Hypertext Markup Language in commercial products. If you use this source code in a product, acknowledgement is not required but would be appreciated.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e HTML Tidy License\u003c\u003cendOptional\u003e\u003e\n\nThis software and documentation is provided \"as is,\" and the copyright holders and contributing author(s) make no representations or warranties, express or implied, including but not limited to, warranties of merchantability or fitness for any particular purpose or that the use of the software or documentation will not infringe any third party patents, copyrights, trademarks or other rights.\n\nThe copyright holders and contributing author(s) will not be held liable for any direct, indirect, special or consequential damages arising out of any use of the software or documentation, even if advised of the possibility of such damage.\n\nPermission is hereby granted to use, copy, modify, and distribute this source code, or portions hereof, documentation and executables, for any purpose, without fee, subject to the following restrictions:\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e The origin of this source code must not be misrepresented.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e Altered versions must be plainly marked as such and must not be misrepresented as being the original source.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"3.\";match\u003d\".{0,20}\"\u003e\u003e This Copyright notice may not be removed or altered from any source or altered source distribution.\n\nThe copyright holders and contributing author(s) specifically permit, without fee, and encourage the use of this source code as a component for supporting the Hypertext Markup Language in commercial products. If you use this source code in a product, acknowledgement is not required but would be appreciated.",
+  "name": "HTML Tidy License",
+  "licenseId": "HTMLTIDY",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://github.com/htacg/tidy-html5/blob/next/README/LICENSE.md",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:55:39"
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/htacg/tidy-html5/blob/next/README/LICENSE.md"
+  ],
+  "isOsiApproved": false
+}

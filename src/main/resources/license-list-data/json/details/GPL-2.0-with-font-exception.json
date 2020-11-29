@@ -4,6 +4,17 @@
   "standardLicenseTemplate": "insert GPL v2 license text here\n\nFont Exception\n\nAs a special exception, if you create a document which uses this font, and embed this font or unaltered portions of this font into the document, this font does not by itself cause the resulting document to be covered by the GNU General Public License. This exception does not however invalidate any other reasons why the document might be covered by the GNU General Public License. If you modify this font, you may extend this exception to your version of the font, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.",
   "name": "GNU General Public License v2.0 w/Font exception",
   "licenseId": "GPL-2.0-with-font-exception",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://www.gnu.org/licenses/gpl-faq.html#FontException",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:48:56"
+    }
+  ],
   "seeAlso": [
     "https://www.gnu.org/licenses/gpl-faq.html#FontException"
   ],

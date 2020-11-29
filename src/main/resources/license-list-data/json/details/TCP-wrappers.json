@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "Copyright 1995 by Wietse Venema. All rights reserved. Some individual files may be covered by other copyrights.\n\nThis material was originally written and compiled by Wietse Venema at Eindhoven University of Technology, The Netherlands, in 1990, 1991, 1992, 1993, 1994 and 1995.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that this entire copyright notice is duplicated in all such copies.\n\nThis software is provided \"as is\" and without any expressed or implied warranties, including, without limitation, the implied warranties of merchantibility and fitness for any particular purpose.",
-  "standardLicenseTemplate": "Copyright 1995 by Wietse Venema. All rights reserved. Some individual files may be covered by other copyrights.\n\nThis material was originally written and compiled by Wietse Venema at Eindhoven University of Technology, The Netherlands, in 1990, 1991, 1992, 1993, 1994 and 1995.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that this entire copyright notice is duplicated in all such copies.\n\nThis software is provided \"as is\" and without any expressed or implied warranties, including, without limitation, the implied warranties of merchantibility and fitness for any particular purpose.",
+  "licenseText": "Copyright 1995 by Wietse Venema. All rights reserved. Some individual files may be covered by other copyrights.\n\nThis material was originally written and compiled by Wietse Venema at Eindhoven University of Technology, The Netherlands, in 1990, 1991, 1992, 1993, 1994 and 1995.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that this entire copyright notice is duplicated in all such copies.\n\nThis software is provided \"as is\" and without any expressed or implied warranties, including, without limitation, the implied warranties of merchantibility and fitness for any particular purpose.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1995 by Wietse Venema. All rights reserved. Some individual files may be covered by other copyrights.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nThis material was originally written and compiled by Wietse Venema at Eindhoven University of Technology, The Netherlands, in 1990, 1991, 1992, 1993, 1994 and 1995.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that this entire copyright notice is duplicated in all such copies.\n\nThis software is provided \"as is\" and without any expressed or implied warranties, including, without limitation, the implied warranties of merchantibility and fitness for any particular purpose.",
   "name": "TCP Wrappers License",
   "licenseId": "TCP-wrappers",
+  "crossRef": [
+    {
+      "isLive": false,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "http://rc.quest.com/topics/openssh/license.php#tcpwrappers",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:52:34"
+    }
+  ],
   "seeAlso": [
     "http://rc.quest.com/topics/openssh/license.php#tcpwrappers"
   ],

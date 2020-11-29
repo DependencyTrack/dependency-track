@@ -6,6 +6,17 @@
   "name": "GNU General Public License v1.0 or later",
   "licenseId": "GPL-1.0+",
   "standardLicenseHeader": "\u003cone line to give the program\u0027s name and a brief idea of what it does.\u003e\n\nCopyright (C) 19yy \u003cname of author\u003e\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 1, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://www.gnu.org/licenses/old-licenses/gpl-1.0-standalone.html",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:51:46"
+    }
+  ],
   "seeAlso": [
     "https://www.gnu.org/licenses/old-licenses/gpl-1.0-standalone.html"
   ],

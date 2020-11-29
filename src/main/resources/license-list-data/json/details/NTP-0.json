@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "NTP No Attribution (NTP-0)\n\nCopyright (4-digit-year) by (CopyrightHoldersName)\n\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose is hereby granted, provided that the name of (TrademarkedName) not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission. (TrademarkedName) make no representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e NTP No Attribution (NTP-0)\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (4-digit-year) by (CopyrightHoldersName)\";match\u003d\".{0,1000}\"\u003e\u003e\n\nPermission to use, copy, modify, and distribute this software and its documentation for any purpose is hereby granted, provided that the name\u003c\u003cbeginOptional\u003e\u003es\u003c\u003cendOptional\u003e\u003eof \u003c\u003cvar;name\u003d\"TMname\";original\u003d\"(TrademarkedName)\";match\u003d\".+\"\u003e\u003e not be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission. \u003c\u003cvar;name\u003d\"TMname\";original\u003d\"(TrademarkedName)\";match\u003d\".+\"\u003e\u003e make\u003c\u003cbeginOptional\u003e\u003es\u003c\u003cendOptional\u003e\u003eno representations about the suitability of this software for any purpose. It is provided \"as is\" without express or implied warranty.",
+  "name": "NTP No Attribution",
+  "licenseComments": "This license is similar to NTP, but it omits the language regarding reproduction of copyright and permission notices. It also omits the phrase \"with or without fee\".",
+  "licenseId": "NTP-0",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://github.com/tytso/e2fsprogs/blob/master/lib/et/et_name.c",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:51:27"
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/tytso/e2fsprogs/blob/master/lib/et/et_name.c"
+  ],
+  "isOsiApproved": false
+}

@@ -141,7 +141,19 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Projects
      */
     public List<Project> getAllProjects() {
+        return getAllProjects(false);
+    }
+
+    /**
+     * Returns a list of all projects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Projects
+     */
+    public List<Project> getAllProjects(boolean excludeInactive) {
         final Query<Project> query = pm.newQuery(Project.class);
+        if (excludeInactive) {
+            query.setFilter("active == true");
+        }
         query.setOrdering("name asc");
         return query.executeResultList(Project.class);
     }

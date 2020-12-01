@@ -15,9 +15,9 @@ ARG USERNAME=dtrack
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p -m 770 ${DATA_DIR} ${EXTLIB_DIR} \
     && adduser -D -h ${DATA_DIR} -u 1000 ${USERNAME} \
-    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
-    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.22/mysql-connector-java-8.0.22.jar \
-    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar \
+    && wget -O ${EXTLIB_DIR}/postgresql.jar https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
+    && wget -O ${EXTLIB_DIR}/mysql-connector-java.jar https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.22/mysql-connector-java-8.0.22.jar \
+    && wget -O ${EXTLIB_DIR}/mssql-jdbc.jar https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/8.4.1.jre8/mssql-jdbc-8.4.1.jre8.jar \
     && chown -R ${USERNAME}:${USERNAME} ${DATA_DIR} ${EXTLIB_DIR}
 
 # Copy the compiled WAR to the application directory created above

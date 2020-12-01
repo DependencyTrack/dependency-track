@@ -2461,31 +2461,12 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Synchronizes a RepositoryMetaComponent, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param repositoryMetaComponent the RepositoryMetaComponent object to synchronize
+     * @param transientRepositoryMetaComponent the RepositoryMetaComponent object to synchronize
      * @return a synchronized RepositoryMetaComponent object
      */
-    public RepositoryMetaComponent synchronizeRepositoryMetaComponent(RepositoryMetaComponent repositoryMetaComponent) {
-        RepositoryMetaComponent result = updateRepositoryMetaComponent(repositoryMetaComponent);
-        if (result == null) {
-            result = persist(repositoryMetaComponent);
-        }
-        return result;
-    }
-
-    /**
-     * Updates a RepositoryMetaComponent.
-     * @param transientRepositoryMetaComponent the RepositoryMetaComponent to update
-     * @return a RepositoryMetaComponent object
-     */
-    private RepositoryMetaComponent updateRepositoryMetaComponent(RepositoryMetaComponent transientRepositoryMetaComponent) {
-        final RepositoryMetaComponent metaComponent;
-        if (transientRepositoryMetaComponent.getId() > 0) {
-            metaComponent = getObjectById(RepositoryMetaComponent.class, transientRepositoryMetaComponent.getId());
-        } else {
-            metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
-                    transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());
-        }
-
+    public synchronized RepositoryMetaComponent synchronizeRepositoryMetaComponent(final RepositoryMetaComponent transientRepositoryMetaComponent) {
+        final RepositoryMetaComponent metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
+                transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());;
         if (metaComponent != null) {
             metaComponent.setRepositoryType(transientRepositoryMetaComponent.getRepositoryType());
             metaComponent.setNamespace(transientRepositoryMetaComponent.getNamespace());
@@ -2494,8 +2475,9 @@ public class QueryManager extends AlpineQueryManager {
             metaComponent.setName(transientRepositoryMetaComponent.getName());
             metaComponent.setPublished(transientRepositoryMetaComponent.getPublished());
             return persist(metaComponent);
+        } else {
+            return persist(transientRepositoryMetaComponent);
         }
-        return null;
     }
 
     /**

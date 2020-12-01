@@ -7,6 +7,26 @@
   "name": "GNU Library General Public License v2.1 or later",
   "licenseId": "LGPL-2.1+",
   "standardLicenseHeader": "\u003cone line to give the library\u0027s name and an idea of what it does.\u003e\n\nCopyright (C) \u003cyear\u003e \u003cname of author\u003e\n\nThis library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\n\nThis library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.\n\nYou should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:51:52"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://opensource.org/licenses/LGPL-2.1",
+      "order": 1,
+      "timestamp": "2020-11-25 - 21:51:52"
+    }
+  ],
   "seeAlso": [
     "https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html",
     "https://opensource.org/licenses/LGPL-2.1"

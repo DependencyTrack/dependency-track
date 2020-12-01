@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "# Blue Oak Model License\n\nVersion 1.0.0\n\n## Purpose\n\nThis license gives everyone as much permission to work with\nthis software as possible, while protecting contributors\nfrom liability.\n\n## Acceptance\n\nIn order to receive this license, you must agree to its\nrules.  The rules of this license are both obligations\nunder that agreement and conditions to your license.\nYou must not do anything with this software that triggers\na rule that you cannot or will not follow.\n\n## Copyright\n\nEach contributor licenses you to do everything with this\nsoftware that would otherwise infringe that contributor\u0027s\ncopyright in it.\n\n## Notices\n\nYou must ensure that everyone who gets a copy of\nany part of this software from you, with or without\nchanges, also gets the text of this license or a link to\n\u003chttps://blueoakcouncil.org/license/1.0.0\u003e.\n\n## Excuse\n\nIf anyone notifies you in writing that you have not\ncomplied with [Notices](#notices), you can keep your\nlicense by taking all practical steps to comply within 30\ndays after the notice.  If you do not do so, your license\nends immediately.\n\n## Patent\n\nEach contributor licenses you to do everything with this\nsoftware that would otherwise infringe any patent claims\nthey can license or become able to license.\n\n## Reliability\n\nNo contributor can revoke this license.\n\n## No Liability\n\n***As far as the law allows, this software comes as is,\nwithout any warranty or condition, and no contributor\nwill be liable to anyone for any damages related to this\nsoftware or this license, under any kind of legal claim.***\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e \u003c\u003cbeginOptional\u003e\u003e #\u003c\u003cendOptional\u003e\u003e Blue Oak Model License\u003c\u003cendOptional\u003e\u003e\n\nVersion 1.0.0\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Purpose\n\nThis license gives everyone as much permission to work with this software as possible, while protecting contributors from liability.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Acceptance\n\nIn order to receive this license, you must agree to its rules. The rules of this license are both obligations under that agreement and conditions to your license. You must not do anything with this software that triggers a rule that you cannot or will not follow.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Copyright\n\nEach contributor licenses you to do everything with this software that would otherwise infringe that contributor\u0027s copyright in it.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Notices\n\nYou must ensure that everyone who gets a copy of any part of this software from you, with or without changes, also gets the text of this license or a link to \u003chttps://blueoakcouncil.org/license/1.0.0\u003e.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Excuse\n\nIf anyone notifies you in writing that you have not complied with \u003c\u003cvar;name\u003d\"noticesRef\";original\u003d\"[Notices](#notices)\";match\u003d\"\\[Notices\\]\\(\\#notices\\)|Notices\"\u003e\u003e , you can keep your license by taking all practical steps to comply within 30 days after the notice. If you do not do so, your license ends immediately.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Patent\n\nEach contributor licenses you to do everything with this software that would otherwise infringe any patent claims they can license or become able to license.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e Reliability\n\nNo contributor can revoke this license.\n\n\u003c\u003cbeginOptional\u003e\u003e ##\u003c\u003cendOptional\u003e\u003e No Liability\n\n***As far as the law allows, this software comes as is, without any warranty or condition, and no contributor will be liable to anyone for any damages related to this software or this license, under any kind of legal claim.***",
+  "name": "Blue Oak Model License 1.0.0",
+  "licenseComments": "This license was released on March 6, 2019.",
+  "licenseId": "BlueOak-1.0.0",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://blueoakcouncil.org/license/1.0.0",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:51:54"
+    }
+  ],
+  "seeAlso": [
+    "https://blueoakcouncil.org/license/1.0.0"
+  ],
+  "isOsiApproved": false
+}

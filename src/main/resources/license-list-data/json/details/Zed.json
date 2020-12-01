@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "(c) Jim Davies, January 1995\n\nYou may copy and distribute this file freely. Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\n\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.",
-  "standardLicenseTemplate": "(c) Jim Davies, January 1995\n\nYou may copy and distribute this file freely. Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\n\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.",
+  "licenseText": "(c) Jim Davies, January 1995\nYou may copy and distribute this file freely.  Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(c) Jim Davies, January 1995\";match\u003d\".{0,1000}\"\u003e\u003e\n\nYou may copy and distribute this file freely. Any queries and complaints should be forwarded to Jim.Davies@comlab.ox.ac.uk.\n\nIf you make any changes to this file, please do not distribute the results under the name `zed-csp.sty\u0027.",
   "name": "Zed License",
   "licenseId": "Zed",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Zed",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:49:55"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Zed"
   ],

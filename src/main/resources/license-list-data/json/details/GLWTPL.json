@@ -1,0 +1,24 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "               GLWT(Good Luck With That) Public License\n                 Copyright (c) Everyone, except Author\n\nEveryone is permitted to copy, distribute, modify, merge, sell, publish,\nsublicense or whatever they want with this software but at their OWN RISK.\n\n                            Preamble\n\nThe author has absolutely no clue what the code in this project does.\nIt might just work or not, there is no third option.\n\n\n                GOOD LUCK WITH THAT PUBLIC LICENSE\n   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION\n\n  0. You just DO WHATEVER YOU WANT TO as long as you NEVER LEAVE A\nTRACE TO TRACK THE AUTHOR of the original product to blame for or hold\nresponsible.\n\nIN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\nFROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER\nDEALINGS IN THE SOFTWARE.\n\nGood luck and Godspeed.\n",
+  "standardLicenseHeaderTemplate": "",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e GLWT(Good Luck With That) Public License\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (c) Everyone, except Author\";match\u003d\".{0,1000}\"\u003e\u003e\n\nEveryone is permitted to copy, distribute, modify, merge, sell, publish, sublicense or whatever they want with this software but at their OWN RISK.\n\nPreamble\n\nThe author has absolutely no clue what the code in this project does. It might just work or not, there is no third option.\n\nGOOD LUCK WITH THAT PUBLIC LICENSE\n\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e You just DO WHATEVER YOU WANT TO as long as you NEVER LEAVE A TRACE TO TRACK THE AUTHOR of the original product to blame for or hold responsible.\n\nIN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nGood luck and Godspeed.",
+  "name": "Good Luck With That Public License",
+  "licenseId": "GLWTPL",
+  "standardLicenseHeader": "",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://github.com/me-shaon/GLWTPL/commit/da5f6bc734095efbacb442c0b31e33a65b9d6e85",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:49:08"
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/me-shaon/GLWTPL/commit/da5f6bc734095efbacb442c0b31e33a65b9d6e85"
+  ],
+  "isOsiApproved": false
+}

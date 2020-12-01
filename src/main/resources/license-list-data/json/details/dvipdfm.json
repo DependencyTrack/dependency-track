@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "A modified version of this file may be distributed, but it should be distributed with a *different* name. Changed files must be distributed *together with a complete and unchanged* distribution of these files.",
+  "licenseText": "A modified version of this file may be distributed, but it should be distributed with a *different* name. Changed files must be distributed *together with a complete and unchanged* distribution of these files.\n",
   "standardLicenseTemplate": "A modified version of this file may be distributed, but it should be distributed with a *different* name. Changed files must be distributed *together with a complete and unchanged* distribution of these files.",
   "name": "dvipdfm License",
   "licenseId": "dvipdfm",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/dvipdfm",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:48:55"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/dvipdfm"
   ],

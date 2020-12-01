@@ -1,0 +1,32 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Terms Of Use\n\nThis software was developed by employees of the National Institute of Standards\nand Technology (NIST), and others. This software has been contributed to the\npublic domain. Pursuant to title 15 Untied States Code Section 105, works of\nNIST employees are not subject to copyright protection in the United States and\nare considered to be in the public domain. As a result, a formal license is\nnot needed to use this software.\n\nThis software is provided \"AS IS.\" NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS,\nIMPLIED OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA\nACCURACY. NIST does not warrant or make any representations regarding the use\nof the software or the results thereof, including but not limited to the\ncorrectness, accuracy, reliability or usefulness of this software.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e \u003c\u003cvar;name\u003d\"title\";original\u003d\"Terms Of Use\";match\u003d\"(Conditions|Terms) [oO]f [uU]se\"\u003e\u003e\u003c\u003cendOptional\u003e\u003e\n\nThis software was developed by employees of the National Institute of Standards and Technology (NIST), and others. This software has been contributed to the public domain. Pursuant to title 15 Untied States Code Section 105, works of NIST employees are not subject to copyright protection in the United States and are considered to be in the public domain. As a result, a formal license is not needed to use this software.\n\nThis software is provided \"AS IS.\" NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST does not warrant or make any representations regarding the use of the software or the results thereof, including but not limited to the correctness, accuracy, reliability or usefulness of this software.",
+  "name": "NIST Public Domain Notice",
+  "licenseId": "NIST-PD",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://github.com/tcheneau/simpleRPL/blob/e645e69e38dd4e3ccfeceb2db8cba05b7c2e0cd3/LICENSE.txt",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:54:30"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://github.com/tcheneau/Routing/blob/f09f46fcfe636107f22f2c98348188a65a135d98/README.md",
+      "order": 1,
+      "timestamp": "2020-11-25 - 21:54:31"
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/tcheneau/simpleRPL/blob/e645e69e38dd4e3ccfeceb2db8cba05b7c2e0cd3/LICENSE.txt",
+    "https://github.com/tcheneau/Routing/blob/f09f46fcfe636107f22f2c98348188a65a135d98/README.md"
+  ],
+  "isOsiApproved": false
+}

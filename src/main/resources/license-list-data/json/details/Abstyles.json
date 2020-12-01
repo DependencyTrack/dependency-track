@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "This is APREAMBL.TEX, version 1.10e, written by Hans-Hermann Bode\n\n(HHBODE@DOSUNI1.BITNET), for the BibTeX `adaptable\u0027 family, version 1.10.\n\nSee the file APREAMBL.DOC for a detailed documentation.\n\nThis program is distributed WITHOUT ANY WARRANTY, express or implied.\n\nCopyright (C) 1991, 1992 Hans-Hermann Bode\n\nPermission is granted to make and distribute verbatim copies of this document provided that the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this document under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.",
+  "licenseText": "This is APREAMBL.TEX, version 1.10e, written by Hans-Hermann Bode\n(HHBODE@DOSUNI1.BITNET), for the BibTeX `adaptable\u0027 family, version 1.10.\nSee the file APREAMBL.DOC for a detailed documentation.\n\nThis program is distributed WITHOUT ANY WARRANTY, express or implied.\n\nCopyright (C) 1991, 1992 Hans-Hermann Bode\n\nPermission is granted to make and distribute verbatim copies of this  document provided that the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this document under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n",
   "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003e This is APREAMBL.TEX, version 1.10e, written by Hans-Hermann Bode\n\n(HHBODE@DOSUNI1.BITNET), for the BibTeX `adaptable\u0027 family, version 1.10.\n\nSee the file APREAMBL.DOC for a detailed documentation.\u003c\u003cendOptional\u003e\u003e\n\nThis program is distributed WITHOUT ANY WARRANTY, express or implied.\n\nCopyright (C) 1991, 1992 Hans-Hermann Bode\n\nPermission is granted to make and distribute verbatim copies of this document provided that the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this document under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.",
   "name": "Abstyles License",
   "licenseId": "Abstyles",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Abstyles",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:49:27"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Abstyles"
   ],

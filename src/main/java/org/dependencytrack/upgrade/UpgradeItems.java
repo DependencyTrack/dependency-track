@@ -26,15 +26,7 @@ class UpgradeItems {
 
     private static final List<Class<? extends UpgradeItem>> UPGRADE_ITEMS = new ArrayList<>();
     static {
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v310.v310Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v320.v320Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v321.v321Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v330.v330Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v340.v340Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v350.v350Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v360.v360Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v370.v370Updater.class);
-        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v380.v380Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v400.v400Updater.class);
     };
 
     static List<Class<? extends UpgradeItem>> getUpgradeItems() {

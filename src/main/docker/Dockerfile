@@ -15,7 +15,7 @@ ARG USERNAME=dtrack
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p -m 770 ${DATA_DIR} ${EXTLIB_DIR} \
     && adduser -D -h ${DATA_DIR} -u 1000 ${USERNAME} \
-    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.11/postgresql-42.2.11.jar \
+    && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.22/mysql-connector-java-8.0.22.jar \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar \
     && chown -R ${USERNAME}:${USERNAME} ${DATA_DIR} ${EXTLIB_DIR}

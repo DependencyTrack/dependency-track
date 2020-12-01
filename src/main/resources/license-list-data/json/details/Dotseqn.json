@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "Copyright (C) 1995 by Donald Arseneau\n\nThis file may be freely transmitted and reproduced, but it may not be changed unless the name is changed also (except that you may freely change the paper-size option for \\documentclass).\n\nThis notice must be left intact.",
-  "standardLicenseTemplate": "Copyright (C) 1995 by Donald Arseneau\n\nThis file may be freely transmitted and reproduced, but it may not be changed unless the name is changed also (except that you may freely change the paper-size option for \\documentclass).\n\nThis notice must be left intact.",
+  "licenseText": "Copyright (C) 1995 by Donald Arseneau\n\nThis file may be freely transmitted and reproduced, but it may not be changed unless the name is changed also (except that you may freely change the paper-size option for \\documentclass).\n\nThis notice must be left intact.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1995 by Donald Arseneau\";match\u003d\".{0,1000}\"\u003e\u003e\n\nThis file may be freely transmitted and reproduced, but it may not be changed unless the name is changed also (except that you may freely change the paper-size option for \\documentclass).\n\nThis notice must be left intact.",
   "name": "Dotseqn License",
   "licenseId": "Dotseqn",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/Dotseqn",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:48:59"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Dotseqn"
   ],

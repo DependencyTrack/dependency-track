@@ -25,6 +25,7 @@ import alpine.notification.Subscriber;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.persistence.QueryManager;
@@ -106,6 +107,7 @@ public class NotificationRouter implements Subscriber {
                 if the rule specified one or more projects as targets, reduce the execution
                 of the notification down to those projects that the rule matches and which
                 also match projects affected by the vulnerability.
+                NOTE: This logic is slightly different than what is implemented in limitToProject()
                  */
                 for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
@@ -125,24 +127,11 @@ public class NotificationRouter implements Subscriber {
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerableDependency) {
                 final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
-                /*
-                if the rule specified one or more projects as targets, reduce the execution
-                of the notification down to those projects that the rule matches and which
-                also match projects affected by the vulnerability.
-                 */
-                for (final NotificationRule rule: result) {
-                    if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
-                        if (rule.getProjects() != null && rule.getProjects().size() > 0) {
-                            for (final Project project : rule.getProjects()) {
-                                if (project.getUuid().equals(subject.getComponent().getProject().getUuid())) {
-                                    rules.add(rule);
-                                }
-                            }
-                        } else {
-                            rules.add(rule);
-                        }
-                    }
-                }
+                limitToProject(rules, result, notification, subject.getComponent().getProject());
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() != null && notification.getSubject() instanceof BomConsumedOrProcessed) {
+                final BomConsumedOrProcessed subject = (BomConsumedOrProcessed) notification.getSubject();
+                limitToProject(rules, result, notification, subject.getProject());
             } else {
                 for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
@@ -152,6 +141,28 @@ public class NotificationRouter implements Subscriber {
             }
         }
         return rules;
+    }
+
+    /**
+     * if the rule specified one or more projects as targets, reduce the execution
+     * of the notification down to those projects that the rule matches and which
+     * also match projects affected by the vulnerability.
+     * */
+    private void limitToProject(final List<NotificationRule> applicableRules, final List<NotificationRule> rules,
+                                final Notification notification, final Project limitToProject) {
+        for (final NotificationRule rule: rules) {
+            if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
+                if (rule.getProjects() != null && rule.getProjects().size() > 0) {
+                    for (final Project project : rule.getProjects()) {
+                        if (project.getUuid().equals(limitToProject.getUuid())) {
+                            applicableRules.add(rule);
+                        }
+                    }
+                } else {
+                    applicableRules.add(rule);
+                }
+            }
+        }
     }
 
 }

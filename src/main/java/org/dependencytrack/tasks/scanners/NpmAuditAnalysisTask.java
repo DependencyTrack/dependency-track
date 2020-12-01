@@ -118,7 +118,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
      * being scanned. Therefore, this method uses a Map with the name of the module being the
      * maps key to ensure multiple versions are not sent at the same time. This will result
      * in multiple requests being made to the NPM Audit API.
-     * @param components a list of Components
+     * @param components a list of ComponentsOssIndexAnalysisTask
      */
     public void analyze(final List<Component> components) {
         final ArrayList<Component> backlog = new ArrayList<>(components);
@@ -195,7 +195,9 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
         LOGGER.info("Processing NPM advisories");
         try (QueryManager qm = new QueryManager()) {
             for (final Advisory advisory: advisories) {
-                final Component component = getComponentFromAdvisory(components, advisory);
+                final Component c = getComponentFromAdvisory(components, advisory);
+                if (c == null) { break; }
+                final Component component = qm.getObjectById(Component.class, c.getId());
                 final Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
                 if (component != null && vulnerability != null) {
                     NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);

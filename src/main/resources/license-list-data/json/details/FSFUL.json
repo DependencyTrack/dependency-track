@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.\n\nThis configure script is free software; the Free Software Foundation gives unlimited permission to copy, distribute and modify it.",
-  "standardLicenseTemplate": "Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.\n\nThis configure script is free software; the Free Software Foundation gives unlimited permission to copy, distribute and modify it.",
+  "licenseText": "Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.\n\nThis configure script is free software; the Free Software Foundation gives unlimited permission to copy, distribute and modify it.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nThis configure script is free software; the Free Software Foundation gives unlimited permission to copy, distribute and modify it.",
   "name": "FSF Unlimited License",
   "licenseId": "FSFUL",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/FSF_Unlimited_License",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:48:49"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/FSF_Unlimited_License"
   ],

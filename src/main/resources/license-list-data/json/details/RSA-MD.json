@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.\n\nLicense to copy and use this software is granted provided that it is identified as the \"RSA Data Security, Inc. MD5 Message-Digest Algorithm\" in all material mentioning or referencing this software or this function.\n\nLicense is also granted to make and use derivative works provided that such works are identified as \"derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm\" in all material mentioning or referencing the derived work.\n\nRSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided \"as is\" without express or implied warranty of any kind.\n\nThese notices must be retained in any copies of any part of this documentation and/or software.",
-  "standardLicenseTemplate": "Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.\n\nLicense to copy and use this software is granted provided that it is identified as the \"RSA Data Security, Inc. \u003c\u003cvar;name\u003d\"algorithm\";original\u003d\"MD5\";match\u003d\"(MD5|MD4)\"\u003e\u003e Message-Digest Algorithm\" in all material mentioning or referencing this software or this function.\n\nLicense is also granted to make and use derivative works provided that such works are identified as \"derived from the RSA Data Security, Inc. \u003c\u003cvar;name\u003d\"algorithm\";original\u003d\"MD5\";match\u003d\"(MD5|MD4)\"\u003e\u003e Message-Digest Algorithm\" in all material mentioning or referencing the derived work.\n\nRSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided \"as is\" without express or implied warranty of any kind.\n\nThese notices must be retained in any copies of any part of this documentation and/or software.",
-  "name": "RSA Message-Digest License ",
+  "licenseText": "Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.\n\nLicense to copy and use this software is granted provided that it is identified as the \"RSA Data Security, Inc. MD5 Message-Digest Algorithm\" in all material mentioning or referencing this software or this function.\n\nLicense is also granted to make and use derivative works provided that such works are identified as \"derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm\" in all material mentioning or referencing the derived work.\n\nRSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided \"as is\" without express or implied warranty of any kind.\n\nThese notices must be retained in any copies of any part of this documentation and/or software.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights reserved.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nLicense to copy and use this software is granted provided that it is identified as the \"RSA Data Security, Inc. \u003c\u003cvar;name\u003d\"algorithm\";original\u003d\"MD5\";match\u003d\"(MD5|MD4)\"\u003e\u003e Message-Digest Algorithm\" in all material mentioning or referencing this software or this function.\n\nLicense is also granted to make and use derivative works provided that such works are identified as \"derived from the RSA Data Security, Inc. \u003c\u003cvar;name\u003d\"algorithm\";original\u003d\"MD5\";match\u003d\"(MD5|MD4)\"\u003e\u003e Message-Digest Algorithm\" in all material mentioning or referencing the derived work.\n\nRSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided \"as is\" without express or implied warranty of any kind.\n\nThese notices must be retained in any copies of any part of this documentation and/or software.",
+  "name": "RSA Message-Digest License",
   "licenseId": "RSA-MD",
+  "crossRef": [
+    {
+      "isLive": false,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "http://www.faqs.org/rfcs/rfc1321.html",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:53:55"
+    }
+  ],
   "seeAlso": [
     "http://www.faqs.org/rfcs/rfc1321.html"
   ],

@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "Copyright (C) 2007, 2008, 2009, 2010 Karl Berry.\n\nCopyright (C) 1988, 1994, 2007 Stephen Gilmore.\n\nCopyright (C) 1994, 1995, 1996 Torsten Martinsen.\n\nPermission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nPermission is granted to copy and distribute translations of this manual into another language, under the above conditions for modified versions.",
-  "standardLicenseTemplate": "Copyright (C) 2007, 2008, 2009, 2010 Karl Berry.\n\nCopyright (C) 1988, 1994, 2007 Stephen Gilmore.\n\nCopyright (C) 1994, 1995, 1996 Torsten Martinsen.\n\nPermission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nPermission is granted to copy and distribute translations of this manual into another language, under the above conditions for modified versions.",
+  "licenseText": "Copyright (C) 2007, 2008, 2009, 2010 Karl Berry.\nCopyright (C) 1988, 1994, 2007 Stephen Gilmore.\nCopyright (C) 1994, 1995, 1996 Torsten Martinsen.\n\nPermission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nPermission is granted to copy and distribute translations of this manual into another language, under the above conditions for modified versions.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 2007, 2008, 2009, 2010 Karl Berry.\n\nCopyright (C) 1988, 1994, 2007 Stephen Gilmore.\n\nCopyright (C) 1994, 1995, 1996 Torsten Martinsen.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nPermission is granted to make and distribute verbatim copies of this manual provided the copyright notice and this permission notice are preserved on all copies.\n\nPermission is granted to copy and distribute modified versions of this manual under the conditions for verbatim copying, provided that the entire resulting derived work is distributed under the terms of a permission notice identical to this one.\n\nPermission is granted to copy and distribute translations of this manual into another language, under the above conditions for modified versions.",
   "name": "Latex2e License",
   "licenseId": "Latex2e",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Latex2e",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:49:00"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/Latex2e"
   ],

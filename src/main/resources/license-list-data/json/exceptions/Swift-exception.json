@@ -1,0 +1,11 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "### Runtime Library Exception to the Apache 2.0 License: ###\n\nAs an exception, if you use this Software to compile your source code and\nportions of this Software are embedded into the binary product as a result,\nyou may redistribute such product without providing attribution as would\notherwise be required by Sections 4(a), 4(b) and 4(d) of the License.\n",
+  "name": "Swift Exception",
+  "licenseComments": "This exception was created specifically to be used with Apache-2.0",
+  "seeAlso": [
+    "https://swift.org/LICENSE.txt",
+    "https://github.com/apple/swift-package-manager/blob/7ab2275f447a5eb37497ed63a9340f8a6d1e488b/LICENSE.txt#L205"
+  ],
+  "licenseExceptionId": "Swift-exception"
+}

@@ -1,6 +1,6 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseExceptionText": "Bison Exception\n\nAs a special exception, you may create a larger work that contains part or all of the Bison parser skeleton and distribute that work under terms of your choice, so long as that work isn\u0027t itself a parser generator using the skeleton or a modified version thereof as a parser skeleton. Alternatively, if you modify or redistribute the parser skeleton itself, you may (at your option) remove this special exception, which will cause the skeleton and the resulting Bison output files to be licensed under the GNU General Public License without this special exception.\n\nThis special exception was added by the Free Software Foundation in version 2.2 of Bison.",
+  "licenseExceptionText": "Bison Exception\n\nAs a special exception, you may create a larger work that contains part or all of the Bison parser skeleton and distribute that work under terms of your choice, so long as that work isn\u0027t itself a parser generator using the skeleton or a modified version thereof as a parser skeleton. Alternatively, if you modify or redistribute the parser skeleton itself, you may (at your option) remove this special exception, which will cause the skeleton and the resulting Bison output files to be licensed under the GNU General Public License without this special exception.\n\nThis special exception was added by the Free Software Foundation in version 2.2 of Bison.\n",
   "name": "Bison exception 2.2",
   "licenseComments": "Typically used with GPL-2.0 or GPL-3.0",
   "seeAlso": [

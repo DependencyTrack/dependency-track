@@ -1,0 +1,22 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This library (libselinux) is public domain software, i.e. not copyrighted.\n\nWarranty Exclusion\n------------------\nYou agree that this software is a\nnon-commercially developed program that may contain \"bugs\" (as that\nterm is used in the industry) and that it may not function as intended.\nThe software is licensed \"as is\". NSA makes no, and hereby expressly\ndisclaims all, warranties, express, implied, statutory, or otherwise\nwith respect to the software, including noninfringement and the implied\nwarranties of merchantability and fitness for a particular purpose.\n\nLimitation of Liability\n-----------------------\nIn no event will NSA be liable for any damages, including loss of data,\nlost profits, cost of cover, or other special, incidental,\nconsequential, direct or indirect damages arising from the software or\nthe use thereof, however caused and on any theory of liability. This\nlimitation will apply even if NSA has been advised of the possibility\nof such damage. You acknowledge that this is a reasonable allocation of\nrisk.\n",
+  "standardLicenseTemplate": "This library (libselinux) is public domain software, i.e. not copyrighted.\n\nWarranty Exclusion\u003c\u003cbeginOptional\u003e\u003e ------------------\u003c\u003cendOptional\u003e\u003e\n\nYou agree that this software is a non-commercially developed program that may contain \"bugs\" (as that term is used in the industry) and that it may not function as intended. The software is licensed \"as is\". NSA makes no, and hereby expressly disclaims all, warranties, express, implied, statutory, or otherwise with respect to the software, including noninfringement and the implied warranties of merchantability and fitness for a particular purpose.\n\nLimitation of Liability\u003c\u003cbeginOptional\u003e\u003e -----------------------\u003c\u003cendOptional\u003e\u003e\n\nIn no event will NSA be liable for any damages, including loss of data, lost profits, cost of cover, or other special, incidental, consequential, direct or indirect damages arising from the software or the use thereof, however caused and on any theory of liability. This limitation will apply even if NSA has been advised of the possibility of such damage. You acknowledge that this is a reasonable allocation of risk.",
+  "name": "libselinux public domain notice",
+  "licenseId": "libselinux-1.0",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://github.com/SELinuxProject/selinux/blob/master/libselinux/LICENSE",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:48:54"
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/SELinuxProject/selinux/blob/master/libselinux/LICENSE"
+  ],
+  "isOsiApproved": false
+}

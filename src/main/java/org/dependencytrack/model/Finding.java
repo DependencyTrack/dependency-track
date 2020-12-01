@@ -66,7 +66,7 @@ public class Finding implements Serializable {
             "\"CWE\".\"CWEID\"," +
             "\"CWE\".\"NAME\"," +
             "\"ANALYSIS\".\"STATE\"," +
-            "\"ANALYSIS\".\"SUPPRESSED\"," +
+            "\"ANALYSIS\".\"SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +

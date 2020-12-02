@@ -427,8 +427,10 @@
                                    data-url="<c:url value="/api/v1/notification/rule"/>" data-project-view="false"
                                    data-response-handler="formatNotificationAlertTable"
                                    data-show-refresh="true" data-show-columns="true" data-search="true"
-                                   data-detail-view="true" data-detail-formatter="notificationAlertDetailFormatter"
-                                   data-toolbar="#notificationAlertToolbar" data-click-to-select="true" data-height="100%">
+                                   data-detail-view="true" data-detail-formatter="notificationAlertDetailFormatter" data-toolbar="#notificationAlertToolbar"
+                                   data-query-params-type="pageSize" data-side-pagination="server" data-pagination="true"
+                                   data-silent-sort="false" data-page-size="10" data-page-list="[10, 25, 50, 100]"
+                                   data-click-to-select="true" data-height="100%">
                                 <thead>
                                 <tr>
                                     <th data-align="left" data-field="name">Name</th>

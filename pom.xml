@@ -392,4 +392,85 @@
         </plugins>
     </build>
 
+    <profiles>
+
+        <!--
+            The following profile executes this plugin against an instance of Dependency Track.
+            It is behind a profile as you need a running server to communicate with.
+            2 properties must be set on the command line or as environment variables.
+
+            Example usage with command args:
+            mvn validate -Pevaluate-dependencies -Ddependency-track.dependencyTrackBaseUrl=http://host:port -Ddependency-track.dependencyTrackApiKey=abc123
+
+            Example usage with environment variables set (DEPENDENCY_TRACK_BASE_URL & DEPENDENCY_TRACK_API_KEY):
+            mvn validate -Pevaluate-dependencies
+        -->
+        <profile>
+            <id>evaluate-dependencies</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.cyclonedx</groupId>
+                        <artifactId>cyclonedx-maven-plugin</artifactId>
+                        <version>2.0.3</version>
+                        <configuration>
+                            <schemaVersion>1.1</schemaVersion>
+                            <includeBomSerialNumber>true</includeBomSerialNumber>
+                            <includeCompileScope>true</includeCompileScope>
+                            <includeProvidedScope>true</includeProvidedScope>
+                            <includeRuntimeScope>true</includeRuntimeScope>
+                            <includeSystemScope>true</includeSystemScope>
+                            <includeTestScope>false</includeTestScope>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>generate-bom</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>makeAggregateBom</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.github.pmckeown</groupId>
+                        <artifactId>dependency-track-maven-plugin</artifactId>
+                        <version>0.8.6</version>
+                        <configuration>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <dependencyTrackBaseUrl>${env.DEPENDENCY_TRACK_BASE_URL}</dependencyTrackBaseUrl>
+                            <!--suppress UnresolvedMavenProperty -->
+                            <apiKey>${env.DEPENDENCY_TRACK_API_KEY}</apiKey>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>upload-bom</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>upload-bom</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>fail-if-vulnerabilities-present</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>findings</goal>
+                                </goals>
+                                <configuration>
+                                    <findingThresholds>
+                                        <critical>0</critical>
+                                        <high>0</high>
+                                        <medium>0</medium>
+                                        <low>0</low>
+                                    </findingThresholds>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

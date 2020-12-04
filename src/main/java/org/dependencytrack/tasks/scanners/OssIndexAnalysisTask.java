@@ -232,9 +232,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         try (QueryManager qm = new QueryManager()) {
             for (final ComponentReport componentReport: report) {
                 for (final Component c: componentsScanned) {
-                    final Component component = qm.getObjectById(Component.class, c.getId()); // Refresh component and attach to current pm.
                     //final String componentPurl = component.getPurl().canonicalize(); // todo: put this back when minimizePurl() is removed
-                    final String componentPurl = minimizePurl(component.getPurl());
+                    final String componentPurl = minimizePurl(c.getPurl());
                     final PackageURL sonatypePurl = oldPurlResolver(componentReport.getCoordinates());
                     final String minimalSonatypePurl = minimizePurl(sonatypePurl);
                     if (componentPurl.equals(componentReport.getCoordinates()) ||
@@ -242,6 +241,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                         /*
                         Found the component
                          */
+                        final Component component = qm.getObjectById(Component.class, c.getId()); // Refresh component and attach to current pm.
                         for (final ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
                             if (reportedVuln.getCve() != null) {
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
@@ -275,8 +275,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                             }
                         }
                         Event.dispatch(new MetricsUpdateEvent(component));
+                        updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
-                    updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                 }
             }
         }

@@ -124,6 +124,9 @@ public class MetricsUpdateTask implements Subscriber {
             if (projectMetrics.severitySum() > 0) {
                 portfolioCounters.vulnerableProjects++;
             }
+            portfolioCounters.vulnerableComponents += projectMetrics.vulnerableComponents;
+
+            // Policy violations
             portfolioCounters.policyViolationsFail += projectMetrics.policyViolationsFail;
             portfolioCounters.policyViolationsWarn += projectMetrics.policyViolationsWarn;
             portfolioCounters.policyViolationsInfo += projectMetrics.policyViolationsInfo;
@@ -142,6 +145,10 @@ public class MetricsUpdateTask implements Subscriber {
         }
         LOGGER.debug("Project metric iteration complete");
         LOGGER.debug("Retrieving total suppression count for portfolio");
+
+        // Total number of components
+        portfolioCounters.components += toIntExact(qm.getCount(Component.class));
+
         // Total number of suppressions regardless if they are dependencies or components not associated to a project
         portfolioCounters.suppressions = toIntExact(qm.getSuppressedCount());
 

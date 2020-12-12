@@ -304,7 +304,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created Project
      */
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, String purl, boolean active, boolean commitIndex) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, PackageURL purl, boolean active, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -336,7 +336,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, String purl, boolean active, boolean commitIndex) {
+    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, uuid);
         project.setName(name);
         project.setDescription(description);
@@ -364,20 +364,7 @@ public class QueryManager extends AlpineQueryManager {
         project.setDescription(source.getDescription());
         project.setVersion(newVersion);
         project.setActive(source.isActive());
-        if (project.getPurl() != null && newVersion != null) {
-            try {
-                final PackageURL sourcePurl = new PackageURL(project.getPurl());
-                final PackageURL purl = new PackageURL(
-                        sourcePurl.getType(),
-                        sourcePurl.getNamespace(),
-                        sourcePurl.getName(),
-                        newVersion, null, null
-                );
-                project.setPurl(purl.canonicalize());
-            } catch (MalformedPackageURLException e) {
-                // throw it away
-            }
-        }
+        project.setPurl(source.getPurl());
         project.setParent(source.getParent());
         project = persist(project);
 

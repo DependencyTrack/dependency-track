@@ -32,6 +32,7 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
+import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
@@ -174,12 +175,20 @@ public class ProjectResource extends AlpineResource {
     public Response createProject(Project jsonProject) {
         final Validator validator = super.getValidator();
         failOnValidationError(
+                validator.validateProperty(jsonProject, "author"),
+                validator.validateProperty(jsonProject, "publisher"),
+                validator.validateProperty(jsonProject, "group"),
                 validator.validateProperty(jsonProject, "name"),
                 validator.validateProperty(jsonProject, "description"),
                 validator.validateProperty(jsonProject, "version"),
-                validator.validateProperty(jsonProject, "purl")
+                validator.validateProperty(jsonProject, "classifier"),
+                validator.validateProperty(jsonProject, "cpe"),
+                validator.validateProperty(jsonProject, "purl"),
+                validator.validateProperty(jsonProject, "swidTagId")
         );
-
+        if (jsonProject.getClassifier() == null) {
+            jsonProject.setClassifier(Classifier.APPLICATION);
+        }
         try (QueryManager qm = new QueryManager()) {
             Project parent = null;
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
@@ -193,7 +202,7 @@ public class ProjectResource extends AlpineResource {
                         StringUtils.trimToNull(jsonProject.getVersion()),
                         jsonProject.getTags(),
                         parent,
-                        StringUtils.trimToNull(jsonProject.getPurl()),
+                        jsonProject.getPurl(),
                         true,
                         true);
                 return Response.status(Response.Status.CREATED).entity(project).build();
@@ -219,12 +228,20 @@ public class ProjectResource extends AlpineResource {
     public Response updateProject(Project jsonProject) {
         final Validator validator = super.getValidator();
         failOnValidationError(
+                validator.validateProperty(jsonProject, "author"),
+                validator.validateProperty(jsonProject, "publisher"),
+                validator.validateProperty(jsonProject, "group"),
                 validator.validateProperty(jsonProject, "name"),
                 validator.validateProperty(jsonProject, "description"),
                 validator.validateProperty(jsonProject, "version"),
-                validator.validateProperty(jsonProject, "purl")
+                validator.validateProperty(jsonProject, "classifier"),
+                validator.validateProperty(jsonProject, "cpe"),
+                validator.validateProperty(jsonProject, "purl"),
+                validator.validateProperty(jsonProject, "swidTagId")
         );
-
+        if (jsonProject.getClassifier() == null) {
+            jsonProject.setClassifier(Classifier.APPLICATION);
+        }
         try (QueryManager qm = new QueryManager()) {
             Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid());
             if (project != null) {
@@ -242,7 +259,7 @@ public class ProjectResource extends AlpineResource {
                             StringUtils.trimToNull(jsonProject.getDescription()),
                             version,
                             jsonProject.getTags(),
-                            StringUtils.trimToNull(jsonProject.getPurl()),
+                            jsonProject.getPurl(),
                             jsonProject.isActive(),
                             true);
                     return Response.ok(project).build();

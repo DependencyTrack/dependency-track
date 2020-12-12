@@ -26,8 +26,8 @@ package org.dependencytrack.auth;
  */
 public enum Permissions {
 
-    BOM_UPLOAD("Allows the ability to upload CycloneDX and SPDX Bill-of-Material (BOM) documents"),
-    VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, dependencies, and licenses"),
+    BOM_UPLOAD("Allows the ability to upload CycloneDX and SPDX Bill of Materials (BOM)"),
+    VIEW_PORTFOLIO("Provides the ability to view the portfolio of projects, components, and licenses"),
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
     VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities"),
     POLICY_VIOLATION_ANALYSIS("Provides the ability to make analysis decisions on policy violations"),

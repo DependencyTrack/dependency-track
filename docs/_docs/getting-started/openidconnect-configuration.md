@@ -127,8 +127,8 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
           - "ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example"
           - "ALPINE_OIDC_USERNAME_CLAIM=preferred_username"
           - "ALPINE_OIDC_TEAMS_CLAIM=groups"
-          - "ALPINE_USER_PROVISIONING=true"
-          - "ALPINE_TEAM_SYNCHRONIZATION=true"
+          - "ALPINE_OIDC_USER_PROVISIONING=true"
+          - "ALPINE_OIDC_TEAM_SYNCHRONIZATION=true"
 
       dtrack-frontend:
         image: dependencytrack/frontend

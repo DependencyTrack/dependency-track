@@ -231,7 +231,11 @@ public class ModelConverter {
             cycloneComponent.setPublisher(StringUtils.trimToNull(project.getPublisher()));
             cycloneComponent.setGroup(StringUtils.trimToNull(project.getGroup()));
             cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
-            cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
+            if (StringUtils.trimToNull(project.getVersion()) == null) {
+                cycloneComponent.setVersion("SNAPSHOT"); // Version is required per CycloneDX spec
+            } else {
+                cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
+            }
             cycloneComponent.setDescription(StringUtils.trimToNull(project.getDescription()));
             cycloneComponent.setCpe(StringUtils.trimToNull(project.getCpe()));
             if (project.getPurl() != null) {

@@ -190,21 +190,12 @@ public class ProjectResource extends AlpineResource {
             jsonProject.setClassifier(Classifier.APPLICATION);
         }
         try (QueryManager qm = new QueryManager()) {
-            Project parent = null;
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                jsonProject.setParent(qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid()));
             }
             Project project = qm.getProject(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()));
             if (project == null) {
-                project = qm.createProject(
-                        StringUtils.trimToNull(jsonProject.getName()),
-                        StringUtils.trimToNull(jsonProject.getDescription()),
-                        StringUtils.trimToNull(jsonProject.getVersion()),
-                        jsonProject.getTags(),
-                        parent,
-                        jsonProject.getPurl(),
-                        true,
-                        true);
+                project = qm.createProject(jsonProject, jsonProject.getTags(), true);
                 return Response.status(Response.Status.CREATED).entity(project).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();
@@ -250,18 +241,10 @@ public class ProjectResource extends AlpineResource {
                 final Project tmpProject = qm.getProject(name, version);
                 if (tmpProject == null || (tmpProject.getUuid().equals(project.getUuid()))) {
                     // Name cannot be empty or null - prevent it
-                    if (name != null) {
-                        project.setName(name);
+                    if (name == null) {
+                        jsonProject.setName(project.getName());
                     }
-                    project = qm.updateProject(
-                            jsonProject.getUuid(),
-                            name,
-                            StringUtils.trimToNull(jsonProject.getDescription()),
-                            version,
-                            jsonProject.getTags(),
-                            jsonProject.getPurl(),
-                            jsonProject.isActive(),
-                            true);
+                    project = qm.updateProject(jsonProject, true);
                     return Response.ok(project).build();
                 } else {
                     return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();

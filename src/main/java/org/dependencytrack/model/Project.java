@@ -99,12 +99,14 @@ public class Project implements Serializable {
     @Persistent
     @Column(name = "AUTHOR", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
     private String author;
 
     @Persistent
     @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
     private String publisher;
 
@@ -112,6 +114,7 @@ public class Project implements Serializable {
     @Column(name = "GROUP", jdbcType = "VARCHAR")
     @Index(name = "PROJECT_GROUP_IDX")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
     private String group;
 
@@ -146,6 +149,7 @@ public class Project implements Serializable {
     @Persistent
     @Index(name = "PROJECT_CPE_IDX")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     //Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
     @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
@@ -159,6 +163,7 @@ public class Project implements Serializable {
     @Persistent
     @Index(name = "PROJECT_SWID_TAGID_IDX")
     @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The SWID tagId may only contain printable characters")
     private String swidTagId;
 

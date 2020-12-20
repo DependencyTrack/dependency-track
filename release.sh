@@ -29,29 +29,46 @@ elif [ -d ".svn" ]; then
     svn commit -m "Preparing to release $RELEASE_VERSION"
 fi
 
-# Default build produces traditional war. Exit on failure.
-mvn clean package -Dmaven.test.skip=true
-if [[ "$?" -ne 0 ]] ; then
-  echo 'Aborting release due to build failure'; exit $rc
-fi
-# Build embedded Jetty distribution. Exit on failure
+
+mvn clean
+# Builds the embedded Jetty API Server distribution
 mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 if [[ "$?" -ne 0 ]] ; then
   echo 'Aborting release due to build failure'; exit $rc
 fi
+
+# Builds the embedded Jetty bundled UI distribution
+mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+if [[ "$?" -ne 0 ]] ; then
+  echo 'Aborting release due to build failure'; exit $rc
+fi
+
+# Builds the traditional war with bundled UI distribution
+mvn package -Dmaven.test.skip=true -P bundle-ui
+if [[ "$?" -ne 0 ]] ; then
+  echo 'Aborting release due to build failure'; exit $rc
+fi
+
+
 mvn net.nicoulaj.maven.plugins:checksum-maven-plugin:files
 mvn github-release:release
 
 
 # Cleanup containers/images, build new image and push to Docker Hub
-REPO=owasp/dependency-track
+APISERVER_REPO=dependencytrack/apiserver
+BUNDLED_REPO=dependencytrack/bundled
 docker rm dependency-track
-docker rmi $REPO:latest
-docker rmi $REPO:$RELEASE_VERSION
-docker build -f src/main/docker/Dockerfile -t $REPO:$RELEASE_VERSION -t $REPO:latest .
+docker rmi $APISERVER_REPO:latest
+docker rmi $APISERVER_REPO:$RELEASE_VERSION
+docker rmi $BUNDLED_REPO:latest
+docker rmi $BUNDLED_REPO:$RELEASE_VERSION
+docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.war -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest .
+docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.war -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest .
 docker login
-docker push $REPO:latest
-docker push $REPO:$RELEASE_VERSION
+docker push $APISERVER_REPO:latest
+docker push $APISERVER_REPO:$RELEASE_VERSION
+docker push $BUNDLED_REPO:latest
+docker push $BUNDLED_REPO:$RELEASE_VERSION
 
 
 # Version bump to prepare next snapshot

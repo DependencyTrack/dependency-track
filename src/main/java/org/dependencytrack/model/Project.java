@@ -156,7 +156,6 @@ public class Project implements Serializable {
 
     @Persistent
     @Index(name = "PROJECT_PURL_IDX")
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
     private String purl;
 

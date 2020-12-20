@@ -55,7 +55,7 @@ jobs:
     - name: Building Docker bundled container
       run: |
         docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.war -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
-    - name: Publishing API Server container to Docker Hub
+    - name: Publishing bundled container to Docker Hub
       env:
         HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
         HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}

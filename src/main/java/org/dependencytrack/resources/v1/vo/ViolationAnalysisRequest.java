@@ -23,9 +23,7 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.ViolationAnalysisState;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 

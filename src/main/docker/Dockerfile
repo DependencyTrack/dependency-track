@@ -47,5 +47,8 @@ ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=90.0"
 # Example: /dtrack
 ENV CONTEXT=""
 
+# Injects the build-time ARG "WAR_FILENAME" as an environment variable that can be used in the CMD.
+ENV WAR_FILENAME ${WAR_FILENAME}
+
 # Add a healthcheck using the Dependency-Track version API
 HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}/api/version || exit 1

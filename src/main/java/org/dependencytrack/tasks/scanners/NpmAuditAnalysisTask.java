@@ -121,7 +121,16 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @param components a list of ComponentsOssIndexAnalysisTask
      */
     public void analyze(final List<Component> components) {
-        final ArrayList<Component> backlog = new ArrayList<>(components);
+        final ArrayList<Component> backlog = new ArrayList<>();
+        for (final Component component: components) {
+            if (!component.isInternal() && isCapable(component.getPurl())) {
+                if (!isCacheCurrent(Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString())) {
+                    backlog.add(component);
+                } else {
+                    applyAnalysisFromCache(Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity());
+                }
+            }
+        }
         while (!backlog.isEmpty()) {
             // Defines a Map of Components to analyze
             final Map<String, Component> npmCandidates = new HashMap<>();
@@ -134,14 +143,10 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
                 final Component component = iterator.next();
                 final PackageURL purl = component.getPurl();
                 final String npmPackageName = purlToNpmName(component.getPurl());
-                if (!component.isInternal() && isCapable(purl)) {
-                    if (!npmCandidates.containsKey(npmPackageName)) {
-                        npmCandidates.put(npmPackageName, component);
-                        npmRequires.put(npmPackageName, purl.getVersion());
-                        npmDependencies.put(npmPackageName, new JSONObject().put("version", purl.getVersion()));
-                        iterator.remove(); // Remove the current component being iterated on
-                    }
-                } else {
+                if (!npmCandidates.containsKey(npmPackageName)) {
+                    npmCandidates.put(npmPackageName, component);
+                    npmRequires.put(npmPackageName, purl.getVersion());
+                    npmDependencies.put(npmPackageName, new JSONObject().put("version", purl.getVersion()));
                     iterator.remove(); // Remove the current component being iterated on
                 }
             }
@@ -194,39 +199,37 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
     private void processResults(final List<Component> components, final List<Advisory> advisories) {
         LOGGER.info("Processing NPM advisories");
         try (QueryManager qm = new QueryManager()) {
-            for (final Advisory advisory: advisories) {
-                final Component c = getComponentFromAdvisory(components, advisory);
-                if (c == null) { break; }
+            for (final Component c: components) {
+                final List<Advisory> componentAdvisories = getComponentFromAdvisories(advisories, c);
                 final Component component = qm.getObjectById(Component.class, c.getId());
-                final Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
-                if (component != null && vulnerability != null) {
+                for (final Advisory advisory: componentAdvisories) {
+                    final Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
                     NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                     addVulnerabilityToCache(component, vulnerability);
                 }
                 Event.dispatch(new MetricsUpdateEvent(component));
-            }
-            for (final Component component: components) {
                 updateAnalysisCacheStats(qm, Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
             }
         }
     }
 
     /**
-     * Resolves a Component from the metadata in the advisory.
+     * Returns advisories for a given component.
      */
-    private Component getComponentFromAdvisory(final List<Component> components, final Advisory advisory) {
-        for (final Component component: components) {
-            final PackageURL purl = component.getPurl();
-            if (purl != null) {
+    private List<Advisory> getComponentFromAdvisories(final List<Advisory> advisories, final Component component) {
+        final List<Advisory> componentAdvisories = new ArrayList<>();
+        final PackageURL purl = component.getPurl();
+        if (purl != null) {
+            for (final Advisory advisory : advisories) {
                 final String npmPackageName = purlToNpmName(purl);
                 if (npmPackageName.equalsIgnoreCase(advisory.getModuleName())
                         && purl.getVersion().equalsIgnoreCase(advisory.getVersion())) {
-                    return component;
+                    componentAdvisories.add(advisory);
                 }
             }
         }
-        return null;
+        return componentAdvisories;
     }
 
     /**

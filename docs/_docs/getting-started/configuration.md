@@ -107,7 +107,7 @@ alpine.database.pool.enabled=true
 # Optional
 # This property controls the maximum size that the pool is allowed to reach,
 # including both idle and in-use connections.
-alpine.database.pool.max.size=10
+alpine.database.pool.max.size=20
 
 # Optional
 # This property controls the maximum amount of time that a connection is
@@ -273,7 +273,7 @@ alpine.ldap.team.synchronization=false
 # The following are default values
 #alpine.cors.enabled=true
 #alpine.cors.allow.origin=*
-#alpine.cors.allow.methods=GET POST PUT DELETE OPTIONS
+#alpine.cors.allow.methods=GET, POST, PUT, DELETE, OPTIONS
 #alpine.cors.allow.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *
 #alpine.cors.expose.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
 #alpine.cors.allow.credentials=true

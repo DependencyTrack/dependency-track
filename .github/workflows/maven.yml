@@ -13,7 +13,8 @@ jobs:
         #java: [ '1.8.0', '11.0.x' ]
         java: [ '1.8.0' ]
     env:
-      DOCKER_REPO: owasp/dependency-track
+      DOCKER_APISERVER_REPO: dependencytrack/apiserver
+      DOCKER_BUNDLED_REPO: dependencytrack/bundled
       DOCKER_TAG: snapshot
     steps:
     - uses: actions/checkout@v1
@@ -33,24 +34,38 @@ jobs:
         tar zxvf ~/trivy.tar.gz -C ~/
     - name: Build with Maven
       run: |
-        mvn clean package
-        mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+        mvn clean
+        mvn package -Dmaven.test.skip=true -P clean-exclude-wars -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+        mvn clean -P clean-exclude-wars
+        mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+        mvn clean -P clean-exclude-wars
+        mvn package -Dmaven.test.skip=true -P bundle-ui
+        mvn clean -P clean-exclude-wars
+        mvn test
     - name: Publish test coverage
+      if: github.ref == 'refs/heads/master'
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
-    - name: Building Docker container
+    - name: Building Docker API Server container
       run: |
-        docker build -f src/main/docker/Dockerfile -t $DOCKER_REPO:$DOCKER_TAG .
-    - name: Publishing container to Docker Hub
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.war -t $DOCKER_APISERVER_REPO:$DOCKER_TAG .
+    - name: Publishing API Server container to Docker Hub
+      if: github.ref == 'refs/heads/master'
       env:
         HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
         HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |
         docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
-        docker push $DOCKER_REPO:$DOCKER_TAG;
-    - name: Analyzing Docker container
+        docker push $DOCKER_APISERVER_REPO:$DOCKER_TAG;
+    - name: Building Docker bundled container
       run: |
-        ~/dockle $DOCKER_REPO:$DOCKER_TAG
-        ~/trivy --exit-code 0 --quiet --auto-refresh $DOCKER_REPO:$DOCKER_TAG
-        # ~/trivy --exit-code 1 --severity CRITICAL --quiet --auto-refresh $DOCKER_REPO:$DOCKER_TAG
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.war -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
+    - name: Publishing bundled container to Docker Hub
+      if: github.ref == 'refs/heads/master'
+      env:
+        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
+        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
+      run: |
+        docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
+        docker push $DOCKER_BUNDLED_REPO:$DOCKER_TAG;

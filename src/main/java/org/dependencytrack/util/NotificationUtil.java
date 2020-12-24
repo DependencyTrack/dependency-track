@@ -197,7 +197,9 @@ public final class NotificationUtil {
         JsonUtil.add(projectBuilder, "name", project.getName());
         JsonUtil.add(projectBuilder, "version", project.getVersion());
         JsonUtil.add(projectBuilder, "description", project.getDescription());
-        JsonUtil.add(projectBuilder, "purl", project.getPurl());
+        if (project.getPurl() != null) {
+            projectBuilder.add("purl", project.getPurl().canonicalize());
+        }
         if (project.getTags() != null && project.getTags().size() > 0) {
             final StringBuilder sb = new StringBuilder();
             for (final Tag tag: project.getTags()) {

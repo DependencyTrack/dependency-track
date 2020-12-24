@@ -5,7 +5,7 @@ title: ''
 labels: question
 assignees: ''
 ---
-All questions should be directed to the Dependency-Track Slack channel.
+All questions should be directed to the Dependency-Track Slack channel or to GitHub discussions
 Questions submitted through GitHub issues will be closed.
 
 Slack channel
@@ -13,6 +13,9 @@ Slack channel
 
 Slack invite
   - https://dependencytrack.org/slack/invite
+  
+GitHub discussions
+  - https://github.com/DependencyTrack/dependency-track/discussions
 
 Groups.io (mailing list)
   - https://dependencytrack.org/discussion

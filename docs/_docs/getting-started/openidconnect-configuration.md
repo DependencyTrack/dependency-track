@@ -7,8 +7,8 @@ order: 9
 
 > OpenID Connect is supported in Dependency-Track 4.0.0 and above
 
-In the context of OAuth2 / OIDC, Dependency-Track's frontend acts as client while the backend acts as resource server (see [OAuth2 roles](https://tools.ietf.org/html/rfc6749#section-1.1)).
-Due to this, the frontend requires additional configuration, which is currently only supported when deploying it separately from the backend.
+In the context of OAuth2 / OIDC, Dependency-Track's frontend acts as *client* while the API server acts as *resource server* (see [OAuth2 roles](https://tools.ietf.org/html/rfc6749#section-1.1)).
+Due to this, the frontend requires additional configuration, which is currently only supported when deploying it separately from the API server.
 Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. "Classic" Dependency-Track deployments using solely the [WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-war.md %}) or [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
 
 If configured properly, users will be able to sign in by clicking the *OpenID* button on the login page:
@@ -18,48 +18,48 @@ If configured properly, users will be able to sign in by clicking the *OpenID* b
 
 Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
 Multiple identity providers have been tested, the following are some example configurations that are known to work. 
-Note that some providers may not support specific features like team synchronization, or require further configuration.
+Note that some providers may not support specific features like team synchronization, or require further configuration to make them work.
 If you find that the provider of your choice does not work with Dependency-Track, please [file an issue](https://github.com/DependencyTrack/dependency-track/issues).
 
 For a complete overview of available configuration options for both backend and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}).
 
 #### Auth0
 
-| Backend                                                               | Frontend                                        |
-|:----------------------------------------------------------------------|:------------------------------------------------|
-| alpine.oidc.enabled=true                                              | OIDC_CLIENT_ID=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM |
-| alpine.oidc.issuer=https://example.auth0.com                          | OIDC_ISSUER=https://example.auth0.com           |
-| alpine.oidc.username.claim=nickname                                   |                                                 |
-| alpine.oidc.user.provisioning=true                                    |                                                 |
-| alpine.oidc.teams.claim=groups<span style="color:red">*</span>        |                                                 |
-| alpine.oidc.team.synchronization=true<span style="color:red">*</span> |                                                 |
+| API server                                                               | Frontend                                        |
+|:-------------------------------------------------------------------------|:------------------------------------------------|
+| alpine.oidc.enabled=true                                                 | OIDC_CLIENT_ID=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM |
+| alpine.oidc.issuer=https://example.auth0.com                             | OIDC_ISSUER=https://example.auth0.com           |
+| alpine.oidc.username.claim=nickname                                      |                                                 |
+| alpine.oidc.user.provisioning=true                                       |                                                 |
+| alpine.oidc.teams.claim=groups<span style="color:red">*</span>           |                                                 |
+| alpine.oidc.team.synchronization=true<span style="color:red">*</span>    |                                                 |
 
 <span style="color:red">*</span> Requires [additional configuration](https://auth0.com/docs/extensions/authorization-extension/use-rules-with-the-authorization-extension)
 
 #### GitLab (gitlab.com)
 
-| Backend                               | Frontend                                                                        |
-|:--------------------------------------|:--------------------------------------------------------------------------------|
-| alpine.oidc.enabled=true              | OIDC_CLIENT_ID=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be |
-| alpine.oidc.issuer=https://gitlab.com | OIDC_ISSUER=https://gitlab.com                                                  |
-| alpine.oidc.username.claim=nickname   |                                                                                 |
-| alpine.oidc.user.provisioning=true    |                                                                                 |
-| alpine.oidc.teams.claim=groups        |                                                                                 |
-| alpine.oidc.team.synchronization=true |                                                                                 |
+| API server                               | Frontend                                                                        |
+|:-----------------------------------------|:--------------------------------------------------------------------------------|
+| alpine.oidc.enabled=true                 | OIDC_CLIENT_ID=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be |
+| alpine.oidc.issuer=https://gitlab.com    | OIDC_ISSUER=https://gitlab.com                                                  |
+| alpine.oidc.username.claim=nickname      |                                                                                 |
+| alpine.oidc.user.provisioning=true       |                                                                                 |
+| alpine.oidc.teams.claim=groups           |                                                                                 |
+| alpine.oidc.team.synchronization=true    |                                                                                 |
 
 > gitlab.com currently does not set the required CORS headers, see GitLab issue [#209259](https://gitlab.com/gitlab-org/gitlab/-/issues/209259).  
 > For on-premise installations, this could be fixed by setting the required headers via reverse proxy.  
 
 #### Keycloak
 
-| Backend                                                               | Frontend                                                 |
-|:----------------------------------------------------------------------|:---------------------------------------------------------|
-| alpine.oidc.enabled=true                                              | OIDC_CLIENT_ID=dependency-track                          |
-| alpine.oidc.issuer=https://auth.example.com/auth/realms/example       | OIDC_ISSUER=https://auth.example.com/auth/realms/example |
-| alpine.oidc.username.claim=preferred_username                         |                                                          |
-| alpine.oidc.user.provisioning=true                                    |                                                          |
-| alpine.oidc.teams.claim=groups<span style="color:red">*</span>        |                                                          |
-| alpine.oidc.team.synchronization=true<span style="color:red">*</span> |                                                          |
+| API server                                                               | Frontend                                                 |
+|:-------------------------------------------------------------------------|:---------------------------------------------------------|
+| alpine.oidc.enabled=true                                                 | OIDC_CLIENT_ID=dependency-track                          |
+| alpine.oidc.issuer=https://auth.example.com/auth/realms/example          | OIDC_ISSUER=https://auth.example.com/auth/realms/example |
+| alpine.oidc.username.claim=preferred_username                            |                                                          |
+| alpine.oidc.user.provisioning=true                                       |                                                          |
+| alpine.oidc.teams.claim=groups<span style="color:red">*</span>           |                                                          |
+| alpine.oidc.team.synchronization=true<span style="color:red">*</span>    |                                                          |
 
 <span style="color:red">*</span> Requires additional configuration, see [Example setup with Keycloak](#example-setup-with-keycloak)
 
@@ -70,17 +70,18 @@ The following steps demonstrate how to setup OpenID Connect with Keycloak. Most 
 > This guide assumes that: 
 >   * the Dependency-Track frontend has been deployed to `http://dependencytrack.example.com`
 >   * a Keycloak instance is available at `https://auth.example.com`
+>   * the realm *example* has been created in Keycloak
 
 1. Configure the client as shown below:
 ![Keycloak: Configure client](/images/screenshots/oidc-keycloak-client-settings.png)
   * Client ID: `dependency-track`
   * Access Type: `public`
   * Standard Flow Enabled: `ON`
-  * Valid Redirect URIs: `<DTRACK_FRONTEND_URL>/static/oidc-callback.html`
-  * Web Origins: `<DTRACK_FRONTEND_URL>`
+  * Valid Redirect URIs: `http://dependencytrack.example.com/static/oidc-callback.html`
+  * Web Origins: `http://dependencytrack.example.com`
 
 2. To be able to synchronize team memberships, create a *protocol mapper* that includes group memberships as `groups` in
-the /userinfo endpoint:
+the `/userinfo` endpoint:
 ![Keycloak: Create protocol mapper for groups](/images/screenshots/oidc-keycloak-create-protocol-mapper.png) 
   * Mapper Type: `Group Membership`
   * Token Claim Name: `groups`
@@ -89,8 +90,8 @@ the /userinfo endpoint:
 3. Create some groups, e.g. `DTRACK_ADMINS` and `DTRACK_USERS`:
 ![Keycloak: Groups](/images/screenshots/oidc-keycloak-groups.png)
 
-4. Verify that all required claims are present in the /userinfo endpoint
-  * Acquire an access token for a user and call /userinfo with it
+4. Verify that all required claims are present in the `/userinfo` endpoint
+  * Acquire an access token for a user and call `/userinfo` with it
   * You can temporarily set *Direct Access Grants Enabled* to `ON` in the client settings to enable the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3)
 ```
 $ ACCESS_TOKEN=$(curl https://auth.example.com/auth/realms/example/protocol/openid-connect/token \
@@ -127,8 +128,8 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
           - "ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example"
           - "ALPINE_OIDC_USERNAME_CLAIM=preferred_username"
           - "ALPINE_OIDC_TEAMS_CLAIM=groups"
-          - "ALPINE_USER_PROVISIONING=true"
-          - "ALPINE_TEAM_SYNCHRONIZATION=true"
+          - "ALPINE_OIDC_USER_PROVISIONING=true"
+          - "ALPINE_OIDC_TEAM_SYNCHRONIZATION=true"
 
       dtrack-frontend:
         image: dependencytrack/frontend

@@ -19,7 +19,6 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
-import com.github.packageurl.PackageURL;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;

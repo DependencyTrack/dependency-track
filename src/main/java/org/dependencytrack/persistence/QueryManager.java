@@ -304,7 +304,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created Project
      */
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, String purl, boolean active, boolean commitIndex) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, PackageURL purl, boolean active, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -325,6 +325,23 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Creates a new Project.
+     * @param project the project to create
+     * @param tags a List of Tags - these will be resolved if necessary
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the created Project
+     */
+    public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
+        final Project result = persist(project);
+        final List<Tag> resolvedTags = resolveTags(tags);
+        bind(project, resolvedTags);
+
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
+        return result;
+    }
+
+    /**
      * Updates an existing Project.
      * @param uuid the uuid of the project to update
      * @param name the name of the project
@@ -336,7 +353,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, String purl, boolean active, boolean commitIndex) {
+    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, uuid);
         project.setName(name);
         project.setDescription(description);
@@ -345,6 +362,35 @@ public class QueryManager extends AlpineQueryManager {
         project.setActive(active);
 
         final List<Tag> resolvedTags = resolveTags(tags);
+        bind(project, resolvedTags);
+
+        final Project result = persist(project);
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
+        return result;
+    }
+
+    /**
+     * Updates an existing Project.
+     * @param transientProject the project to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the updated Project
+     */
+    public Project updateProject(Project transientProject, boolean commitIndex) {
+        final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+        project.setAuthor(transientProject.getAuthor());
+        project.setPublisher(transientProject.getPublisher());
+        project.setGroup(transientProject.getGroup());
+        project.setName(transientProject.getName());
+        project.setDescription(transientProject.getDescription());
+        project.setVersion(transientProject.getVersion());
+        project.setClassifier(transientProject.getClassifier());
+        project.setCpe(transientProject.getCpe());
+        project.setPurl(transientProject.getPurl());
+        project.setSwidTagId(transientProject.getSwidTagId());
+        project.setActive(transientProject.isActive());
+
+        final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
         bind(project, resolvedTags);
 
         final Project result = persist(project);
@@ -364,20 +410,7 @@ public class QueryManager extends AlpineQueryManager {
         project.setDescription(source.getDescription());
         project.setVersion(newVersion);
         project.setActive(source.isActive());
-        if (project.getPurl() != null && newVersion != null) {
-            try {
-                final PackageURL sourcePurl = new PackageURL(project.getPurl());
-                final PackageURL purl = new PackageURL(
-                        sourcePurl.getType(),
-                        sourcePurl.getNamespace(),
-                        sourcePurl.getName(),
-                        newVersion, null, null
-                );
-                project.setPurl(purl.canonicalize());
-            } catch (MalformedPackageURLException e) {
-                // throw it away
-            }
-        }
+        project.setPurl(source.getPurl());
         project.setParent(source.getParent());
         project = persist(project);
 

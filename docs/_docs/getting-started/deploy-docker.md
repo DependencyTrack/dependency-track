@@ -40,9 +40,20 @@ can be used with `docker-compose` or `docker stack deploy`.
 
 ```yaml
 version: '3.7'
+
+#####################################################
+# This Docker Compose file contains two services
+#    Dependency-Track API Server
+#    Dependency-Track FrontEnd
+#####################################################
+
+volumes:
+  dependency-track:
+
 services:
-  dtrack:
-    #environment:
+  dtrack-apiserver:
+    image: dependencytrack/apiserver
+    # environment:
     # The Dependency-Track container can be configured using any of the
     # available configuration properties defined in:
     # https://docs.dependencytrack.org/getting-started/configuration/
@@ -61,7 +72,7 @@ services:
     # - ALPINE_DATABASE_POOL_MAX_LIFETIME=600000
     #
     # Optional LDAP Properties
-    # - ALPINE_LDAP_ENABLED=
+    # - ALPINE_LDAP_ENABLED=true
     # - ALPINE_LDAP_SERVER_URL=ldap://ldap.example.com:389
     # - ALPINE_LDAP_BASEDN=dc=example,dc=com
     # - ALPINE_LDAP_SECURITY_AUTH=simple
@@ -76,6 +87,14 @@ services:
     # - ALPINE_LDAP_USERS_SEARCH_FILTER=(&(objectClass=user)(objectCategory=Person)(cn=*{SEARCH_TERM}*))
     # - ALPINE_LDAP_USER_PROVISIONING=false
     # - ALPINE_LDAP_TEAM_SYNCHRONIZATION=false
+    #
+    # Optional OpenID Connect (OIDC) Properties
+    # - ALPINE_OIDC_ENABLED=true
+    # - ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example
+    # - ALPINE_OIDC_USERNAME_CLAIM=preferred_username
+    # - ALPINE_OIDC_TEAMS_CLAIM=groups
+    # - ALPINE_OIDC_USER_PROVISIONING=true
+    # - ALPINE_OIDC_TEAM_SYNCHRONIZATION=true
     #
     # Optional HTTP Proxy Settings
     # - ALPINE_HTTP_PROXY_ADDRESS=proxy.example.com
@@ -92,7 +111,6 @@ services:
     # - ALPINE_CORS_EXPOSE_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
-    image: 'owasp/dependency-track'
     deploy:
       resources:
         limits:
@@ -102,9 +120,26 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-    - '80:8080'
+      - '8081:8080'
     volumes:
-    - './data:/data'
+      - 'dependency-track:/data'
+    restart: unless-stopped
+
+  dtrack-frontend:
+    image: dependencytrack/frontend
+    depends_on:
+      - dtrack-apiserver
+    environment:
+      - API_BASE_URL=http://localhost:8081
+      # - "OIDC_ISSUER="
+      # - "OIDC_CLIENT_ID="
+      # - "OIDC_SCOPE="
+      # - "OIDC_FLOW="
+      # volumes:
+      # - "/host/path/to/config.json:/app/static/config.json"
+    ports:
+      - "8080:80"
+    restart: unless-stopped
 ```
 
 ### Bundled JDBC Drivers

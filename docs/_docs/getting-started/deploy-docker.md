@@ -11,13 +11,42 @@ other than a modern version of Docker.
 > The 'latest' tag in Docker Hub will always refer to the latest stable GA release. Consult the GitHub repo
 > for instructions on how to run untested snapshot releases.
 
-### Container Requirements
+### Container Requirements (API Server)
 
 | Minimum     | Recommended |
 | :---------- | :---------- |
 | 4.5GB RAM   | 16GB RAM    |
 | 2 CPU cores | 4 CPU cores |
 
+### Container Requirements (Front End)
+
+| Minimum     | Recommended |
+| :---------- | :---------- |
+| 512MB RAM   | 1GB RAM    |
+| 1 CPU cores | 2 CPU cores |
+
+### Quickstart (Docker Compose)
+
+```bash
+# Downloads the latest Docker Compose file
+curl -LO https://dependencytrack.org/docker-compose.yml
+
+# Starts the stack using Docker Compose
+docker-compose up -d
+```
+
+### Quickstart (Docker Swarm)
+
+```bash
+# Downloads the latest Docker Compose file
+curl -LO https://dependencytrack.org/docker-compose.yml
+
+# Initializes Docker Swarm (if not previously initialized)
+docker swarm init
+
+# Starts the stack using Docker Swarm
+docker stack deploy -c docker-compose.yml dtrack
+```
 
 ### Quickstart (Manual Execution)
 
@@ -28,8 +57,8 @@ docker pull owasp/dependency-track
 # Creates a dedicated volume where data can be stored outside the container
 docker volume create --name dependency-track
 
-# Run the container with 8GB RAM on port 8080
-docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
+# Run the bundled container with 8GB RAM on port 8080
+docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:/data dependencytrack/bundled
 ```
 
 ### Docker Compose (Automated / Orchestration)

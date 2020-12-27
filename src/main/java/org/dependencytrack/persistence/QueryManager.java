@@ -1133,6 +1133,7 @@ public class QueryManager extends AlpineQueryManager {
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -1152,6 +1153,7 @@ public class QueryManager extends AlpineQueryManager {
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }

@@ -95,6 +95,8 @@ public class PolicyViolation implements Serializable {
     @NotNull
     private UUID uuid;
 
+    private transient ViolationAnalysis analysis;
+
     public long getId() {
         return id;
     }
@@ -154,6 +156,14 @@ public class PolicyViolation implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public ViolationAnalysis getAnalysis() {
+        return analysis;
+    }
+
+    public void setAnalysis(ViolationAnalysis analysis) {
+        this.analysis = analysis;
     }
 }
 

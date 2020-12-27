@@ -35,7 +35,7 @@
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
-    <description>Dependency-Track is an intelligent software supply-chain component analysis platform that allows organizations to identify and reduce risk from the use of third-party and open source components.</description>
+    <description>Dependency-Track is an intelligent component analysis platform that allows organizations to identify and reduce risk in the software supply chain.</description>
     <inceptionYear>2013</inceptionYear>
     <organization>
         <name>OWASP</name>

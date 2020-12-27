@@ -58,6 +58,6 @@ CI/CD environments.
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com
 [Component Analysis]: https://owasp.org/www-community/Component_Analysis
-[Software Bill-of-Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
+[Software Bill of Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
 [CycloneDX]: https://cyclonedx.org
 [SPDX]: https://spdx.org/

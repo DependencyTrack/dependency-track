@@ -27,7 +27,7 @@ by default and does not require an account.
 
 The analyzers run asynchronously. After you enable an analyzer it is not immediately run.
 You have to wait some time until the analyzers are scheduled, currently this is 6 hours.  
-You can also trigger the analysis of one project by re-uploading a BOM for the project.  
+You can also trigger the analysis of one project by re-uploading a SBOM for the project.  
 Restarting Dependency Track will not run the analyzers either, it will just reset the clock.
 
 #### Why is the local NVD mirror not used?
@@ -61,7 +61,7 @@ alternative path to where you want DT temp files to reside.
 
 #### Why is there a delay with LDAP synchronization?
 
-For auto-provisioned accounts, LDAP synchronization is performed on-demand and utilizes the same async job scheduling queue that all other jobs use. If the system is busy processing other jobs (mirroring the NVD or processing lots of BOMs simultaneously for example), there might be a slight delay provisioning the account (which includes permission sync). If the LDAP account is manually created in DT, then synchronization has already happened and there shouldn’t be a delay.
+For auto-provisioned accounts, LDAP synchronization is performed on-demand and utilizes the same async job scheduling queue that all other jobs use. If the system is busy processing other jobs (mirroring the NVD or processing lots of SBOMs simultaneously for example), there might be a slight delay provisioning the account (which includes permission sync). If the LDAP account is manually created in DT, then synchronization has already happened and there shouldn’t be a delay.
 
 #### Breaking changes with Java 11
 

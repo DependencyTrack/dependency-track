@@ -15,7 +15,7 @@ measuring and improving software supply chain assurance. The guidance includes f
 guidance for supplier evaluation.
 
 Once obtained, SBOMs can be manually uploaded to Dependency-Track for analysis. First, create a new project that 
-corresponds to the software and version being procured. Then, upload the BOM for analysis.
+corresponds to the software and version being procured. Then, upload the SBOM for analysis.
 
 This will provide complete visibility of component inventory, vulnerabilities, outdated component status, and 
 policy violations. If the software being procurred will eventually be deployed to production, simply keep the project

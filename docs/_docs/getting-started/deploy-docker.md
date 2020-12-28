@@ -52,7 +52,7 @@ docker stack deploy -c docker-compose.yml dtrack
 
 ```bash
 # Pull the image from the Docker Hub OWASP repo
-docker pull owasp/dependency-track
+docker pull dependencytrack/bundled
 
 # Creates a dedicated volume where data can be stored outside the container
 docker volume create --name dependency-track

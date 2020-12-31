@@ -108,6 +108,7 @@ public class ComponentResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
+                final Project project = component.getProject(); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
                 return Response.ok(component).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();

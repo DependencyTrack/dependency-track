@@ -18,7 +18,7 @@ generating CycloneDX BOMs from various build systems.
 > ingestion of files as well as changes to the components via REST or from the user interface. All 
 > components in Dependency-Track, regardless of changes, are automatically analyzed on a daily basis.
 
-The [Dependency-Track Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) is the 
+The [Dependency-Track Jenkins Plugin](https://plugins.jenkins.io/dependency-track/) is the 
 recommended method for publishing CycloneDX BOMs to Dependency-Track in a Jenkins environment.
 
 For other environments, cURL (or similar) can be used. 

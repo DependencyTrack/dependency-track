@@ -1124,8 +1124,11 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations(final Project project) {
+    public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project.id == :pid");
+        if (!includeSuppressed) {
+            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
@@ -1144,8 +1147,11 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations(final Component component) {
+    public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component.id == :cid");
+        if (!includeSuppressed) {
+            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc");
         }
@@ -1163,8 +1169,11 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations() {
+    public PaginatedResult getPolicyViolations(boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (!includeSuppressed) {
+            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
         }
@@ -1172,6 +1181,7 @@ public class QueryManager extends AlpineQueryManager {
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }

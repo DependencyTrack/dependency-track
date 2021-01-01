@@ -66,7 +66,7 @@ public class PolicyViolationResource extends AlpineResource {
     public Response getViolations(@ApiParam(value = "Optionally includes suppressed violations")
                                       @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getPolicyViolations();
+            final PaginatedResult result = qm.getPolicyViolations(suppressed);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
@@ -91,7 +91,7 @@ public class PolicyViolationResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final PaginatedResult result = qm.getPolicyViolations(project);
+                final PaginatedResult result = qm.getPolicyViolations(project, suppressed);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
@@ -119,7 +119,7 @@ public class PolicyViolationResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
-                final PaginatedResult result = qm.getPolicyViolations(component);
+                final PaginatedResult result = qm.getPolicyViolations(component, suppressed);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();

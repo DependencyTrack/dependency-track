@@ -86,6 +86,9 @@ public class PolicyViolation implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The text may only contain printable characters")
     private String text;
 
+    @Persistent(mappedBy="policyViolation", defaultFetchGroup = "true")
+    private  ViolationAnalysis analysis;
+
     /**
      * The unique identifier of the object.
      */
@@ -94,8 +97,6 @@ public class PolicyViolation implements Serializable {
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
-
-    private transient ViolationAnalysis analysis;
 
     public long getId() {
         return id;

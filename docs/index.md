@@ -33,6 +33,7 @@ CI/CD environments.
   * License risk and compliance
   * Operational risk and compliance
 * Ecosystem agnostic with built-in repository support for:
+  * Composer (PHP)
   * Gems (Ruby)
   * Hex (Erlang/Elixir)
   * Maven (Java)

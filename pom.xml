@@ -243,6 +243,12 @@
             <artifactId>woodstox-core</artifactId>
             <version>6.2.3</version>
         </dependency>
+        <!-- Package version parsing -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>3.6.3</version>
+        </dependency>
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.mock-server</groupId>

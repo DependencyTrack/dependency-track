@@ -94,6 +94,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.COMPOSER.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             } else if ("hex".equals(component.getPurl().getType())) {
                 IMetaAnalyzer analyzer = new HexMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {

@@ -24,7 +24,7 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>1.8.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -35,7 +35,7 @@
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
-    <description>Dependency-Track is an intelligent software supply-chain component analysis platform that allows organizations to identify and reduce risk from the use of third-party and open source components.</description>
+    <description>Dependency-Track is an intelligent component analysis platform that allows organizations to identify and reduce risk in the software supply chain.</description>
     <inceptionYear>2013</inceptionYear>
     <organization>
         <name>OWASP</name>
@@ -81,16 +81,16 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>1.1.0-SNAPSHOT</frontend.version>
+        <frontend.version>1.1.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
-        <lib.cvss-calculator.version>1.3.0</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>3.0.5</lib.cyclonedx-java.version>
+        <lib.cvss-calculator.version>1.4.0</lib.cvss-calculator.version>
+        <lib.cyclonedx-java.version>3.0.7</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
-        <lib.lucene.version>8.6.2</lib.lucene.version>
+        <lib.lucene.version>8.7.0</lib.lucene.version>
         <lib.packageurl.version>1.1.1</lib.packageurl.version>
         <lib.pebble.version>3.1.4</lib.pebble.version>
-        <lib.spdx-tools.version>2.2.3</lib.spdx-tools.version>
+        <lib.spdx-tools.version>2.2.4</lib.spdx-tools.version>
         <lib.unirest.version>2.4.03</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- Maven Plugin Properties -->
@@ -241,7 +241,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.2.1</version>
+            <version>6.2.3</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>
@@ -253,13 +253,13 @@
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
-            <version>5.11.1</version>
+            <version>5.11.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.5.11</version>
+            <version>3.6.28</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -287,56 +287,6 @@
         </testResources>
         <plugins>
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>frontend-download</id>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <target>
-                                <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip"
-                                     dest="${project.build.directory}"
-                                     verbose="true"/>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>frontend-extract</id>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <target>
-                                <unzip src="${project.build.directory}/frontend-dist.zip"
-                                       dest="${project.build.directory}/frontend">
-                                </unzip>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>frontend-resource-deploy</id>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <target>
-                                <copy todir="${project.build.directory}/${project.artifactId}">
-                                    <fileset dir="${project.build.directory}/frontend/dist">
-                                        <include name="**/*"/>
-                                    </fileset>
-                                </copy>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>de.jutzig</groupId>
                 <artifactId>github-release-plugin</artifactId>
                 <version>${plugin.github-release-plugin.version}</version>
@@ -356,9 +306,11 @@
                             <directory>${project.build.directory}</directory>
                             <includes>
                                 <include>dependency-track.war</include>
-                                <include>dependency-track-embedded.war</include>
+                                <include>dependency-track-apiserver.war</include>
+                                <include>dependency-track-bundled.war</include>
                                 <include>checksums.xml</include>
                                 <include>bom.xml</include>
+                                <include>bom.json</include>
                             </includes>
                         </fileSet>
                     </fileSets>
@@ -397,5 +349,116 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>clean-exclude-wars</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                            <filesets>
+                                <fileset>
+                                    <directory>target</directory>
+                                    <followSymlinks>false</followSymlinks>
+                                    <useDefaultExcludes>false</useDefaultExcludes>
+                                    <includes>
+                                        <include>*/</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>*.war</exclude>
+                                    </excludes>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>embedded-jetty</id>
+            <activation>
+                <property>
+                    <name>env.ACTIVATE_EMBEDDED_JETTY</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <war-embedded-finalname>${project.build.finalName}-apiserver</war-embedded-finalname>
+            </properties>
+        </profile>
+        <profile>
+            <id>bundle-ui</id>
+            <activation>
+                <property>
+                    <name>env.ACTIVATE_BUNDLE_UI</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <war-embedded-finalname>${project.build.finalName}-bundled</war-embedded-finalname>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>frontend-download</id>
+                                <phase>prepare-package</phase>
+                                <configuration>
+                                    <target>
+                                        <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip"
+                                             dest="${project.build.directory}"
+                                             verbose="true"/>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>frontend-extract</id>
+                                <phase>prepare-package</phase>
+                                <configuration>
+                                    <target>
+                                        <unzip src="${project.build.directory}/frontend-dist.zip"
+                                               dest="${project.build.directory}/frontend">
+                                        </unzip>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>frontend-resource-deploy</id>
+                                <phase>prepare-package</phase>
+                                <configuration>
+                                    <target>
+                                        <copy todir="${project.build.directory}/${project.artifactId}">
+                                            <fileset dir="${project.build.directory}/frontend/dist">
+                                                <include name="**/*"/>
+                                            </fileset>
+                                        </copy>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

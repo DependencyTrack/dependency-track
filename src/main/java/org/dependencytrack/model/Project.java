@@ -23,6 +23,10 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -58,7 +62,16 @@ import java.util.UUID;
 @FetchGroups({
         @FetchGroup(name = "ALL", members = {
                 @Persistent(name = "name"),
+                @Persistent(name = "author"),
+                @Persistent(name = "publisher"),
+                @Persistent(name = "group"),
+                @Persistent(name = "name"),
+                @Persistent(name = "description"),
                 @Persistent(name = "version"),
+                @Persistent(name = "classifier"),
+                @Persistent(name = "cpe"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "swidTagId"),
                 @Persistent(name = "uuid"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
@@ -84,6 +97,28 @@ public class Project implements Serializable {
     private long id;
 
     @Persistent
+    @Column(name = "AUTHOR", jdbcType = "VARCHAR")
+    @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The author may only contain printable characters")
+    private String author;
+
+    @Persistent
+    @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
+    @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
+    private String publisher;
+
+    @Persistent
+    @Column(name = "GROUP", jdbcType = "VARCHAR")
+    @Index(name = "PROJECT_GROUP_IDX")
+    @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
+    private String group;
+
+    @Persistent
     @Index(name = "PROJECT_NAME_IDX")
     @Column(name = "NAME", jdbcType = "VARCHAR", allowsNull = "false")
     @NotBlank
@@ -106,9 +141,30 @@ public class Project implements Serializable {
     private String version;
 
     @Persistent
+    @Column(name = "CLASSIFIER", jdbcType = "VARCHAR")
+    @Index(name = "PROJECT_CLASSIFIER_IDX")
+    @Extension(vendorName = "datanucleus", key = "enum-check-constraint", value = "true")
+    private Classifier classifier;
+
+    @Persistent
+    @Index(name = "PROJECT_CPE_IDX")
+    @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    //Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
+    @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
+    private String cpe;
+
+    @Persistent
+    @Index(name = "PROJECT_PURL_IDX")
     @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
     private String purl;
+
+    @Persistent
+    @Index(name = "PROJECT_SWID_TAGID_IDX")
+    @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The SWID tagId may only contain printable characters")
+    private String swidTagId;
 
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "PROJECT_UUID_IDX")
@@ -171,6 +227,30 @@ public class Project implements Serializable {
         this.id = id;
     }
 
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
     public String getName() {
         return name;
     }
@@ -195,12 +275,43 @@ public class Project implements Serializable {
         this.version = version;
     }
 
-    public String getPurl() {
-        return purl;
+    public Classifier getClassifier() {
+        return classifier;
     }
 
-    public void setPurl(String purl) {
-        this.purl = purl;
+    public void setClassifier(Classifier classifier) {
+        this.classifier = classifier;
+    }
+
+    public String getCpe() {
+        return cpe;
+    }
+
+    public void setCpe(String cpe) {
+        this.cpe = cpe;
+    }
+
+    @JsonSerialize(using = CustomPackageURLSerializer.class)
+    public PackageURL getPurl() {
+        try {
+            return new PackageURL(purl);
+        } catch (MalformedPackageURLException e) {
+            return null;
+        }
+    }
+
+    public void setPurl(PackageURL purl) {
+        if (purl != null) {
+            this.purl = purl.canonicalize();
+        }
+    }
+
+    public String getSwidTagId() {
+        return swidTagId;
+    }
+
+    public void setSwidTagId(String swidTagId) {
+        this.swidTagId = swidTagId;
     }
 
     public UUID getUuid() {
@@ -289,9 +400,12 @@ public class Project implements Serializable {
     @Override
     public String toString() {
         if (getPurl() != null) {
-            return getPurl();
+            return getPurl().canonicalize();
         } else {
             StringBuilder sb = new StringBuilder();
+            if (getGroup() != null) {
+                sb.append(getGroup()).append(" : ");
+            }
             sb.append(getName());
             if (getVersion() != null) {
                 sb.append(" : ").append(getVersion());

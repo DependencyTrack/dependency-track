@@ -1,0 +1,11 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "Additional permission under GNU GPL version 3 section 7\n\nIf you modify this Program, or any covered work, by linking or combining it with [name of library] (or a modified version of that library), containing parts covered by the terms of [name of library\u0027s license], the licensors of this Program grant you additional permission to convey the resulting work. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of [name of library] used as well as that of the covered work.\n",
+  "name": "GPL-3.0 Linking Exception (with Corresponding Source)",
+  "licenseComments": "This exception is based on the suggested template from the Free Software Foundation\u0027s FAQ about the GPL. This variant includes the second optional sentence regarding Corresponding Source. For a variant without that sentence, please see GPL-3.0-linking-exception.",
+  "seeAlso": [
+    "https://www.gnu.org/licenses/gpl-faq.en.html#GPLIncompatibleLibs",
+    "https://github.com/mirror/wget/blob/master/src/http.c#L20"
+  ],
+  "licenseExceptionId": "GPL-3.0-linking-source-exception"
+}

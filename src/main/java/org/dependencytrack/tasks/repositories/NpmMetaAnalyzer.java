@@ -80,8 +80,10 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
                         .asJson();
                 if (response.getStatus() == 200) {
                     if (response.getBody() != null && response.getBody().getObject() != null) {
-                        final String latest = response.getBody().getObject().getString("latest");
-                        meta.setLatestVersion(latest);
+                        final String latest = response.getBody().getObject().optString("latest");
+                        if (latest != null) {
+                            meta.setLatestVersion(latest);
+                        }
                     }
                 } else {
                     handleUnexpectedHttpResponse(LOGGER, url, response.getStatus(), response.getStatusText(), component);

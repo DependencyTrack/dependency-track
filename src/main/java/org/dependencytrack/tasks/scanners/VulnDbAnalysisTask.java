@@ -145,7 +145,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 } else {
                     vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 }
-                NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
+                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(component, vulnerability);
             }

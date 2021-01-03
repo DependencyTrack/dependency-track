@@ -5,6 +5,8 @@ chapter: 1
 order: 5
 ---
 
+### Backend
+
 The central configuration file `application.properties` resides in the classpath of the WAR by default. 
 This configuration file controls many performance tuning parameters but is most useful for defining
 optional external database sources, directory services (LDAP), and proxy settings.
@@ -105,7 +107,7 @@ alpine.database.pool.enabled=true
 # Optional
 # This property controls the maximum size that the pool is allowed to reach,
 # including both idle and in-use connections.
-alpine.database.pool.max.size=10
+alpine.database.pool.max.size=20
 
 # Optional
 # This property controls the maximum amount of time that a connection is
@@ -271,7 +273,7 @@ alpine.ldap.team.synchronization=false
 # The following are default values
 #alpine.cors.enabled=true
 #alpine.cors.allow.origin=*
-#alpine.cors.allow.methods=GET POST PUT DELETE OPTIONS
+#alpine.cors.allow.methods=GET, POST, PUT, DELETE, OPTIONS
 #alpine.cors.allow.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *
 #alpine.cors.expose.headers=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
 #alpine.cors.allow.credentials=true
@@ -351,3 +353,48 @@ java -Xmx4G -DdependencyTrack.logging.level=DEBUG -jar dependency-track-embedded
 
 For Docker deployments, simply set the `LOGGING_LEVEL` environment variable to one of
 INFO, WARN, ERROR, DEBUG, or TRACE.
+
+### Frontend
+
+The frontend uses a static `config.json` file that is dynamically requested and evaluated via AJAX.
+This file resides in `<BASE_URL>/static/config.json`.
+
+#### Default configuration
+
+```json
+{
+    // Required
+    // URL of the Dependency-Track backend
+    "API_BASE_URL": "",
+    // Optional
+    // Defines the issuer URL to be used for OpenID Connect.
+    // See alpine.oidc.issuer property of the backend.
+    "OIDC_ISSUER": "",
+    // Optional
+    // Defines the client ID for OpenID Connect.
+    "OIDC_CLIENT_ID": "",
+    // Optional
+    // Defines the scopes to request for OpenID Connect.
+    // See also: https://openid.net/specs/openid-connect-basic-1_0.html#Scopes
+    "OIDC_SCOPE": "openid profile email",
+    // Optional
+    // Specifies the OpenID Connect flow to use.
+    // Values other than "implicit" will result in the Code+PKCE flow to be used.
+    // Usage of the implicit flow is strongly discouraged, but may be necessary when
+    // the IdP of choice does not support the Code+PKCE flow.
+    // See also:
+    //   - https://oauth.net/2/grant-types/implicit/
+    //   - https://oauth.net/2/pkce/
+    "OIDC_FLOW": "",
+}
+```
+
+For containerized deployments, these settings can be overridden by either:
+
+* mounting a customized `config.json` to `/app/static/config.json` inside the container
+* providing them as environment variables
+
+The names of the environment variables are equivalent to their counterparts in `config.json`.
+
+> A mounted `config.json` takes precedence over environment variables. 
+> If both are provided, environment variables will be ignored.

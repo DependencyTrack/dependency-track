@@ -22,6 +22,11 @@ FPF's are json files and have the following sections:
 | project  | object | The project the findings are associated with |
 | findings | array  | An array of zero or more findings |
 
+To export findings in the FPF format, the `/api/v1/finding/project/{uuid}/export` API endpoint is used.
+
+The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
+
+
 #### Example
 
 ```json

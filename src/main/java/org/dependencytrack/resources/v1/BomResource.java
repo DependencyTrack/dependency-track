@@ -32,6 +32,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.BomGeneratorFactory;
 import org.cyclonedx.CycloneDxSchema;
+import org.cyclonedx.generators.json.BomJsonGenerator;
 import org.cyclonedx.generators.xml.BomXmlGenerator;
 import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
@@ -54,6 +55,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
@@ -81,7 +83,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/project/{uuid}")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ApiOperation(
             value = "Returns dependency metadata for a project in CycloneDX format",
             response = String.class
@@ -90,10 +92,12 @@ public class BomResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response exportProjectAsCycloneDx (
             @ApiParam(value = "The UUID of the project to export", required = true)
-            @PathParam("uuid") String uuid) {
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The format to output (defaults to xml)")
+            @QueryParam("format") String format) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
@@ -102,14 +106,22 @@ public class BomResource extends AlpineResource {
             final List<Component> components = qm.getAllComponents(project);
             final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
             try {
-                Bom bom = new Bom();
+                final Bom bom = new Bom();
                 bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
                 bom.setMetadata(ModelConverter.createMetadata(project));
                 bom.setComponents(cycloneComponents);
-                final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
-                bomXmlGenerator.generate();
-                return Response.ok(bomXmlGenerator.toXmlString()).build();
+                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("XML")) {
+                    final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
+                    bomGenerator.generate();
+                    return Response.ok(bomGenerator.toXmlString()).build();
+                } else if (format.equalsIgnoreCase("JSON")) {
+                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
+                    bomGenerator.generate();
+                    return Response.ok(bomGenerator.toJsonString()).build();
+                } else {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
+                }
             } catch (ParserConfigurationException | TransformerException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -127,7 +139,7 @@ public class BomResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response exportComponentsAsCycloneDx () {
         try (QueryManager qm = new QueryManager()) {
             final List<Component> components = qm.getAllComponents();
@@ -159,7 +171,7 @@ public class BomResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response exportComponentAsCycloneDx (
             @ApiParam(value = "The UUID of the component to export", required = true)
             @PathParam("uuid") String uuid) {

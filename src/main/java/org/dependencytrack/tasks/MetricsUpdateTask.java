@@ -86,16 +86,16 @@ public class MetricsUpdateTask implements Subscriber {
         LOGGER.info("Executing portfolio metrics update");
         final Date measuredAt = new Date();
 
-        // Retrieve list of all projects
-        final List<Project> projects = qm.getAllProjects();
-        LOGGER.debug("Portfolio metrics will include " + projects.size() + " projects");
+        // Retrieve list of all ACTIVE projects
+        final List<Project> projects = qm.getAllProjects(true);
+        LOGGER.debug("Portfolio metrics will include " + projects.size() + " active projects");
 
         // Setup metrics
         final MetricCounters portfolioCounters = new MetricCounters();
         final List<MetricCounters> projectCountersList = new ArrayList<>();
 
         // Iterate through all projects
-        LOGGER.debug("Iterating through projects");
+        LOGGER.debug("Iterating through active projects");
         for (final Project project: projects) {
             try {
                 // Update the projects metrics
@@ -124,6 +124,9 @@ public class MetricsUpdateTask implements Subscriber {
             if (projectMetrics.severitySum() > 0) {
                 portfolioCounters.vulnerableProjects++;
             }
+            portfolioCounters.vulnerableComponents += projectMetrics.vulnerableComponents;
+
+            // Policy violations
             portfolioCounters.policyViolationsFail += projectMetrics.policyViolationsFail;
             portfolioCounters.policyViolationsWarn += projectMetrics.policyViolationsWarn;
             portfolioCounters.policyViolationsInfo += projectMetrics.policyViolationsInfo;
@@ -142,6 +145,10 @@ public class MetricsUpdateTask implements Subscriber {
         }
         LOGGER.debug("Project metric iteration complete");
         LOGGER.debug("Retrieving total suppression count for portfolio");
+
+        // Total number of components
+        portfolioCounters.components += toIntExact(qm.getCount(Component.class));
+
         // Total number of suppressions regardless if they are dependencies or components not associated to a project
         portfolioCounters.suppressions = toIntExact(qm.getSuppressedCount());
 

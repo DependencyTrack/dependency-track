@@ -2,8 +2,8 @@
 title: Introduction
 ---
 
-Dependency-Track is an intelligent [Supply Chain Component Analysis] platform that allows organizations to 
-identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
+Dependency-Track is an intelligent [Component Analysis] platform that allows organizations to 
+identify and reduce risk in the software supply chain. Dependency-Track takes a unique
 and highly beneficial approach by leveraging the capabilities of [Software Bill of Materials] (SBOM). This approach 
 provides capabilities that traditional Software Composition Analysis (SCA) solutions cannot achieve.
 
@@ -58,7 +58,7 @@ CI/CD environments.
 [Sonatype OSS Index]: https://ossindex.sonatype.org
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com
-[Supply Chain Component Analysis]: https://owasp.org/www-community/Component_Analysis
-[Software Bill-of-Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
+[Component Analysis]: https://owasp.org/www-community/Component_Analysis
+[Software Bill of Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
 [CycloneDX]: https://cyclonedx.org
 [SPDX]: https://spdx.org/

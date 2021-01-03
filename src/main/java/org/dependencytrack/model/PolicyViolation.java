@@ -86,6 +86,9 @@ public class PolicyViolation implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The text may only contain printable characters")
     private String text;
 
+    @Persistent(mappedBy="policyViolation", defaultFetchGroup = "true")
+    private  ViolationAnalysis analysis;
+
     /**
      * The unique identifier of the object.
      */
@@ -154,6 +157,14 @@ public class PolicyViolation implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public ViolationAnalysis getAnalysis() {
+        return analysis;
+    }
+
+    public void setAnalysis(ViolationAnalysis analysis) {
+        this.analysis = analysis;
     }
 }
 

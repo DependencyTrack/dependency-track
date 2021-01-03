@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "Copyright 1996-2006 Free Software Foundation, Inc.\n\nThis file is free software; the Free Software Foundation gives unlimited permission to copy and/or distribute it, with or without modifications, as long as this notice is preserved.",
-  "standardLicenseTemplate": "Copyright 1996-2006 Free Software Foundation, Inc.\n\nThis file is free software; the Free Software Foundation gives unlimited permission to copy and/or distribute it, with or without modifications, as long as this notice is preserved.",
+  "licenseText": "Copyright 1996-2006 Free Software Foundation, Inc.\n\nThis file is free software; the Free Software Foundation gives unlimited permission to copy and/or distribute it, with or without modifications, as long as this notice is preserved.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1996-2006 Free Software Foundation, Inc.\";match\u003d\".{0,1000}\"\u003e\u003e\n\nThis file is free software; the Free Software Foundation gives unlimited permission to copy and/or distribute it, with or without modifications, as long as this notice is preserved.",
   "name": "FSF Unlimited License (with License Retention)",
   "licenseId": "FSFULLR",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/FSF_Unlimited_License#License_Retention_Variant",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:54:38"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/FSF_Unlimited_License#License_Retention_Variant"
   ],

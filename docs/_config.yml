@@ -6,6 +6,8 @@ url: "https://docs.dependencytrack.org"
 baseurl:
 show_full_navigation: true
 
+version: v4.0
+
 # Values for the jekyll-seo-tag gem (https://github.com/jekyll/jekyll-seo-tag)
 logo: /siteicon.png
 description: Product documentation

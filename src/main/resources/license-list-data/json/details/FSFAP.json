@@ -1,10 +1,21 @@
 {
   "isDeprecatedLicenseId": false,
   "isFsfLibre": true,
-  "licenseText": "Copying and distribution of this file, with or without modification, are permitted in any medium without royalty provided the copyright notice and this notice are preserved. This file is offered as-is, without any warranty.",
+  "licenseText": "Copying and distribution of this file, with or without modification, are permitted in any medium without royalty provided the copyright notice and this notice are preserved.  This file is offered as-is, without any warranty.\n",
   "standardLicenseTemplate": "Copying and distribution of this file, with or without modification, are permitted in any medium without royalty provided the copyright notice and this notice are preserved. This file is offered as-is, without any warranty.",
   "name": "FSF All Permissive License",
   "licenseId": "FSFAP",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "true",
+      "url": "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:57:41"
+    }
+  ],
   "seeAlso": [
     "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html"
   ],

@@ -1,0 +1,52 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright \u003cyyyy, yyyy\u003e The Open Group\n\nPermission to use, copy, modify, distribute, and sell this software and\nits documentation for any purpose is hereby granted without fee,\nprovided that the above copyright notice appear in all copies and that\nboth that copyright notice and this permission notice appear in\nsupporting documentation.\n\nThe above copyright notice and this permission notice shall be included\nin all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS\nOR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\nIN NO EVENT SHALL BE LIABLE FOR ANY CLAIM, DAMAGES\nOR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR\nOTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR\nTHE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name of The Open Group\nshall not be used in advertising or otherwise to promote the sale, use\nor other dealings in this Software without prior written authorization\nfrom The Open Group.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright \u003cyyyy, yyyy\u003e The Open Group\";match\u003d\".{0,1000}\"\u003e\u003e\n\nPermission to use, copy, modify, distribute, and sell this software and its documentation for any purpose is hereby granted without fee, provided that the above copyright notice appear in all copies and that both that copyright notice and this permission notice appear in supporting documentation.\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nExcept as contained in this notice, the name of \u003c\u003cvar;name\u003d\"name1\";original\u003d\"The Open Group\";match\u003d\".+\"\u003e\u003e shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Software without prior written authorization from \u003c\u003cvar;name\u003d\"name2\";original\u003d\"The Open Group\";match\u003d\".+\"\u003e\u003e .",
+  "name": "MIT Open Group variant",
+  "licenseId": "MIT-open-group",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/iceauth/-/blob/master/COPYING",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:54:46"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xvinfo/-/blob/master/COPYING",
+      "order": 1,
+      "timestamp": "2020-11-25 - 21:54:47"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xsetroot/-/blob/master/COPYING",
+      "order": 2,
+      "timestamp": "2020-11-25 - 21:54:47"
+    },
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xorg/app/xauth/-/blob/master/COPYING",
+      "order": 3,
+      "timestamp": "2020-11-25 - 21:54:47"
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.freedesktop.org/xorg/app/iceauth/-/blob/master/COPYING",
+    "https://gitlab.freedesktop.org/xorg/app/xvinfo/-/blob/master/COPYING",
+    "https://gitlab.freedesktop.org/xorg/app/xsetroot/-/blob/master/COPYING",
+    "https://gitlab.freedesktop.org/xorg/app/xauth/-/blob/master/COPYING"
+  ],
+  "isOsiApproved": false
+}

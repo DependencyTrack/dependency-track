@@ -19,6 +19,7 @@ The data directory includes:
 | db.mv.db                   | Embedded H2 database                       |
 | dependency-track.log       | Application log                            |
 | dependency-track-audit.log | Application audit log                      |
+| id.system                  | Randomly generated system identifier       |
 | index                      | Internal search engine index               |
 | keys                       | Keys used to generate/verify JWT tokens    |
 | nist                       | Mirror of the NVD and CPE                  |

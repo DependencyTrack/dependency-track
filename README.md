@@ -1,5 +1,5 @@
 [![Build Status](https://github.com/DependencyTrack/dependency-track/workflows/CI%20Build/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions?workflow=CI+Build)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a1d99b45c27e4d069f94d24bcce8d7e6)](https://www.codacy.com/app/DependencyTrack/dependency-track?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b2ecd06dab57438a9a55bc4a71c5a8ce)](https://www.codacy.com/gh/DependencyTrack/dependency-track/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)
 [![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
 [![License][license-image]][license-url]
 [![OWASP Flagship](https://img.shields.io/badge/owasp-flagship%20project-orange.svg)](https://www.owasp.org/index.php/OWASP_Dependency_Track_Project)
@@ -17,14 +17,14 @@
 ![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-black-text.svg?sanitize=true)
 
 
-Dependency-Track is an intelligent Software [Supply Chain Component Analysis] platform that allows organizations to
-identify and reduce risk from the use of third-party and open source components. Dependency-Track takes a unique
-and highly beneficial approach by leveraging the capabilities of [Software Bill-of-Materials] (SBOM). This approach
+Dependency-Track is an intelligent [Component Analysis] platform that allows organizations to
+identify and reduce risk in the software supply chain. Dependency-Track takes a unique
+and highly beneficial approach by leveraging the capabilities of [Software Bill of Materials] (SBOM). This approach
 provides capabilities that traditional Software Composition Analysis (SCA) solutions cannot achieve.
 
 Dependency-Track monitors component usage across all versions of every application in its portfolio in order to
 proactively identify risk across an organization. The platform has an API-first design and is ideal for use in
-Continuous Integration (CI) and Continuous Delivery (CD) environments.
+CI/CD environments.
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=cQuk6jKTrTs">
@@ -37,8 +37,8 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
 
 ## Features
-* Tracks application, library, framework, operating system, and hardware components
-* Tracks component usage across all version of every application in an organizations portfolio
+* Tracks application, library, framework, operating system, container, firmware, and hardware components
+* Tracks component usage across every application in an organizations portfolio
 * Identifies multiple forms of risk including
   * Components with known vulnerabilities
   * Out-of-date components
@@ -51,6 +51,10 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
   * [Sonatype OSS Index]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
+* Robust policy engine with support for global and per-project policies
+  * Security risk and compliance
+  * License risk and compliance
+  * Operational risk and compliance  
 * Ecosystem agnostic with built-in repository support for:
   * Composer (PHP)
   * Gems (Ruby)
@@ -63,11 +67,12 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 * Includes a comprehensive auditing workflow for triaging results
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
-* Supports importing [CycloneDX] and [SPDX] Software Bill-of-Materials (SBOM) formats
+* Supports importing [CycloneDX] and [SPDX] Software Bill of Materials (SBOM) formats
 * Easy to read metrics for components, projects, and portfolio
 * Native support for Kenna Security, Fortify SSC, and ThreadFix
 * API-first design facilitates easy integration with other systems
 * API documentation available in OpenAPI format
+* OAuth 2.0 + OpenID Connect (OIDC) support for single sign-on (authN/authZ)
 * Supports internally managed users, Active Directory/LDAP, and API Keys
 * Simple to install and configure. Get up and running in just a few minutes
 
@@ -76,49 +81,77 @@ Continuous Integration (CI) and Continuous Delivery (CD) environments.
 
 ![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
 
+### Quickstart (Docker Compose)
 
-## Distributions
-Dependency-Track supports the following three deployment options:
+```bash
+# Downloads the latest Docker Compose file
+curl -LO https://dependencytrack.org/docker-compose.yml
 
-* Docker container
-* Executable WAR
-* Conventional WAR
+# Starts the stack using Docker Compose
+docker-compose up -d
+```
+
+### Quickstart (Docker Swarm)
+
+```bash
+# Downloads the latest Docker Compose file
+curl -LO https://dependencytrack.org/docker-compose.yml
+
+# Initializes Docker Swarm (if not previously initialized)
+docker swarm init
+
+# Starts the stack using Docker Swarm
+docker stack deploy -c docker-compose.yml dtrack
+```
+
+### Quickstart (Manual Execution)
+
+```bash
+# Pull the image from the Docker Hub OWASP repo
+docker pull dependencytrack/bundled
+
+# Creates a dedicated volume where data can be stored outside the container
+docker volume create --name dependency-track
+
+# Run the bundled container with 8GB RAM on port 8080
+docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:/data dependencytrack/bundled
+```
 
 **NOTICE: Always use official binary releases in production.**
 
-## Deploying Docker Container
-Deploying with Docker is the easiest and fastest method of getting started. No prerequisites are required
-other than a modern version of Docker. Dependency-Track uses the following conventions:
+## Distributions
+
+Dependency-Track has four distribution variants. They are:
+
+| Package | Package Format | Recommended | Supported | Docker | Download |
+| :---------- | :---------- | :---------: | :---------: | :---------: | :---------: |
+| API Server | Executable WAR | ✅ | ✅ | ✅ | ✅ | 
+| Frontend | Single Page Application | ✅ | ✅ | ✅ | ✅ |
+| Bundled | Executable WAR | ❌ | ☑️ | ✅ | ✅ |
+| Traditional WAR | WAR | ❌ | ❌ | ❌ | ✅ |
 
 
-* The 'latest' tag, which is pulled by default if no tag is specified, will always refer to the latest stable release (3.0.0, 3.0.1, 3.1.0, etc)
-* The 'snapshot' tag will be built and pushed on all CI changes to the master. Use this if you want a "moving target" with all the latest changes.
-* Version tags (3.0.0, 3.0.1, etc) are used to indicate each release
+#### API Server
 
+The API Server contains an embedded Jetty server and all server-side functionality, but excludes the frontend user
+interface. This variant is new as of Dependency-Track v4.0.
 
-```shell
-docker pull owasp/dependency-track
-docker volume create --name dependency-track
-docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
-```
+#### Frontend
 
-To run snapshot releases (not recommended for production):
+The Frontend is the user interface that is accessible in a web browser. The Frontend is a Single Page Application (SPA)
+that can be deployed independently of the Dependency-Track API Server. This variant is new as of Dependency-Track v3.8.
 
-```shell
-docker pull owasp/dependency-track:snapshot
-docker volume create --name dependency-track
-docker run -d -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track:snapshot
-```
+#### Bundled
 
-In the event you want to delete all Dependency-Track images, containers, and volumes, the following statements
-may be executed. NOTE: This is a destructive operation and cannot be undone.
+The Bundled variant combines the API Server and the Frontend user interface. This variant was previously referred to as
+the executable war and was the preferred distribution from Dependency-Track v3.0 - v3.8. This variant is supported but
+deprecated and will be discontinued in a future release.
 
+#### Traditional
 
-```shell
-docker rmi owasp/dependency-track
-docker rm dependency-track
-docker volume rm dependency-track:/data
-```
+The Traditional variant combines the API Server and the Frontend user interface and must be deployed to a Servlet
+container. This variant is not supported, deprecated, and will be discontinued in a future release.
+
 
 ## Deploying on Kubernetes with Helm
 You can install on Kubernetes using the [community-maintained chart](https://github.com/evryfs/helm-charts/tree/master/charts/dependency-track) like this:
@@ -127,40 +160,26 @@ You can install on Kubernetes using the [community-maintained chart](https://git
 helm repo add evryfs-oss https://evryfs.github.io/helm-charts/
 helm install evryfs-oss/dependency-track --name dependency-track --namespace dependency-track
 ```
-by default it will install PostgreSQL and use persistent volume claims for the data-directory used for vulnerability feeds.
-
-
-## Deploying the Executable WAR
-Another simple way to get Dependency-Track running quickly is to automatically deploy the executable WAR. This
-method requires Java 8u101 or higher. Simply download `dependency-track-embedded.war` and execute:
-
-```shell
-java -Xmx4G -jar dependency-track-embedded.war
-```
-
-## Deploying the Conventional WAR
-This is the most difficult to deploy option as it requires an already installed and configured Servlet
-container such as Apache Tomcat 8.5 and higher, however, it offers the most flexible deployment options.
-Follow the Servlet containers instructions for deploying `dependency-track.war`.
+by default, it will install PostgreSQL and use persistent volume claims for the data-directory used for vulnerability feeds.
 
 
 ## Compiling From Sources (optional)
-To create an executable WAR that is ready to launch (recommended for most users):
+To create the API Server executable WAR that is ready to launch:
 
 ```shell
 mvn clean package -P embedded-jetty
 ```
 
-To create a WAR that must be manually deployed to a modern Servlet container (i.e. Tomcat 8.5+):
-
-```shell
-mvn clean package
-```
-
-To create an executable WAR that is ready to be deployed in a Docker container:
+To create the API Server executable WAR that is ready to be deployed in a Docker container:
 
 ```shell
 mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+```
+
+To create the Bundled (API Server + Frontend) executable WAR that is ready to be deployed in a Docker container:
+
+```shell
+mvn clean package -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 ## Resources
@@ -191,8 +210,8 @@ the [NOTICES.txt] [notices] file for more information.
   [Sonatype OSS Index]: https://ossindex.sonatype.org
   [VulnDB]: https://vulndb.cyberriskanalytics.com
   [Risk Based Security]: https://www.riskbasedsecurity.com
-  [Supply Chain Component Analysis]: https://owasp.org/www-community/Component_Analysis
-  [Software Bill-of-Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
+  [Component Analysis]: https://owasp.org/www-community/Component_Analysis
+  [Software Bill of Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
   [CycloneDX]: https://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg

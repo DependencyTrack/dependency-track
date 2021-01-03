@@ -141,7 +141,19 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Projects
      */
     public List<Project> getAllProjects() {
+        return getAllProjects(false);
+    }
+
+    /**
+     * Returns a list of all projects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Projects
+     */
+    public List<Project> getAllProjects(boolean excludeInactive) {
         final Query<Project> query = pm.newQuery(Project.class);
+        if (excludeInactive) {
+            query.setFilter("active == true");
+        }
         query.setOrdering("name asc");
         return query.executeResultList(Project.class);
     }
@@ -292,7 +304,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the created Project
      */
-    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, String purl, boolean active, boolean commitIndex) {
+    public Project createProject(String name, String description, String version, List<Tag> tags, Project parent, PackageURL purl, boolean active, boolean commitIndex) {
         final Project project = new Project();
         project.setName(name);
         project.setDescription(description);
@@ -313,6 +325,23 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Creates a new Project.
+     * @param project the project to create
+     * @param tags a List of Tags - these will be resolved if necessary
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the created Project
+     */
+    public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
+        final Project result = persist(project);
+        final List<Tag> resolvedTags = resolveTags(tags);
+        bind(project, resolvedTags);
+
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
+        return result;
+    }
+
+    /**
      * Updates an existing Project.
      * @param uuid the uuid of the project to update
      * @param name the name of the project
@@ -324,7 +353,7 @@ public class QueryManager extends AlpineQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      * @return the updated Project
      */
-    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, String purl, boolean active, boolean commitIndex) {
+    public Project updateProject(UUID uuid, String name, String description, String version, List<Tag> tags, PackageURL purl, boolean active, boolean commitIndex) {
         final Project project = getObjectByUuid(Project.class, uuid);
         project.setName(name);
         project.setDescription(description);
@@ -333,6 +362,35 @@ public class QueryManager extends AlpineQueryManager {
         project.setActive(active);
 
         final List<Tag> resolvedTags = resolveTags(tags);
+        bind(project, resolvedTags);
+
+        final Project result = persist(project);
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
+        return result;
+    }
+
+    /**
+     * Updates an existing Project.
+     * @param transientProject the project to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the updated Project
+     */
+    public Project updateProject(Project transientProject, boolean commitIndex) {
+        final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
+        project.setAuthor(transientProject.getAuthor());
+        project.setPublisher(transientProject.getPublisher());
+        project.setGroup(transientProject.getGroup());
+        project.setName(transientProject.getName());
+        project.setDescription(transientProject.getDescription());
+        project.setVersion(transientProject.getVersion());
+        project.setClassifier(transientProject.getClassifier());
+        project.setCpe(transientProject.getCpe());
+        project.setPurl(transientProject.getPurl());
+        project.setSwidTagId(transientProject.getSwidTagId());
+        project.setActive(transientProject.isActive());
+
+        final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
         bind(project, resolvedTags);
 
         final Project result = persist(project);
@@ -352,20 +410,7 @@ public class QueryManager extends AlpineQueryManager {
         project.setDescription(source.getDescription());
         project.setVersion(newVersion);
         project.setActive(source.isActive());
-        if (project.getPurl() != null && newVersion != null) {
-            try {
-                final PackageURL sourcePurl = new PackageURL(project.getPurl());
-                final PackageURL purl = new PackageURL(
-                        sourcePurl.getType(),
-                        sourcePurl.getNamespace(),
-                        sourcePurl.getName(),
-                        newVersion, null, null
-                );
-                project.setPurl(purl.canonicalize());
-            } catch (MalformedPackageURLException e) {
-                // throw it away
-            }
-        }
+        project.setPurl(source.getPurl());
         project.setParent(source.getParent());
         project = persist(project);
 
@@ -1079,8 +1124,11 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations(final Project project) {
+    public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project.id == :pid");
+        if (!includeSuppressed) {
+            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
@@ -1088,6 +1136,7 @@ public class QueryManager extends AlpineQueryManager {
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -1098,8 +1147,11 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations(final Component component) {
+    public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component.id == :cid");
+        if (!includeSuppressed) {
+            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc");
         }
@@ -1107,6 +1159,7 @@ public class QueryManager extends AlpineQueryManager {
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -1116,8 +1169,11 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of all Policy violations
      */
     @SuppressWarnings("unchecked")
-    public PaginatedResult getPolicyViolations() {
+    public PaginatedResult getPolicyViolations(boolean includeSuppressed) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (!includeSuppressed) {
+            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
         }
@@ -1125,6 +1181,7 @@ public class QueryManager extends AlpineQueryManager {
         for (final PolicyViolation violation: result.getList(PolicyViolation.class)) {
             violation.getPolicyCondition().getPolicy(); // force policy to ne included since its not the default
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
+            violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
         return result;
     }
@@ -1382,12 +1439,26 @@ public class QueryManager extends AlpineQueryManager {
      * Adds a vulnerability to a component.
      * @param vulnerability the vulnerability to add
      * @param component the component affected by the vulnerability
+     * @param analyzerIdentity the identify of the analyzer
      */
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
+        this.addVulnerability(vulnerability, component, analyzerIdentity, null, null);
+    }
+
+    /**
+     * Adds a vulnerability to a component.
+     * @param vulnerability the vulnerability to add
+     * @param component the component affected by the vulnerability
+     * @param analyzerIdentity the identify of the analyzer
+     * @param alternateIdentifier the optional identifier if the analyzer refers to the vulnerability by an alternative identifier
+     * @param referenceUrl the optional URL that references the occurrence of the vulnerability if uniquely identified
+     */
+    public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity,
+                                 String alternateIdentifier, String referenceUrl) {
         if (!contains(vulnerability, component)) {
             component.addVulnerability(vulnerability);
             component = persist(component);
-            persist(new FindingAttribution(component, vulnerability, analyzerIdentity));
+            persist(new FindingAttribution(component, vulnerability, analyzerIdentity, alternateIdentifier, referenceUrl));
         }
     }
 
@@ -1426,6 +1497,17 @@ public class QueryManager extends AlpineQueryManager {
     private void deleteFindingAttributions(Component component) {
         final Query<FindingAttribution> query = pm.newQuery(FindingAttribution.class, "component == :component");
         query.deletePersistentAll(component);
+    }
+
+    /**
+     * Deletes a {@link Policy}, including all related {@link PolicyViolation}s and {@link PolicyCondition}s.
+     * @param policy the {@link Policy} to delete
+     */
+    public void deletePolicy(final Policy policy) {
+        for (final PolicyCondition condition : policy.getPolicyConditions()) {
+            deletePolicyCondition(condition);
+        }
+        delete(policy);
     }
 
     /**
@@ -1669,8 +1751,10 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<Component> matchIdentity(final ComponentIdentity cid) {
+        String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
+            purlString = cid.getPurl().canonicalize();
             try {
                 final PackageURL purl = cid.getPurl();
                 purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
@@ -1678,7 +1762,7 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
         final Query<Component> query = pm.newQuery(Component.class, "(purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version)");
-        return (List<Component>) query.executeWithArray(cid.getPurl().canonicalize(), purlCoordinates, null, cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()); // TODO SWID
+        return (List<Component>) query.executeWithArray(purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
     }
 
     /**
@@ -2422,31 +2506,12 @@ public class QueryManager extends AlpineQueryManager {
 
     /**
      * Synchronizes a RepositoryMetaComponent, updating it if it needs updating, or creating it if it doesn't exist.
-     * @param repositoryMetaComponent the RepositoryMetaComponent object to synchronize
+     * @param transientRepositoryMetaComponent the RepositoryMetaComponent object to synchronize
      * @return a synchronized RepositoryMetaComponent object
      */
-    public RepositoryMetaComponent synchronizeRepositoryMetaComponent(RepositoryMetaComponent repositoryMetaComponent) {
-        RepositoryMetaComponent result = updateRepositoryMetaComponent(repositoryMetaComponent);
-        if (result == null) {
-            result = persist(repositoryMetaComponent);
-        }
-        return result;
-    }
-
-    /**
-     * Updates a RepositoryMetaComponent.
-     * @param transientRepositoryMetaComponent the RepositoryMetaComponent to update
-     * @return a RepositoryMetaComponent object
-     */
-    private RepositoryMetaComponent updateRepositoryMetaComponent(RepositoryMetaComponent transientRepositoryMetaComponent) {
-        final RepositoryMetaComponent metaComponent;
-        if (transientRepositoryMetaComponent.getId() > 0) {
-            metaComponent = getObjectById(RepositoryMetaComponent.class, transientRepositoryMetaComponent.getId());
-        } else {
-            metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
-                    transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());
-        }
-
+    public synchronized RepositoryMetaComponent synchronizeRepositoryMetaComponent(final RepositoryMetaComponent transientRepositoryMetaComponent) {
+        final RepositoryMetaComponent metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
+                transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());;
         if (metaComponent != null) {
             metaComponent.setRepositoryType(transientRepositoryMetaComponent.getRepositoryType());
             metaComponent.setNamespace(transientRepositoryMetaComponent.getNamespace());
@@ -2455,8 +2520,9 @@ public class QueryManager extends AlpineQueryManager {
             metaComponent.setName(transientRepositoryMetaComponent.getName());
             metaComponent.setPublished(transientRepositoryMetaComponent.getPublished());
             return persist(metaComponent);
+        } else {
+            return persist(transientRepositoryMetaComponent);
         }
-        return null;
     }
 
     /**

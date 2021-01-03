@@ -25,6 +25,8 @@ import alpine.model.SchemaVersion;
 import alpine.persistence.JdoProperties;
 import alpine.upgrade.UpgradeException;
 import alpine.upgrade.UpgradeExecutor;
+import alpine.upgrade.UpgradeMetaProcessor;
+import alpine.util.VersionComparator;
 import org.datanucleus.PersistenceNucleusContext;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
@@ -53,6 +55,20 @@ public class UpgradeInitializer implements ServletContextListener {
         if (driverPath != null) {
             Config.getInstance().expandClasspath(driverPath);
         }
+
+        try {
+            final UpgradeMetaProcessor ump = new UpgradeMetaProcessor();
+            final VersionComparator currentVersion = ump.getSchemaVersion();
+            ump.close();
+            if (currentVersion != null && currentVersion.isOlderThan(new VersionComparator("4.0.0"))) {
+                LOGGER.error("Unable to upgrade Dependency-Track versions prior to v4.0.0. Please refer to documentation for migration details. Halting.");
+                Runtime.getRuntime().halt(-1);
+            }
+        } catch (UpgradeException e) {
+            LOGGER.error("An error occurred determining database schema version. Unable to continue.", e);
+            Runtime.getRuntime().halt(-1);
+        }
+
         final JDOPersistenceManagerFactory pmf  = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(JdoProperties.get(), "Alpine");
 
         // Ensure that the UpgradeMetaProcessor and SchemaVersion tables are created NOW, not dynamically at runtime.

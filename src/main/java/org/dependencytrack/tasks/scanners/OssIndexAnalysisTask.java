@@ -69,7 +69,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     private String apiToken;
 
     public OssIndexAnalysisTask() {
-        super(100, 5);
+        super(100, 0);
     }
 
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -193,6 +193,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      */
     @Deprecated
     private static String minimizePurl(final PackageURL purl) {
+        if (purl == null) {
+            return null;
+        }
         String p = purl.canonicalize();
         if (p.contains("?")) {
             p = p.substring(0, p.lastIndexOf("?"));
@@ -228,22 +231,24 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     private void processResults(final List<ComponentReport> report, final List<Component> componentsScanned) {
         try (QueryManager qm = new QueryManager()) {
             for (final ComponentReport componentReport: report) {
-                for (final Component component: componentsScanned) {
+                for (final Component c: componentsScanned) {
                     //final String componentPurl = component.getPurl().canonicalize(); // todo: put this back when minimizePurl() is removed
-                    final String componentPurl = minimizePurl(component.getPurl());
+                    final String componentPurl = minimizePurl(c.getPurl());
                     final PackageURL sonatypePurl = oldPurlResolver(componentReport.getCoordinates());
+                    final String minimalSonatypePurl = minimizePurl(sonatypePurl);
                     if (componentPurl.equals(componentReport.getCoordinates()) ||
-                            (sonatypePurl != null && componentPurl.equals(sonatypePurl.canonicalize()))) {
+                            (sonatypePurl != null && componentPurl.equals(minimalSonatypePurl))) {
                         /*
                         Found the component
                          */
+                        final Component component = qm.getObjectById(Component.class, c.getId()); // Refresh component and attach to current pm.
                         for (final ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
                             if (reportedVuln.getCve() != null) {
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
                                 if (vulnerability != null) {
-                                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                     addVulnerabilityToCache(component, vulnerability);
                                 } else {
                                     /*
@@ -252,8 +257,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     through traditional feeds. Regardless, the vuln needs to be added to the database.
                                      */
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
-                                    NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                                    qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                     addVulnerabilityToCache(component, vulnerability);
                                 }
                             } else {
@@ -264,14 +269,14 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 if (vulnerability == null) {
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                 }
-                                NotificationUtil.analyzeNotificationCriteria(vulnerability, component);
-                                qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                                qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
                         Event.dispatch(new MetricsUpdateEvent(component));
+                        updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
-                    updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                 }
             }
         }

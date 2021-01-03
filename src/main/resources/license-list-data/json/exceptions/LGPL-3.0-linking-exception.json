@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "As a special exception to the GNU Lesser General Public License version 3\n(\"LGPL3\"), the copyright holders of this Library give you permission to\nconvey to a third party a Combined Work that links statically or dynamically\nto this Library without providing any Minimal Corresponding Source or\nMinimal Application Code as set out in 4d or providing the installation\ninformation set out in section 4e, provided that you comply with the other\nprovisions of LGPL3 and provided that you meet, for the Application the\nterms and conditions of the license(s) which apply to the Application.\n\nExcept as stated in this special exception, the provisions of LGPL3 will\ncontinue to comply in full to this Library. If you modify this Library, you\nmay apply this exception to your version of this Library, but you are not\nobliged to do so. If you do not wish to do so, delete this exception\nstatement from your version. This exception does not (and cannot) modify any\nlicense terms which apply to the Application, with which you must still\ncomply.\n",
+  "name": "LGPL-3.0 Linking Exception",
+  "licenseComments": "Unlike GPL-3.0-linking-exception, this exception it is not based on a suggested template from the Free Software Foundation\u0027s FAQ about the GPL. It is being added as it has been used in several projects as a linking exception to LGPL-3.0.",
+  "seeAlso": [
+    "https://raw.githubusercontent.com/go-xmlpath/xmlpath/v2/LICENSE",
+    "https://github.com/goamz/goamz/blob/master/LICENSE",
+    "https://github.com/juju/errors/blob/master/LICENSE"
+  ],
+  "licenseExceptionId": "LGPL-3.0-linking-exception"
+}

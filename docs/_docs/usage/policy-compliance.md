@@ -2,7 +2,7 @@
 title: Policy Compliance
 category: Usage
 chapter: 2
-order: 3
+order: 4
 ---
 
 Organizations can create policies and measure policy violations across the portfolio, and against individual 

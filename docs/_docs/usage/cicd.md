@@ -5,20 +5,20 @@ chapter: 2
 order: 1
 ---
 
-Dependency-Track can ingest CycloneDX and SPDX BOMs as part of a CI/CD pipeline. The 
-generation of CycloneDX BOMs often occur during CI or when the final application assembly 
-is being generated. CycloneDX is preferred due to the availability of ready-to-use build 
-tool integrations available. 
+Dependency-Track consumes and analyzes CycloneDX BOMs at high-velocity and is ideal for use in modern build pipelines. 
+The generation of CycloneDX BOMs often occur during CI or when the final application assembly is being generated. 
+CycloneDX is the preferred BOM format due to the availability of build-time tools and the formats focus on security 
+use cases. However, BOMs in SPDX tag and RDF formats are also supported.
 
-Visit the [CycloneDX Tool Center](https://cyclonedx.org/tool-center/) for 
-information on the available tools for generating CycloneDX BOMs from various build systems.
+Visit the [CycloneDX Tool Center](https://cyclonedx.org/tool-center/) for information on the available tools for 
+generating CycloneDX BOMs from various build systems.
 
 > Dependency-Track continuously monitors components for known vulnerabilities. When components are added or 
 > updated in Dependency-Track, an analysis is performed against the component. This action occurs during 
 > ingestion of files as well as changes to the components via REST or from the user interface. All 
 > components in Dependency-Track, regardless of changes, are automatically analyzed on a daily basis.
 
-The [Dependency-Track Jenkins Plugin]({{ site.baseurl }}{% link _docs/integrations/jenkins.md %}) is the 
+The [Dependency-Track Jenkins Plugin](https://plugins.jenkins.io/dependency-track/) is the 
 recommended method for publishing CycloneDX BOMs to Dependency-Track in a Jenkins environment.
 
 For other environments, cURL (or similar) can be used. 

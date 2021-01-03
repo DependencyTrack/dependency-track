@@ -64,12 +64,12 @@ Refer to [Repositories]({{ site.baseurl }}{% link _docs/datasources/repositories
 
 ### Package URL support in Bill-of-Materials
 
-The CycloneDX BOM specification supports Package URL on a per-component basis. Users of the official CycloneDX 
+All version of the CycloneDX BOM specification support Package URL. Users of official CycloneDX 
 implementations for various build systems will automatically have valid Package URLs for every component in the 
 resulting BOM. 
 
-When importing SPDX BOM documents, Package URL identification cannot be automatically determined, although support 
-for Package URL may be coming to the SPDX specification in a future release.
+For SPDX BOMs, Package URL support was added in v2.2 of the SPDX specification. When importing SPDX BOMs, ensure the 
+BOM is SPDX v2.2 or higher and that components have valid Package URLs.
 
 ### Common Platform Enumeration (CPE)
 Like Package URL, the Common Platform Enumeration (CPE) specification is a structured naming scheme for applications, 

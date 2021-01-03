@@ -1,9 +1,20 @@
 {
   "isDeprecatedLicenseId": false,
-  "licenseText": "\n\n   1. you can do what you want with it\n\n   2. I refuse any responsibility for the consequences",
+  "licenseText": "1. you can do what you want with it\n2. I refuse any responsibility for the consequences\n",
   "standardLicenseTemplate": "\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e you can do what you want with it\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"2.\";match\u003d\".{0,20}\"\u003e\u003e I refuse any responsibility for the consequences",
   "name": "diffmark license",
   "licenseId": "diffmark",
+  "crossRef": [
+    {
+      "isLive": true,
+      "isValid": true,
+      "isWayBackLink": false,
+      "match": "false",
+      "url": "https://fedoraproject.org/wiki/Licensing/diffmark",
+      "order": 0,
+      "timestamp": "2020-11-25 - 21:58:28"
+    }
+  ],
   "seeAlso": [
     "https://fedoraproject.org/wiki/Licensing/diffmark"
   ],

@@ -4,7 +4,12 @@
 export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 export PATH=JAVA_HOME/bin:$PATH
 
-mvn clean package -Dmaven.test.skip=true
-mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean
+mvn package -Dmaven.test.skip=true -P clean-exclude-wars -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean -P clean-exclude-wars
+mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean -P clean-exclude-wars
+mvn package -Dmaven.test.skip=true -P bundle-ui
+mvn clean -P clean-exclude-wars
 mvn net.nicoulaj.maven.plugins:checksum-maven-plugin:files
 mvn github-release:release

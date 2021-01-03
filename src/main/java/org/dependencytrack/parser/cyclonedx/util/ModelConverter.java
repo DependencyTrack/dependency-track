@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Hash;
+import org.cyclonedx.model.Swid;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -226,13 +227,31 @@ public class ModelConverter {
         metadata.setTools(Collections.singletonList(tool));
         if (project != null) {
             final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+            cycloneComponent.setAuthor(StringUtils.trimToNull(project.getAuthor()));
+            cycloneComponent.setPublisher(StringUtils.trimToNull(project.getPublisher()));
+            cycloneComponent.setGroup(StringUtils.trimToNull(project.getGroup()));
             cycloneComponent.setName(StringUtils.trimToNull(project.getName()));
-            cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
+            if (StringUtils.trimToNull(project.getVersion()) == null) {
+                cycloneComponent.setVersion("SNAPSHOT"); // Version is required per CycloneDX spec
+            } else {
+                cycloneComponent.setVersion(StringUtils.trimToNull(project.getVersion()));
+            }
             cycloneComponent.setDescription(StringUtils.trimToNull(project.getDescription()));
-            cycloneComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
-
+            cycloneComponent.setCpe(StringUtils.trimToNull(project.getCpe()));
             if (project.getPurl() != null) {
-                cycloneComponent.setPurl(project.getPurl());
+                cycloneComponent.setPurl(StringUtils.trimToNull(project.getPurl().canonicalize()));
+            }
+            if (StringUtils.trimToNull(project.getSwidTagId()) != null) {
+                final Swid swid = new Swid();
+                swid.setTagId(StringUtils.trimToNull(project.getSwidTagId()));
+                swid.setName(StringUtils.trimToNull(project.getName()));
+                swid.setVersion(StringUtils.trimToNull(project.getVersion()));
+                cycloneComponent.setSwid(swid);
+            }
+            if (project.getClassifier() != null) {
+                cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(project.getClassifier().name()));
+            } else {
+                cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
             }
             metadata.setComponent(cycloneComponent);
         }

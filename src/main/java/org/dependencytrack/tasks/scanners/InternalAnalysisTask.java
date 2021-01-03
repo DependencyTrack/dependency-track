@@ -82,7 +82,8 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_ENABLED);
         final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
         try (QueryManager qm = new QueryManager()) {
-            for (Component component : components) {
+            for (final Component c : components) {
+                final Component component = qm.getObjectById(Component.class, c.getId()); // Refresh component and attach to current pm.
                 versionRangeAnalysis(qm, component);
                 if (fuzzyEnabled) {
                     if (component.getPurl() == null || !excludeComponentsWithPurl) {

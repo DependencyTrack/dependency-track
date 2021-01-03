@@ -152,8 +152,9 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                     if (vulns != null) {
                         for (JsonNumber vulnId : vulns.getValuesAs(JsonNumber.class)) {
                             final Vulnerability vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
+                            final Component c = qm.getObjectById(Component.class, component.getId());
                             if (vulnerability != null) {
-                                qm.addVulnerability(vulnerability, component, analyzerIdentity);
+                                qm.addVulnerability(vulnerability, c, analyzerIdentity);
                             }
                         }
                     }

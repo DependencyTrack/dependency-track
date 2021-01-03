@@ -86,9 +86,8 @@ intelligence services in an effort to determine if that component has known vuln
 ### SPDX
 Software Package Data Exchange (SPDX) provides two complimentary specifications, a bill-of-material specification, and
 a standardized list of open source licenses. The BOM specification relies on either 'tag' or 'rdf' files to document
-software components as bill of materials. In contrast to CycloneDX, the SPDX BOM spec is a heavyweight (and very robust)
-specification. The standardized license list is a lightweight spec that has been adopted across multiple industries 
-and is recommended for use in all software projects. See: <https://spdx.org/>
+software components as bill of materials. The standardized license list is a lightweight spec that has been adopted 
+across multiple industries and is recommended for use in all software projects. See: <https://spdx.org/>
 
 ### Swagger
 A lightweight REST specification that provides a framework to document the use of REST APIs. 

@@ -7,6 +7,8 @@ redirect_from:
   - /usage/private-vuln-repo/
 ---
 
+> This feature was experimental in Dependency-Track v3.x and is not yet available in Dependency-Track v4.x
+
 Dependency-Track has the ability to maintain it's own repository of internally managed vulnerabilities. The private
 repository behaves identical to other sources of vulnerability intelligence such as the NVD.
 

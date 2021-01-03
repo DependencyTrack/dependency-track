@@ -11,25 +11,54 @@ other than a modern version of Docker.
 > The 'latest' tag in Docker Hub will always refer to the latest stable GA release. Consult the GitHub repo
 > for instructions on how to run untested snapshot releases.
 
-### Container Requirements
+### Container Requirements (API Server)
 
-| Minimum | Recommended |
-|:---------|:--------|
-| 4.5GB RAM | 16GB RAM |
+| Minimum     | Recommended |
+| :---------- | :---------- |
+| 4.5GB RAM   | 16GB RAM    |
 | 2 CPU cores | 4 CPU cores |
 
+### Container Requirements (Front End)
+
+| Minimum     | Recommended |
+| :---------- | :---------- |
+| 512MB RAM   | 1GB RAM    |
+| 1 CPU cores | 2 CPU cores |
+
+### Quickstart (Docker Compose)
+
+```bash
+# Downloads the latest Docker Compose file
+curl -LO https://dependencytrack.org/docker-compose.yml
+
+# Starts the stack using Docker Compose
+docker-compose up -d
+```
+
+### Quickstart (Docker Swarm)
+
+```bash
+# Downloads the latest Docker Compose file
+curl -LO https://dependencytrack.org/docker-compose.yml
+
+# Initializes Docker Swarm (if not previously initialized)
+docker swarm init
+
+# Starts the stack using Docker Swarm
+docker stack deploy -c docker-compose.yml dtrack
+```
 
 ### Quickstart (Manual Execution)
 
 ```bash
 # Pull the image from the Docker Hub OWASP repo
-docker pull owasp/dependency-track
+docker pull dependencytrack/bundled
 
 # Creates a dedicated volume where data can be stored outside the container
 docker volume create --name dependency-track
 
-# Run the container with 8GB RAM on port 8080
-docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:/data owasp/dependency-track
+# Run the bundled container with 8GB RAM on port 8080
+docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:/data dependencytrack/bundled
 ```
 
 ### Docker Compose (Automated / Orchestration)
@@ -40,9 +69,20 @@ can be used with `docker-compose` or `docker stack deploy`.
 
 ```yaml
 version: '3.7'
+
+#####################################################
+# This Docker Compose file contains two services
+#    Dependency-Track API Server
+#    Dependency-Track FrontEnd
+#####################################################
+
+volumes:
+  dependency-track:
+
 services:
-  dtrack:
-    #environment:
+  dtrack-apiserver:
+    image: dependencytrack/apiserver
+    # environment:
     # The Dependency-Track container can be configured using any of the
     # available configuration properties defined in:
     # https://docs.dependencytrack.org/getting-started/configuration/
@@ -61,7 +101,7 @@ services:
     # - ALPINE_DATABASE_POOL_MAX_LIFETIME=600000
     #
     # Optional LDAP Properties
-    # - ALPINE_LDAP_ENABLED=
+    # - ALPINE_LDAP_ENABLED=true
     # - ALPINE_LDAP_SERVER_URL=ldap://ldap.example.com:389
     # - ALPINE_LDAP_BASEDN=dc=example,dc=com
     # - ALPINE_LDAP_SECURITY_AUTH=simple
@@ -76,6 +116,14 @@ services:
     # - ALPINE_LDAP_USERS_SEARCH_FILTER=(&(objectClass=user)(objectCategory=Person)(cn=*{SEARCH_TERM}*))
     # - ALPINE_LDAP_USER_PROVISIONING=false
     # - ALPINE_LDAP_TEAM_SYNCHRONIZATION=false
+    #
+    # Optional OpenID Connect (OIDC) Properties
+    # - ALPINE_OIDC_ENABLED=true
+    # - ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example
+    # - ALPINE_OIDC_USERNAME_CLAIM=preferred_username
+    # - ALPINE_OIDC_TEAMS_CLAIM=groups
+    # - ALPINE_OIDC_USER_PROVISIONING=true
+    # - ALPINE_OIDC_TEAM_SYNCHRONIZATION=true
     #
     # Optional HTTP Proxy Settings
     # - ALPINE_HTTP_PROXY_ADDRESS=proxy.example.com
@@ -92,7 +140,6 @@ services:
     # - ALPINE_CORS_EXPOSE_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
-    image: 'owasp/dependency-track'
     deploy:
       resources:
         limits:
@@ -102,9 +149,26 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-    - '80:8080'
+      - '8081:8080'
     volumes:
-    - './data:/data'
+      - 'dependency-track:/data'
+    restart: unless-stopped
+
+  dtrack-frontend:
+    image: dependencytrack/frontend
+    depends_on:
+      - dtrack-apiserver
+    environment:
+      - API_BASE_URL=http://localhost:8081
+      # - "OIDC_ISSUER="
+      # - "OIDC_CLIENT_ID="
+      # - "OIDC_SCOPE="
+      # - "OIDC_FLOW="
+      # volumes:
+      # - "/host/path/to/config.json:/app/static/config.json"
+    ports:
+      - "8080:80"
+    restart: unless-stopped
 ```
 
 ### Bundled JDBC Drivers
@@ -115,8 +179,9 @@ with `ALPINE_DATABASE_DRIVER_PATH`.
 | Driver        | Path                                      |
 | ------------- | ----------------------------------------- |
 | Microsoft SQL | /extlib/mssql-jdbc-7.1.3.jre8-preview.jar |
-| MySQL         | /extlib/mysql-connector-java-5.1.47.jar   |
-| PostgreSQL    | /extlib/postgresql-42.2.11.jar            |
+| MySQL         | /extlib/mysql-connector-java-8.0.22.jar   |
+| PostgreSQL    | /extlib/postgresql-42.2.18.jar            |
+
 
 The inclusion of drivers does not preclude the use of other driver versions. They are
 bundled as a matter of convenience.

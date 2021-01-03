@@ -25,6 +25,7 @@ import alpine.tasks.AlpineTaskScheduler;
 import alpine.util.BooleanUtil;
 import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
+import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
@@ -86,6 +87,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
         // Configurable tasks
         scheduleConfigurableTask(300000, FORTIFY_SSC_ENABLED, FORTIFY_SSC_SYNC_CADENCE, new FortifySscUploadEventAbstract());
+        scheduleConfigurableTask(300000, DEFECTDOJO_ENABLED, DEFECTDOJO_SYNC_CADENCE, new DefectDojoUploadEventAbstract());
         scheduleConfigurableTask(300000, KENNA_ENABLED, KENNA_SYNC_CADENCE, new KennaSecurityUploadEventAbstract());
     }
 

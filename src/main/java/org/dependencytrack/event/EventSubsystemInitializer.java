@@ -27,6 +27,7 @@ import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
 import org.dependencytrack.tasks.ClearComponentAnalysisCacheTask;
 import org.dependencytrack.tasks.CloneProjectTask;
+import org.dependencytrack.tasks.DefectDojoUploadTask;
 import org.dependencytrack.tasks.FortifySscUploadTask;
 import org.dependencytrack.tasks.IndexTask;
 import org.dependencytrack.tasks.InternalComponentIdentificationTask;

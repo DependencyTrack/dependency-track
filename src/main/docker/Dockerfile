@@ -8,6 +8,7 @@ ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
 ARG EXTLIB_DIR=/extlib/
 ARG USERNAME=dtrack
+ARG GID=0
 ARG WAR_FILENAME=dependency-track-apiserver.war
 
 # Create the directory where Dependency-Track will store its data (${DATA_DIR}) and the external library directory (${EXTLIB_DIR})
@@ -19,11 +20,11 @@ RUN mkdir -p -m 770 ${DATA_DIR} ${EXTLIB_DIR} \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.22/mysql-connector-java-8.0.22.jar \
     && wget -P ${EXTLIB_DIR} https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.1.3.jre8-preview/mssql-jdbc-7.1.3.jre8-preview.jar \
-    && chown -R ${USERNAME}:${USERNAME} ${DATA_DIR} ${EXTLIB_DIR}
+    && chown -R ${USERNAME}:0 ${DATA_DIR} ${EXTLIB_DIR}
 
 # Copy the compiled WAR to the application directory created above
 # Automatically creates the $APP_DIR directory
-COPY --chown=1000 ./target/${WAR_FILENAME} ${APP_DIR}
+COPY --chown=${USERNAME}:0  ./target/${WAR_FILENAME} ${APP_DIR}
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER 1000

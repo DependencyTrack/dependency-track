@@ -1125,9 +1125,11 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
-        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project.id == :pid");
-        if (!includeSuppressed) {
-            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (includeSuppressed) {
+            query.setFilter("project.id == :pid");
+        } else {
+            query.setFilter("project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)");
         }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
@@ -1148,9 +1150,11 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
-        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component.id == :cid");
-        if (!includeSuppressed) {
-            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (includeSuppressed) {
+            query.setFilter("component.id == :cid");
+        } else {
+            query.setFilter("component.id == :cid && (analysis.suppressed == false || analysis.suppressed == null)");
         }
         if (orderBy == null) {
             query.setOrdering("timestamp desc");

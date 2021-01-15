@@ -256,6 +256,7 @@ public class ComponentResource extends AlpineResource {
                 component.setResolvedLicense(null);
             }
             component.setParent(parent);
+            component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
             component = qm.createComponent(component, true);
             Event.dispatch(new VulnerabilityAnalysisEvent(component));
@@ -333,6 +334,7 @@ public class ComponentResource extends AlpineResource {
                     component.setLicense(StringUtils.trimToNull(jsonComponent.getLicense()));
                     component.setResolvedLicense(null);
                 }
+                component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                 component = qm.updateComponent(component, true);
                 Event.dispatch(new VulnerabilityAnalysisEvent(component));

@@ -295,6 +295,14 @@ public class Component implements Serializable {
     @Column(name = "LAST_RISKSCORE", allowsNull = "true") // New column, must allow nulls on existing databases))
     private Double lastInheritedRiskScore;
 
+    /**
+     * Sticky notes
+     */
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "TEXT", jdbcType = "CLOB")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String notes;
+
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "COMPONENT_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -604,6 +612,14 @@ public class Component implements Serializable {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     public UUID getUuid() {

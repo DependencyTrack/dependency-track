@@ -28,7 +28,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.util.DateUtil;
 import org.dependencytrack.util.XmlUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -36,6 +35,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 
 /**
  * An IMetaAnalyzer implementation that supports Maven repositories (including Maven Central).
@@ -95,7 +95,7 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
 
                                 meta.setLatestVersion(latest);
                                 if (lastUpdated != null) {
-                                    meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
+                                    meta.setPublishedTimestamp(new Date(lastUpdated));
                                 }
                             }
                         }

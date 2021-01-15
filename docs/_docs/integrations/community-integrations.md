@@ -1,10 +1,11 @@
 ---
-title: Community Implementations
+title: Community Integrations
 category: Integrations
 chapter: 6
 order: 10
 redirect_from:
   - /integrations/jenkins/
+  - /integrations/community-implementations/
 ---
 
 Since Dependency-Track follows the API-First approach of product development, the API itself provides vast possibilities 

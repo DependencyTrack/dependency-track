@@ -61,7 +61,7 @@ public class RepositoryResourceTest extends ResourceTest {
         Assert.assertEquals(String.valueOf(11), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(11, json.size());
+        Assert.assertEquals(12, json.size());
         for (int i=0; i<json.size(); i++) {
             Assert.assertNotNull(json.getJsonObject(i).getString("type"));
             Assert.assertNotNull(json.getJsonObject(i).getString("identifier"));

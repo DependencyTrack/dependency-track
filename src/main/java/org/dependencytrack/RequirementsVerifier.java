@@ -19,7 +19,6 @@
 package org.dependencytrack;
 
 import alpine.logging.Logger;
-import alpine.util.JavaVersion;
 import org.dependencytrack.exception.RequirementsException;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -39,21 +38,6 @@ public class RequirementsVerifier implements ServletContextListener {
     @Override
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing requirements verifier");
-        final JavaVersion javaVersion = new JavaVersion();
-        if (javaVersion.getMajor() != 8 && javaVersion.getMajor() != 11) {
-            setFailedValidation(true);
-            final String message = "Dependency-Track supports Java LTS releases only. Cannot continue.";
-            LOGGER.error("Using Java version: " + javaVersion.toString());
-            LOGGER.error(message);
-            throw new RequirementsException(message);
-        }
-        if (javaVersion.getMajor() == 8 && javaVersion.getUpdate() < 161) {
-            setFailedValidation(true);
-            final String message = "Dependency-Track requires Java 8 with a minimum update of 162 or higher. Cannot continue.";
-            LOGGER.error("Using Java version: " + javaVersion.toString());
-            LOGGER.error(message);
-            throw new RequirementsException(message);
-        }
         if (Runtime.getRuntime().maxMemory()/1024/1024 <= 3584) {
             setFailedValidation(true);
             // too complicated to calculate (Eden, Survivor, Tenured) and different type names between Java versions.

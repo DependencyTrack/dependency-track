@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.upgrade;
 
-import alpine.Config;
 import alpine.logging.Logger;
 import alpine.model.InstalledUpgrades;
 import alpine.model.SchemaVersion;
@@ -50,12 +49,6 @@ public class UpgradeInitializer implements ServletContextListener {
     @Override
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing upgrade framework");
-
-        final String driverPath = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER_PATH);
-        if (driverPath != null) {
-            Config.getInstance().expandClasspath(driverPath);
-        }
-
         try {
             final UpgradeMetaProcessor ump = new UpgradeMetaProcessor();
             final VersionComparator currentVersion = ump.getSchemaVersion();

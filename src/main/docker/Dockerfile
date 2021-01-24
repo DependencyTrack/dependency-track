@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk8:alpine-jre
+FROM adoptopenjdk/openjdk11:alpine-jre
 LABEL maintainer="steve.springett@owasp.org"
 LABEL vendor="OWASP"
 
@@ -41,11 +41,14 @@ EXPOSE 8080
 ENV LOGGING_LEVEL=INFO
 
 # Environment variables that can be passed at runtime
-ENV JAVA_OPTIONS="-XX:MaxRAMPercentage=90.0"
+ENV JAVA_OPTIONS="-XX:+UseParallelGC -XX:MaxRAMPercentage=90.0"
 
 # The web context defaults to the root. To override, supply an alternative context which starts with a / but does not end with one
 # Example: /dtrack
 ENV CONTEXT=""
+
+# Sets the build-time ARG "EXTLIB_DIR" as the CLASSPATH environment variable.
+ENV CLASSPATH="${EXTLIB_DIR}*.jar"
 
 # Injects the build-time ARG "WAR_FILENAME" as an environment variable that can be used in the CMD.
 ENV WAR_FILENAME ${WAR_FILENAME}

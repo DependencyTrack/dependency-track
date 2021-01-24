@@ -89,6 +89,7 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
         try {
             final UnirestInstance ui = UnirestFactory.getUnirestInstance();
 
+            int firstAdvisory = -1;
             boolean more = true;
 
             String url = NPM_BASE_URL + NPM_ADVISORY_START;
@@ -101,6 +102,26 @@ public class NpmAdvisoryMirrorTask implements LoggableSubscriber {
                 if (jsonResponse.getStatus() == 200) {
                     final NpmAdvisoriesParser parser = new NpmAdvisoriesParser();
                     final AdvisoryResults results = parser.parse(jsonResponse.getBody());
+
+                    if (results.getAdvisories() != null && results.getAdvisories().size() > 0) {
+                        if (firstAdvisory == -1) {
+                            firstAdvisory = results.getAdvisories().get(0).getId();
+                        } else if (firstAdvisory == results.getAdvisories().get(0).getId()){
+                            // This should not happen and is likely due to NPM API being broken again
+                            // and not property paginating.
+                            final String error = "NPM Advisories API is not paginating properly. Aborting mirroring to prevent possible infinite loop. Please open an issue with NPM to resolve. See: https://github.com/DependencyTrack/dependency-track/issues/811";
+                            LOGGER.error(error);
+                            Notification.dispatch(new Notification()
+                                    .scope(NotificationScope.SYSTEM)
+                                    .group(NotificationGroup.DATASOURCE_MIRRORING)
+                                    .title(NotificationConstants.Title.NPM_ADVISORY_MIRROR)
+                                    .content(error)
+                                    .level(NotificationLevel.ERROR)
+                            );
+                            return;
+                        }
+                    }
+
                     updateDatasource(results);
                     more = results.getNext() != null;
                     // Workaround for breaking changes made to NPM Advisories API documented in:

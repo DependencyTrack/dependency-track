@@ -11,7 +11,7 @@ jobs:
       matrix:
         # Need to figure out a way to prevent duplicate pushes to Docker Hub. Should only be done with one.
         #java: [ '1.8.0', '11.0.x' ]
-        java: [ '1.8.0' ]
+        java: [ '11' ]
     env:
       DOCKER_APISERVER_REPO: dependencytrack/apiserver
       DOCKER_BUNDLED_REPO: dependencytrack/bundled

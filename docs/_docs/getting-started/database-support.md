@@ -25,7 +25,6 @@ To change database settings, edit `application.properties` found in the Dependen
 alpine.database.mode=external
 alpine.database.url=jdbc:sqlserver://localhost:1433;databaseName=dtrack
 alpine.database.driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
-alpine.database.driver.path=~/path/to/sqljdbc4.jar
 alpine.database.username=dtrack
 alpine.database.password=password
 ```
@@ -36,7 +35,6 @@ alpine.database.password=password
 alpine.database.mode=external
 alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL=false
 alpine.database.driver=com.mysql.jdbc.Driver
-alpine.database.driver.path=~/path/to/mysql-connector-java-8.0.22-bin.jar
 alpine.database.username=dtrack
 alpine.database.password=password
 ```
@@ -62,7 +60,6 @@ key length is lower than the actual value. If UTF-8 support is required, do not 
 alpine.database.mode=external
 alpine.database.url=jdbc:postgresql://localhost:5432/dtrack
 alpine.database.driver=org.postgresql.Driver
-alpine.database.driver.path=~/path/to/postgresql-42.2.18.jar
 alpine.database.username=dtrack
 alpine.database.password=password
 ```

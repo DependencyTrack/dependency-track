@@ -201,10 +201,10 @@ mvn clean package -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=sr
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the
-[Apache License 2.0] [license-url]
+[Apache License 2.0].
 
 Dependency-Track makes use of several other open source libraries. Please see
-the [NOTICES.txt] [notices] file for more information.
+the [notices] file for more information.
 
   [National Vulnerability Database]: https://nvd.nist.gov
   [NPM Public Advisories]: https://www.npmjs.com/advisories
@@ -216,7 +216,6 @@ the [NOTICES.txt] [notices] file for more information.
   [CycloneDX]: https://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
-  [license-url]: https://github.com/DependencyTrack/dependency-track/blob/master/LICENSE.txt
-  [Apache License 2.0]: https://github.com/DependencyTrack/dependency-track/blob/3.0-dev/LICENSE.txt
+  [Apache License 2.0]: https://github.com/DependencyTrack/dependency-track/blob/master/LICENSE.txt
   [notices]: https://github.com/DependencyTrack/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine

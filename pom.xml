@@ -86,7 +86,7 @@
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.0</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>3.0.8</lib.cyclonedx-java.version>
-        <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
+        <lib.jaxb.runtime.version>2.3.3</lib.jaxb.runtime.version>
         <lib.lucene.version>8.7.0</lib.lucene.version>
         <lib.packageurl.version>1.2.0</lib.packageurl.version>
         <lib.pebble.version>3.1.4</lib.pebble.version>
@@ -435,9 +435,7 @@
                                 <phase>prepare-package</phase>
                                 <configuration>
                                     <target>
-                                        <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip"
-                                             dest="${project.build.directory}"
-                                             verbose="true"/>
+                                        <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip" dest="${project.build.directory}" verbose="true"/>
                                     </target>
                                 </configuration>
                                 <goals>
@@ -449,8 +447,7 @@
                                 <phase>prepare-package</phase>
                                 <configuration>
                                     <target>
-                                        <unzip src="${project.build.directory}/frontend-dist.zip"
-                                               dest="${project.build.directory}/frontend">
+                                        <unzip src="${project.build.directory}/frontend-dist.zip" dest="${project.build.directory}/frontend">
                                         </unzip>
                                     </target>
                                 </configuration>

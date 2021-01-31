@@ -1,7 +1,7 @@
 [![Build Status](https://github.com/DependencyTrack/dependency-track/workflows/CI%20Build/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions?workflow=CI+Build)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/b2ecd06dab57438a9a55bc4a71c5a8ce)](https://www.codacy.com/gh/DependencyTrack/dependency-track/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DependencyTrack/dependency-track&amp;utm_campaign=Badge_Grade)
 [![Alpine](https://img.shields.io/badge/built%20on-Alpine-blue.svg)](https://github.com/stevespringett/Alpine)
-[![License][license-image]][license-url]
+[![License][license-image]][Apache License 2.0]
 [![OWASP Flagship](https://img.shields.io/badge/owasp-flagship%20project-orange.svg)](https://www.owasp.org/index.php/OWASP_Dependency_Track_Project)
 [![Website](https://img.shields.io/badge/https://-dependencytrack.org-blue.svg)](https://dependencytrack.org/)
 [![Documentation](https://img.shields.io/badge/read-documentation-blue.svg)](https://docs.dependencytrack.org/)
@@ -201,10 +201,10 @@ mvn clean package -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=sr
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.
 
 Permission to modify and redistribute is granted under the terms of the
-[Apache License 2.0] [license-url]
+[Apache License 2.0].
 
 Dependency-Track makes use of several other open source libraries. Please see
-the [NOTICES.txt] [notices] file for more information.
+the [notices] file for more information.
 
   [National Vulnerability Database]: https://nvd.nist.gov
   [NPM Public Advisories]: https://www.npmjs.com/advisories
@@ -216,7 +216,6 @@ the [NOTICES.txt] [notices] file for more information.
   [CycloneDX]: https://cyclonedx.org
   [SPDX]: https://spdx.org
   [license-image]: https://img.shields.io/badge/license-apache%20v2-brightgreen.svg
-  [license-url]: https://github.com/DependencyTrack/dependency-track/blob/master/LICENSE.txt
-  [Apache License 2.0]: https://github.com/DependencyTrack/dependency-track/blob/3.0-dev/LICENSE.txt
+  [Apache License 2.0]: https://github.com/DependencyTrack/dependency-track/blob/master/LICENSE.txt
   [notices]: https://github.com/DependencyTrack/dependency-track/blob/master/NOTICES.txt
   [Alpine]: https://github.com/stevespringett/Alpine

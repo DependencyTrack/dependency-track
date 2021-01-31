@@ -31,6 +31,7 @@ import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.BomGeneratorFactory;
+import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.CycloneDxSchema;
 import org.cyclonedx.generators.json.BomJsonGenerator;
 import org.cyclonedx.generators.xml.BomXmlGenerator;
@@ -83,7 +84,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/project/{uuid}")
-    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_XML, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON})
     @ApiOperation(
             value = "Returns dependency metadata for a project in CycloneDX format",
             response = String.class
@@ -114,11 +115,11 @@ public class BomResource extends AlpineResource {
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("XML")) {
                     final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                     bomGenerator.generate();
-                    return Response.ok(bomGenerator.toXmlString()).build();
+                    return Response.ok(bomGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
                 } else if (format.equalsIgnoreCase("JSON")) {
                     final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
                     bomGenerator.generate();
-                    return Response.ok(bomGenerator.toJsonString()).build();
+                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }
@@ -131,7 +132,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/components")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
     @ApiOperation(
             value = "Returns dependency metadata for all components in CycloneDX format",
             response = String.class
@@ -152,7 +153,7 @@ public class BomResource extends AlpineResource {
                 bom.setComponents(cycloneComponents);
                 final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                 bomXmlGenerator.generate();
-                return Response.ok(bomXmlGenerator.toXmlString()).build();
+                return Response.ok(bomXmlGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
             } catch (ParserConfigurationException | TransformerException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -162,7 +163,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/component/{uuid}")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
     @ApiOperation(
             value = "Returns dependency metadata for a specific component in CycloneDX format",
             response = String.class
@@ -190,7 +191,7 @@ public class BomResource extends AlpineResource {
                 bom.setComponents(cycloneComponents);
                 final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                 bomXmlGenerator.generate();
-                return Response.ok(bomXmlGenerator.toXmlString()).build();
+                return Response.ok(bomXmlGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
             } catch (ParserConfigurationException | TransformerException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();

@@ -134,7 +134,7 @@ services:
     # Optional Cross-Origin Resource Sharing (CORS) Headers
     # - ALPINE_CORS_ENABLED=true
     # - ALPINE_CORS_ALLOW_ORIGIN=*
-    # - ALPINE_CORS_ALLOW_METHODS=GET POST PUT DELETE OPTIONS
+    # - ALPINE_CORS_ALLOW_METHODS=GET, POST, PUT, DELETE, OPTIONS
     # - ALPINE_CORS_ALLOW_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *
     # - ALPINE_CORS_EXPOSE_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true

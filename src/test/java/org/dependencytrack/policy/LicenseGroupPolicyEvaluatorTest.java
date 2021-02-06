@@ -19,11 +19,15 @@
 package org.dependencytrack.policy;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.LicenseGroup;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
@@ -47,8 +51,8 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
     }
 
     @Test
@@ -69,8 +73,8 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -90,8 +94,8 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -111,8 +115,8 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setResolvedLicense(license);
         PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
 }

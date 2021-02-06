@@ -21,7 +21,8 @@ package org.dependencytrack.policy;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import java.util.Optional;
+import org.dependencytrack.persistence.QueryManager;
+import java.util.List;
 
 /**
  * Defines a PolicyEvaluator. Each PolicyEvaluator should perform a very specific
@@ -32,6 +33,8 @@ import java.util.Optional;
  */
 public interface PolicyEvaluator {
 
+    void setQueryManager(final QueryManager qm);
+
     /**
      * Returns the Subject for which a PolicyEvaluator is capable of analyzing.
      * @return A PolicyCondition Subject
@@ -40,12 +43,12 @@ public interface PolicyEvaluator {
     PolicyCondition.Subject supportedSubject();
 
     /**
-     * Performs the evaluation and returns an Optional PolicyConditionViolation if a violation occurs.
+     * Performs the evaluation and returns a List of PolicyConditionViolation objects.
      * @param policy the policy to evaluate against
      * @param component the component to evaluate
-     * @return an Optional that may contain a PolicyConditionViolation
+     * @return a List of zero or more PolicyConditionViolation objects
      * @since 4.0.0
      */
-    Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component);
+    List<PolicyConditionViolation> evaluate(final Policy policy, final Component component);
 
 }

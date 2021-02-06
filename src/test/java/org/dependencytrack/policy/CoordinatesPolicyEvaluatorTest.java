@@ -24,7 +24,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
 import org.junit.Test;
-import java.util.Optional;
+import java.util.List;
 
 public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
 
@@ -38,9 +38,9 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
-        PolicyConditionViolation violation = optional.get();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
         Assert.assertEquals(component, violation.getComponent());
         Assert.assertEquals(condition, violation.getPolicyCondition());
     }
@@ -54,9 +54,9 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
-        PolicyConditionViolation violation = optional.get();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
         Assert.assertEquals(component, violation.getComponent());
         Assert.assertEquals(condition, violation.getPolicyCondition());
     }
@@ -71,9 +71,9 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
-        PolicyConditionViolation violation = optional.get();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
         Assert.assertEquals(component, violation.getComponent());
         Assert.assertEquals(condition, violation.getPolicyCondition());
     }
@@ -88,8 +88,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("2.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -102,8 +102,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -116,8 +116,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -129,8 +129,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -141,8 +141,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Example Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -153,8 +153,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Test Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -165,8 +165,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Test Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
 }

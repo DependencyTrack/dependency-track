@@ -22,7 +22,8 @@ import alpine.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Evaluates a components SWID tagId against a policy.
@@ -46,23 +47,24 @@ public class SwidTagIdPolicyEvaluator extends AbstractPolicyEvaluator {
      * {@inheritDoc}
      */
     @Override
-    public Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+    public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+        final List<PolicyConditionViolation> violations = new ArrayList<>();
         if (component.getSwidTagId() == null) {
-            return Optional.empty();
+            return violations;
         }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             if (PolicyCondition.Operator.MATCHES == condition.getOperator()) {
                 if (component.getSwidTagId() != null && component.getSwidTagId().contains(condition.getValue())) {
-                    return Optional.of(new PolicyConditionViolation(condition, component));
+                    violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
                 if (component.getSwidTagId() != null && !component.getSwidTagId().contains(condition.getValue())) {
-                    return Optional.of(new PolicyConditionViolation(condition, component));
+                    violations.add(new PolicyConditionViolation(condition, component));
                 }
             }
         }
-        return Optional.empty();
+        return violations;
     }
 
 }

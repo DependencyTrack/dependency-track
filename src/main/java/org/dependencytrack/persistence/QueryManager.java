@@ -1924,7 +1924,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    private List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
+    public List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
         final String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component.getProject(), component);
         final Query<Vulnerability> query = pm.newQuery(Vulnerability.class, filter);
         return (List<Vulnerability>)query.execute(component);

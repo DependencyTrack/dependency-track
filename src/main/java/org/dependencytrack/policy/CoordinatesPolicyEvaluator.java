@@ -25,7 +25,8 @@ import org.dependencytrack.model.Coordinates;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.json.JSONObject;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Evaluates a components group + name + version against a policy.
@@ -49,18 +50,18 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
      * {@inheritDoc}
      */
     @Override
-    public Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+    public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+        final List<PolicyConditionViolation> violations = new ArrayList<>();
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Coordinates coordinates = parseCoordinatesDefinition(condition);
-
             if (matches(condition.getOperator(), coordinates.getGroup(), component.getGroup())
                     && matches(condition.getOperator(), coordinates.getName(), component.getName())
                     && matches(condition.getOperator(), coordinates.getVersion(), component.getVersion())) {
-                return Optional.of(new PolicyConditionViolation(condition, component));
+                violations.add(new PolicyConditionViolation(condition, component));
             }
         }
-        return Optional.empty();
+        return violations;
     }
 
     private boolean matches(final PolicyCondition.Operator operator, final String conditionValue, final String part) {

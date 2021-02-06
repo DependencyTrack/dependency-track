@@ -11,7 +11,7 @@ limited to specific projects.
 
 There are three types of policy violations:
 * License
-* Security (coming in v4.1)
+* Security
 * Operational
 
 ## License Violation
@@ -20,7 +20,9 @@ pre-configured groups of related licenses (e.g. Copyleft) that provide a startin
 custom license policies.
 
 ## Security Violation
-Coming in v4.1
+Policy conditions can specify the severity of vulnerabilities. A vulnerability affecting a component can result in a 
+policy violation if the policy condition matches the severity of the vulnerability. Vulnerabilities that are suppressed
+will not result in a policy violation.
 
 ## Operational Violation
 Policy conditions can specify zero or more:

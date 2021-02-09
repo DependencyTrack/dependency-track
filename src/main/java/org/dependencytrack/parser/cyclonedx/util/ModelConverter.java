@@ -80,6 +80,10 @@ public class ModelConverter {
         component.setCopyright(StringUtils.trimToNull(cycloneDxComponent.getCopyright()));
         component.setCpe(StringUtils.trimToNull(cycloneDxComponent.getCpe()));
 
+        if (cycloneDxComponent.getSwid() != null) {
+            component.setSwidTagId(StringUtils.trimToNull(cycloneDxComponent.getSwid().getTagId()));
+        }
+
         if (StringUtils.isNotBlank(cycloneDxComponent.getPurl())) {
             try {
                 component.setPurl(new PackageURL(StringUtils.trimToNull(cycloneDxComponent.getPurl())));
@@ -155,6 +159,12 @@ public class ModelConverter {
         cycloneComponent.setDescription(StringUtils.trimToNull(component.getDescription()));
         cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
+
+        if (component.getSwidTagId() != null) {
+            final Swid swid = new Swid();
+            swid.setTagId(component.getSwidTagId());
+            cycloneComponent.setSwid(swid);
+        }
 
         if (component.getPurl() != null) {
             cycloneComponent.setPurl(component.getPurl().canonicalize());

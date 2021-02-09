@@ -236,8 +236,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                     final String componentPurl = minimizePurl(c.getPurl());
                     final PackageURL sonatypePurl = oldPurlResolver(componentReport.getCoordinates());
                     final String minimalSonatypePurl = minimizePurl(sonatypePurl);
-                    if (componentPurl.equals(componentReport.getCoordinates()) ||
-                            (sonatypePurl != null && componentPurl.equals(minimalSonatypePurl))) {
+                    if (componentPurl != null && (componentPurl.equals(componentReport.getCoordinates()) ||
+                            (sonatypePurl != null && componentPurl.equals(minimalSonatypePurl)))) {
                         /*
                         Found the component
                          */

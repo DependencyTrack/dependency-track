@@ -2698,7 +2698,7 @@ public class QueryManager extends AlpineQueryManager {
         return singleResult(query.executeWithArray(cacheType, targetHost, targetType, target));
     }
 
-    public void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
+    public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
         ComponentAnalysisCache cac = getComponentAnalysisCache(cacheType, targetHost, targetType, target);
         if (cac == null) {
             cac = new ComponentAnalysisCache();

@@ -50,10 +50,8 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.persist(component);
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.detach(Project.class, project.getId());
-        qm.detach(Component.class, component.getId());
-        qm.detach(Vulnerability.class, vulnerability.getId());
         PolicyEvaluator evaluator = new SeverityPolicyEvaluator();
+        evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);
@@ -79,10 +77,8 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.persist(component);
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.detach(Project.class, project.getId());
-        qm.detach(Component.class, component.getId());
-        qm.detach(Vulnerability.class, vulnerability.getId());
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
+        evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -105,10 +101,8 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.persist(component);
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.detach(Project.class, project.getId());
-        qm.detach(Component.class, component.getId());
-        qm.detach(Vulnerability.class, vulnerability.getId());
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
+        evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }
@@ -131,10 +125,8 @@ public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {
         qm.persist(component);
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.detach(Project.class, project.getId());
-        qm.detach(Component.class, component.getId());
-        qm.detach(Vulnerability.class, vulnerability.getId());
         PolicyEvaluator evaluator = new CpePolicyEvaluator();
+        evaluator.setQueryManager(qm);
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(0, violations.size());
     }

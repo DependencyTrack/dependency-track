@@ -1,0 +1,82 @@
+package org.dependencytrack.policy;
+
+import alpine.logging.Logger;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.util.ComponentVersion;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Evaluates a components version against a policy.
+ *
+ * @since 4.2.0
+ */
+public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
+
+    private static final Logger LOGGER = Logger.getLogger(VersionPolicyEvaluator.class);
+
+    @Override
+    public PolicyCondition.Subject supportedSubject() {
+        return PolicyCondition.Subject.VERSION;
+    }
+
+    @Override
+    public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+        final var componentVersion = new ComponentVersion(component.getVersion());
+
+        final List<PolicyConditionViolation> violations = new ArrayList<>();
+
+        for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
+            LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
+
+            final var conditionVersion = new ComponentVersion(condition.getValue());
+            if (conditionVersion.getVersionParts().isEmpty()) {
+                LOGGER.warn("Unable to parse version (" + condition.getValue() + " provided by condition");
+                continue;
+            }
+
+            final int comparisonResult = componentVersion.compareTo(conditionVersion);
+            switch (condition.getOperator()) {
+                case NUMERIC_EQUAL:
+                    if (comparisonResult == 0) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                    break;
+                case NUMERIC_NOT_EQUAL:
+                    if (comparisonResult != 0) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                    break;
+                case NUMERIC_LESS_THAN:
+                    if (comparisonResult < 0) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                    break;
+                case NUMERIC_LESSER_THAN_OR_EQUAL:
+                    if (comparisonResult <= 0) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                    break;
+                case NUMERIC_GREATER_THAN:
+                    if (comparisonResult > 0) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                    break;
+                case NUMERIC_GREATER_THAN_OR_EQUAL:
+                    if (comparisonResult >= 0) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                    break;
+                default:
+                    LOGGER.warn("Unsupported operation " + condition.getOperator());
+                    break;
+            }
+        }
+
+        return violations;
+    }
+
+}

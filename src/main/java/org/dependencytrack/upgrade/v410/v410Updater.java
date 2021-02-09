@@ -18,18 +18,18 @@
  */
 package org.dependencytrack.upgrade.v410;
 
+import alpine.Config;
 import alpine.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.upgrade.AbstractUpgradeItem;
-import alpine.util.DbUtil;
-
+import org.apache.commons.io.FileDeleteStrategy;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 
 public class v410Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v410Updater.class);
-    private static final String COMPOSER_REPOSITORY = "INSERT INTO \"REPOSITORY\" (\"TYPE\", \"IDENTIFIER\", \"URL\", \"RESOLUTION_ORDER\", \"ENABLED\", \"INTERNAL\") VALUES ('COMPOSER', 'packagist', 'https://repo.packagist.org/', 1, TRUE, FALSE)";
-    private static final String COMPOSER_REPOSITORY_ALT = "INSERT INTO \"REPOSITORY\" (\"TYPE\", \"IDENTIFIER\", \"URL\", \"RESOLUTION_ORDER\", \"ENABLED\", \"INTERNAL\") VALUES ('COMPOSER', 'packagist', 'https://repo.packagist.org/', 1, 1, 0)";
 
     @Override
     public String getSchemaVersion() {
@@ -38,12 +38,12 @@ public class v410Updater extends AbstractUpgradeItem {
 
     @Override
     public void executeUpgrade(final AlpineQueryManager alpineQueryManager, final Connection connection) throws Exception {
-        LOGGER.info("Adding Composer-type repository support");
+        LOGGER.info("Deleting index directory");
         try {
-            DbUtil.executeUpdate(connection, COMPOSER_REPOSITORY);
-        } catch (Exception e) {
-            LOGGER.info("Enabled and/or internal fields are likely not boolean. Attempting composer repository creation assuming bit fields");
-            DbUtil.executeUpdate(connection, COMPOSER_REPOSITORY_ALT);
+            final String INDEX_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "index";
+            FileDeleteStrategy.FORCE.delete(new File(INDEX_ROOT_DIR));
+        } catch (IOException e) {
+            LOGGER.error("An error occurred deleting the index directory", e);
         }
     }
 }

@@ -70,7 +70,8 @@ public class PolicyCondition implements Serializable {
         LICENSE_GROUP,
         PACKAGE_URL,
         SEVERITY,
-        SWID_TAGID
+        SWID_TAGID,
+        VERSION
     }
 
     @PrimaryKey

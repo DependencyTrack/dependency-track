@@ -38,45 +38,54 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
                 continue;
             }
 
-            final int comparisonResult = componentVersion.compareTo(conditionVersion);
-            switch (condition.getOperator()) {
-                case NUMERIC_EQUAL:
-                    if (comparisonResult == 0) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                    break;
-                case NUMERIC_NOT_EQUAL:
-                    if (comparisonResult != 0) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                    break;
-                case NUMERIC_LESS_THAN:
-                    if (comparisonResult < 0) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                    break;
-                case NUMERIC_LESSER_THAN_OR_EQUAL:
-                    if (comparisonResult <= 0) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                    break;
-                case NUMERIC_GREATER_THAN:
-                    if (comparisonResult > 0) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                    break;
-                case NUMERIC_GREATER_THAN_OR_EQUAL:
-                    if (comparisonResult >= 0) {
-                        violations.add(new PolicyConditionViolation(condition, component));
-                    }
-                    break;
-                default:
-                    LOGGER.warn("Unsupported operation " + condition.getOperator());
-                    break;
+            if (matches(componentVersion, conditionVersion, condition.getOperator())) {
+                violations.add(new PolicyConditionViolation(condition, component));
             }
         }
 
         return violations;
+    }
+
+    static boolean matches(final ComponentVersion componentVersion,
+                    final ComponentVersion conditionVersion,
+                    final PolicyCondition.Operator operator) {
+        final int comparisonResult = componentVersion.compareTo(conditionVersion);
+        switch (operator) {
+            case NUMERIC_EQUAL:
+                if (comparisonResult == 0) {
+                    return true;
+                }
+                break;
+            case NUMERIC_NOT_EQUAL:
+                if (comparisonResult != 0) {
+                    return true;
+                }
+                break;
+            case NUMERIC_LESS_THAN:
+                if (comparisonResult < 0) {
+                    return true;
+                }
+                break;
+            case NUMERIC_LESSER_THAN_OR_EQUAL:
+                if (comparisonResult <= 0) {
+                    return true;
+                }
+                break;
+            case NUMERIC_GREATER_THAN:
+                if (comparisonResult > 0) {
+                    return true;
+                }
+                break;
+            case NUMERIC_GREATER_THAN_OR_EQUAL:
+                if (comparisonResult >= 0) {
+                    return true;
+                }
+                break;
+            default:
+                LOGGER.warn("Unsupported operation " + operator);
+                break;
+        }
+        return false;
     }
 
 }

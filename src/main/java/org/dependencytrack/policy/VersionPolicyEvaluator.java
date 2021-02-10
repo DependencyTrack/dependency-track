@@ -47,40 +47,22 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
     }
 
     static boolean matches(final ComponentVersion componentVersion,
-                    final ComponentVersion conditionVersion,
-                    final PolicyCondition.Operator operator) {
+                           final ComponentVersion conditionVersion,
+                           final PolicyCondition.Operator operator) {
         final int comparisonResult = componentVersion.compareTo(conditionVersion);
         switch (operator) {
             case NUMERIC_EQUAL:
-                if (comparisonResult == 0) {
-                    return true;
-                }
-                break;
+                return comparisonResult == 0;
             case NUMERIC_NOT_EQUAL:
-                if (comparisonResult != 0) {
-                    return true;
-                }
-                break;
+                return comparisonResult != 0;
             case NUMERIC_LESS_THAN:
-                if (comparisonResult < 0) {
-                    return true;
-                }
-                break;
+                return comparisonResult < 0;
             case NUMERIC_LESSER_THAN_OR_EQUAL:
-                if (comparisonResult <= 0) {
-                    return true;
-                }
-                break;
+                return comparisonResult <= 0;
             case NUMERIC_GREATER_THAN:
-                if (comparisonResult > 0) {
-                    return true;
-                }
-                break;
+                return comparisonResult > 0;
             case NUMERIC_GREATER_THAN_OR_EQUAL:
-                if (comparisonResult >= 0) {
-                    return true;
-                }
-                break;
+                return comparisonResult >= 0;
             default:
                 LOGGER.warn("Unsupported operation " + operator);
                 break;

@@ -76,7 +76,7 @@ public class DataClassification implements Serializable {
     private String name;
 
     @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "ORGENTITY_UUID_IDX")
+    @Unique(name = "DATACLASSIFICATION_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;

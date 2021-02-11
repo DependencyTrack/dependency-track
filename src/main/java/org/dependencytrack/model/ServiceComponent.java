@@ -141,7 +141,7 @@ public class ServiceComponent implements Serializable {
     @Column(name = "PARENT_SERVICECOMPONENT_ID")
     private ServiceComponent parent;
 
-    @Persistent(mappedBy = "serviceComponent")
+    @Persistent(mappedBy = "parent")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private Collection<ServiceComponent> children;
 

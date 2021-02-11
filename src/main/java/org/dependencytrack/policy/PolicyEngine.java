@@ -51,6 +51,7 @@ public class PolicyEngine {
         evaluators.add(new PackageURLPolicyEvaluator());
         evaluators.add(new CpePolicyEvaluator());
         evaluators.add(new SwidTagIdPolicyEvaluator());
+        evaluators.add(new VersionPolicyEvaluator());
     }
 
     public void evaluate(final List<Component> components) {
@@ -118,6 +119,7 @@ public class PolicyEngine {
             case PACKAGE_URL:
             case CPE:
             case SWID_TAGID:
+            case VERSION:
                 return PolicyViolation.Type.OPERATIONAL;
             case LICENSE:
             case LICENSE_GROUP:

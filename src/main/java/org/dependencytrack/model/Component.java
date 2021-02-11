@@ -283,6 +283,7 @@ public class Component implements Serializable {
     private List<Vulnerability> vulnerabilities;
 
     @Persistent(defaultFetchGroup = "true")
+    @Index(name = "COMPONENT_PROJECT_ID_IDX")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;

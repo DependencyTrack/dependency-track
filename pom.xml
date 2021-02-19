@@ -245,7 +245,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.2.3</version>
+            <version>6.2.4</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>

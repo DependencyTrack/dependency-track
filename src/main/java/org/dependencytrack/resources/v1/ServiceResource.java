@@ -140,10 +140,16 @@ public class ServiceResource extends AlpineResource {
             }
             ServiceComponent service = new ServiceComponent();
             service.setProject(project);
+            service.setProvider(jsonService.getProvider());
+            service.setGroup(StringUtils.trimToNull(jsonService.getGroup()));
             service.setName(StringUtils.trimToNull(jsonService.getName()));
             service.setVersion(StringUtils.trimToNull(jsonService.getVersion()));
-            service.setGroup(StringUtils.trimToNull(jsonService.getGroup()));
             service.setDescription(StringUtils.trimToNull(jsonService.getDescription()));
+            service.setEndpoints(jsonService.getEndpoints().clone());
+            service.setAuthenticated(jsonService.getAuthenticated());
+            service.setCrossesTrustBoundary(jsonService.getCrossesTrustBoundary());
+            service.setData(jsonService.getData());
+            service.setExternalReferences(jsonService.getExternalReferences());
             service = qm.createServiceComponent(service, true);
             return Response.status(Response.Status.CREATED).entity(service).build();
         }
@@ -177,9 +183,15 @@ public class ServiceResource extends AlpineResource {
                 if (name != null) {
                     service.setName(name);
                 }
-                service.setVersion(StringUtils.trimToNull(jsonService.getVersion()));
+                service.setProvider(jsonService.getProvider());
                 service.setGroup(StringUtils.trimToNull(jsonService.getGroup()));
+                service.setVersion(StringUtils.trimToNull(jsonService.getVersion()));
                 service.setDescription(StringUtils.trimToNull(jsonService.getDescription()));
+                service.setEndpoints(jsonService.getEndpoints().clone());
+                service.setAuthenticated(jsonService.getAuthenticated());
+                service.setCrossesTrustBoundary(jsonService.getCrossesTrustBoundary());
+                service.setData(jsonService.getData());
+                service.setExternalReferences(jsonService.getExternalReferences());
                 service = qm.updateServiceComponent(service, true);
                 return Response.ok(service).build();
             } else {

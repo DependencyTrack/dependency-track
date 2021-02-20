@@ -28,16 +28,12 @@
         <class>org.dependencytrack.model.ComponentAnalysisCache</class>
         <class>org.dependencytrack.model.Cpe</class>
         <class>org.dependencytrack.model.Cwe</class>
-        <class>org.dependencytrack.model.DataClassification</class>
         <class>org.dependencytrack.model.DependencyMetrics</class>
-        <class>org.dependencytrack.model.ExternalReference</class>
         <class>org.dependencytrack.model.FindingAttribution</class>
         <class>org.dependencytrack.model.License</class>
         <class>org.dependencytrack.model.LicenseGroup</class>
         <class>org.dependencytrack.model.NotificationPublisher</class>
         <class>org.dependencytrack.model.NotificationRule</class>
-        <class>org.dependencytrack.model.OrganizationalEntity</class>
-        <class>org.dependencytrack.model.OrganizationalContact</class>
         <class>org.dependencytrack.model.Policy</class>
         <class>org.dependencytrack.model.PolicyCondition</class>
         <class>org.dependencytrack.model.PolicyViolation</class>

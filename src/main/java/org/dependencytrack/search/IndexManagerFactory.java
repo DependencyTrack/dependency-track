@@ -24,6 +24,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 
@@ -54,6 +55,8 @@ public class IndexManagerFactory {
             return ProjectIndexer.getInstance();
         } else if (event.getObject() instanceof Component || Component.class == event.getIndexableClass()) {
             return ComponentIndexer.getInstance();
+        } else if (event.getObject() instanceof ServiceComponent || ServiceComponent.class == event.getIndexableClass()) {
+            return ServiceComponentIndexer.getInstance();
         } else if (event.getObject() instanceof Vulnerability || Vulnerability.class == event.getIndexableClass()) {
             return VulnerabilityIndexer.getInstance();
         } else if (event.getObject() instanceof License || License.class == event.getIndexableClass()) {

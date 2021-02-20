@@ -20,71 +20,30 @@ package org.dependencytrack.model;
 
 import alpine.json.TrimmedStringArrayDeserializer;
 import alpine.json.TrimmedStringDeserializer;
-import alpine.validation.RegexSequence;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.Extension;
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Order;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Serialized;
-import javax.jdo.annotations.Unique;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Model class for tracking service components.
+ * Model class for tracking organizational entities (provider, supplier, manufacturer, etc).
  *
  * @author Steve Springett
  * @since 4.2.0
  */
-@PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrganizationalEntity implements Serializable {
 
     private static final long serialVersionUID = 5333594855427723634L;
 
-    @PrimaryKey
-    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
-    @JsonIgnore
-    private long id;
-
-    @Persistent
-    @Column(name = "NAME")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
     private String name;
 
-    @Persistent(defaultFetchGroup = "true")
-    @Serialized
-    @Column(name = "URLS", jdbcType = "LONGVARBINARY")
     @JsonDeserialize(using = TrimmedStringArrayDeserializer.class)
     private String[] urls;
 
-    @Persistent(mappedBy = "organizationalEntity", defaultFetchGroup = "true")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<OrganizationalContact> contacts;
-
-    @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "ORGENTITY_UUID_IDX")
-    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
-    @NotNull
-    private UUID uuid;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;
@@ -106,15 +65,14 @@ public class OrganizationalEntity implements Serializable {
         return contacts;
     }
 
+    public void addContact(OrganizationalContact contact) {
+        if (this.contacts == null) {
+            this.contacts = new ArrayList<>();
+        }
+        this.contacts.add(contact);
+    }
+
     public void setContacts(List<OrganizationalContact> contacts) {
         this.contacts = contacts;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
     }
 }

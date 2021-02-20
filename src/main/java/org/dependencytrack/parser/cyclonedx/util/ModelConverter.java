@@ -30,11 +30,17 @@ import org.cyclonedx.model.Swid;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.DataClassification;
+import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.OrganizationalContact;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +59,7 @@ public class ModelConverter {
      * @param bom the Bom to convert
      * @return a List of Component object
      */
-    public static List<Component> convert(final QueryManager qm, final Bom bom, final Project project) {
+    public static List<Component> convertComponents(final QueryManager qm, final Bom bom, final Project project) {
         final List<Component> components = new ArrayList<>();
         for (int i = 0; i < bom.getComponents().size(); i++) {
             final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
@@ -153,6 +159,7 @@ public class ModelConverter {
     @SuppressWarnings("deprecation")
     public static org.cyclonedx.model.Component convert(final QueryManager qm, final Component component) {
         final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+        cycloneComponent.setBomRef(component.getUuid().toString());
         cycloneComponent.setGroup(StringUtils.trimToNull(component.getGroup()));
         cycloneComponent.setName(StringUtils.trimToNull(component.getName()));
         cycloneComponent.setVersion(StringUtils.trimToNull(component.getVersion()));
@@ -266,5 +273,187 @@ public class ModelConverter {
             metadata.setComponent(cycloneComponent);
         }
         return metadata;
+    }
+
+    /**
+     * Converts a parsed Bom to a native list of Dependency-Track component object
+     * @param bom the Bom to convert
+     * @return a List of Component object
+     */
+    public static List<ServiceComponent> convertServices(final QueryManager qm, final Bom bom, final Project project) {
+        final List<ServiceComponent> services = new ArrayList<>();
+        for (int i = 0; i < bom.getServices().size(); i++) {
+            final org.cyclonedx.model.Service cycloneDxService = bom.getServices().get(i);
+            if (cycloneDxService != null) {
+                services.add(convert(qm, cycloneDxService, project));
+            }
+        }
+        return services;
+    }
+
+    public static ServiceComponent convert(final QueryManager qm, final org.cyclonedx.model.Service cycloneDxService, final Project project) {
+        ServiceComponent service = qm.matchServiceIdentity(project, new ComponentIdentity(cycloneDxService));
+        if (service == null) {
+            service = new ServiceComponent();
+            service.setProject(project);
+        }
+        if (cycloneDxService.getProvider() != null) {
+            OrganizationalEntity provider = new OrganizationalEntity();;
+            provider.setName(cycloneDxService.getProvider().getName());
+            provider.setUrls(cycloneDxService.getProvider().getUrls().toArray(new String[0]));
+            if (cycloneDxService.getProvider().getContacts() != null) {
+                for (org.cyclonedx.model.OrganizationalContact cycloneDxContact: cycloneDxService.getProvider().getContacts()) {
+                    OrganizationalContact contact = new OrganizationalContact();
+                    contact.setName(cycloneDxContact.getName());
+                    contact.setEmail(cycloneDxContact.getEmail());
+                    contact.setPhone(cycloneDxContact.getPhone());
+                    provider.addContact(contact);
+                }
+            }
+            service.setProvider(provider);
+        } else {
+            service.setProvider(null);
+        }
+        service.setGroup(StringUtils.trimToNull(cycloneDxService.getGroup()));
+        service.setName(StringUtils.trimToNull(cycloneDxService.getName()));
+        service.setVersion(StringUtils.trimToNull(cycloneDxService.getVersion()));
+        service.setDescription(StringUtils.trimToNull(cycloneDxService.getDescription()));
+        if (cycloneDxService.getEndpoints() != null && cycloneDxService.getEndpoints().size() > 0) {
+            //service.setEndpoints(cycloneDxService.getEndpoints().toArray(new String[0]));
+        } else {
+            service.setEndpoints(null);
+        }
+        service.setAuthenticated(cycloneDxService.getAuthenticated());
+        service.setCrossesTrustBoundary(cycloneDxService.getxTrustBoundary());
+        if (cycloneDxService.getData() != null && cycloneDxService.getData().size() > 0) {
+            for (org.cyclonedx.model.ServiceData data: cycloneDxService.getData()) {
+                DataClassification dc = new DataClassification();
+                dc.setDirection(DataClassification.Direction.valueOf(data.getFlow().name()));
+                dc.setName(data.getClassification());
+                service.addData(dc);
+            }
+        } else {
+            service.setData(null);
+        }
+        if (cycloneDxService.getExternalReferences() != null && cycloneDxService.getExternalReferences().size() > 0) {
+            for (org.cyclonedx.model.ExternalReference cycloneDxRef: cycloneDxService.getExternalReferences()) {
+                ExternalReference ref = new ExternalReference();
+                ref.setType(cycloneDxRef.getType());
+                ref.setUrl(cycloneDxRef.getUrl());
+                ref.setComment(cycloneDxRef.getComment());
+                service.addExternalReference(ref);
+            }
+        } else {
+            service.setData(null);
+        }
+        /* TODO: Add when services support licenses (after component license refactor)
+        final LicenseChoice licenseChoice = cycloneDxService.getLicenseChoice();
+        if (licenseChoice != null && licenseChoice.getLicenses() != null && !licenseChoice.getLicenses().isEmpty()) {
+            for (final org.cyclonedx.model.License cycloneLicense : licenseChoice.getLicenses()) {
+                if (cycloneLicense != null) {
+                    if (StringUtils.isNotBlank(cycloneLicense.getId())) {
+                        final License license = qm.getLicense(StringUtils.trimToNull(cycloneLicense.getId()));
+                        if (license != null) {
+                            service.setResolvedLicense(license);
+                        }
+                    }
+                    service.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                }
+            }
+        }
+        */
+        if (cycloneDxService.getServices() != null && !cycloneDxService.getServices().isEmpty()) {
+            final Collection<ServiceComponent> services = new ArrayList<>();
+            for (int i = 0; i < cycloneDxService.getServices().size(); i++) {
+                final org.cyclonedx.model.Service cycloneDxChildComponent = cycloneDxService.getServices().get(i);
+                if (cycloneDxChildComponent != null) {
+                    services.add(convert(qm, cycloneDxChildComponent, project));
+                }
+            }
+            if (CollectionUtils.isNotEmpty(services)) {
+                service.setChildren(services);
+            }
+        }
+        return service;
+    }
+
+    public static org.cyclonedx.model.Service convert(final QueryManager qm, final ServiceComponent service) {
+        final org.cyclonedx.model.Service cycloneService = new org.cyclonedx.model.Service();
+        cycloneService.setBomRef(service.getUuid().toString());
+        if (service.getProvider() != null) {
+            org.cyclonedx.model.OrganizationalEntity cycloneEntity = new org.cyclonedx.model.OrganizationalEntity();
+            cycloneEntity.setName(service.getProvider().getName());
+            if (service.getProvider().getUrls() != null) {
+                cycloneEntity.setUrls(Arrays.asList(service.getProvider().getUrls()));
+            }
+            if (service.getProvider().getContacts() != null && service.getProvider().getContacts().size() > 0) {
+                List<org.cyclonedx.model.OrganizationalContact> contacts = new ArrayList<>();
+                for (OrganizationalContact contact: service.getProvider().getContacts()) {
+                    org.cyclonedx.model.OrganizationalContact cycloneContact = new org.cyclonedx.model.OrganizationalContact();
+                    cycloneContact.setName(contact.getName());
+                    cycloneContact.setEmail(contact.getEmail());
+                    cycloneContact.setPhone(contact.getPhone());
+                    contacts.add(cycloneContact);
+                }
+                cycloneEntity.setContacts(contacts);
+            }
+            cycloneService.setProvider(cycloneEntity);
+        }
+        cycloneService.setGroup(StringUtils.trimToNull(service.getGroup()));
+        cycloneService.setName(StringUtils.trimToNull(service.getName()));
+        cycloneService.setVersion(StringUtils.trimToNull(service.getVersion()));
+        cycloneService.setDescription(StringUtils.trimToNull(service.getDescription()));
+        if (service.getEndpoints() != null && service.getEndpoints().length > 0) {
+            cycloneService.setEndpoints(Arrays.asList(service.getEndpoints().clone()));
+        }
+        cycloneService.setAuthenticated(service.getAuthenticated());
+        cycloneService.setxTrustBoundary(service.getCrossesTrustBoundary());
+        if (service.getData() != null && service.getData().size() > 0) {
+            for (DataClassification dc: service.getData()) {
+                org.cyclonedx.model.ServiceData sd = new org.cyclonedx.model.ServiceData(dc.getDirection().name(), dc.getName());
+                cycloneService.addServiceData(sd);
+            }
+        }
+        if (service.getExternalReferences() != null && service.getExternalReferences().size() > 0) {
+            for (ExternalReference ref : service.getExternalReferences()) {
+                org.cyclonedx.model.ExternalReference cycloneRef = new org.cyclonedx.model.ExternalReference();
+                cycloneRef.setType(ref.getType());
+                cycloneRef.setUrl(ref.getUrl());
+                cycloneRef.setComment(ref.getComment());
+                cycloneService.addExternalReference(cycloneRef);
+            }
+        }
+        /* TODO: Add when services support licenses (after component license refactor)
+        if (component.getResolvedLicense() != null) {
+            final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
+            license.setId(component.getResolvedLicense().getLicenseId());
+            final LicenseChoice licenseChoice = new LicenseChoice();
+            licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
+        } else if (component.getLicense() != null) {
+            final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
+            license.setName(component.getLicense());
+            final LicenseChoice licenseChoice = new LicenseChoice();
+            licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
+        }
+        */
+
+        /*
+        TODO: Assemble child/parent hierarchy. Components come in as flat, resolved dependencies.
+         */
+        /*
+        if (component.getChildren() != null && component.getChildren().size() > 0) {
+            final List<org.cyclonedx.model.Component> components = new ArrayList<>();
+            final Component[] children = component.getChildren().toArray(new Component[0]);
+            for (Component child : children) {
+                components.add(convert(qm, child));
+            }
+            if (children.length > 0) {
+                cycloneComponent.setComponents(components);
+            }
+        }
+        */
+        return cycloneService;
     }
 }

@@ -26,6 +26,7 @@ public class NotificationConstants {
         public static final String NPM_ADVISORY_MIRROR = "NPM Advisory Mirroring";
         public static final String VULNDB_MIRROR = "VulnDB Mirroring";
         public static final String COMPONENT_INDEXER = "Component Indexing Service";
+        public static final String SERVICECOMPONENT_INDEXER = "ServiceComponent Indexing Service";
         public static final String LICENSE_INDEXER = "License Indexing Service";
         public static final String CPE_INDEXER = "CPE Indexing Service";
         public static final String VULNERABLESOFTWARE_INDEXER = "Vulnerable Software Indexer";

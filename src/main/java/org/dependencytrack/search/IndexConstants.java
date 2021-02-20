@@ -48,6 +48,16 @@ public final class IndexConstants {
             COMPONENT_UUID, COMPONENT_NAME, COMPONENT_GROUP, COMPONENT_VERSION, COMPONENT_SHA1, COMPONENT_DESCRIPTION
     };
 
+    static final String SERVICECOMPONENT_UUID = "uuid";
+    static final String SERVICECOMPONENT_NAME = "name";
+    static final String SERVICECOMPONENT_GROUP = "group";
+    static final String SERVICECOMPONENT_VERSION = "version";
+    static final String SERVICECOMPONENT_URL = "url";
+    static final String SERVICECOMPONENT_DESCRIPTION = "description";
+    static final String[] SERVICECOMPONENT_SEARCH_FIELDS = {
+            SERVICECOMPONENT_UUID, SERVICECOMPONENT_NAME, SERVICECOMPONENT_GROUP, SERVICECOMPONENT_VERSION, SERVICECOMPONENT_URL, SERVICECOMPONENT_DESCRIPTION
+    };
+
     static final String VULNERABILITY_UUID = "uuid";
     static final String VULNERABILITY_VULNID = "vulnId";
     static final String VULNERABILITY_SOURCE = "source";
@@ -103,6 +113,13 @@ public final class IndexConstants {
     private static final float BOOST_COMPONENT_VERSION = 10.0f;
     private static final float BOOST_COMPONENT_SHA1 = 90.0f;
     private static final float BOOST_COMPONENT_DESCRIPTION = 20.0f;
+
+    private static final float BOOST_SERVICECOMPONENT_UUID = 100.0f;
+    private static final float BOOST_SERVICECOMPONENT_NAME = 50.0f;
+    private static final float BOOST_SERVICECOMPONENT_GROUP = 60.0f;
+    private static final float BOOST_SERVICECOMPONENT_VERSION = 10.0f;
+    private static final float BOOST_SERVICECOMPONENT_URL = 90.0f;
+    private static final float BOOST_SERVICECOMPONENT_DESCRIPTION = 20.0f;
 
     private static final float BOOST_VULNERABILITY_UUID = 100.0f;
     private static final float BOOST_VULNERABILITY_VULNID = 90.0f;

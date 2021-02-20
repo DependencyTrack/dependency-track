@@ -73,6 +73,17 @@ public class SearchResourceTest extends ResourceTest {
     }
 
     @Test
+    public void searchServiceComponentTest() {
+        Response response = target(V1_SEARCH + "/service").queryParam("query", "stock-ticker").request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+    }
+
+    @Test
     public void searchLicenseTest() {
         Response response = target(V1_SEARCH + "/license").queryParam("query", "Apache").request()
                 .header(X_API_KEY, apiKey)

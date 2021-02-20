@@ -97,6 +97,24 @@ public class SearchResource extends AlpineResource {
         return Response.ok(searchResult).build();
     }
 
+    @Path("/service")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Processes and returns search results",
+            response = SearchResult.class,
+            notes = "Preferred search endpoint"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response serviceSearch(@QueryParam("query") String query) {
+        final SearchManager searchManager = new SearchManager();
+        final SearchResult searchResult = searchManager.searchServiceComponentIndex(query, 1000);
+        return Response.ok(searchResult).build();
+    }
+
     @Path("/license")
     @GET
     @Produces(MediaType.APPLICATION_JSON)

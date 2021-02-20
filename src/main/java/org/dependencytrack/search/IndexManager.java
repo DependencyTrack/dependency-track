@@ -84,6 +84,7 @@ public abstract class IndexManager implements AutoCloseable {
     public enum IndexType {
         PROJECT,
         COMPONENT,
+        SERVICECOMPONENT,
         VULNERABILITY,
         LICENSE,
         CPE,

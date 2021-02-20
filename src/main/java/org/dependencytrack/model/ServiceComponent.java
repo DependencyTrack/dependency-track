@@ -43,6 +43,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -82,7 +83,8 @@ public class ServiceComponent implements Serializable {
     private long id;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "PROVIDER_ID", allowsNull = "true")
+    @Column(name = "PROVIDER_ID")
+    @Serialized
     private OrganizationalEntity provider;
 
     @Persistent
@@ -121,20 +123,22 @@ public class ServiceComponent implements Serializable {
 
     @Persistent
     @Column(name = "AUTHENTICATED")
-    private boolean authenticated;
+    private Boolean authenticated;
 
     @Persistent
     @Column(name = "X_TRUST_BOUNDARY")
-    private boolean crossesTrustBoundary;
+    private Boolean crossesTrustBoundary;
 
-    @Persistent(mappedBy = "serviceComponent", defaultFetchGroup = "true")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "direction ASC, name ASC"))
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "DATA")
+    @Serialized
     private List<DataClassification> data;
 
     //TODO add license support once Component license support is refactored
 
-    @Persistent(mappedBy = "serviceComponent", defaultFetchGroup = "true")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "type ASC, url ASC"))
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "EXTERNAL_REFERENCES")
+    @Serialized
     private List<ExternalReference> externalReferences;
 
     @Persistent
@@ -161,7 +165,7 @@ public class ServiceComponent implements Serializable {
      */
     @Persistent
     @Index(name = "SERVICECOMPONENT_LAST_RISKSCORE_IDX")
-    @Column(name = "LAST_RISKSCORE", allowsNull = "false")
+    @Column(name = "LAST_RISKSCORE", allowsNull = "false", defaultValue = "0")
     private Double lastInheritedRiskScore;
 
     /**
@@ -234,24 +238,31 @@ public class ServiceComponent implements Serializable {
         this.endpoints = endpoints;
     }
 
-    public boolean isAuthenticated() {
+    public Boolean getAuthenticated() {
         return authenticated;
     }
 
-    public void setAuthenticated(boolean authenticated) {
+    public void setAuthenticated(Boolean authenticated) {
         this.authenticated = authenticated;
     }
 
-    public boolean isCrossesTrustBoundary() {
+    public Boolean getCrossesTrustBoundary() {
         return crossesTrustBoundary;
     }
 
-    public void setCrossesTrustBoundary(boolean crossesTrustBoundary) {
+    public void setCrossesTrustBoundary(Boolean crossesTrustBoundary) {
         this.crossesTrustBoundary = crossesTrustBoundary;
     }
 
     public List<DataClassification> getData() {
         return data;
+    }
+
+    public void addData(DataClassification data) {
+        if (this.data == null) {
+            this.data = new ArrayList<>();
+        }
+        this.data.add(data);
     }
 
     public void setData(List<DataClassification> data) {
@@ -260,6 +271,13 @@ public class ServiceComponent implements Serializable {
 
     public List<ExternalReference> getExternalReferences() {
         return externalReferences;
+    }
+
+    public void addExternalReference(ExternalReference externalReferences) {
+        if (this.externalReferences == null) {
+            this.externalReferences = new ArrayList<>();
+        }
+        this.externalReferences.add(externalReferences);
     }
 
     public void setExternalReferences(List<ExternalReference> externalReferences) {

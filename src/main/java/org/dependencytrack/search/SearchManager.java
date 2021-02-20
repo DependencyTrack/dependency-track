@@ -54,6 +54,7 @@ public class SearchManager {
         final IndexManager[] indexManagers = {
                 ProjectIndexer.getInstance(),
                 ComponentIndexer.getInstance(),
+                ServiceComponentIndexer.getInstance(),
                 VulnerabilityIndexer.getInstance(),
                 LicenseIndexer.getInstance()
         };
@@ -138,6 +139,10 @@ public class SearchManager {
 
     public SearchResult searchComponentIndex(final String queryString, final int limit) {
         return searchIndex(ComponentIndexer.getInstance(), queryString, limit);
+    }
+
+    public SearchResult searchServiceComponentIndex(final String queryString, final int limit) {
+        return searchIndex(ServiceComponentIndexer.getInstance(), queryString, limit);
     }
 
     public SearchResult searchLicenseIndex(final String queryString, final int limit) {

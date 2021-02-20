@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.BomGeneratorFactory;
 import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.CycloneDxSchema;
+import org.cyclonedx.exception.GeneratorException;
 import org.cyclonedx.generators.json.BomJsonGenerator;
 import org.cyclonedx.generators.xml.BomXmlGenerator;
 import org.cyclonedx.model.Bom;
@@ -40,6 +41,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
@@ -60,7 +62,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -105,13 +106,16 @@ public class BomResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
             final List<Component> components = qm.getAllComponents(project);
+            final List<ServiceComponent> services = qm.getAllServiceComponents(project);
             final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
+            final List<org.cyclonedx.model.Service> cycloneServices = services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList());
             try {
                 final Bom bom = new Bom();
-                bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
+                bom.setSerialNumber("urn:uuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
                 bom.setMetadata(ModelConverter.createMetadata(project));
                 bom.setComponents(cycloneComponents);
+                bom.setServices(cycloneServices);
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("XML")) {
                     final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                     bomGenerator.generate();
@@ -123,7 +127,7 @@ public class BomResource extends AlpineResource {
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }
-            } catch (ParserConfigurationException | TransformerException e) {
+            } catch (ParserConfigurationException | GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
@@ -144,17 +148,20 @@ public class BomResource extends AlpineResource {
     public Response exportComponentsAsCycloneDx () {
         try (QueryManager qm = new QueryManager()) {
             final List<Component> components = qm.getAllComponents();
+            final List<ServiceComponent> services = qm.getAllServiceComponents();
             final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
+            final List<org.cyclonedx.model.Service> cycloneServices = services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList());
             try {
                 Bom bom = new Bom();
-                bom.setSerialNumber("url:ufuid:" + UUID.randomUUID().toString());
+                bom.setSerialNumber("urn:ufuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
                 bom.setMetadata(ModelConverter.createMetadata(null));
                 bom.setComponents(cycloneComponents);
+                bom.setServices(cycloneServices);
                 final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                 bomXmlGenerator.generate();
                 return Response.ok(bomXmlGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-            } catch (ParserConfigurationException | TransformerException e) {
+            } catch (ParserConfigurationException | GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
@@ -185,14 +192,14 @@ public class BomResource extends AlpineResource {
                 final List<org.cyclonedx.model.Component> cycloneComponents = new ArrayList<>();
                 cycloneComponents.add(ModelConverter.convert(qm, component));
                 Bom bom = new Bom();
-                bom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
+                bom.setSerialNumber("urn:uuid:" + UUID.randomUUID().toString());
                 bom.setVersion(1);
                 bom.setMetadata(ModelConverter.createMetadata(null));
                 bom.setComponents(cycloneComponents);
                 final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                 bomXmlGenerator.generate();
                 return Response.ok(bomXmlGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-            } catch (ParserConfigurationException | TransformerException e) {
+            } catch (ParserConfigurationException | GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }

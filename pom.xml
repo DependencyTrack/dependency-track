@@ -89,14 +89,14 @@
         <lib.jaxb.runtime.version>2.3.3</lib.jaxb.runtime.version>
         <lib.lucene.version>8.8.0</lib.lucene.version>
         <lib.packageurl.version>1.2.0</lib.packageurl.version>
-        <lib.pebble.version>3.1.4</lib.pebble.version>
+        <lib.pebble.version>3.1.5</lib.pebble.version>
         <lib.spdx-tools.version>2.2.4</lib.spdx-tools.version>
         <lib.unirest.version>2.4.03</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.23</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.2.18</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.2.19</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.github-release-plugin.version>1.4.0</plugin.github-release-plugin.version>
@@ -245,7 +245,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.2.3</version>
+            <version>6.2.4</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>

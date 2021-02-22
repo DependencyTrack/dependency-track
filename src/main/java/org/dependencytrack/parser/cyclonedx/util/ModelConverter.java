@@ -302,13 +302,15 @@ public class ModelConverter {
             provider.setName(cycloneDxService.getProvider().getName());
             provider.setUrls(cycloneDxService.getProvider().getUrls().toArray(new String[0]));
             if (cycloneDxService.getProvider().getContacts() != null) {
+                List<OrganizationalContact> contacts = new ArrayList<>();
                 for (org.cyclonedx.model.OrganizationalContact cycloneDxContact: cycloneDxService.getProvider().getContacts()) {
                     OrganizationalContact contact = new OrganizationalContact();
                     contact.setName(cycloneDxContact.getName());
                     contact.setEmail(cycloneDxContact.getEmail());
                     contact.setPhone(cycloneDxContact.getPhone());
-                    provider.addContact(contact);
+                    contacts.add(contact);
                 }
+                provider.setContacts(contacts);
             }
             service.setProvider(provider);
         } else {
@@ -319,30 +321,34 @@ public class ModelConverter {
         service.setVersion(StringUtils.trimToNull(cycloneDxService.getVersion()));
         service.setDescription(StringUtils.trimToNull(cycloneDxService.getDescription()));
         if (cycloneDxService.getEndpoints() != null && cycloneDxService.getEndpoints().size() > 0) {
-            //service.setEndpoints(cycloneDxService.getEndpoints().toArray(new String[0]));
+            service.setEndpoints(cycloneDxService.getEndpoints().toArray(new String[0]));
         } else {
             service.setEndpoints(null);
         }
         service.setAuthenticated(cycloneDxService.getAuthenticated());
         service.setCrossesTrustBoundary(cycloneDxService.getxTrustBoundary());
         if (cycloneDxService.getData() != null && cycloneDxService.getData().size() > 0) {
+            List<DataClassification> dataClassifications = new ArrayList<>();
             for (org.cyclonedx.model.ServiceData data: cycloneDxService.getData()) {
                 DataClassification dc = new DataClassification();
                 dc.setDirection(DataClassification.Direction.valueOf(data.getFlow().name()));
                 dc.setName(data.getClassification());
-                service.addData(dc);
+                dataClassifications.add(dc);
             }
+            service.setData(dataClassifications);
         } else {
             service.setData(null);
         }
         if (cycloneDxService.getExternalReferences() != null && cycloneDxService.getExternalReferences().size() > 0) {
+            List<ExternalReference> references = new ArrayList<>();
             for (org.cyclonedx.model.ExternalReference cycloneDxRef: cycloneDxService.getExternalReferences()) {
                 ExternalReference ref = new ExternalReference();
                 ref.setType(cycloneDxRef.getType());
                 ref.setUrl(cycloneDxRef.getUrl());
                 ref.setComment(cycloneDxRef.getComment());
-                service.addExternalReference(ref);
+                references.add(ref);
             }
+            service.setExternalReferences(references);
         } else {
             service.setData(null);
         }

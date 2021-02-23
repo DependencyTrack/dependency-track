@@ -300,7 +300,11 @@ public class ModelConverter {
         if (cycloneDxService.getProvider() != null) {
             OrganizationalEntity provider = new OrganizationalEntity();;
             provider.setName(cycloneDxService.getProvider().getName());
-            provider.setUrls(cycloneDxService.getProvider().getUrls().toArray(new String[0]));
+            if (cycloneDxService.getProvider().getUrls() != null && cycloneDxService.getProvider().getUrls().size() > 0) {
+                provider.setUrls(cycloneDxService.getProvider().getUrls().toArray(new String[0]));
+            } else {
+                provider.setUrls(null);
+            }
             if (cycloneDxService.getProvider().getContacts() != null) {
                 List<OrganizationalContact> contacts = new ArrayList<>();
                 for (org.cyclonedx.model.OrganizationalContact cycloneDxContact: cycloneDxService.getProvider().getContacts()) {

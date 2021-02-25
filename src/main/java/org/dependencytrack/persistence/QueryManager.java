@@ -677,10 +677,21 @@ public class QueryManager extends AlpineQueryManager {
      * @return a list of components
      */
     public PaginatedResult getComponents(ComponentIdentity identity) {
+        return getComponents(identity, false);
+    }
+
+    /**
+     * Returns Components by their identity.
+     * @param identity the ComponentIdentity to query against
+     * @param includeMetrics whether or not to include component metrics or not
+     * @return a list of components
+     */
+    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
         if (identity == null) {
             return null;
         }
         final Query<Component> query;
+        final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
             final Map<String, String> map = new HashMap<>();
             String filter = "";
@@ -706,22 +717,38 @@ public class QueryManager extends AlpineQueryManager {
                 map.put("version", filterString);
             }
             query = pm.newQuery(Component.class, filter);
-            return execute(query, map);
+            result = execute(query, map);
         } else if (identity.getPurl() != null) {
             query = pm.newQuery(Component.class, "purl.toLowerCase().matches(:purl)");
             final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
         } else if (identity.getCpe() != null) {
             query = pm.newQuery(Component.class, "cpe.toLowerCase().matches(:cpe)");
             final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
         } else if (identity.getSwidTagId() != null) {
             query = pm.newQuery(Component.class, "swidTagId.toLowerCase().matches(:swidTagId)");
             final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
         } else {
-            return new PaginatedResult();
+            result = new PaginatedResult();
         }
+        if (includeMetrics) {
+            // Populate each Component object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Component component : result.getList(Component.class)) {
+                component.setMetrics(getMostRecentDependencyMetrics(component));
+                final PackageURL purl = component.getPurl();
+                if (purl != null) {
+                    final RepositoryType type = RepositoryType.resolve(purl);
+                    if (RepositoryType.UNSUPPORTED != type) {
+                        final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
+                        component.setRepositoryMeta(repoMetaComponent);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     /**

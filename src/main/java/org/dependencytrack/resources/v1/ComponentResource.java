@@ -150,7 +150,7 @@ public class ComponentResource extends AlpineResource {
                 }
             }
             final ComponentIdentity identity = new ComponentIdentity(packageURL, cpe, swidTagId, group, name, version);
-            final PaginatedResult result = qm.getComponents(identity);
+            final PaginatedResult result = qm.getComponents(identity, true);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

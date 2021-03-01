@@ -240,7 +240,7 @@
             <!-- Force the dependency version greater or equal to 0.11.0 for Jena - resolves vulnerability -->
             <groupId>org.apache.thrift</groupId>
             <artifactId>libthrift</artifactId>
-            <version>0.13.0</version>
+            <version>0.14.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>

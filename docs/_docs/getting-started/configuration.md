@@ -89,10 +89,6 @@ alpine.database.url=jdbc:h2:~/.dependency-track/db
 alpine.database.driver=org.h2.Driver
 
 # Optional
-# Specifies the path (including filename) to where the JDBC driver is located.
-# alpine.database.driver.path=/path/to/dbdriver.jar
-
-# Optional
 # Specifies the username to use when authenticating to the database.
 alpine.database.username=sa
 

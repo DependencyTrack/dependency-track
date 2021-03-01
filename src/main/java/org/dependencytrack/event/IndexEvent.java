@@ -23,6 +23,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 
@@ -55,6 +56,11 @@ public class IndexEvent implements Event {
     public IndexEvent(final Action action, final Component component) {
         this.action = action;
         this.indexableObject = component;
+    }
+
+    public IndexEvent(final Action action, final ServiceComponent service) {
+        this.action = action;
+        this.indexableObject = service;
     }
 
     public IndexEvent(final Action action, final Vulnerability vulnerability) {

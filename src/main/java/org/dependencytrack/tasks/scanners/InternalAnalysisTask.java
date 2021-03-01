@@ -104,7 +104,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                         parsedCpe.getProduct());
                 super.analyzeVersionRange(qm, matchedCpes, parsedCpe.getVersion(), parsedCpe.getUpdate(), component);
             } catch (CpeParsingException e) {
-                LOGGER.error("An error occurred parsing a CPE defined for a component: " + component.getCpe(), e);
+                LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
         }
     }

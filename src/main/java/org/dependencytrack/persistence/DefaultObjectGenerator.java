@@ -245,6 +245,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.createRepository(RepositoryType.PYPI, "pypi.org", "https://pypi.org/", true, false);
             qm.createRepository(RepositoryType.NUGET, "nuget-gallery", "https://api.nuget.org/", true, false);
             qm.createRepository(RepositoryType.COMPOSER, "packagist", "https://repo.packagist.org/", true, false);
+            qm.createRepository(RepositoryType.CARGO, "crates.io", "https://crates.io", true, false);
         }
     }
 

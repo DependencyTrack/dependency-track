@@ -67,6 +67,12 @@ public class ComponentIdentity {
         this.version = component.getVersion();
     }
 
+    public ComponentIdentity(final org.cyclonedx.model.Service service) {
+        this.group = service.getGroup();
+        this.name = service.getName();
+        this.version = service.getVersion();
+    }
+
     public PackageURL getPurl() {
         return purl;
     }

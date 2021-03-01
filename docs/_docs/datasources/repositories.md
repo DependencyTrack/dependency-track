@@ -17,6 +17,7 @@ Dependency-Track supports the following default repositories:
 
 | Ecosystem | Repository       | Resolution Order |
 | --------- | ---------------- | ---------------- |
+| cargo     | Crates.io        | 1 |
 | composer  | Packagist        | 1 |
 | gem       | RubyGems         | 1 |
 | hex       | Hex              | 1 |

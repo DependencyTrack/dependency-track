@@ -506,6 +506,9 @@ public class QueryManager extends AlpineQueryManager {
         for (final Component c: getAllComponents(project)) {
             recursivelyDelete(c, false);
         }
+        for (final ServiceComponent s: getAllServiceComponents(project)) {
+            recursivelyDelete(s, false);
+        }
         deleteBoms(project);
         removeProjectFromNotificationRules(project);
         delete(project.getProperties());
@@ -674,10 +677,21 @@ public class QueryManager extends AlpineQueryManager {
      * @return a list of components
      */
     public PaginatedResult getComponents(ComponentIdentity identity) {
+        return getComponents(identity, false);
+    }
+
+    /**
+     * Returns Components by their identity.
+     * @param identity the ComponentIdentity to query against
+     * @param includeMetrics whether or not to include component metrics or not
+     * @return a list of components
+     */
+    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
         if (identity == null) {
             return null;
         }
         final Query<Component> query;
+        final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
             final Map<String, String> map = new HashMap<>();
             String filter = "";
@@ -703,22 +717,38 @@ public class QueryManager extends AlpineQueryManager {
                 map.put("version", filterString);
             }
             query = pm.newQuery(Component.class, filter);
-            return execute(query, map);
+            result = execute(query, map);
         } else if (identity.getPurl() != null) {
             query = pm.newQuery(Component.class, "purl.toLowerCase().matches(:purl)");
             final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
         } else if (identity.getCpe() != null) {
             query = pm.newQuery(Component.class, "cpe.toLowerCase().matches(:cpe)");
             final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
         } else if (identity.getSwidTagId() != null) {
             query = pm.newQuery(Component.class, "swidTagId.toLowerCase().matches(:swidTagId)");
             final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            return execute(query, filterString);
+            result = execute(query, filterString);
         } else {
-            return new PaginatedResult();
+            result = new PaginatedResult();
         }
+        if (includeMetrics) {
+            // Populate each Component object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Component component : result.getList(Component.class)) {
+                component.setMetrics(getMostRecentDependencyMetrics(component));
+                final PackageURL purl = component.getPurl();
+                if (purl != null) {
+                    final RepositoryType type = RepositoryType.resolve(purl);
+                    if (RepositoryType.UNSUPPORTED != type) {
+                        final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
+                        component.setRepositoryMeta(repoMetaComponent);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -1125,9 +1155,11 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Project project, boolean includeSuppressed) {
-        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project.id == :pid");
-        if (!includeSuppressed) {
-            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (includeSuppressed) {
+            query.setFilter("project.id == :pid");
+        } else {
+            query.setFilter("project.id == :pid && (analysis.suppressed == false || analysis.suppressed == null)");
         }
         if (orderBy == null) {
             query.setOrdering("timestamp desc, component.name, component.version");
@@ -1148,9 +1180,11 @@ public class QueryManager extends AlpineQueryManager {
      */
     @SuppressWarnings("unchecked")
     public PaginatedResult getPolicyViolations(final Component component, boolean includeSuppressed) {
-        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "component.id == :cid");
-        if (!includeSuppressed) {
-            query.setFilter("analysis.suppressed == false || analysis.suppressed == null");
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class);
+        if (includeSuppressed) {
+            query.setFilter("component.id == :cid");
+        } else {
+            query.setFilter("component.id == :cid && (analysis.suppressed == false || analysis.suppressed == null)");
         }
         if (orderBy == null) {
             query.setOrdering("timestamp desc");
@@ -1745,6 +1779,17 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Returns a service component by matching its identity information.
+     * @param project the Project the component is a dependency of
+     * @param cid the identity values of the component
+     * @return a ServiceComponent object, or null if not found
+     */
+    public ServiceComponent matchServiceIdentity(final Project project, final ComponentIdentity cid) {
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project && group == :group && name == :name && version == :version");
+        return singleResult(query.executeWithArray(project, cid.getGroup(), cid.getName(), cid.getVersion()));
+    }
+
+    /**
      * Returns a List of components by matching identity information.
      * @param cid the identity values of the component
      * @return a List of Component objects
@@ -1849,6 +1894,187 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * Intelligently adds service components that are not already a dependency
+     * of the specified project and removes the dependency relationship for service components
+     * that are not in the list of specified components.
+     * @param project the project to bind components to
+     * @param existingProjectServices the complete list of existing dependent service components
+     * @param services the complete list of service components that should be dependencies of the project
+     */
+    public void reconcileServiceComponents(Project project, List<ServiceComponent> existingProjectServices, List<ServiceComponent> services) {
+        // Removes components as dependencies to the project for all
+        // components not included in the list provided
+        List<ServiceComponent> markedForDeletion = new ArrayList<>();
+        for (final ServiceComponent existingService: existingProjectServices) {
+            boolean keep = false;
+            for (final ServiceComponent service: services) {
+                if (service.getId() == existingService.getId()) {
+                    keep = true;
+                    break;
+                }
+            }
+            if (!keep) {
+                markedForDeletion.add(existingService);
+            }
+        }
+        if (!markedForDeletion.isEmpty()) {
+            for (ServiceComponent sc: markedForDeletion) {
+                this.recursivelyDelete(sc, false);
+            }
+            //this.delete(markedForDeletion);
+        }
+    }
+
+    /**
+     * Creates a new ServiceComponent.
+     * @param service the ServiceComponent to persist
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a new ServiceComponent
+     */
+    public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {
+        final ServiceComponent result = persist(service);
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, ServiceComponent.class);
+        return result;
+    }
+
+    /**
+     * Returns a list of all service components.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of ServiceComponent objects
+     */
+    public List<ServiceComponent> getAllServiceComponents() {
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class);
+        query.setOrdering("id asc");
+        return query.executeResultList(ServiceComponent.class);
+    }
+
+    /**
+     * Returns a List of all ServiceComponent for the specified Project.
+     * This method if designed NOT to provide paginated results.
+     * @param project the Project to retrieve dependencies of
+     * @return a List of ServiceComponent objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<ServiceComponent> getAllServiceComponents(Project project) {
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
+        query.getFetchPlan().setMaxFetchDepth(2);
+        query.setOrdering("name asc");
+        return (List<ServiceComponent>)query.execute(project);
+    }
+
+    /**
+     * Returns a list of all ServiceComponents defined in the datastore.
+     * @return a List of ServiceComponents
+     */
+    public PaginatedResult getServiceComponents() {
+        return getServiceComponents(false);
+    }
+
+    /**
+     * Returns a list of all ServiceComponents defined in the datastore.
+     * @return a List of ServiceComponents
+     */
+    public PaginatedResult getServiceComponents(final boolean includeMetrics) {
+        final PaginatedResult result;
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc, version desc");
+        }
+        if (filter != null) {
+            query.setFilter("name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            result = execute(query, filterString);
+        } else {
+            result = execute(query);
+        }
+        if (includeMetrics) {
+            // TODO: Add metrics
+            // Populate each Component object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            //for (ServiceComponent service : result.getList(ServiceComponent.class)) {
+            //    service.setMetrics(getMostRecentDependencyMetrics(service));
+            //}
+        }
+        return result;
+    }
+
+    /**
+     * Returns a List of ServiceComponents for the specified Project.
+     * @param project the Project to retrieve dependencies of
+     * @return a List of ServiceComponent objects
+     */
+    public PaginatedResult getServiceComponents(final Project project, final boolean includeMetrics) {
+        final PaginatedResult result;
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
+        query.getFetchPlan().setMaxFetchDepth(2);
+        if (orderBy == null) {
+            query.setOrdering("name asc, version desc");
+        }
+        if (filter != null) {
+            query.setFilter("project == :project && name.toLowerCase().matches(:name)");
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            result = execute(query, project, filterString);
+        } else {
+            result = execute(query, project);
+        }
+        if (includeMetrics) {
+            // TODO
+        }
+        return result;
+    }
+
+    /**
+     * Updated an existing ServiceComponent.
+     * @param transientServiceComponent the service to update
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return a Component
+     */
+    public ServiceComponent updateServiceComponent(ServiceComponent transientServiceComponent, boolean commitIndex) {
+        final ServiceComponent service = getObjectByUuid(ServiceComponent.class, transientServiceComponent.getUuid());
+        service.setName(transientServiceComponent.getName());
+        service.setVersion(transientServiceComponent.getVersion());
+        service.setGroup(transientServiceComponent.getGroup());
+        service.setDescription(transientServiceComponent.getDescription());
+        final ServiceComponent result = persist(service);
+        Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, ServiceComponent.class);
+        return result;
+    }
+
+    /**
+     * Deletes all services for the specified Project.
+     * @param project the Project to delete services of
+     */
+    private void deleteServiceComponents(Project project) {
+        final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
+        query.deletePersistentAll(project);
+    }
+
+    /**
+     * Deletes a ServiceComponent and all objects dependant on the service.
+     * @param service the ServiceComponent to delete
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     */
+    public void recursivelyDelete(ServiceComponent service, boolean commitIndex) {
+        if (service.getChildren() != null) {
+            for (final ServiceComponent child: service.getChildren()) {
+                recursivelyDelete(child, false);
+            }
+        }
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final ServiceComponent result = pm.getObjectById(ServiceComponent.class, service.getId());
+        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        // TODO: Add these in when these features are supported by service components
+        //deleteAnalysisTrail(service);
+        //deleteViolationAnalysisTrail(service);
+        //deleteMetrics(service);
+        //deleteFindingAttributions(service);
+        //deletePolicyViolations(service);
+        delete(service);
+        commitSearchIndex(commitIndex, ServiceComponent.class);
+    }
+    /**
      * Returns a List of all Vulnerabilities.
      * @return a List of Vulnerability objects
      */
@@ -1920,7 +2146,7 @@ public class QueryManager extends AlpineQueryManager {
      * @return a List of Vulnerability objects
      */
     @SuppressWarnings("unchecked")
-    private List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
+    public List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
         final String filter = (includeSuppressed) ? "components.contains(:component)" : "components.contains(:component)" + generateExcludeSuppressed(component.getProject(), component);
         final Query<Vulnerability> query = pm.newQuery(Vulnerability.class, filter);
         return (List<Vulnerability>)query.execute(component);
@@ -2694,7 +2920,7 @@ public class QueryManager extends AlpineQueryManager {
         return singleResult(query.executeWithArray(cacheType, targetHost, targetType, target));
     }
 
-    public void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
+    public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
         ComponentAnalysisCache cac = getComponentAnalysisCache(cacheType, targetHost, targetType, target);
         if (cac == null) {
             cac = new ComponentAnalysisCache();

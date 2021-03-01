@@ -23,7 +23,8 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Evaluates a components resolved license against a policy.
@@ -47,25 +48,26 @@ public class LicensePolicyEvaluator extends AbstractPolicyEvaluator {
      * {@inheritDoc}
      */
     @Override
-    public Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+    public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+        final List<PolicyConditionViolation> violations = new ArrayList<>();
         final License license = component.getResolvedLicense();
         if (license == null) {
-            return Optional.empty();
+            return violations;
         }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final License l = qm.getObjectByUuid(License.class, condition.getValue());
             if (l != null && PolicyCondition.Operator.IS == condition.getOperator()) {
                 if (component.getResolvedLicense().getId() == l.getId()) {
-                    return Optional.of(new PolicyConditionViolation(condition, component));
+                    violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (l != null && PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
                 if (component.getResolvedLicense().getId() != l.getId()) {
-                    return Optional.of(new PolicyConditionViolation(condition, component));
+                    violations.add(new PolicyConditionViolation(condition, component));
                 }
             }
         }
-        return Optional.empty();
+        return violations;
     }
 
 }

@@ -283,6 +283,7 @@ public class Component implements Serializable {
     private List<Vulnerability> vulnerabilities;
 
     @Persistent(defaultFetchGroup = "true")
+    @Index(name = "COMPONENT_PROJECT_ID_IDX")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;
@@ -294,6 +295,14 @@ public class Component implements Serializable {
     @Index(name = "COMPONENT_LAST_RISKSCORE_IDX")
     @Column(name = "LAST_RISKSCORE", allowsNull = "true") // New column, must allow nulls on existing databases))
     private Double lastInheritedRiskScore;
+
+    /**
+     * Sticky notes
+     */
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "TEXT", jdbcType = "CLOB")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String notes;
 
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "COMPONENT_UUID_IDX")
@@ -604,6 +613,14 @@ public class Component implements Serializable {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     public UUID getUuid() {

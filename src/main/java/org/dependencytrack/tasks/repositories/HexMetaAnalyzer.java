@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
+import com.github.packageurl.PackageURL;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
@@ -53,8 +54,7 @@ public class HexMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public boolean isApplicable(final Component component) {
-        //return component.getPurl() != null && PackageURL.StandardTypes.HEX.equals(component.getPurl().getType());
-        return component.getPurl() != null && "hex".equals(component.getPurl().getType());
+        return component.getPurl() != null && PackageURL.StandardTypes.HEX.equals(component.getPurl().getType());
     }
 
     /**

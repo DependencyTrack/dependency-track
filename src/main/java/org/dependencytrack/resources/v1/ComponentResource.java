@@ -150,7 +150,7 @@ public class ComponentResource extends AlpineResource {
                 }
             }
             final ComponentIdentity identity = new ComponentIdentity(packageURL, cpe, swidTagId, group, name, version);
-            final PaginatedResult result = qm.getComponents(identity);
+            final PaginatedResult result = qm.getComponents(identity, true);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
@@ -256,6 +256,7 @@ public class ComponentResource extends AlpineResource {
                 component.setResolvedLicense(null);
             }
             component.setParent(parent);
+            component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
             component = qm.createComponent(component, true);
             Event.dispatch(new VulnerabilityAnalysisEvent(component));
@@ -333,6 +334,7 @@ public class ComponentResource extends AlpineResource {
                     component.setLicense(StringUtils.trimToNull(jsonComponent.getLicense()));
                     component.setResolvedLicense(null);
                 }
+                component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                 component = qm.updateComponent(component, true);
                 Event.dispatch(new VulnerabilityAnalysisEvent(component));

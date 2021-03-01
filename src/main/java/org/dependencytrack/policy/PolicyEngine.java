@@ -28,7 +28,6 @@ import org.dependencytrack.persistence.QueryManager;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A lightweight policy engine that evaluates a list of components against
@@ -45,12 +44,14 @@ public class PolicyEngine {
     private final List<PolicyEvaluator> evaluators = new ArrayList<>();
 
     public PolicyEngine() {
+        evaluators.add(new SeverityPolicyEvaluator());
         evaluators.add(new CoordinatesPolicyEvaluator());
         evaluators.add(new LicenseGroupPolicyEvaluator());
         evaluators.add(new LicensePolicyEvaluator());
         evaluators.add(new PackageURLPolicyEvaluator());
         evaluators.add(new CpePolicyEvaluator());
         evaluators.add(new SwidTagIdPolicyEvaluator());
+        evaluators.add(new VersionPolicyEvaluator());
     }
 
     public void evaluate(final List<Component> components) {
@@ -72,7 +73,8 @@ public class PolicyEngine {
                 LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
                 final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
                 for (final PolicyEvaluator evaluator : evaluators) {
-                    evaluate(evaluator, policy, component, policyConditionViolations);
+                    evaluator.setQueryManager(qm);
+                    policyConditionViolations.addAll(evaluator.evaluate(policy, component));
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {
                     if (policyConditionViolations.size() > 0) {
@@ -95,11 +97,6 @@ public class PolicyEngine {
         return policy.getProjects().stream().anyMatch(p -> p.getId() == project.getId());
     }
 
-    private void evaluate(final PolicyEvaluator evaluator, final Policy policy, final Component component, final List<PolicyConditionViolation> violations) {
-        final Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        optional.ifPresent(violations::add);
-    }
-
     private List<PolicyViolation> createPolicyViolations(final QueryManager qm, final List<PolicyConditionViolation> pcvList) {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
         for (PolicyConditionViolation pcv: pcvList) {
@@ -116,10 +113,13 @@ public class PolicyEngine {
 
     private PolicyViolation.Type determineViolationType(final PolicyCondition.Subject subject) {
         switch(subject) {
+            case SEVERITY:
+                return PolicyViolation.Type.SECURITY;
             case COORDINATES:
             case PACKAGE_URL:
             case CPE:
             case SWID_TAGID:
+            case VERSION:
                 return PolicyViolation.Type.OPERATIONAL;
             case LICENSE:
             case LICENSE_GROUP:

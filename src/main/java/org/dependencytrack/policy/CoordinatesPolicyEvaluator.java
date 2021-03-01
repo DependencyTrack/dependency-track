@@ -24,8 +24,13 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Coordinates;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.util.ComponentVersion;
 import org.json.JSONObject;
-import java.util.Optional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Evaluates a components group + name + version against a policy.
@@ -36,6 +41,7 @@ import java.util.Optional;
 public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
 
     private static final Logger LOGGER = Logger.getLogger(CoordinatesPolicyEvaluator.class);
+    private static final Pattern VERSION_OPERATOR_PATTERN = Pattern.compile("^(?<operator>[<>]=?|[!=]=)\\s*");
 
     /**
      * {@inheritDoc}
@@ -49,18 +55,18 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
      * {@inheritDoc}
      */
     @Override
-    public Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
-        for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
+    public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+        final List<PolicyConditionViolation> violations = new ArrayList<>();
+        for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final Coordinates coordinates = parseCoordinatesDefinition(condition);
-
             if (matches(condition.getOperator(), coordinates.getGroup(), component.getGroup())
                     && matches(condition.getOperator(), coordinates.getName(), component.getName())
-                    && matches(condition.getOperator(), coordinates.getVersion(), component.getVersion())) {
-                return Optional.of(new PolicyConditionViolation(condition, component));
+                    && versionMatches(condition.getOperator(), coordinates.getVersion(), component.getVersion())) {
+                violations.add(new PolicyConditionViolation(condition, component));
             }
         }
-        return Optional.empty();
+        return violations;
     }
 
     private boolean matches(final PolicyCondition.Operator operator, final String conditionValue, final String part) {
@@ -89,6 +95,53 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
         return false;
     }
 
+    private boolean versionMatches(final PolicyCondition.Operator conditionOperator, final String conditionValue, final String part) {
+        final Matcher versionOperatorMatcher = VERSION_OPERATOR_PATTERN.matcher(conditionValue);
+        if (!versionOperatorMatcher.find()) {
+            // No operator provided, use default matching algorithm
+            return matches(conditionOperator, conditionValue, part);
+        }
+
+        final PolicyCondition.Operator versionOperator;
+        switch (versionOperatorMatcher.group(1)) {
+            case "==":
+                versionOperator = PolicyCondition.Operator.NUMERIC_EQUAL;
+                break;
+            case "!=":
+                versionOperator = PolicyCondition.Operator.NUMERIC_NOT_EQUAL;
+                break;
+            case "<":
+                versionOperator = PolicyCondition.Operator.NUMERIC_LESS_THAN;
+                break;
+            case "<=":
+                versionOperator = PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL;
+                break;
+            case ">":
+                versionOperator = PolicyCondition.Operator.NUMERIC_GREATER_THAN;
+                break;
+            case ">=":
+                versionOperator = PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL;
+                break;
+            default:
+                versionOperator = null;
+                break;
+        }
+        if (versionOperator == null) {
+            // Shouldn't ever happen because the regex won't match anything else
+            LOGGER.error("Failed to infer version operator from " + versionOperatorMatcher.group(1));
+            return false;
+        }
+
+        final var componentVersion = new ComponentVersion(part);
+        final var conditionVersion = new ComponentVersion(VERSION_OPERATOR_PATTERN.split(conditionValue)[1]);
+
+        final boolean versionMatches = VersionPolicyEvaluator.matches(componentVersion, conditionVersion, versionOperator);
+        if (PolicyCondition.Operator.NO_MATCH == conditionOperator) {
+            return !versionMatches;
+        }
+        return versionMatches;
+    }
+
     /**
      * Expects the format of condition.getValue() to be:
      * <pre>
@@ -98,6 +151,7 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
      *     'version': '1.0.0'
      * }
      * </pre>
+     *
      * @param condition teh condition to evaluate
      * @return the Coordinates
      */

@@ -24,7 +24,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
 import org.junit.Test;
-import java.util.Optional;
+import java.util.List;
 
 public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
 
@@ -38,9 +38,9 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
-        PolicyConditionViolation violation = optional.get();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
         Assert.assertEquals(component, violation.getComponent());
         Assert.assertEquals(condition, violation.getPolicyCondition());
     }
@@ -54,9 +54,9 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
-        PolicyConditionViolation violation = optional.get();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
         Assert.assertEquals(component, violation.getComponent());
         Assert.assertEquals(condition, violation.getPolicyCondition());
     }
@@ -71,9 +71,9 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertTrue(optional.isPresent());
-        PolicyConditionViolation violation = optional.get();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
         Assert.assertEquals(component, violation.getComponent());
         Assert.assertEquals(condition, violation.getPolicyCondition());
     }
@@ -88,8 +88,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("2.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -102,8 +102,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -116,8 +116,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -129,8 +129,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         component.setName("Test Component");
         component.setVersion("1.0.0");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -141,8 +141,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Example Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -153,8 +153,8 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Test Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
     }
 
     @Test
@@ -165,8 +165,272 @@ public class CoordinatesPolicyEvaluatorTest extends PersistenceCapableTest {
         Component component = new Component();
         component.setName("Test Component");
         PolicyEvaluator evaluator = new CoordinatesPolicyEvaluator();
-        Optional<PolicyConditionViolation> optional = evaluator.evaluate(policy, component);
-        Assert.assertFalse(optional.isPresent());
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
+    }
+
+    @Test
+    public void matchWithVersionOperatorLessThan() {
+        final String def = "{ 'version': '< 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithVersionOperatorLessThan() {
+        final String def = "{ 'version': '< 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void matchWithVersionOperatorLessThanOrEqual() {
+        final String def = "{ 'version': '<= 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithVersionOperatorLessThanOrEqual() {
+        final String def = "{ 'version': '<= 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void matchWithVersionOperatorEqual() {
+        final String def = "{ 'version': '== 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithVersionOperatorEqual() {
+        final String def = "{ 'version': '== 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void matchWithVersionOperatorNotEqual() {
+        final String def = "{ 'version': '!= 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithVersionOperatorNotEqual() {
+        final String def = "{ 'version': '!= 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void matchWithVersionOperatorGreaterThan() {
+        final String def = "{ 'version': '> 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithVersionOperatorGreaterThan() {
+        final String def = "{ 'version': '> 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void matchWithVersionOperatorGreaterThanOrEqual() {
+        final String def = "{ 'version': '>= 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    public void noMatchWithVersionOperatorGreaterThanOrEqual() {
+        final String def = "{ 'version': '>= 1.1.1' }";
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.NO_MATCH, def);
+
+        final var component = new Component();
+        final var evaluator = new CoordinatesPolicyEvaluator();
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
     }
 
 }

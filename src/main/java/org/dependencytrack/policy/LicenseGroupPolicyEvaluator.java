@@ -24,7 +24,8 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Evaluates if a components resolved license is in the license group defined by the policy.
@@ -48,10 +49,11 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
      * {@inheritDoc}
      */
     @Override
-    public Optional<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+    public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
+        final List<PolicyConditionViolation> violations = new ArrayList<>();
         final License license = component.getResolvedLicense();
         if (license == null) {
-            return Optional.empty();
+            return violations;
         }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
@@ -59,15 +61,15 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
             final boolean containsLicense = qm.doesLicenseGroupContainLicense(lg, license);
             if (PolicyCondition.Operator.IS == condition.getOperator()) {
                 if (containsLicense) {
-                    return Optional.of(new PolicyConditionViolation(condition, component));
+                    violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
                 if (!containsLicense) {
-                    return Optional.of(new PolicyConditionViolation(condition, component));
+                    violations.add(new PolicyConditionViolation(condition, component));
                 }
             }
         }
-        return Optional.empty();
+        return violations;
     }
 
 }

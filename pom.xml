@@ -24,14 +24,14 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>1.8.0</version>
+        <version>1.9.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -81,18 +81,22 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>1.1.0</frontend.version>
+        <frontend.version>1.2.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.0</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>3.0.7</lib.cyclonedx-java.version>
-        <lib.jaxb.runtime.version>2.3.2</lib.jaxb.runtime.version>
-        <lib.lucene.version>8.7.0</lib.lucene.version>
-        <lib.packageurl.version>1.1.1</lib.packageurl.version>
-        <lib.pebble.version>3.1.4</lib.pebble.version>
+        <lib.cyclonedx-java.version>4.0.0-SNAPSHOT</lib.cyclonedx-java.version>
+        <lib.jaxb.runtime.version>2.3.3</lib.jaxb.runtime.version>
+        <lib.lucene.version>8.8.1</lib.lucene.version>
+        <lib.packageurl.version>1.2.0</lib.packageurl.version>
+        <lib.pebble.version>3.1.5</lib.pebble.version>
         <lib.spdx-tools.version>2.2.4</lib.spdx-tools.version>
         <lib.unirest.version>2.4.03</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
+        <!-- JDBC Drivers -->
+        <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mysql.version>8.0.23</lib.jdbc-driver.mysql.version>
+        <lib.jdbc-driver.postgresql.version>42.2.19</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.github-release-plugin.version>1.4.0</plugin.github-release-plugin.version>
@@ -241,13 +245,29 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.2.3</version>
+            <version>6.2.4</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
             <version>3.6.3</version>
+        </dependency>
+        <!-- Bundle JDBC drivers -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>${lib.jdbc-driver.mssql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${lib.jdbc-driver.mysql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${lib.jdbc-driver.postgresql.version}</version>
         </dependency>
         <!-- Test Dependencies -->
         <dependency>
@@ -259,7 +279,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.6.28</version>
+            <version>3.7.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

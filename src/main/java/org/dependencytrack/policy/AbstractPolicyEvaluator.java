@@ -35,6 +35,10 @@ public abstract class AbstractPolicyEvaluator implements PolicyEvaluator {
 
     protected QueryManager qm = new QueryManager();
 
+    public void setQueryManager(final QueryManager qm) {
+        this.qm = qm;
+    }
+
     protected List<PolicyCondition> extractSupportedConditions(final Policy policy) {
         if (policy == null || policy.getPolicyConditions() == null) {
             return new ArrayList<>();

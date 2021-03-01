@@ -35,6 +35,7 @@ public enum RepositoryType {
     NUGET,
     HEX,
     COMPOSER,
+    CARGO,
     UNSUPPORTED;
 
     /**
@@ -54,10 +55,12 @@ public enum RepositoryType {
             return PYPI;
         } else if (PackageURL.StandardTypes.NUGET.equals(type)) {
             return NUGET;
-        } else if ("hex".equals(type)) { // TODO
+        } else if (PackageURL.StandardTypes.HEX.equals(type)) {
             return HEX;
         } else if (PackageURL.StandardTypes.COMPOSER.equals(type)) {
             return COMPOSER;
+        } else if (PackageURL.StandardTypes.CARGO.equals(type)) {
+            return CARGO;
         }
         return UNSUPPORTED;
     }

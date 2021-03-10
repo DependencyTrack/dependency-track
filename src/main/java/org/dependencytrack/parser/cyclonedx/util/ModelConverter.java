@@ -24,8 +24,9 @@ import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
-import org.cyclonedx.model.LicenseChoice;
+import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
+import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -39,6 +40,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
+import org.dependencytrack.util.PurlUtil;
+import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -67,6 +70,7 @@ public class ModelConverter {
                 components.add(convert(qm, cycloneDxComponent, project));
             }
         }
+        generateDependencies(qm, bom, project, components);
         return components;
     }
 
@@ -78,6 +82,7 @@ public class ModelConverter {
             component.setProject(project);
         }
         //component.setAuthor(StringUtils.trimToNull(cycloneDxComponent.getAuthor())); // TODO
+        component.setBomRef(StringUtils.trimToNull(cycloneDxComponent.getBomRef()));
         component.setPublisher(StringUtils.trimToNull(cycloneDxComponent.getPublisher()));
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
         component.setName(StringUtils.trimToNull(cycloneDxComponent.getName()));
@@ -92,7 +97,9 @@ public class ModelConverter {
 
         if (StringUtils.isNotBlank(cycloneDxComponent.getPurl())) {
             try {
-                component.setPurl(new PackageURL(StringUtils.trimToNull(cycloneDxComponent.getPurl())));
+                final PackageURL purl = new PackageURL(StringUtils.trimToNull(cycloneDxComponent.getPurl()));
+                component.setPurl(purl);
+                component.setPurlCoordinates(PurlUtil.purlCoordinatesOnly(purl));
             } catch (MalformedPackageURLException e) {
                 LOGGER.warn("Unable to parse PackageURL: " + cycloneDxComponent.getPurl());
             }
@@ -282,10 +289,12 @@ public class ModelConverter {
      */
     public static List<ServiceComponent> convertServices(final QueryManager qm, final Bom bom, final Project project) {
         final List<ServiceComponent> services = new ArrayList<>();
-        for (int i = 0; i < bom.getServices().size(); i++) {
-            final org.cyclonedx.model.Service cycloneDxService = bom.getServices().get(i);
-            if (cycloneDxService != null) {
-                services.add(convert(qm, cycloneDxService, project));
+        if (bom.getServices() != null) {
+            for (int i = 0; i < bom.getServices().size(); i++) {
+                final org.cyclonedx.model.Service cycloneDxService = bom.getServices().get(i);
+                if (cycloneDxService != null) {
+                    services.add(convert(qm, cycloneDxService, project));
+                }
             }
         }
         return services;
@@ -297,6 +306,7 @@ public class ModelConverter {
             service = new ServiceComponent();
             service.setProject(project);
         }
+        service.setBomRef(StringUtils.trimToNull(cycloneDxService.getBomRef()));
         if (cycloneDxService.getProvider() != null) {
             OrganizationalEntity provider = new OrganizationalEntity();;
             provider.setName(cycloneDxService.getProvider().getName());
@@ -465,5 +475,77 @@ public class ModelConverter {
         }
         */
         return cycloneService;
+    }
+
+    /**
+     * Converts a parsed Bom to a native list of Dependency-Track component object
+     * @param bom the Bom to convert
+     * @return a List of Component object
+     */
+    private static void generateDependencies(final QueryManager qm, final Bom bom, final Project project, final List<Component> components) {
+        // Get direct dependencies first
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getBomRef() != null) {
+            final String targetBomRef = bom.getMetadata().getComponent().getBomRef();
+            final org.cyclonedx.model.Dependency targetDep = getDependencyFromBomRef(targetBomRef, bom.getDependencies());
+            final JSONArray jsonArray = new JSONArray();
+            if (targetDep != null && targetDep.getDependencies() != null) {
+                for (final org.cyclonedx.model.Dependency directDep : targetDep.getDependencies()) {
+                    final Component c = getComponentFromBomRef(directDep.getRef(), components);
+                    if (c != null) {
+                        final ComponentIdentity ci = new ComponentIdentity(c);
+                        jsonArray.put(ci.toJSON());
+                    }
+                }
+            }
+            if (jsonArray.isEmpty()) {
+                project.setDirectDependencies(null);
+            } else {
+                project.setDirectDependencies(jsonArray.toString());
+            }
+        }
+        // Get transitive last. It is possible that some CycloneDX implementations may not properly specify direct
+        // dependencies. As a result, it is not possible to distinguish between direct and transitive.
+        for (final Component c1: components) {
+            if (c1.getBomRef() != null) {
+                final JSONArray jsonArray = new JSONArray();
+                final org.cyclonedx.model.Dependency d1 = getDependencyFromBomRef(c1.getBomRef(), bom.getDependencies());
+                if (d1 != null && d1.getDependencies() != null) {
+                    for (final org.cyclonedx.model.Dependency d2: d1.getDependencies()) {
+                        final Component c2 = getComponentFromBomRef(d2.getRef(), components);
+                        if (c2 != null) {
+                            final ComponentIdentity ci = new ComponentIdentity(c2);
+                            jsonArray.put(ci.toJSON());
+                        }
+                    }
+                }
+                if (jsonArray.isEmpty()) {
+                    c1.setDirectDependencies(null);
+                } else {
+                    c1.setDirectDependencies(jsonArray.toString());
+                }
+            }
+        }
+    }
+
+    private static Component getComponentFromBomRef(final String bomRef, final List<Component> components) {
+        if (components != null) {
+            for (Component c : components) {
+                if (bomRef != null && bomRef.equals(c.getBomRef())) {
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static org.cyclonedx.model.Dependency getDependencyFromBomRef(final String bomRef, final List<org.cyclonedx.model.Dependency> dependencies) {
+        if (dependencies != null) {
+            for (Dependency o : dependencies) {
+                if (bomRef != null && bomRef.equals(o.getRef())) {
+                    return o;
+                }
+            }
+        }
+        return null;
     }
 }

@@ -182,6 +182,8 @@ public class ServiceComponent implements Serializable {
     @NotNull
     private UUID uuid;
 
+    private transient String bomRef;
+
     public long getId() {
         return id;
     }
@@ -338,5 +340,13 @@ public class ServiceComponent implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public String getBomRef() {
+        return bomRef;
+    }
+
+    public void setBomRef(String bomRef) {
+        this.bomRef = bomRef;
     }
 }

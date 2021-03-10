@@ -268,6 +268,11 @@ public class Component implements Serializable {
     @Column(name = "LICENSE_ID")
     private License resolvedLicense;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "DIRECT_DEPENDENCIES", jdbcType = "CLOB")
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String directDependencies; // This will be a JSON string
+
     @Persistent
     @Column(name = "PARENT_COMPONENT_ID")
     private Component parent;
@@ -310,6 +315,7 @@ public class Component implements Serializable {
     @NotNull
     private UUID uuid;
 
+    private transient String bomRef;
     private transient DependencyMetrics metrics;
     private transient RepositoryMetaComponent repositoryMeta;
     private transient int usedBy;
@@ -572,6 +578,14 @@ public class Component implements Serializable {
         this.resolvedLicense = resolvedLicense;
     }
 
+    public String getDirectDependencies() {
+        return directDependencies;
+    }
+
+    public void setDirectDependencies(String directDependencies) {
+        this.directDependencies = directDependencies;
+    }
+
     public Component getParent() {
         return parent;
     }
@@ -653,6 +667,14 @@ public class Component implements Serializable {
 
     public void setLastInheritedRiskScore(Double lastInheritedRiskScore) {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
+    }
+
+    public String getBomRef() {
+        return bomRef;
+    }
+
+    public void setBomRef(String bomRef) {
+        this.bomRef = bomRef;
     }
 
     public int getUsedBy() {

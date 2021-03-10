@@ -20,6 +20,9 @@ package org.dependencytrack.model;
 
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.util.PurlUtil;
+import org.json.JSONObject;
+import java.util.UUID;
 
 /**
  * A transient object that carries component identity information.
@@ -28,35 +31,49 @@ import com.github.packageurl.PackageURL;
  */
 public class ComponentIdentity {
 
+    public enum ObjectType {
+        COMPONENT,
+        SERVICE
+    }
+
+    private ObjectType objectType;
     private PackageURL purl;
+    private PackageURL purlCoordinates;
     private String cpe;
     private String swidTagId;
     private String group;
     private String name;
     private String version;
+    private UUID uuid;
 
     public ComponentIdentity(final PackageURL purl, final String cpe, final String swidTagId,
                              final String group, final String name, final String version) {
         this.purl = purl;
+        this.purlCoordinates = PurlUtil.silentPurlCoordinatesOnly(purl);
         this.cpe = cpe;
         this.swidTagId = swidTagId;
         this.group = group;
         this.name = name;
         this.version = version;
+        this.objectType = ObjectType.COMPONENT;
     }
 
     public ComponentIdentity(final Component component) {
         this.purl = component.getPurl();
+        this.purlCoordinates = PurlUtil.silentPurlCoordinatesOnly(purl);
         this.cpe = component.getCpe();
         this.swidTagId = component.getSwidTagId();
         this.group = component.getGroup();
         this.name = component.getName();
         this.version = component.getVersion();
+        this.uuid = component.getUuid();
+        this.objectType = ObjectType.COMPONENT;
     }
 
     public ComponentIdentity(final org.cyclonedx.model.Component component) {
         try {
             this.purl = new PackageURL(component.getPurl());
+            this.purlCoordinates = PurlUtil.purlCoordinatesOnly(purl);
         } catch (MalformedPackageURLException e) {
             // throw it away
         }
@@ -65,16 +82,34 @@ public class ComponentIdentity {
         this.group = component.getGroup();
         this.name = component.getName();
         this.version = component.getVersion();
+        this.objectType = ObjectType.COMPONENT;
+    }
+
+    public ComponentIdentity(final ServiceComponent service) {
+        this.group = service.getGroup();
+        this.name = service.getName();
+        this.version = service.getVersion();
+        this.uuid = service.getUuid();
+        this.objectType = ObjectType.SERVICE;
     }
 
     public ComponentIdentity(final org.cyclonedx.model.Service service) {
         this.group = service.getGroup();
         this.name = service.getName();
         this.version = service.getVersion();
+        this.objectType = ObjectType.SERVICE;
+    }
+
+    public ObjectType getObjectType() {
+        return objectType;
     }
 
     public PackageURL getPurl() {
         return purl;
+    }
+
+    public PackageURL getPurlCoordinates() {
+        return purlCoordinates;
     }
 
     public String getCpe() {
@@ -95,5 +130,23 @@ public class ComponentIdentity {
 
     public String getVersion() {
         return version;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public JSONObject toJSON() {
+        final JSONObject jsonObject = new JSONObject();
+        jsonObject.put("uuid", this.getUuid());
+        jsonObject.put("group", this.getGroup());
+        jsonObject.put("name", this.getName());
+        jsonObject.put("version", this.getVersion());
+        jsonObject.put("purl", this.getPurl());
+        jsonObject.put("purlCoordinates", this.getPurlCoordinates());
+        jsonObject.put("cpe", this.getCpe());
+        jsonObject.put("swidTagId", this.getSwidTagId());
+        jsonObject.put("objectType", this.getObjectType());
+        return jsonObject;
     }
 }

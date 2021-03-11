@@ -80,15 +80,16 @@ public class BomUploadProcessingTask implements Subscriber {
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 final Bom.Format bomFormat;
                 final String bomSpecVersion;
+                org.cyclonedx.model.Bom cycloneDxBom = null;
                 if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
                         LOGGER.info("Processing CycloneDX BOM uploaded to project: " + event.getProjectUuid());
                         bomFormat = Bom.Format.CYCLONEDX;
                         final Parser parser = BomParserFactory.createParser(bomBytes);
-                        final org.cyclonedx.model.Bom bom = parser.parse(bomBytes);
-                        bomSpecVersion = bom.getSpecVersion();
-                        components = ModelConverter.convertComponents(qm, bom, project);
-                        services = ModelConverter.convertServices(qm, bom, project);
+                        cycloneDxBom = parser.parse(bomBytes);
+                        bomSpecVersion = cycloneDxBom.getSpecVersion();
+                        components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
+                        services = ModelConverter.convertServices(qm, cycloneDxBom, project);
                     } else {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;
@@ -124,6 +125,10 @@ public class BomUploadProcessingTask implements Subscriber {
                 }
                 for (final ServiceComponent service: services) {
                     processService(qm, bom, service, flattenedServices);
+                }
+                if (Bom.Format.CYCLONEDX == bomFormat) {
+                    LOGGER.info("Processing CycloneDX dependency graph for project: " + event.getProjectUuid());
+                    ModelConverter.generateDependencies(qm, cycloneDxBom, project, components);
                 }
                 LOGGER.debug("Reconciling components for project " + event.getProjectUuid());
                 qm.reconcileComponents(project, existingProjectComponents, flattenedComponents);

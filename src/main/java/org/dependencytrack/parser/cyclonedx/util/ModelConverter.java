@@ -70,7 +70,6 @@ public class ModelConverter {
                 components.add(convert(qm, cycloneDxComponent, project));
             }
         }
-        generateDependencies(qm, bom, project, components);
         return components;
     }
 
@@ -482,7 +481,7 @@ public class ModelConverter {
      * @param bom the Bom to convert
      * @return a List of Component object
      */
-    private static void generateDependencies(final QueryManager qm, final Bom bom, final Project project, final List<Component> components) {
+    public static void generateDependencies(final QueryManager qm, final Bom bom, final Project project, final List<Component> components) {
         // Get direct dependencies first
         if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null && bom.getMetadata().getComponent().getBomRef() != null) {
             final String targetBomRef = bom.getMetadata().getComponent().getBomRef();

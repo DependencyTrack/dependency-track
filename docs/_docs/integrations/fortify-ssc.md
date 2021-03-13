@@ -22,6 +22,8 @@ Requirements:
 ### Dependency-Track Configuration
 
 #### Global configuration
+Dependency-Track requires the use of a `CIToken`. Refer to the Fortify SSC documentation for more information.
+
 ![Configure SSC Integration](/images/screenshots/fortify-ssc-dtrack-configuration.png)
 
 #### Per-project configuration

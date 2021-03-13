@@ -27,6 +27,8 @@ import org.dependencytrack.common.UnirestFactory;
 import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 
 public class FortifySscClient {
@@ -40,14 +42,14 @@ public class FortifySscClient {
         this.baseURL = baseURL;
     }
 
-    public String generateOneTimeUploadToken(final String username, final String password) {
+    public String generateOneTimeUploadToken(final String citoken) {
         LOGGER.debug("Generating one-time upload token");
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
         final HttpRequestWithBody request = ui.post(baseURL + "/api/v1/fileTokens");
         final HttpResponse<JsonNode> response = request
                 .header("Content-Type", "application/json")
-                .basicAuth(username, password)
+                .header("Authorization", "FortifyToken " + Base64.getEncoder().encodeToString(citoken.getBytes(StandardCharsets.UTF_8)))
                 .body(payload)
                 .asJson();
         if (response.getStatus() == 201) {

@@ -34,9 +34,8 @@ import java.net.URL;
 import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_USERNAME;
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_PASSWORD;
 
 public class FortifySscUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -74,14 +73,15 @@ public class FortifySscUploader extends AbstractIntegrationPoint implements Proj
     @Override
     public void upload(final Project project, final InputStream payload) {
         final ConfigProperty sscUrl = qm.getConfigProperty(FORTIFY_SSC_URL.getGroupName(), FORTIFY_SSC_URL.getPropertyName());
-        final ConfigProperty username = qm.getConfigProperty(FORTIFY_SSC_USERNAME.getGroupName(), FORTIFY_SSC_USERNAME.getPropertyName());
-        final ConfigProperty password = qm.getConfigProperty(FORTIFY_SSC_PASSWORD.getGroupName(), FORTIFY_SSC_PASSWORD.getPropertyName());
+        final ConfigProperty citoken = qm.getConfigProperty(FORTIFY_SSC_TOKEN.getGroupName(), FORTIFY_SSC_TOKEN.getPropertyName());
         final ProjectProperty applicationId = qm.getProjectProperty(project, FORTIFY_SSC_ENABLED.getGroupName(), APPID_PROPERTY);
+        if (citoken == null || citoken.getPropertyValue() == null) {
+            LOGGER.warn("Fortify SSC token not specified. Aborting");
+            return;
+        }
         try {
             final FortifySscClient client = new FortifySscClient(this, new URL(sscUrl.getPropertyValue()));
-            final String token = client.generateOneTimeUploadToken(
-                    username.getPropertyValue(),
-                    DataEncryption.decryptAsString(password.getPropertyValue()));
+            final String token = client.generateOneTimeUploadToken(DataEncryption.decryptAsString(citoken.getPropertyValue()));
             if (token != null) {
                 client.uploadDependencyTrackFindings(token, applicationId.getPropertyValue(), payload);
             }

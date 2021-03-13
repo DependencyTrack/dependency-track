@@ -20,7 +20,6 @@ package org.dependencytrack.integrations.fortifyssc;
 
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.http.HttpHeaders;
-import org.dependencytrack.util.HttpUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,6 +31,8 @@ import org.junit.rules.ExpectedException;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
@@ -68,7 +69,7 @@ public class FortifySscClientTest {
                 .when(
                         request()
                                 .withMethod("POST")
-                                .withHeader(HttpHeaders.AUTHORIZATION, HttpUtil.basicAuthHeaderValue("admin", "admin"))
+                                .withHeader(HttpHeaders.AUTHORIZATION, "FortifyToken " + Base64.getEncoder().encodeToString("2d5e4a06-945e-405f-a3c2-112bb3053453".getBytes(StandardCharsets.UTF_8)))
                                 .withPath("/ssc/api/v1/fileTokens")
                                 .withBody("{\"fileTokenType\":\"UPLOAD\"}")
                 )
@@ -80,7 +81,7 @@ public class FortifySscClientTest {
                 );
         FortifySscUploader uploader = new FortifySscUploader();
         FortifySscClient client = new FortifySscClient(uploader, new URL("https://localhost/ssc"));
-        String token = client.generateOneTimeUploadToken("admin", "admin");
+        String token = client.generateOneTimeUploadToken("2d5e4a06-945e-405f-a3c2-112bb3053453");
         Assert.assertEquals("db975c97-98b1-4988-8d6a-9c3e044dfff3", token);
     }
 
@@ -90,7 +91,7 @@ public class FortifySscClientTest {
                 .when(
                         request()
                                 .withMethod("POST")
-                                .withHeader(HttpHeaders.AUTHORIZATION, HttpUtil.basicAuthHeaderValue("admin", "wrong"))
+                                .withHeader(HttpHeaders.AUTHORIZATION, "FortifyToken " + Base64.getEncoder().encodeToString("wrong".getBytes(StandardCharsets.UTF_8)))
                                 .withPath("/ssc/api/v1/fileTokens")
                                 .withBody("{\"fileTokenType\":\"UPLOAD\"}")
                 )
@@ -100,7 +101,7 @@ public class FortifySscClientTest {
                 );
         FortifySscUploader uploader = new FortifySscUploader();
         FortifySscClient client = new FortifySscClient(uploader, new URL("https://localhost/ssc"));
-        String token = client.generateOneTimeUploadToken("admin", "wrong");
+        String token = client.generateOneTimeUploadToken("wrong");
         Assert.assertNull(token);
     }
 

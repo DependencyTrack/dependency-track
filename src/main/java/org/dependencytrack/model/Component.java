@@ -501,6 +501,9 @@ public class Component implements Serializable {
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
     public PackageURL getPurl() {
+        if (purl == null) {
+            return null;
+        }
         try {
             return new PackageURL(purl);
         } catch (MalformedPackageURLException e) {
@@ -516,6 +519,9 @@ public class Component implements Serializable {
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
     public PackageURL getPurlCoordinates() {
+        if (purlCoordinates == null) {
+            return null;
+        }
         try {
             return new PackageURL(purlCoordinates);
         } catch (MalformedPackageURLException e) {
@@ -524,7 +530,9 @@ public class Component implements Serializable {
     }
 
     public void setPurlCoordinates(PackageURL purlCoordinates) {
-        this.purlCoordinates = purlCoordinates.canonicalize();
+        if (purlCoordinates != null) {
+            this.purlCoordinates = purlCoordinates.canonicalize();
+        }
     }
 
     public String getSwidTagId() {

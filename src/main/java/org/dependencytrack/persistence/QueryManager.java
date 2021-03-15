@@ -400,17 +400,26 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
-                         boolean includeDependencies, boolean includeAuditHistory) {
+                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory) {
         final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
         if (source == null) {
             return null;
         }
         Project project = new Project();
+        project.setAuthor(source.getAuthor());
+        project.setPublisher(source.getPublisher());
+        project.setGroup(source.getGroup());
         project.setName(source.getName());
         project.setDescription(source.getDescription());
         project.setVersion(newVersion);
+        project.setClassifier(source.getClassifier());
         project.setActive(source.isActive());
+        project.setCpe(source.getCpe());
         project.setPurl(source.getPurl());
+        project.setSwidTagId(source.getSwidTagId());
+        if (includeComponents && includeServices) {
+            project.setDirectDependencies(source.getDirectDependencies());
+        }
         project.setParent(source.getParent());
         project = persist(project);
 
@@ -434,22 +443,33 @@ public class QueryManager extends AlpineQueryManager {
             }
         }
 
-        if (includeDependencies) {
+        final Map<Long, Component> clonedComponents = new HashMap<>();
+        if (includeComponents) {
             final List<Component> sourceComponents = getAllComponents(source);
             if (sourceComponents != null) {
                 for (final Component sourceComponent: sourceComponents) {
-                    cloneComponent(sourceComponent, false);
+                    final Component clonedComponent = cloneComponent(sourceComponent, project, false);
+                    // Add vulnerabilties and finding attribution from the source component to the cloned component
+                    for (Vulnerability vuln: sourceComponent.getVulnerabilities()) {
+                        final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
+                        this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl());
+                    }
+                    clonedComponents.put(sourceComponent.getId(), clonedComponent);
                 }
             }
         }
 
-        if (includeAuditHistory) {
+        if (includeAuditHistory && includeComponents) {
             final List<Analysis> analyses = getAnalyses(source);
             if (analyses != null) {
                 for (final Analysis sourceAnalysis: analyses) {
                     Analysis analysis = new Analysis();
                     analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
-                    analysis.setComponent(sourceAnalysis.getComponent());
+                    final Component clonedComponent = clonedComponents.get(sourceAnalysis.getComponent().getId());
+                    if (clonedComponent == null) {
+                        break;
+                    }
+                    analysis.setComponent(clonedComponent);
                     analysis.setVulnerability(sourceAnalysis.getVulnerability());
                     analysis.setSuppressed(sourceAnalysis.isSuppressed());
                     analysis = persist(analysis);
@@ -764,7 +784,7 @@ public class QueryManager extends AlpineQueryManager {
         return result;
     }
 
-    public Component cloneComponent(Component sourceComponent, boolean commitIndex) {
+    public Component cloneComponent(Component sourceComponent, Project destinationProject, boolean commitIndex) {
         final Component component = new Component();
         component.setGroup(sourceComponent.getGroup());
         component.setName(sourceComponent.getName());
@@ -793,8 +813,7 @@ public class QueryManager extends AlpineQueryManager {
         component.setLicense(sourceComponent.getLicense());
         component.setResolvedLicense(sourceComponent.getResolvedLicense());
         // TODO Add support for parent component and children components
-        component.setVulnerabilities(sourceComponent.getVulnerabilities());
-        component.setProject(sourceComponent.getProject());
+        component.setProject(destinationProject);
         return createComponent(component, commitIndex);
     }
 
@@ -2022,6 +2041,25 @@ public class QueryManager extends AlpineQueryManager {
             // TODO
         }
         return result;
+    }
+
+    public ServiceComponent cloneServiceComponent(ServiceComponent sourceService, Project destinationProject, boolean commitIndex) {
+        final ServiceComponent service = new ServiceComponent();
+        service.setProvider(sourceService.getProvider());
+        service.setGroup(sourceService.getGroup());
+        service.setName(sourceService.getName());
+        service.setVersion(sourceService.getVersion());
+        service.setDescription(sourceService.getDescription());
+        service.setEndpoints(sourceService.getEndpoints());
+        service.setAuthenticated(sourceService.getAuthenticated());
+        service.setCrossesTrustBoundary(sourceService.getCrossesTrustBoundary());
+        service.setData(sourceService.getData());
+        service.setExternalReferences(sourceService.getExternalReferences());
+        // TODO Add support for parent component and children components
+        service.setNotes(sourceService.getNotes());
+        service.setVulnerabilities(sourceService.getVulnerabilities());
+        service.setProject(destinationProject);
+        return createServiceComponent(sourceService, commitIndex);
     }
 
     /**

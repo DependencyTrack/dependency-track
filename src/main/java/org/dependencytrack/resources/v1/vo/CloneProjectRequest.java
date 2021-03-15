@@ -48,7 +48,11 @@ public class CloneProjectRequest {
 
     private final boolean includeProperties;
 
-    private final boolean includeDependencies;
+    private final boolean includeDependencies; // Keep for backward compatibility
+
+    private final boolean includeComponents;
+
+    private final boolean includeServices;
 
     private final boolean includeAuditHistory;
 
@@ -58,12 +62,19 @@ public class CloneProjectRequest {
                                @JsonProperty(value = "includeTags") boolean includeTags,
                                @JsonProperty(value = "includeProperties") boolean includeProperties,
                                @JsonProperty(value = "includeDependencies") boolean includeDependencies,
+                               @JsonProperty(value = "includeComponents") boolean includeComponents,
+                               @JsonProperty(value = "includeServices") boolean includeServices,
                                @JsonProperty(value = "includeAuditHistory") boolean includeAuditHistory) {
+        if (includeDependencies) { // For backward compatibility
+            includeComponents = true;
+        }
         this.project = project;
         this.version = version;
         this.includeTags = includeTags;
         this.includeProperties = includeProperties;
         this.includeDependencies = includeDependencies;
+        this.includeComponents = includeComponents;
+        this.includeServices = includeServices;
         this.includeAuditHistory = includeAuditHistory;
     }
 
@@ -85,6 +96,14 @@ public class CloneProjectRequest {
 
     public boolean includeDependencies() {
         return includeDependencies;
+    }
+
+    public boolean includeComponents() {
+        return includeComponents;
+    }
+
+    public boolean includeServices() {
+        return includeServices;
     }
 
     public boolean includeAuditHistory() {

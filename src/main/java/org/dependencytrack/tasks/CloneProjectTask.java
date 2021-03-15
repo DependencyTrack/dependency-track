@@ -42,7 +42,7 @@ public class CloneProjectTask implements Subscriber {
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.clone(UUID.fromString(request.getProject()),
                         request.getVersion(), request.includeTags(), request.includeProperties(),
-                        request.includeDependencies(), request.includeAuditHistory());
+                        request.includeComponents(), request.includeServices(), request.includeAuditHistory());
                 LOGGER.info("Cloned project: " + request.getProject() + " to " + project.getUuid());
             }
         }

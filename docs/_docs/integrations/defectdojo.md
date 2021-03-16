@@ -41,7 +41,7 @@ Requirements:
 
 #### Per-project configuration
 Dependency-Track includes the ability to specify configuration properties on a per-project basis. 
-This feature is used to map projects in Dependency-Track to applications in DefectDojo. 
+This feature is used to map projects in Dependency-Track to engagements in DefectDojo. 
 
 | Attribute      | Value                             |
 | ---------------| --------------------------------- |

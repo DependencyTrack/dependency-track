@@ -2,7 +2,7 @@
 title: Community Implementations
 category: Integrations
 chapter: 6
-order: 10
+order: 11
 ---
 
 Since DependencyTrack follows the API-First approach of product development, the API itself provides huge amount

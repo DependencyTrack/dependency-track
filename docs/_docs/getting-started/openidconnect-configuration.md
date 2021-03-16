@@ -68,17 +68,19 @@ For a complete overview of available configuration options for both backend and 
 The following steps demonstrate how to setup OpenID Connect with Keycloak. Most settings should be applicable to other IdPs as well.
 
 > This guide assumes that: 
->   * the Dependency-Track frontend has been deployed to `http://dependencytrack.example.com`
+>   * the Dependency-Track frontend has been deployed to `https://dependencytrack.example.com`
 >   * a Keycloak instance is available at `https://auth.example.com`
 >   * the realm *example* has been created in Keycloak
 
 1. Configure the client as shown below:
 ![Keycloak: Configure client](/images/screenshots/oidc-keycloak-client-settings.png)
   * Client ID: `dependency-track`
+  * Client Protocol: `openid-connect`
   * Access Type: `public`
   * Standard Flow Enabled: `ON`
-  * Valid Redirect URIs: `http://dependencytrack.example.com/static/oidc-callback.html`
-  * Web Origins: `http://dependencytrack.example.com`
+  * Valid Redirect URIs: `https://dependencytrack.example.com/static/oidc-callback.html*`
+    * The trailing `*` is required when using the frontend v1.3.0 or newer, in order to support [post-login redirects](https://github.com/DependencyTrack/frontend/pull/47)
+  * Web Origins: `https://dependencytrack.example.com`
 
 2. To be able to synchronize team memberships, create a *protocol mapper* that includes group memberships as `groups` in
 the `/userinfo` endpoint:

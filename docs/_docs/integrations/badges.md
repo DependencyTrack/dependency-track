@@ -2,6 +2,7 @@
 title: SVG Badges
 category: Integrations
 chapter: 6
+order: 10
 ---
 
 Dependency-Track supports badges in Scalable Vector Graphics (SVG) format. Support for badges is a globally configurable

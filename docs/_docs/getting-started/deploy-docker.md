@@ -166,7 +166,7 @@ services:
       # volumes:
       # - "/host/path/to/config.json:/app/static/config.json"
     ports:
-      - "8080:80"
+      - "8080:8080"
     restart: unless-stopped
 ```
 

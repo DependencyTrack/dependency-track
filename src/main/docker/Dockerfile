@@ -6,6 +6,8 @@ LABEL vendor="OWASP"
 # Directory names must end with / to avoid errors when ADDing and COPYing
 ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
+ARG UID=1000
+ARG GID=1000
 ARG USERNAME=dtrack
 ARG WAR_FILENAME=dependency-track-apiserver.war
 
@@ -13,15 +15,20 @@ ARG WAR_FILENAME=dependency-track-apiserver.war
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p -m 770 ${DATA_DIR} \
-    && adduser -D -h ${DATA_DIR} -u 1000 ${USERNAME} \
-    && chown -R ${USERNAME}:${USERNAME} ${DATA_DIR}
+    && adduser -D -h ${DATA_DIR} -u ${UID} ${USERNAME} \
+    && chown -R ${USERNAME}:0 ${DATA_DIR} \
+    && chmod -R g=u ${DATA_DIR}
 
 # Copy the compiled WAR to the application directory created above
 # Automatically creates the $APP_DIR directory
-COPY --chown=1000 ./target/${WAR_FILENAME} ${APP_DIR}
+COPY --chown=${UID}:0 ./target/${WAR_FILENAME} ${APP_DIR}
+
+# Ensure ${APP_DIR} is accessible when installing via OpenShift Restricted SCC - which applies arbitrary UID and GID=0
+RUN chown -R ${USERNAME}:0 ${APP_DIR} && \
+    chmod -R g=u ${APP_DIR} 
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
-USER 1000
+USER ${UID}
 
 # Specify the container working directory
 WORKDIR ${APP_DIR}
@@ -44,6 +51,9 @@ ENV CONTEXT=""
 
 # Injects the build-time ARG "WAR_FILENAME" as an environment variable that can be used in the CMD.
 ENV WAR_FILENAME ${WAR_FILENAME}
+
+# Specify this so that when OpenShift restricted SCC assigns arbitrary UID - it gets the home dir it requires
+ENV HOME ${DATA_DIR}
 
 # Add a healthcheck using the Dependency-Track version API
 HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}/api/version || exit 1

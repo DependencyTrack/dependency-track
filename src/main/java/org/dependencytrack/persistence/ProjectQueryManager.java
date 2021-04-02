@@ -19,6 +19,10 @@
 package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
+import alpine.model.LdapUser;
+import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
+import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
@@ -36,7 +40,12 @@ import org.dependencytrack.model.Vulnerability;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
@@ -72,14 +81,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final Tag tag = getTagByName(filter.trim());
             if (tag != null) {
                 if (excludeInactive) {
-                    query.setFilter("(name.toLowerCase().matches(:name) || tags.contains(:tag)) && active == true");
+                    query.setFilter("(name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null)");
                 } else {
                     query.setFilter("name.toLowerCase().matches(:name) || tags.contains(:tag)");
                 }
                 result = execute(query, filterString, tag);
             } else {
                 if (excludeInactive) {
-                    query.setFilter("name.toLowerCase().matches(:name) && active == true");
+                    query.setFilter("name.toLowerCase().matches(:name) && (active == true || active == null)");
                 } else {
                     query.setFilter("name.toLowerCase().matches(:name)");
                 }
@@ -87,7 +96,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             }
         } else {
             if (excludeInactive) {
-                query.setFilter("active == true");
+                query.setFilter("active == true || active == null");
             }
             result = execute(query);
         }
@@ -134,7 +143,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public List<Project> getAllProjects(boolean excludeInactive) {
         final Query<Project> query = pm.newQuery(Project.class);
         if (excludeInactive) {
-            query.setFilter("active == true");
+            query.setFilter("active == true || active == null");
         }
         query.setOrdering("name asc");
         return query.executeResultList(Project.class);
@@ -151,7 +160,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             query.setOrdering("version desc");
         }
         if (excludeInactive) {
-            query.setFilter("name == :name && active == true");
+            query.setFilter("name == :name && (active == true || active == null)");
         } else {
             query.setFilter("name == :name");
         }
@@ -586,5 +595,41 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setLastBomImport(date);
         project.setLastBomImportFormat(bomFormat);
         return persist(project);
+    }
+
+    private String doitAgain(final Query<Project> query, final String inputFilter, final Map params) {
+        if (super.principal == null) {
+            return null;
+        }
+        final List<Team> teams = new ArrayList<>();
+        if (super.principal instanceof ManagedUser) {
+            final ManagedUser user = (ManagedUser)principal;
+            teams.addAll(user.getTeams());
+        } else if (super.principal instanceof LdapUser) {
+            final LdapUser user = (LdapUser)principal;
+            teams.addAll(user.getTeams());
+        } else if (super.principal instanceof OidcUser) {
+            final OidcUser user = (OidcUser)principal;
+            teams.addAll(user.getTeams());
+        }
+        if (teams.size() == 0) {
+            return null;
+        } else {
+            final StringBuilder sb = new StringBuilder();
+            for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
+                Team team = teams.get(i);
+                sb.append(" accessTeams.contains(:team) ");
+                if (i <teamsSize) {
+                    sb.append(" || ");
+                }
+            }
+            if (inputFilter != null) {
+                query.setFilter(inputFilter + " " + sb.toString());
+            } else {
+                query.setFilter(sb.toString());
+            }
+        }
+
+        return null;
     }
 }

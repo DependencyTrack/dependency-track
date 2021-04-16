@@ -187,9 +187,14 @@ public class SpdxDocumentParser {
                 }
                 if (spdxPackage.getExternalRefs() != null) {
                     for (final ExternalRef ref : spdxPackage.getExternalRefs()) {
-                        if (ref.getReferenceType().toString().equals("cpe23Type") || ref.getReferenceType().toString().equals("cpe22Type")) {
+                        if (ref.getReferenceType().toString().equals("cpe23Type")
+                                || ref.getReferenceType().toString().endsWith("#cpe23Type")) {
                             component.setCpe(ref.getReferenceLocator());
-                        } else if (ref.getReferenceType().toString().equals("purl")) {
+                        } else if (ref.getReferenceType().toString().equals("cpe22Type")
+                                || ref.getReferenceType().toString().endsWith("#cpe22Type")) {
+                            component.setCpe(ref.getReferenceLocator());
+                        } else if (ref.getReferenceType().toString().equals("purl")
+                                || ref.getReferenceType().toString().endsWith("#purl")) {
                             try {
                                 component.setPurl(new PackageURL(ref.getReferenceLocator()));
                             } catch (MalformedPackageURLException e) {

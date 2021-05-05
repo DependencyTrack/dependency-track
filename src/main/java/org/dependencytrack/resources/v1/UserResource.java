@@ -19,44 +19,19 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.Config;
-import alpine.auth.AlpineAuthenticationException;
-import alpine.auth.AuthenticationNotRequired;
-import alpine.auth.Authenticator;
-import alpine.auth.JsonWebToken;
-import alpine.auth.OidcAuthenticationService;
-import alpine.auth.PasswordService;
-import alpine.auth.PermissionRequired;
+import alpine.auth.*;
 import alpine.crypto.KeyManager;
 import alpine.logging.Logger;
-import alpine.model.LdapUser;
-import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
-import alpine.model.Permission;
-import alpine.model.Team;
-import alpine.model.UserPrincipal;
+import alpine.model.*;
 import alpine.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.IdentifiableObject;
 import org.dependencytrack.persistence.QueryManager;
 import org.owasp.security.logging.SecurityMarkers;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.Principal;
@@ -127,8 +102,9 @@ public class UserResource extends AlpineResource {
     })
     @AuthenticationNotRequired
     public Response validateOidcAccessToken(@ApiParam(value = "An OAuth2 access token", required = true)
-                                            @FormParam("accessToken") final String accessToken) {
-        final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken);
+                                            @FormParam("accessToken") final String accessToken,
+                                            @FormParam("idToken") final String idToken) {
+        final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken, idToken);
 
         if (!authService.isSpecified()) {
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "An OpenID Connect login attempt was made, but OIDC is disabled or not properly configured");

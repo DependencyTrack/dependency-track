@@ -172,10 +172,15 @@ public final class NvdParser {
                         final List<VulnerableSoftware> vulnerableSoftwareInNode = new ArrayList<>();
                         final Operator nodeOperator = Operator.valueOf(node.getString("operator", Operator.NONE.name()));
                         if (node.containsKey("children")) {
+                            // https://github.com/DependencyTrack/dependency-track/issues/1033
                             final JsonArray children = node.getJsonArray("children");
-                            for (int l = 0; l < children.size(); l++) {
-                                final JsonObject child = children.getJsonObject(l);
-                                vulnerableSoftwareInNode.addAll(parseCpes(qm, child, synchronizeVulnerability));
+                            if (children.size() > 0) {
+                                for (int l = 0; l < children.size(); l++) {
+                                    final JsonObject child = children.getJsonObject(l);
+                                    vulnerableSoftwareInNode.addAll(parseCpes(qm, child, synchronizeVulnerability));
+                                }
+                            } else {
+                                vulnerableSoftwareInNode.addAll(parseCpes(qm, node, synchronizeVulnerability));
                             }
                         } else {
                             vulnerableSoftwareInNode.addAll(parseCpes(qm, node, synchronizeVulnerability));

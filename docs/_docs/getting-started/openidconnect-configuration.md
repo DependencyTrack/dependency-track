@@ -15,6 +15,11 @@ If configured properly, users will be able to sign in by clicking the *OpenID* b
 
 ![Login page with OpenID button](/images/screenshots/oidc-login-page.png)
 
+> Before v4.3.0, Dependency-Track exclusively used the `/userinfo` endpoint of the IdP to get user information.  
+> Since v4.3.0, [ID tokens](https://openid.net/specs/openid-connect-core-1_0.html#IDToken) are validated and evaluated as well. They even take precedence over `/userinfo`,  
+> which means that Dependency-Track will no longer request the `/userinfo` endpoint if all required claims  
+> are present in the ID token's payload already.
+
 ### Example Configurations
 
 Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
@@ -95,7 +100,8 @@ the `/userinfo` endpoint:
   
     * Mapper Type: `Group Membership`
     * Token Claim Name: `groups`
-    * Add to userinfo: `ON`
+    * Add to userinfo: `ON` (optional for Dependency-Track v4.3.0 and newer)
+    * Add to ID token: `ON` (for Dependency-Track v4.3.0 and newer)
 
 3. Create some groups, e.g. `DTRACK_ADMINS` and `DTRACK_USERS`:
 

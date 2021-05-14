@@ -28,7 +28,8 @@ For a complete overview of available configuration options for both backend and 
 
 | API server                                                               | Frontend                                        |
 |:-------------------------------------------------------------------------|:------------------------------------------------|
-| alpine.oidc.enabled=true                                                 | OIDC_CLIENT_ID=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM |
+| alpine.oidc.enabled=true                                                 |                                                 |
+| alpine.oidc.client.id=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM                   | OIDC_CLIENT_ID=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM |
 | alpine.oidc.issuer=https://example.auth0.com                             | OIDC_ISSUER=https://example.auth0.com           |
 | alpine.oidc.username.claim=nickname                                      |                                                 |
 | alpine.oidc.user.provisioning=true                                       |                                                 |
@@ -39,14 +40,15 @@ For a complete overview of available configuration options for both backend and 
 
 #### GitLab (gitlab.com)
 
-| API server                               | Frontend                                                                        |
-|:-----------------------------------------|:--------------------------------------------------------------------------------|
-| alpine.oidc.enabled=true                 | OIDC_CLIENT_ID=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be |
-| alpine.oidc.issuer=https://gitlab.com    | OIDC_ISSUER=https://gitlab.com                                                  |
-| alpine.oidc.username.claim=nickname      |                                                                                 |
-| alpine.oidc.user.provisioning=true       |                                                                                 |
-| alpine.oidc.teams.claim=groups           |                                                                                 |
-| alpine.oidc.team.synchronization=true    |                                                                                 |
+| API server                                                                             | Frontend                                                                        |
+|:---------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------|
+| alpine.oidc.enabled=true                                                               |                                              |
+| alpine.oidc.client.id=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be | OIDC_CLIENT_ID=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be |
+| alpine.oidc.issuer=https://gitlab.com                                                  | OIDC_ISSUER=https://gitlab.com                                                  |
+| alpine.oidc.username.claim=nickname                                                    |                                                                                 |
+| alpine.oidc.user.provisioning=true                                                     |                                                                                 |
+| alpine.oidc.teams.claim=groups                                                         |                                                                                 |
+| alpine.oidc.team.synchronization=true                                                  |                                                                                 |
 
 > gitlab.com currently does not set the required CORS headers, see GitLab issue [#209259](https://gitlab.com/gitlab-org/gitlab/-/issues/209259).  
 > For on-premise installations, this could be fixed by setting the required headers via reverse proxy.  
@@ -55,7 +57,8 @@ For a complete overview of available configuration options for both backend and 
 
 | API server                                                               | Frontend                                                 |
 |:-------------------------------------------------------------------------|:---------------------------------------------------------|
-| alpine.oidc.enabled=true                                                 | OIDC_CLIENT_ID=dependency-track                          |
+| alpine.oidc.enabled=true                                                 |                                                          |
+| alpine.oidc.client.id=dependency-track                                   | OIDC_CLIENT_ID=dependency-track                          |    
 | alpine.oidc.issuer=https://auth.example.com/auth/realms/example          | OIDC_ISSUER=https://auth.example.com/auth/realms/example |
 | alpine.oidc.username.claim=preferred_username                            |                                                          |
 | alpine.oidc.user.provisioning=true                                       |                                                          |
@@ -133,6 +136,7 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
         environment:
           # ...
           - "ALPINE_OIDC_ENABLED=true"
+          - "ALPINE_OIDC_CLIENT_ID=dependency-track"
           - "ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example"
           - "ALPINE_OIDC_USERNAME_CLAIM=preferred_username"
           - "ALPINE_OIDC_TEAMS_CLAIM=groups"

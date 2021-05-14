@@ -127,9 +127,9 @@ public class UserResource extends AlpineResource {
     })
     @AuthenticationNotRequired
     public Response validateOidcAccessToken(@ApiParam(value = "An OAuth2 access token", required = true)
-                                            @FormParam("accessToken") final String accessToken,
-                                            @FormParam("idToken") final String idToken) {
-        final OidcAuthenticationService authService = new OidcAuthenticationService(accessToken, idToken);
+                                            @FormParam("idToken") final String idToken,
+                                            @FormParam("accessToken") final String accessToken) {
+        final OidcAuthenticationService authService = new OidcAuthenticationService(idToken, accessToken);
 
         if (!authService.isSpecified()) {
             super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "An OpenID Connect login attempt was made, but OIDC is disabled or not properly configured");

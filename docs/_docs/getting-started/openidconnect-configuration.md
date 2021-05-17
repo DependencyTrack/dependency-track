@@ -15,6 +15,11 @@ If configured properly, users will be able to sign in by clicking the *OpenID* b
 
 ![Login page with OpenID button](/images/screenshots/oidc-login-page.png)
 
+> Before v4.3.0, Dependency-Track exclusively used the `/userinfo` endpoint of the IdP to get user information.  
+> Since v4.3.0, [ID tokens](https://openid.net/specs/openid-connect-core-1_0.html#IDToken) are validated and evaluated as well. They even take precedence over `/userinfo`,  
+> which means that Dependency-Track will no longer request the `/userinfo` endpoint if all required claims  
+> are present in the ID token's payload already.
+
 ### Example Configurations
 
 Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
@@ -28,7 +33,8 @@ For a complete overview of available configuration options for both backend and 
 
 | API server                                                               | Frontend                                        |
 |:-------------------------------------------------------------------------|:------------------------------------------------|
-| alpine.oidc.enabled=true                                                 | OIDC_CLIENT_ID=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM |
+| alpine.oidc.enabled=true                                                 |                                                 |
+| alpine.oidc.client.id=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM                   | OIDC_CLIENT_ID=9XgMg7bP7QbD74TZnzZ9Jhk9KHq3RPCM |
 | alpine.oidc.issuer=https://example.auth0.com                             | OIDC_ISSUER=https://example.auth0.com           |
 | alpine.oidc.username.claim=nickname                                      |                                                 |
 | alpine.oidc.user.provisioning=true                                       |                                                 |
@@ -39,14 +45,15 @@ For a complete overview of available configuration options for both backend and 
 
 #### GitLab (gitlab.com)
 
-| API server                               | Frontend                                                                        |
-|:-----------------------------------------|:--------------------------------------------------------------------------------|
-| alpine.oidc.enabled=true                 | OIDC_CLIENT_ID=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be |
-| alpine.oidc.issuer=https://gitlab.com    | OIDC_ISSUER=https://gitlab.com                                                  |
-| alpine.oidc.username.claim=nickname      |                                                                                 |
-| alpine.oidc.user.provisioning=true       |                                                                                 |
-| alpine.oidc.teams.claim=groups           |                                                                                 |
-| alpine.oidc.team.synchronization=true    |                                                                                 |
+| API server                                                                             | Frontend                                                                        |
+|:---------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------|
+| alpine.oidc.enabled=true                                                               |                                              |
+| alpine.oidc.client.id=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be | OIDC_CLIENT_ID=ff53529a3806431e06b2930c07ab0275a9024a59873a0d5106dd67c4cd34e3be |
+| alpine.oidc.issuer=https://gitlab.com                                                  | OIDC_ISSUER=https://gitlab.com                                                  |
+| alpine.oidc.username.claim=nickname                                                    |                                                                                 |
+| alpine.oidc.user.provisioning=true                                                     |                                                                                 |
+| alpine.oidc.teams.claim=groups                                                         |                                                                                 |
+| alpine.oidc.team.synchronization=true                                                  |                                                                                 |
 
 > gitlab.com currently does not set the required CORS headers, see GitLab issue [#209259](https://gitlab.com/gitlab-org/gitlab/-/issues/209259).  
 > For on-premise installations, this could be fixed by setting the required headers via reverse proxy.  
@@ -55,7 +62,8 @@ For a complete overview of available configuration options for both backend and 
 
 | API server                                                               | Frontend                                                 |
 |:-------------------------------------------------------------------------|:---------------------------------------------------------|
-| alpine.oidc.enabled=true                                                 | OIDC_CLIENT_ID=dependency-track                          |
+| alpine.oidc.enabled=true                                                 |                                                          |
+| alpine.oidc.client.id=dependency-track                                   | OIDC_CLIENT_ID=dependency-track                          |    
 | alpine.oidc.issuer=https://auth.example.com/auth/realms/example          | OIDC_ISSUER=https://auth.example.com/auth/realms/example |
 | alpine.oidc.username.claim=preferred_username                            |                                                          |
 | alpine.oidc.user.provisioning=true                                       |                                                          |
@@ -92,7 +100,8 @@ the `/userinfo` endpoint:
   
     * Mapper Type: `Group Membership`
     * Token Claim Name: `groups`
-    * Add to userinfo: `ON`
+    * Add to userinfo: `ON` (optional for Dependency-Track v4.3.0 and newer)
+    * Add to ID token: `ON` (for Dependency-Track v4.3.0 and newer)
 
 3. Create some groups, e.g. `DTRACK_ADMINS` and `DTRACK_USERS`:
 
@@ -133,6 +142,7 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
         environment:
           # ...
           - "ALPINE_OIDC_ENABLED=true"
+          - "ALPINE_OIDC_CLIENT_ID=dependency-track"
           - "ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example"
           - "ALPINE_OIDC_USERNAME_CLAIM=preferred_username"
           - "ALPINE_OIDC_TEAMS_CLAIM=groups"

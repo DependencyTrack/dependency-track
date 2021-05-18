@@ -156,7 +156,9 @@ public class Project implements Serializable {
 
     @Persistent
     @Index(name = "PROJECT_PURL_IDX")
-    @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
+    @Size(max = 255)
+    @com.github.packageurl.validator.PackageURL
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purl;
 
     @Persistent
@@ -308,7 +310,13 @@ public class Project implements Serializable {
     public void setPurl(PackageURL purl) {
         if (purl != null) {
             this.purl = purl.canonicalize();
+        } else {
+            this.purl = null;
         }
+    }
+
+    public void setPurl(String purl) {
+        this.purl = purl;
     }
 
     public String getSwidTagId() {

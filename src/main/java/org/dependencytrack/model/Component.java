@@ -223,13 +223,15 @@ public class Component implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_IDX")
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
+    @com.github.packageurl.validator.PackageURL
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purl;
 
     @Persistent(defaultFetchGroup = "true")
     @Index(name = "COMPONENT_PURL_COORDINATES_IDX")
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.HTTP_URI, message = "The Package URL (purl) must be a valid URI and conform to https://github.com/package-url/purl-spec")
+    @com.github.packageurl.validator.PackageURL
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
 
     @Persistent
@@ -514,7 +516,13 @@ public class Component implements Serializable {
     public void setPurl(PackageURL purl) {
         if (purl != null) {
             this.purl = purl.canonicalize();
+        } else {
+            this.purl = null;
         }
+    }
+
+    public void setPurl(String purl) {
+        this.purl = purl;
     }
 
     @JsonSerialize(using = CustomPackageURLSerializer.class)
@@ -532,7 +540,13 @@ public class Component implements Serializable {
     public void setPurlCoordinates(PackageURL purlCoordinates) {
         if (purlCoordinates != null) {
             this.purlCoordinates = purlCoordinates.canonicalize();
+        } else {
+            this.purlCoordinates = null;
         }
+    }
+
+    public void setPurlCoordinates(String purlCoordinates) {
+        this.purlCoordinates = purlCoordinates;
     }
 
     public String getSwidTagId() {

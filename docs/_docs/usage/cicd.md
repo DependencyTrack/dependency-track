@@ -21,6 +21,10 @@ generating CycloneDX BOMs from various build systems.
 The [Dependency-Track Jenkins Plugin](https://plugins.jenkins.io/dependency-track/) is the 
 recommended method for publishing CycloneDX BOMs to Dependency-Track in a Jenkins environment.
 
+For GitHub workflow environments the
+[Dependency-Track GitHub Action](https://github.com/marketplace/actions/upload-bom-to-dependency-track)
+is recommended.
+
 For other environments, cURL (or similar) can be used. 
 
 #### CycloneDX or SPDX BOM

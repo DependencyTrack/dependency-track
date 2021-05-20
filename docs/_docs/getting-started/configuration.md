@@ -106,9 +106,16 @@ alpine.database.pool.enabled=true
 alpine.database.pool.max.size=20
 
 # Optional
+# This property controls the minimum number of idle connections in the pool.
+# This value should be equal to or less than alpine.database.pool.max.size.
+# Warning: If the value is less than alpine.database.pool.max.size, 
+# alpine.database.pool.idle.timeout will have no effect.
+alpine.database.pool.min.idle=10
+
+# Optional
 # This property controls the maximum amount of time that a connection is
 # allowed to sit idle in the pool.
-alpine.database.pool.idle.timeout=600000
+alpine.database.pool.idle.timeout=300000
 
 # Optional
 # This property controls the maximum lifetime of a connection in the pool.

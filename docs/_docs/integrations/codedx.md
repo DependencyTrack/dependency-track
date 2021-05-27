@@ -30,6 +30,10 @@ Check the box "Run this connector during normal analyses" if you want to pull da
 
 *Analysis cycles involve pulling in data from all connected tools for a particular Code Dx project, as well as running scans using the built-in open source tools if configured to do so.
 
+Wait for the analysis to complete, then go to the Findings page to view potential vulnerabilities.
+
 ![Findings](/images/screenshots/codedx-findings.png)
+
+Click on any Finding ID to go to its Details page, where you can see more information about the finding.
 
 ![Finding Details](/images/screenshots/codedx-details.png)

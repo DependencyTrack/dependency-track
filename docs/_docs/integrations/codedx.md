@@ -18,7 +18,7 @@ Follow these steps to get started:
 
 Retrieve the frontend URL, API URL, and the API Key from Dependency-Track.
 
-Select the Dependency-Track Connector from the Tool Connectors Section for your Code Dx Project - For additional details on configuring data sources please see [here](https://codedx.com/Documentation/UserGuide.html#ToolConnectors).
+Select the Dependency-Track Connector from the Tool Connectors Section for your Code Dx Project - For additional details on configuring data sources please see the Code Dx [User Guide](https://codedx.com/Documentation/UserGuide.html#ToolConnectors).
 
 ![Configuration](/images/screenshots/codedx-configuration.png)
 

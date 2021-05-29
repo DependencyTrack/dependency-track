@@ -5,21 +5,14 @@ chapter: 9
 order: 
 ---
 
-### Importing and Using BOMs
-* For best results, always generate and import [CycloneDX](https://cyclonedx.org) BOMs
-* Do not import SPDX v2.1 (or previous) BOMs
-
 #### Summary
 BOMs are a statement of facts, and the type of facts a BOM has will greatly impact
 how effective the system will be when performing component risk analysis.
 
-SPDX BOM format v2.1 and previous do not support Package URL. When importing SPDX BOMs, 
-ensure the format is version 2.2 or higher and contains valid Package URLs for each component.
-
 ### Generating and Obtaining BOMs
 * When developing software, generate BOMs during Continuous Integration (CI)
 * If using Jenkins, use the [Dependency-Track Jenkins Plugin](https://plugins.jenkins.io/dependency-track/) with synchronous publishing mode enabled
-* Contractually require BOMs ([CycloneDX](https://cyclonedx.org) or [SPDX](https://spdx.org)) from vendors
+* Contractually require BOMs ([CycloneDX](https://cyclonedx.org) from vendors
 * Generate or acquire BOMs from commercial-off-the-shelf (COTS) software
 
 #### Summary

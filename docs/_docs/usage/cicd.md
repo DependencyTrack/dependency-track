@@ -6,9 +6,7 @@ order: 1
 ---
 
 Dependency-Track consumes and analyzes CycloneDX BOMs at high-velocity and is ideal for use in modern build pipelines. 
-The generation of CycloneDX BOMs often occur during CI or when the final application assembly is being generated. 
-CycloneDX is the preferred BOM format due to the availability of build-time tools and the formats focus on security 
-use cases. However, BOMs in SPDX tag and RDF formats are also supported.
+The generation of CycloneDX BOMs often occur during CI or when the final application assembly is being generated.
 
 Visit the [CycloneDX Tool Center](https://cyclonedx.org/tool-center/) for information on the available tools for 
 generating CycloneDX BOMs from various build systems.
@@ -27,8 +25,8 @@ is recommended.
 
 For other environments, cURL (or similar) can be used. 
 
-#### CycloneDX or SPDX BOM
-To publish CycloneDX or SPDX BOMs, use a valid API Key and project UUID. Finally, Base64 encode the 
+#### CycloneDX
+To publish CycloneDX BOMs, use a valid API Key and project UUID. Finally, Base64 encode the 
 bom and insert the resulting text into the 'bom' field.
 
 ```bash

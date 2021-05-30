@@ -45,7 +45,6 @@ public enum ConfigPropertyConstants {
     SCANNER_VULNDB_OAUTH1_CONSUMER_KEY("scanner", "vulndb.api.oauth1.consumerKey", null, PropertyType.STRING, "The OAuth 1.0a consumer key"),
     SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET("scanner", "vulndb.api.oath1.consumerSecret", null, PropertyType.ENCRYPTEDSTRING, "The OAuth 1.0a consumer secret"),
     ACCEPT_ARTIFACT_CYCLONEDX("artifact", "cyclonedx.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable the systems ability to accept CycloneDX uploads"),
-    ACCEPT_ARTIFACT_SPDX("artifact", "spdx.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable the systems ability to accept SPDX uploads"),
     FORTIFY_SSC_ENABLED("integrations", "fortify.ssc.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Fortify SSC integration"),
     FORTIFY_SSC_SYNC_CADENCE("integrations", "fortify.ssc.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Fortify SSC"),
     FORTIFY_SSC_URL("integrations", "fortify.ssc.url", null, PropertyType.URL, "Base URL to Fortify SSC"),

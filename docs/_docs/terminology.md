@@ -18,8 +18,8 @@ for each finding.
 ### Bill of Material (BOM)
 In supply chains, a bill of material (BOM) defines and describes the contents of what is used in the manufacturing and 
 packaging of the deliverable. In software supply chains, this refers to the contents of all components bundled with the
-software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports two BOM 
-formats: CycloneDX and SPDX. Bill-of-Materials specific to software components are commonly referred to as SBOMs.
+software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports the 
+CycloneDX format. Bill of Materials specific to software components are commonly referred to as SBOMs.
 
 ### Component
 Dependency-Track defines a component as a standalone entity. A component may be an open source component, third-party 
@@ -84,9 +84,7 @@ A scan is method by which evidence about a component is gathered and cross-refer
 intelligence services in an effort to determine if that component has known vulnerabilities.
 
 ### SPDX
-Software Package Data Exchange (SPDX) provides two complimentary specifications, a bill-of-material specification, and
-a standardized list of open source licenses. The BOM specification relies on either 'tag' or 'rdf' files to document
-software components as bill of materials. The standardized license list is a lightweight spec that has been adopted 
+Software Package Data Exchange (SPDX) provides a standardized license list that has been adopted 
 across multiple industries and is recommended for use in all software projects. See: <https://spdx.org/>
 
 ### Swagger

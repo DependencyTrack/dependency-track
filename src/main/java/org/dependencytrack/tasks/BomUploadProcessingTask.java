@@ -38,7 +38,6 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
-import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
@@ -94,20 +93,8 @@ public class BomUploadProcessingTask implements Subscriber {
                         LOGGER.warn("A CycloneDX BOM was uploaded but accepting CycloneDX BOMs is disabled. Aborting");
                         return;
                     }
-                } else if (SpdxDocumentParser.isSupportedSpdxFormat(bomString)) {
-                    if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_SPDX)) {
-                        LOGGER.info("Processing SPDX BOM uploaded to project: " + event.getProjectUuid());
-                        bomFormat = Bom.Format.SPDX;
-                        final SpdxDocumentParser parser = new SpdxDocumentParser(qm);
-                        components = parser.parse(bomBytes, project);
-                        services = new ArrayList<>(); // SPDX does not support services
-                        bomSpecVersion = parser.getSpecVersion(); // Must come after the parsing is performed
-                    } else {
-                        LOGGER.warn("A SPDX BOM was uploaded but accepting SPDX BOMs is disabled. Aborting");
-                        return;
-                    }
                 } else {
-                    LOGGER.warn("The BOM uploaded is not in a supported format. Supported formats include CycloneDX, SPDX RDF, and SPDX Tag");
+                    LOGGER.warn("The BOM uploaded is not in a supported format. Supported formats include CycloneDX XML and JSON");
                     return;
                 }
                 final Project copyOfProject = qm.detach(Project.class, qm.getObjectById(Project.class, project.getId()).getId());

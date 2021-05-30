@@ -61,7 +61,7 @@ CI/CD environments.
 * Includes a comprehensive auditing workflow for triaging results
 * Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
-* Supports importing [CycloneDX] (recommended) and [SPDX] Software Bill of Materials (SBOM) formats
+* Supports importing [CycloneDX] Software Bill of Materials (SBOM) formats
 * Easy to read metrics for components, projects, and portfolio
 * Native support for Kenna Security, Fortify SSC, ThreadFix, and DefectDojo
 * API-first design facilitates easy integration with other systems
@@ -78,4 +78,3 @@ CI/CD environments.
 [Component Analysis]: https://owasp.org/www-community/Component_Analysis
 [Software Bill of Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
 [CycloneDX]: https://cyclonedx.org
-[SPDX]: https://spdx.org/

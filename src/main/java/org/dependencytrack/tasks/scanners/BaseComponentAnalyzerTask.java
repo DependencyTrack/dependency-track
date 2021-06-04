@@ -35,6 +35,8 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.NotificationUtil;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -154,6 +156,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                             final Vulnerability vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
                             final Component c = qm.getObjectById(Component.class, component.getId());
                             if (vulnerability != null) {
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                                 qm.addVulnerability(vulnerability, c, analyzerIdentity);
                             }
                         }

@@ -57,8 +57,6 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             LOGGER.info("Starting internal analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
-            } else {
-                super.analyze();
             }
             LOGGER.info("Internal analysis complete");
         }

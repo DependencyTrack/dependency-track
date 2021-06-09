@@ -22,10 +22,14 @@ import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
+import alpine.resources.AlpineRequest;
+import alpine.resources.OrderDirection;
+import alpine.resources.Pagination;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -115,16 +119,29 @@ public final class ComponentIndexer extends IndexManager implements ObjectIndexe
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
-        try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(Component.class);
+        final AlpineRequest alpineRequest = new AlpineRequest(
+                null,
+                new Pagination(Pagination.Strategy.OFFSET, 0, 100),
+                null,
+                "id",
+                OrderDirection.ASCENDING
+        );
+        try (final QueryManager qm = new QueryManager(alpineRequest)) {
+            final PaginatedResult result = qm.getProjects(false, true);
             long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getComponents();
-                final List<Component> components = result.getList(Component.class);
-                for (final Component component: components) {
-                    add(component);
+            boolean shouldContinue = true;
+            while (count < result.getTotal() && shouldContinue) {
+                for (final Project project: result.getList(Project.class)) {
+                    final List<Component> components = qm.getAllComponents(project);
+                    LOGGER.info("Indexing " + components.size() + " components in project: " + project.getUuid());
+                    for (final Component component: components) {
+                        add(component);
+                    }
+                    LOGGER.info("Completed indexing of " + components.size() + " components in project: " + project.getUuid());
                 }
-                count += result.getObjects().size();
+                int lastResult = result.getObjects().size();
+                count += lastResult;
+                shouldContinue = lastResult > 0;
                 qm.advancePagination();
             }
             commit();

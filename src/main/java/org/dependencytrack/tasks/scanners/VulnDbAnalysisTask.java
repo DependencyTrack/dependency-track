@@ -46,7 +46,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
 
     private static final Logger LOGGER = Logger.getLogger(VulnDbAnalysisTask.class);
     private static final String TARGET_HOST = "https://vulndb.cyberriskanalytics.com/";
-    private final int PAGE_SIZE = 100;
+    private static final int PAGE_SIZE = 100;
     private String apiConsumerKey;
     private String apiConsumerSecret;
 
@@ -91,8 +91,6 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
             LOGGER.info("Starting VulnDB analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
-            } else {
-                super.analyze();
             }
             LOGGER.info("VulnDB analysis complete");
         }
@@ -129,7 +127,6 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                         LOGGER.error(results.getErrorCondition());
                         return;
                     }
-                    doThrottleDelay(1000);
                 }
             }
         }

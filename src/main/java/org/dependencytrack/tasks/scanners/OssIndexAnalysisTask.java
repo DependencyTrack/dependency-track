@@ -65,12 +65,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
 
     private static final String API_BASE_URL = "https://ossindex.sonatype.org/api/v3/component-report";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
+    private static final int PAGE_SIZE = 100;
     private String apiUsername;
     private String apiToken;
-
-    public OssIndexAnalysisTask() {
-        super(100, 0);
-    }
 
     public AnalyzerIdentity getAnalyzerIdentity() {
         return AnalyzerIdentity.OSSINDEX_ANALYZER;
@@ -110,8 +107,6 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             LOGGER.info("Starting Sonatype OSS Index analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
-            } else {
-                super.analyze();
             }
             LOGGER.info("Sonatype OSS Index analysis complete");
         }
@@ -151,7 +146,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        final Pageable<Component> paginatedComponents = new Pageable<>(100, components);
+        final Pageable<Component> paginatedComponents = new Pageable<>(PAGE_SIZE, components);
         while (!paginatedComponents.isPaginationComplete()) {
             final List<String> coordinates = new ArrayList<>();
             final List<Component> paginatedList = paginatedComponents.getPaginatedList();
@@ -177,7 +172,6 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 handleRequestException(LOGGER, e);
             }
             LOGGER.info("Analyzing " + coordinates.size() + " component(s)");
-            doThrottleDelay();
             paginatedComponents.nextPage();
         }
     }

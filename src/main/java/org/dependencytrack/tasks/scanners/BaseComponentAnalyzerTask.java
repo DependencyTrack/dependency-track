@@ -22,10 +22,6 @@ import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import alpine.resources.OrderDirection;
-import alpine.resources.Pagination;
 import alpine.util.BooleanUtil;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
@@ -36,7 +32,6 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -51,25 +46,8 @@ import java.util.Date;
  * @since 3.0.0
  */
 public abstract class BaseComponentAnalyzerTask implements ScanTask {
+
     private final Logger LOGGER = Logger.getLogger(this.getClass()); // We dont want this class reporting the logger
-
-    private final int paginationLimit;
-    private final int throttleDelay;
-
-    protected BaseComponentAnalyzerTask() {
-        this.paginationLimit = 1000;
-        this.throttleDelay = 0;
-    }
-
-    protected BaseComponentAnalyzerTask(final int paginationLimit) {
-        this.paginationLimit = paginationLimit;
-        this.throttleDelay = 0;
-    }
-
-    protected BaseComponentAnalyzerTask(final int paginationLimit, final int throttleSeconds) {
-        this.paginationLimit = paginationLimit;
-        this.throttleDelay = throttleSeconds > 0 ? throttleSeconds * 1000 : 0;
-    }
 
     protected boolean isEnabled(final ConfigPropertyConstants configPropertyConstants) {
         try (QueryManager qm = new QueryManager()) {
@@ -80,47 +58,6 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                 return BooleanUtil.valueOf(property.getPropertyValue());
             }
             return false;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void analyze() {
-        final Logger logger = Logger.getLogger(this.getClass()); // We don't want the base class to be the logger
-        logger.info("Analyzing portfolio");
-        final AlpineRequest alpineRequest = new AlpineRequest(
-                null,
-                new Pagination(Pagination.Strategy.OFFSET, 0, paginationLimit),
-                null,
-                "id",
-                OrderDirection.ASCENDING
-        );
-        try (QueryManager qm = new QueryManager(alpineRequest)) {
-            final long total = qm.getCount(Component.class);
-            long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getComponents();
-                analyze(result.getList(Component.class));
-                count += result.getObjects().size();
-                qm.advancePagination();
-                doThrottleDelay();
-            }
-        }
-        logger.info("Portfolio analysis complete");
-    }
-
-    protected void doThrottleDelay() {
-        doThrottleDelay(throttleDelay);
-    }
-
-    protected void doThrottleDelay(long delay) {
-        if (delay > 0) {
-            long now = System.currentTimeMillis();
-            final long delayUntil = now + delay;
-            while(now < delayUntil) {
-                now = System.currentTimeMillis();
-            }
         }
     }
 

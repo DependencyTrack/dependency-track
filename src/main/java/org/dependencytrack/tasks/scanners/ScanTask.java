@@ -37,17 +37,11 @@ public interface ScanTask {
     AnalyzerIdentity getAnalyzerIdentity();
 
     /**
-     * Analyzes all components in the portfolio.
-     * @since 3.0.0
-     */
-    void analyze();
-
-    /**
      * Analyzes only the specified components.
-     * @param componens the components to analyze
+     * @param components the components to analyze
      * @since 3.0.0
      */
-    void analyze(List<Component> componens);
+    void analyze(List<Component> components);
 
     /**
      * Determines if the analyzer is capable of analyzing

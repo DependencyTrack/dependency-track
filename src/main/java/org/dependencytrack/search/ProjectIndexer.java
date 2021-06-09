@@ -25,6 +25,7 @@ import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -126,16 +127,17 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     public void reindex() {
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
-        try (QueryManager qm = new QueryManager()) {
-            final long total = qm.getCount(Project.class);
+        try (final QueryManager qm = new QueryManager()) {
+            final PaginatedResult result = qm.getProjects(false, true);
             long count = 0;
-            while (count < total) {
-                final PaginatedResult result = qm.getProjects();
-                final List<Project> projects = result.getList(Project.class);
-                for (final Project project: projects) {
+            boolean shouldContinue = true;
+            while (count < result.getTotal() && shouldContinue) {
+                for (final Project project: result.getList(Project.class)) {
                     add(project);
                 }
-                count += result.getObjects().size();
+                int lastResult = result.getObjects().size();
+                count += lastResult;
+                shouldContinue = lastResult > 0;
                 qm.advancePagination();
             }
             commit();

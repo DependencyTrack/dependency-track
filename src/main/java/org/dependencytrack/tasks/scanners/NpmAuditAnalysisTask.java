@@ -72,8 +72,6 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
             LOGGER.info("Starting Node Audit analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
-            } else {
-                super.analyze();
             }
             LOGGER.info("Node Audit analysis complete");
         }
@@ -254,7 +252,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
         while(sb.length() < length){
             sb.append(Integer.toHexString(r.nextInt()));
         }
-        return sb.toString().substring(0, length);
+        return sb.substring(0, length);
     }
 
 }

@@ -501,9 +501,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         deleteAnalysisTrail(project);
         deleteViolationAnalysisTrail(project);
         deleteMetrics(project);
-        for (final Component c: getAllComponents(project)) {
-            recursivelyDelete(c, false);
-        }
+        deleteFindingAttributions(project);
+        deletePolicyViolations(project);
+        deleteComponents(project);
+
         for (final ServiceComponent s: getAllServiceComponents(project)) {
             recursivelyDelete(s, false);
         }

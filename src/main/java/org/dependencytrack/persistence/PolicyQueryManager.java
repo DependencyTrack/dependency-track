@@ -461,6 +461,15 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Deleted all PolicyViolation associated for the specified Project.
+     * @param project the Project to delete PolicyViolation for
+     */
+    void deletePolicyViolations(Project project) {
+        final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "project == :project");
+        query.deletePersistentAll(project);
+    }
+
+    /**
      * Deleted all PolicyViolation associated for the specified PolicyCondition.
      * @param policyCondition the PolicyCondition to delete PolicyViolation for
      */

@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.auth.PermissionRequired;
 import alpine.event.framework.Event;
+import alpine.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -59,6 +60,8 @@ import javax.ws.rs.core.Response;
 @Path("/v1/project")
 @Api(value = "project", authorizations = @Authorization(value = "X-Api-Key"))
 public class ProjectResource extends AlpineResource {
+
+    private static final Logger LOGGER = Logger.getLogger(ProjectResource.class);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -196,6 +199,7 @@ public class ProjectResource extends AlpineResource {
             Project project = qm.getProject(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()));
             if (project == null) {
                 project = qm.createProject(jsonProject, jsonProject.getTags(), true);
+                LOGGER.info("Project " + project.toString() + " created by " + super.getPrincipal().getName());
                 return Response.status(Response.Status.CREATED).entity(project).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A project with the specified name already exists.").build();
@@ -245,6 +249,7 @@ public class ProjectResource extends AlpineResource {
                         jsonProject.setName(project.getName());
                     }
                     project = qm.updateProject(jsonProject, true);
+                    LOGGER.info("Project " + project.toString() + " updated by " + super.getPrincipal().getName());
                     return Response.ok(project).build();
                 } else {
                     return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();
@@ -274,6 +279,7 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
+                LOGGER.info("Project " + project.toString() + " deletion request by " + super.getPrincipal().getName());
                 qm.recursivelyDelete(project);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
@@ -304,6 +310,7 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project sourceProject = qm.getObjectByUuid(Project.class, jsonRequest.getProject(), Project.FetchGroup.ALL.name());
             if (sourceProject != null) {
+                LOGGER.info("Project " + sourceProject.toString() + " is being cloned by " + super.getPrincipal().getName());
                 Event.dispatch(new CloneProjectEvent(jsonRequest));
                 return Response.ok().build();
             } else {

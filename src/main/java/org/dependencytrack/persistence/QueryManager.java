@@ -409,7 +409,7 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().updateComponent(transientComponent, commitIndex);
     }
 
-    private void deleteComponents(Project project) {
+    void deleteComponents(Project project) {
         getComponentQueryManager().deleteComponents(project);
     }
 
@@ -539,6 +539,10 @@ public class QueryManager extends AlpineQueryManager {
         getPolicyQueryManager().deletePolicyViolations(component);
     }
 
+    void deletePolicyViolations(Project project) {
+        getPolicyQueryManager().deletePolicyViolations(project);
+    }
+
     public void deletePolicyCondition(PolicyCondition policyCondition) {
         getPolicyQueryManager().deletePolicyCondition(policyCondition);
     }
@@ -586,6 +590,10 @@ public class QueryManager extends AlpineQueryManager {
 
     void deleteFindingAttributions(Component component) {
         getVulnerabilityQueryManager().deleteFindingAttributions(component);
+    }
+
+    void deleteFindingAttributions(Project project) {
+        getVulnerabilityQueryManager().deleteFindingAttributions(project);
     }
 
     public boolean contains(Vulnerability vulnerability, Component component) {

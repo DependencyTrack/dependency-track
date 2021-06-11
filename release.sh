@@ -43,12 +43,6 @@ if [[ "$?" -ne 0 ]] ; then
   echo 'Aborting release due to build failure'; exit $rc
 fi
 
-# Builds the traditional war with bundled UI distribution
-mvn package -Dmaven.test.skip=true -P bundle-ui
-if [[ "$?" -ne 0 ]] ; then
-  echo 'Aborting release due to build failure'; exit $rc
-fi
-
 
 mvn net.nicoulaj.maven.plugins:checksum-maven-plugin:files
 mvn github-release:release
@@ -62,8 +56,8 @@ docker rmi $APISERVER_REPO:latest
 docker rmi $APISERVER_REPO:$RELEASE_VERSION
 docker rmi $BUNDLED_REPO:latest
 docker rmi $BUNDLED_REPO:$RELEASE_VERSION
-docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.war -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest .
-docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.war -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest .
+docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest .
+docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest .
 docker login
 docker push $APISERVER_REPO:latest
 docker push $APISERVER_REPO:$RELEASE_VERSION

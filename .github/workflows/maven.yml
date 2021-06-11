@@ -39,8 +39,6 @@ jobs:
         mvn clean -P clean-exclude-wars
         mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
-        mvn package -Dmaven.test.skip=true -P bundle-ui
-        mvn clean -P clean-exclude-wars
         mvn test
     - name: Publish test coverage
       if: github.ref == 'refs/heads/master'
@@ -49,7 +47,7 @@ jobs:
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
     - name: Building Docker API Server container
       run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.war -t $DOCKER_APISERVER_REPO:$DOCKER_TAG .
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG .
     - name: Publishing API Server container to Docker Hub
       if: github.ref == 'refs/heads/master'
       env:
@@ -60,7 +58,7 @@ jobs:
         docker push $DOCKER_APISERVER_REPO:$DOCKER_TAG;
     - name: Building Docker bundled container
       run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.war -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
     - name: Publishing bundled container to Docker Hub
       if: github.ref == 'refs/heads/master'
       env:

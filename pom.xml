@@ -302,9 +302,8 @@
                         <fileSet>
                             <directory>${project.build.directory}</directory>
                             <includes>
-                                <include>dependency-track.war</include>
-                                <include>dependency-track-apiserver.war</include>
-                                <include>dependency-track-bundled.war</include>
+                                <include>dependency-track-apiserver.jar</include>
+                                <include>dependency-track-bundled.jar</include>
                                 <include>checksums.xml</include>
                                 <include>bom.xml</include>
                                 <include>bom.json</include>
@@ -338,7 +337,7 @@
                         <fileSet>
                             <directory>${project.build.directory}</directory>
                             <includes>
-                                <include>*.war</include>
+                                <include>dependency-track*.jar</include>
                             </includes>
                         </fileSet>
                     </fileSets>
@@ -368,7 +367,7 @@
                                         <include>*/</include>
                                     </includes>
                                     <excludes>
-                                        <exclude>*.war</exclude>
+                                        <exclude>dependency-track*.jar</exclude>
                                     </excludes>
                                 </fileset>
                             </filesets>

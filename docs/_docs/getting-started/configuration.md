@@ -367,7 +367,11 @@ This file resides in `<BASE_URL>/static/config.json`.
 ```json
 {
     // Required
-    // URL of the Dependency-Track backend
+    // The base URL of the API server.
+    // NOTE:
+    //   * This URL must be reachable by the browsers of your users.
+    //   * The frontend container itself does NOT communicate with the API server directly, it just serves static files.
+    //   * When deploying to dedicated servers, please use the external IP or domain of the API server.
     "API_BASE_URL": "",
     // Optional
     // Defines the issuer URL to be used for OpenID Connect.

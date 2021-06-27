@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import alpine.json.TrimmedStringDeserializer;
+import alpine.model.Team;
 import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,6 +46,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -76,7 +78,8 @@ import java.util.UUID;
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
                 @Persistent(name = "properties"),
-                @Persistent(name = "tags")
+                @Persistent(name = "tags"),
+                @Persistent(name = "accessTeams")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -223,6 +226,13 @@ public class Project implements Serializable {
     @Persistent
     @Column(name = "ACTIVE")
     private Boolean active; // Added in v3.6. Existing records need to be nullable on upgrade.
+
+    @Persistent(table = "PROJECT_ACCESS_TEAMS", defaultFetchGroup = "true")
+    @Join(column = "PROJECT_ID")
+    @Element(column = "TEAM_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
+    @JsonIgnore
+    private List<Team> accessTeams;
 
     private transient ProjectMetrics metrics;
 
@@ -416,6 +426,21 @@ public class Project implements Serializable {
 
     public void setMetrics(ProjectMetrics metrics) {
         this.metrics = metrics;
+    }
+
+    public List<Team> getAccessTeams() {
+        return accessTeams;
+    }
+
+    public void setAccessTeams(List<Team> accessTeams) {
+        this.accessTeams = accessTeams;
+    }
+
+    public void addAccessTeam(Team accessTeam) {
+        if (this.accessTeams == null) {
+            this.accessTeams = new ArrayList<>();
+        }
+        this.accessTeams.add(accessTeam);
     }
 
     @Override

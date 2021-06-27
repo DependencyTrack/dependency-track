@@ -19,18 +19,20 @@
 package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
-import alpine.model.LdapUser;
-import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
+import alpine.model.ApiKey;
+import alpine.model.Permission;
 import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
@@ -40,6 +42,7 @@ import org.dependencytrack.model.Vulnerability;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -76,29 +79,37 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
         }
+        String queryFilter = null;
+        final Map<String, Object> params = new HashMap<>();
         if (filter != null) {
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             final Tag tag = getTagByName(filter.trim());
             if (tag != null) {
                 if (excludeInactive) {
-                    query.setFilter("(name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null)");
+                    queryFilter = "(name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null)";
                 } else {
-                    query.setFilter("name.toLowerCase().matches(:name) || tags.contains(:tag)");
+                    queryFilter = "name.toLowerCase().matches(:name) || tags.contains(:tag)";
                 }
-                result = execute(query, filterString, tag);
+                params.put("name", filterString);
+                params.put("tag", tag);
+                preprocessACLs(query, queryFilter, params, false);
+                result = execute(query, params);
             } else {
                 if (excludeInactive) {
-                    query.setFilter("name.toLowerCase().matches(:name) && (active == true || active == null)");
+                    queryFilter = "name.toLowerCase().matches(:name) && (active == true || active == null)";
                 } else {
-                    query.setFilter("name.toLowerCase().matches(:name)");
+                    queryFilter = "name.toLowerCase().matches(:name)";
                 }
-                result = execute(query, filterString);
+                params.put("name", filterString);
+                preprocessACLs(query, queryFilter, params, false);
+                result = execute(query, params);
             }
         } else {
             if (excludeInactive) {
-                query.setFilter("active == true || active == null");
+                queryFilter = " (active == true || active == null) ";
             }
-            result = execute(query);
+            preprocessACLs(query, queryFilter, params, false);
+            result = execute(query, params);
         }
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
@@ -159,12 +170,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("version desc");
         }
+        final String queryFilter;
         if (excludeInactive) {
-            query.setFilter("name == :name && (active == true || active == null)");
+            queryFilter = "name == :name && (active == true || active == null)";
         } else {
-            query.setFilter("name == :name");
+            queryFilter = "name == :name";
         }
-        return execute(query, name);
+        final Map<String, Object> params = new HashMap<>();
+        params.put("name", name);
+        preprocessACLs(query, queryFilter, params, false);
+        return execute(query, params);
     }
 
     /**
@@ -174,8 +189,35 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a Project object, or null if not found
      */
     public Project getProject(final String name, final String version) {
-        final Query<Project> query = pm.newQuery(Project.class, "name == :name && version == :version");
-        return singleResult(query.execute(name, version));
+        final Query<Project> query = pm.newQuery(Project.class);
+        final String queryFilter = "name == :name && version == :version";
+        final Map<String, Object> params = new HashMap<>();
+        params.put("name", name);
+        params.put("version", version);
+        preprocessACLs(query, queryFilter, params, false);
+        return singleResult(query.execute(params));
+    }
+
+    /**
+     * Returns a list of projects that are accessible by the specified team.
+     * @param team the team the has access to Projects
+     * @return a List of Project objects
+     */
+    public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass) {
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc, version desc, id asc");
+        }
+        final String queryFilter;
+        if (excludeInactive) {
+            queryFilter = "accessTeams.contains(:team) && (active == true || active == null)";
+        } else {
+            queryFilter = "accessTeams.contains(:team)";
+        }
+        final Map<String, Object> params = new HashMap<>();
+        params.put("team", team);
+        preprocessACLs(query, queryFilter, params, bypass);
+        return execute(query, params);
     }
 
     /**
@@ -185,11 +227,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
         final PaginatedResult result;
-        final Query<Project> query = pm.newQuery(Project.class, "tags.contains(:tag)");
+        final Query<Project> query = pm.newQuery(Project.class);
+        final String queryFilter = "tags.contains(:tag)";
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
-        result = execute(query, tag);
+        final Map<String, Object> params = new HashMap<>();
+        params.put("tag", tag);
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -598,39 +644,83 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return persist(project);
     }
 
-    private String doitAgain(final Query<Project> query, final String inputFilter, final Map params) {
-        if (super.principal == null) {
-            return null;
-        }
-        final List<Team> teams = new ArrayList<>();
-        if (super.principal instanceof ManagedUser) {
-            final ManagedUser user = (ManagedUser)principal;
-            teams.addAll(user.getTeams());
-        } else if (super.principal instanceof LdapUser) {
-            final LdapUser user = (LdapUser)principal;
-            teams.addAll(user.getTeams());
-        } else if (super.principal instanceof OidcUser) {
-            final OidcUser user = (OidcUser)principal;
-            teams.addAll(user.getTeams());
-        }
-        if (teams.size() == 0) {
-            return null;
-        } else {
-            final StringBuilder sb = new StringBuilder();
-            for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                Team team = teams.get(i);
-                sb.append(" accessTeams.contains(:team) ");
-                if (i <teamsSize) {
-                    sb.append(" || ");
+    public boolean hasAccess(final Principal principal, final Project project) {
+        if (isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)) {
+            if (principal instanceof UserPrincipal) {
+                final UserPrincipal userPrincipal = (UserPrincipal) principal;
+                for (final Team userInTeam : userPrincipal.getTeams()) {
+                    for (final Team accessTeam : project.getAccessTeams()) {
+                        if (userInTeam.getId() == accessTeam.getId()) {
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                final ApiKey apiKey = (ApiKey) principal;
+                for (final Team userInTeam : apiKey.getTeams()) {
+                    for (final Team accessTeam : project.getAccessTeams()) {
+                        if (userInTeam.getId() == accessTeam.getId()) {
+                            return true;
+                        }
+                    }
                 }
             }
-            if (inputFilter != null) {
-                query.setFilter(inputFilter + " " + sb.toString());
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private void preprocessACLs(final Query<Project> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
+        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
+            final List<Team> teams;
+            if (super.principal instanceof UserPrincipal) {
+                final UserPrincipal userPrincipal = ((UserPrincipal) super.principal);
+                teams = userPrincipal.getTeams();
+                if (hasAccessManagementPermission(userPrincipal)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
             } else {
-                query.setFilter(sb.toString());
+                final ApiKey apiKey = ((ApiKey) super.principal);
+                teams = apiKey.getTeams();
+                if (hasAccessManagementPermission(apiKey)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            }
+            if (teams != null && teams.size() > 0) {
+                final StringBuilder sb = new StringBuilder();
+                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
+                    //final Team team = teams.get(i);
+                    final Team team = super.getObjectById(Team.class, teams.get(0).getId());
+                    sb.append(" accessTeams.contains(:team").append(i).append(") ");
+                    params.put("team" + i, team);
+                    if (i < teamsSize-2) {
+                        sb.append(" || ");
+                    }
+                }
+                if (inputFilter != null) {
+                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
+                } else {
+                    query.setFilter(sb.toString());
+                }
+            }
+        } else if (bypass) {
+            query.setFilter(inputFilter);
+        }
+    }
+
+    public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {
+        for (Permission permission: getEffectivePermissions(userPrincipal)) {
+            if (Permissions.ACCESS_MANAGEMENT.name().equals(permission.getName())) {
+                return true;
             }
         }
+        return false;
+    }
 
-        return null;
+    public boolean hasAccessManagementPermission(final ApiKey apiKey) {
+        return hasPermission(apiKey, Permissions.ACCESS_MANAGEMENT.name());
     }
 }

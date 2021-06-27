@@ -94,6 +94,7 @@ public class ProjectResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -103,7 +104,11 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                return Response.ok(project).build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.ok(project).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -119,6 +124,7 @@ public class ProjectResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -130,7 +136,11 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getProject(name, version);
             if (project != null) {
-                return Response.ok(project).build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.ok(project).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -270,6 +280,7 @@ public class ProjectResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -279,9 +290,13 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
-                LOGGER.info("Project " + project.toString() + " deletion request by " + super.getPrincipal().getName());
-                qm.recursivelyDelete(project);
-                return Response.status(Response.Status.NO_CONTENT).build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    LOGGER.info("Project " + project.toString() + " deletion request by " + super.getPrincipal().getName());
+                    qm.recursivelyDelete(project);
+                    return Response.status(Response.Status.NO_CONTENT).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }

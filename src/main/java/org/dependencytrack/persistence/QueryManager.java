@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
+import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
@@ -67,6 +68,7 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import javax.jdo.PersistenceManager;
 import javax.json.JsonObject;
+import java.security.Principal;
 import java.util.*;
 
 /**
@@ -299,6 +301,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public Project getProject(final String name, final String version) {
         return getProjectQueryManager().getProject(name, version);
+    }
+
+    public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass) {
+        return getProjectQueryManager().getProjects(team, excludeInactive, bypass);
+    }
+
+    public boolean hasAccess(final Principal principal, final Project project) {
+        return getProjectQueryManager().hasAccess(principal, project);
     }
 
     public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {

@@ -7,6 +7,7 @@ LABEL vendor="OWASP"
 ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
 ARG USERNAME=dtrack
+ARG GID=0
 ARG WAR_FILENAME=dependency-track-apiserver.war
 
 # Create the directory where Dependency-Track will store its data (${DATA_DIR}) and the external library directory (${EXTLIB_DIR})
@@ -14,11 +15,11 @@ ARG WAR_FILENAME=dependency-track-apiserver.war
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p -m 770 ${DATA_DIR} \
     && adduser -D -h ${DATA_DIR} -u 1000 ${USERNAME} \
-    && chown -R ${USERNAME}:${USERNAME} ${DATA_DIR}
+    && chown -R ${USERNAME}:0 ${DATA_DIR} 
 
 # Copy the compiled WAR to the application directory created above
 # Automatically creates the $APP_DIR directory
-COPY --chown=1000 ./target/${WAR_FILENAME} ${APP_DIR}
+COPY --chown=${USERNAME}:0  ./target/${WAR_FILENAME} ${APP_DIR}
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER 1000

@@ -60,7 +60,7 @@ public final class NotificationUtil {
             final Set<Project> affectedProjects = new HashSet<>();
             final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
             for (final Component c : components) {
-                affectedProjects.add(c.getProject());
+                affectedProjects.add(qm.detach(Project.class, c.getProject().getId()));
             }
 
             final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());

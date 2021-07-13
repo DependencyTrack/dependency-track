@@ -95,7 +95,7 @@
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.25</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.2.20</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.2.23</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.github-release-plugin.version>1.4.0</plugin.github-release-plugin.version>

@@ -88,7 +88,7 @@
         <lib.cyclonedx-java.version>5.0.1</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.3</lib.jaxb.runtime.version>
         <lib.lucene.version>8.8.2</lib.lucene.version>
-        <lib.packageurl.version>1.3.0</lib.packageurl.version>
+        <lib.packageurl.version>1.3.1</lib.packageurl.version>
         <lib.pebble.version>3.1.5</lib.pebble.version>
         <lib.unirest.version>2.4.03</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
@@ -244,7 +244,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.20</version>
+            <version>1.21</version>
         </dependency>
         <!-- Test Dependencies -->
         <dependency>
@@ -256,7 +256,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.11.0</version>
+            <version>3.11.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

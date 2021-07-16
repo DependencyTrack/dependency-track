@@ -72,7 +72,7 @@ public class MetricsUpdateTask implements Subscriber {
                     updateVulnerabilitiesMetrics(qm);
                 }
             } catch (Exception ex) {
-                LOGGER.error(ex.getMessage());
+                LOGGER.error("An unknown error occurred while updating metrics", ex);
             }
             LOGGER.debug("Metrics update complete");
         }

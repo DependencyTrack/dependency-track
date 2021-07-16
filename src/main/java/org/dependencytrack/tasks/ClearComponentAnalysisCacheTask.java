@@ -42,7 +42,10 @@ public class ClearComponentAnalysisCacheTask implements LoggableSubscriber {
             LOGGER.info("Clearing ComponentAnalysisCache");
             try (QueryManager qm = new QueryManager()) {
                 qm.clearComponentAnalysisCache();
+            } catch (Exception ex) {
+                LOGGER.error("An unknown error occurred while clearing component analysis cache", ex);
             }
+            LOGGER.info("Complete");
         }
     }
 }

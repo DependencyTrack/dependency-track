@@ -86,9 +86,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final Tag tag = getTagByName(filter.trim());
             if (tag != null) {
                 if (excludeInactive) {
-                    queryFilter = "(name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null)";
+                    queryFilter = "((name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null))";
                 } else {
-                    queryFilter = "name.toLowerCase().matches(:name) || tags.contains(:tag)";
+                    queryFilter = "(name.toLowerCase().matches(:name) || tags.contains(:tag))";
                 }
                 params.put("name", filterString);
                 params.put("tag", tag);
@@ -96,9 +96,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 result = execute(query, params);
             } else {
                 if (excludeInactive) {
-                    queryFilter = "name.toLowerCase().matches(:name) && (active == true || active == null)";
+                    queryFilter = "(name.toLowerCase().matches(:name) && (active == true || active == null))";
                 } else {
-                    queryFilter = "name.toLowerCase().matches(:name)";
+                    queryFilter = "(name.toLowerCase().matches(:name))";
                 }
                 params.put("name", filterString);
                 preprocessACLs(query, queryFilter, params, false);
@@ -172,9 +172,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         final String queryFilter;
         if (excludeInactive) {
-            queryFilter = "name == :name && (active == true || active == null)";
+            queryFilter = "(name == :name && (active == true || active == null))";
         } else {
-            queryFilter = "name == :name";
+            queryFilter = "(name == :name)";
         }
         final Map<String, Object> params = new HashMap<>();
         params.put("name", name);
@@ -190,12 +190,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     public Project getProject(final String name, final String version) {
         final Query<Project> query = pm.newQuery(Project.class);
-        final String queryFilter = "name == :name && version == :version";
+        final String queryFilter = "(name == :name && version == :version)";
         final Map<String, Object> params = new HashMap<>();
         params.put("name", name);
         params.put("version", version);
         preprocessACLs(query, queryFilter, params, false);
-        return singleResult(query.execute(params));
+        query.setFilter(queryFilter);
+        return singleResult(query.executeWithMap(params));
     }
 
     /**
@@ -210,9 +211,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         final String queryFilter;
         if (excludeInactive) {
-            queryFilter = "accessTeams.contains(:team) && (active == true || active == null)";
+            queryFilter = "(active == true || active == null)";
         } else {
-            queryFilter = "accessTeams.contains(:team)";
+            queryFilter = "";
         }
         final Map<String, Object> params = new HashMap<>();
         params.put("team", team);
@@ -228,7 +229,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
         final PaginatedResult result;
         final Query<Project> query = pm.newQuery(Project.class);
-        final String queryFilter = "tags.contains(:tag)";
+        final String queryFilter = "(tags.contains(:tag))";
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
@@ -648,6 +649,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)) {
             if (principal instanceof UserPrincipal) {
                 final UserPrincipal userPrincipal = (UserPrincipal) principal;
+                if (super.hasAccessManagementPermission(userPrincipal)) {
+                    return true;
+                }
                 for (final Team userInTeam : userPrincipal.getTeams()) {
                     for (final Team accessTeam : project.getAccessTeams()) {
                         if (userInTeam.getId() == accessTeam.getId()) {
@@ -655,8 +659,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                         }
                     }
                 }
-            } else {
+            } else if (principal instanceof ApiKey ){
                 final ApiKey apiKey = (ApiKey) principal;
+                if (super.hasAccessManagementPermission(apiKey)) {
+                    return true;
+                }
                 for (final Team userInTeam : apiKey.getTeams()) {
                     for (final Team accessTeam : project.getAccessTeams()) {
                         if (userInTeam.getId() == accessTeam.getId()) {
@@ -664,6 +671,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                         }
                     }
                 }
+            } else if (principal == null) {
+                // This is a system request being made (e.g. MetricsUpdateTask, etc) where there isn't a principal
+                return true;
             }
             return false;
         } else {
@@ -671,20 +681,23 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
     }
 
+    /**
+     * A similar method exists in ComponentQueryManager
+     */
     private void preprocessACLs(final Query<Project> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
         if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
             final List<Team> teams;
             if (super.principal instanceof UserPrincipal) {
                 final UserPrincipal userPrincipal = ((UserPrincipal) super.principal);
                 teams = userPrincipal.getTeams();
-                if (hasAccessManagementPermission(userPrincipal)) {
+                if (super.hasAccessManagementPermission(userPrincipal)) {
                     query.setFilter(inputFilter);
                     return;
                 }
             } else {
                 final ApiKey apiKey = ((ApiKey) super.principal);
                 teams = apiKey.getTeams();
-                if (hasAccessManagementPermission(apiKey)) {
+                if (super.hasAccessManagementPermission(apiKey)) {
                     query.setFilter(inputFilter);
                     return;
                 }

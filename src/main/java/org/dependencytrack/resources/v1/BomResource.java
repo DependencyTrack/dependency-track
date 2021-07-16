@@ -92,6 +92,7 @@ public class BomResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -104,6 +105,9 @@ public class BomResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            if (! qm.hasAccess(super.getPrincipal(), project)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
             final List<Component> components = qm.getAllComponents(project);
             final List<ServiceComponent> services = qm.getAllServiceComponents(project);
@@ -134,40 +138,6 @@ public class BomResource extends AlpineResource {
     }
 
     @GET
-    @Path("/cyclonedx/components")
-    @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
-    @ApiOperation(
-            value = "Returns dependency metadata for all components in CycloneDX format",
-            response = String.class
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
-    })
-    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response exportComponentsAsCycloneDx () {
-        try (QueryManager qm = new QueryManager()) {
-            final List<Component> components = qm.getAllComponents();
-            final List<ServiceComponent> services = qm.getAllServiceComponents();
-            final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
-            final List<org.cyclonedx.model.Service> cycloneServices = services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList());
-            try {
-                Bom bom = new Bom();
-                bom.setSerialNumber("urn:ufuid:" + UUID.randomUUID().toString());
-                bom.setVersion(1);
-                bom.setMetadata(ModelConverter.createMetadata(null));
-                bom.setComponents(cycloneComponents);
-                bom.setServices(cycloneServices);
-                final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
-                bomXmlGenerator.generate();
-                return Response.ok(bomXmlGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-            } catch (ParserConfigurationException | GeneratorException e) {
-                LOGGER.error("An error occurred while building a CycloneDX document for export", e);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-            }
-        }
-    }
-
-    @GET
     @Path("/cyclonedx/component/{uuid}")
     @Produces(CycloneDxMediaType.APPLICATION_CYCLONEDX_XML)
     @ApiOperation(
@@ -176,16 +146,22 @@ public class BomResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response exportComponentAsCycloneDx (
             @ApiParam(value = "The UUID of the component to export", required = true)
-            @PathParam("uuid") String uuid) {
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "The format to output (defaults to xml)")
+            @QueryParam("format") String format) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+            }
+            if (! qm.hasAccess(super.getPrincipal(), component.getProject())) {
+                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
             }
             try {
                 final List<org.cyclonedx.model.Component> cycloneComponents = new ArrayList<>();
@@ -195,9 +171,16 @@ public class BomResource extends AlpineResource {
                 bom.setVersion(1);
                 bom.setMetadata(ModelConverter.createMetadata(null));
                 bom.setComponents(cycloneComponents);
-                final BomXmlGenerator bomXmlGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
-                bomXmlGenerator.generate();
-                return Response.ok(bomXmlGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
+                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("XML")) {
+                    final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
+                    bomGenerator.generate();
+                    return Response.ok(bomGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
+                } else if (format.equalsIgnoreCase("JSON")) {
+                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
+                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                } else {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
+                }
             } catch (ParserConfigurationException | GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -210,10 +193,11 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported bill of material format document",
-            notes = "Expects CycloneDX or SPDX (tag or RDF) along and a valid project UUID. If a UUID is not specified then the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
+            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified then the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
@@ -226,7 +210,7 @@ public class BomResource extends AlpineResource {
             );
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, request.getProject());
-                return process(project, request.getBom());
+                return process(qm, project, request.getBom());
             }
         } else { // additional behavior added in v3.1.0
             failOnValidationError(
@@ -239,11 +223,12 @@ public class BomResource extends AlpineResource {
                 if (project == null && request.isAutoCreate()) {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
                         project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, null, null, true, true);
+                        //TODO - If portfolio access control is enabled, retrieve the principal (ApiKey only) and automatically grant access to the project to the team the key belongs to.
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
                 }
-                return process(project, request.getBom());
+                return process(qm, project, request.getBom());
             }
         }
     }
@@ -253,10 +238,11 @@ public class BomResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload a supported bill of material format document",
-            notes = "Expects CycloneDX or SPDX (text or RDF) along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
+            notes = "Expects CycloneDX along and a valid project UUID. If a UUID is not specified, than the projectName and projectVersion must be specified. Optionally, if autoCreate is specified and 'true' and the project does not exist, the project will be created. In this scenario, the principal making the request will additionally need the PORTFOLIO_MANAGEMENT or PROJECT_CREATION_UPLOAD permission."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.BOM_UPLOAD)
@@ -270,7 +256,7 @@ public class BomResource extends AlpineResource {
         if (projectUuid != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
-                return process(project, artifactParts);
+                return process(qm, project, artifactParts);
             }
         } else { // additional behavior added in v3.1.0
             try (QueryManager qm = new QueryManager()) {
@@ -280,11 +266,12 @@ public class BomResource extends AlpineResource {
                 if (project == null && autoCreate) {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, null, null, true, true);
+                        //TODO - If portfolio access control is enabled, retrieve the principal (ApiKey only) and automatically grant access to the project to the team the key belongs to.
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
                 }
-                return process(project, artifactParts);
+                return process(qm, project, artifactParts);
             }
         }
     }
@@ -311,8 +298,11 @@ public class BomResource extends AlpineResource {
     /**
      * Common logic that processes a BOM given a project and encoded payload.
      */
-    private Response process(Project project, String encodedBomData) {
+    private Response process(QueryManager qm, Project project, String encodedBomData) {
         if (project != null) {
+            if (! qm.hasAccess(super.getPrincipal(), project)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+            }
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
             final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), decoded);
             Event.dispatch(bomUploadEvent);
@@ -325,10 +315,13 @@ public class BomResource extends AlpineResource {
     /**
      * Common logic that processes a BOM given a project and list of multi-party form objects containing decoded payloads.
      */
-    private Response process(Project project, List<FormDataBodyPart> artifactParts) {
+    private Response process(QueryManager qm, Project project, List<FormDataBodyPart> artifactParts) {
         for (final FormDataBodyPart artifactPart: artifactParts) {
             final BodyPartEntity bodyPartEntity = (BodyPartEntity) artifactPart.getEntity();
             if (project != null) {
+                if (! qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(in);
                     // todo: make option to combine all the bom data so components are reconciled in a single pass.

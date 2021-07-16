@@ -66,17 +66,23 @@ public class ServiceResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getAllServices(@PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project == null) {
+            if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final PaginatedResult result = qm.getServiceComponents(project, true);
+                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
-            final PaginatedResult result = qm.getServiceComponents(project, true);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 
@@ -89,6 +95,7 @@ public class ServiceResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified service is forbidden"),
             @ApiResponse(code = 404, message = "The service could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -98,8 +105,13 @@ public class ServiceResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, uuid);
             if (service != null) {
-                final ServiceComponent detachedService = qm.detach(ServiceComponent.class, service.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
-                return Response.ok(detachedService).build();
+                final Project project = service.getProject();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final ServiceComponent detachedService = qm.detach(ServiceComponent.class, service.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
+                    return Response.ok(detachedService).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified service is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The service could not be found.").build();
             }
@@ -117,6 +129,7 @@ public class ServiceResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -137,6 +150,9 @@ public class ServiceResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            if (! qm.hasAccess(super.getPrincipal(), project)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
             ServiceComponent service = new ServiceComponent();
             service.setProject(project);
@@ -164,10 +180,11 @@ public class ServiceResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified service is forbidden"),
             @ApiResponse(code = 404, message = "The UUID of the service could not be found"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
-    public Response updateComponent(ServiceComponent jsonService) {
+    public Response updateService(ServiceComponent jsonService) {
         final Validator validator = super.getValidator();
         failOnValidationError(
                 validator.validateProperty(jsonService, "name"),
@@ -178,6 +195,9 @@ public class ServiceResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, jsonService.getUuid());
             if (service != null) {
+                if (! qm.hasAccess(super.getPrincipal(), service.getProject())) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified service is forbidden").build();
+                }
                 // Name cannot be empty or null - prevent it
                 final String name = StringUtils.trimToNull(jsonService.getName());
                 if (name != null) {
@@ -210,6 +230,7 @@ public class ServiceResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified service is forbidden"),
             @ApiResponse(code = 404, message = "The UUID of the service could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -219,6 +240,9 @@ public class ServiceResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, uuid, ServiceComponent.FetchGroup.ALL.name());
             if (service != null) {
+                if (! qm.hasAccess(super.getPrincipal(), service.getProject())) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified service is forbidden").build();
+                }
                 qm.recursivelyDelete(service, false);
                 qm.commitSearchIndex(ServiceComponent.class);
                 return Response.status(Response.Status.NO_CONTENT).build();

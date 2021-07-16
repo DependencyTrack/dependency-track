@@ -19,8 +19,10 @@
 package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
+import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
@@ -999,5 +1001,13 @@ public class QueryManager extends AlpineQueryManager {
      */
     public void commitSearchIndex(Class clazz) {
         commitSearchIndex(true, clazz);
+    }
+
+    public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {
+        return getProjectQueryManager().hasAccessManagementPermission(userPrincipal);
+    }
+
+    public boolean hasAccessManagementPermission(final ApiKey apiKey) {
+        return getProjectQueryManager().hasAccessManagementPermission(apiKey);
     }
 }

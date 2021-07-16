@@ -19,6 +19,9 @@
 package org.dependencytrack.persistence;
 
 import alpine.event.framework.Event;
+import alpine.model.ApiKey;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
@@ -26,6 +29,7 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
@@ -163,20 +167,30 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             return null;
         }
         final Query<Component> query;
+        final Map<String, Object> params = new HashMap<>();
+        final String queryFilter;
         if (hash.length() == 32) {
-            query = pm.newQuery(Component.class, "md5 == :hash");
+            query = pm.newQuery(Component.class);
+            queryFilter = "(md5 == :hash)";
         } else if (hash.length() == 40) {
-            query = pm.newQuery(Component.class, "sha1 == :hash");
+            query = pm.newQuery(Component.class);
+            queryFilter = "(sha1 == :hash)";
         } else if (hash.length() == 64) {
-            query = pm.newQuery(Component.class, "sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash");
+            query = pm.newQuery(Component.class);
+            queryFilter = "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
         } else if (hash.length() == 96) {
-            query = pm.newQuery(Component.class, "sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash");
+            query = pm.newQuery(Component.class);
+            queryFilter = "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
         } else if (hash.length() == 128) {
-            query = pm.newQuery(Component.class, "sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash");
+            query = pm.newQuery(Component.class);
+            queryFilter = "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
         } else {
-            query = pm.newQuery(Component.class, "blake3 == :hash");
+            query = pm.newQuery(Component.class);
+            queryFilter = "(blake3 == :hash)";
         }
-        return execute(query, hash);
+        params.put("hash", hash);
+        preprocessACLs(query, queryFilter, params, false);
+        return execute(query, params);
     }
 
     /**
@@ -201,43 +215,58 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final Query<Component> query;
         final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
-            final Map<String, String> map = new HashMap<>();
-            String filter = "";
+            final Map<String, Object> map = new HashMap<>();
+            String queryFilter = "";
+            if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += "(";
             if (identity.getGroup() != null) {
-                filter += " group.toLowerCase().matches(:group) ";
+                queryFilter += " group.toLowerCase().matches(:group) ";
                 final String filterString = ".*" + identity.getGroup().toLowerCase() + ".*";
                 map.put("group", filterString);
             }
             if (identity.getName() != null) {
                 if (identity.getGroup() != null) {
-                    filter += " && ";
+                    queryFilter += " && ";
                 }
-                filter += " name.toLowerCase().matches(:name) ";
+                queryFilter += " name.toLowerCase().matches(:name) ";
                 final String filterString = ".*" + identity.getName().toLowerCase() + ".*";
                 map.put("name", filterString);
             }
             if (identity.getVersion() != null) {
                 if (identity.getGroup() != null || identity.getName() != null) {
-                    filter += " && ";
+                    queryFilter += " && ";
                 }
-                filter += " version.toLowerCase().matches(:version) ";
+                queryFilter += " version.toLowerCase().matches(:version) ";
                 final String filterString = ".*" + identity.getVersion().toLowerCase() + ".*";
                 map.put("version", filterString);
             }
-            query = pm.newQuery(Component.class, filter);
+            if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += ")";
+            query = pm.newQuery(Component.class);
+            preprocessACLs(query, queryFilter, map, false);
             result = execute(query, map);
         } else if (identity.getPurl() != null) {
-            query = pm.newQuery(Component.class, "purl.toLowerCase().matches(:purl)");
+            query = pm.newQuery(Component.class);
+            final Map<String, Object> params = new HashMap<>();
+            final String queryFilter = "(purl.toLowerCase().matches(:purl))";
             final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            result = execute(query, filterString);
+            params.put("purl", filterString);
+            preprocessACLs(query, queryFilter, params, false);
+            result = execute(query, params);
         } else if (identity.getCpe() != null) {
-            query = pm.newQuery(Component.class, "cpe.toLowerCase().matches(:cpe)");
+            query = pm.newQuery(Component.class);
+            final Map<String, Object> params = new HashMap<>();
+            final String queryFilter = "(cpe.toLowerCase().matches(:cpe))";
             final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            result = execute(query, filterString);
+            params.put("cpe", filterString);
+            preprocessACLs(query, queryFilter, params, false);
+            result = execute(query, params);
         } else if (identity.getSwidTagId() != null) {
-            query = pm.newQuery(Component.class, "swidTagId.toLowerCase().matches(:swidTagId)");
+            query = pm.newQuery(Component.class);
+            final Map<String, Object> params = new HashMap<>();
+            final String queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
             final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            result = execute(query, filterString);
+            params.put("swidTagId", filterString);
+            preprocessACLs(query, queryFilter, params, false);
+            result = execute(query, params);
         } else {
             result = new PaginatedResult();
         }
@@ -441,6 +470,49 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 this.recursivelyDelete(c, false);
             }
             //this.delete(markedForDeletion);
+        }
+    }
+
+    /**
+     * A similar method exists in ProjectQueryManager
+     */
+    private void preprocessACLs(final Query<Component> query, final String inputFilter, final Map<String, Object> params, final boolean bypass) {
+        if (super.principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
+            final List<Team> teams;
+            if (super.principal instanceof UserPrincipal) {
+                final UserPrincipal userPrincipal = ((UserPrincipal) super.principal);
+                teams = userPrincipal.getTeams();
+                if (super.hasAccessManagementPermission(userPrincipal)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            } else {
+                final ApiKey apiKey = ((ApiKey) super.principal);
+                teams = apiKey.getTeams();
+                if (super.hasAccessManagementPermission(apiKey)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            }
+            if (teams != null && teams.size() > 0) {
+                final StringBuilder sb = new StringBuilder();
+                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
+                    //final Team team = teams.get(i);
+                    final Team team = super.getObjectById(Team.class, teams.get(0).getId());
+                    sb.append(" project.accessTeams.contains(:team").append(i).append(") ");
+                    params.put("team" + i, team);
+                    if (i < teamsSize-2) {
+                        sb.append(" || ");
+                    }
+                }
+                if (inputFilter != null) {
+                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
+                } else {
+                    query.setFilter(sb.toString());
+                }
+            }
+        } else if (bypass) {
+            query.setFilter(inputFilter);
         }
     }
 }

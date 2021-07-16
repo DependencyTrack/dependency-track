@@ -76,17 +76,23 @@ public class ComponentResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getAllComponents(@PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project == null) {
+            if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final PaginatedResult result = qm.getComponents(project, true);
+                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
-            final PaginatedResult result = qm.getComponents(project, true);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 
@@ -99,6 +105,7 @@ public class ComponentResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -108,8 +115,13 @@ public class ComponentResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
-                final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
-                return Response.ok(detachedComponent).build();
+                final Project project = component.getProject();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
+                    return Response.ok(detachedComponent).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }
@@ -132,7 +144,7 @@ public class ComponentResource extends AlpineResource {
                                            @QueryParam("group") String group,
                                            @ApiParam(value = "The name of the component")
                                            @QueryParam("name") String name,
-                                           @ApiParam(value = "The version of the vulnerability")
+                                           @ApiParam(value = "The version of the component")
                                            @QueryParam("version") String version,
                                            @ApiParam(value = "The purl of the component")
                                            @QueryParam("purl") String purl,
@@ -149,9 +161,16 @@ public class ComponentResource extends AlpineResource {
                     // throw it away
                 }
             }
-            final ComponentIdentity identity = new ComponentIdentity(packageURL, cpe, swidTagId, group, name, version);
-            final PaginatedResult result = qm.getComponents(identity, true);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            final ComponentIdentity identity = new ComponentIdentity(packageURL, StringUtils.trimToNull(cpe),
+                    StringUtils.trimToNull(swidTagId), StringUtils.trimToNull(group), StringUtils.trimToNull(name),
+                    StringUtils.trimToNull(version));
+            if (identity.getGroup() == null && identity.getName() == null && identity.getVersion() == null
+                    && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
+                return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
+            } else {
+                final PaginatedResult result = qm.getComponents(identity, true);
+                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            }
         }
     }
 
@@ -187,6 +206,7 @@ public class ComponentResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -223,6 +243,9 @@ public class ComponentResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+            if (! qm.hasAccess(super.getPrincipal(), project)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
             final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());
             Component component = new Component();
@@ -274,6 +297,7 @@ public class ComponentResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
             @ApiResponse(code = 404, message = "The UUID of the component could not be found"),
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -300,6 +324,9 @@ public class ComponentResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
             if (component != null) {
+                if (! qm.hasAccess(super.getPrincipal(), component.getProject())) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
+                }
                 // Name cannot be empty or null - prevent it
                 final String name = StringUtils.trimToNull(jsonComponent.getName());
                 if (name != null) {
@@ -356,6 +383,7 @@ public class ComponentResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
             @ApiResponse(code = 404, message = "The UUID of the component could not be found")
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
@@ -365,6 +393,9 @@ public class ComponentResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
             if (component != null) {
+                if (! qm.hasAccess(super.getPrincipal(), component.getProject())) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
+                }
                 qm.recursivelyDelete(component, false);
                 qm.commitSearchIndex(Component.class);
                 return Response.status(Response.Status.NO_CONTENT).build();

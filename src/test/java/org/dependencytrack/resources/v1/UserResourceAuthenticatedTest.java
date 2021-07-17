@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.auth.PasswordService;
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
@@ -46,6 +47,7 @@ public class UserResourceAuthenticatedTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(UserResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
     }

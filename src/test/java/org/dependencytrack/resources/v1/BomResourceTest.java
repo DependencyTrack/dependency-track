@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import alpine.util.UuidUtil;
 import org.apache.commons.io.FileUtils;
@@ -47,6 +48,7 @@ public class BomResourceTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(BomResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)
                         .register(MultiPartFeature.class)))
                 .build();
@@ -78,23 +80,6 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The project could not be found.", body);
-    }
-
-    @Test
-    public void exportComponentsAsCycloneDxTest() {
-        Project project = qm.createProject("Acme Example", null, null, null, null, null, false, false);
-        Component c = new Component();
-        c.setProject(project);
-        c.setName("sample-component");
-        c.setVersion("1.0");
-        qm.createComponent(c, false);
-        Response response = target(V1_BOM + "/cyclonedx/components").request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
-        Assert.assertTrue(body.startsWith("<?xml"));
     }
 
     @Test

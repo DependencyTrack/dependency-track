@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.persistence.CweImporter;
@@ -30,7 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
 public class CweResourceTest extends ResourceTest {
@@ -39,6 +39,7 @@ public class CweResourceTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(CweResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
     }

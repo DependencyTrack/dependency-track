@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
@@ -33,9 +34,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class ConfigPropertyResourceTest extends ResourceTest {
 
@@ -43,6 +42,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(ConfigPropertyResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
     }

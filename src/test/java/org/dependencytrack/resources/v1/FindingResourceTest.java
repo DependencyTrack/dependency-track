@@ -19,10 +19,10 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.Config;
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -44,6 +44,7 @@ public class FindingResourceTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(FindingResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
     }

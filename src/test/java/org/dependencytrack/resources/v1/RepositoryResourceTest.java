@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.RepositoryMetaComponent;
@@ -41,6 +42,7 @@ public class RepositoryResourceTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(RepositoryResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
     }

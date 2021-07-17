@@ -719,7 +719,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     query.setFilter(sb.toString());
                 }
             }
-        } else if (bypass) {
+        } else {
             query.setFilter(inputFilter);
         }
     }

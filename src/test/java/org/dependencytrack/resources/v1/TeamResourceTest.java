@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import alpine.model.Team;
 import alpine.util.UuidUtil;
@@ -42,6 +43,7 @@ public class TeamResourceTest extends ResourceTest {
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
                 new ResourceConfig(TeamResource.class)
+                        .register(ApiFilter.class)
                         .register(AuthenticationFilter.class)))
                 .build();
     }

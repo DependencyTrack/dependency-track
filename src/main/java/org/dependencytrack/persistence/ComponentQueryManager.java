@@ -26,6 +26,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -511,7 +512,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                     query.setFilter(sb.toString());
                 }
             }
-        } else if (bypass) {
+        } else {
             query.setFilter(inputFilter);
         }
     }

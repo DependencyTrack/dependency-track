@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.auth.PasswordService;
+import alpine.filters.ApiFilter;
 import alpine.model.ManagedUser;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -37,7 +38,8 @@ public class UserResourceUnauthenticatedTest extends ResourceTest {
     @Override
     protected DeploymentContext configureDeployment() {
         return ServletDeploymentContext.forServlet(new ServletContainer(
-                new ResourceConfig(UserResource.class)))
+                new ResourceConfig(UserResource.class)
+                        .register(ApiFilter.class)))
                 .build();
     }
 

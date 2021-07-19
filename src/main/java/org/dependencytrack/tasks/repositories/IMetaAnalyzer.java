@@ -104,6 +104,11 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
+            } else if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType())) {
+                IMetaAnalyzer analyzer = new GoModulesMetaAnalyzer();
+                if (analyzer.isApplicable(component)) {
+                    return analyzer;
+                }
             }
         }
 

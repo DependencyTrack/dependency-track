@@ -36,6 +36,7 @@ public enum RepositoryType {
     HEX,
     COMPOSER,
     CARGO,
+    GO_MODULES,
     UNSUPPORTED;
 
     /**
@@ -61,6 +62,8 @@ public enum RepositoryType {
             return COMPOSER;
         } else if (PackageURL.StandardTypes.CARGO.equals(type)) {
             return CARGO;
+        } else if (PackageURL.StandardTypes.GOLANG.equals(type)) {
+            return GO_MODULES;
         }
         return UNSUPPORTED;
     }

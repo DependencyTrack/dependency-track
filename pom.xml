@@ -90,7 +90,7 @@
         <lib.lucene.version>8.9.0</lib.lucene.version>
         <lib.packageurl.version>1.3.1</lib.packageurl.version>
         <lib.pebble.version>3.1.5</lib.pebble.version>
-        <lib.unirest.version>2.4.03</lib.unirest.version>
+        <lib.unirest.version>3.11.12</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>
@@ -150,6 +150,15 @@
             <groupId>javax.activation</groupId>
             <artifactId>javax.activation-api</artifactId>
             <version>1.2.0</version>
+        </dependency>
+        <!-- org.json
+        This was previously transitively included with Unirest. However, Unirest v3.x removed reliance on org.json
+        in favor of their own API compatible replacement. Therefore, it was necessary to directly include org.json.
+        Removal of org.json is documented in https://github.com/DependencyTrack/dependency-track/issues/1113 -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20210307</version>
         </dependency>
         <!-- Package URL -->
         <dependency>

@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.parser.npm;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import kong.unirest.json.JSONArray;
+import kong.unirest.json.JSONObject;
 import org.dependencytrack.parser.npm.model.Advisory;
 import java.util.ArrayList;
 import java.util.List;

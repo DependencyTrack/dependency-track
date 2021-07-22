@@ -20,6 +20,8 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
+import kong.unirest.json.JSONArray;
+import kong.unirest.json.JSONObject;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -28,8 +30,6 @@ import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import org.dependencytrack.util.DateUtil;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * An IMetaAnalyzer implementation that supports Cargo via crates.io compatible repos

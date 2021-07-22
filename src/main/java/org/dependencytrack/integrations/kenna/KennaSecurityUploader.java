@@ -26,12 +26,12 @@ import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
+import kong.unirest.json.JSONObject;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
-import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 

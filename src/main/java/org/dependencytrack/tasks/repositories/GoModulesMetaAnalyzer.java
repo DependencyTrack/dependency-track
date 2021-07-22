@@ -24,12 +24,11 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
+import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.json.JSONObject;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 

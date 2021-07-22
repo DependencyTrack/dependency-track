@@ -20,10 +20,10 @@ package org.dependencytrack.parser.npm;
 
 import alpine.logging.Logger;
 import kong.unirest.JsonNode;
+import kong.unirest.json.JSONArray;
+import kong.unirest.json.JSONObject;
 import org.dependencytrack.parser.npm.model.Advisory;
 import org.dependencytrack.parser.npm.model.AdvisoryResults;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * Parser for NPM Advisory objects returned from the NPM Advisory API.

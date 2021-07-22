@@ -119,7 +119,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean isCapable(final PackageURL purl) {
-        return purl != null;
+        return purl != null && purl.getName() != null && purl.getVersion() != null;
     }
 
     /**

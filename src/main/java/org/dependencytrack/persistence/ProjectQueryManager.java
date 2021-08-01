@@ -211,9 +211,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         final String queryFilter;
         if (excludeInactive) {
-            queryFilter = "(active == true || active == null)";
+            queryFilter = "(active == true || active == null) && (accessTeams.contains(:team))";
         } else {
-            queryFilter = "";
+            queryFilter = "(accessTeams.contains(:team))";
         }
         final Map<String, Object> params = new HashMap<>();
         params.put("team", team);
@@ -719,7 +719,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     query.setFilter(sb.toString());
                 }
             }
-        } else {
+        } else if (StringUtils.trimToNull(inputFilter) != null) {
             query.setFilter(inputFilter);
         }
     }

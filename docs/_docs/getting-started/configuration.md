@@ -393,6 +393,9 @@ This file resides in `<BASE_URL>/static/config.json`.
     //   - https://oauth.net/2/grant-types/implicit/
     //   - https://oauth.net/2/pkce/
     "OIDC_FLOW": "",
+    // Optional
+    // Defines the text of the OpenID Connect login button. 
+    "OIDC_LOGIN_BUTTON_TEXT": ""
 }
 ```
 

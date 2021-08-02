@@ -21,13 +21,10 @@ package org.dependencytrack.integrations.defectdojo;
 import alpine.logging.Logger;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
-import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 

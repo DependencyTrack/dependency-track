@@ -78,6 +78,23 @@ public class LicenseGroupPolicyEvaluatorTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void unknownLicenseViolateWhitelist() {
+        LicenseGroup lg = qm.createLicenseGroup("Test License Group");
+        lg = qm.persist(lg);
+        lg = qm.detach(LicenseGroup.class, lg.getId());
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        policy = qm.detach(Policy.class, policy.getId());
+        qm.detach(PolicyCondition.class, condition.getId());
+        Component component = new Component();
+        component.setResolvedLicense(null);
+
+        PolicyEvaluator evaluator = new LicenseGroupPolicyEvaluator();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+    }
+
+    @Test
     public void wrongSubject() {
         License license = new License();
         license.setName("Apache 2.0");

@@ -52,20 +52,24 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
     public List<PolicyConditionViolation> evaluate(final Policy policy, final Component component) {
         final List<PolicyConditionViolation> violations = new ArrayList<>();
         final License license = component.getResolvedLicense();
-        if (license == null) {
-            return violations;
-        }
-        for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
+
+        for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             final LicenseGroup lg = qm.getObjectByUuid(LicenseGroup.class, condition.getValue());
-            final boolean containsLicense = qm.doesLicenseGroupContainLicense(lg, license);
-            if (PolicyCondition.Operator.IS == condition.getOperator()) {
-                if (containsLicense) {
+            if (license == null) {
+                if (PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
-            } else if (PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
-                if (!containsLicense) {
-                    violations.add(new PolicyConditionViolation(condition, component));
+            } else {
+                final boolean containsLicense = qm.doesLicenseGroupContainLicense(lg, license);
+                if (PolicyCondition.Operator.IS == condition.getOperator()) {
+                    if (containsLicense) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
+                } else if (PolicyCondition.Operator.IS_NOT == condition.getOperator()) {
+                    if (!containsLicense) {
+                        violations.add(new PolicyConditionViolation(condition, component));
+                    }
                 }
             }
         }

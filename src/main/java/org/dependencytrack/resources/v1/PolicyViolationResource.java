@@ -82,6 +82,7 @@ public class PolicyViolationResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
@@ -91,8 +92,12 @@ public class PolicyViolationResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final PaginatedResult result = qm.getPolicyViolations(project, suppressed);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final PaginatedResult result = qm.getPolicyViolations(project, suppressed);
+                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -110,6 +115,7 @@ public class PolicyViolationResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
     @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
@@ -119,8 +125,12 @@ public class PolicyViolationResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
-                final PaginatedResult result = qm.getPolicyViolations(component, suppressed);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                if (qm.hasAccess(super.getPrincipal(), component.getProject())) {
+                    final PaginatedResult result = qm.getPolicyViolations(component, suppressed);
+                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
             }

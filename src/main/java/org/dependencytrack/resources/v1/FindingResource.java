@@ -63,6 +63,7 @@ public class FindingResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
@@ -72,9 +73,13 @@ public class FindingResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
-                final List<Finding> findings = qm.getFindings(project, suppressed);
-                return Response.ok(findings).header(TOTAL_COUNT_HEADER,  findings.size()).build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
+                    final List<Finding> findings = qm.getFindings(project, suppressed);
+                    return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -89,6 +94,7 @@ public class FindingResource extends AlpineResource {
     )
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
@@ -96,11 +102,15 @@ public class FindingResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final List<Finding> findings = qm.getFindings(project);
-                final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);
-                final Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
-                rb.header("Content-Disposition", "inline; filename=findings-" + uuid + ".fpf");
-                return rb.build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final List<Finding> findings = qm.getFindings(project);
+                    final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);
+                    final Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
+                    rb.header("Content-Disposition", "inline; filename=findings-" + uuid + ".fpf");
+                    return rb.build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }

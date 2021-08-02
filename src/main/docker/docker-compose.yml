@@ -99,6 +99,7 @@ services:
       # - "OIDC_CLIENT_ID="
       # - "OIDC_SCOPE="
       # - "OIDC_FLOW="
+      # - "OIDC_LOGIN_BUTTON_TEXT="
       # volumes:
       # - "/host/path/to/config.json:/app/static/config.json"
     ports:

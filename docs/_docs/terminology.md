@@ -15,8 +15,8 @@ The process of evaluating findings to determine the accuracy of the findings and
 affected projects. The auditing process creates an audit trail that captures the thought process and decisions made 
 for each finding.
 
-### Bill of Material (BOM)
-In supply chains, a bill of material (BOM) defines and describes the contents of what is used in the manufacturing and 
+### Bill of Materials (BOM)
+In supply chains, a bill of materials (BOM) defines and describes the contents of what is used in the manufacturing and
 packaging of the deliverable. In software supply chains, this refers to the contents of all components bundled with the
 software including, authors, publishers, names, versions, licenses, and copyrights. Dependency-Track supports the 
 CycloneDX format. Bill of Materials specific to software components are commonly referred to as SBOMs.

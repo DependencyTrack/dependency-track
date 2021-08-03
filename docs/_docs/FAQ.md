@@ -49,7 +49,7 @@ was dropped. A comparison can be found in the [Dependency Check Comparison](./..
 
 Make sure the container is allowed to allocate enough RAM. For memory requirements see
 [Deploying Docker Container](./../getting-started/deploy-docker/). A common source for limited memory is Docker for
-Windows's default memory limit of 2GB which is too less. You can change this in docker's settings.
+Windows's default memory limit of 2GB which is too little. You can change this in Docker's settings.
 
 #### Dependency Track stops working after 1-2 weeks
 

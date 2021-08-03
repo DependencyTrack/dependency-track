@@ -11,7 +11,7 @@ NPM public advisories is a centralized source of vulnerability intelligence spec
 or may not be documented in the National Vulnerability Database. Projects that leverage Node.js will benefit from the 
 NPM Audit datasource as it provides visibility on vulnerabilities specific to the ecosystem.
 
-Dependency-Track integrates with NPM using it's public advisory API. In doing so, Dependency-Track is able to create a 
+Dependency-Track integrates with NPM using its public advisory API. In doing so, Dependency-Track is able to create a
 mirror of all NPM advisory data. The mirror is kept up-to-date on a daily basis, or upon the restarting of the 
 Dependency-Track instance.
 

@@ -27,7 +27,7 @@ For other environments, cURL (or similar) can be used.
 
 #### CycloneDX
 To publish CycloneDX BOMs, use a valid API Key and project UUID. Finally, Base64 encode the 
-bom and insert the resulting text into the 'bom' field.
+BOM and insert the resulting text into the 'bom' field.
 
 ```bash
 curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
@@ -50,7 +50,7 @@ curl -X "POST" "http://dtrack.example.com/api/v1/bom" \
 ```
 
 #### Large Payloads
-In cases where the scan or BOM being uploaded is large, using cURLs capability of specifying a file
+In cases where the scan or BOM being uploaded is large, using cURL's capability of specifying a file
 containing a payload may be preferred.
 
 ```bash

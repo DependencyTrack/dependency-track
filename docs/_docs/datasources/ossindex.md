@@ -9,7 +9,7 @@ Sonatype OSS Index provides transparent and highly accurate results for componen
 The majority of vulnerabilities directly map to CVEs in the National Vulnerability Database (NVD), however, 
 OSS Index does contain many vulnerabilities that are not present in the NVD.
 
-Dependency-Track integrates with OSS Index using it's public API. Dependency-Track does not mirror OSS Index, 
+Dependency-Track integrates with OSS Index using its public API. Dependency-Track does not mirror OSS Index,
 but it does consume vulnerabilities from OSS Index on a 'as-identified' basis.
 
 > Starting with Dependency-Track v4.0, OSS Index is enabled by default and does not require an account. For prior 

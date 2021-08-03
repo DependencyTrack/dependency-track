@@ -55,4 +55,4 @@ means to populate project dependencies, organizations benefit from the many use-
 leveraging repositories to identify outdated components.
 
 Refer to [Datasource Routing]({{ site.baseurl }}{% link _docs/datasources/routing.md %})
-for information on Package URL and the various ways its used throughout Dependency-Track.
+for information on Package URL and the various ways it is used throughout Dependency-Track.

@@ -56,8 +56,8 @@ docker rmi $APISERVER_REPO:latest
 docker rmi $APISERVER_REPO:$RELEASE_VERSION
 docker rmi $BUNDLED_REPO:latest
 docker rmi $BUNDLED_REPO:$RELEASE_VERSION
-docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest .
-docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest .
+docker build --no-cache --pull -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest .
+docker build --no-cache --pull -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest .
 docker login
 docker push $APISERVER_REPO:latest
 docker push $APISERVER_REPO:$RELEASE_VERSION

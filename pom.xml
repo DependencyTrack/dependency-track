@@ -93,7 +93,7 @@
         <lib.unirest.version>3.11.12</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>9.4.0.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.26</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.2.23</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->

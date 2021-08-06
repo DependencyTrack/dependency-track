@@ -705,11 +705,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             if (teams != null && teams.size() > 0) {
                 final StringBuilder sb = new StringBuilder();
                 for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                    //final Team team = teams.get(i);
-                    final Team team = super.getObjectById(Team.class, teams.get(0).getId());
+                    final Team team = super.getObjectById(Team.class, teams.get(i).getId());
                     sb.append(" accessTeams.contains(:team").append(i).append(") ");
                     params.put("team" + i, team);
-                    if (i < teamsSize-2) {
+                    if (i < teamsSize-1) {
                         sb.append(" || ");
                     }
                 }

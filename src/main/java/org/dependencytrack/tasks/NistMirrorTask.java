@@ -66,11 +66,11 @@ public class NistMirrorTask implements LoggableSubscriber {
     }
 
     public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
-    private static final String CPE_DICTIONARY_23_XML = "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz";
-    private static final String CVE_JSON_11_MODIFIED_URL = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz";
-    private static final String CVE_JSON_11_BASE_URL = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz";
-    private static final String CVE_JSON_11_MODIFIED_META = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.meta";
-    private static final String CVE_JSON_11_BASE_META = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.meta";
+    private static final String CPE_DICTIONARY_23_XML = System.getenv("CPE_DICTIONARY_23_XML") == null ? "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz" : System.getenv("CPE_DICTIONARY_23_XML");
+    private static final String CVE_JSON_11_MODIFIED_URL = System.getenv("CVE_JSON_11_MODIFIED_URL") == null ? "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz" : System.getenv("CVE_JSON_11_MODIFIED_URL");
+    private static final String CVE_JSON_11_BASE_URL = System.getenv("CVE_JSON_11_BASE_URL") == null ? "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz" : System.getenv("CVE_JSON_11_BASE_URL");
+    private static final String CVE_JSON_11_MODIFIED_META = System.getenv("CVE_JSON_11_MODIFIED_META") == null ? "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.meta" : System.getenv("CVE_JSON_11_MODIFIED_META");
+    private static final String CVE_JSON_11_BASE_META = System.getenv("CVE_JSON_11_BASE_META") == null ? "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.meta" : System.getenv("CVE_JSON_11_BASE_META");
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private File outputDir;

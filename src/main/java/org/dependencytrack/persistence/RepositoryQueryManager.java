@@ -74,7 +74,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
     public List<Repository> getAllRepositories() {
         final Query<Repository> query = pm.newQuery(Repository.class);
         query.setOrdering("type asc, identifier asc");
-        return query.executeResultList(Repository.class);
+        return query.executeList();
     }
 
     /**

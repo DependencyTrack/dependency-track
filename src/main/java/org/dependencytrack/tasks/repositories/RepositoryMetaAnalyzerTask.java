@@ -21,10 +21,6 @@ package org.dependencytrack.tasks.repositories;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
-import alpine.persistence.PaginatedResult;
-import alpine.resources.AlpineRequest;
-import alpine.resources.OrderDirection;
-import alpine.resources.Pagination;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -53,30 +49,15 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     analyze(qm, qm.getObjectById(Component.class, event.getComponent().getId()));
                 }
             } else {
-                final AlpineRequest alpineRequest = new AlpineRequest(
-                        null,
-                        new Pagination(Pagination.Strategy.OFFSET, 0, 100),
-                        null,
-                        "id",
-                        OrderDirection.ASCENDING
-                );
-                try (final QueryManager qm = new QueryManager(alpineRequest)) {
-                    final PaginatedResult result = qm.getProjects(false, true);
-                    long count = 0;
-                    boolean shouldContinue = true;
-                    while (count < result.getTotal() && shouldContinue) {
-                        for (final Project project: result.getList(Project.class)) {
-                            final List<Component> components = qm.getAllComponents(project);
-                            LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
-                            for (final Component component: components) {
-                                analyze(qm, component);
-                            }
-                            LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                try (final QueryManager qm = new QueryManager()) {
+                    final List<Project> projects = qm.getAllProjects(true);
+                    for (final Project project: projects) {
+                        final List<Component> components = qm.getAllComponents(project);
+                        LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                        for (final Component component: components) {
+                            analyze(qm, component);
                         }
-                        int lastResult = result.getObjects().size();
-                        count += lastResult;
-                        shouldContinue = lastResult > 0;
-                        qm.advancePagination();
+                        LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                     }
                 }
                 LOGGER.info("Portfolio component repository metadata analysis complete");

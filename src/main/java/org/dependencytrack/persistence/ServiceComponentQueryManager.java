@@ -114,7 +114,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
     public List<ServiceComponent> getAllServiceComponents() {
         final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class);
         query.setOrdering("id asc");
-        return query.executeResultList(ServiceComponent.class);
+        return query.executeList();
     }
 
     /**

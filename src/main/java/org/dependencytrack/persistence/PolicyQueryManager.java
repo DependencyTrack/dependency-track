@@ -82,7 +82,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
-        return query.executeResultList(Policy.class);
+        return query.executeList();
     }
 
     /**
@@ -190,7 +190,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("timestamp desc, project.name, project.version, component.name, component.version");
         }
-        return query.executeResultList(PolicyViolation.class);
+        return query.executeList();
     }
 
     /**

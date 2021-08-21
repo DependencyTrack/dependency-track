@@ -104,7 +104,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     public List<Component> getAllComponents() {
         final Query<Component> query = pm.newQuery(Component.class);
         query.setOrdering("id asc");
-        return query.executeResultList(Component.class);
+        return query.executeList();
     }
 
     /**

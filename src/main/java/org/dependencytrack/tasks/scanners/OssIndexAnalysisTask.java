@@ -161,7 +161,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 }
             }
             if (CollectionUtils.isEmpty(coordinates)) {
-                return;
+                paginatedComponents.nextPage();
+                continue;
             }
             final JSONObject json = new JSONObject();
             json.put("coordinates", coordinates);

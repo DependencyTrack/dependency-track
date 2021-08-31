@@ -160,18 +160,17 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                     }
                 }
             }
-            if (CollectionUtils.isEmpty(coordinates)) {
-                return;
+            if (!CollectionUtils.isEmpty(coordinates)) {
+                final JSONObject json = new JSONObject();
+                json.put("coordinates", coordinates);
+                try {
+                    final List<ComponentReport> report = submit(json);
+                    processResults(report, paginatedList);
+                } catch (UnirestException e) {
+                    handleRequestException(LOGGER, e);
+                }
+                LOGGER.info("Analyzing " + coordinates.size() + " component(s)");
             }
-            final JSONObject json = new JSONObject();
-            json.put("coordinates", coordinates);
-            try {
-                final List<ComponentReport> report = submit(json);
-                processResults(report, paginatedList);
-            } catch (UnirestException e) {
-                handleRequestException(LOGGER, e);
-            }
-            LOGGER.info("Analyzing " + coordinates.size() + " component(s)");
             paginatedComponents.nextPage();
         }
     }

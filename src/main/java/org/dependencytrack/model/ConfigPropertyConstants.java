@@ -57,8 +57,13 @@ public enum ConfigPropertyConstants {
     KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
     KENNA_TOKEN("integrations", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security"),
     KENNA_CONNECTOR_ID("integrations", "kenna.connector.id", null, PropertyType.STRING, "The Kenna Security connector identifier to upload to"),
-    ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio");
-
+    ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio"),
+    JIRA_ENABLED("integrations", "jira.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable JIRA"),
+    JIRA_URL("integrations", "jira.url", null, PropertyType.STRING, "The base URL of the JIRA server"),
+    JIRA_USERNAME("integrations", "jira.username", null, PropertyType.STRING, "The username to authenticate with towards JIRA"),
+    JIRA_PASSWORD("integrations", "jira.password", null, PropertyType.ENCRYPTEDSTRING, "The password for the username used for authentication"),
+    JIRA_PROJECT("integrations", "jira.project", null, PropertyType.STRING, "The optional default Jira project to create notifications in"),
+    JIRA_ISSUETYPE("integrations", "jira.issuetype", null, PropertyType.STRING, "The optional default Jira issue type");
 
     private String groupName;
     private String propertyName;

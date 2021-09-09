@@ -99,10 +99,11 @@ public class UserResource extends AlpineResource {
             final String token = jwt.createToken(principal, permissions);
             return Response.ok(token).build();
         } catch (AlpineAuthenticationException e) {
-            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
             if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / account is suspended / username: " + username);
                 return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
             } else {
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / invalid credentials / username: " + username);
                 return Response.status(Response.Status.UNAUTHORIZED).entity(e.getCauseType().name()).build();
             }
         }
@@ -204,10 +205,11 @@ public class UserResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Changing passwords for non-managed users is not forbidden. Password not changed.").build();
             }
         } catch (AlpineAuthenticationException e) {
-            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / username: " + username);
             if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType() || AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT == e.getCauseType()) {
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / account is suspended / username: " + username);
                 return Response.status(Response.Status.FORBIDDEN).entity(e.getCauseType().name()).build();
             } else {
+                super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_FAILURE, "Unauthorized login attempt / invalid credentials / username: " + username);
                 return Response.status(Response.Status.UNAUTHORIZED).entity(e.getCauseType().name()).build();
             }
         }

@@ -1,0 +1,21 @@
+{% if notification.group == "NEW_VULNERABILITY" %}
+{# @pebvariable name="subject" type="org.dependencytrack.notification.vo.NewVulnerabilityIdentified" #}
+{
+"summary": "New vulnerability identified in project {{ subject.component.project | escape(strategy="json") }}, component {{ subject.component.toString | escape(strategy="json") }} with a severity of {{ subject.vulnerability.severity | escape(strategy="json") }}",
+"description": "{{ subject.vulnerability.description | escape(strategy="json") }}"
+}
+{% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+{# @pebvariable name="subject" type="org.dependencytrack.notification.vo.NewVulnerableDependency" #}
+{
+"summary": "A new vulable component {{ subject.component }} was added to a monitored project",
+"description: "List of vulnerabilities:
+{% for vulnerability in subject.vulnerabilities %}
+Vulnerability ID:  {{ vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ vulnerability.source }}&vulnId={{ vulnerability.vulnId }}
+Severity:          {{ vulnerability.severity }}
+Source:            {{ vulnerability.source }}
+Description:       {{ vulnerability.description }}
+{% endfor %}
+"
+}
+{% endif %}

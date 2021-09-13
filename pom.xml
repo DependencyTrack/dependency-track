@@ -90,7 +90,7 @@
         <lib.lucene.version>8.9.0</lib.lucene.version>
         <lib.packageurl.version>1.4.0</lib.packageurl.version>
         <lib.pebble.version>3.1.5</lib.pebble.version>
-        <lib.unirest.version>3.12.0</lib.unirest.version>
+        <lib.unirest.version>3.13.0</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>

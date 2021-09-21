@@ -147,6 +147,20 @@ public class ModelConverter {
             }
         }
 
+        if (cycloneDxComponent.getExternalReferences() != null && cycloneDxComponent.getExternalReferences().size() > 0) {
+            List<ExternalReference> references = new ArrayList<>();
+            for (org.cyclonedx.model.ExternalReference cycloneDxRef: cycloneDxComponent.getExternalReferences()) {
+                ExternalReference ref = new ExternalReference();
+                ref.setType(cycloneDxRef.getType());
+                ref.setUrl(cycloneDxRef.getUrl());
+                ref.setComment(cycloneDxRef.getComment());
+                references.add(ref);
+            }
+            component.setExternalReferences(references);
+        } else {
+            component.setExternalReferences(null);
+        }
+
         if (cycloneDxComponent.getComponents() != null && !cycloneDxComponent.getComponents().isEmpty()) {
             final Collection<Component> components = new ArrayList<>();
             for (int i = 0; i < cycloneDxComponent.getComponents().size(); i++) {
@@ -220,6 +234,20 @@ public class ModelConverter {
             final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
+        }
+
+        if (component.getExternalReferences() != null && component.getExternalReferences().size() > 0) {
+            List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();
+            for (ExternalReference ref: component.getExternalReferences()) {
+                org.cyclonedx.model.ExternalReference cdxRef = new org.cyclonedx.model.ExternalReference();
+                cdxRef.setType(ref.getType());
+                cdxRef.setUrl(ref.getUrl());
+                cdxRef.setComment(ref.getComment());
+                references.add(cdxRef);
+            }
+            cycloneComponent.setExternalReferences(references);
+        } else {
+            cycloneComponent.setExternalReferences(null);
         }
 
         /*

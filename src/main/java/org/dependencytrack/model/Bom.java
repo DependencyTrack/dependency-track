@@ -82,6 +82,14 @@ public class Bom implements Serializable {
     @Column(name = "SPEC_VERSION")
     private String specVersion;
 
+    @Persistent
+    @Column(name = "BOM_VERSION")
+    private Integer bomVersion;
+
+    @Persistent
+    @Column(name = "SERIAL_NUMBER")
+    private String serialNumber;
+
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
@@ -123,6 +131,22 @@ public class Bom implements Serializable {
 
     public void setSpecVersion(String specVersion) {
         this.specVersion = specVersion;
+    }
+
+    public Integer getBomVersion() {
+        return bomVersion;
+    }
+
+    public void setBomVersion(Integer bomVersion) {
+        this.bomVersion = bomVersion;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
     }
 
     public Project getProject() {

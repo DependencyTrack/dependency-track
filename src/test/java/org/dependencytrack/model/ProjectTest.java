@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.dependencytrack.PersistenceCapableTest;
 import java.util.Date;
+import java.util.UUID;
 
 public class ProjectTest extends PersistenceCapableTest {
 
@@ -29,7 +30,7 @@ public class ProjectTest extends PersistenceCapableTest {
     public void testProjectPersistence() {
         Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, true, false);
         Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, true, false);
-        Bom bom = qm.createBom(p1, new Date(), Bom.Format.CYCLONEDX, "1.1");
+        Bom bom = qm.createBom(p1, new Date(), Bom.Format.CYCLONEDX, "1.1", 1, UUID.randomUUID().toString());
 
         Assert.assertEquals("Example Project 1", p1.getName());
         Assert.assertEquals("Example Project 2", p2.getName());

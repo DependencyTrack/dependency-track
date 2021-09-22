@@ -51,12 +51,14 @@ final class BomQueryManager extends QueryManager implements IQueryManager {
      * @param imported the Date when the bom was imported
      * @return a new Bom object
      */
-    public Bom createBom(Project project, Date imported, Bom.Format format, String version) {
+    public Bom createBom(Project project, Date imported, Bom.Format format, String specVersion, Integer bomVersion, String serialNumber) {
         final Bom bom = new Bom();
         bom.setImported(imported);
         bom.setProject(project);
         bom.setBomFormat(format);
-        bom.setSpecVersion(version);
+        bom.setSpecVersion(specVersion);
+        bom.setBomVersion(bomVersion);
+        bom.setSerialNumber(serialNumber);
         return persist(bom);
     }
 

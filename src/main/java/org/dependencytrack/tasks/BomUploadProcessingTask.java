@@ -79,6 +79,8 @@ public class BomUploadProcessingTask implements Subscriber {
                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 final Bom.Format bomFormat;
                 final String bomSpecVersion;
+                final Integer bomVersion;
+                final String serialNumnber;
                 org.cyclonedx.model.Bom cycloneDxBom = null;
                 if (BomParserFactory.looksLikeCycloneDX(bomBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
@@ -87,6 +89,8 @@ public class BomUploadProcessingTask implements Subscriber {
                         final Parser parser = BomParserFactory.createParser(bomBytes);
                         cycloneDxBom = parser.parse(bomBytes);
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
+                        bomVersion = cycloneDxBom.getVersion();
+                        serialNumnber = (cycloneDxBom.getSerialNumber() != null) ? cycloneDxBom.getSerialNumber().replaceFirst("urn:uuid:", "") : null;
                         components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
                         services = ModelConverter.convertServices(qm, cycloneDxBom, project);
                     } else {
@@ -106,7 +110,7 @@ public class BomUploadProcessingTask implements Subscriber {
                         .content("A " + bomFormat.getFormatShortName() + " BOM was consumed and will be processed")
                         .subject(new BomConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(bomBytes), bomFormat, bomSpecVersion)));
                 final Date date = new Date();
-                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion);
+                final Bom bom = qm.createBom(project, date, bomFormat, bomSpecVersion, bomVersion, serialNumnber);
                 for (final Component component: components) {
                     processComponent(qm, bom, component, flattenedComponents);
                 }

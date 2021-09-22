@@ -72,6 +72,12 @@ public class OssIndexParser {
             vulnerability.setCwe(vulnObject.optString("cwe", null));
             vulnerability.setCve(vulnObject.optString("cve", null));
             vulnerability.setReference(vulnObject.optString("reference", null));
+            final JSONArray externalRefsJSONArray = vulnObject.optJSONArray("externalReferences");
+            final List<String> externalReferences = new ArrayList<String>();
+            for (int j = 0; j < externalRefsJSONArray.length(); j++) {
+                externalReferences.add(externalRefsJSONArray.getString(j));
+            }
+            vulnerability.setExternalReferences(externalReferences);
             componentReport.addVulnerability(vulnerability);
         }
         return componentReport;

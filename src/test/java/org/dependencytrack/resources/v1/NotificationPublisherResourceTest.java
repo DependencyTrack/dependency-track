@@ -63,13 +63,13 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
-        Assert.assertEquals(5, json.size());
-        Assert.assertEquals("Console", json.getJsonObject(0).getString("name"));
-        Assert.assertEquals("Displays notifications on the system console", json.getJsonObject(0).getString("description"));
-        Assert.assertEquals("text/plain", json.getJsonObject(0).getString("templateMimeType"));
+        Assert.assertEquals(6, json.size());
+        Assert.assertEquals("Console", json.getJsonObject(1).getString("name"));
+        Assert.assertEquals("Displays notifications on the system console", json.getJsonObject(1).getString("description"));
+        Assert.assertEquals("text/plain", json.getJsonObject(1).getString("templateMimeType"));
         Assert.assertNotNull("template");
-        Assert.assertTrue(json.getJsonObject(0).getBoolean("defaultPublisher"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getJsonObject(0).getString("uuid")));
+        Assert.assertTrue(json.getJsonObject(1).getBoolean("defaultPublisher"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getJsonObject(1).getString("uuid")));
     }
 
     @Test

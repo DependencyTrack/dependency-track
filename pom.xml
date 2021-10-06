@@ -85,12 +85,12 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.0</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>5.0.2</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>5.0.4</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.3</lib.jaxb.runtime.version>
         <lib.lucene.version>8.9.0</lib.lucene.version>
         <lib.packageurl.version>1.4.0</lib.packageurl.version>
         <lib.pebble.version>3.1.5</lib.pebble.version>
-        <lib.unirest.version>3.12.0</lib.unirest.version>
+        <lib.unirest.version>3.13.0</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.0</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>8.4.1.jre11</lib.jdbc-driver.mssql.version>
@@ -265,7 +265,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.11.2</version>
+            <version>3.12.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

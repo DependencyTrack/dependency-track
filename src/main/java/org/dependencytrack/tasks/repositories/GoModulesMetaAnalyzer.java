@@ -60,7 +60,7 @@ public class GoModulesMetaAnalyzer extends AbstractMetaAnalyzer {
     public MetaModel analyze(final Component component) {
         final var meta = new MetaModel(component);
 
-        if (component.getPurl() == null) {
+        if (component.getPurl() == null || component.getPurl().getNamespace() == null) {
             return meta;
         }
 

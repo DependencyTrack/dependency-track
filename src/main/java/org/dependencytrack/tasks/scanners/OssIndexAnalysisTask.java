@@ -313,8 +313,17 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             }
         }
 
-        if (reportedVuln.getReference() != null) {
-            vulnerability.setReferences("* [" + reportedVuln.getReference() + "](" + reportedVuln.getReference() + ")");
+        final StringBuilder sb = new StringBuilder();
+        final String reference = reportedVuln.getReference();
+        if (reference != null) {
+            sb.append("* [").append(reference).append("](").append(reference).append(")\n");
+        }
+        for (String externalReference: reportedVuln.getExternalReferences()) {
+            sb.append("* [").append(externalReference).append("](").append(externalReference).append(")\n");
+        }
+        final String references = sb.toString();
+        if (references.length() > 0) {
+            vulnerability.setReferences(references.substring(0, references.lastIndexOf("\n")));
         }
 
         if (reportedVuln.getCvssVector() != null) {

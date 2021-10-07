@@ -41,6 +41,7 @@ import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
 import javax.json.JsonObject;
 import javax.validation.constraints.NotBlank;
@@ -64,6 +65,7 @@ import java.util.UUID;
         @FetchGroup(name = "ALL", members = {
                 @Persistent(name = "project"),
                 @Persistent(name = "resolvedLicense"),
+                @Persistent(name = "externalReferences"),
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
                 @Persistent(name = "vulnerabilities"),
@@ -274,6 +276,11 @@ public class Component implements Serializable {
     @Column(name = "DIRECT_DEPENDENCIES", jdbcType = "CLOB")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String directDependencies; // This will be a JSON string
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "EXTERNAL_REFERENCES")
+    @Serialized
+    private List<ExternalReference> externalReferences;
 
     @Persistent
     @Column(name = "PARENT_COMPONENT_ID")
@@ -606,6 +613,21 @@ public class Component implements Serializable {
 
     public void setDirectDependencies(String directDependencies) {
         this.directDependencies = directDependencies;
+    }
+
+    public List<ExternalReference> getExternalReferences() {
+        return externalReferences;
+    }
+
+    public void addExternalReference(ExternalReference externalReferences) {
+        if (this.externalReferences == null) {
+            this.externalReferences = new ArrayList<>();
+        }
+        this.externalReferences.add(externalReferences);
+    }
+
+    public void setExternalReferences(List<ExternalReference> externalReferences) {
+        this.externalReferences = externalReferences;
     }
 
     public Component getParent() {

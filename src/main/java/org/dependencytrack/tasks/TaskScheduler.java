@@ -73,8 +73,8 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         // Creates a new event that executes every 1 hour (3600000) after an initial 10 second (10000) delay
         scheduleEvent(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY), 10000, 3600000);
 
-        // Creates a new event that executes every 6 hours (21600000) after an initial 6 hour delay
-        scheduleEvent(new VulnerabilityAnalysisEvent(), 21600000, 21600000);
+        // Creates a new event that executes every 24 hours (86400000) after an initial 6 hour delay
+        scheduleEvent(new VulnerabilityAnalysisEvent(), 21600000, 86400000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 hour (3600000) delay
         scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);

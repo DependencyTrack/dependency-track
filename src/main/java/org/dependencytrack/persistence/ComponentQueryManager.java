@@ -242,10 +242,16 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
             if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += ")";
             query = pm.newQuery(Component.class);
+            if (orderBy == null) {
+                query.setOrdering("id asc");
+            }
             preprocessACLs(query, queryFilter, map, false);
             result = execute(query, map);
         } else if (identity.getPurl() != null) {
             query = pm.newQuery(Component.class);
+            if (orderBy == null) {
+                query.setOrdering("id asc");
+            }
             final Map<String, Object> params = new HashMap<>();
             final String queryFilter = "(purl.toLowerCase().matches(:purl))";
             final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
@@ -254,6 +260,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             result = execute(query, params);
         } else if (identity.getCpe() != null) {
             query = pm.newQuery(Component.class);
+            if (orderBy == null) {
+                query.setOrdering("id asc");
+            }
             final Map<String, Object> params = new HashMap<>();
             final String queryFilter = "(cpe.toLowerCase().matches(:cpe))";
             final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
@@ -262,6 +271,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             result = execute(query, params);
         } else if (identity.getSwidTagId() != null) {
             query = pm.newQuery(Component.class);
+            if (orderBy == null) {
+                query.setOrdering("id asc");
+            }
             final Map<String, Object> params = new HashMap<>();
             final String queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
             final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";

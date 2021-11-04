@@ -24,7 +24,6 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
-import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.common.UnirestFactory;
@@ -94,23 +93,29 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                     .getJSONObject("packages")
                     .getJSONObject(component.getPurl().getNamespace() + "/" + component.getPurl().getName());
 
-            final JSONArray versions = composerPackage.names();
-
-            final ComparableVersion latestVersion = new ComparableVersion(component.getPurl().getVersion());
+            final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
             final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
-            versions.forEach(version -> {
-                // For now only the dev versions are excluded. Later a more sophisticated semver parser can be added.
-                if (((String) version).startsWith("dev-") ||
-                        ((String) version).endsWith("-dev") ||
-                        latestVersion.compareTo(new ComparableVersion((String) version)) > 0) {
+            composerPackage.names().forEach(key_ -> {
+                String key = (String) key_;
+                if (key.startsWith("dev-") || key.endsWith("-dev")) {
+                    // dev versions are excluded, since they are not pinned but a VCS-branch.
                     return;
                 }
 
-                latestVersion.parseVersion((String) version);
-                meta.setLatestVersion(latestVersion.toString());
+                final String version_normalized = composerPackage.getJSONObject(key).getString("version_normalized");
+                ComparableVersion currentComparableVersion = new ComparableVersion(version_normalized);
+                if ( currentComparableVersion.compareTo(latestVersion) < 0)
+                {
+                    // smaller version can be skipped
+                    return;
+                }
 
-                final String published = composerPackage.getJSONObject((String) version).getString("time");
+                final String version = composerPackage.getJSONObject(key).getString("version");
+                latestVersion.parseVersion(stripLeadingV(version_normalized));
+                meta.setLatestVersion(version);
+
+                final String published = composerPackage.getJSONObject(key).getString("time");
                 try {
                     meta.setPublishedTimestamp(dateFormat.parse(published));
                 } catch (ParseException e) {
@@ -122,5 +127,11 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         }
 
         return meta;
+    }
+
+    private static String stripLeadingV(String s) {
+        return s.startsWith("v")
+                ? s.substring(1)
+                : s;
     }
 }

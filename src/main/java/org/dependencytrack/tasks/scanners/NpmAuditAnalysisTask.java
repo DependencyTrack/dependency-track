@@ -84,10 +84,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @return true if NpmAuditAnalysisTask should analyze, false if not
      */
     public boolean isCapable(final PackageURL purl) {
-        if (purl == null) {
-            return false;
-        }
-        return "npm".equals(purl.getType());
+        return purl != null && PackageURL.StandardTypes.NPM.equals(purl.getType());
     }
 
     /**

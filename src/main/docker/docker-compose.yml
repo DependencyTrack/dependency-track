@@ -50,6 +50,7 @@ services:
     # Optional OpenID Connect (OIDC) Properties
     # - ALPINE_OIDC_ENABLED=true
     # - ALPINE_OIDC_ISSUER=https://auth.example.com/auth/realms/example
+    # - ALPINE_OIDC_CLIENT_ID=
     # - ALPINE_OIDC_USERNAME_CLAIM=preferred_username
     # - ALPINE_OIDC_TEAMS_CLAIM=groups
     # - ALPINE_OIDC_USER_PROVISIONING=true

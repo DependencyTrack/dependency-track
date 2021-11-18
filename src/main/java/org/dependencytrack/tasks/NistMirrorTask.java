@@ -48,6 +48,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.NVD_FEEDS_URL;
+
 /**
  * Subscriber task that performs a mirror of the National Vulnerability Database.
  *
@@ -66,11 +68,11 @@ public class NistMirrorTask implements LoggableSubscriber {
     }
 
     public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
-    private static final String CPE_DICTIONARY_23_XML = "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz";
-    private static final String CVE_JSON_11_MODIFIED_URL = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz";
-    private static final String CVE_JSON_11_BASE_URL = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz";
-    private static final String CVE_JSON_11_MODIFIED_META = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.meta";
-    private static final String CVE_JSON_11_BASE_META = "https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.meta";
+    private static final String CPE_DICTIONARY_23_XML = NVD_FEEDS_URL + "/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz";
+    private static final String CVE_JSON_11_MODIFIED_URL = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
+    private static final String CVE_JSON_11_BASE_URL = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
+    private static final String CVE_JSON_11_MODIFIED_META = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-modified.meta";
+    private static final String CVE_JSON_11_BASE_META = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-%d.meta";
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
     private File outputDir;

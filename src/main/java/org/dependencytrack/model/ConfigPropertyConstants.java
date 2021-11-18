@@ -57,6 +57,7 @@ public enum ConfigPropertyConstants {
     KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
     KENNA_TOKEN("integrations", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security"),
     KENNA_CONNECTOR_ID("integrations", "kenna.connector.id", null, PropertyType.STRING, "The Kenna Security connector identifier to upload to"),
+    NVD_FEEDS_URL("integrations", "nvd.feeds.url", "https://nvd.nist.gov/feeds", PropertyType.STRING, "NIST Mirror base Url : https://nvd.nist.gov/feeds"),
     ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio");
 
 

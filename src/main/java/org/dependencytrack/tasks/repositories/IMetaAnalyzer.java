@@ -99,7 +99,7 @@ public interface IMetaAnalyzer {
                 if (analyzer.isApplicable(component)) {
                     return analyzer;
                 }
-            } else if ("hex".equals(component.getPurl().getType())) {
+            } else if (PackageURL.StandardTypes.HEX.equals(component.getPurl().getType())) {
                 IMetaAnalyzer analyzer = new HexMetaAnalyzer();
                 if (analyzer.isApplicable(component)) {
                     return analyzer;

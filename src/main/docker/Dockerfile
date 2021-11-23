@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM eclipse-temurin:17
 LABEL maintainer="steve.springett@owasp.org"
 LABEL vendor="OWASP"
 

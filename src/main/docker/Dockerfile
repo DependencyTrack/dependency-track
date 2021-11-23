@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17
+FROM eclipse-temurin:17-alpine
 LABEL maintainer="steve.springett@owasp.org"
 LABEL vendor="OWASP"
 

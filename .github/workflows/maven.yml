@@ -1,6 +1,14 @@
 name: CI Build
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      skipTests:
+        description: 'Should tests be skipped (true/false)?'
+        required: true
+        default: "false"
 
 jobs:
   build:
@@ -44,7 +52,7 @@ jobs:
         mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
     - name: Publish test coverage
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/master' && ${{ github.event.inputs.skipTests }} == 'false'
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml

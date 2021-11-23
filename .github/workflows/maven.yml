@@ -51,6 +51,9 @@ jobs:
         mvn clean -P clean-exclude-wars
         mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
+    - name: Execute unit tests
+      if: github.event.inputs.skipTests == 'false'
+      run: mvn test
     - name: Publish test coverage
       if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests == 'false'
       env:

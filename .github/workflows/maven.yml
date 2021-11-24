@@ -52,10 +52,10 @@ jobs:
         mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
     - name: Execute unit tests
-      if: github.event.inputs.skipTests == 'false'
+      if: github.event.inputs.skipTests != 'true'
       run: mvn test
     - name: Publish test coverage
-      if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests == 'false'
+      if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests != 'true'
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml

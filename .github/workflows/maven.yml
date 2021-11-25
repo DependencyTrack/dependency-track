@@ -61,29 +61,17 @@ jobs:
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
+    - name: Logging into Docker Hub
+      if: github.ref == 'refs/heads/master'
+      env:
+        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
+        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
+      run: docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN"
     - name: Building Docker API Server container
-      run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 .
-    - name: Listing Docker images
-      run: docker images
-    - name: Publishing API Server container to Docker Hub
       if: github.ref == 'refs/heads/master'
-      env:
-        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
-        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |
-        docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
-        docker push $DOCKER_APISERVER_REPO:$DOCKER_TAG;
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 --push .
     - name: Building Docker bundled container
-      run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
-    - name: Listing Docker images
-      run: docker images
-    - name: Publishing bundled container to Docker Hub
       if: github.ref == 'refs/heads/master'
-      env:
-        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
-        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |
-        docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
-        docker push $DOCKER_BUNDLED_REPO:$DOCKER_TAG;
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 --push .

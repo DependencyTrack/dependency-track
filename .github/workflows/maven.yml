@@ -64,6 +64,8 @@ jobs:
     - name: Building Docker API Server container
       run: |
         docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 .
+    - name: Listing Docker images
+      run: docker images
     - name: Publishing API Server container to Docker Hub
       if: github.ref == 'refs/heads/master'
       env:

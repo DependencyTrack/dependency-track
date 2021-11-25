@@ -73,6 +73,9 @@ jobs:
     - name: Building Docker bundled container
       run: |
         docker buildx build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
+    - name: Listing Docker images
+      run: |
+        docker images;
     - name: Publishing bundled container to Docker Hub
       if: github.ref == 'refs/heads/master'
       env:

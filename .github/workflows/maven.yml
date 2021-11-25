@@ -25,8 +25,10 @@ jobs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
     - name: Set up Docker Buildx
-      id: buildx
       uses: docker/setup-buildx-action@v1
+      id: buildx
+      with:
+        install: true
     - name: Available platforms
       run: echo ${{ steps.buildx.outputs.platforms }}
     - name: Set up JDK
@@ -61,9 +63,7 @@ jobs:
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
     - name: Building Docker API Server container
       run: |
-        docker buildx build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 .
-    - name: Listing Docker images
-      run: docker images
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 .
     - name: Publishing API Server container to Docker Hub
       if: github.ref == 'refs/heads/master'
       env:
@@ -74,7 +74,7 @@ jobs:
         docker push $DOCKER_APISERVER_REPO:$DOCKER_TAG;
     - name: Building Docker bundled container
       run: |
-        docker buildx build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
     - name: Listing Docker images
       run: docker images
     - name: Publishing bundled container to Docker Hub

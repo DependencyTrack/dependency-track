@@ -156,7 +156,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (excludeInactive) {
             query.setFilter("active == true || active == null");
         }
-        query.setOrdering("name asc");
+        query.setOrdering("id asc");
         return query.executeList();
     }
 

@@ -113,13 +113,15 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     }
 
     /**
-     * Determines if the {@link OssIndexAnalysisTask} is capable of analyzing the specified PackageURL.
+     * Determines if the {@link OssIndexAnalysisTask} is capable of analyzing the specified Component.
      *
-     * @param purl the PackageURL to analyze
+     * @param component the Component to analyze
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
-    public boolean isCapable(final PackageURL purl) {
-        return purl != null && purl.getName() != null && purl.getVersion() != null;
+    public boolean isCapable(final Component component) {
+        return component.getPurl() != null
+                && component.getPurl().getName() != null
+                && component.getPurl().getVersion() != null;
     }
 
     /**
@@ -151,7 +153,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             final List<String> coordinates = new ArrayList<>();
             final List<Component> paginatedList = paginatedComponents.getPaginatedList();
             for (final Component component: paginatedList) {
-                if (!component.isInternal() && isCapable(component.getPurl())) {
+                if (!component.isInternal() && isCapable(component)) {
                     if (!isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString())) {
                         //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
                         coordinates.add(minimizePurl(component.getPurl()));
@@ -242,7 +244,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                         /*
                         Found the component
                          */
-                        final Component component = qm.getObjectById(Component.class, c.getId()); // Refresh component and attach to current pm.
+                        final Component component = qm.getObjectByUuid(Component.class, c.getUuid()); // Refresh component and attach to current pm.
+                        if (component == null) continue;
                         for (final ComponentReportVulnerability reportedVuln: componentReport.getVulnerabilities()) {
                             if (reportedVuln.getCve() != null) {
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(

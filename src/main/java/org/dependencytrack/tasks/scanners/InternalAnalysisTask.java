@@ -21,7 +21,6 @@ package org.dependencytrack.tasks.scanners;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -63,13 +62,13 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
     }
 
     /**
-     * Determines if the {@link InternalAnalysisTask} is capable of analyzing the specified PackageURL.
+     * Determines if the {@link InternalAnalysisTask} is capable of analyzing the specified Component.
      *
-     * @param purl the PackageURL to analyze
+     * @param component the Component to analyze
      * @return true if InternalAnalysisTask should analyze, false if not
      */
-    public boolean isCapable(final PackageURL purl) {
-        return true;
+    public boolean isCapable(final Component component) {
+        return component.getCpe() != null;
     }
 
     /**
@@ -81,7 +80,8 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
         try (QueryManager qm = new QueryManager()) {
             for (final Component c : components) {
-                final Component component = qm.getObjectById(Component.class, c.getId()); // Refresh component and attach to current pm.
+                final Component component = qm.getObjectByUuid(Component.class, c.getUuid()); // Refresh component and attach to current pm.
+                if (component == null) continue;
                 versionRangeAnalysis(qm, component);
                 if (fuzzyEnabled) {
                     if (component.getPurl() == null || !excludeComponentsWithPurl) {

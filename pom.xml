@@ -87,7 +87,7 @@
         <lib.cvss-calculator.version>1.4.0</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>5.0.4</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.3</lib.jaxb.runtime.version>
-        <lib.lucene.version>8.9.0</lib.lucene.version>
+        <lib.lucene.version>8.11.0</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.1.5</lib.pebble.version>
         <lib.unirest.version>3.13.0</lib.unirest.version>
@@ -219,7 +219,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.2.6</version>
+            <version>6.2.7</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>

@@ -24,16 +24,16 @@ import alpine.model.ConfigProperty;
 import alpine.tasks.AlpineTaskScheduler;
 import alpine.util.BooleanUtil;
 import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
-import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
+import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
+import org.dependencytrack.event.PortfolioVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -73,8 +73,8 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         // Creates a new event that executes every 1 hour (3600000) after an initial 10 second (10000) delay
         scheduleEvent(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY), 10000, 3600000);
 
-        // Creates a new event that executes every 24 hours (86400000) after an initial 6 hour delay
-        scheduleEvent(new VulnerabilityAnalysisEvent(), 21600000, 86400000);
+        // Creates a new event that executes every 24 hours (86400000) after an initial 6 hour (21600000) delay
+        scheduleEvent(new PortfolioVulnerabilityAnalysisEvent(), 21600000, 86400000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 hour (3600000) delay
         scheduleEvent(new RepositoryMetaEvent(), 3600000, 86400000);

@@ -12,66 +12,79 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     env:
       DOCKER_APISERVER_REPO: dependencytrack/apiserver
       DOCKER_BUNDLED_REPO: dependencytrack/bundled
       DOCKER_TAG: snapshot
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2.3.4
+      uses: actions/checkout@v2
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
       id: buildx
       with:
         install: true
+
     - name: Available platforms
       run: echo ${{ steps.buildx.outputs.platforms }}
+
     - name: Set up JDK
       uses: actions/setup-java@v2
       with:
-        distribution: 'adopt'
+        distribution: 'temurin'
         java-version: '11'
-    - name: Install tools
-      run: |
-        sudo apt-get install jq
-        wget -O ~/codacy-coverage-reporter-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
-        export DOCKLE_VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        wget -O ~/dockle.tar.gz https://github.com/goodwithtech/dockle/releases/download/v${DOCKLE_VERSION}/dockle_${DOCKLE_VERSION}_Linux-64bit.tar.gz
-        tar zxvf ~/dockle.tar.gz -C ~/
-        export TRIVY_VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-        wget -O ~/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
-        tar zxvf ~/trivy.tar.gz -C ~/
+        cache: 'maven'
+
     - name: Build with Maven
-      run: |
+      run: |-
         mvn clean
         mvn package -Dmaven.test.skip=true -P clean-exclude-wars -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
         mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
+
     - name: Execute unit tests
       if: github.event.inputs.skipTests != 'true'
       run: mvn test
+
     - name: Publish test coverage
       if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests != 'true'
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
+
     - name: Logging into Docker Hub
       if: github.ref == 'refs/heads/master'
       env:
         HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
         HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
-      run: docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN"
+      run: docker login -u "${HUB_USERNAME}" -p "${HUB_ACCESSS_TOKEN}"
+
     - name: Building Docker API Server container
       if: github.ref == 'refs/heads/master'
-      run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 --push .
+      run: |-
+        docker build -f src/main/docker/Dockerfile \
+          --build-arg COMMIT_SHA=${GITHUB_SHA} \
+          --build-arg APP_VERSION=${DOCKER_TAG} \
+          --build-arg WAR_FILENAME=dependency-track-apiserver.jar \
+          -t ${DOCKER_APISERVER_REPO}:${DOCKER_TAG} \
+          --platform linux/amd64,linux/arm64 \
+          --push .
+
     - name: Building Docker bundled container
       if: github.ref == 'refs/heads/master'
-      run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 --push .
+      run: |-
+        docker build -f src/main/docker/Dockerfile \
+          --build-arg COMMIT_SHA=${GITHUB_SHA} \
+          --build-arg APP_VERSION=${DOCKER_TAG} \
+          --build-arg WAR_FILENAME=dependency-track-bundled.jar \
+          -t ${DOCKER_BUNDLED_REPO}:${DOCKER_TAG} \
+          --platform linux/amd64,linux/arm64 \
+          --push .

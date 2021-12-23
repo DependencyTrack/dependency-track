@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.repositories;
 
 import com.github.packageurl.PackageURL;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 
@@ -37,6 +38,14 @@ public interface IMetaAnalyzer {
      * @since 3.1.0
      */
     void setRepositoryBaseUrl(String baseUrl);
+
+    /**
+     * Sets the UsernamePasswordCredentials for the repository being used. If not specified, IMetaAnalyzer implementations
+     * should fall back to a default value (if one is available).
+     * @param usernamePasswordCredentials the basicAuth required to the repository
+     * @since 3.1.0
+     */
+    void setRepositoryUsernamePasswordCredentials(UsernamePasswordCredentials usernamePasswordCredentials);
 
     /**
      * Returns the type of repositry the analyzer supports.
@@ -118,6 +127,10 @@ public interface IMetaAnalyzer {
             }
 
             @Override
+            public void setRepositoryUsernamePasswordCredentials(UsernamePasswordCredentials usernamePasswordCredentials) {
+            }
+
+            @Override
             public boolean isApplicable(Component component) {
                 return false;
             }
@@ -132,5 +145,4 @@ public interface IMetaAnalyzer {
             }
         };
     }
-
 }

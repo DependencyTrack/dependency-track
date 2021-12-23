@@ -21,10 +21,18 @@ package org.dependencytrack.tasks.repositories;
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.StatusLine;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -77,7 +85,19 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try {
                 final HttpUriRequest request = new HttpGet(url);
-                try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                final HttpClientContext context = HttpClientContext.create();
+                if (this.usernamePasswordCredentials != null) {
+                    final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+                    credsProvider.setCredentials(AuthScope.ANY, this.usernamePasswordCredentials);
+
+                    final AuthCache authCache = new BasicAuthCache();
+                    authCache.put(new HttpHost(request.getURI().getHost()), new BasicScheme());
+                    context.setCredentialsProvider(credsProvider);
+                    context.setAuthCache(authCache);
+                    LOGGER.debug("Calling with auth: " + url);
+                }
+
+                try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request, context)) {
                     final StatusLine status = response.getStatusLine();
                     if (status.getStatusCode() == 200) {
                         final HttpEntity entity = response.getEntity();

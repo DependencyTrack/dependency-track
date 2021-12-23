@@ -166,7 +166,9 @@ public class RepositoryResource extends AlpineResource {
                         StringUtils.trimToNull(jsonRepository.getIdentifier()),
                         StringUtils.trimToNull(jsonRepository.getUrl()),
                         jsonRepository.isEnabled(),
-                        jsonRepository.isInternal());
+                        jsonRepository.isInternal(),
+                        jsonRepository.getUsername(),
+                        jsonRepository.getPassword());
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A repository with the specified identifier already exists.").build();

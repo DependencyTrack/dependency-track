@@ -22,6 +22,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -81,6 +82,9 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
                         + repository.getIdentifier() + " (" + repository.getType() + ")");
                 analyzer.setRepositoryBaseUrl(repository.getUrl());
+                if (repository.getUsername() != null && repository.getPassword() != null) {
+                    analyzer.setRepositoryUsernamePasswordCredentials(new UsernamePasswordCredentials(repository.getUsername(), repository.getPassword()));
+                }
                 final MetaModel model = analyzer.analyze(component);
                 if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
                     // Resolution from repository was successful. Update meta model

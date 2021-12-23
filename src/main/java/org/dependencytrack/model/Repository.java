@@ -70,6 +70,18 @@ public class Repository implements Serializable {
     private String url;
 
     @Persistent
+    @Column(name = "USERNAME")
+    @NotBlank
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String username;
+
+    @Persistent
+    @Column(name = "PASSWORD")
+    @NotBlank
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    private String password;
+
+    @Persistent
     @Column(name = "RESOLUTION_ORDER")
     @NotNull
     private int resolutionOrder;
@@ -120,6 +132,22 @@ public class Repository implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public int getResolutionOrder() {

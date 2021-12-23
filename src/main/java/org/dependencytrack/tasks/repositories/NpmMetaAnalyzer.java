@@ -23,8 +23,6 @@ import com.github.packageurl.PackageURL;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
-import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 
@@ -62,7 +60,6 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(final Component component) {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
 
@@ -75,9 +72,7 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
 
             final String url = String.format(baseUrl + API_URL, packageName);
             try {
-                final HttpResponse<JsonNode> response = ui.get(url)
-                        .header("accept", "application/json")
-                        .asJson();
+                final HttpResponse<JsonNode> response = unirestGet(LOGGER, url);
                 if (response.getStatus() == 200) {
                     if (response.getBody() != null && response.getBody().getObject() != null) {
                         final String latest = response.getBody().getObject().optString("latest");

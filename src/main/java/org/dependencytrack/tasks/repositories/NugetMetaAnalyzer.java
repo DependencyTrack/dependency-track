@@ -78,12 +78,9 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private boolean performVersionCheck(final MetaModel meta, final Component component) {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = String.format(baseUrl + VERSION_QUERY_URL, component.getPurl().getName().toLowerCase());
         try {
-            final HttpResponse<JsonNode> response = ui.get(url)
-                    .header("accept", "application/json")
-                    .asJson();
+            final HttpResponse<JsonNode> response = unirestGet(LOGGER, url);
             if (response.getStatus() == 200) {
                 if (response.getBody() != null && response.getBody().getObject() != null) {
                     final JSONArray versions = response.getBody().getObject().getJSONArray("versions");

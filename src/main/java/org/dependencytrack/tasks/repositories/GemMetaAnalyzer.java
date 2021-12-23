@@ -20,13 +20,11 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
 
 /**
  * An IMetaAnalyzer implementation that supports Ruby Gems.
@@ -62,14 +60,11 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(final Component component) {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() != null) {
             final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
             try {
-                final HttpResponse<JsonNode> response = ui.get(url)
-                        .header("accept", "application/json")
-                        .asJson();
+                final HttpResponse<JsonNode> response = unirestGet(LOGGER, url);
                 if (response.getStatus() == 200) {
                     if (response.getBody() != null && response.getBody().getObject() != null) {
                         final String latest = response.getBody().getObject().getString("version");

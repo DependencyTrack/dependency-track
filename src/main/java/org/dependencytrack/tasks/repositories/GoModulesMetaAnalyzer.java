@@ -23,10 +23,8 @@ import com.github.packageurl.PackageURL;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import java.text.ParseException;
@@ -64,13 +62,10 @@ public class GoModulesMetaAnalyzer extends AbstractMetaAnalyzer {
             return meta;
         }
 
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = String.format(baseUrl + API_URL, caseEncode(component.getPurl().getNamespace()), caseEncode(component.getPurl().getName()));
 
         try {
-            final HttpResponse<JsonNode> response = ui.get(url)
-                    .header("accept", "application/json")
-                    .asJson();
+            final HttpResponse<JsonNode> response = unirestGet(LOGGER, url);
             if (response.getStatus() == 200) {
                 if (response.getBody() != null && response.getBody().getObject() != null) {
                     final JSONObject responseJson = response.getBody().getObject();

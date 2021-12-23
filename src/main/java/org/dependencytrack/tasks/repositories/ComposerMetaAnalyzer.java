@@ -23,10 +23,8 @@ import com.github.packageurl.PackageURL;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import java.text.DateFormat;
@@ -67,7 +65,6 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
      * {@inheritDoc}
      */
     public MetaModel analyze(final Component component) {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final MetaModel meta = new MetaModel(component);
         if (component.getPurl() == null) {
             return meta;
@@ -75,9 +72,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         final String url = String.format(baseUrl + API_URL, component.getPurl().getNamespace(), component.getPurl().getName());
         try {
-            final HttpResponse<JsonNode> response = ui.get(url)
-                    .header("accept", "application/json")
-                    .asJson();
+            final HttpResponse<JsonNode> response = unirestGet(LOGGER, url);
             if (response.getStatus() != 200) {
                 handleUnexpectedHttpResponse(LOGGER, url, response.getStatus(), response.getStatusText(), component);
                 return meta;

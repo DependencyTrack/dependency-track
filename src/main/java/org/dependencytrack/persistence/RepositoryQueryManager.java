@@ -116,13 +116,16 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
 
     /**
      * Creates a new Repository.
-     * @param type the type of repository
+     * @param type       the type of repository
      * @param identifier a unique (to the type) identifier for the repo
-     * @param url the URL to the repository
-     * @param enabled if the repo is enabled or not
+     * @param url        the URL to the repository
+     * @param enabled    if the repo is enabled or not
+     * @param internal   if the repo is enabled or not
+     * @param username   username if auth is required
+     * @param password   password if auth is required
      * @return the created Repository
      */
-    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal) {
+    public Repository createRepository(RepositoryType type, String identifier, String url, boolean enabled, boolean internal, String username, String password) {
         if (repositoryExist(type, identifier)) {
             return null;
         }
@@ -142,6 +145,8 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
         repo.setResolutionOrder(order + 1);
         repo.setEnabled(enabled);
         repo.setInternal(internal);
+        repo.setUsername(username);
+        repo.setPassword(password);
         return persist(repo);
     }
 

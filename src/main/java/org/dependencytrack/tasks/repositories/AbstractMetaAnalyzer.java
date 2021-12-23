@@ -21,7 +21,13 @@ package org.dependencytrack.tasks.repositories;
 import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -36,6 +42,7 @@ import org.dependencytrack.notification.NotificationScope;
 public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
 
     String baseUrl;
+    UsernamePasswordCredentials usernamePasswordCredentials;
 
     /**
      * {@inheritDoc}
@@ -49,6 +56,13 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
         this.baseUrl = baseUrl;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setRepositoryUsernamePasswordCredentials(UsernamePasswordCredentials usernamePasswordCredentials) {
+        this.usernamePasswordCredentials = usernamePasswordCredentials;
     }
 
     public void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText, final Component component) {
@@ -75,4 +89,19 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         );
     }
 
+    protected HttpResponse<JsonNode> unirestGet(final Logger logger, String url) throws UnirestException {
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
+        if (this.usernamePasswordCredentials == null) {
+            logger.debug("Calling without auth: " + url);
+            return ui.get(url)
+                    .header("accept", "application/json")
+                    .asJson();
+        } else {
+            logger.debug("Calling with auth: " + url);
+            return ui.get(url)
+                    .header("accept", "application/json")
+                    .basicAuth(usernamePasswordCredentials.getUserName(), usernamePasswordCredentials.getPassword())
+                    .asJson();
+        }
+    }
 }

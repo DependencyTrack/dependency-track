@@ -38,6 +38,8 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProjectResourceTest extends ResourceTest {
 
@@ -285,6 +287,63 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals("ABC", json.getString("name"));
         Assert.assertEquals("1.0", json.getString("version"));
         Assert.assertEquals("Test project", json.getString("description"));
+    }
+
+    @Test
+    public void updateProjectTagsTest() {
+        final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
+        final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+
+        final var jsonProject = new Project();
+        jsonProject.setUuid(p1.getUuid());
+        jsonProject.setName(p1.getName());
+        jsonProject.setVersion(p1.getVersion());
+        jsonProject.setTags(Stream.of("tag1", "tag2", "tag3").map(name -> {
+            var t = new Tag();
+            t.setName(name);
+            return t;
+        }).collect(Collectors.toList()));
+
+        // update the 1st time and add another tag
+        var response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonProject, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        var json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(p1.getName(), json.getString("name"));
+        Assert.assertEquals(p1.getVersion(), json.getString("version"));
+        Assert.assertFalse(json.containsKey("description"));
+        var jsonTags = json.getJsonArray("tags");
+        Assert.assertEquals(3, jsonTags.size());
+        Assert.assertEquals("tag1", jsonTags.get(0).asJsonObject().getString("name"));
+        Assert.assertEquals("tag2", jsonTags.get(1).asJsonObject().getString("name"));
+        Assert.assertEquals("tag3", jsonTags.get(2).asJsonObject().getString("name"));
+
+        // and update again with the same tags ... issue #1165
+        response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonProject, MediaType.APPLICATION_JSON));
+        json = parseJsonObject(response);
+        jsonTags = json.getJsonArray("tags");
+        Assert.assertEquals(3, jsonTags.size());
+        Assert.assertEquals("tag1", jsonTags.get(0).asJsonObject().getString("name"));
+        Assert.assertEquals("tag2", jsonTags.get(1).asJsonObject().getString("name"));
+        Assert.assertEquals("tag3", jsonTags.get(2).asJsonObject().getString("name"));
+
+        // and finally delete one of the tags
+        jsonProject.getTags().remove(0);
+        response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonProject, MediaType.APPLICATION_JSON));
+        json = parseJsonObject(response);
+        jsonTags = json.getJsonArray("tags");
+        Assert.assertEquals(2, jsonTags.size());
+        Assert.assertEquals("tag2", jsonTags.get(0).asJsonObject().getString("name"));
+        Assert.assertEquals("tag3", jsonTags.get(1).asJsonObject().getString("name"));
     }
 
     @Test

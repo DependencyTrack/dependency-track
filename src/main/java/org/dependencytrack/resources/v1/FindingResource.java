@@ -29,9 +29,13 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.integrations.FindingPackagingFormat;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.VulnerabilityUtil;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -39,8 +43,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing findings.
@@ -69,14 +77,21 @@ public class FindingResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
     public Response getFindingsByProject(@PathParam("uuid") String uuid,
                                          @ApiParam(value = "Optionally includes suppressed findings")
-                                         @QueryParam("suppressed") boolean suppressed) {
+                                         @QueryParam("suppressed") boolean suppressed,
+                                         @ApiParam(value = "Optionally provide the minimum severity of findings to include")
+                                         @QueryParam("minimumSeverity") String minimumSeverityFilter,
+                                         @ApiParam(value = "Optionally provide a regex for purl of findings to include (filters are combined as AND)")
+                                         @QueryParam("purl") String purlFilter,
+                                         @ApiParam(value = "Optionally provide a regex for cpe of findings to include (filters are combined as AND)")
+                                         @QueryParam("cpe") String cpeFilter) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
                     final List<Finding> findings = qm.getFindings(project, suppressed);
-                    return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+                    List<Finding> filteredFindings = filter(findings, purlFilter, cpeFilter, minimumSeverityFilter);
+
+                    return Response.ok(filteredFindings).header(TOTAL_COUNT_HEADER, filteredFindings.size()).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }
@@ -84,6 +99,38 @@ public class FindingResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
         }
+    }
+    private List<Finding> filter(List<Finding> findings,
+                                 String purlFilter,
+                                 String cpeFilter,
+                                 String minimumSeverityFilter) {
+        List<Finding> filteredPurlList =  findings;
+        if (purlFilter != null && !purlFilter.isEmpty()) {
+            filteredPurlList = findings.stream().filter(
+                    finding -> finding.getComponent().getOrDefault("purl", "").toString().matches(purlFilter)
+            ).collect(Collectors.toList());
+        }
+
+        // not working because CPE is not part of Finding.java
+        List<Finding> filteredCpeList = findings;
+        if (cpeFilter != null && !cpeFilter.isEmpty()) {
+            filteredCpeList = findings.stream().filter(
+                    finding -> finding.getComponent().getOrDefault("cpe", "").toString().matches(cpeFilter)
+            ).collect(Collectors.toList());
+        }
+
+        List<Finding> minimumSeverityList = findings;
+        if (minimumSeverityFilter != null && !minimumSeverityFilter.isEmpty()) {
+            minimumSeverityList = findings.stream().filter(
+                    finding -> VulnerabilityUtil.isMinimalSeverity(
+                            VulnerabilityUtil.severityStringToSeverity(finding.getVulnerability().get("severity").toString()),
+                            VulnerabilityUtil.severityStringToSeverity(minimumSeverityFilter))
+            ).collect(Collectors.toList());
+        }
+
+        filteredPurlList.retainAll(minimumSeverityList);
+        filteredPurlList.retainAll(filteredCpeList);
+        return filteredPurlList;
     }
 
     @GET
@@ -98,13 +145,19 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
-    public Response exportFindingsByProject(@PathParam("uuid") String uuid) {
+    public Response exportFindingsByProject(@PathParam("uuid") String uuid,
+                                            @QueryParam("suppressed") boolean suppressed,
+                                            @QueryParam("minimumSeverity") String minimumSeverityFilter,
+                                            @QueryParam("purl") String purlFilter,
+                                            @ApiParam(value = "Optionally provide a regex for cpe of findings to include")
+                                            @QueryParam("cpe") String cpeFilter) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final List<Finding> findings = qm.getFindings(project);
-                    final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);
+                    List<Finding> filteredFindings = filter( findings, purlFilter, cpeFilter, minimumSeverityFilter);
+                    final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), filteredFindings);
                     final Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), "application/json");
                     rb.header("Content-Disposition", "inline; filename=findings-" + uuid + ".fpf");
                     return rb.build();

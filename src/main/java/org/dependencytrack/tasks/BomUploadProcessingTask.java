@@ -29,6 +29,7 @@ import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
@@ -41,11 +42,11 @@ import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -76,7 +77,6 @@ public class BomUploadProcessingTask implements Subscriber {
                 // Holds a list of all Components that are existing dependencies of the specified project
                 final List<Component> existingProjectComponents = qm.getAllComponents(project);
                 final List<ServiceComponent> existingProjectServices = qm.getAllServiceComponents(project);
-                final String bomString = new String(bomBytes, StandardCharsets.UTF_8);
                 final Bom.Format bomFormat;
                 final String bomSpecVersion;
                 final Integer bomVersion;
@@ -90,6 +90,15 @@ public class BomUploadProcessingTask implements Subscriber {
                         cycloneDxBom = parser.parse(bomBytes);
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
                         bomVersion = cycloneDxBom.getVersion();
+                        if (project.getClassifier() == null) {
+                            final var classifier = Optional.ofNullable(cycloneDxBom.getMetadata())
+                                .map(org.cyclonedx.model.Metadata::getComponent)
+                                .map(org.cyclonedx.model.Component::getType)
+                                .map(org.cyclonedx.model.Component.Type::name)
+                                .map(Classifier::valueOf)
+                                .orElse(Classifier.APPLICATION);
+                            project.setClassifier(classifier);
+                        }
                         serialNumnber = (cycloneDxBom.getSerialNumber() != null) ? cycloneDxBom.getSerialNumber().replaceFirst("urn:uuid:", "") : null;
                         components = ModelConverter.convertComponents(qm, cycloneDxBom, project);
                         services = ModelConverter.convertServices(qm, cycloneDxBom, project);

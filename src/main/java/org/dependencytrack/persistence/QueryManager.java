@@ -646,12 +646,22 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByCpe(cpeString);
     }
 
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product, final String version) {
-        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(part, vendor, product, version);
+    public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
+                                                           String versionEndExcluding, String versionEndIncluding,
+                                                           String versionStartExcluding, String versionStartIncluding) {
+        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product) {
-        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(part, vendor, product);
+    public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
+        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByPurl(purl);
+    }
+
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
+        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, cpeVersion, purl);
+    }
+
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final PackageURL purl) {
+        return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, purl);
     }
 
     public Cwe createCweIfNotExist(int id, String name) {

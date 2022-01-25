@@ -30,7 +30,7 @@ import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NistMirrorEvent;
-import org.dependencytrack.event.NpmAdvisoryMirrorEvent;
+import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.PortfolioVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;
@@ -59,7 +59,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
         scheduleEvent(new LdapSyncEvent(), 10000, 21600000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 10 second (10000) delay
-        scheduleEvent(new NpmAdvisoryMirrorEvent(), 10000, 86400000);
+        scheduleEvent(new GitHubAdvisoryMirrorEvent(), 10000, 86400000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 minute (60000) delay
         scheduleEvent(new NistMirrorEvent(), 60000, 86400000);

@@ -1,0 +1,76 @@
+{
+  viewer {
+    login
+  }
+  securityAdvisories(first: 100 {% if advisoriesEndCursor != null %}after: "{{ advisoriesEndCursor }}"{% endif %} orderBy: {field: UPDATED_AT, direction: ASC}) {
+    nodes {
+      databaseId
+      description
+      ghsaId
+      id
+      identifiers {
+        type
+        value
+      }
+      notificationsPermalink
+      origin
+      permalink
+      publishedAt
+      references {
+        url
+      }
+      severity
+      summary
+      updatedAt
+      vulnerabilities(first: 100, orderBy: {field: UPDATED_AT, direction: ASC}) {
+        edges {
+          node {
+            severity
+            updatedAt
+            firstPatchedVersion {
+              identifier
+            }
+            vulnerableVersionRange
+            package {
+              ecosystem
+              name
+            }
+          }
+        }
+        totalCount
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          endCursor
+          startCursor
+        }
+      }
+      cvss {
+        score
+        vectorString
+      }
+      cwes(first: 100) {
+        edges {
+          node {
+            cweId
+            name
+            description
+          }
+        }
+        totalCount
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+        }
+      }
+      withdrawnAt
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}

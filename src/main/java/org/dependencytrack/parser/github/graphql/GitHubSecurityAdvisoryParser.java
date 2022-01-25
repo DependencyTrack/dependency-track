@@ -23,6 +23,7 @@ import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
+import org.dependencytrack.parser.github.graphql.model.PageableList;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ import java.util.List;
 
 public class GitHubSecurityAdvisoryParser {
 
-    public List<GitHubSecurityAdvisory> parse(final JSONObject object) {
+    public PageableList parse(final JSONObject object) {
+        final PageableList pageableList = new PageableList();
         final List<GitHubSecurityAdvisory> advisories = new ArrayList<>();
         final JSONObject data = object.optJSONObject("data");
         if (data != null) {
@@ -44,9 +46,18 @@ public class GitHubSecurityAdvisoryParser {
                         advisories.add(advisory);
                     }
                 }
+                pageableList.setTotalCount(securityAdvisories.optInt("totalCount"));
+                final JSONObject pageInfo = securityAdvisories.getJSONObject("pageInfo");
+                if (pageInfo != null) {
+                    pageableList.setHasNextPage(pageInfo.optBoolean("hasNextPage"));
+                    pageableList.setHasPreviousPage(pageInfo.optBoolean("hasPreviousPage"));
+                    pageableList.setStartCursor(pageInfo.optString("startCursor"));
+                    pageableList.setEndCursor(pageInfo.optString("endCursor"));
+                }
             }
         }
-        return advisories;
+        pageableList.setAdvisories(advisories);
+        return pageableList;
     }
 
     private GitHubSecurityAdvisory parseSecurityAdvisory(final JSONObject object) {

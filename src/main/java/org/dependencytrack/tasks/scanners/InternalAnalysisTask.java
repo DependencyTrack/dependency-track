@@ -68,7 +68,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
      * @return true if InternalAnalysisTask should analyze, false if not
      */
     public boolean isCapable(final Component component) {
-        return component.getCpe() != null;
+        return component.getCpe() != null || component.getPurl() != null;
     }
 
     /**
@@ -93,17 +93,20 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
     }
 
     private void versionRangeAnalysis(final QueryManager qm, final Component component) {
+        us.springett.parsers.cpe.Cpe parsedCpe = null;
         if (component.getCpe() != null) {
             try {
-                final us.springett.parsers.cpe.Cpe parsedCpe = CpeParser.parse(component.getCpe());
-                final List<VulnerableSoftware> matchedCpes = qm.getAllVulnerableSoftware(
-                        parsedCpe.getPart().getAbbreviation(),
-                        parsedCpe.getVendor(),
-                        parsedCpe.getProduct());
-                super.analyzeVersionRange(qm, matchedCpes, parsedCpe.getVersion(), parsedCpe.getUpdate(), component);
+                parsedCpe = CpeParser.parse(component.getCpe());
             } catch (CpeParsingException e) {
                 LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
+        }
+        if (parsedCpe != null) {
+            final List<VulnerableSoftware> vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
+            super.analyzeVersionRange(qm, vsList, parsedCpe.getVersion(), parsedCpe.getUpdate(), component);
+        } else {
+            final List<VulnerableSoftware> vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
+            super.analyzeVersionRange(qm, vsList, component.getPurl().getVersion(), null, component);
         }
     }
 

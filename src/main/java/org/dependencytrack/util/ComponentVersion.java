@@ -265,6 +265,14 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
                 }
             }
         }
-        return Integer.compare(left.size(), right.size());
+        // Modified from original by Steve Springett
+        // Account for comparisons where one version may be 1.0.0 and another may be 1.0.0.0.
+        if (left.size() == max && right.size() == left.size()+1 && right.get(right.size()-1).equals("0")) {
+            return 0;
+        } else if (right.size() == max && left.size() == right.size()+1 && left.get(left.size()-1).equals("0")) {
+            return 0;
+        } else {
+            return Integer.compare(left.size(), right.size());
+        }
     }
 }

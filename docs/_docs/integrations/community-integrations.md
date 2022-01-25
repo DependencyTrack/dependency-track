@@ -15,7 +15,7 @@ to make custom tools and integrations. Many tools that integrate with Dependency
 |:---------|:--------|
 | [Code Dx](https://codedx.com/) | [Code Dx](https://codedx.com/) |
 | [Dependency-Track Jenkins plugin](https://plugins.jenkins.io/dependency-track/) | [Jenkins](https://www.jenkins.io/) |
-| [Dependency-Track Client (Go)](https://github.com/nscuro/dependency-track-client) | |
+| [Dependency-Track Client (Go)](https://github.com/nscuro/dtrack-client) | |
 | [Dependency-Track Client (Python)](https://github.com/alvinchchen/dependency-track-python) | |
 | [Dependency-Track Client (Ruby)](https://github.com/mrtc0/dependency-tracker-client) | |
 | [Dependency-Track Reporting Tool](https://github.com/MO-Movia/Dependency-Track-Report-Tool) | [Modus Operandi](https://www.modusoperandi.com/) |

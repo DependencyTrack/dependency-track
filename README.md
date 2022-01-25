@@ -34,7 +34,7 @@ CI/CD environments.
 
 
 ## Ecosystem Overview
-![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/integrations.png)
+![alt text](./docs/images/integrations.png)
 
 ## Features
 * Component support for:
@@ -96,7 +96,7 @@ CI/CD environments.
 
 <hr>
 
-![alt text](https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/screenshots/dashboard.png)
+![alt text](./docs/images/screenshots/dashboard.png)
 
 ### Quickstart (Docker Compose)
 
@@ -198,6 +198,12 @@ To create the Bundled (API Server + Frontend) executable WAR that is ready to be
 ```shell
 mvn clean package -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
+
+## To run for local dev
+### Command Line
+Using the maven jetty plugin, you can just run `mvn jetty:run` and `mvn jetty:stop`.
+
+The plugin will periodically scan your project for changes and automatically redeploy the application.
 
 ## Resources
 

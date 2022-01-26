@@ -1,27 +1,41 @@
 name: CI Build
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      skipTests:
+        description: 'Should tests be skipped (true/false)?'
+        required: true
+        default: 'false'
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        # Need to figure out a way to prevent duplicate pushes to Docker Hub. Should only be done with one.
-        #java: [ '1.8.0', '11.0.x' ]
-        java: [ '11' ]
     env:
       DOCKER_APISERVER_REPO: dependencytrack/apiserver
       DOCKER_BUNDLED_REPO: dependencytrack/bundled
       DOCKER_TAG: snapshot
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK
-      uses: actions/setup-java@v1
+    - name: Checkout code
+      uses: actions/checkout@v2.3.4
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+      id: buildx
       with:
-        java-version: ${{ matrix.java }}
+        install: true
+    - name: Available platforms
+      run: echo ${{ steps.buildx.outputs.platforms }}
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: '11'
     - name: Install tools
       run: |
         sudo apt-get install jq
@@ -39,31 +53,25 @@ jobs:
         mvn clean -P clean-exclude-wars
         mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
         mvn clean -P clean-exclude-wars
-        mvn test
+    - name: Execute unit tests
+      if: github.event.inputs.skipTests != 'true'
+      run: mvn test
     - name: Publish test coverage
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests != 'true'
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
       run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
+    - name: Logging into Docker Hub
+      if: github.ref == 'refs/heads/master'
+      env:
+        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
+        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
+      run: docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN"
     - name: Building Docker API Server container
-      run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG .
-    - name: Publishing API Server container to Docker Hub
       if: github.ref == 'refs/heads/master'
-      env:
-        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
-        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |
-        docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
-        docker push $DOCKER_APISERVER_REPO:$DOCKER_TAG;
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $DOCKER_APISERVER_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 --push .
     - name: Building Docker bundled container
-      run: |
-        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG .
-    - name: Publishing bundled container to Docker Hub
       if: github.ref == 'refs/heads/master'
-      env:
-        HUB_USERNAME: ${{ secrets.HUB_USERNAME }}
-        HUB_ACCESSS_TOKEN: ${{ secrets.HUB_ACCESSS_TOKEN }}
       run: |
-        docker login -u "$HUB_USERNAME" -p "$HUB_ACCESSS_TOKEN";
-        docker push $DOCKER_BUNDLED_REPO:$DOCKER_TAG;
+        docker build -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $DOCKER_BUNDLED_REPO:$DOCKER_TAG --platform linux/amd64,linux/arm64 --push .

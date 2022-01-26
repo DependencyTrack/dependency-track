@@ -21,12 +21,14 @@ package org.dependencytrack.persistence;
 import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.VulnerableSoftware;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.util.ArrayList;
 import java.util.List;
 
 final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
@@ -153,14 +155,36 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     }
 
     /**
+     * Returns a List of all VulnerableSoftware objects that match the specified PackageURL
+     * @return a List of matching VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
+    public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
+                                                                   String versionEndExcluding, String versionEndIncluding,
+                                                                   String versionStartExcluding, String versionStartIncluding) {
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
+        return singleResult(query.executeWithArray(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
+    }
+
+    /**
+     * Returns a List of all VulnerableSoftware objects that match the specified PackageURL
+     * @return a List of matching VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "(purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && purlVersion == :purlVersion)");
+        return (List<VulnerableSoftware>)query.executeWithArray(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
+    }
+
+    /**
      * Returns a List of all VulnerableSoftware objects that match the specified vendor/product/version.
      * @return a List of matching VulnerableSoftware objects
      */
     @SuppressWarnings("unchecked")
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product, final String version) {
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter("part == :part && vendor == :vendor && product == :product && version == :version");
-        return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product, version);
+        query.setFilter("(part == :part && vendor == :vendor && product == :product && version == :version) || (purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && purlVersion == :purlVersion)");
+        return (List<VulnerableSoftware>)query.executeWithArray(cpePart, cpeVendor, cpeProduct, cpeVersion, purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());
     }
 
     /**
@@ -168,10 +192,29 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      * @return a List of matching VulnerableSoftware objects
      */
     @SuppressWarnings("unchecked")
-    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product) {
+    public List<VulnerableSoftware> getAllVulnerableSoftware(final String part, final String vendor, final String product, final PackageURL purl) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
-        query.setFilter("part == :part && vendor == :vendor && product == :product");
-        return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product);
+        String filter = "";
+        boolean cpeSpecified = (part != null && vendor != null && product != null);
+        if (cpeSpecified) {
+            filter += "(part == :part && vendor == :vendor && product == :product)";
+        }
+        if (cpeSpecified && purl != null) {
+            filter += " || ";
+        }
+        if (purl != null) {
+            filter += "(purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName)";
+        }
+        query.setFilter(filter);
+        if (cpeSpecified && purl != null) {
+            return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product, purl.getType(), purl.getNamespace(), purl.getName());
+        } else if (cpeSpecified) {
+            return (List<VulnerableSoftware>)query.executeWithArray(part, vendor, product);
+        } else if (purl != null) {
+            return (List<VulnerableSoftware>)query.executeWithArray(purl.getType(), purl.getNamespace(), purl.getName());
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     /**

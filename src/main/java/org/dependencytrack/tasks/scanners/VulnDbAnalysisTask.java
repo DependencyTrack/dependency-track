@@ -23,7 +23,6 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
@@ -97,14 +96,13 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     }
 
     /**
-     * Determines if the {@link VulnDbAnalysisTask} is capable of analyzing the specified PackageURL.
-     * Because PURL is not a factor in determining this, the method will always return true.
+     * Determines if the {@link VulnDbAnalysisTask} is capable of analyzing the specified Component.
      *
-     * @param purl the PackageURL to analyze
+     * @param component the Component to analyze
      * @return true if VulnDbAnalysisTask should analyze, false if not
      */
-    public boolean isCapable(final PackageURL purl) {
-        return true;
+    public boolean isCapable(final Component component) {
+        return component.getCpe() != null;
     }
 
     /**
@@ -114,7 +112,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     public void analyze(final List<Component> components) {
         final VulnDbApi api = new VulnDbApi(this.apiConsumerKey, this.apiConsumerSecret, UnirestFactory.getUnirestInstance());
         for (final Component component: components) {
-            if (!component.isInternal() && isCapable(component.getPurl()) && component.getCpe() != null
+            if (!component.isInternal() && isCapable(component)
                     && !isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())) {
                 int page = 1;
                 boolean more = true;

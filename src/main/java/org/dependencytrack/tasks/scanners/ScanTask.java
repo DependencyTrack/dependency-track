@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import java.util.List;
 
@@ -44,12 +43,11 @@ public interface ScanTask {
     void analyze(List<Component> components);
 
     /**
-     * Determines if the analyzer is capable of analyzing
-     * a component with the specified PackageURL
-     * @param packageUrl a PackageURL
+     * Determines if the analyzer is capable of analyzing a component.
+     * @param component a Component
      * @return true if the analyzer is capable of analyzing this type, false if not
      * @since 4.0.0
      */
-    boolean isCapable(PackageURL packageUrl);
+    boolean isCapable(Component component);
 
 }

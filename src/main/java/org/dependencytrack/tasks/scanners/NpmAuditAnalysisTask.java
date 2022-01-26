@@ -78,16 +78,13 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
     }
 
     /**
-     * Determines if the {@link NpmAuditAnalysisTask} is capable of analyzing the specified PackageURL.
+     * Determines if the {@link NpmAuditAnalysisTask} is capable of analyzing the specified Component.
      *
-     * @param purl the PackageURL to analyze
+     * @param component the Component to analyze
      * @return true if NpmAuditAnalysisTask should analyze, false if not
      */
-    public boolean isCapable(final PackageURL purl) {
-        if (purl == null) {
-            return false;
-        }
-        return "npm".equals(purl.getType());
+    public boolean isCapable(final Component component) {
+        return component.getPurl() != null && PackageURL.StandardTypes.NPM.equals(component.getPurl().getType());
     }
 
     /**
@@ -121,7 +118,7 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
     public void analyze(final List<Component> components) {
         final ArrayList<Component> backlog = new ArrayList<>();
         for (final Component component: components) {
-            if (!component.isInternal() && isCapable(component.getPurl())) {
+            if (!component.isInternal() && isCapable(component)) {
                 if (!isCacheCurrent(Vulnerability.Source.NPM, API_BASE_URL, component.getPurl().toString())) {
                     backlog.add(component);
                 } else {
@@ -199,7 +196,8 @@ public class NpmAuditAnalysisTask extends BaseComponentAnalyzerTask implements C
         try (QueryManager qm = new QueryManager()) {
             for (final Component c: components) {
                 final List<Advisory> componentAdvisories = getComponentFromAdvisories(advisories, c);
-                final Component component = qm.getObjectById(Component.class, c.getId());
+                final Component component = qm.getObjectByUuid(Component.class, c.getUuid());
+                if (component == null) continue;
                 for (final Advisory advisory: componentAdvisories) {
                     final Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.NPM, String.valueOf(advisory.getId()));
                     NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);

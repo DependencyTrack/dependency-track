@@ -76,8 +76,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * Ported from Dependency-Check v5.2.1
      */
     private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {
+        // For VulnerableSoftware (could actually be hardware) without a version number.
+        // e.g. cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*
         if (LogicalValue.NA.getAbbreviation().equals(vs.getVersion())) {
-            return false;
+            return true;
         }
         //if any of the four conditions will be evaluated - then true;
         boolean result = (vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty())
@@ -85,7 +87,9 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 || (vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty())
                 || (vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty());
 
-        if (!result && compareAttributes(vs.getVersion(), targetVersion)) {
+        // Modified from original by Steve Springett
+        // Added null check: vs.getVersion() != null as purl sources that use version ranges may not have version populated.
+        if (!result && vs.getVersion() != null && compareAttributes(vs.getVersion(), targetVersion)) {
             return true;
         }
 

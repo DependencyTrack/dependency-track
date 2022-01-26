@@ -156,7 +156,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (excludeInactive) {
             query.setFilter("active == true || active == null");
         }
-        query.setOrdering("name asc");
+        query.setOrdering("id asc");
         return query.executeList();
     }
 
@@ -616,6 +616,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @param tags a List of Tag objects
      */
     @SuppressWarnings("unchecked")
+    @Override
     public void bind(Project project, List<Tag> tags) {
         final Query<Tag> query = pm.newQuery(Tag.class, "projects.contains(:project)");
         final List<Tag> currentProjectTags = (List<Tag>)query.execute(project);
@@ -627,7 +628,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         project.setTags(tags);
         for (final Tag tag: tags) {
-            tag.getProjects().add(project);
+            final List<Project> projects = tag.getProjects();
+            if (!projects.contains(project)) {
+                projects.add(project);
+            }
         }
         pm.currentTransaction().commit();
     }

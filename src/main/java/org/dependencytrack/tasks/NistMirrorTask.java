@@ -22,6 +22,7 @@ import alpine.Config;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
@@ -37,6 +38,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
+import org.dependencytrack.persistence.QueryManager;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +50,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.NVD_FEEDS_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_FEEDS_URL;
 
 /**
  * Subscriber task that performs a mirror of the National Vulnerability Database.
@@ -68,13 +71,15 @@ public class NistMirrorTask implements LoggableSubscriber {
     }
 
     public static final String NVD_MIRROR_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
-    private static final String CPE_DICTIONARY_23_XML = NVD_FEEDS_URL + "/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz";
-    private static final String CVE_JSON_11_MODIFIED_URL = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
-    private static final String CVE_JSON_11_BASE_URL = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
-    private static final String CVE_JSON_11_MODIFIED_META = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-modified.meta";
-    private static final String CVE_JSON_11_BASE_META = NVD_FEEDS_URL + "/json/cve/1.1/nvdcve-1.1-%d.meta";
+    private static final String CVE_JSON_11_MODIFIED_URL = "/json/cve/1.1/nvdcve-1.1-modified.json.gz";
+    private static final String CVE_JSON_11_BASE_URL = "/json/cve/1.1/nvdcve-1.1-%d.json.gz";
+    private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
+    private static final String CVE_JSON_11_BASE_META = "/json/cve/1.1/nvdcve-1.1-%d.meta";
     private static final int START_YEAR = 2002;
     private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
+
+    private final boolean isEnabled;
+    private String nvdFeedsUrl;
     private File outputDir;
     private long metricParseTime;
     private long metricDownloadTime;
@@ -83,11 +88,22 @@ public class NistMirrorTask implements LoggableSubscriber {
 
     private boolean mirroredWithoutErrors = true;
 
+    public NistMirrorTask() {
+        try (final QueryManager qm = new QueryManager()) {
+            final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_ENABLED.getGroupName(), VULNERABILITY_SOURCE_NVD_ENABLED.getPropertyName());
+            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+            this.nvdFeedsUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_NVD_FEEDS_URL.getGroupName(), VULNERABILITY_SOURCE_NVD_FEEDS_URL.getPropertyName()).getPropertyValue();
+            if (this.nvdFeedsUrl.endsWith("/")) {
+                this.nvdFeedsUrl = this.nvdFeedsUrl.substring(0, this.nvdFeedsUrl.length()-1);
+            }
+         }
+    }
+
     /**
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        if (e instanceof NistMirrorEvent) {
+        if (e instanceof NistMirrorEvent && this.isEnabled) {
             final long start = System.currentTimeMillis();
             LOGGER.info("Starting NIST mirroring task");
             final File mirrorPath = new File(NVD_MIRROR_DIR);
@@ -109,13 +125,13 @@ public class NistMirrorTask implements LoggableSubscriber {
         LOGGER.info("Downloading files at " + currentDate);
         for (int i = START_YEAR; i <= END_YEAR; i++) {
             // Download JSON 1.1 year feeds
-            final String json11BaseUrl = CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
-            final String cve11BaseMetaUrl = CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
+            final String json11BaseUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
+            final String cve11BaseMetaUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));
             doDownload(json11BaseUrl, ResourceType.CVE_YEAR_DATA);
             doDownload(cve11BaseMetaUrl, ResourceType.CVE_META);
         }
-        doDownload(CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
-        doDownload(CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
+        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
+        doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
 
         if (mirroredWithoutErrors) {
             Notification.dispatch(new Notification()

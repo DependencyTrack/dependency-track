@@ -247,7 +247,7 @@
         <dependency>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
-            <version>2.12.1</version>
+            <version>2.12.2</version>
         </dependency>
         <!-- Commons Compress -->
         <dependency>
@@ -420,9 +420,7 @@
                                 <phase>prepare-package</phase>
                                 <configuration>
                                     <target>
-                                        <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip"
-                                             dest="${project.build.directory}"
-                                             verbose="true"/>
+                                        <get src="https://github.com/DependencyTrack/frontend/releases/download/${frontend.version}/frontend-dist.zip" dest="${project.build.directory}" verbose="true"/>
                                     </target>
                                 </configuration>
                                 <goals>
@@ -434,8 +432,7 @@
                                 <phase>prepare-package</phase>
                                 <configuration>
                                     <target>
-                                        <unzip src="${project.build.directory}/frontend-dist.zip"
-                                               dest="${project.build.directory}/frontend">
+                                        <unzip src="${project.build.directory}/frontend-dist.zip" dest="${project.build.directory}/frontend">
                                         </unzip>
                                     </target>
                                 </configuration>

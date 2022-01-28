@@ -299,7 +299,13 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
         }
         for (Component component : result.getList(Component.class)) {
-           component.getProject(); // Force loading of project
+            component.getProject(); // Force loading of project
+            component.getProject().getGroup();
+            component.getProject().getName();
+            component.getProject().getVersion();
+            component.getProject().getSwidTagId();
+            component.getProject().getCpe();
+            component.getProject().getUuid();
         }
         return result;
     }

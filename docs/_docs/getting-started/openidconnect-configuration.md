@@ -89,8 +89,9 @@ The following steps demonstrate how to setup OpenID Connect with Keycloak. Most 
     * Client Protocol: `openid-connect`
     * Access Type: `public`
     * Standard Flow Enabled: `ON`
-    * Valid Redirect URIs: `https://dependencytrack.example.com/static/oidc-callback.html*`
-     * The trailing `*` is required when using the frontend v1.3.0 or newer, in order to support [post-login redirects](https://github.com/DependencyTrack/frontend/pull/47)
+    * Valid Redirect URIs: `https://dependencytrack.example.com/static/oidc-callback.html`
+      * A trailing wildcard (`*`) was required when using frontend v1.3.0-v4.3.0, in order to support [post-login redirects](https://github.com/DependencyTrack/frontend/pull/47)
+      * Starting with v4.4.0, the trailing wildcard is no longer necessary
     * Web Origins: `https://dependencytrack.example.com`
 
 2. To be able to synchronize team memberships, create a *protocol mapper* that includes group memberships as `groups` in

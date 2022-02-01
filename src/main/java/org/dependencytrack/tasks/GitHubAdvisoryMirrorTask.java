@@ -234,6 +234,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                     } else if (part.startsWith("<")) {
                         versionEndExcluding = part.replace("<", "").trim();
                     } else if (part.startsWith("=")) {
+                        versionStartIncluding = part.replace("=", "").trim();
                         versionEndIncluding = part.replace("=", "").trim();
                     } else {
                         LOGGER.warn("Unable to determine version range of " + vuln.getPackageEcosystem()

@@ -22,7 +22,6 @@ import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.Subscriber;
-import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -39,7 +38,6 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class NotificationRouter implements Subscriber {
 
@@ -82,7 +80,7 @@ public class NotificationRouter implements Subscriber {
         }
         try (QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
-            final Query query = pm.newQuery(NotificationRule.class);
+            final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
 
             final StringBuilder sb = new StringBuilder();
 

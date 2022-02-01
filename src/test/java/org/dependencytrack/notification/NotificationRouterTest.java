@@ -156,7 +156,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
         method.setAccessible(true);
         List<NotificationRule> rules = (List<NotificationRule>) method.invoke(router, notification);
-        Assert.assertEquals(0, rules.size());
+        Assert.assertEquals(1, rules.size());
     }
 
     @Test

@@ -103,8 +103,6 @@ public class NotificationRouter implements Subscriber {
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerabilityIdentified) {
                 final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
-                final Component component = qm.getObjectByUuid(Component.class, subject.getComponent().getUuid());
-                final Project componentProject = qm.getObjectByUuid(Project.class, component.getProject().getUuid());
                 /*
                 if the rule specified one or more projects as targets, reduce the execution
                 of the notification down to those projects that the rule matches and which
@@ -113,9 +111,10 @@ public class NotificationRouter implements Subscriber {
                  */
                 for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
-                        if (rule.getProjects() != null && rule.getProjects().size() > 0) {
+                        if (rule.getProjects() != null && rule.getProjects().size() > 0
+                            && subject.getComponent() != null && subject.getComponent().getProject() != null) {
                             for (final Project project : rule.getProjects()) {
-                                if (componentProject.getUuid().equals(project.getUuid())) {
+                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid())) {
                                     rules.add(rule);
                                 }
                             }

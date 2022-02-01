@@ -22,6 +22,7 @@ import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.Subscriber;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -102,21 +103,20 @@ public class NotificationRouter implements Subscriber {
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerabilityIdentified) {
                 final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
-                final Set<Project> affectedProjects = subject.getAffectedProjects();
+                final Component component = qm.getObjectByUuid(Component.class, subject.getComponent().getUuid());
+                final Project componentProject = qm.getObjectByUuid(Project.class, component.getProject().getUuid());
                 /*
                 if the rule specified one or more projects as targets, reduce the execution
                 of the notification down to those projects that the rule matches and which
-                also match projects affected by the vulnerability.
-                NOTE: This logic is slightly different than what is implemented in limitToProject()
+                also match project the component is included in.
+                NOTE: This logic is slightly different from what is implemented in limitToProject()
                  */
                 for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0) {
                             for (final Project project : rule.getProjects()) {
-                                for (final Project affectedProject : affectedProjects) {
-                                    if (affectedProject.getUuid().equals(project.getUuid())) {
-                                        rules.add(rule);
-                                    }
+                                if (componentProject.getUuid().equals(project.getUuid())) {
+                                    rules.add(rule);
                                 }
                             }
                         } else {

@@ -100,7 +100,7 @@ public class BomResource extends AlpineResource {
     public Response exportProjectAsCycloneDx (
             @ApiParam(value = "The UUID of the project to export", required = true)
             @PathParam("uuid") String uuid,
-            @ApiParam(value = "The format to output (defaults to xml)")
+            @ApiParam(value = "The format to output (defaults to JSON)")
             @QueryParam("format") String format) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
@@ -121,13 +121,13 @@ public class BomResource extends AlpineResource {
                 bom.setMetadata(ModelConverter.createMetadata(project));
                 bom.setComponents(cycloneComponents);
                 bom.setServices(cycloneServices);
-                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("XML")) {
+                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
+                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
+                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                } else if (format.equalsIgnoreCase("XML")) {
                     final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                     bomGenerator.generate();
                     return Response.ok(bomGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-                } else if (format.equalsIgnoreCase("JSON")) {
-                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
-                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }
@@ -154,7 +154,7 @@ public class BomResource extends AlpineResource {
     public Response exportComponentAsCycloneDx (
             @ApiParam(value = "The UUID of the component to export", required = true)
             @PathParam("uuid") String uuid,
-            @ApiParam(value = "The format to output (defaults to xml)")
+            @ApiParam(value = "The format to output (defaults to JSON)")
             @QueryParam("format") String format) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
@@ -172,13 +172,13 @@ public class BomResource extends AlpineResource {
                 bom.setVersion(1);
                 bom.setMetadata(ModelConverter.createMetadata(null));
                 bom.setComponents(cycloneComponents);
-                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("XML")) {
+                if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
+                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
+                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                } else if (format.equalsIgnoreCase("XML")) {
                     final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
                     bomGenerator.generate();
                     return Response.ok(bomGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
-                } else if (format.equalsIgnoreCase("JSON")) {
-                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
-                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }

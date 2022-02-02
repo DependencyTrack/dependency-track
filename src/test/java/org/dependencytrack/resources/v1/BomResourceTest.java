@@ -68,7 +68,7 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertTrue(body.startsWith("<?xml"));
+        Assert.assertTrue(body.startsWith("{"));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class BomResourceTest extends ResourceTest {
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertTrue(body.startsWith("<?xml"));
+        Assert.assertTrue(body.startsWith("{"));
     }
 
     @Test

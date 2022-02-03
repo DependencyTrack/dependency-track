@@ -72,7 +72,7 @@ public class AnalysisResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The project, component, or vulnerability could not be found")
     })
-    @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response retrieveAnalysis(@ApiParam(value = "The UUID of the project")
                                      @QueryParam("project") String projectUuid,
                                      @ApiParam(value = "The UUID of the component", required = true)

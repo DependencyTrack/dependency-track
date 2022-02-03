@@ -66,7 +66,7 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response getFindingsByProject(@PathParam("uuid") String uuid,
                                          @ApiParam(value = "Optionally includes suppressed findings")
                                          @QueryParam("suppressed") boolean suppressed) {
@@ -97,7 +97,7 @@ public class FindingResource extends AlpineResource {
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response exportFindingsByProject(@PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);

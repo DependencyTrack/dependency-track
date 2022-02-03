@@ -22,6 +22,8 @@ import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -69,7 +71,7 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(components);
         qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED, true);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
         Response response = target(V1_ANALYSIS)
                 .queryParam("project", project.getUuid())
                 .queryParam("component", component.getUuid())
@@ -188,9 +190,9 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(components);
         qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED, true);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
+                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Not an issue", true);
         Response response = target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -223,9 +225,9 @@ public class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(components);
         qm.createVulnerability(vulnerability, false);
-        qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, false);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", false);
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, "Not an issue", true);
+                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Not an issue", true);
         Response response = target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -236,11 +238,11 @@ public class AnalysisResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals(AnalysisState.NOT_AFFECTED.name(), json.getString("analysisState"));
         Assert.assertTrue(json.getBoolean("isSuppressed"));
-        Assert.assertEquals(2, json.getJsonArray("analysisComments").size());
+        Assert.assertEquals(3, json.getJsonArray("analysisComments").size());
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(0).getJsonNumber("timestamp"));
         Assert.assertEquals("IN_TRIAGE → NOT_AFFECTED", json.getJsonArray("analysisComments").getJsonObject(0).getString("comment"));
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(1).getJsonNumber("timestamp"));
-        Assert.assertEquals("Not an issue", json.getJsonArray("analysisComments").getJsonObject(1).getString("comment"));
+        Assert.assertEquals("Not an issue", json.getJsonArray("analysisComments").getJsonObject(2).getString("comment"));
         Analysis analysis = qm.getAnalysis(component, vulnerability);
         Assert.assertEquals(project.getUuid(), analysis.getProject().getUuid());
         Assert.assertEquals(component.getUuid(), analysis.getComponent().getUuid());

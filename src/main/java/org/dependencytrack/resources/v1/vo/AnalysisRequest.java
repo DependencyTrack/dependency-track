@@ -23,6 +23,8 @@ import alpine.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -50,7 +52,15 @@ public class AnalysisRequest {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
     private final String comment;
 
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
+    private final String analysisDetails;
+
     private final AnalysisState analysisState;
+
+    private final AnalysisJustification analysisJustification;
+
+    private final AnalysisResponse analysisResponse;
 
     private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
@@ -59,12 +69,18 @@ public class AnalysisRequest {
                            @JsonProperty(value = "component", required = true) String component,
                            @JsonProperty(value = "vulnerability", required = true) String vulnerability,
                            @JsonProperty(value = "analysisState") AnalysisState analysisState,
+                           @JsonProperty(value = "analysisJustification") AnalysisJustification analysisJustification,
+                           @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
+                           @JsonProperty(value = "analysisDetails") String analysisDetails,
                            @JsonProperty(value = "comment") String comment,
                            @JsonProperty(value = "isSuppressed") Boolean suppressed) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;
         this.analysisState = analysisState;
+        this.analysisJustification = analysisJustification;
+        this.analysisResponse = analysisResponse;
+        this.analysisDetails = analysisDetails;
         this.comment = comment;
         this.suppressed = suppressed;
     }
@@ -87,6 +103,26 @@ public class AnalysisRequest {
         } else {
             return analysisState;
         }
+    }
+
+    public AnalysisJustification getAnalysisJustification() {
+        if (analysisJustification == null) {
+            return AnalysisJustification.NOT_SET;
+        } else {
+            return analysisJustification;
+        }
+    }
+
+    public AnalysisResponse getAnalysisResponse() {
+        if (analysisResponse == null) {
+            return AnalysisResponse.NOT_SET;
+        } else {
+            return analysisResponse;
+        }
+    }
+
+    public String getAnalysisDetails() {
+        return analysisDetails;
     }
 
     public String getComment() {

@@ -71,6 +71,21 @@ public class Analysis implements Serializable {
     @NotNull
     private AnalysisState analysisState;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "JUSTIFICATION", jdbcType = "VARCHAR", allowsNull = "true")
+    @NotNull
+    private AnalysisJustification analysisJustification;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESPONSE", jdbcType = "VARCHAR", allowsNull = "true")
+    @NotNull
+    private AnalysisResponse analysisResponse;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "DETAILS", jdbcType = "VARCHAR", allowsNull = "true")
+    @NotNull
+    private String analysisDetails;
+
     @Persistent(mappedBy = "analysis", defaultFetchGroup = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
     private List<AnalysisComment> analysisComments;
@@ -115,6 +130,30 @@ public class Analysis implements Serializable {
 
     public void setAnalysisState(AnalysisState analysisState) {
         this.analysisState = analysisState;
+    }
+
+    public AnalysisJustification getAnalysisJustification() {
+        return analysisJustification;
+    }
+
+    public void setAnalysisJustification(AnalysisJustification analysisJustification) {
+        this.analysisJustification = analysisJustification;
+    }
+
+    public AnalysisResponse getAnalysisResponse() {
+        return analysisResponse;
+    }
+
+    public void setAnalysisResponse(AnalysisResponse analysisResponse) {
+        this.analysisResponse = analysisResponse;
+    }
+
+    public String getAnalysisDetails() {
+        return analysisDetails;
+    }
+
+    public void setAnalysisDetails(String analysisDetails) {
+        this.analysisDetails = analysisDetails;
     }
 
     public List<AnalysisComment> getAnalysisComments() {

@@ -20,13 +20,8 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import org.datanucleus.api.jdo.JDOQuery;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.*;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
@@ -162,8 +157,9 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @param vulnerability the Vulnerability
      * @return an Analysis object
      */
-    public Analysis makeAnalysis(Component component, Vulnerability vulnerability,
-                                 AnalysisState analysisState, Boolean isSuppressed) {
+    public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                                 AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                                 String analysisDetails, Boolean isSuppressed) {
         if (analysisState == null) {
             analysisState = AnalysisState.NOT_SET;
         }
@@ -177,6 +173,9 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             analysis.setSuppressed(isSuppressed);
         }
         analysis.setAnalysisState(analysisState);
+        analysis.setAnalysisJustification(analysisJustification);
+        analysis.setAnalysisResponse(analysisResponse);
+        analysis.setAnalysisDetails(analysisDetails);
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
     }

@@ -30,41 +30,7 @@ import alpine.resources.AlpineRequest;
 import alpine.util.BooleanUtil;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Bom;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentAnalysisCache;
-import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cpe;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.DependencyMetrics;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.FindingAttribution;
-import org.dependencytrack.model.License;
-import org.dependencytrack.model.LicenseGroup;
-import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.model.Policy;
-import org.dependencytrack.model.PolicyCondition;
-import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.PortfolioMetrics;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ProjectMetrics;
-import org.dependencytrack.model.ProjectProperty;
-import org.dependencytrack.model.Repository;
-import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.ServiceComponent;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.ViolationAnalysis;
-import org.dependencytrack.model.ViolationAnalysisComment;
-import org.dependencytrack.model.ViolationAnalysisState;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityMetrics;
-import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -812,9 +778,10 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getAnalysis(component, vulnerability);
     }
 
-    public Analysis makeAnalysis(Component component, Vulnerability vulnerability,
-                                 AnalysisState analysisState, Boolean isSuppressed) {
-        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, isSuppressed);
+    public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                                 AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                                 String analysisDetails, Boolean isSuppressed) {
+        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed);
     }
 
     public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {

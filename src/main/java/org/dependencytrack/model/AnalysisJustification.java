@@ -19,16 +19,20 @@
 package org.dependencytrack.model;
 
 /**
- * Provides a list of available states an analysis decision may have.
+ * Provides a list of available justification an analysis decision of 'not affected' may have.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 4.4.0
  */
-public enum AnalysisState {
-    EXPLOITABLE,
-    IN_TRIAGE,
-    FALSE_POSITIVE,
-    NOT_AFFECTED,
-    RESOLVED,
+public enum AnalysisJustification {
+    CODE_NOT_PRESENT,
+    CODE_NOT_REACHABLE,
+    REQUIRES_CONFIGURATION,
+    REQUIRES_DEPENDENCY,
+    REQUIRES_ENVIRONMENT,
+    PROTECTED_BY_COMPILER,
+    PROTECTED_AT_RUNTIME,
+    PROTECTED_AT_PERIMETER,
+    PROTECTED_BY_MITIGATING_CONTROL,
     NOT_SET
 }

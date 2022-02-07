@@ -73,7 +73,7 @@ public final class NvdParser {
             final JsonObject root = reader.readObject();
             final JsonArray cveItems = root.getJsonArray("CVE_Items");
 
-            cveItems.parallelStream().forEach((c) -> {
+            cveItems.forEach((c) -> {
                 final JsonObject cveItem = (JsonObject) c;
                 try (QueryManager qm = new QueryManager()) {
                     final Vulnerability vulnerability = new Vulnerability();

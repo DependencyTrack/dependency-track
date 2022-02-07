@@ -65,11 +65,11 @@ In lieu of specifying the UUID of an existing project, the project name and vers
 If the project does not exist, it can optionally be automatically created using the `autoCreate` parameter.
 
 ```bash
-curl -X "POST" "http://dtrack.example.com/api/v1/bom"
-     -H 'Content-Type: multipart/form-data'
-     -H "X-Api-Key: xxxxxxx"
-     -F "autoCreate=true"
-     -F "projectName=xxxx"
-     -F "projectVersion=xxxx"
+curl -X "POST" "http://dtrack.example.com/api/v1/bom" \
+     -H 'Content-Type: multipart/form-data' \
+     -H "X-Api-Key: xxxxxxx" \
+     -F "autoCreate=true" \
+     -F "projectName=xxxx" \
+     -F "projectVersion=xxxx" \
      -F "bom=@target/bom.xml"
 ```

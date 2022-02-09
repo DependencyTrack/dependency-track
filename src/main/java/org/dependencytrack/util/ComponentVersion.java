@@ -79,8 +79,18 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
     public final void parseVersion(String version) {
         versionParts = new ArrayList<>();
         if (version != null) {
-            final Pattern rx = Pattern.compile("(\\d+[a-z]{1,3}$|[a-z]+\\d+|\\d+|(release|beta|alpha)$)");
-            final Matcher matcher = rx.matcher(version.toLowerCase());
+            // https://github.com/DependencyTrack/dependency-track/issues/1374
+            // handle deb versions
+            String lcVersion = version.toLowerCase();
+            final Pattern debrx = Pattern.compile("^([0-9]+:)?(.*)(-[^-]+ubuntu[^-]+)$");
+            final Matcher debmatcher = debrx.matcher(lcVersion);
+            if (debmatcher.matches()) {
+                lcVersion = debmatcher.group(2);
+            }
+
+            final Pattern rx = Pattern.compile("(\\d+[a-z]{1,3}$|[a-z]{1,3}[_-]?\\d+|\\d+|(rc|release|snapshot|beta|alpha)$)",
+                    Pattern.CASE_INSENSITIVE);
+            final Matcher matcher = rx.matcher(lcVersion);
             while (matcher.find()) {
                 versionParts.add(matcher.group());
             }

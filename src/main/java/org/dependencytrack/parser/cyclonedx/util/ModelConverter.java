@@ -38,6 +38,9 @@ import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
@@ -278,6 +281,7 @@ public class ModelConverter {
         metadata.setTools(Collections.singletonList(tool));
         if (project != null) {
             final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+            cycloneComponent.setBomRef(project.getUuid().toString());
             cycloneComponent.setAuthor(StringUtils.trimToNull(project.getAuthor()));
             cycloneComponent.setPublisher(StringUtils.trimToNull(project.getPublisher()));
             cycloneComponent.setGroup(StringUtils.trimToNull(project.getGroup()));
@@ -504,6 +508,91 @@ public class ModelConverter {
         return cycloneService;
     }
 
+    public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
+                                                                          final Vulnerability vulnerability, final List<Component> components,
+                                                                          final Project project) {
+        final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
+        cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
+        cdxVulnerability.setId(vulnerability.getVulnId());
+        // Add the vulnerability source
+        org.cyclonedx.model.vulnerability.Vulnerability.Source cdxSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
+        cdxSource.setName(vulnerability.getSource());
+        cdxVulnerability.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+        if (vulnerability.getCvssV2BaseScore() != null) {
+            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+            rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV2);
+            rating.setScore(vulnerability.getCvssV2BaseScore().doubleValue());
+            rating.setVector(vulnerability.getCvssV2Vector());
+            if (rating.getScore() >= 7.0) {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.HIGH);
+            } else if (rating.getScore() >= 4.0) {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.MEDIUM);
+            } else {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.LOW);
+            }
+            cdxVulnerability.addRating(rating);
+        }
+        if (vulnerability.getCvssV3BaseScore() != null) {
+            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+            if (vulnerability.getCvssV3Vector() != null && vulnerability.getCvssV3Vector().contains("CVSS:3.0")) {
+                rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV3);
+            } else {
+                rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV31);
+            }
+            rating.setScore(vulnerability.getCvssV3BaseScore().doubleValue());
+            rating.setVector(vulnerability.getCvssV3Vector());
+            if (rating.getScore() >= 9.0) {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.CRITICAL);
+            } else if (rating.getScore() >= 7.0) {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.HIGH);
+            } else if (rating.getScore() >= 4.0) {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.MEDIUM);
+            } else {
+                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.LOW);
+            }
+            cdxVulnerability.addRating(rating);
+        }
+        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null) {
+            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            rating.setSeverity(convertDtSeverityToCdxSeverity(vulnerability.getSeverity()));
+            rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+            rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
+            cdxVulnerability.addRating(rating);
+        }
+        if (vulnerability.getCwe() != null) {
+            cdxVulnerability.addCwe(vulnerability.getCwe().getCweId());
+        }
+        cdxVulnerability.setDescription(vulnerability.getDescription());
+        cdxVulnerability.setRecommendation(vulnerability.getRecommendation());
+        cdxVulnerability.setCreated(vulnerability.getCreated());
+        cdxVulnerability.setPublished(vulnerability.getPublished());
+        cdxVulnerability.setUpdated(vulnerability.getUpdated());
+
+        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant && components != null) {
+            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
+            for (final Component component : vulnerability.getComponents()) {
+                // Check to see if the vulnerable component is in the list of components passed to this method
+                for (final Component c : components) {
+                    if (component.getId() == c.getId()) {
+                        final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+                        affect.setRef(component.getUuid().toString());
+                        affects.add(affect);
+                    }
+                }
+            }
+            cdxVulnerability.setAffects(affects);
+        } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
+            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
+            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(project.getUuid().toString());
+            affects.add(affect);
+            cdxVulnerability.setAffects(affects);
+        }
+        return cdxVulnerability;
+    }
+
     /**
      * Converts a parsed Bom to a native list of Dependency-Track component object
      * @param bom the Bom to convert
@@ -574,5 +663,40 @@ public class ModelConverter {
             }
         }
         return null;
+    }
+
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity convertDtSeverityToCdxSeverity(final Severity severity) {
+        switch (severity) {
+            case CRITICAL:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.CRITICAL;
+            case HIGH:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.HIGH;
+            case MEDIUM:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.MEDIUM;
+            case LOW:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.LOW;
+            default:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.UNKNOWN;
+        }
+    }
+
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Source convertDtVulnSourceToCdxVulnSource(final Vulnerability.Source vulnSource) {
+        org.cyclonedx.model.vulnerability.Vulnerability.Source cdxSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
+        cdxSource.setName(vulnSource.name());
+        switch (vulnSource) {
+            case NVD:
+                cdxSource.setUrl("https://nvd.nist.gov/"); break;
+            case NPM:
+                cdxSource.setUrl("https://www.npmjs.com/"); break;
+            case GITHUB:
+                cdxSource.setUrl("https://github.com/advisories"); break;
+            case VULNDB:
+                cdxSource.setUrl("https://vulndb.cyberriskanalytics.com/"); break;
+            case OSSINDEX:
+                cdxSource.setUrl("https://ossindex.sonatype.org/"); break;
+            case RETIREJS:
+                cdxSource.setUrl("https://github.com/RetireJS/retire.js"); break;
+        }
+        return cdxSource;
     }
 }

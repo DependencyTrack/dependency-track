@@ -31,19 +31,13 @@ import io.swagger.annotations.Authorization;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
-import org.cyclonedx.BomGeneratorFactory;
 import org.cyclonedx.CycloneDxMediaType;
-import org.cyclonedx.CycloneDxSchema;
 import org.cyclonedx.exception.GeneratorException;
-import org.cyclonedx.generators.json.BomJsonGenerator;
-import org.cyclonedx.generators.xml.BomXmlGenerator;
-import org.cyclonedx.model.Bom;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ServiceComponent;
-import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
+import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
@@ -62,15 +56,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing bill-of-material (bom) documents.
@@ -101,7 +92,9 @@ public class BomResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to export", required = true)
             @PathParam("uuid") String uuid,
             @ApiParam(value = "The format to output (defaults to JSON)")
-            @QueryParam("format") String format) {
+            @QueryParam("format") String format,
+            @ApiParam(value = "Specifies the CycloneDX variant to export. Value options are 'inventory', 'withVulnerabilities', and 'vex'. (defaults to 'inventory')")
+            @QueryParam("variant") String variant) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
@@ -110,28 +103,29 @@ public class BomResource extends AlpineResource {
             if (! qm.hasAccess(super.getPrincipal(), project)) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
-            final List<Component> components = qm.getAllComponents(project);
-            final List<ServiceComponent> services = qm.getAllServiceComponents(project);
-            final List<org.cyclonedx.model.Component> cycloneComponents = components.stream().map(component -> ModelConverter.convert(qm, component)).collect(Collectors.toList());
-            final List<org.cyclonedx.model.Service> cycloneServices = services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList());
+
+            final CycloneDXExporter exporter;
+            if (StringUtils.trimToNull(variant) == null || variant.equalsIgnoreCase("inventory")) {
+                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
+            } else if (variant.equalsIgnoreCase("withVulnerabilities")) {
+                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES, qm);
+            } else if (variant.equalsIgnoreCase("vex")) {
+                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
+            } else {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM variant specified.").build();
+            }
+
             try {
-                final Bom bom = new Bom();
-                bom.setSerialNumber("urn:uuid:" + UUID.randomUUID().toString());
-                bom.setVersion(1);
-                bom.setMetadata(ModelConverter.createMetadata(project));
-                bom.setComponents(cycloneComponents);
-                bom.setServices(cycloneServices);
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
-                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON),
+                            CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 } else if (format.equalsIgnoreCase("XML")) {
-                    final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
-                    bomGenerator.generate();
-                    return Response.ok(bomGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
+                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML),
+                            CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }
-            } catch (ParserConfigurationException | GeneratorException e) {
+            } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }
@@ -164,25 +158,19 @@ public class BomResource extends AlpineResource {
             if (! qm.hasAccess(super.getPrincipal(), component.getProject())) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
             }
+
+            final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             try {
-                final List<org.cyclonedx.model.Component> cycloneComponents = new ArrayList<>();
-                cycloneComponents.add(ModelConverter.convert(qm, component));
-                Bom bom = new Bom();
-                bom.setSerialNumber("urn:uuid:" + UUID.randomUUID().toString());
-                bom.setVersion(1);
-                bom.setMetadata(ModelConverter.createMetadata(null));
-                bom.setComponents(cycloneComponents);
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    final BomJsonGenerator bomGenerator = BomGeneratorFactory.createJson(CycloneDxSchema.VERSION_LATEST, bom);
-                    return Response.ok(bomGenerator.toJsonString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                    return Response.ok(exporter.export(exporter.create(component), CycloneDXExporter.Format.JSON),
+                            CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 } else if (format.equalsIgnoreCase("XML")) {
-                    final BomXmlGenerator bomGenerator = BomGeneratorFactory.createXml(CycloneDxSchema.VERSION_LATEST, bom);
-                    bomGenerator.generate();
-                    return Response.ok(bomGenerator.toXmlString(), CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
+                    return Response.ok(exporter.export(exporter.create(component), CycloneDXExporter.Format.XML),
+                            CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }
-            } catch (ParserConfigurationException | GeneratorException e) {
+            } catch (GeneratorException e) {
                 LOGGER.error("An error occurred while building a CycloneDX document for export", e);
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             }

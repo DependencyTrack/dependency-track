@@ -77,7 +77,7 @@ public class BomResource extends AlpineResource {
 
     @GET
     @Path("/cyclonedx/project/{uuid}")
-    @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_XML, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON})
+    @Produces({CycloneDxMediaType.APPLICATION_CYCLONEDX_XML, CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @ApiOperation(
             value = "Returns dependency metadata for a project in CycloneDX format",
             response = String.class
@@ -94,7 +94,9 @@ public class BomResource extends AlpineResource {
             @ApiParam(value = "The format to output (defaults to JSON)")
             @QueryParam("format") String format,
             @ApiParam(value = "Specifies the CycloneDX variant to export. Value options are 'inventory', 'withVulnerabilities', and 'vex'. (defaults to 'inventory')")
-            @QueryParam("variant") String variant) {
+            @QueryParam("variant") String variant,
+            @ApiParam(value = "Force the resulting BOM to be downloaded as a file (defaults to 'false')")
+            @QueryParam("download") boolean download) {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project == null) {
@@ -117,11 +119,21 @@ public class BomResource extends AlpineResource {
 
             try {
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON),
-                            CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                    if (download) {
+                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON), MediaType.APPLICATION_OCTET_STREAM)
+                                .header("content-disposition","attachment; filename = \"" + project.getUuid() + "-" + variant + ".cdx.json\"").build();
+                    } else {
+                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON),
+                                CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
+                    }
                 } else if (format.equalsIgnoreCase("XML")) {
-                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML),
-                            CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
+                    if (download) {
+                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML), MediaType.APPLICATION_OCTET_STREAM)
+                                .header("content-disposition","attachment; filename = \"" + project.getUuid() + "-" + variant + ".cdx.xml\"").build();
+                    } else {
+                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML),
+                                CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
+                    }
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();
                 }

@@ -55,16 +55,10 @@ public class CycloneDXExporter {
     }
 
     public Bom create(final Project project) {
-        if (Variant.INVENTORY == variant || Variant.INVENTORY_WITH_VULNERABILITIES == variant) {
-            final List<Component> components = qm.getAllComponents(project);
-            final List<ServiceComponent> services = qm.getAllServiceComponents(project);
-            final List<Vulnerability> vulnerabilities = (Variant.INVENTORY_WITH_VULNERABILITIES == variant) ? qm.getVulnerabilities(project, true) : null;
-            return create(components, services, vulnerabilities, project);
-        } else if (Variant.VEX == variant) {
-            final List<Vulnerability> vulnerabilities = qm.getVulnerabilities(project, true);
-            return create(null, null, vulnerabilities, project);
-        }
-        return new Bom();
+        final List<Component> components = qm.getAllComponents(project);
+        final List<ServiceComponent> services = qm.getAllServiceComponents(project);
+        final List<Vulnerability> vulnerabilities = (Variant.INVENTORY_WITH_VULNERABILITIES == variant || Variant.VEX == variant) ? qm.getVulnerabilities(project, true) : null;
+        return create(components, services, vulnerabilities, project);
     }
 
     public Bom create(final Component component) {

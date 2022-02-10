@@ -28,6 +28,10 @@ import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
+import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -584,6 +588,36 @@ public class ModelConverter {
             }
             cdxVulnerability.setAffects(affects);
         } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
+            for (final Component component : vulnerability.getComponents()) {
+                for (final Component c : components) {
+                    if (component.getId() == c.getId()) {
+                        final Analysis analysis = qm.getAnalysis(
+                                qm.getObjectByUuid(Component.class, component.getUuid()),
+                                qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
+                        );
+                        if (analysis != null) {
+                            final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
+                            if (analysis.getAnalysisResponse() != null) {
+                                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
+                                if (response != null) {
+                                    List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
+                                    responses.add(response);
+                                    cdxAnalysis.setResponses(responses);
+                                }
+                            }
+                            if (analysis.getAnalysisState() != null) {
+                                cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
+                            }
+                            if (analysis.getAnalysisJustification() != null) {
+                                cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
+                            }
+                            cdxAnalysis.setDetail(analysis.getAnalysisDetails().trim());
+                            cdxVulnerability.setAnalysis(cdxAnalysis);
+                        }
+                    }
+                }
+            }
+
             final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
             final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
             affect.setRef(project.getUuid().toString());
@@ -698,5 +732,73 @@ public class ModelConverter {
                 cdxSource.setUrl("https://github.com/RetireJS/retire.js"); break;
         }
         return cdxSource;
+    }
+
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response convertDtVulnAnalysisResponseToCdxAnalysisResponse(final AnalysisResponse analysisResponse) {
+        if (analysisResponse == null) {
+            return null;
+        }
+        switch (analysisResponse) {
+            case UPDATE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response.UPDATE;
+            case CAN_NOT_FIX:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response.CAN_NOT_FIX;
+            case WILL_NOT_FIX:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response.WILL_NOT_FIX;
+            case ROLLBACK:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response.ROLLBACK;
+            case WORKAROUND_AVAILABLE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response.WORKAROUND_AVAILABLE;
+            default:
+                return null;
+        }
+    }
+
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State convertDtVulnAnalysisStateToCdxAnalysisState(final AnalysisState analysisState) {
+        if (analysisState == null) {
+            return null;
+        }
+        switch (analysisState) {
+            case EXPLOITABLE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.EXPLOITABLE;
+            case FALSE_POSITIVE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.FALSE_POSITIVE;
+            case IN_TRIAGE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.IN_TRIAGE;
+            case NOT_AFFECTED:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.NOT_AFFECTED;
+            case RESOLVED:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.RESOLVED;
+            default:
+                return null;
+        }
+    }
+
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification convertDtVulnAnalysisJustificationToCdxAnalysisJustification(final AnalysisJustification analysisJustification) {
+        if (analysisJustification == null) {
+            return null;
+        }
+        switch (analysisJustification) {
+            case CODE_NOT_PRESENT:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.CODE_NOT_PRESENT;
+            case CODE_NOT_REACHABLE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.CODE_NOT_REACHABLE;
+            case PROTECTED_AT_PERIMETER:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.PROTECTED_AT_PERIMETER;
+            case PROTECTED_AT_RUNTIME:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.PROTECTED_AT_RUNTIME;
+            case PROTECTED_BY_COMPILER:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.PROTECTED_BY_COMPILER;
+            case PROTECTED_BY_MITIGATING_CONTROL:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.PROTECTED_BY_MITIGATING_CONTROL;
+            case REQUIRES_CONFIGURATION:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.REQUIRES_CONFIGURATION;
+            case REQUIRES_DEPENDENCY:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.REQUIRES_DEPENDENCY;
+            case REQUIRES_ENVIRONMENT:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.REQUIRES_ENVIRONMENT;
+            default:
+                return null;
+        }
     }
 }

@@ -121,7 +121,7 @@ public class BomResource extends AlpineResource {
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
                     if (download) {
                         return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON), MediaType.APPLICATION_OCTET_STREAM)
-                                .header("content-disposition","attachment; filename = \"" + project.getUuid() + "-" + variant + ".cdx.json\"").build();
+                                .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.json\"").build();
                     } else {
                         return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON),
                                 CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
@@ -129,7 +129,7 @@ public class BomResource extends AlpineResource {
                 } else if (format.equalsIgnoreCase("XML")) {
                     if (download) {
                         return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML), MediaType.APPLICATION_OCTET_STREAM)
-                                .header("content-disposition","attachment; filename = \"" + project.getUuid() + "-" + variant + ".cdx.xml\"").build();
+                                .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.xml\"").build();
                     } else {
                         return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML),
                                 CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();

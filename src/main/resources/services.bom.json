@@ -3,45 +3,6 @@
   "specVersion": "1.4",
   "serialNumber": "urn:uuid:d8e07202-6817-42c1-8cae-20254567672f",
   "version": 1,
-  "metadata" : {
-    "timestamp" : "2022-02-11T01:37:02Z",
-    "component" : {
-      "publisher" : "OWASP",
-      "group" : "org.dependencytrack",
-      "name" : "dependency-track",
-      "version" : "4.4.0-SNAPSHOT",
-      "description" : "Dependency-Track is an intelligent component analysis platform that allows organizations to identify and reduce risk in the software supply chain.",
-      "licenses" : [
-        {
-          "license" : {
-            "id" : "Apache-2.0",
-            "url" : "http://www.apache.org/licenses/LICENSE-2.0"
-          }
-        }
-      ],
-      "purl" : "pkg:maven/org.dependencytrack/dependency-track@4.4.0-SNAPSHOT?type=war",
-      "externalReferences" : [
-        {
-          "type" : "build-system",
-          "url" : "https://github.com/DependencyTrack/dependency-track/actions"
-        },
-        {
-          "type" : "distribution",
-          "url" : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-        },
-        {
-          "type" : "issue-tracker",
-          "url" : "https://github.com/DependencyTrack/dependency-track/issues"
-        },
-        {
-          "type" : "vcs",
-          "url" : "https://github.com/DependencyTrack/dependency-track.git"
-        }
-      ],
-      "type" : "application",
-      "bom-ref" : "pkg:maven/org.dependencytrack/dependency-track@4.4.0-SNAPSHOT?type=war"
-    }
-  },
   "services": [
     {
       "bom-ref": "service:gov.nist.nvd",

@@ -22,6 +22,7 @@ import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import alpine.model.Team;
 import alpine.util.UuidUtil;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -84,6 +85,32 @@ public class TeamResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The team could not be found.", body);
+    }
+    
+    @Test
+    public void getTeamSelfTest() {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        var response = target(V1_TEAM + "/self").request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus());
+        final var json = parseJsonObject(response);
+        Assert.assertEquals(team.getName(), json.getString("name"));
+        Assert.assertEquals(team.getUuid().toString(), json.getString("uuid"));
+        final var permissions = json.getJsonArray("permissions");
+        Assert.assertEquals(2, permissions.size());
+        Assert.assertEquals(Permissions.BOM_UPLOAD.toString(), permissions.get(0).asJsonObject().getString("name"));
+        Assert.assertEquals(Permissions.PROJECT_CREATION_UPLOAD.toString(), permissions.get(1).asJsonObject().getString("name"));
+
+        // missing api-key
+        response = target(V1_TEAM + "/self").request().get(Response.class);
+        Assert.assertEquals(401, response.getStatus());
+
+        // wrong api-key
+        response = target(V1_TEAM + "/self").request().header(X_API_KEY, "5ce9b8a5-5f18-4c1f-9eda-1611b83e8915").get(Response.class);
+        Assert.assertEquals(401, response.getStatus());
+
+        // not an api-key
+        response = target(V1_TEAM + "/self").request().header("Authorization", "Bearer " + jwt).get(Response.class);
+        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.Config;
 import alpine.auth.PermissionRequired;
 import alpine.logging.Logger;
 import alpine.model.ApiKey;
@@ -32,6 +33,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
 import org.owasp.security.logging.SecurityMarkers;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -265,4 +267,35 @@ public class TeamResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("self")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns information about the current team.",
+            response = TeamSelfResponse.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 400, message = "Invalid API key supplied"),
+            @ApiResponse(code = 404, message = "No Team for the given API key found")
+    })
+    public Response getSelf() {
+        if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            try (var qm = new QueryManager()) {
+                if (isApiKey()) {
+                    final var apiKey = qm.getApiKey(getPrincipal().getName());
+                    final var team = apiKey.getTeams().stream().findFirst();
+                    if (team.isPresent()) {
+                        return Response.ok(new TeamSelfResponse(team.get())).build();
+                    } else {
+                        return Response.status(Response.Status.NOT_FOUND).entity("No Team for the given API key found.").build();
+                    }
+                } else {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Invalid API key supplied.").build();
+                }
+            }
+        }
+        // Authentication is not enabled, but we need to return a positive response without any principal data.
+        return Response.ok().build();
+    }
 }

@@ -510,6 +510,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     analysis.setComponent(clonedComponent);
                     analysis.setVulnerability(sourceAnalysis.getVulnerability());
                     analysis.setSuppressed(sourceAnalysis.isSuppressed());
+                    analysis.setAnalysisResponse(sourceAnalysis.getAnalysisResponse());
+                    analysis.setAnalysisJustification(sourceAnalysis.getAnalysisJustification());
+                    analysis.setAnalysisState(sourceAnalysis.getAnalysisState());
+                    analysis.setAnalysisDetails(sourceAnalysis.getAnalysisDetails());
                     analysis = persist(analysis);
                     if (sourceAnalysis.getAnalysisComments() != null) {
                         for (final AnalysisComment sourceComment: sourceAnalysis.getAnalysisComments()) {

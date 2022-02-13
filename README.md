@@ -11,8 +11,10 @@
 [![Twitter](https://img.shields.io/twitter/follow/dependencytrack.svg?label=Follow&style=social)](https://twitter.com/dependencytrack)
 [![Downloads](https://img.shields.io/github/downloads/DependencyTrack/dependency-track/total.svg)](https://github.com/DependencyTrack/dependency-track/releases)
 [![Latest](https://img.shields.io/github/release/DependencyTrack/dependency-track.svg)](https://github.com/DependencyTrack/dependency-track/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/owasp/dependency-track.svg)](https://hub.docker.com/r/owasp/dependency-track/)
-
+[![Pulls - API Server](https://img.shields.io/docker/pulls/dependencytrack/apiserver.svg?label=Docker%20Pulls%20%28API%20Server%29)](https://hub.docker.com/r/dependencytrack/apiserver/)
+[![Pulls - Frontend](https://img.shields.io/docker/pulls/dependencytrack/frontend.svg?label=Docker%20Pulls%20%28Frontend%29)](https://hub.docker.com/r/dependencytrack/frontend/)
+[![Pulls - Bundled](https://img.shields.io/docker/pulls/dependencytrack/bundled.svg?label=Docker%20Pulls%20%28Bundled%29)](https://hub.docker.com/r/dependencytrack/bundled/)
+[![Pulls - Legacy](https://img.shields.io/docker/pulls/owasp/dependency-track.svg?label=Docker%20Pulls%20%28OWASP%20Legacy%29)](https://hub.docker.com/r/owasp/dependency-track/)
 
 ![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-black-text.svg?sanitize=true)
 

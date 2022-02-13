@@ -156,15 +156,15 @@ public class AnalysisResource extends AlpineResource {
                 if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
                     // The analysis state has changed. Add an additional comment to the trail.
                     analysisStateChange = true;
-                    final String message = analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
+                    final String message = "Analysis: " + analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
                 }
                 if (request.getAnalysisJustification() != null && analysis.getAnalysisJustification() != request.getAnalysisJustification()) {
-                    final String message = analysis.getAnalysisJustification().name() + " → " + request.getAnalysisJustification().name();
+                    final String message = "Justification: " + analysis.getAnalysisJustification().name() + " → " + request.getAnalysisJustification().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
                 }
                 if (request.getAnalysisResponse() != null && analysis.getAnalysisResponse() != request.getAnalysisResponse()) {
-                    final String message = analysis.getAnalysisResponse().name() + " → " + request.getAnalysisResponse().name();
+                    final String message = "Vendor Response: " + analysis.getAnalysisResponse().name() + " → " + request.getAnalysisResponse().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
                 }
                 if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
@@ -177,7 +177,7 @@ public class AnalysisResource extends AlpineResource {
                 analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
                 analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
                 if (AnalysisState.NOT_SET != request.getAnalysisState()) {
-                    final String message = AnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();
+                    final String message = "Analysis: " + AnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
                 }
             }

@@ -283,7 +283,7 @@ public class TeamResource extends AlpineResource {
         if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
             try (var qm = new QueryManager()) {
                 if (isApiKey()) {
-                    final var apiKey = qm.getApiKey(getPrincipal().getName());
+                    final var apiKey = qm.getApiKey(((ApiKey)getPrincipal()).getKey());
                     final var team = apiKey.getTeams().stream().findFirst();
                     if (team.isPresent()) {
                         return Response.ok(new TeamSelfResponse(team.get())).build();

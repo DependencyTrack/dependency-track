@@ -611,7 +611,7 @@ public class ModelConverter {
                             if (analysis.getAnalysisJustification() != null) {
                                 cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
                             }
-                            cdxAnalysis.setDetail(analysis.getAnalysisDetails().trim());
+                            cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
                             cdxVulnerability.setAnalysis(cdxAnalysis);
                         }
                     }

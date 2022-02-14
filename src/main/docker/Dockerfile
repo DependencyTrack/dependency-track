@@ -1,6 +1,6 @@
-FROM eclipse-temurin:11.0.13_8-jre-focal AS jre-build
+FROM eclipse-temurin:17.0.2_8-jre-focal AS jre-build
 
-FROM debian:bullseye-slim
+FROM debian:bullseye-20220125-slim
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
@@ -8,8 +8,8 @@ ARG COMMIT_SHA
 ARG APP_VERSION
 ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
-ARG UID=1001
-ARG GID=1001
+ARG UID=1000
+ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
 ENV TZ=Etc/UTC \

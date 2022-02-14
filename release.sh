@@ -48,7 +48,7 @@ mvn net.nicoulaj.maven.plugins:checksum-maven-plugin:files
 mvn github-release:release
 
 
-# Cleanup containers/images, build new image and push to Docker Hub
+# Cleanup containers/images, build new images (using buildx) and push to Docker Hub
 APISERVER_REPO=dependencytrack/apiserver
 BUNDLED_REPO=dependencytrack/bundled
 docker rm dependency-track
@@ -56,13 +56,9 @@ docker rmi $APISERVER_REPO:latest
 docker rmi $APISERVER_REPO:$RELEASE_VERSION
 docker rmi $BUNDLED_REPO:latest
 docker rmi $BUNDLED_REPO:$RELEASE_VERSION
-docker build --no-cache --pull -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest .
-docker build --no-cache --pull -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest .
 docker login
-docker push $APISERVER_REPO:latest
-docker push $APISERVER_REPO:$RELEASE_VERSION
-docker push $BUNDLED_REPO:latest
-docker push $BUNDLED_REPO:$RELEASE_VERSION
+docker build --no-cache --pull -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:$RELEASE_VERSION -t $APISERVER_REPO:latest --platform linux/amd64,linux/arm64 --push .
+docker build --no-cache --pull -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:$RELEASE_VERSION -t $BUNDLED_REPO:latest --platform linux/amd64,linux/arm64 --push .
 
 
 # Version bump to prepare next snapshot

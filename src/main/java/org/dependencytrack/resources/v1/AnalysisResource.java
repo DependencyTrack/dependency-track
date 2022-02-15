@@ -166,7 +166,7 @@ public class AnalysisResource extends AlpineResource {
                     final String message = "Vendor Response: " + analysis.getAnalysisResponse().name() + " → " + request.getAnalysisResponse().name();
                     qm.makeAnalysisComment(analysis, message, commenter);
                 }
-                if (request.getAnalysisDetails() != null && !analysis.getAnalysisDetails().trim().equals(request.getAnalysisDetails().trim())) {
+                if (request.getAnalysisDetails() != null && !request.getAnalysisDetails().equals(analysis.getAnalysisDetails())) {
                     final String message = "Details: " + request.getAnalysisDetails().trim();
                     qm.makeAnalysisComment(analysis, message, commenter);
                 }

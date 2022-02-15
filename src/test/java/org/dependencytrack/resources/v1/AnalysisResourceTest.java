@@ -227,7 +227,7 @@ public class AnalysisResourceTest extends ResourceTest {
         qm.createVulnerability(vulnerability, false);
         qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", false);
         AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL, AnalysisResponse.UPDATE, "Analysis details here", "Not an issue", true);
+                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL, AnalysisResponse.UPDATE, "Updated analysis details here", "Not an issue", true);
         Response response = target(V1_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -238,7 +238,7 @@ public class AnalysisResourceTest extends ResourceTest {
         Assert.assertNotNull(json);
         Assert.assertEquals(AnalysisState.NOT_AFFECTED.name(), json.getString("analysisState"));
         Assert.assertTrue(json.getBoolean("isSuppressed"));
-        Assert.assertEquals(5, json.getJsonArray("analysisComments").size());
+        Assert.assertEquals(6, json.getJsonArray("analysisComments").size());
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(0).getJsonNumber("timestamp"));
         Assert.assertEquals("Analysis: IN_TRIAGE → NOT_AFFECTED", json.getJsonArray("analysisComments").getJsonObject(0).getString("comment"));
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(1).getJsonNumber("timestamp"));
@@ -246,9 +246,11 @@ public class AnalysisResourceTest extends ResourceTest {
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(2).getJsonNumber("timestamp"));
         Assert.assertEquals("Vendor Response: WILL_NOT_FIX → UPDATE", json.getJsonArray("analysisComments").getJsonObject(2).getString("comment"));
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(3).getJsonNumber("timestamp"));
-        Assert.assertEquals("Suppressed", json.getJsonArray("analysisComments").getJsonObject(3).getString("comment"));
+        Assert.assertEquals("Details: Updated analysis details here", json.getJsonArray("analysisComments").getJsonObject(3).getString("comment"));
         Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(4).getJsonNumber("timestamp"));
-        Assert.assertEquals("Not an issue", json.getJsonArray("analysisComments").getJsonObject(4).getString("comment"));
+        Assert.assertEquals("Suppressed", json.getJsonArray("analysisComments").getJsonObject(4).getString("comment"));
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(5).getJsonNumber("timestamp"));
+        Assert.assertEquals("Not an issue", json.getJsonArray("analysisComments").getJsonObject(5).getString("comment"));
         Analysis analysis = qm.getAnalysis(component, vulnerability);
         Assert.assertEquals(project.getUuid(), analysis.getProject().getUuid());
         Assert.assertEquals(component.getUuid(), analysis.getComponent().getUuid());

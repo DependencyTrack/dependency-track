@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17.0.2_8-jre-focal AS jre-build
+FROM eclipse-temurin:11.0.14.1_1-jre-focal AS jre-build
 
 FROM debian:bullseye-20220125-slim
 

@@ -15,6 +15,7 @@ The following notification publishers are included:
 | ------|-------------|
 | Slack   | Publishes notifications to Slack channels |
 | Teams   | Publishes notifications to Microsoft Teams channels |
+| WebEx   | Publishes notifications to Cisco WebEx channels |
 | Webhook | Publishes notifications to a configurable endpoint |
 | Email   | Sends notifications to an email address |
 | Console | Displays notifications on the system console |

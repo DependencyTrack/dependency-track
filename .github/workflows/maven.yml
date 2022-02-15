@@ -56,9 +56,11 @@ jobs:
 
     - name: Publish test coverage
       if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests != 'true'
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      run: java -jar ~/codacy-coverage-reporter-assembly.jar report -l Java -r target/jacoco-ut/jacoco.xml
+      uses: codacy/codacy-coverage-reporter-action@v1
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        language: Java
+        coverage-reports: target/jacoco-ut/jacoco.xml
 
     - name: Logging into Docker Hub
       if: github.ref == 'refs/heads/master'

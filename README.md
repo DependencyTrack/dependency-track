@@ -58,7 +58,7 @@ CI/CD environments.
   * More coming soon...
 * Integrates with multiple sources of vulnerability intelligence including:
   * [National Vulnerability Database] (NVD)
-  * [NPM Public Advisories]
+  * [GitHub Advisories]
   * [Sonatype OSS Index]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
@@ -84,7 +84,7 @@ CI/CD environments.
   * Trust boundary traversal
   * Authentication requirements
 * Includes a comprehensive auditing workflow for triaging results
-* Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
+* Configurable notifications supporting Slack, Microsoft Teams, WebEx, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports importing [CycloneDX] Software Bill of Materials (SBOM)
 * Easy to read metrics for components, projects, and portfolio
@@ -239,7 +239,7 @@ Dependency-Track makes use of several other open source libraries. Please see
 the [notices] file for more information.
 
   [National Vulnerability Database]: https://nvd.nist.gov
-  [NPM Public Advisories]: https://www.npmjs.com/advisories
+  [GitHub Advisories]: https://www.github.com/advisories
   [Sonatype OSS Index]: https://ossindex.sonatype.org
   [VulnDB]: https://vulndb.cyberriskanalytics.com
   [Risk Based Security]: https://www.riskbasedsecurity.com

@@ -26,7 +26,8 @@ public enum DefaultNotificationPublishers {
     MS_TEAMS("Microsoft Teams", "Publishes notifications to a Microsoft Teams channel", MsTeamsPublisher.class, "/templates/notification/publisher/msteams.peb", MediaType.APPLICATION_JSON, true),
     EMAIL("Email", "Sends notifications to an email address", SendMailPublisher.class, "/templates/notification/publisher/email.peb", MediaType.TEXT_PLAIN, true),
     CONSOLE("Console", "Displays notifications on the system console", ConsolePublisher.class, "/templates/notification/publisher/console.peb", MediaType.TEXT_PLAIN, true),
-    WEBHOOK("Outbound Webhook", "Publishes notifications to a configurable endpoint", WebhookPublisher.class, "/templates/notification/publisher/webhook.peb", MediaType.APPLICATION_JSON, true);
+    WEBHOOK("Outbound Webhook", "Publishes notifications to a configurable endpoint", WebhookPublisher.class, "/templates/notification/publisher/webhook.peb", MediaType.APPLICATION_JSON, true),
+    CS_WEBEX("Cisco Webex", "Publishes notifications to a Cisco Webex Teams channel", CsWebexPublisher.class, "/templates/notification/publisher/cswebex.peb", MediaType.APPLICATION_JSON, true);
 
     private String name;
     private String description;

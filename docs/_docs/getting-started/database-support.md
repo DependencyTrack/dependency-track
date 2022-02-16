@@ -23,7 +23,7 @@ To change database settings, edit `application.properties` found in the Dependen
 
 ```ini
 alpine.database.mode=external
-alpine.database.url=jdbc:sqlserver://localhost:1433;databaseName=dtrack
+alpine.database.url=jdbc:sqlserver://localhost:1433;databaseName=dtrack;sendStringParametersAsUnicode=false
 alpine.database.driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
 alpine.database.username=dtrack
 alpine.database.password=password

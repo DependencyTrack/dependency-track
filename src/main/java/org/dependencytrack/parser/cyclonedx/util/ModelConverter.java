@@ -37,6 +37,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.DataClassification;
 import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.OrganizationalEntity;
@@ -513,8 +514,11 @@ public class ModelConverter {
     }
 
     public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
-                                                                          final Vulnerability vulnerability, final List<Component> components,
-                                                                          final Project project) {
+                                                                          final Finding finding) {
+        final Component component = qm.getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
+        final Project project = component.getProject();
+        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
+
         final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
         cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
         cdxVulnerability.setId(vulnerability.getVulnId());
@@ -574,48 +578,35 @@ public class ModelConverter {
         cdxVulnerability.setPublished(vulnerability.getPublished());
         cdxVulnerability.setUpdated(vulnerability.getUpdated());
 
-        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant && components != null) {
+        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant) {
             final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            for (final Component component : vulnerability.getComponents()) {
-                // Check to see if the vulnerable component is in the list of components passed to this method
-                for (final Component c : components) {
-                    if (component.getId() == c.getId()) {
-                        final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-                        affect.setRef(component.getUuid().toString());
-                        affects.add(affect);
-                    }
-                }
-            }
+            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(component.getUuid().toString());
+            affects.add(affect);
             cdxVulnerability.setAffects(affects);
         } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
-            for (final Component component : vulnerability.getComponents()) {
-                for (final Component c : components) {
-                    if (component.getId() == c.getId()) {
-                        final Analysis analysis = qm.getAnalysis(
-                                qm.getObjectByUuid(Component.class, component.getUuid()),
-                                qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
-                        );
-                        if (analysis != null) {
-                            final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
-                            if (analysis.getAnalysisResponse() != null) {
-                                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
-                                if (response != null) {
-                                    List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
-                                    responses.add(response);
-                                    cdxAnalysis.setResponses(responses);
-                                }
-                            }
-                            if (analysis.getAnalysisState() != null) {
-                                cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
-                            }
-                            if (analysis.getAnalysisJustification() != null) {
-                                cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
-                            }
-                            cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
-                            cdxVulnerability.setAnalysis(cdxAnalysis);
-                        }
+            final Analysis analysis = qm.getAnalysis(
+                    qm.getObjectByUuid(Component.class, component.getUuid()),
+                    qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
+            );
+            if (analysis != null) {
+                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
+                if (analysis.getAnalysisResponse() != null) {
+                    final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
+                    if (response != null) {
+                        List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
+                        responses.add(response);
+                        cdxAnalysis.setResponses(responses);
                     }
                 }
+                if (analysis.getAnalysisState() != null) {
+                    cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
+                }
+                if (analysis.getAnalysisJustification() != null) {
+                    cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
+                }
+                cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
+                cdxVulnerability.setAnalysis(cdxAnalysis);
             }
 
             final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();

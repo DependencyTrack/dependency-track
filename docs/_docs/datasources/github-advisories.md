@@ -4,7 +4,6 @@ category: Datasources
 chapter: 4
 order: 2
 redirect_from:
-  - /datasources/nsp/
   - /datasources/npm/
 ---
 

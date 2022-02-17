@@ -3,8 +3,6 @@ title: GitHub Advisories
 category: Datasources
 chapter: 4
 order: 2
-redirect_from:
-  - /datasources/npm/
 ---
 
 GitHub Advisories is a centralized source of vulnerability intelligence specific to GitHub projects. GitHub advisories may 

@@ -11,7 +11,6 @@ vulnerabilities. The platform employs several methods of vulnerability identific
 | Analyzer  | Description |
 | ----------|-------------|
 | Internal  | Identifies vulnerable components from an internal directory of vulnerable software|
-| NPM Audit | NPM Audit is a service which identifies vulnerabilities in Node.js Modules|
 | OSS Index | OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components|
 | VulnDB    | VulnDB is a commercial service which identifies vulnerabilities in third-party components|
 
@@ -20,17 +19,8 @@ Each of the analyzers above can be enabled or disabled independently from one an
 ### Internal Analyzer
 
 The internal analyzer relies on a dictionary of vulnerable software. This dictionary is automatically populated when 
-NVD mirroring or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid CPEs, 
-including application, operating system, and hardware components.
-
-### NPM Audit Analyzer
-
-NPM Audit is a service which identifies vulnerabilities in Node.js Modules. Dependency-Track integrates natively 
-with the NPM Audit service to provide highly accurate results. Use of this analyzer requires a valid Package URL for 
-the components being analyzed.
-
-NPM is a source of vulnerability intelligence that provides its own content. Refer to 
-[NPM Public Advisories (Datasource)]({{ site.baseurl }}{% link _docs/datasources/npm.md %}) for additional information.
+NVD, GitHub Advisory, or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid 
+CPEs, including application, operating system, and hardware components, and all components with Package URLs.
 
 ### OSS Index Analyzer
 

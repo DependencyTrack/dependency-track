@@ -38,8 +38,8 @@ RUN mkdir -p -m 770 ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
     \
     # Install wget for health check
-    && apt update \
-    && DEBIAN_FRONTEND=noninteractive apt install -y wget \
+    && apt-get -yqq update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy JRE from temurin base image

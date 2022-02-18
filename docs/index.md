@@ -33,7 +33,7 @@ CI/CD environments.
   * More coming soon...
 * Integrates with multiple sources of vulnerability intelligence including:
   * [National Vulnerability Database] (NVD)
-  * [NPM Public Advisories]
+  * [GitHub Advisories]
   * [Sonatype OSS Index]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
@@ -71,7 +71,7 @@ CI/CD environments.
 * Simple to install and configure. Get up and running in just a few minutes
 
 [National Vulnerability Database]: https://nvd.nist.gov
-[NPM Public Advisories]: https://www.npmjs.com/advisories
+[GitHub Advisories]: https://www.github.com/advisories
 [Sonatype OSS Index]: https://ossindex.sonatype.org
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com

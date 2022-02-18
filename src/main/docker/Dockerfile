@@ -27,20 +27,25 @@ ENV TZ=Etc/UTC \
     PATH="/opt/java/openjdk/bin:${PATH}" \
     LANG=C.UTF-8
 
-COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
-
-# Copy the compiled WAR to the application directory created above
-# Automatically creates the $APP_DIR directory
-COPY ./target/${WAR_FILENAME} ${APP_DIR}
-
-# Create the directory where Dependency-Track will store its data (${DATA_DIR}) and the external library directory (${EXTLIB_DIR})
+# Create the directories where the WAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
-RUN mkdir -p -m 770 ${DATA_DIR} \
+RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
     && addgroup --system --gid ${GID} dtrack || true \
     && adduser --system --disabled-login --ingroup dtrack --no-create-home --home ${DATA_DIR} --gecos "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
-    && chmod -R g=u ${DATA_DIR} ${APP_DIR}
+    && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
+    \
+    # Install wget for health check
+    && apt-get -yqq update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy JRE from temurin base image
+COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
+
+# Copy the compiled WAR to the application directory created above
+COPY ./target/${WAR_FILENAME} ${APP_DIR}
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}
@@ -55,7 +60,7 @@ CMD java ${JAVA_OPTIONS} -DdependencyTrack.logging.level=${LOGGING_LEVEL} -jar $
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}api/version || exit 1
+HEALTHCHECK --interval=5m --timeout=3s CMD wget --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}api/version || exit 1
 
 # metadata labels
 LABEL \

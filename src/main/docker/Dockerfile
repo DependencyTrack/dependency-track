@@ -2,11 +2,6 @@ FROM eclipse-temurin:11.0.14.1_1-jre-focal@sha256:246f0a07f7ba2c52b48d1879aa6f29
 
 FROM debian:bullseye-20220125-slim@sha256:4c25ffa6ef572cf0d57da8c634769a08ae94529f7de5be5587ec8ce7b9b50f9c
 
-# Install wget for healthcheck
-RUN apt update \
-    && apt install -y wget \
-    && rm -rf /var/lib/apt/lists/*
-
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
 ARG COMMIT_SHA
@@ -32,20 +27,26 @@ ENV TZ=Etc/UTC \
     PATH="/opt/java/openjdk/bin:${PATH}" \
     LANG=C.UTF-8
 
-COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
-
-# Copy the compiled WAR to the application directory created above
-# Automatically creates the $APP_DIR directory
-COPY ./target/${WAR_FILENAME} ${APP_DIR}
-
-# Create the directory where Dependency-Track will store its data (${DATA_DIR}) and the external library directory (${EXTLIB_DIR})
+# Create the directories where the WAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
-RUN mkdir -p -m 770 ${DATA_DIR} \
+RUN mkdir -p -m 770 ${APP_DIR} \
+    && mkdir -p -m 770 ${DATA_DIR} \
     && addgroup --system --gid ${GID} dtrack || true \
     && adduser --system --disabled-login --ingroup dtrack --no-create-home --home ${DATA_DIR} --gecos "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
-    && chmod -R g=u ${DATA_DIR} ${APP_DIR}
+    && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
+    \
+    # Install wget for health check
+    && apt update \
+    && DEBIAN_FRONTEND=noninteractive apt install -y wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy JRE from temurin base image
+COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
+
+# Copy the compiled WAR to the application directory created above
+COPY ./target/${WAR_FILENAME} ${APP_DIR}
 
 # Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}

@@ -2,6 +2,11 @@ FROM eclipse-temurin:11.0.14.1_1-jre-focal@sha256:246f0a07f7ba2c52b48d1879aa6f29
 
 FROM debian:bullseye-20220125-slim@sha256:4c25ffa6ef572cf0d57da8c634769a08ae94529f7de5be5587ec8ce7b9b50f9c
 
+# Install wget for healthcheck
+RUN apt update \
+    && apt install -y wget \
+    && rm -rf /var/lib/apt/lists/*
+
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
 ARG COMMIT_SHA
@@ -55,7 +60,7 @@ CMD java ${JAVA_OPTIONS} -DdependencyTrack.logging.level=${LOGGING_LEVEL} -jar $
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}api/version || exit 1
+HEALTHCHECK --interval=5m --timeout=3s CMD wget --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}api/version || exit 1
 
 # metadata labels
 LABEL \

@@ -16,7 +16,7 @@ public class v440Updater extends AbstractUpgradeItem {
 
     private static final Logger LOGGER = Logger.getLogger(v440Updater.class);
     private static final String STMT_1 = "INSERT INTO \"PERMISSION\" (\"NAME\", \"DESCRIPTION\") VALUES (?, ?)";
-    private static final String STMT_2 = "SELECT \"ID\" FROM \"PERMISSION\" WHERE \"NAME\" = ? LIMIT 1";
+    private static final String STMT_2 = "SELECT TOP 1 \"ID\" FROM \"PERMISSION\" WHERE \"NAME\" = ?";
     private static final String STMT_3 = "SELECT \"u\".\"ID\" FROM \"MANAGEDUSER\" AS \"u\" INNER JOIN \"MANAGEDUSERS_PERMISSIONS\" AS \"up\" ON \"up\".\"MANAGEDUSER_ID\" = \"u\".\"ID\" WHERE \"up\".\"PERMISSION_ID\" = %d";
     private static final String STMT_4 = "INSERT INTO \"MANAGEDUSERS_PERMISSIONS\" (\"MANAGEDUSER_ID\", \"PERMISSION_ID\") VALUES (?, ?)";
     private static final String STMT_5 = "SELECT \"u\".\"ID\" FROM \"LDAPUSER\" AS \"u\" INNER JOIN \"LDAPUSERS_PERMISSIONS\" AS \"up\" ON \"up\".\"LDAPUSER_ID\" = \"u\".\"ID\" WHERE \"up\".\"PERMISSION_ID\" = %d";

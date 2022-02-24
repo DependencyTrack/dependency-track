@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.filters.ApiFilter;
+import alpine.server.filters.ApiFilter;
 import alpine.model.ManagedUser;
 import alpine.server.auth.PasswordService;
 import org.dependencytrack.ResourceTest;

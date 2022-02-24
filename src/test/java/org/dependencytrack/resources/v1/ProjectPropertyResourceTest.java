@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.filters.ApiFilter;
-import alpine.filters.AuthenticationFilter;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import alpine.model.IConfigProperty;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;

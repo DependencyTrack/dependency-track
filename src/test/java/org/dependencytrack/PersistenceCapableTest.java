@@ -19,7 +19,7 @@
 package org.dependencytrack;
 
 import alpine.Config;
-import alpine.persistence.PersistenceManagerFactory;
+import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.After;
 import org.junit.Before;

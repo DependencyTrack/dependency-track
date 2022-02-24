@@ -17,7 +17,7 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.filters.ApiFilter;
+import alpine.server.filters.ApiFilter;
 import org.dependencytrack.ResourceTest;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;

@@ -256,4 +256,57 @@ public class AnalysisResourceTest extends ResourceTest {
         Assert.assertEquals(component.getUuid(), analysis.getComponent().getUuid());
         Assert.assertEquals(vulnerability.getUuid(), analysis.getVulnerability().getUuid());
     }
+
+    // Test the scenario where an analysis was created with Dependency-Track <= 4.3.6,
+    // before the additional fields "justification" and "response" were introduced.
+    // Performing an analysis with those request fields set in >= 4.4.0 then resulted in NPEs,
+    // see https://github.com/DependencyTrack/dependency-track/issues/1409
+    @Test
+    public void testIssue1409() {
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.createComponent(component, false);
+        List<Component> components = new ArrayList<>();
+        components.add(component);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(components);
+        qm.createVulnerability(vulnerability, false);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, null, null, null, false);
+        AnalysisRequest request = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
+                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL, AnalysisResponse.UPDATE, "Updated analysis details here", "Not an issue", true);
+        Response response = target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(AnalysisState.NOT_AFFECTED.name(), json.getString("analysisState"));
+        Assert.assertTrue(json.getBoolean("isSuppressed"));
+        Assert.assertEquals(6, json.getJsonArray("analysisComments").size());
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(0).getJsonNumber("timestamp"));
+        Assert.assertEquals("Analysis: IN_TRIAGE → NOT_AFFECTED", json.getJsonArray("analysisComments").getJsonObject(0).getString("comment"));
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(1).getJsonNumber("timestamp"));
+        Assert.assertEquals("Justification: NOT_SET → PROTECTED_BY_MITIGATING_CONTROL", json.getJsonArray("analysisComments").getJsonObject(1).getString("comment"));
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(2).getJsonNumber("timestamp"));
+        Assert.assertEquals("Vendor Response: NOT_SET → UPDATE", json.getJsonArray("analysisComments").getJsonObject(2).getString("comment"));
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(3).getJsonNumber("timestamp"));
+        Assert.assertEquals("Details: Updated analysis details here", json.getJsonArray("analysisComments").getJsonObject(3).getString("comment"));
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(4).getJsonNumber("timestamp"));
+        Assert.assertEquals("Suppressed", json.getJsonArray("analysisComments").getJsonObject(4).getString("comment"));
+        Assert.assertNotNull(json.getJsonArray("analysisComments").getJsonObject(5).getJsonNumber("timestamp"));
+        Assert.assertEquals("Not an issue", json.getJsonArray("analysisComments").getJsonObject(5).getString("comment"));
+        Analysis analysis = qm.getAnalysis(component, vulnerability);
+        Assert.assertEquals(project.getUuid(), analysis.getProject().getUuid());
+        Assert.assertEquals(component.getUuid(), analysis.getComponent().getUuid());
+        Assert.assertEquals(vulnerability.getUuid(), analysis.getVulnerability().getUuid());
+    }
+
 }

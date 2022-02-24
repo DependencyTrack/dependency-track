@@ -92,6 +92,7 @@ jobs:
           --push .
 
     - name: Run Trivy vulnerability scanner
+      if: github.ref == 'refs/heads/master'
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: 'docker.io/${{DOCKER_APISERVER_REPO}}:${{DOCKER_TAG}}'

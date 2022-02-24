@@ -52,7 +52,7 @@ jobs:
 
     - name: Execute unit tests
       if: github.event.inputs.skipTests != 'true'
-      run: mvn test
+      run: mvn test -P enhance
 
     - name: Publish test coverage
       if: github.ref == 'refs/heads/master' && github.event.inputs.skipTests != 'true'

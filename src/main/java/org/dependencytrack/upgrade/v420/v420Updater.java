@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.upgrade.v420;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
-import alpine.upgrade.AbstractUpgradeItem;
-import alpine.util.DbUtil;
+import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.util.DbUtil;
+
 import java.sql.Connection;
 
 public class v420Updater extends AbstractUpgradeItem {

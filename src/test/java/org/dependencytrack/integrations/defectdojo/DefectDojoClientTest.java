@@ -20,11 +20,9 @@ package org.dependencytrack.integrations.defectdojo;
 
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.http.HttpHeaders;
-import org.dependencytrack.util.HttpUtil;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,13 +31,12 @@ import org.junit.rules.ExpectedException;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.verify.VerificationTimes;
+
 import java.net.URL;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.ParameterBody.params;
-import static org.mockserver.model.Parameter.param;
 
 public class DefectDojoClientTest {
 

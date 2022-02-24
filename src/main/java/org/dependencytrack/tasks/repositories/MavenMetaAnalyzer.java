@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -32,8 +32,13 @@ import org.dependencytrack.util.DateUtil;
 import org.dependencytrack.util.XmlUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
 import java.io.InputStream;
 

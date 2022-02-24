@@ -19,8 +19,8 @@
 package org.dependencytrack.common;
 
 import alpine.Config;
-import alpine.logging.Logger;
-import alpine.util.SystemUtil;
+import alpine.common.logging.Logger;
+import alpine.common.util.SystemUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -52,6 +52,7 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
+
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;

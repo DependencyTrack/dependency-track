@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+
 import javax.jdo.AttributeConverter;
 
 /**

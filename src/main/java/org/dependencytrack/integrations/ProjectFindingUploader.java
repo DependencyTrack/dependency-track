@@ -20,6 +20,7 @@ package org.dependencytrack.integrations;
 
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
+
 import java.io.InputStream;
 import java.util.List;
 

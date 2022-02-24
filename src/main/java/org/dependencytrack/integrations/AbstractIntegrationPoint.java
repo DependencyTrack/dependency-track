@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.integrations;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationConstants;

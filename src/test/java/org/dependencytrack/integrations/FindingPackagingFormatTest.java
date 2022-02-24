@@ -24,6 +24,7 @@ import org.dependencytrack.model.Project;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.Collections;
 
 public class FindingPackagingFormatTest extends PersistenceCapableTest {

@@ -19,7 +19,7 @@
 package org.dependencytrack.common;
 
 import alpine.Config;
-import alpine.util.SystemUtil;
+import alpine.common.util.SystemUtil;
 import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;

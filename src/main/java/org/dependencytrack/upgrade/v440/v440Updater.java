@@ -1,9 +1,9 @@
 package org.dependencytrack.upgrade.v440;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
-import alpine.upgrade.AbstractUpgradeItem;
-import alpine.upgrade.UpgradeException;
+import alpine.server.upgrade.AbstractUpgradeItem;
+import alpine.server.upgrade.UpgradeException;
 import org.dependencytrack.auth.Permissions;
 
 import java.sql.Connection;

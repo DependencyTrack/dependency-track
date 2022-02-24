@@ -19,6 +19,7 @@
 package org.dependencytrack.util;
 
 import java.util.Base64;
+
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 public final class HttpUtil {

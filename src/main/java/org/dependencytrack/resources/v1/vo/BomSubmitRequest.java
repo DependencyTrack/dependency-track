@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
-import alpine.json.TrimmedStringDeserializer;
-import alpine.validation.RegexSequence;
+import alpine.common.validation.RegexSequence;
+import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;

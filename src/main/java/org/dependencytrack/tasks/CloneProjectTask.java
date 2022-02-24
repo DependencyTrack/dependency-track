@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import org.dependencytrack.event.CloneProjectEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
+
 import java.util.UUID;
 
 public class CloneProjectTask implements Subscriber {

@@ -18,13 +18,13 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.auth.LdapConnectionWrapper;
-import alpine.auth.PermissionRequired;
-import alpine.cache.CacheManager;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.model.MappedLdapGroup;
 import alpine.model.Team;
-import alpine.resources.AlpineResource;
+import alpine.server.auth.LdapConnectionWrapper;
+import alpine.server.auth.PermissionRequired;
+import alpine.server.cache.CacheManager;
+import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -35,6 +35,7 @@ import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest;
+
 import javax.naming.NamingException;
 import javax.naming.SizeLimitExceededException;
 import javax.naming.directory.DirContext;

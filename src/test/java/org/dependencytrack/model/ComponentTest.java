@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

@@ -27,6 +27,7 @@ import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.VulnerabilityMetrics;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.Date;

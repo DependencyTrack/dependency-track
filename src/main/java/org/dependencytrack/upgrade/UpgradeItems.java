@@ -18,7 +18,8 @@
  */
 package org.dependencytrack.upgrade;
 
-import alpine.upgrade.UpgradeItem;
+import alpine.server.upgrade.UpgradeItem;
+
 import java.util.ArrayList;
 import java.util.List;
 

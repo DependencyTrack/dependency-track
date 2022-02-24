@@ -22,6 +22,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.License;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.UUID;
 
 public class LicenseIndexerTest extends PersistenceCapableTest {

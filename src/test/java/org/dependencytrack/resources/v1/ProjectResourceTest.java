@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.common.util.UuidUtil;
 import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
-import alpine.util.UuidUtil;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -30,6 +30,7 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;

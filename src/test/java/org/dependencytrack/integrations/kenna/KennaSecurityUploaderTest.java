@@ -20,9 +20,9 @@ package org.dependencytrack.integrations.kenna;
 
 import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.persistence.QueryManager;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.io.InputStream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;

@@ -19,9 +19,9 @@
 package org.dependencytrack.tasks;
 
 import alpine.Config;
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
@@ -39,6 +39,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;

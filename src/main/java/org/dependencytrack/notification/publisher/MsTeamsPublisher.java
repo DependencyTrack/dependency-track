@@ -21,6 +21,7 @@ package org.dependencytrack.notification.publisher;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
+
 import javax.json.JsonObject;
 
 public class MsTeamsPublisher extends AbstractWebhookPublisher implements Publisher {

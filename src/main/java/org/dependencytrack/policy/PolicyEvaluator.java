@@ -22,6 +22,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.util.List;
 
 /**

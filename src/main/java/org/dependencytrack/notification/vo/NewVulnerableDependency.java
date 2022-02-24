@@ -20,6 +20,7 @@ package org.dependencytrack.notification.vo;
 
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
+
 import java.util.List;
 
 public class NewVulnerableDependency {

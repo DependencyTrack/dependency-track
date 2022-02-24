@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.ComponentAnalysisCache;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.json.JsonObject;

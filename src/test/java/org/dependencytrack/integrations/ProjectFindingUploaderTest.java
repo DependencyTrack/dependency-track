@@ -22,6 +22,7 @@ import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;

@@ -18,12 +18,12 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.auth.PasswordService;
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.logging.Logger;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
+import alpine.server.auth.PasswordService;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
@@ -39,6 +39,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.search.IndexManager;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.File;

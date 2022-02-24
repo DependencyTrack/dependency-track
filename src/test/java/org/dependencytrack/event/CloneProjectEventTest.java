@@ -21,6 +21,7 @@ package org.dependencytrack.event;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.UUID;
 
 public class CloneProjectEventTest {

@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.dependencytrack.util.VulnerabilityUtil;
+
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;

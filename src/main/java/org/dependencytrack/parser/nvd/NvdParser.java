@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.parser.nvd;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
@@ -31,6 +31,7 @@ import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import us.springett.parsers.cpe.values.Part;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;

@@ -18,12 +18,12 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import alpine.crypto.DataEncryption;
+import alpine.common.logging.Logger;
+import alpine.common.util.Pageable;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
-import alpine.util.Pageable;
+import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.HttpRequestWithBody;
@@ -51,6 +51,7 @@ import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;

@@ -27,13 +27,13 @@
         <listener-class>org.dependencytrack.RequirementsVerifier</listener-class>
     </listener>
     <listener>
-        <listener-class>alpine.persistence.PersistenceInitializer</listener-class>
+        <listener-class>alpine.server.persistence.PersistenceInitializer</listener-class>
     </listener>
     <listener>
         <listener-class>org.dependencytrack.upgrade.UpgradeInitializer</listener-class>
     </listener>
     <listener>
-        <listener-class>alpine.persistence.PersistenceManagerFactory</listener-class>
+        <listener-class>alpine.server.persistence.PersistenceManagerFactory</listener-class>
     </listener>
     <listener>
         <listener-class>org.dependencytrack.event.EventSubsystemInitializer</listener-class>
@@ -47,7 +47,7 @@
 
     <filter>
         <filter-name>WhitelistUrlFilter</filter-name>
-        <filter-class>alpine.filters.WhitelistUrlFilter</filter-class>
+        <filter-class>alpine.server.filters.WhitelistUrlFilter</filter-class>
         <init-param>
             <param-name>allowUrls</param-name>
             <param-value>/index.html,/css,/fonts,/img,/js,/static,/favicon.ico,/api,/mirror,/.well-known</param-value>
@@ -68,7 +68,7 @@
 
     <filter>
         <filter-name>ClickjackingFilter</filter-name>
-        <filter-class>alpine.filters.ClickjackingFilter</filter-class>
+        <filter-class>alpine.server.filters.ClickjackingFilter</filter-class>
         <init-param>
             <param-name>mode</param-name>
             <param-value>DENY</param-value>
@@ -81,7 +81,7 @@
 
     <filter>
         <filter-name>CspFilter</filter-name>
-        <filter-class>alpine.filters.ContentSecurityPolicyFilter</filter-class>
+        <filter-class>alpine.server.filters.ContentSecurityPolicyFilter</filter-class>
         <init-param>
             <param-name>script-src</param-name>
             <param-value>'self' 'unsafe-inline'</param-value>
@@ -98,10 +98,10 @@
 
     <servlet>
         <servlet-name>DependencyTrack</servlet-name>
-        <servlet-class>alpine.AlpineServlet</servlet-class>
+        <servlet-class>alpine.server.AlpineServlet</servlet-class>
         <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>io.swagger.jaxrs.listing,alpine.filters,alpine.resources,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
+            <param-value>io.swagger.jaxrs.listing,alpine.server.filters,alpine.server.resources,org.dependencytrack.resources,org.dependencytrack.filters</param-value>
         </init-param>
         <init-param>
             <param-name>jersey.config.server.provider.classnames</param-name>

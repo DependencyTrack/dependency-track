@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.search;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +32,7 @@ import org.apache.lucene.search.TopDocs;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;

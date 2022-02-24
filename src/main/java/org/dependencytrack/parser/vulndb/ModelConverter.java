@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.parser.vulndb;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
@@ -28,6 +28,7 @@ import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
 import us.springett.vulndbdatamirror.parser.model.CvssV2Metric;
 import us.springett.vulndbdatamirror.parser.model.CvssV3Metric;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Date;

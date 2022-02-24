@@ -18,15 +18,16 @@
  */
 package org.dependencytrack.integrations.defectdojo;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
+
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class DefectDojoClient {
 

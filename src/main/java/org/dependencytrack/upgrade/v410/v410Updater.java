@@ -19,10 +19,11 @@
 package org.dependencytrack.upgrade.v410;
 
 import alpine.Config;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
-import alpine.upgrade.AbstractUpgradeItem;
+import alpine.server.upgrade.AbstractUpgradeItem;
 import org.apache.commons.io.FileDeleteStrategy;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;

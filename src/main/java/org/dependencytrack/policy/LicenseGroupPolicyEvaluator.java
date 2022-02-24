@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.policy;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+
 import java.util.ArrayList;
 import java.util.List;
 

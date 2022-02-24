@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.logging.Logger;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.integrations.kenna.KennaSecurityUploader;
 

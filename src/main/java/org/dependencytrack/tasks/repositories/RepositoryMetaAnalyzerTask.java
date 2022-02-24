@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.tasks.repositories;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -28,6 +28,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.util.Date;
 import java.util.List;
 

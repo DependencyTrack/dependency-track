@@ -23,6 +23,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.License;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;

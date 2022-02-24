@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.common;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;

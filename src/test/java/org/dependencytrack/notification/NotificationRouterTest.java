@@ -30,6 +30,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;

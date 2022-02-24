@@ -26,6 +26,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;

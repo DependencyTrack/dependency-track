@@ -19,12 +19,11 @@
 package org.dependencytrack;
 
 import alpine.Config;
-import alpine.auth.JsonWebToken;
-import alpine.auth.JwtAuthenticationService;
-import alpine.auth.PasswordService;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
+import alpine.server.auth.JsonWebToken;
+import alpine.server.auth.PasswordService;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.test.JerseyTest;
@@ -33,6 +32,7 @@ import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;

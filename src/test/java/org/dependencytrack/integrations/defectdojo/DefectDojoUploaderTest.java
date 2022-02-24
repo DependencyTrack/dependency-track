@@ -21,9 +21,9 @@ package org.dependencytrack.integrations.defectdojo;
 import alpine.model.IConfigProperty;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
-import org.dependencytrack.persistence.QueryManager;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 

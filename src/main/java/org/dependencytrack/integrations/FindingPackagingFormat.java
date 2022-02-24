@@ -25,6 +25,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DateUtil;
 import org.json.JSONObject;
+
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;

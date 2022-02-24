@@ -15,9 +15,6 @@
  */
 package org.dependencytrack.task;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Classifier;
@@ -27,6 +24,10 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.tasks.BomUploadProcessingTask;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 

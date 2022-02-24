@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.servlets;
 
-import alpine.logging.Logger;
-import alpine.servlets.FileSystemResourceServlet;
+import alpine.common.logging.Logger;
+import alpine.server.servlets.FileSystemResourceServlet;
 import org.dependencytrack.tasks.NistMirrorTask;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 

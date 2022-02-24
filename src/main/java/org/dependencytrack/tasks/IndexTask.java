@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.search.IndexManagerFactory;
 import org.dependencytrack.search.ObjectIndexer;

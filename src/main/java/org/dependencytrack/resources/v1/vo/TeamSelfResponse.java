@@ -17,9 +17,10 @@ package org.dependencytrack.resources.v1.vo;
 
 import alpine.model.Permission;
 import alpine.model.Team;
+
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.UUID;
-import javax.annotation.Nonnull;
 
 /**
  * Response-Object that contains only a subset of a {@link Team}

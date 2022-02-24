@@ -1,13 +1,13 @@
 package org.dependencytrack.resources.v1;
 
-import alpine.auth.AuthenticationNotRequired;
-import alpine.auth.PermissionRequired;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.model.MappedOidcGroup;
 import alpine.model.OidcGroup;
 import alpine.model.Team;
-import alpine.resources.AlpineResource;
-import alpine.util.OidcUtil;
+import alpine.server.auth.AuthenticationNotRequired;
+import alpine.server.auth.PermissionRequired;
+import alpine.server.resources.AlpineResource;
+import alpine.server.util.OidcUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

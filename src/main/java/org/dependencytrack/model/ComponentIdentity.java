@@ -22,6 +22,7 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.util.PurlUtil;
 import org.json.JSONObject;
+
 import java.util.UUID;
 
 /**

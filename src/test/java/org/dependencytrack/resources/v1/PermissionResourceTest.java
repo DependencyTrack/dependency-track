@@ -18,12 +18,12 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.auth.PasswordService;
 import alpine.filters.ApiFilter;
 import alpine.filters.AuthenticationFilter;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
+import alpine.server.auth.PasswordService;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
@@ -34,6 +34,7 @@ import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;

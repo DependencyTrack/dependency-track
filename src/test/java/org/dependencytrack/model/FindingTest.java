@@ -21,6 +21,7 @@ package org.dependencytrack.model;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;

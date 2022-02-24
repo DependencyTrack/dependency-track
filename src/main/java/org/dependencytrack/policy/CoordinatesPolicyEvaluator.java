@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.policy;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Coordinates;

@@ -18,15 +18,15 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
-import org.dependencytrack.common.UnirestFactory;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.RepositoryType;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
+import org.dependencytrack.common.UnirestFactory;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.RepositoryType;
 
 /**
  * An IMetaAnalyzer implementation that supports Ruby Gems.

@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.integrations.kenna;
 
-import alpine.crypto.DataEncryption;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
+import alpine.security.crypto.DataEncryption;
 import kong.unirest.ContentType;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
@@ -32,12 +32,11 @@ import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.PortfolioFindingUploader;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
-import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
 public class KennaSecurityUploader extends AbstractIntegrationPoint implements PortfolioFindingUploader {
 

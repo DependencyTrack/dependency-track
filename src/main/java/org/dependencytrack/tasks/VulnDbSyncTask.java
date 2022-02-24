@@ -19,9 +19,9 @@
 package org.dependencytrack.tasks;
 
 import alpine.Config;
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.event.IndexEvent;
@@ -43,6 +43,7 @@ import us.springett.vulndbdatamirror.parser.model.Product;
 import us.springett.vulndbdatamirror.parser.model.Results;
 import us.springett.vulndbdatamirror.parser.model.Vendor;
 import us.springett.vulndbdatamirror.parser.model.Version;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

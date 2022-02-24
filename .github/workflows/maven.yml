@@ -90,3 +90,15 @@ jobs:
           -t ${DOCKER_BUNDLED_REPO}:${DOCKER_TAG} \
           --platform linux/amd64,linux/arm64 \
           --push .
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'docker.io/${DOCKER_APISERVER_REPO}:${DOCKER_TAG}'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results.sarif'

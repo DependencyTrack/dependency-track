@@ -95,7 +95,7 @@ jobs:
       if: github.ref == 'refs/heads/master'
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: '${DOCKER_APISERVER_REPO}:${DOCKER_TAG}'
+        image-ref: ${DOCKER_APISERVER_REPO}:${DOCKER_TAG}
         format: 'sarif'
         output: 'trivy-results.sarif'
 

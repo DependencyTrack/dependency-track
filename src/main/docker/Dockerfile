@@ -52,10 +52,10 @@ WORKDIR ${APP_DIR}
 CMD java ${JAVA_OPTIONS} -DdependencyTrack.logging.level=${LOGGING_LEVEL} -jar ${WAR_FILENAME} -context ${CONTEXT}
 
 # Specify which port Dependency-Track listens on
-EXPOSE 8080
+EXPOSE 8081
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}api/version || exit 1
+HEALTHCHECK --interval=5m --timeout=3s CMD wget --proxy off -q -O /dev/null http://127.0.0.1:8081${CONTEXT}api/version || exit 1
 
 # metadata labels
 LABEL \

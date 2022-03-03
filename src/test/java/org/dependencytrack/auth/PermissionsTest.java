@@ -27,12 +27,13 @@ public class PermissionsTest {
 
     @Test
     public void testPermissionEnums() {
-        Assert.assertEquals(10, Permissions.values().length);
+        Assert.assertEquals(11, Permissions.values().length);
         Assert.assertEquals("BOM_UPLOAD", Permissions.BOM_UPLOAD.name());
         Assert.assertEquals("VIEW_PORTFOLIO", Permissions.VIEW_PORTFOLIO.name());
         Assert.assertEquals("PORTFOLIO_MANAGEMENT", Permissions.PORTFOLIO_MANAGEMENT.name());
         Assert.assertEquals("VIEW_VULNERABILITY", Permissions.VIEW_VULNERABILITY.name());
         Assert.assertEquals("VULNERABILITY_ANALYSIS", Permissions.VULNERABILITY_ANALYSIS.name());
+        Assert.assertEquals("VIEW_POLICY_VIOLATION", Permissions.VIEW_POLICY_VIOLATION.name());
         Assert.assertEquals("POLICY_VIOLATION_ANALYSIS", Permissions.POLICY_VIOLATION_ANALYSIS.name());
         Assert.assertEquals("ACCESS_MANAGEMENT", Permissions.ACCESS_MANAGEMENT.name());
         Assert.assertEquals("SYSTEM_CONFIGURATION", Permissions.SYSTEM_CONFIGURATION.name());
@@ -47,6 +48,7 @@ public class PermissionsTest {
         Assert.assertEquals("PORTFOLIO_MANAGEMENT", PORTFOLIO_MANAGEMENT);
         Assert.assertEquals("VIEW_VULNERABILITY", VIEW_VULNERABILITY);
         Assert.assertEquals("VULNERABILITY_ANALYSIS", VULNERABILITY_ANALYSIS);
+        Assert.assertEquals("VIEW_POLICY_VIOLATION", VIEW_POLICY_VIOLATION);
         Assert.assertEquals("POLICY_VIOLATION_ANALYSIS", POLICY_VIOLATION_ANALYSIS);
         Assert.assertEquals("ACCESS_MANAGEMENT", ACCESS_MANAGEMENT);
         Assert.assertEquals("SYSTEM_CONFIGURATION", SYSTEM_CONFIGURATION);

@@ -63,6 +63,11 @@ services:
     # - ALPINE_HTTP_PROXY_PASSWORD=
     # - ALPINE_NO_PROXY=
     #
+    # Optional HTTP Outbound Connection Timeout Settings. All values are in seconds.
+    # - ALPINE_HTTP_TIMEOUT_CONNECTION=30
+    # - ALPINE_HTTP_TIMEOUT_SOCKET=30
+    # - ALPINE_HTTP_TIMEOUT_POOL=60
+    #
     # Optional Cross-Origin Resource Sharing (CORS) Headers
     # - ALPINE_CORS_ENABLED=true
     # - ALPINE_CORS_ALLOW_ORIGIN=*

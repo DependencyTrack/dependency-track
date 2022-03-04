@@ -118,6 +118,44 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
+    public void retrieveAnalysisComponentNotFoundTest() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Response response = target(V1_VIOLATION_ANALYSIS)
+                .queryParam("component", UUID.randomUUID())
+                .queryParam("policyViolation", UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("component could not be found");
+    }
+
+    @Test
+    public void retrieveAnalysisViolationNotFoundTest() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        final Response response = target(V1_VIOLATION_ANALYSIS)
+                .queryParam("component", component.getUuid())
+                .queryParam("policyViolation", UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("policy violation could not be found");
+    }
+
+    @Test
     public void updateAnalysisTest() {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
@@ -220,6 +258,46 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         assertThat(response.getStatus()).isEqualTo(Response.Status.FORBIDDEN.getStatusCode());
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+    }
+
+    @Test
+    public void updateAnalysisComponentNotFoundTest() {
+        initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
+
+        final var request = new ViolationAnalysisRequest(UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), ViolationAnalysisState.REJECTED, "Some comment", false);
+
+        final Response response = target(V1_VIOLATION_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("component could not be found");
+    }
+
+    @Test
+    public void updateAnalysisViolationNotFoundTest() {
+        initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        final var request = new ViolationAnalysisRequest(component.getUuid().toString(),
+                UUID.randomUUID().toString(), ViolationAnalysisState.REJECTED, "Some comment", false);
+
+        final Response response = target(V1_VIOLATION_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("policy violation could not be found");
     }
 
 }

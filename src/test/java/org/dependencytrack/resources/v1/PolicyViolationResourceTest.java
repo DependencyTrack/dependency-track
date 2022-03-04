@@ -124,7 +124,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violation = qm.persist(violation);
 
         final Response response = target(V1_POLICY_VIOLATION)
-                .path("/project/" + project.getUuid().toString())
+                .path("/project/" + project.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -151,6 +151,20 @@ public class PolicyViolationResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getViolationsByProjectNotFoundTest() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Response response = target(V1_POLICY_VIOLATION)
+                .path("/project/" + UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("project could not be found");
+    }
+
+    @Test
     public void getViolationsByComponentTest() {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
@@ -173,7 +187,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violation = qm.persist(violation);
 
         final Response response = target(V1_POLICY_VIOLATION)
-                .path("/component/" + component.getUuid().toString())
+                .path("/component/" + component.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -197,6 +211,20 @@ public class PolicyViolationResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(Response.Status.FORBIDDEN.getStatusCode());
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+    }
+
+    @Test
+    public void getViolationsByComponentNotFoundTest() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Response response = target(V1_POLICY_VIOLATION)
+                .path("/component/" + UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("component could not be found");
     }
 
 }

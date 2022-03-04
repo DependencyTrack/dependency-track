@@ -107,8 +107,6 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
 
     @Test
     public void retrieveAnalysisUnauthorizedTest() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT, Permissions.VULNERABILITY_ANALYSIS);
-
         final Response response = target(V1_VIOLATION_ANALYSIS)
                 .queryParam("component", UUID.randomUUID())
                 .queryParam("policyViolation", UUID.randomUUID())
@@ -213,13 +211,9 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
 
     @Test
     public void updateAnalysisUnauthorizedTest() {
-        initializeWithPermissions(
-                Permissions.VIEW_POLICY_VIOLATION,
-                Permissions.PORTFOLIO_MANAGEMENT,
-                Permissions.VULNERABILITY_ANALYSIS);
-
         final var request = new ViolationAnalysisRequest(UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), ViolationAnalysisState.REJECTED, "Some comment", false);
+
         final Response response = target(V1_VIOLATION_ANALYSIS)
                 .request()
                 .header(X_API_KEY, apiKey)

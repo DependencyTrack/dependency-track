@@ -31,7 +31,7 @@ public enum Permissions {
     PORTFOLIO_MANAGEMENT("Allows the creation, modification, and deletion of data in the portfolio"),
     VIEW_VULNERABILITY("Provides the ability to view the vulnerabilities projects are affected by"),
     VULNERABILITY_ANALYSIS("Provides the ability to make analysis decisions on vulnerabilities"),
-    VIEW_POLICY_VIOLATION(""),
+    VIEW_POLICY_VIOLATION("Provides the ability to view policy violations"),
     POLICY_VIOLATION_ANALYSIS("Provides the ability to make analysis decisions on policy violations"),
     ACCESS_MANAGEMENT("Allows the management of users, teams, and API keys"),
     SYSTEM_CONFIGURATION("Allows the configuration of the system including notifications, repositories, and email settings"),

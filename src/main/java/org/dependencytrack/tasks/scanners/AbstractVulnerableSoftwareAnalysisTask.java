@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.scanners;
 
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
@@ -44,6 +45,9 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * Analyzes the targetVersion against a list of VulnerableSoftware objects which may contain
      * specific versions or version ranges. For every match, every vulnerability associated with
      * the VulnerableSoftware object will be applied to the specified component.
+     * if ConfigPropertyConstants.SCANNER_REMOVE_MISMATCHED enabled will remove
+     * vulnerabilities that no longer apply if a version was manually changed or
+     * a new BOM was uploaded updating the version.
      *
      * @param qm the QueryManager to use
      * @param vsList a list of VulnerableSoftware objects
@@ -58,6 +62,12 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                         qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                    }
+                }
+            } else {
+                if (super.isEnabled(ConfigPropertyConstants.SCANNER_REMOVE_MISMATCHED)) {
+                    for (Vulnerability vuln: vs.getVulnerabilities()) {
+                        qm.removeVulnerability(vuln, component);
                     }
                 }
             }

@@ -75,6 +75,27 @@ public final class NotificationUtil {
                     .content(generateNotificationContent(detachedVuln))
                     .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, affectedProjects))
             );
+        } else {
+            // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
+            // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
+            // it warrants a Notification be dispatched.
+            final Set<Project> affectedProjects = new HashSet<>();
+            final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
+            for (final Component c : components) {
+                affectedProjects.add(qm.detach(Project.class, c.getProject().getId()));
+            }
+
+            final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());
+            final Component detachedComponent = qm.detach(Component.class, component.getId());
+
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.PORTFOLIO)
+                    .group(NotificationGroup.PROJECT_AUDIT_CHANGE)
+                    .title(NotificationConstants.Title.VULNERABLE_DEPENDENCY_REMEDIATED)
+                    .level(NotificationLevel.INFORMATIONAL)
+                    .content(generateNotificationContent(detachedVuln))
+                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, affectedProjects))
+            );
         }
     }
 /*

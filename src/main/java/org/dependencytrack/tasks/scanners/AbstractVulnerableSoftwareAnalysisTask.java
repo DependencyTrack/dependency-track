@@ -67,7 +67,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             } else {
                 if (super.isEnabled(ConfigPropertyConstants.SCANNER_REMOVE_MISMATCHED)) {
                     for (Vulnerability vuln: vs.getVulnerabilities()) {
-                        qm.removeVulnerability(vuln, component);
+                        if (qm.contains(vuln, component)) {
+                            NotificationUtil.analyzeNotificationCriteria(qm, vuln, component);
+                            qm.removeVulnerability(vuln, component);
+                        }
                     }
                 }
             }

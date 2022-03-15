@@ -25,6 +25,8 @@ import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
+import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -44,7 +46,8 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
 
     private static final Logger LOGGER = Logger.getLogger(VulnerableSoftwareIndexer.class);
     private static final VulnerableSoftwareIndexer INSTANCE = new VulnerableSoftwareIndexer();
-
+    private ComplexPhraseQueryParser cpqparser;
+    private MultiFieldQueryParser mfqparser;
     protected static VulnerableSoftwareIndexer getInstance() {
         return INSTANCE;
     }
@@ -69,8 +72,8 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
     public void add(final VulnerableSoftware vs) {
         final Document doc = new Document();
         addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.getCpe22(), Field.Store.YES, true);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.getCpe23(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.getCpe22(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.getCpe23(), Field.Store.YES, false);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.getVendor(), Field.Store.YES, true);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.getProduct(), Field.Store.YES, true);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.getVersion(), Field.Store.YES, true);
@@ -132,4 +135,5 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
         }
         LOGGER.info("Reindexing complete");
     }
+
 }

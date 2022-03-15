@@ -25,13 +25,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.dependencytrack.model.Cpe;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -134,61 +139,6 @@ public class SearchManager {
         return searchResult;
     }
 
-    public SearchResult searchIndex(IndexManager indexManager, final String luceneQueryString) {
-        final SearchResult searchResult = new SearchResult();
-        final List<Map<String, String>> resultSet = new ArrayList<>();
-        try {
-            final Query query = indexManager.getQueryParser().parse(luceneQueryString);
-            final TopDocs results = indexManager.getIndexSearcher().search(query,1000);
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Searching for: " + luceneQueryString + " - Total Hits: " + results.totalHits);
-            }
-
-            for (final ScoreDoc scoreDoc: results.scoreDocs) {
-                final Document doc = indexManager.getIndexSearcher().doc(scoreDoc.doc);
-                final Map<String, String> fields = new HashMap<>();
-                for (final IndexableField field: doc.getFields()) {
-                    if (StringUtils.isNotBlank(field.stringValue())) {
-                        fields.put(field.name(), field.stringValue());
-                    }
-                }
-                resultSet.add(fields);
-            }
-            searchResult.addResultSet(indexManager.getIndexType().name().toLowerCase(), resultSet);
-        } catch (ParseException e) {
-            LOGGER.error("Failed to parse search string", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
-                    .content("Failed to parse search string. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        } catch (CorruptIndexException e) {
-            LOGGER.error("Corrupted Lucene index detected", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
-                    .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        } catch (IOException e) {
-            LOGGER.error("An I/O Exception occurred while searching Lucene index", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
-                    .content("An I/O Exception occurred while searching Lucene index. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
-        }
-
-        indexManager.close();
-        return searchResult;
-    }
-
     public SearchResult searchProjectIndex(final String queryString, final int limit) {
         return searchIndex(ProjectIndexer.getInstance(), queryString, limit);
     }
@@ -210,9 +160,6 @@ public class SearchManager {
     }
     public SearchResult searchVulnerableSoftwareIndex(final String queryString, final int limit) {
         return searchIndex(VulnerableSoftwareIndexer.getInstance(), queryString, limit);
-    }
-    public SearchResult searchVulnerableSoftwareIndex(final String luceneQueryString) {
-        return searchIndex(VulnerableSoftwareIndexer.getInstance(), luceneQueryString);
     }
     /**
      * Escapes special characters used in Lucene query syntax.

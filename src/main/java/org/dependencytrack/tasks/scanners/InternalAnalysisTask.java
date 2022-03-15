@@ -26,17 +26,12 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.search.SearchManager;
-import org.dependencytrack.search.SearchResult;
+import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchMananger;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Subscriber task that performs an analysis of component using internal CPE/PURL data.
@@ -95,6 +90,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
 
     private void versionRangeAnalysis(final QueryManager qm, final Component component) {
         final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_ENABLED);
+        final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
         us.springett.parsers.cpe.Cpe parsedCpe = null;
         if (component.getCpe() != null) {
             try {
@@ -103,32 +99,23 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
         }
-        List<VulnerableSoftware>  fuzzyList = Collections.emptyList();
-        if (fuzzyEnabled) {
-            fuzzyList = fuzzyAnalysis(qm, component);
-        }
+        List<VulnerableSoftware> vsList = Collections.emptyList();
+        String version = null;
+        String update = null;
         if (parsedCpe != null) {
-            final List<VulnerableSoftware> vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
-            super.analyzeVersionRange(qm, Stream.concat(vsList.stream(), fuzzyList.stream()).collect(Collectors.toList()), parsedCpe.getVersion(), parsedCpe.getUpdate(), component);
+            vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
+            version = parsedCpe.getVersion();
+            update = parsedCpe.getUpdate();
         } else {
-            final List<VulnerableSoftware> vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
-            super.analyzeVersionRange(qm, Stream.concat(vsList.stream(), fuzzyList.stream()).collect(Collectors.toList()), component.getPurl().getVersion(), null, component);
+            vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
+            version = component.getPurl().getVersion();
         }
+
+        if (fuzzyEnabled && vsList.isEmpty()) {
+            FuzzyVulnerableSoftwareSearchMananger fm = new FuzzyVulnerableSoftwareSearchMananger(excludeComponentsWithPurl);
+            vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
+        }
+        super.analyzeVersionRange(qm, vsList, version, update, component);
     }
 
-    private List<VulnerableSoftware> fuzzyAnalysis(QueryManager qm, final Component component) {
-        final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
-        List<VulnerableSoftware>  fuzzyList = new LinkedList<>();
-        if (component.getPurl() == null || !excludeComponentsWithPurl) {
-            SearchManager sm = new SearchManager();
-            //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
-            SearchResult sr = sm.searchVulnerableSoftwareIndex("product:" + component.getName() + "~");
-            if (sr.getResults().containsKey("vulnerablesoftware")) {
-                for (Map<String, String> result : sr.getResults().get("vulnerablesoftware")) {
-                    fuzzyList.add(qm.getObjectByUuid(VulnerableSoftware.class, result.get("uuid")));
-                }
-            }
-        }
-        return fuzzyList;
-    }
 }

@@ -47,6 +47,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
@@ -187,7 +188,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
             if (file.exists()) {
-                if (System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
+                if (false && System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
                     if (ResourceType.CVE_YEAR_DATA == resourceType) {
                         LOGGER.info("Retrieval of " + filename + " not necessary. Will use modified feed for updates.");
                         return;
@@ -212,8 +213,10 @@ public class NistMirrorTask implements LoggableSubscriber {
                 if (status.getStatusCode() == 200) {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
+                        File temp = File.createTempFile(filename, null);
                         file = new File(outputDir, filename);
-                        FileUtils.copyInputStreamToFile(in, file);
+                        FileUtils.copyInputStreamToFile(in, temp);
+                        Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             file.setLastModified(0);

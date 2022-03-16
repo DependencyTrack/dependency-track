@@ -39,16 +39,17 @@ public class FuzzyVulnerableSoftwareSearchMananger {
     public List<VulnerableSoftware> fuzzyAnalysis(QueryManager qm, final Component component, us.springett.parsers.cpe.Cpe parsedCpe) {
         List<VulnerableSoftware>  fuzzyList = Collections.emptyList();
         if (component.getPurl() == null || !excludeComponentsWithPurl) {
-
-            // First CPE as is from component
-            String cpeSearch = getCpeRegexp(component.getCpe());
-            fuzzyList = fuzzySearch(qm, component, cpeSearch);
-            if (fuzzyList.isEmpty()) {
-                try {
-                    Part part = Part.ANY;
-                    if (parsedCpe != null) {
-                        part = parsedCpe.getPart();
-                    }
+            try {
+                Part part = Part.ANY;
+                String vendor = "*";
+                if (parsedCpe != null) {
+                    part = parsedCpe.getPart();
+                    vendor = parsedCpe.getVendor();
+                }
+                us.springett.parsers.cpe.Cpe omitVersion = new us.springett.parsers.cpe.Cpe(part, vendor, component.getName(), "*", "*", "*","*", "*", "*", "*", "*");
+                String cpeSearch = getCpeRegexp(omitVersion.toCpe23FS());
+                fuzzyList = fuzzySearch(qm, component, cpeSearch);
+                if (fuzzyList.isEmpty()) {
                     // Next search product without vendor
                     us.springett.parsers.cpe.Cpe justProduct = new us.springett.parsers.cpe.Cpe(part, "*", component.getName(), "*", "*", "*","*", "*", "*", "*", "*");
                     String justProductSearch = getCpeRegexp(justProduct.toCpe23FS());
@@ -63,9 +64,9 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                         //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
                         fuzzyList = fuzzySearch(qm, component, "product:" + component.getName() + "~0.8 AND " + fuzzyTerm);
                     }
-                } catch (CpeValidationException cve) {
-                    LOGGER.error("Failed to validate fuzz search CPE", cve);
                 }
+            } catch (CpeValidationException cve) {
+                LOGGER.error("Failed to validate fuzz search CPE", cve);
             }
         }
         return fuzzyList;

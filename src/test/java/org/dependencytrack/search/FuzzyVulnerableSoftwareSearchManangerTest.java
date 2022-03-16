@@ -9,6 +9,8 @@ import org.mockito.Mockito;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
+import us.springett.parsers.cpe.exceptions.CpeValidationException;
+import us.springett.parsers.cpe.values.Part;
 
 import java.util.List;
 
@@ -57,5 +59,11 @@ public class FuzzyVulnerableSoftwareSearchManangerTest {
         String fuzzyNextTerm = nextTerm.substring(0, nextTerm.indexOf(".*") + 2) + "/";
         SearchResult sr = toTest.searchIndex("product:\\\"time\\\"");
         assertFalse(sr.getResults().isEmpty());
+    }
+
+    @Test
+    public void parse() throws CpeParsingException {
+        Cpe cpe = CpeParser.parse("cpe:2.3:a:*:libglib-2.0-0:1:2.70.0:*:*:*:*:*:*:*");
+                //new Cpe(Part.APPLICATION, "*", "*", "2:23", "*", "*", "*", "*", "*", "*", "*");
     }
 }

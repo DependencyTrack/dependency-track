@@ -188,7 +188,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
             if (file.exists()) {
-                if (false && System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
+                if (System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
                     if (ResourceType.CVE_YEAR_DATA == resourceType) {
                         LOGGER.info("Retrieval of " + filename + " not necessary. Will use modified feed for updates.");
                         return;

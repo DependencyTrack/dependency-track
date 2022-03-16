@@ -56,13 +56,13 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                     if (!justProduct.equals(cpeSearch)) {
                         fuzzyList = fuzzySearch(qm, component, justProductSearch);
                     }
-                    // If no luck, get fuzzier
-                    if (fuzzyList.isEmpty()) {
+                    // If no luck, get fuzzier but not with small values as fuzzy 2 chars are easy to match
+                    if (fuzzyList.isEmpty() && component.getName().length() > 2) {
                         us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
                         // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
                         String fuzzyTerm = getCpeRegexp(justThePart.toCpe23FS());
                         //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
-                        fuzzyList = fuzzySearch(qm, component, "product:" + component.getName() + "~0.8 AND " + fuzzyTerm);
+                        fuzzyList = fuzzySearch(qm, component, "product:" + component.getName() + "~0.88 AND " + fuzzyTerm);
                     }
                 }
             } catch (CpeValidationException cve) {

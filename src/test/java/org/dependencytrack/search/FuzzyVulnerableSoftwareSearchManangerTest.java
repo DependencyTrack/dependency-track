@@ -43,6 +43,11 @@ public class FuzzyVulnerableSoftwareSearchManangerTest {
         cpe = CpeParser.parse(component.getCpe());
         vs = toTest.fuzzyAnalysis(qm, component, cpe);
         assertFalse(vs.isEmpty());
+        component.setName("mc");
+        component.setCpe("cpe:2.3:a:*:mc:*:*:*:*:*:*:*:*");
+        cpe = CpeParser.parse(component.getCpe());
+        vs = toTest.fuzzyAnalysis(qm, component, cpe);
+        assertTrue(vs.isEmpty());
     }
 
     @Test
@@ -65,7 +70,7 @@ public class FuzzyVulnerableSoftwareSearchManangerTest {
     @Test
     public void parse() throws CpeParsingException {
         Cpe cpe = CpeParser.parse("cpe:2.3:a:*:libglib-2.0-0:1%3A2.70.0:*:*:*:*:*:*:*");
-                //new Cpe(Part.APPLICATION, "*", "*", "2:23", "*", "*", "*", "*", "*", "*", "*");
+                //cpe:2.3:a:mitsubishielectric:mc-worx_suite:*:*:*:*:*:*:*:*
     }
 
     @Test

@@ -13,6 +13,7 @@ import us.springett.parsers.cpe.exceptions.CpeValidationException;
 import us.springett.parsers.cpe.values.Part;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.*;
 
@@ -46,7 +47,7 @@ public class FuzzyVulnerableSoftwareSearchManangerTest {
 
     @Test
     public void getCpeRegexp() {
-        assertEquals("cpe23:/cpe\\:2\\.3\\:a\\:.*/", FuzzyVulnerableSoftwareSearchMananger.getCpeRegexp("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*"));
+        assertEquals("cpe23:/cpe\\:2\\.3\\:a\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*/", FuzzyVulnerableSoftwareSearchMananger.getCpeRegexp("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*"));
     }
 
     @Test
@@ -63,7 +64,18 @@ public class FuzzyVulnerableSoftwareSearchManangerTest {
 
     @Test
     public void parse() throws CpeParsingException {
-        Cpe cpe = CpeParser.parse("cpe:2.3:a:*:libglib-2.0-0:1:2.70.0:*:*:*:*:*:*:*");
+        Cpe cpe = CpeParser.parse("cpe:2.3:a:*:libglib-2.0-0:1%3A2.70.0:*:*:*:*:*:*:*");
                 //new Cpe(Part.APPLICATION, "*", "*", "2:23", "*", "*", "*", "*", "*", "*", "*");
+    }
+
+    @Test
+    public void match() {
+        String lucene = FuzzyVulnerableSoftwareSearchMananger.getCpeRegexp("cpe:2.3:a:*:file:*:*:*:*:*:*:*:*");
+        String regex = lucene.substring(7, lucene.length()-1);
+        Pattern pattern = Pattern.compile(regex);
+        assertFalse(pattern.matcher(
+        "cpe:2.3:a:dell:emc_vnx2_operating_environment:*:*:*:*:*:file:*:*").matches());
+        assertTrue(pattern.matcher(
+                "cpe:2.3:a:*:file:*:*:*:*:*:file:*:*").matches());
     }
 }

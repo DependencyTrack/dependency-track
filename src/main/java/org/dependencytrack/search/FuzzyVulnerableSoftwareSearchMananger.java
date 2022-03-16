@@ -163,12 +163,9 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                 exp.append("\\:").append(getComponentRegex(cpe.getTargetHw()));
                 exp.append("\\:").append(getComponentRegex(cpe.getOther()));
             }
-            while(exp.charAt(exp.length() -1 ) == '*' && exp.charAt(exp.length() -5 ) == '*') {
-                exp.delete(exp.length() - 4, exp.length());
-            }
             exp.append("/");
         } catch (CpeParsingException cpepe) {
-
+            LOGGER.error("Unable to parse CPE to create RegularExpression", cpepe);
         }
         return exp.toString();
     }

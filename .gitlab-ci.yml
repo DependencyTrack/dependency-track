@@ -1,0 +1,30 @@
+image: registry.qadev.singlewire.com/cms/dind
+
+stages:
+  - compile
+  - build
+
+variables:
+  APISERVER_REPO: registry.qadev.singlewire.com/dependencytrack/apiserver
+  BUNDLED_REPO: registry.qadev.singlewire.com/dependencytrack/bundled
+
+build-app:
+  stage: compile
+  image: registry.qadev.singlewire.com/singlewire-builder-11
+  script:
+    - mvn package -Dmaven.test.skip=true -P clean-exclude-wars -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+    - mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+    - mvn package -Dmaven.test.skip=true -P enhance -P bundle-ui
+  artifacts:
+    paths:
+      - './target/*'
+  when:
+    manual
+
+build-image:
+  stage: build
+  environment: build-dependency-track-image
+  script:
+    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:latest --platform linux/amd64,linux/arm64 --push .
+    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:latest --platform linux/amd64,linux/arm64 --push .
+  when: manual

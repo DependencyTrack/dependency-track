@@ -17,7 +17,7 @@ build-app:
     - mvn package -Dmaven.test.skip=true -P enhance -P bundle-ui
   artifacts:
     paths:
-      - './target/*'
+      - './target/dependency-track-*.jar'
   when:
     manual
 
@@ -25,6 +25,6 @@ build-image:
   stage: build
   environment: build-dependency-track-image
   script:
-    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:latest --platform linux/amd64,linux/arm64 --push .
-    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:latest --platform linux/amd64,linux/arm64 --push .
+    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:latest --push .
+    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:latest --push .
   when: manual

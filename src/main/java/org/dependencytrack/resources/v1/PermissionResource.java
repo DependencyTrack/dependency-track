@@ -160,7 +160,7 @@ public class PermissionResource extends AlpineResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Adds the permission to the specified username.",
+            value = "Adds the permission to the specified team.",
             notes = "Requires 'manage users' permission.",
             response = Team.class
     )

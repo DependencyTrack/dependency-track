@@ -18,10 +18,12 @@
  */
 package org.dependencytrack.model;
 
+import com.google.common.collect.Lists;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +35,7 @@ public class FindingTest {
     private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "component-purl", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4",
-            AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, "79", "XSS", AnalysisState.NOT_AFFECTED, true);
+            null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 
     @Test
     public void testComponent() {
@@ -57,8 +59,6 @@ public class FindingTest {
         //Assert.assertEquals("vuln-recommendation", map.get("recommendation"));
         Assert.assertEquals(Severity.HIGH.name(), map.get("severity"));
         Assert.assertEquals(1, map.get("severityRank"));
-        Assert.assertEquals("79", map.get("cweId"));
-        Assert.assertEquals("XSS", map.get("cweName"));
     }
 
     @Test

@@ -645,6 +645,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getCwes();
     }
 
+    public List<Cwe> getAllCwes() {
+        return getVulnerableSoftwareQueryManager().getAllCwes();
+    }
+
     public Component matchIdentity(final Project project, final ComponentIdentity cid) {
         return getComponentQueryManager().matchIdentity(project, cid);
     }

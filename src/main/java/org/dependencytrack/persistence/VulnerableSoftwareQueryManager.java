@@ -263,4 +263,14 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         }
         return execute(query);
     }
+
+    /**
+     * Returns a complete list of all CWE's.
+     * @return a List of CWEs
+     */
+    public List<Cwe> getAllCwes() {
+        final Query<Cwe> query = pm.newQuery(Cwe.class);
+        query.setOrdering("id asc");
+        return query.executeList();
+    }
 }

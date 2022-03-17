@@ -29,6 +29,7 @@ import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
 import org.dependencytrack.model.*;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
@@ -554,8 +555,13 @@ public class ModelConverter {
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
             cdxVulnerability.addRating(rating);
         }
-        if (vulnerability.getCwe() != null) {
-            cdxVulnerability.addCwe(vulnerability.getCwe().getCweId());
+        if (vulnerability.getCwes() != null) {
+            for (final Integer cweId: vulnerability.getCwes()) {
+                final Cwe cwe = CweResolver.getInstance().lookup(cweId);
+                if (cwe != null) {
+                    cdxVulnerability.addCwe(cwe.getCweId());
+                }
+            }
         }
         cdxVulnerability.setDescription(vulnerability.getDescription());
         cdxVulnerability.setRecommendation(vulnerability.getRecommendation());

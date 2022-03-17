@@ -22,6 +22,7 @@ import alpine.common.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -158,12 +159,9 @@ public final class ModelConverter {
         if (vulnDbVuln.getNvdAdditionalInfo() != null) {
             final String cweString = vulnDbVuln.getNvdAdditionalInfo().getCweId();
             if (cweString != null && cweString.startsWith("CWE-")) {
-                try {
-                    final int cweId = Integer.parseInt(cweString.substring(4).trim());
-                    final Cwe cwe = qm.getCweById(cweId);
-                    vuln.setCwe(cwe);
-                } catch (NumberFormatException e) {
-                    LOGGER.error("Error parsing CWE ID: " + cweString, e);
+                final Cwe cwe = CweResolver.getInstance().resolve(qm, cweString);
+                if (cwe != null) {
+                    vuln.addCwe(cwe);
                 }
             }
         }

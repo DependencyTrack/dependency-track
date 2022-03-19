@@ -97,10 +97,12 @@ public class MetricsUpdateTask implements Subscriber {
 
         // Iterate through all projects
         LOGGER.debug("Iterating through active projects");
-        for (final Project project: projects) {
-            try {
+        for (final Project project : projects) {
+            // Due to the large buildup of cached objects, we use a new query manager
+            // for each project. That way, resources are released in reasonable intervals.
+            try (final var pqm = new QueryManager()) {
                 // Update the projects metrics
-                final MetricCounters projectMetrics = updateProjectMetrics(qm, project.getId());
+                final MetricCounters projectMetrics = updateProjectMetrics(pqm, project.getId());
                 projectCountersList.add(projectMetrics);
             } catch (Exception e) {
                 LOGGER.error("An unexpected error occurred while updating portfolio metrics and iterating through projects. The error occurred while updating metrics for project: " + project.getUuid().toString(), e);

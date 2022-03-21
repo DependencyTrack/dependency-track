@@ -44,6 +44,7 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
 
     private static final Logger LOGGER = Logger.getLogger(VulnerableSoftwareIndexer.class);
     private static final VulnerableSoftwareIndexer INSTANCE = new VulnerableSoftwareIndexer();
+
     protected static VulnerableSoftwareIndexer getInstance() {
         return INSTANCE;
     }
@@ -131,5 +132,4 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
         }
         LOGGER.info("Reindexing complete");
     }
-
 }

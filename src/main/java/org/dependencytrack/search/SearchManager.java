@@ -25,18 +25,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.dependencytrack.model.Cpe;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import us.springett.parsers.cpe.CpeParser;
-import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -158,6 +153,7 @@ public class SearchManager {
     public SearchResult searchVulnerabilityIndex(final String queryString, final int limit) {
         return searchIndex(VulnerabilityIndexer.getInstance(), queryString, limit);
     }
+
     public SearchResult searchVulnerableSoftwareIndex(final String queryString, final int limit) {
         return searchIndex(VulnerableSoftwareIndexer.getInstance(), queryString, limit);
     }

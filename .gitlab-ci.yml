@@ -25,6 +25,8 @@ build-image:
   stage: build
   environment: build-dependency-track-image
   script:
-    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:latest --push .
-    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:latest --push .
+    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t $APISERVER_REPO:latest
+    - docker push $APISERVER_REPO:latest
+    - docker build --force-rm -f src/main/docker/Dockerfile --build-arg WAR_FILENAME=dependency-track-bundled.jar -t $BUNDLED_REPO:latest
+    - docker push $BUNDLED_REPO:latest
   when: manual

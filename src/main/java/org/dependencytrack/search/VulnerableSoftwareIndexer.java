@@ -25,8 +25,6 @@ import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -46,8 +44,6 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
 
     private static final Logger LOGGER = Logger.getLogger(VulnerableSoftwareIndexer.class);
     private static final VulnerableSoftwareIndexer INSTANCE = new VulnerableSoftwareIndexer();
-    private ComplexPhraseQueryParser cpqparser;
-    private MultiFieldQueryParser mfqparser;
     protected static VulnerableSoftwareIndexer getInstance() {
         return INSTANCE;
     }

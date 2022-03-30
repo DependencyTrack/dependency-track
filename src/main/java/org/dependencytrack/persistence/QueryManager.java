@@ -282,8 +282,8 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().hasAccess(principal, project);
     }
 
-    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
-        return getProjectQueryManager().getProjects(tag, includeMetrics);
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
+        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive);
     }
 
     public PaginatedResult getProjects(final Tag tag) {

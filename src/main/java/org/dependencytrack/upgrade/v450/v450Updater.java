@@ -18,12 +18,17 @@
  */
 package org.dependencytrack.upgrade.v450;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
 import alpine.server.upgrade.UpgradeException;
 import org.dependencytrack.auth.Permissions;
-
+import alpine.server.util.DbUtil;
+import org.apache.commons.io.FileDeleteStrategy;
+import org.dependencytrack.auth.Permissions;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,7 +37,8 @@ import java.sql.Statement;
 
 public class v450Updater extends AbstractUpgradeItem {
 
-    private static final Logger LOGGER = Logger.getLogger(org.dependencytrack.upgrade.v450.v450Updater.class);
+
+    private static final Logger LOGGER = Logger.getLogger(v450Updater.class);
     private static final String STMT_1 = "INSERT INTO \"PERMISSION\" (\"NAME\", \"DESCRIPTION\") VALUES (?, ?)";
     private static final String STMT_2 = "SELECT \"ID\" FROM \"PERMISSION\" WHERE \"NAME\" = ?";
     private static final String STMT_3 = "SELECT \"u\".\"ID\" FROM \"MANAGEDUSER\" AS \"u\" INNER JOIN \"MANAGEDUSERS_PERMISSIONS\" AS \"up\" ON \"up\".\"MANAGEDUSER_ID\" = \"u\".\"ID\" WHERE \"up\".\"PERMISSION_ID\" = %d";
@@ -43,6 +49,7 @@ public class v450Updater extends AbstractUpgradeItem {
     private static final String STMT_8 = "INSERT INTO \"OIDCUSERS_PERMISSIONS\" (\"OIDCUSER_ID\", \"PERMISSION_ID\") VALUES (?, ?)";
     private static final String STMT_9 = "SELECT \"t\".\"ID\" FROM \"TEAM\" AS \"t\" INNER JOIN \"TEAMS_PERMISSIONS\" AS \"tp\" ON \"tp\".\"TEAM_ID\" = \"t\".\"ID\" WHERE \"tp\".\"PERMISSION_ID\" = %d";
     private static final String STMT_10 = "INSERT INTO \"TEAMS_PERMISSIONS\" (\"TEAM_ID\", \"PERMISSION_ID\") VALUES (?, ?)";
+    private static final String STMT_11 = "UPDATE \"VULNERABILITY\" SET \"CWE\" = NULL";
 
     @Override
     public String getSchemaVersion() {
@@ -51,6 +58,17 @@ public class v450Updater extends AbstractUpgradeItem {
 
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
+        LOGGER.info("Deleting NIST directory");
+        try {
+            final String NIST_ROOT_DIR = Config.getInstance().getDataDirectorty().getAbsolutePath() + File.separator + "nist";
+            FileDeleteStrategy.FORCE.delete(new File(NIST_ROOT_DIR));
+        } catch (IOException e) {
+            LOGGER.error("An error occurred deleting the NIST directory", e);
+        }
+
+        LOGGER.info("Clearing vulnerability CWEs. CWEs will be recreated when vulnerabilities are next synchronized.");
+        DbUtil.executeUpdate(connection, STMT_11);
+      
         LOGGER.info("Creating VIEW_POLICY_VIOLATION permission");
         PreparedStatement ps = connection.prepareStatement(STMT_1);
         ps.setString(1, Permissions.VIEW_POLICY_VIOLATION.name());
@@ -118,4 +136,3 @@ public class v450Updater extends AbstractUpgradeItem {
     }
 
 }
-

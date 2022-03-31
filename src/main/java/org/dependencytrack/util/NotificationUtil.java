@@ -23,6 +23,7 @@ import alpine.notification.NotificationLevel;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -36,6 +37,7 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.Json;
@@ -243,13 +245,20 @@ public final class NotificationUtil {
         JsonUtil.add(vulnerabilityBuilder, "cvssv2", vulnerability.getCvssV2BaseScore());
         JsonUtil.add(vulnerabilityBuilder, "cvssv3", vulnerability.getCvssV3BaseScore());
         JsonUtil.add(vulnerabilityBuilder, "severity",  vulnerability.getSeverity());
-        if (vulnerability.getCwe() != null) {
-            final JsonObject cweNode = Json.createObjectBuilder()
-                    .add("cweId", vulnerability.getCwe().getCweId())
-                    .add("name", vulnerability.getCwe().getName())
-                    .build();
-            vulnerabilityBuilder.add("cwe", cweNode);
+        final JsonArrayBuilder cwesBuilder = Json.createArrayBuilder();
+        if (vulnerability.getCwes() != null) {
+            for (final Integer cweId: vulnerability.getCwes()) {
+                final Cwe cwe = CweResolver.getInstance().lookup(cweId);
+                if (cwe != null) {
+                    final JsonObject cweNode = Json.createObjectBuilder()
+                            .add("cweId", cwe.getCweId())
+                            .add("name", cwe.getName())
+                            .build();
+                    cwesBuilder.add(cweNode);
+                }
+            }
         }
+        vulnerabilityBuilder.add("cwes", cwesBuilder.build());
         return vulnerabilityBuilder.build();
     }
 

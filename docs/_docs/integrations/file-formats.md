@@ -26,16 +26,19 @@ To export findings in the FPF format, the `/api/v1/finding/project/{uuid}/export
 
 The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
 
+> Finding Packaging Format v1.1 was introduced in Dependency-Track v4.5 and supports an array of CWEs per vulnerability.
+> Previous versions of Dependency-Track supported only a single CWE (cweId and cweName fields respectively) per
+> vulnerability.
 
 #### Example
 
 ```json
 {
-  "version": "1.0",
+  "version": "1.1",
   "meta" : {
     "application": "Dependency-Track",
-    "version": "3.4.0",
-    "timestamp": "2018-11-18T23:31:42Z",
+    "version": "4.5.0",
+    "timestamp": "2022-02-18T23:31:42Z",
     "baseUrl": "http://dtrack.example.org"
   },
   "project" : {
@@ -60,8 +63,12 @@ The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
       "subtitle": "timespan",
       "severity": "LOW",
       "severityRank": 3,
-      "cweId": 400,
-      "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
+      "cwe": [
+        {
+          "cweId": 400,
+          "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
+        }
+      ],
       "description": "Affected versions of `timespan`...",
       "recommendation": "No direct patch is available..."
     },
@@ -86,8 +93,12 @@ The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
       "subtitle": "uglify-js",
       "severity": "LOW",
       "severityRank": 3,
-      "cweId": 400,
-      "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
+      "cwe": [
+        {
+          "cweId": 400,
+          "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
+        }
+      ],
       "description": "Versions of `uglify-js` prior to...",
       "recommendation": "Update to version 2.6.0 or later."
     },

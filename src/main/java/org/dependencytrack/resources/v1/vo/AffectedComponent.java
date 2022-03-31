@@ -18,12 +18,21 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
+import alpine.common.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.VulnerableSoftware;
+import us.springett.parsers.cpe.Cpe;
+import us.springett.parsers.cpe.CpeParser;
+import us.springett.parsers.cpe.exceptions.CpeEncodingException;
+import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AffectedComponent {
+
+    private static final Logger LOGGER = Logger.getLogger(AffectedComponent.class);
 
     private enum IdentityType {
         CPE,
@@ -141,5 +150,51 @@ public class AffectedComponent {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public VulnerableSoftware toVulnerableSoftware() {
+        final VulnerableSoftware vs = new VulnerableSoftware();
+        if (IdentityType.CPE == this.identityType && this.identity != null) {
+            try {
+                final Cpe cpe = CpeParser.parse(this.identity);
+                vs.setCpe22(cpe.toCpe22Uri());
+                vs.setCpe23(cpe.toCpe23FS());
+                vs.setPart(cpe.getPart().getAbbreviation());
+                vs.setVendor(cpe.getVendor());
+                vs.setProduct(cpe.getProduct());
+                vs.setVersion(cpe.getVersion());
+                vs.setUpdate(cpe.getUpdate());
+                vs.setEdition(cpe.getEdition());
+                vs.setLanguage(cpe.getLanguage());
+                vs.setSwEdition(cpe.getSwEdition());
+                vs.setTargetSw(cpe.getTargetSw());
+                vs.setTargetHw(cpe.getTargetHw());
+                vs.setOther(cpe.getOther());
+            } catch (CpeParsingException | CpeEncodingException e) {
+                LOGGER.warn("Error parsing CPE: " + this.identity + " (skipping)", e);
+                return null;
+            }
+        } else if (IdentityType.PURL == this.identityType && this.identity != null) {
+            try {
+                final PackageURL purl = new PackageURL(this.identity);
+                vs.setPurl(purl.canonicalize());
+                vs.setPurlType(purl.getType());
+                vs.setPurlNamespace(purl.getNamespace());
+                vs.setPurlName(purl.getName());
+                vs.setVersion(purl.getVersion());
+                //vs.setPurlQualifiers(purl.getQualifiers()); // TODO stringify this
+                vs.setPurlSubpath(purl.getSubpath());
+            } catch (MalformedPackageURLException e) {
+                LOGGER.warn("Error parsing PURL: " + this.identity + " (skipping)", e);
+                return null;
+            }
+        }
+        if (VersionType.RANGE == this.versionType) {
+            vs.setVersionStartIncluding(this.versionStartIncluding);
+            vs.setVersionStartExcluding(this.versionStartExcluding);
+            vs.setVersionEndIncluding(this.versionEndIncluding);
+            vs.setVersionEndExcluding(this.versionEndExcluding);
+        }
+        return vs;
     }
 }

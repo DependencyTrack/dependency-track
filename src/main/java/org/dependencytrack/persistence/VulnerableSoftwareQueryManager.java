@@ -259,8 +259,9 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         }
         if (filter != null) {
             if (StringUtils.isNumber(filter)) {
-                query.setFilter("cweId == :filter");
-                return execute(query, Integer.valueOf(filter));
+                query.setFilter("cweId == :cweId || name.matches(:filter)");
+                final String filterString = ".*" + filter.toLowerCase() + ".*";
+                return execute(query, Integer.valueOf(filter), filterString);
             } else {
                 query.setFilter("name.toLowerCase().matches(:filter)");
                 final String filterString = ".*" + filter.toLowerCase() + ".*";

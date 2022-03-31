@@ -63,9 +63,9 @@ public class PolicyViolationResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
     public Response getViolations(@ApiParam(value = "Optionally includes suppressed violations")
-                                      @QueryParam("suppressed") boolean suppressed) {
+                                  @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getPolicyViolations(suppressed);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
@@ -86,7 +86,7 @@ public class PolicyViolationResource extends AlpineResource {
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
             @ApiResponse(code = 404, message = "The project could not be found")
     })
-    @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
     public Response getViolationsByProject(@PathParam("uuid") String uuid,
                                            @ApiParam(value = "Optionally includes suppressed violations")
                                            @QueryParam("suppressed") boolean suppressed) {
@@ -119,10 +119,10 @@ public class PolicyViolationResource extends AlpineResource {
             @ApiResponse(code = 403, message = "Access to the specified component is forbidden"),
             @ApiResponse(code = 404, message = "The component could not be found")
     })
-    @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
     public Response getViolationsByComponent(@PathParam("uuid") String uuid,
-                                           @ApiParam(value = "Optionally includes suppressed violations")
-                                           @QueryParam("suppressed") boolean suppressed) {
+                                             @ApiParam(value = "Optionally includes suppressed violations")
+                                             @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {

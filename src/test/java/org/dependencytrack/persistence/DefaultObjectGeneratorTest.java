@@ -51,7 +51,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultPermissions");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(11, qm.getPermissions().size());
+        Assert.assertEquals(12, qm.getPermissions().size());
     }
 
     @Test

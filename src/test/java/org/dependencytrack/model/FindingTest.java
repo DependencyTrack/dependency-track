@@ -18,24 +18,22 @@
  */
 package org.dependencytrack.model;
 
-import com.google.common.collect.Lists;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
-public class FindingTest {
+public class FindingTest extends PersistenceCapableTest {
 
     private UUID projectUuid = UUID.randomUUID();
     private Date attributedOn = new Date();
     private Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
-            "component-version", "component-purl", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
+            "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4",
-            null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
+            "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 
     @Test
     public void testComponent() {

@@ -21,10 +21,8 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.VulnerabilityUtil;
-
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +52,7 @@ public class Finding implements Serializable {
             "\"COMPONENT\".\"GROUP\"," +
             "\"COMPONENT\".\"VERSION\"," +
             "\"COMPONENT\".\"PURL\"," +
+            "\"COMPONENT\".\"CPE\"," +
             "\"VULNERABILITY\".\"UUID\"," +
             "\"VULNERABILITY\".\"SOURCE\"," +
             "\"VULNERABILITY\".\"VULNID\"," +
@@ -64,6 +63,8 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"SEVERITY\"," +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
+            "\"VULNERABILITY\".\"EPSSSCORE\"," +
+            "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
             "\"VULNERABILITY\".\"CWES\"," +
             "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\"," +
             "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"," +
@@ -97,26 +98,31 @@ public class Finding implements Serializable {
         optValue(component, "group", o[2]);
         optValue(component, "version", o[3]);
         optValue(component, "purl", o[4]);
+        optValue(component, "cpe", o[5]);
         optValue(component, "project", project.toString());
 
-        optValue(vulnerability, "uuid", o[5]);
-        optValue(vulnerability, "source", o[6]);
-        optValue(vulnerability, "vulnId", o[7]);
-        optValue(vulnerability, "title", o[8]);
-        optValue(vulnerability, "subtitle", o[9]);
-        //optValue(vulnerability, "description", o[10]); // CLOB - handle this in QueryManager
-        //optValue(vulnerability, "recommendation", o[11]); // CLOB - handle this in QueryManager
-        final Severity severity = VulnerabilityUtil.getSeverity(o[12], o[13], o[14]);
+        optValue(vulnerability, "uuid", o[6]);
+        optValue(vulnerability, "source", o[7]);
+        optValue(vulnerability, "vulnId", o[8]);
+        optValue(vulnerability, "title", o[9]);
+        optValue(vulnerability, "subtitle", o[10]);
+        //optValue(vulnerability, "description", o[11]); // CLOB - handle this in QueryManager
+        //optValue(vulnerability, "recommendation", o[12]); // CLOB - handle this in QueryManager
+        final Severity severity = VulnerabilityUtil.getSeverity(o[13], o[14], o[15]);
+        optValue(vulnerability, "cvssV2BaseScore", o[14]);
+        optValue(vulnerability, "cvssV3BaseScore", o[15]);
         optValue(vulnerability, "severity", severity.name());
         optValue(vulnerability, "severityRank", severity.ordinal());
-        optValue(vulnerability, "cwe", getCwes(o[15]));
-        optValue(attribution, "analyzerIdentity", o[16]);
-        optValue(attribution, "attributedOn", o[17]);
-        optValue(attribution, "alternateIdentifier", o[18]);
-        optValue(attribution, "referenceUrl", o[19]);
+        optValue(vulnerability, "epssScore", o[16]);
+        optValue(vulnerability, "epssPercentile", o[17]);
+        optValue(vulnerability, "cwe", getCwes(o[18]));
+        optValue(attribution, "analyzerIdentity", o[19]);
+        optValue(attribution, "attributedOn", o[20]);
+        optValue(attribution, "alternateIdentifier", o[21]);
+        optValue(attribution, "referenceUrl", o[22]);
 
-        optValue(analysis, "state", o[20]);
-        optValue(analysis, "isSuppressed", o[21], false);
+        optValue(analysis, "state", o[23]);
+        optValue(analysis, "isSuppressed", o[24], false);
     }
 
     public Map getComponent() {

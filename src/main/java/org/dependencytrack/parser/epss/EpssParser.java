@@ -54,8 +54,8 @@ public final class EpssParser {
                 }
                 if (values.get(0).startsWith("CVE-")) {
                     final String cveId = values.get(0);
-                    final BigDecimal epssScore = BigDecimal.valueOf(Double.parseDouble(values.get(1)));
-                    final BigDecimal percentile = BigDecimal.valueOf(Double.parseDouble(values.get(2)));
+                    final BigDecimal epssScore = new BigDecimal(values.get(1));
+                    final BigDecimal percentile = new BigDecimal(values.get(2));
                     try (final QueryManager qm = new QueryManager()) {
                         final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, cveId);
                         if (vuln != null) {

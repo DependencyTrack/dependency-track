@@ -163,11 +163,12 @@ public class ProjectResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectsByTag(
             @ApiParam(value = "The tag to query on", required = true)
-            @PathParam("tag") String tagString) {
+            @PathParam("tag") String tagString,
+            @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+            @QueryParam("excludeInactive") boolean excludeInactive) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-
             final Tag tag = qm.getTagByName(tagString);
-            final PaginatedResult result = qm.getProjects(tag, true);
+            final PaginatedResult result = qm.getProjects(tag, true, excludeInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

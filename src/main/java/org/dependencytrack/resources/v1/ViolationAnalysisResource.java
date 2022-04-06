@@ -72,7 +72,7 @@ public class ViolationAnalysisResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component or policy violation could not be found")
     })
-    @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
     public Response retrieveAnalysis(@ApiParam(value = "The UUID of the component", required = true)
                                      @QueryParam("component") String componentUuid,
                                      @ApiParam(value = "The UUID of the policy violation", required = true)
@@ -106,7 +106,7 @@ public class ViolationAnalysisResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The component or policy violation could not be found")
     })
-    @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)
+    @PermissionRequired(Permissions.Constants.POLICY_VIOLATION_ANALYSIS)
     public Response updateAnalysis(ViolationAnalysisRequest request) {
         final Validator validator = getValidator();
         failOnValidationError(
@@ -135,23 +135,20 @@ public class ViolationAnalysisResource extends AlpineResource {
             ViolationAnalysis analysis = qm.getViolationAnalysis(component, violation);
             if (analysis != null) {
                 if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
-                    // The analysis state has changed. Add an additional comment to the trail.
                     analysisStateChange = true;
-                    final String message = analysis.getAnalysisState().name() + " → " + request.getAnalysisState().name();
-                    qm.makeViolationAnalysisComment(analysis, message, commenter);
-                    analysis = qm.makeViolationAnalysis(component, violation, request.getAnalysisState(), request.isSuppressed());
-                } else if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
+                    qm.makeViolationAnalysisComment(analysis, String.format("%s → %s", analysis.getAnalysisState(), request.getAnalysisState()), commenter);
+                }
+                if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
                     suppressionChange = true;
                     final String message = (request.isSuppressed()) ? "Suppressed" : "Unsuppressed";
                     qm.makeViolationAnalysisComment(analysis, message, commenter);
-                    analysis = qm.makeViolationAnalysis(component, violation, analysis.getAnalysisState(), request.isSuppressed());
                 }
+                analysis = qm.makeViolationAnalysis(component, violation, request.getAnalysisState(), request.isSuppressed());
             } else {
                 analysis = qm.makeViolationAnalysis(component, violation, request.getAnalysisState(), request.isSuppressed());
                 analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
                 if (ViolationAnalysisState.NOT_SET != request.getAnalysisState()) {
-                    final String message = ViolationAnalysisState.NOT_SET.name() + " → " + request.getAnalysisState().name();
-                    qm.makeViolationAnalysisComment(analysis, message, commenter);
+                    qm.makeViolationAnalysisComment(analysis, String.format("%s → %s", ViolationAnalysisState.NOT_SET, request.getAnalysisState()), commenter);
                 }
             }
 

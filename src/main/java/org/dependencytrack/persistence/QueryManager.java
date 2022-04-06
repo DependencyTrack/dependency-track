@@ -282,8 +282,8 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().hasAccess(principal, project);
     }
 
-    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
-        return getProjectQueryManager().getProjects(tag, includeMetrics);
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
+        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive);
     }
 
     public PaginatedResult getProjects(final Tag tag) {
@@ -541,11 +541,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
+    }
+
+    public Vulnerability getVulnerabilityByVulnId(String source, String vulnId, boolean includeVulnerableSoftware) {
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
+    }
+
+    public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId, boolean includeVulnerableSoftware) {
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
     public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {

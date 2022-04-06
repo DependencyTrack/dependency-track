@@ -33,6 +33,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -116,6 +117,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
             LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
             LOGGER.info("Time spent (total): " + (end - start) + "ms");
+            Event.dispatch(new EpssMirrorEvent());
         }
     }
 

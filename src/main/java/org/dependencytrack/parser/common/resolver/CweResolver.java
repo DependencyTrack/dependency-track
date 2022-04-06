@@ -21,6 +21,8 @@ package org.dependencytrack.parser.common.resolver;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.persistence.QueryManager;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Attempts to resolve an internal CWE object from a string
@@ -31,17 +33,84 @@ import org.dependencytrack.persistence.QueryManager;
  */
 public class CweResolver {
 
-    private final QueryManager qm;
+    private static final Map<Integer, String> CWE_DICTIONARY = new HashMap<>();
+    static {
+        try (final QueryManager qm = new QueryManager()) {
+            for (final Cwe cwe : qm.getAllCwes()) {
+                CWE_DICTIONARY.put(cwe.getCweId(), cwe.getName());
+            }
+        }
+    }
+    private static final CweResolver INSTANCE = new CweResolver();
 
-    public CweResolver(final QueryManager qm) {
-        this.qm = qm;
+    private CweResolver() { }
+
+    public static CweResolver getInstance() {
+        return INSTANCE;
+    }
+
+    /**
+     * Lookups a CWE from the internal CWE dictionary. This method
+     * does not query the database, but will return a Cwe object useful
+     * for JSON serialization, but not for persistence.
+     * @param cweString the string to lookup
+     * @return a Cwe object
+     * @since 4.5.0
+     */
+    public Cwe lookup(final String cweString) {
+        final Integer cweId = parseCweString(cweString);
+        if (cweId != null) {
+            final String cweName = CWE_DICTIONARY.get(cweId);
+            if (cweName != null) {
+                final Cwe cwe = new Cwe();
+                cwe.setCweId(cweId);
+                cwe.setName(cweName);
+                return cwe;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Lookups a CWE from the internal CWE dictionary. This method
+     * does not query the database, but will return a Cwe object useful
+     * for JSON serialization, but not for persistence.
+     * @param cweId the cwe id to lookup
+     * @return a Cwe object
+     * @since 4.5.0
+     */
+    public Cwe lookup(final Integer cweId) {
+        if (cweId != null) {
+            final String cweName = CWE_DICTIONARY.get(cweId);
+            if (cweName != null) {
+                final Cwe cwe = new Cwe();
+                cwe.setCweId(cweId);
+                cwe.setName(cweName);
+                return cwe;
+            }
+        }
+        return null;
     }
 
     /**
      * Resolves a CWE by its string representation.
+     * This method performs a query against the database and
+     * returns a persisted Cwe object.
      * @param cweString the string to resolve
+     * @return a Cwe object
+     * @since 3.0.0
      */
-    public Cwe resolve(final String cweString) {
+    public Cwe resolve(final QueryManager qm, final String cweString) {
+        final Integer cweId = parseCweString(cweString);
+        return (cweId != null) ? qm.getCweById(cweId) : null;
+    }
+
+    /**
+     * Parses a CWE string returning the CWE ID, or null.
+     * @param cweString the string to parse
+     * @return a Cwe object
+     */
+    private Integer parseCweString(final String cweString) {
         if (StringUtils.isNotBlank(cweString)) {
             final String string = cweString.trim();
             String lookupString = "";
@@ -52,15 +121,14 @@ public class CweResolver {
             } else if (string.startsWith("CWE-") && string.length() < 9) {
                 // This is likely to be in the following format:
                 // CWE-264
-                lookupString = string.substring(4, string.length());
+                lookupString = string.substring(4);
             } else if (string.length() < 5) {
                 // This is likely to be in the following format:
                 // 264
                 lookupString = string;
             }
-
             try {
-                return qm.getCweById(Integer.valueOf(lookupString));
+                return Integer.valueOf(lookupString);
             } catch (NumberFormatException e) {
                 // throw it away
             }

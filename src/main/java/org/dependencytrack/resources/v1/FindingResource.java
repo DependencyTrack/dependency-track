@@ -31,6 +31,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.ws.rs.GET;
@@ -40,8 +41,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing findings.
@@ -70,14 +73,21 @@ public class FindingResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response getFindingsByProject(@PathParam("uuid") String uuid,
                                          @ApiParam(value = "Optionally includes suppressed findings")
-                                         @QueryParam("suppressed") boolean suppressed) {
+                                         @QueryParam("suppressed") boolean suppressed,
+                                         @ApiParam(value = "Optionally limit findings to specific sources of vulnerability intelligence")
+                                         @QueryParam("source") Vulnerability.Source source) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
                     final List<Finding> findings = qm.getFindings(project, suppressed);
-                    return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+                    if (source != null) {
+                        final List<Finding> filteredList = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
+                        return Response.ok(filteredList).header(TOTAL_COUNT_HEADER, filteredList.size()).build();
+                    } else {
+                        return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+                    }
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }

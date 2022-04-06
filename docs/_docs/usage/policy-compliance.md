@@ -7,7 +7,7 @@ order: 4
 
 Organizations can create policies and measure policy violations across the portfolio, and against individual 
 projects and components. Policies are configurable and can be enforced for the portfolio, or can be 
-limited to specific projects.
+limited to specific projects. Policies are evaluated when an SBOM is uploaded.
 
 There are three types of policy violations:
 * License

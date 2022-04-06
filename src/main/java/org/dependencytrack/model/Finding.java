@@ -19,10 +19,12 @@
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.VulnerabilityUtil;
-
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,6 +52,7 @@ public class Finding implements Serializable {
             "\"COMPONENT\".\"GROUP\"," +
             "\"COMPONENT\".\"VERSION\"," +
             "\"COMPONENT\".\"PURL\"," +
+            "\"COMPONENT\".\"CPE\"," +
             "\"VULNERABILITY\".\"UUID\"," +
             "\"VULNERABILITY\".\"SOURCE\"," +
             "\"VULNERABILITY\".\"VULNID\"," +
@@ -60,19 +63,19 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"SEVERITY\"," +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
+            "\"VULNERABILITY\".\"EPSSSCORE\"," +
+            "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
+            "\"VULNERABILITY\".\"CWES\"," +
             "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\"," +
             "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"," +
             "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
             "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
-            "\"CWE\".\"CWEID\"," +
-            "\"CWE\".\"NAME\"," +
             "\"ANALYSIS\".\"STATE\"," +
             "\"ANALYSIS\".\"SUPPRESSED\" " +
             "FROM \"COMPONENT\" " +
             "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
             "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
             "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
-            "LEFT JOIN \"CWE\"  ON (\"VULNERABILITY\".\"CWE\" = \"CWE\".\"ID\") " +
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
             "WHERE \"COMPONENT\".\"PROJECT_ID\" = ?";
 
@@ -95,27 +98,31 @@ public class Finding implements Serializable {
         optValue(component, "group", o[2]);
         optValue(component, "version", o[3]);
         optValue(component, "purl", o[4]);
+        optValue(component, "cpe", o[5]);
         optValue(component, "project", project.toString());
 
-        optValue(vulnerability, "uuid", o[5]);
-        optValue(vulnerability, "source", o[6]);
-        optValue(vulnerability, "vulnId", o[7]);
-        optValue(vulnerability, "title", o[8]);
-        optValue(vulnerability, "subtitle", o[9]);
-        //optValue(vulnerability, "description", o[10]); // CLOB - handle this in QueryManager
-        //optValue(vulnerability, "recommendation", o[11]); // CLOB - handle this in QueryManager
-        final Severity severity = VulnerabilityUtil.getSeverity(o[12], o[13], o[14]);
+        optValue(vulnerability, "uuid", o[6]);
+        optValue(vulnerability, "source", o[7]);
+        optValue(vulnerability, "vulnId", o[8]);
+        optValue(vulnerability, "title", o[9]);
+        optValue(vulnerability, "subtitle", o[10]);
+        //optValue(vulnerability, "description", o[11]); // CLOB - handle this in QueryManager
+        //optValue(vulnerability, "recommendation", o[12]); // CLOB - handle this in QueryManager
+        final Severity severity = VulnerabilityUtil.getSeverity(o[13], o[14], o[15]);
+        optValue(vulnerability, "cvssV2BaseScore", o[14]);
+        optValue(vulnerability, "cvssV3BaseScore", o[15]);
         optValue(vulnerability, "severity", severity.name());
         optValue(vulnerability, "severityRank", severity.ordinal());
-        optValue(attribution, "analyzerIdentity", o[15]);
-        optValue(attribution, "attributedOn", o[16]);
-        optValue(attribution, "alternateIdentifier", o[17]);
-        optValue(attribution, "referenceUrl", o[18]);
-        optValue(vulnerability, "cweId", o[19]);
-        optValue(vulnerability, "cweName", o[20]);
+        optValue(vulnerability, "epssScore", o[16]);
+        optValue(vulnerability, "epssPercentile", o[17]);
+        optValue(vulnerability, "cwe", getCwes(o[18]));
+        optValue(attribution, "analyzerIdentity", o[19]);
+        optValue(attribution, "attributedOn", o[20]);
+        optValue(attribution, "alternateIdentifier", o[21]);
+        optValue(attribution, "referenceUrl", o[22]);
 
-        optValue(analysis, "state", o[21]);
-        optValue(analysis, "isSuppressed", o[22], false);
+        optValue(analysis, "state", o[23]);
+        optValue(analysis, "isSuppressed", o[24], false);
     }
 
     public Map getComponent() {
@@ -145,6 +152,22 @@ public class Finding implements Serializable {
     private void optValue(Map<String, Object> map, String key, Object value) {
         if (value != null) {
             map.put(key, value);
+        }
+    }
+
+    private List<Cwe> getCwes(final Object value) {
+        if (value instanceof String) {
+            final String cweIds = (String)value;
+            final List<Cwe> cwes = new ArrayList<>();
+            for (final String s : cweIds.split(",")) {
+                final Cwe cwe = CweResolver.getInstance().lookup(Integer.valueOf(s));
+                if (cwe != null) {
+                    cwes.add(cwe);
+                }
+            }
+            return cwes;
+        } else {
+            return null;
         }
     }
 

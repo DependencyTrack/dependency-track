@@ -184,12 +184,13 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
         //vuln.setVulnerableVersions(advisory.getVulnerableVersions());
         //vuln.setPatchedVersions(advisory.getPatchedVersions());
-
-        // TODO - support multiple CWEs
-        if (advisory.getCwes() != null && advisory.getCwes().size() > 0) {
-            final CweResolver cweResolver = new CweResolver(qm);
-            final Cwe cwe = cweResolver.resolve(advisory.getCwes().get(0));
-            vuln.setCwe(cwe);
+        if (advisory.getCwes() != null) {
+            for (int i=0; i<advisory.getCwes().size(); i++) {
+                final Cwe cwe = CweResolver.getInstance().resolve(qm, advisory.getCwes().get(i));
+                if (cwe != null) {
+                    vuln.addCwe(cwe);
+                }
+            }
         }
 
         if (advisory.getSeverity() != null) {

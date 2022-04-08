@@ -4,8 +4,8 @@ FROM debian:bullseye-20220328-slim@sha256:78fd65998de7a59a001d792fe2d3a6d2ea25b6
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
-ARG COMMIT_SHA
-ARG APP_VERSION
+ARG COMMIT_SHA=unkowen
+ARG APP_VERSION=0.0.0
 ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
 ARG UID=1000
@@ -25,7 +25,9 @@ ENV TZ=Etc/UTC \
     # Set JAVA_HOME for the copied over JRE
     JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:${PATH}" \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    # Ensure user home is always set to DATA_DIR, even for arbitrary UIDs (such as used by OpenShift)
+    HOME=${DATA_DIR}
 
 # Create the directories where the WAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}

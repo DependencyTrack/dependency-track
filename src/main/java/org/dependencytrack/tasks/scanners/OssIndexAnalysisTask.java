@@ -128,7 +128,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * Determines if the {@link OssIndexAnalysisTask} should analyze the specified PackageURL.
      *
      * @param purl the PackageURL to analyze
-     * @return true if NpmAuditAnalysisTask should analyze, false if not
+     * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(final PackageURL purl) {
         return !isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, purl.toString());

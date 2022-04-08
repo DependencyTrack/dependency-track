@@ -32,13 +32,13 @@ fi
 
 mvn clean
 # Builds the embedded Jetty API Server distribution
-mvn package -Dmaven.test.skip=true -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 if [[ "$?" -ne 0 ]] ; then
   echo 'Aborting release due to build failure'; exit $rc
 fi
 
 # Builds the embedded Jetty bundled UI distribution
-mvn package -Dmaven.test.skip=true -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
 if [[ "$?" -ne 0 ]] ; then
   echo 'Aborting release due to build failure'; exit $rc
 fi

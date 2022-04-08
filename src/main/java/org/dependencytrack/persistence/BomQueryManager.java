@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Project;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.Date;

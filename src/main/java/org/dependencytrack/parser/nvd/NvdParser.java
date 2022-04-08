@@ -18,19 +18,21 @@
  */
 package org.dependencytrack.parser.nvd;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 import us.springett.parsers.cpe.values.Part;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -128,12 +130,11 @@ public final class NvdParser {
                             if ("en".equals(prob4.getString("lang"))) {
                                 final String cweString = prob4.getString("value");
                                 if (cweString != null && cweString.startsWith("CWE-")) {
-                                    try {
-                                        final int cweId = Integer.parseInt(cweString.substring(4).trim());
-                                        final Cwe cwe = qm.getCweById(cweId);
-                                        vulnerability.setCwe(cwe);
-                                    } catch (NumberFormatException e) {
-                                        // throw it away
+                                    final Cwe cwe = CweResolver.getInstance().resolve(qm, cweString);
+                                    if (cwe != null) {
+                                        vulnerability.addCwe(cwe);
+                                    } else {
+                                        LOGGER.warn("CWE " + cweString + " now found in Dependency-Track database. This could signify an issue with the NVD or with Dependency-Track not having advanced knowledge of this specific CWE identifier.");
                                     }
                                 }
                             }

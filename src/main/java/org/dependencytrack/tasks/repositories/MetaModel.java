@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.repositories;
 
 import org.dependencytrack.model.Component;
+
 import java.util.Date;
 
 public class MetaModel {

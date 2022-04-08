@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
@@ -35,6 +35,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -96,10 +97,12 @@ public class MetricsUpdateTask implements Subscriber {
 
         // Iterate through all projects
         LOGGER.debug("Iterating through active projects");
-        for (final Project project: projects) {
-            try {
+        for (final Project project : projects) {
+            // Due to the large buildup of cached objects, we use a new query manager
+            // for each project. That way, resources are released in reasonable intervals.
+            try (final var pqm = new QueryManager()) {
                 // Update the projects metrics
-                final MetricCounters projectMetrics = updateProjectMetrics(qm, project.getId());
+                final MetricCounters projectMetrics = updateProjectMetrics(pqm, project.getId());
                 projectCountersList.add(projectMetrics);
             } catch (Exception e) {
                 LOGGER.error("An unexpected error occurred while updating portfolio metrics and iterating through projects. The error occurred while updating metrics for project: " + project.getUuid().toString(), e);
@@ -358,11 +361,13 @@ public class MetricsUpdateTask implements Subscriber {
             last.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting metrics for project: " + project.getUuid());
             qm.persist(last);
-            LOGGER.debug("Updating Inherited Risk Score for project: " + project.getUuid());
             // Update the convenience fields in the Project object
-            project.setLastInheritedRiskScore(last.getInheritedRiskScore());
-            LOGGER.debug("Persisting metrics for project: " + project.getUuid());
-            qm.persist(project);
+            if (project.getLastInheritedRiskScore() != last.getInheritedRiskScore()) {
+                LOGGER.debug("Updating Inherited Risk Score for project: " + project.getUuid());
+                project.setLastInheritedRiskScore(last.getInheritedRiskScore());
+                LOGGER.debug("Persisting metrics for project: " + project.getUuid());
+                qm.persist(project);
+            }
         } else {
             LOGGER.debug("Metrics have changed (or were never previously measured) for project: " + project.getUuid());
             final ProjectMetrics projectMetrics = new ProjectMetrics();
@@ -399,11 +404,13 @@ public class MetricsUpdateTask implements Subscriber {
             projectMetrics.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting metrics for project: " + project.getUuid());
             qm.persist(projectMetrics);
-            LOGGER.debug("Updating Inherited Risk Score for project: " + project.getUuid());
             // Update the convenience fields in the Project object
-            project.setLastInheritedRiskScore(projectMetrics.getInheritedRiskScore());
-            LOGGER.debug("Persisting metrics for project: " + project.getUuid());
-            qm.persist(project);
+            if (project.getLastInheritedRiskScore() != projectMetrics.getInheritedRiskScore()) {
+                LOGGER.debug("Updating Inherited Risk Score for project: " + project.getUuid());
+                project.setLastInheritedRiskScore(projectMetrics.getInheritedRiskScore());
+                LOGGER.debug("Persisting metrics for project: " + project.getUuid());
+                qm.persist(project);
+            }
         }
         LOGGER.info("Completed metrics update for project: " + project.getUuid());
         return counters;
@@ -497,11 +504,13 @@ public class MetricsUpdateTask implements Subscriber {
             last.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting metrics for component: " + component.getUuid());
             qm.persist(last);
-            LOGGER.debug("Updating Inherited Risk Score for component: " + component.getUuid());
             // Update the convenience fields in the Component object
-            component.setLastInheritedRiskScore(last.getInheritedRiskScore());
-            LOGGER.debug("Persisting metrics for component: " + component.getUuid());
-            qm.persist(component);
+            if (component.getLastInheritedRiskScore() != last.getInheritedRiskScore()) {
+                LOGGER.debug("Updating Inherited Risk Score for component: " + component.getUuid());
+                component.setLastInheritedRiskScore(last.getInheritedRiskScore());
+                LOGGER.debug("Persisting metrics for component: " + component.getUuid());
+                qm.persist(component);
+            }
         } else {
             LOGGER.debug("Metrics have changed (or were never previously measured) for component: " + component.getUuid());
             final DependencyMetrics componentMetrics = new DependencyMetrics();
@@ -537,11 +546,13 @@ public class MetricsUpdateTask implements Subscriber {
             componentMetrics.setLastOccurrence(measuredAt);
             LOGGER.debug("Persisting metrics for component: " + component.getUuid());
             qm.persist(componentMetrics);
-            LOGGER.debug("Updating Inherited Risk Score for component: " + component.getUuid());
             // Update the convenience fields in the Component object
-            component.setLastInheritedRiskScore(componentMetrics.getInheritedRiskScore());
-            LOGGER.debug("Persisting metrics for component: " + component.getUuid());
-            qm.persist(component);
+            if (component.getLastInheritedRiskScore() != componentMetrics.getInheritedRiskScore()) {
+                LOGGER.debug("Updating Inherited Risk Score for component: " + component.getUuid());
+                component.setLastInheritedRiskScore(componentMetrics.getInheritedRiskScore());
+                LOGGER.debug("Persisting metrics for component: " + component.getUuid());
+                qm.persist(component);
+            }
         }
         LOGGER.debug("Completed metrics update for component: " + component.getUuid());
         return counters;

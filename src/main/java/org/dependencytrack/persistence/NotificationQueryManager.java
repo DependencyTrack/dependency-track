@@ -26,6 +26,7 @@ import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;

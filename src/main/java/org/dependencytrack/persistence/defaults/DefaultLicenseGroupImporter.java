@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.persistence.defaults;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.persistence.QueryManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;

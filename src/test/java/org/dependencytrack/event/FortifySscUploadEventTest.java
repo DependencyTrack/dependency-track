@@ -20,6 +20,7 @@ package org.dependencytrack.event;
 
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.UUID;
 
 public class FortifySscUploadEventTest {

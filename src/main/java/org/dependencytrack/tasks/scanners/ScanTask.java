@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.scanners;
 
 import org.dependencytrack.model.Component;
+
 import java.util.List;
 
 /**

@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -39,11 +39,12 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.GitHubSecurityAdvisoryParser;
+import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -54,7 +55,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 
 public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
@@ -182,12 +184,13 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
         //vuln.setVulnerableVersions(advisory.getVulnerableVersions());
         //vuln.setPatchedVersions(advisory.getPatchedVersions());
-
-        // TODO - support multiple CWEs
-        if (advisory.getCwes() != null && advisory.getCwes().size() > 0) {
-            final CweResolver cweResolver = new CweResolver(qm);
-            final Cwe cwe = cweResolver.resolve(advisory.getCwes().get(0));
-            vuln.setCwe(cwe);
+        if (advisory.getCwes() != null) {
+            for (int i=0; i<advisory.getCwes().size(); i++) {
+                final Cwe cwe = CweResolver.getInstance().resolve(qm, advisory.getCwes().get(i));
+                if (cwe != null) {
+                    vuln.addCwe(cwe);
+                }
+            }
         }
 
         if (advisory.getSeverity() != null) {

@@ -19,8 +19,8 @@
 package org.dependencytrack.common;
 
 import alpine.Config;
-import alpine.logging.Logger;
-import alpine.util.SystemUtil;
+import alpine.common.logging.Logger;
+import alpine.common.util.SystemUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -31,6 +31,7 @@ import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Lookup;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -52,6 +53,7 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
+
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -75,6 +77,9 @@ public final class ManagedHttpClientFactory {
     private static final String PROXY_USERNAME = Config.getInstance().getProperty(Config.AlpineKey.HTTP_PROXY_USERNAME);
     private static final String PROXY_PASSWORD = Config.getInstance().getPropertyOrFile(Config.AlpineKey.HTTP_PROXY_PASSWORD);
     private static final String NO_PROXY = Config.getInstance().getProperty(Config.AlpineKey.NO_PROXY);
+    private static final int TIMEOUT_CONNECTION = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_TIMEOUT_CONNECTION);
+    private static final int TIMEOUT_POOL = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_TIMEOUT_POOL);
+    private static final int TIMEOUT_SOCKET = Config.getInstance().getPropertyAsInt(Config.AlpineKey.HTTP_TIMEOUT_SOCKET);
     private static final Logger LOGGER = Logger.getLogger(ManagedHttpClientFactory.class);
     private static final String USER_AGENT;
     static {
@@ -103,7 +108,12 @@ public final class ManagedHttpClientFactory {
      */
     public static ManagedHttpClient newManagedHttpClient() {
         PoolingHttpClientConnectionManager connectionManager = null;
-        final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        final RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(TIMEOUT_CONNECTION * 1000)
+                .setConnectionRequestTimeout(TIMEOUT_POOL * 1000)
+                .setSocketTimeout(TIMEOUT_SOCKET * 1000)
+                .build();
+        final HttpClientBuilder clientBuilder = HttpClientBuilder.create().setDefaultRequestConfig(config);
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         clientBuilder.useSystemProperties();
 

@@ -18,19 +18,20 @@
  */
 package org.dependencytrack.upgrade;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
+import alpine.common.util.VersionComparator;
 import alpine.model.InstalledUpgrades;
 import alpine.model.SchemaVersion;
 import alpine.persistence.JdoProperties;
-import alpine.upgrade.UpgradeException;
-import alpine.upgrade.UpgradeExecutor;
-import alpine.upgrade.UpgradeMetaProcessor;
-import alpine.util.VersionComparator;
+import alpine.server.upgrade.UpgradeException;
+import alpine.server.upgrade.UpgradeExecutor;
+import alpine.server.upgrade.UpgradeMetaProcessor;
 import org.datanucleus.PersistenceNucleusContext;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.persistence.QueryManager;
+
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.servlet.ServletContextEvent;

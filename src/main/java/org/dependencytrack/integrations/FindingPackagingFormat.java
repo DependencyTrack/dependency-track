@@ -25,6 +25,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DateUtil;
 import org.json.JSONObject;
+import us.springett.parsers.cpe.Cpe;
+
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +36,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL
 public class FindingPackagingFormat {
 
     /** FPF is versioned. If the format changes, the version needs to be bumped. */
-    private static final String FPF_VERSION = "1.0";
+    private static final String FPF_VERSION = "1.1";
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_TIMESTAMP = "timestamp";
@@ -43,6 +45,7 @@ public class FindingPackagingFormat {
     private static final String FIELD_DESCRIPTION = "description";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_PURL = "purl";
+    private static final String FIELD_CPE = "cpe";
     private static final String FIELD_META = "meta";
     private static final String FIELD_PROJECT = "project";
     private static final String FIELD_FINDINGS = "findings";
@@ -94,6 +97,9 @@ public class FindingPackagingFormat {
             }
             if (project.getPurl() != null) {
                 projectJson.put(FIELD_PURL, project.getPurl());
+            }
+            if (project.getCpe() != null) {
+                projectJson.put(FIELD_CPE, project.getCpe());
             }
 
 

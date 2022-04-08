@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx.util;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,28 +28,14 @@ import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
-import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisJustification;
-import org.dependencytrack.model.AnalysisResponse;
-import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Classifier;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.DataClassification;
-import org.dependencytrack.model.ExternalReference;
-import org.dependencytrack.model.Finding;
-import org.dependencytrack.model.License;
-import org.dependencytrack.model.OrganizationalContact;
-import org.dependencytrack.model.OrganizationalEntity;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.ServiceComponent;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.*;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.json.JSONArray;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -569,8 +555,13 @@ public class ModelConverter {
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
             cdxVulnerability.addRating(rating);
         }
-        if (vulnerability.getCwe() != null) {
-            cdxVulnerability.addCwe(vulnerability.getCwe().getCweId());
+        if (vulnerability.getCwes() != null) {
+            for (final Integer cweId: vulnerability.getCwes()) {
+                final Cwe cwe = CweResolver.getInstance().lookup(cweId);
+                if (cwe != null) {
+                    cdxVulnerability.addCwe(cwe.getCweId());
+                }
+            }
         }
         cdxVulnerability.setDescription(vulnerability.getDescription());
         cdxVulnerability.setRecommendation(vulnerability.getRecommendation());

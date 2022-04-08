@@ -20,7 +20,15 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import org.datanucleus.api.jdo.JDOQuery;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisComment;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Vulnerability;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;

@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,7 +52,7 @@ public class CweImporter {
 
     public void processCweDefinitions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
         try (QueryManager qm = new QueryManager();
-                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v4.3.xml")) {
+                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("nist/cwec_v4.6.xml")) {
 
             LOGGER.info("Synchronizing CWEs with datastore");
 

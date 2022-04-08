@@ -18,8 +18,9 @@
  */
 package org.dependencytrack;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.dependencytrack.exception.RequirementsException;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 

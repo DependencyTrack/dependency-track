@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.integrations.fortifyssc;
 
-import alpine.crypto.DataEncryption;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
+import alpine.security.crypto.DataEncryption;
 import org.dependencytrack.integrations.AbstractIntegrationPoint;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.integrations.ProjectFindingUploader;
@@ -28,14 +28,13 @@ import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.json.JSONObject;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_TOKEN;
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
 public class FortifySscUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 

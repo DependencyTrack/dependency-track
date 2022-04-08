@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
+import alpine.common.util.BooleanUtil;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
@@ -27,17 +28,19 @@ import alpine.notification.NotificationLevel;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
-import alpine.util.BooleanUtil;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.*;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+
 import javax.jdo.PersistenceManager;
 import javax.json.JsonObject;
 import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -279,8 +282,8 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().hasAccess(principal, project);
     }
 
-    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
-        return getProjectQueryManager().getProjects(tag, includeMetrics);
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
+        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive);
     }
 
     public PaginatedResult getProjects(final Tag tag) {
@@ -538,11 +541,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
+    }
+
+    public Vulnerability getVulnerabilityByVulnId(String source, String vulnId, boolean includeVulnerableSoftware) {
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
+    }
+
+    public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId, boolean includeVulnerableSoftware) {
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
     public List<Vulnerability> getVulnerabilitiesForNpmModule(String module) {
@@ -640,6 +651,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getCwes() {
         return getVulnerableSoftwareQueryManager().getCwes();
+    }
+
+    public List<Cwe> getAllCwes() {
+        return getVulnerableSoftwareQueryManager().getAllCwes();
     }
 
     public Component matchIdentity(final Project project, final ComponentIdentity cid) {

@@ -18,9 +18,8 @@
  */
 package org.dependencytrack.integrations;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.persistence.QueryManager;
 import org.junit.Test;
 import org.mockito.Mockito;
 

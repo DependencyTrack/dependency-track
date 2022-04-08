@@ -1,10 +1,10 @@
 package org.dependencytrack.notification.publisher;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 public class SendMailPublisherTest {
   private static JsonObject configWithDestination(final String destination) {

@@ -18,10 +18,10 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.auth.AuthenticationNotRequired;
+import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
-import alpine.resources.AlpineResource;
-import alpine.util.BooleanUtil;
+import alpine.server.auth.AuthenticationNotRequired;
+import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -31,6 +31,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.misc.Badger;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;

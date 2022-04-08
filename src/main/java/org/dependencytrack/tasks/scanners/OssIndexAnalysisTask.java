@@ -18,12 +18,12 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import alpine.crypto.DataEncryption;
+import alpine.common.logging.Logger;
+import alpine.common.util.Pageable;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
-import alpine.util.Pageable;
+import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.HttpRequestWithBody;
@@ -42,6 +42,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
@@ -51,6 +52,7 @@ import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
 import us.springett.cvss.Score;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -302,17 +304,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         vulnerability.setDescription(reportedVuln.getDescription());
 
         if (reportedVuln.getCwe() != null) {
-            try {
-                if (reportedVuln.getCwe().startsWith("CWE-")) {
-                    final String cweId = reportedVuln.getCwe().substring(4);
-                    final Cwe cwe = qm.getCweById(Integer.parseInt(cweId));
-                    vulnerability.setCwe(cwe);
-                } else {
-                    final Cwe cwe = qm.getCweById(Integer.parseInt(reportedVuln.getCwe()));
-                    vulnerability.setCwe(cwe);
-                }
-            } catch (NumberFormatException e) {
-                LOGGER.error("An error occurred parsing the CWE ID of " + reportedVuln.getId());
+            final Cwe cwe = CweResolver.getInstance().resolve(qm, reportedVuln.getCwe());
+            if (cwe != null) {
+                vulnerability.addCwe(cwe);
             }
         }
 

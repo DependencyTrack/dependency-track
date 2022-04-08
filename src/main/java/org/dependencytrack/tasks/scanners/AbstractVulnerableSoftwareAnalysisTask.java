@@ -26,6 +26,7 @@ import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.parsers.cpe.util.Convert;
 import us.springett.parsers.cpe.values.LogicalValue;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

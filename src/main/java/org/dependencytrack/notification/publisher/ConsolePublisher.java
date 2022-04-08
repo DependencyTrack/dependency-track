@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
+
 import javax.json.JsonObject;
 import java.io.PrintStream;
 

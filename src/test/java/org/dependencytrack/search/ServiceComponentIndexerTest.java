@@ -22,6 +22,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.ServiceComponent;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.UUID;
 
 public class ServiceComponentIndexerTest extends PersistenceCapableTest {

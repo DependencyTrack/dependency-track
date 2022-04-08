@@ -21,6 +21,7 @@ package org.dependencytrack.policy;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

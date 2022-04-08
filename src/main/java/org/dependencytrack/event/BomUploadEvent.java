@@ -19,6 +19,7 @@
 package org.dependencytrack.event;
 
 import alpine.event.framework.AbstractChainableEvent;
+
 import java.io.File;
 import java.util.UUID;
 

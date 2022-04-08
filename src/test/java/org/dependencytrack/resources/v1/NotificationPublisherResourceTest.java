@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.filters.ApiFilter;
-import alpine.filters.AuthenticationFilter;
-import alpine.util.UuidUtil;
+import alpine.common.util.UuidUtil;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -30,6 +30,7 @@ import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
 import javax.json.JsonArray;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Form;

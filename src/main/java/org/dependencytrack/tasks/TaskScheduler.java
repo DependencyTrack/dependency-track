@@ -18,19 +18,19 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.common.util.BooleanUtil;
 import alpine.event.LdapSyncEvent;
 import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
-import alpine.tasks.AlpineTaskScheduler;
-import alpine.util.BooleanUtil;
+import alpine.server.tasks.AlpineTaskScheduler;
 import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
+import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.event.NistMirrorEvent;
-import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.PortfolioVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;

@@ -18,10 +18,10 @@
  */
 package org.dependencytrack.notification.publisher;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
+import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
-import alpine.util.UrlUtil;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
@@ -31,6 +31,7 @@ import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+
 import javax.json.JsonObject;
 import java.io.IOException;
 import java.io.StringWriter;

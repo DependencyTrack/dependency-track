@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.resources.v1.misc;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.model.ProjectMetrics;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;

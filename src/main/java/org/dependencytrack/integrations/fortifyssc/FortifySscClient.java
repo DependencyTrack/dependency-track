@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.integrations.fortifyssc;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
 import org.dependencytrack.common.UnirestFactory;
+
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;

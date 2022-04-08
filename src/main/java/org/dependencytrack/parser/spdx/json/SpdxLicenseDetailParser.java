@@ -20,6 +20,7 @@ package org.dependencytrack.parser.spdx.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.model.License;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;

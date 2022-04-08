@@ -23,6 +23,7 @@ import alpine.resources.AlpineRequest;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.List;

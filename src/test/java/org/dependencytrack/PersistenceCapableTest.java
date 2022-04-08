@@ -19,11 +19,12 @@
 package org.dependencytrack;
 
 import alpine.Config;
-import alpine.persistence.PersistenceManagerFactory;
+import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.persistence.QueryManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.datastore.JDOConnection;
 import java.sql.Connection;

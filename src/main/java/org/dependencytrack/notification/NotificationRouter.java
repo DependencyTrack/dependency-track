@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.notification;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.Subscriber;
@@ -29,6 +29,7 @@ import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.persistence.QueryManager;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.json.Json;

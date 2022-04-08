@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import org.dependencytrack.PersistenceCapableTest;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.lang.reflect.Method;
 
 public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
@@ -50,7 +51,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultPermissions");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(10, qm.getPermissions().size());
+        Assert.assertEquals(12, qm.getPermissions().size());
     }
 
     @Test
@@ -77,7 +78,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultConfigProperties");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(40, qm.getConfigProperties().size());
+        Assert.assertEquals(42, qm.getConfigProperties().size());
     }
 
     @Test

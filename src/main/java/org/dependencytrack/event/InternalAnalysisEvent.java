@@ -19,6 +19,7 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Component;
+
 import java.util.List;
 
 /**

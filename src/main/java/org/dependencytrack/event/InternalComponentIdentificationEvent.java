@@ -20,6 +20,7 @@ package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 

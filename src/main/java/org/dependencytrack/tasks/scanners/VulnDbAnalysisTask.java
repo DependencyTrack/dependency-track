@@ -18,11 +18,11 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import alpine.crypto.DataEncryption;
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
-import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
+import alpine.security.crypto.DataEncryption;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
@@ -33,6 +33,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import us.springett.vulndbdatamirror.client.VulnDbApi;
 import us.springett.vulndbdatamirror.parser.model.Results;
+
 import java.util.List;
 
 /**

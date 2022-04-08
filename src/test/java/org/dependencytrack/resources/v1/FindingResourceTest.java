@@ -19,8 +19,8 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.Config;
-import alpine.filters.ApiFilter;
-import alpine.filters.AuthenticationFilter;
+import alpine.server.filters.ApiFilter;
+import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -33,6 +33,7 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.core.Response;
@@ -137,7 +138,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("Acme Example", json.getJsonObject("project").getString("name"));
         Assert.assertEquals("1.0", json.getJsonObject("project").getString("version"));
         Assert.assertEquals(p1.getUuid().toString(), json.getJsonObject("project").getString("uuid"));
-        Assert.assertEquals("1.0", json.getString("version")); // FPF version
+        Assert.assertEquals("1.1", json.getString("version")); // FPF version
         JsonArray findings = json.getJsonArray("findings");
         Assert.assertEquals(3, findings.size());
         Assert.assertEquals("Component A", findings.getJsonObject(0).getJsonObject("component").getString("name"));

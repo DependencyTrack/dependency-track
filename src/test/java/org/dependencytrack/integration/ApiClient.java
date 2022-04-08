@@ -26,6 +26,7 @@ import kong.unirest.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.datanucleus.util.Base64;
 import org.dependencytrack.common.UnirestFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;

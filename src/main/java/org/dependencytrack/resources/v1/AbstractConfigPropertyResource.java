@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.crypto.DataEncryption;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
+import alpine.common.util.BooleanUtil;
+import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty;
-import alpine.resources.AlpineResource;
-import alpine.util.BooleanUtil;
-import alpine.util.UuidUtil;
+import alpine.security.crypto.DataEncryption;
+import alpine.server.resources.AlpineResource;
 import org.dependencytrack.persistence.QueryManager;
+
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;

@@ -19,7 +19,7 @@
 package org.dependencytrack.search;
 
 import alpine.Config;
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,6 +48,7 @@ import org.apache.lucene.store.SimpleFSDirectory;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

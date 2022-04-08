@@ -30,6 +30,7 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.rules.ExpectedException;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
+
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

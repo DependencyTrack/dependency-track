@@ -268,6 +268,12 @@ alpine.ldap.team.synchronization=false
 # alpine.http.proxy.password=
 # alpine.no.proxy=localhost,127.0.0.1
 
+# Optional 
+# HTTP Outbound Connection Timeout Settings. All values are in seconds.
+# alpine.http.timeout.connection=30
+# alpine.http.timeout.socket=30
+# alpine.http.timeout.pool=60
+    
 # Optional
 # Cross-Origin Resource Sharing (CORS) headers to include in REST responses.
 # If 'alpine.cors.enabled' is true, CORS headers will be sent, if false, no

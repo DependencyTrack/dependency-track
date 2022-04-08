@@ -24,6 +24,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.HashSet;
 import java.util.Set;
 

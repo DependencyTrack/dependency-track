@@ -24,6 +24,7 @@ import org.dependencytrack.model.Project;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.Collections;
 
 public class FindingPackagingFormatTest extends PersistenceCapableTest {
@@ -49,6 +50,6 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
         Assert.assertEquals(project.getDescription(), pjson.getString("description"));
         Assert.assertEquals(project.getVersion(), pjson.getString("version"));
 
-        Assert.assertEquals("1.0", root.getString("version"));
+        Assert.assertEquals("1.1", root.getString("version"));
     }
 }

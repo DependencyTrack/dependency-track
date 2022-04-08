@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.github.graphql.model;
 
 import org.apache.commons.lang3.tuple.Pair;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;

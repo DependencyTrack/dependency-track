@@ -19,9 +19,9 @@
 package org.dependencytrack.tasks;
 
 import alpine.Config;
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
-import alpine.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
@@ -33,12 +33,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
+import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.nvd.NvdParser;
 import org.dependencytrack.persistence.QueryManager;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +48,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
@@ -114,6 +117,7 @@ public class NistMirrorTask implements LoggableSubscriber {
             LOGGER.info("Time spent (d/l):   " + metricDownloadTime + "ms");
             LOGGER.info("Time spent (parse): " + metricParseTime + "ms");
             LOGGER.info("Time spent (total): " + (end - start) + "ms");
+            Event.dispatch(new EpssMirrorEvent());
         }
     }
 
@@ -211,8 +215,10 @@ public class NistMirrorTask implements LoggableSubscriber {
                 if (status.getStatusCode() == 200) {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
+                        File temp = File.createTempFile(filename, null);
                         file = new File(outputDir, filename);
-                        FileUtils.copyInputStreamToFile(in, file);
+                        FileUtils.copyInputStreamToFile(in, temp);
+                        Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             file.setLastModified(0);

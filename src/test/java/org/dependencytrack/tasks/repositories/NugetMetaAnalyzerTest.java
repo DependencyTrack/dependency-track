@@ -22,7 +22,6 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
-import org.junit.Test;
 
 public class NugetMetaAnalyzerTest {
 

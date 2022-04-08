@@ -28,6 +28,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.List;
 
 public class SeverityPolicyEvaluatorTest extends PersistenceCapableTest {

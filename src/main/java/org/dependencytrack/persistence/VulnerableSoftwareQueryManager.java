@@ -26,6 +26,8 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.h2.util.StringUtils;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.ArrayList;
@@ -256,10 +258,26 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             query.setOrdering("id asc");
         }
         if (filter != null) {
-            query.setFilter("cweId == :cweId || name.toLowerCase().matches(:name)");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            return execute(query, filter, filterString);
+            if (StringUtils.isNumber(filter)) {
+                query.setFilter("cweId == :cweId || name.matches(:filter)");
+                final String filterString = ".*" + filter.toLowerCase() + ".*";
+                return execute(query, Integer.valueOf(filter), filterString);
+            } else {
+                query.setFilter("name.toLowerCase().matches(:filter)");
+                final String filterString = ".*" + filter.toLowerCase() + ".*";
+                return execute(query, filterString);
+            }
         }
         return execute(query);
+    }
+
+    /**
+     * Returns a complete list of all CWE's.
+     * @return a List of CWEs
+     */
+    public List<Cwe> getAllCwes() {
+        final Query<Cwe> query = pm.newQuery(Cwe.class);
+        query.setOrdering("id asc");
+        return query.executeList();
     }
 }

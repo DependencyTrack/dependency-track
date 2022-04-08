@@ -39,6 +39,7 @@ import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -226,10 +227,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @param tag the tag associated with the Project
      * @return a List of Projects that contain the tag
      */
-    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics) {
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
         final PaginatedResult result;
         final Query<Project> query = pm.newQuery(Project.class);
-        final String queryFilter = "(tags.contains(:tag))";
+        final String queryFilter;
+        if (excludeInactive) {
+            queryFilter = "(tags.contains(:tag)) && (active == true || active == null))";
+        } else {
+            queryFilter = "(tags.contains(:tag))";
+        }
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
@@ -253,7 +259,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a List of Projects that contain the tag
      */
     public PaginatedResult getProjects(final Tag tag) {
-        return getProjects(tag, false);
+        return getProjects(tag, false, false);
     }
 
     /**

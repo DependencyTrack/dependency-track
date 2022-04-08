@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.resources.AlpineResource;
+import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -27,6 +27,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;

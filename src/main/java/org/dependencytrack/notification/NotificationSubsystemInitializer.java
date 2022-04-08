@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.notification;
 
-import alpine.logging.Logger;
+import alpine.common.logging.Logger;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
 import org.dependencytrack.RequirementsVerifier;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 

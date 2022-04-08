@@ -194,19 +194,19 @@ by default, it will install PostgreSQL and use persistent volume claims for the 
 To create the API Server executable WAR that is ready to launch:
 
 ```shell
-mvn clean package -P embedded-jetty
+mvn clean package -P enhance -P embedded-jetty
 ```
 
 To create the API Server executable WAR that is ready to be deployed in a Docker container:
 
 ```shell
-mvn clean package -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 To create the Bundled (API Server + Frontend) executable WAR that is ready to be deployed in a Docker container:
 
 ```shell
-mvn clean package -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 ## To run for local dev

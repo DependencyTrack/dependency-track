@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.model;
 
+import org.dependencytrack.PersistenceCapableTest;
 import org.junit.Assert;
 import org.junit.Test;
-import org.dependencytrack.PersistenceCapableTest;
+
 import java.util.Date;
 import java.util.UUID;
 

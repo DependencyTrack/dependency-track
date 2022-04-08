@@ -22,6 +22,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Project;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.UUID;
 
 public class ProjectIndexerTest extends PersistenceCapableTest {

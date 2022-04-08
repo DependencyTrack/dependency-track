@@ -22,6 +22,7 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+
 import java.util.Set;
 
 public class AnalysisDecisionChange {

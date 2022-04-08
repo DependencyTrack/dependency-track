@@ -16,10 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.model; 
+package org.dependencytrack.model;
 
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.Date;
 
 public class RepositoryMetaComponentTest {

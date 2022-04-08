@@ -22,6 +22,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.Assert;
 import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 

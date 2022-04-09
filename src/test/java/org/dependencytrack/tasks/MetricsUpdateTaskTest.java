@@ -111,7 +111,7 @@ public class MetricsUpdateTaskTest extends TaskTest {
         assertThat(counters.vulnerabilities).isEqualTo(2);
         assertThat(counters.suppressions).isEqualTo(1);
         assertThat(counters.findingsTotal).isEqualTo(2);
-        assertThat(counters.findingsAudited).isEqualTo(2);
+        assertThat(counters.findingsAudited).isEqualTo(1);
         assertThat(counters.findingsUnaudited).isEqualTo(1);
         assertThat(counters.policyViolationsFail).isZero();
         assertThat(counters.policyViolationsWarn).isZero();
@@ -282,7 +282,7 @@ public class MetricsUpdateTaskTest extends TaskTest {
         assertThat(counters.vulnerabilities).isEqualTo(2);
         assertThat(counters.suppressions).isEqualTo(1);
         assertThat(counters.findingsTotal).isEqualTo(2);
-        assertThat(counters.findingsAudited).isEqualTo(2);
+        assertThat(counters.findingsAudited).isEqualTo(1);
         assertThat(counters.findingsUnaudited).isEqualTo(1);
         assertThat(counters.policyViolationsFail).isZero();
         assertThat(counters.policyViolationsWarn).isZero();
@@ -455,7 +455,7 @@ public class MetricsUpdateTaskTest extends TaskTest {
         assertThat(counters.vulnerabilities).isEqualTo(2);
         assertThat(counters.suppressions).isEqualTo(1);
         assertThat(counters.findingsTotal).isEqualTo(2);
-        assertThat(counters.findingsAudited).isEqualTo(2);
+        assertThat(counters.findingsAudited).isEqualTo(1);
         assertThat(counters.findingsUnaudited).isEqualTo(1);
         assertThat(counters.policyViolationsFail).isZero();
         assertThat(counters.policyViolationsWarn).isZero();

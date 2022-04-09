@@ -159,7 +159,7 @@ public class MetricsUpdateTask implements Subscriber {
         // However, vulns may be defined as 'confirmed' in a future release.
         portfolioCounters.findingsTotal = portfolioCounters.severitySum();
         portfolioCounters.findingsAudited = toIntExact(qm.getAuditedCount());
-        portfolioCounters.findingsUnaudited = (portfolioCounters.findingsTotal + portfolioCounters.suppressions) - portfolioCounters.findingsAudited;
+        portfolioCounters.findingsUnaudited = portfolioCounters.findingsTotal - portfolioCounters.findingsAudited;
 
         // Query for an existing PortfolioMetrics
         final PortfolioMetrics last = qm.getMostRecentPortfolioMetrics();
@@ -323,7 +323,7 @@ public class MetricsUpdateTask implements Subscriber {
         counters.findingsTotal = counters.severitySum();
         LOGGER.debug("Retrieving existing audited count for project: " + project.getUuid());
         counters.findingsAudited = toIntExact(qm.getAuditedCount(project));
-        counters.findingsUnaudited = (counters.findingsTotal + counters.suppressions) - counters.findingsAudited;
+        counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
         // Query for an existing ProjectMetrics
         final ProjectMetrics last = qm.getMostRecentProjectMetrics(project);
@@ -444,7 +444,7 @@ public class MetricsUpdateTask implements Subscriber {
         counters.findingsTotal = counters.vulnerabilities;
         LOGGER.debug("Retrieving existing audited count for component: " + component.getUuid());
         counters.findingsAudited = toIntExact(qm.getAuditedCount(component));
-        counters.findingsUnaudited = (counters.findingsTotal + counters.suppressions) - counters.findingsAudited;
+        counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
         for (final PolicyViolation violation: qm.getAllPolicyViolations(component)) {
             counters.policyViolationsTotal++;

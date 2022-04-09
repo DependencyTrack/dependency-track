@@ -482,4 +482,17 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         delete(violations);
         delete(policyCondition);
     }
+
+    /**
+     * Returns the number of audited policy violations of a given type for a component.
+     * @param component The {@link Component} to retrieve audit counts for
+     * @param type The {@link PolicyViolation.Type} to retrieve audit counts for
+     * @return The total number of audited {@link PolicyViolation}s for the {@link Component}
+     */
+    public long getAuditedCount(final Component component, final PolicyViolation.Type type) {
+        final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class);
+        query.setFilter("component == :component && policyViolation.type == :type && analysisState != null && analysisState != :notSet");
+        return getCount(query, component, type, ViolationAnalysisState.NOT_SET);
+    }
+
 }

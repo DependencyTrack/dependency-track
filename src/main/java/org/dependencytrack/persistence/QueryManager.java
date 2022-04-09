@@ -524,6 +524,10 @@ public class QueryManager extends AlpineQueryManager {
         getPolicyQueryManager().deletePolicyViolations(project);
     }
 
+    public long getAuditedCount(final Component component, final PolicyViolation.Type type) {
+        return getPolicyQueryManager().getAuditedCount(component, type);
+    }
+
     public void deletePolicyCondition(PolicyCondition policyCondition) {
         getPolicyQueryManager().deletePolicyCondition(policyCondition);
     }

@@ -81,7 +81,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @return the total number of analysis decisions for the component
      */
     public long getAuditedCount(Component component) {
-        final Query<Analysis> query = pm.newQuery(Analysis.class, "project == null && component == :component && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "component == :component && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
         return getCount(query, component, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
     }
 
@@ -121,7 +121,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @return the total number of suppressed vulnerabilities for the component
      */
     public long getSuppressedCount(Component component) {
-        final Query<Analysis> query = pm.newQuery(Analysis.class, "project == null && component == :component && suppressed == true");
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "component == :component && suppressed == true");
         return getCount(query, component);
     }
 

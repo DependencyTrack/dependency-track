@@ -666,10 +666,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 if (super.hasAccessManagementPermission(userPrincipal)) {
                     return true;
                 }
-                for (final Team userInTeam : userPrincipal.getTeams()) {
-                    for (final Team accessTeam : project.getAccessTeams()) {
-                        if (userInTeam.getId() == accessTeam.getId()) {
-                            return true;
+                if (userPrincipal.getTeams() != null) {
+                    for (final Team userInTeam : userPrincipal.getTeams()) {
+                        for (final Team accessTeam : project.getAccessTeams()) {
+                            if (userInTeam.getId() == accessTeam.getId()) {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -678,10 +680,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 if (super.hasAccessManagementPermission(apiKey)) {
                     return true;
                 }
-                for (final Team userInTeam : apiKey.getTeams()) {
-                    for (final Team accessTeam : project.getAccessTeams()) {
-                        if (userInTeam.getId() == accessTeam.getId()) {
-                            return true;
+                if (apiKey.getTeams() != null) {
+                    for (final Team userInTeam : apiKey.getTeams()) {
+                        for (final Team accessTeam : project.getAccessTeams()) {
+                            if (userInTeam.getId() == accessTeam.getId()) {
+                                return true;
+                            }
                         }
                     }
                 }

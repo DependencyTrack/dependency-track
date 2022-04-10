@@ -58,30 +58,36 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
 
     /**
      * Returns the number of audited findings for the portfolio.
+     * Findings that are suppressed or have been assigned the states {@link AnalysisState#NOT_SET} or {@link AnalysisState#IN_TRIAGE}
+     * do not count as audited. Suppressions are tracked separately.
      * @return the total number of analysis decisions
      */
     public long getAuditedCount() {
-        final Query<Analysis> query = pm.newQuery(Analysis.class, "analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "analysisState != null && suppressed == false && analysisState != :notSet && analysisState != :inTriage");
         return getCount(query, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
     }
 
     /**
      * Returns the number of audited findings for the specified Project.
+     * Findings that are suppressed or have been assigned the states {@link AnalysisState#NOT_SET} or {@link AnalysisState#IN_TRIAGE}
+     * do not count as audited. Suppressions are tracked separately.
      * @param project the Project to retrieve audit counts for
      * @return the total number of analysis decisions for the project
      */
     public long getAuditedCount(Project project) {
-        final Query<Analysis> query = pm.newQuery(Analysis.class, "project == :project && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "project == :project && analysisState != null && suppressed == false && analysisState != :notSet && analysisState != :inTriage");
         return getCount(query, project, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
     }
 
     /**
      * Returns the number of audited findings for the specified Component.
+     * Findings that are suppressed or have been assigned the states {@link AnalysisState#NOT_SET} or {@link AnalysisState#IN_TRIAGE}
+     * do not count as audited. Suppressions are tracked separately.
      * @param component the Component to retrieve audit counts for
      * @return the total number of analysis decisions for the component
      */
     public long getAuditedCount(Component component) {
-        final Query<Analysis> query = pm.newQuery(Analysis.class, "project == null && component == :component && analysisState != null && analysisState != :notSet && analysisState != :inTriage");
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "component == :component && analysisState != null && suppressed == false && analysisState != :notSet && analysisState != :inTriage");
         return getCount(query, component, AnalysisState.NOT_SET, AnalysisState.IN_TRIAGE);
     }
 
@@ -121,7 +127,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @return the total number of suppressed vulnerabilities for the component
      */
     public long getSuppressedCount(Component component) {
-        final Query<Analysis> query = pm.newQuery(Analysis.class, "project == null && component == :component && suppressed == true");
+        final Query<Analysis> query = pm.newQuery(Analysis.class, "component == :component && suppressed == true");
         return getCount(query, component);
     }
 

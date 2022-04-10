@@ -10,9 +10,9 @@ Upon starting Dependency-Track for the first time, multiple tasks occur includin
 * Generation of default objects such as users, teams, and permissions
 * Generation of secret key used for JWT token creation and validation
 * Population of CWE and SPDX license data
-* Initial mirroring of all supported vulnerability datasources (National Vulnerability Database, NPM Advisories, etc)
+* Initial mirroring of all supported vulnerability datasources (National Vulnerability Database, GitHub Advisories, etc)
 
-> The initial mirroring may take between 10 - 30 minutes or more. Do not interrupt this process. Wait for the 
+> The initial mirroring may take between 10 - 30 minutes or more. Do not interrupt this process. Wait for the
 > completion of all mirroring tasks before shutting down the system. These tasks can be monitored by watching
 > `dependency-track.log` or the Docker containers console.
 

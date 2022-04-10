@@ -459,6 +459,10 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().getAllPolicyViolations(component);
     }
 
+    public List<PolicyViolation> getAllPolicyViolations(final Component component, final boolean includeSuppressed) {
+        return getPolicyQueryManager().getAllPolicyViolations(component, includeSuppressed);
+    }
+
     public List<PolicyViolation> getAllPolicyViolations(final Project project) {
         return getPolicyQueryManager().getAllPolicyViolations(project);
     }
@@ -522,6 +526,10 @@ public class QueryManager extends AlpineQueryManager {
 
     void deletePolicyViolations(Project project) {
         getPolicyQueryManager().deletePolicyViolations(project);
+    }
+
+    public long getAuditedCount(final Component component, final PolicyViolation.Type type) {
+        return getPolicyQueryManager().getAuditedCount(component, type);
     }
 
     public void deletePolicyCondition(PolicyCondition policyCondition) {

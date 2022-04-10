@@ -83,7 +83,7 @@ public class MetricsUpdateTask implements Subscriber {
      * Performs high-level metric updates on the portfolio.
      * @param qm a QueryManager instance
      */
-    private void updatePortfolioMetrics(final QueryManager qm) {
+    MetricCounters updatePortfolioMetrics(final QueryManager qm) {
         LOGGER.info("Executing portfolio metrics update");
         final Date measuredAt = new Date();
 
@@ -246,6 +246,7 @@ public class MetricsUpdateTask implements Subscriber {
             qm.persist(portfolioMetrics);
         }
         LOGGER.info("Completed portfolio metrics update");
+        return portfolioCounters;
     }
 
     /**
@@ -254,7 +255,7 @@ public class MetricsUpdateTask implements Subscriber {
      * @param oid the object ID of the project
      * @return MetricCounters
      */
-    private MetricCounters updateProjectMetrics(final QueryManager qm, final long oid) {
+    MetricCounters updateProjectMetrics(final QueryManager qm, final long oid) {
         final Project project = qm.getObjectById(Project.class, oid);
         LOGGER.info("Executing metrics update for project: " + project.getUuid());
         final Date measuredAt = new Date();
@@ -362,7 +363,8 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.debug("Persisting metrics for project: " + project.getUuid());
             qm.persist(last);
             // Update the convenience fields in the Project object
-            if (project.getLastInheritedRiskScore() != last.getInheritedRiskScore()) {
+            if (project.getLastInheritedRiskScore() == null ||
+                    project.getLastInheritedRiskScore() != last.getInheritedRiskScore()) {
                 LOGGER.debug("Updating Inherited Risk Score for project: " + project.getUuid());
                 project.setLastInheritedRiskScore(last.getInheritedRiskScore());
                 LOGGER.debug("Persisting metrics for project: " + project.getUuid());
@@ -405,7 +407,8 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.debug("Persisting metrics for project: " + project.getUuid());
             qm.persist(projectMetrics);
             // Update the convenience fields in the Project object
-            if (project.getLastInheritedRiskScore() != projectMetrics.getInheritedRiskScore()) {
+            if (project.getLastInheritedRiskScore() == null ||
+                    project.getLastInheritedRiskScore() != projectMetrics.getInheritedRiskScore()) {
                 LOGGER.debug("Updating Inherited Risk Score for project: " + project.getUuid());
                 project.setLastInheritedRiskScore(projectMetrics.getInheritedRiskScore());
                 LOGGER.debug("Persisting metrics for project: " + project.getUuid());
@@ -422,7 +425,7 @@ public class MetricsUpdateTask implements Subscriber {
      * @param oid object ID of the component to perform metric updates on
      * @return MetricCounters
      */
-    private MetricCounters updateComponentMetrics(final QueryManager qm, final long oid) {
+    MetricCounters updateComponentMetrics(final QueryManager qm, final long oid) {
         final Component component = qm.getObjectById(Component.class, oid);
         LOGGER.debug("Executing metrics update for component: " + component.getUuid());
         final Date measuredAt = new Date();
@@ -437,12 +440,13 @@ public class MetricsUpdateTask implements Subscriber {
 
         // For the time being finding and vulnerability counts are the same.
         // However, vulns may be defined as 'confirmed' in a future release.
-        counters.findingsTotal = counters.severitySum();
+        counters.vulnerabilities = counters.severitySum();
+        counters.findingsTotal = counters.vulnerabilities;
         LOGGER.debug("Retrieving existing audited count for component: " + component.getUuid());
         counters.findingsAudited = toIntExact(qm.getAuditedCount(component));
         counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
 
-        for (final PolicyViolation violation: qm.getAllPolicyViolations(component)) {
+        for (final PolicyViolation violation: qm.getAllPolicyViolations(component, false)) {
             counters.policyViolationsTotal++;
 
             // Assign violation states
@@ -456,18 +460,33 @@ public class MetricsUpdateTask implements Subscriber {
             // Assign violation types
             if (PolicyViolation.Type.LICENSE == violation.getType()) {
                 counters.policyViolationsLicenseTotal++;
-                //counters.policyViolationsLicenseAudited = qm.getAuditedCount(violation, component);
-                counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
             } else if (PolicyViolation.Type.SECURITY == violation.getType()) {
                 counters.policyViolationsSecurityTotal++;
-                //counters.policyViolationsSecurityAudited = qm.getAuditedCount(violation, component);
-                counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
             } else if (PolicyViolation.Type.OPERATIONAL == violation.getType()) {
                 counters.policyViolationsOperationalTotal++;
-                //counters.policyViolationsOperationalAudited = qm.getAuditedCount(violation, component);
-                counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
             }
         }
+
+        // Calculate audit counts per violation type.
+        // Only do this if there are any violations at all, otherwise we'll be performing unnecessary database operations.
+        if (counters.policyViolationsLicenseTotal > 0) {
+            counters.policyViolationsLicenseAudited = toIntExact(qm.getAuditedCount(component, PolicyViolation.Type.LICENSE));
+            counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
+        }
+        if (counters.policyViolationsOperationalTotal > 0) {
+            counters.policyViolationsOperationalAudited = toIntExact(qm.getAuditedCount(component, PolicyViolation.Type.OPERATIONAL));
+            counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
+        }
+        if (counters.policyViolationsSecurityTotal > 0) {
+            counters.policyViolationsSecurityAudited = toIntExact(qm.getAuditedCount(component, PolicyViolation.Type.SECURITY));
+            counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
+        }
+
+        // Calculate total audit counts across all violation types.
+        counters.policyViolationsAudited = counters.policyViolationsLicenseAudited +
+                counters.policyViolationsOperationalAudited +
+                counters.policyViolationsSecurityAudited;
+        counters.policyViolationsUnaudited = counters.policyViolationsTotal - counters.policyViolationsAudited;
 
         // Query for an existing ComponentMetrics
         final DependencyMetrics last = qm.getMostRecentDependencyMetrics(component);
@@ -505,7 +524,8 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.debug("Persisting metrics for component: " + component.getUuid());
             qm.persist(last);
             // Update the convenience fields in the Component object
-            if (component.getLastInheritedRiskScore() != last.getInheritedRiskScore()) {
+            if (component.getLastInheritedRiskScore() == null ||
+                    component.getLastInheritedRiskScore() != last.getInheritedRiskScore()) {
                 LOGGER.debug("Updating Inherited Risk Score for component: " + component.getUuid());
                 component.setLastInheritedRiskScore(last.getInheritedRiskScore());
                 LOGGER.debug("Persisting metrics for component: " + component.getUuid());
@@ -547,7 +567,8 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.debug("Persisting metrics for component: " + component.getUuid());
             qm.persist(componentMetrics);
             // Update the convenience fields in the Component object
-            if (component.getLastInheritedRiskScore() != componentMetrics.getInheritedRiskScore()) {
+            if (component.getLastInheritedRiskScore() == null ||
+                    component.getLastInheritedRiskScore() != componentMetrics.getInheritedRiskScore()) {
                 LOGGER.debug("Updating Inherited Risk Score for component: " + component.getUuid());
                 component.setLastInheritedRiskScore(componentMetrics.getInheritedRiskScore());
                 LOGGER.debug("Persisting metrics for component: " + component.getUuid());
@@ -643,10 +664,10 @@ public class MetricsUpdateTask implements Subscriber {
     /**
      * A value object that holds various counters returned by the updating of metrics.
      */
-    private class MetricCounters {
+    static class MetricCounters {
 
-        private int critical, high, medium, low, unassigned;
-        private int projects, vulnerableProjects, components, vulnerableComponents,
+        int critical, high, medium, low, unassigned;
+        int projects, vulnerableProjects, components, vulnerableComponents,
                 vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited,
                 policyViolationsFail, policyViolationsWarn, policyViolationsInfo, policyViolationsTotal,
                 policyViolationsAudited, policyViolationsUnaudited, policyViolationsSecurityTotal,

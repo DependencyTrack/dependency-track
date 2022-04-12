@@ -314,6 +314,10 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().updateProject(transientProject, commitIndex);
     }
 
+    public boolean updateNewProjectACL(Project transientProject, Principal principal) {
+        return getProjectQueryManager().updateNewProjectACL(transientProject, principal);
+    }
+
     public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
                          boolean includeComponents, boolean includeServices, boolean includeAuditHistory) {
         return getProjectQueryManager().clone(from, newVersion, includeTags, includeProperties,

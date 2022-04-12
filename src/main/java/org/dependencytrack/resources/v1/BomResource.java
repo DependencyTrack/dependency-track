@@ -20,8 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.model.ApiKey;
-import alpine.model.Team;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -38,7 +36,6 @@ import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
@@ -66,7 +63,6 @@ import java.security.Principal;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -231,7 +227,7 @@ public class BomResource extends AlpineResource {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
                         project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, null, null, true, true);
                         Principal principal = getPrincipal();
-                        updateProjectACL(qm, project, principal);
+                        qm.updateNewProjectACL(project, principal);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
@@ -275,7 +271,7 @@ public class BomResource extends AlpineResource {
                     if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, null, null, true, true);
                         Principal principal = getPrincipal();
-                        updateProjectACL(qm, project, principal);
+                        qm.updateNewProjectACL(project, principal);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
@@ -346,27 +342,6 @@ public class BomResource extends AlpineResource {
             }
         }
         return Response.ok().build();
-    }
-
-    private boolean updateProjectACL(QueryManager qm, Project project, Principal principal) {
-        //If portfolio access is enabled, we have to allow the Team access to the newly created Project
-        if (qm.isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && principal instanceof ApiKey) {
-            LOGGER.info("checking if we can add Team to ACL of newly created project");
-            ApiKey apiKey = (ApiKey) principal;
-            final var apiTeam = apiKey.getTeams().stream().findFirst();
-            if (apiTeam.isPresent()) {
-                LOGGER.debug("adding Team to ACL of newly created project");
-                final Team team = qm.getObjectByUuid(Team.class, apiTeam.get().getUuid());
-                project.addAccessTeam(team);
-                qm.persist(project);
-                return true;
-            } else {
-                //Shouldn't happen as having permission means at least one Team is present
-                LOGGER.warn("Request has an API Key without a Team, unable to assign team ACL to autocreated project.");
-            }
-        }
-        return false;
-        //TODO: What if a UserPrincipal is autocreating a Project? See https://github.com/DependencyTrack/dependency-track/issues/1435
     }
 
 }

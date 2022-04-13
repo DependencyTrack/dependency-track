@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
 import alpine.model.Permission;
@@ -52,6 +53,8 @@ import java.util.Map;
 import java.util.UUID;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
+
+    private static final Logger LOGGER = Logger.getLogger(ProjectQueryManager.class);
 
     /**
      * Constructs a new QueryManager.
@@ -666,10 +669,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 if (super.hasAccessManagementPermission(userPrincipal)) {
                     return true;
                 }
-                for (final Team userInTeam : userPrincipal.getTeams()) {
-                    for (final Team accessTeam : project.getAccessTeams()) {
-                        if (userInTeam.getId() == accessTeam.getId()) {
-                            return true;
+                if (userPrincipal.getTeams() != null) {
+                    for (final Team userInTeam : userPrincipal.getTeams()) {
+                        for (final Team accessTeam : project.getAccessTeams()) {
+                            if (userInTeam.getId() == accessTeam.getId()) {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -678,10 +683,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 if (super.hasAccessManagementPermission(apiKey)) {
                     return true;
                 }
-                for (final Team userInTeam : apiKey.getTeams()) {
-                    for (final Team accessTeam : project.getAccessTeams()) {
-                        if (userInTeam.getId() == accessTeam.getId()) {
-                            return true;
+                if (apiKey.getTeams() != null) {
+                    for (final Team userInTeam : apiKey.getTeams()) {
+                        for (final Team accessTeam : project.getAccessTeams()) {
+                            if (userInTeam.getId() == accessTeam.getId()) {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -735,6 +742,32 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         } else if (StringUtils.trimToNull(inputFilter) != null) {
             query.setFilter(inputFilter);
         }
+    }
+
+    /**
+     * Updates a Project ACL to add the principals Team to the AccessTeams
+     * This only happens if Portfolio Access Control is enabled and the @param principal is an ApyKey
+     * For a UserPrincipal we don't know which Team(s) to add to the ACL,
+     * See https://github.com/DependencyTrack/dependency-track/issues/1435
+     * @param project
+     * @param principal
+     * @return True if ACL was updated
+     */
+    public boolean updateNewProjectACL(Project project, Principal principal) {
+        if (isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && principal instanceof ApiKey) {
+            ApiKey apiKey = (ApiKey) principal;
+            final var apiTeam = apiKey.getTeams().stream().findFirst();
+            if (apiTeam.isPresent()) {
+                LOGGER.debug("adding Team to ACL of newly created project");
+                final Team team = getObjectByUuid(Team.class, apiTeam.get().getUuid());
+                project.addAccessTeam(team);
+                persist(project);
+                return true;
+            } else {
+                LOGGER.warn("API Key without a Team, unable to assign team ACL to project.");
+            }
+        }
+        return false;
     }
 
     public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {

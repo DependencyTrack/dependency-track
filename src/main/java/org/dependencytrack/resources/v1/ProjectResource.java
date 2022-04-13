@@ -39,6 +39,8 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 
+import java.security.Principal;
+
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -211,6 +213,8 @@ public class ProjectResource extends AlpineResource {
             Project project = qm.getProject(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()));
             if (project == null) {
                 project = qm.createProject(jsonProject, jsonProject.getTags(), true);
+                Principal principal = getPrincipal();
+                qm.updateNewProjectACL(project, principal);
                 LOGGER.info("Project " + project.toString() + " created by " + super.getPrincipal().getName());
                 return Response.status(Response.Status.CREATED).entity(project).build();
             } else {

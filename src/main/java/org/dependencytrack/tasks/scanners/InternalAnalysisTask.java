@@ -89,7 +89,8 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
     }
 
     private void versionRangeAnalysis(final QueryManager qm, final Component component) {
-        final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_ENABLED);
+        final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_ENABLED) &&
+                !(component.isInternal() && !super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_INTERNAL));
         final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
         us.springett.parsers.cpe.Cpe parsedCpe = null;
         if (component.getCpe() != null) {

@@ -13,15 +13,15 @@ jobs:
   prepare-release:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.varaibles.outputs.version }}
-      next-version: ${{ steps.varaibles.outputs.next-version }}
-      release-branch: ${{ steps.varaibles.outputs.release-branch }}
+      version: ${{ steps.variables.outputs.version }}
+      next-version: ${{ steps.variables.outputs.next-version }}
+      release-branch: ${{ steps.variables.outputs.release-branch }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3.0.0
 
       - name: Setup Environment
-        id: varaibles
+        id: variables
         run: |-
           VERSION="${{ github.event.inputs.version-overwrite }}"
           if [[ -z ${VERSION} ]]; then

@@ -4,7 +4,7 @@ FROM debian:bullseye-20220328-slim@sha256:78fd65998de7a59a001d792fe2d3a6d2ea25b6
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
-ARG COMMIT_SHA=unkowen
+ARG COMMIT_SHA=unknown
 ARG APP_VERSION=0.0.0
 ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/

@@ -76,9 +76,6 @@ jobs:
         with:
           install: true
 
-      - name: Available Platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
       - name: Login to Docker.io
         uses: docker/login-action@v1.13.0
         with:

@@ -194,7 +194,7 @@ The following steps demonstrate how to setup OpenID Connect with Azure Active Di
 
 > This guide assumes that:
 >   * the Dependency-Track frontend has been deployed to `https://dependencytrack.example.com`
->   * an Azure Active Directory tenant has been created with name `dt-example`
+>   * an Azure Active Directory tenant has been created
 
 1. Add an app registration for Dependency-Track to your Azure AD tenant:
    * Name: `Dependency-Track`
@@ -202,9 +202,8 @@ The following steps demonstrate how to setup OpenID Connect with Azure Active Di
    * Redirect URI (optional): Leave empty for now
 
 
-2. Under Authentication, add two Redirect URIs for Single Page Applications and leave all settings at default:
+2. Under Authentication, add the following Redirect URI for a Single Page Application and leave all settings at default:
    * https://dependencytrack.example.com/static/oidc-callback.html
-   * https://dependencytrack.example.com/static/oidc-callback.html?redirect=%2fdashboard
 
 
 3. Under Token configuration, click Add groups claim and select the group types you'd like to include (check all options if you're not sure).

@@ -88,7 +88,7 @@ public class AnalysisResource extends AlpineResource {
                 new ValidationTask(RegexSequence.Pattern.UUID, vulnerabilityUuid, "Vulnerability is not a valid UUID")
         );
         try (QueryManager qm = new QueryManager()) {
-            Project project = null;
+            final Project project;
             if (StringUtils.trimToNull(projectUuid) != null) {
                 project = qm.getObjectByUuid(Project.class, projectUuid);
                 if (project == null) {
@@ -163,14 +163,14 @@ public class AnalysisResource extends AlpineResource {
                 if (request.getAnalysisJustification() != null) {
                     if (analysis.getAnalysisJustification() == null && request.getAnalysisJustification() != AnalysisJustification.NOT_SET) {
                         qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", AnalysisJustification.NOT_SET, request.getAnalysisJustification()), commenter);
-                    } else {
+                    } else if (analysis.getAnalysisJustification() != null && request.getAnalysisJustification() != analysis.getAnalysisJustification()) {
                         qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", analysis.getAnalysisJustification(), request.getAnalysisJustification()), commenter);
                     }
                 }
                 if (request.getAnalysisResponse() != null) {
                     if (analysis.getAnalysisResponse() == null && analysis.getAnalysisResponse() != request.getAnalysisResponse()) {
                         qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", AnalysisResponse.NOT_SET, request.getAnalysisResponse()), commenter);
-                    } else {
+                    } else if (analysis.getAnalysisResponse() != null && request.getAnalysisResponse() != analysis.getAnalysisResponse()) {
                         qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", analysis.getAnalysisResponse(), request.getAnalysisResponse()), commenter);
                     }
                 }

@@ -285,7 +285,7 @@
       "name": "Atlassian Public",
       "description": "Package repository for the Java ecosystem.",
       "endpoints": [
-        "https://maven.atlassian.com/content/repositories/atlassian-public/"
+        "https://packages.atlassian.com/content/repositories/atlassian-public/"
       ],
       "authenticated": false,
       "x-trust-boundary": true,

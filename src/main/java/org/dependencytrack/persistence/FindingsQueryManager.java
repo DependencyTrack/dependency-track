@@ -180,9 +180,11 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             analysis.setComponent(component);
             analysis.setVulnerability(vulnerability);
         }
-        if (isSuppressed != null) {
-            analysis.setSuppressed(isSuppressed);
-        }
+
+        // In case we're updating an existing analysis, setting any of the fields
+        // to null will wipe them. That is not the expected behavior when an AnalysisRequest
+        // has some fields unset (so they're null). If fields are not set, there shouldn't
+        // be any modifications to the existing data.
         if (analysisState != null) {
             analysis.setAnalysisState(analysisState);
         }
@@ -195,6 +197,10 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         if (analysisDetails != null) {
             analysis.setAnalysisDetails(analysisDetails);
         }
+        if (isSuppressed != null) {
+            analysis.setSuppressed(isSuppressed);
+        }
+
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
     }

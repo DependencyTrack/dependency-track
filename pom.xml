@@ -94,7 +94,7 @@
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.1.1.jre11-preview</lib.jdbc-driver.mssql.version>
-        <lib.jdbc-driver.mysql.version>8.0.28</lib.jdbc-driver.mysql.version>
+        <lib.jdbc-driver.mysql.version>8.0.29</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.3.4</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>

@@ -50,6 +50,7 @@ public class v450Updater extends AbstractUpgradeItem {
     private static final String STMT_9 = "SELECT \"t\".\"ID\" FROM \"TEAM\" AS \"t\" INNER JOIN \"TEAMS_PERMISSIONS\" AS \"tp\" ON \"tp\".\"TEAM_ID\" = \"t\".\"ID\" WHERE \"tp\".\"PERMISSION_ID\" = %d";
     private static final String STMT_10 = "INSERT INTO \"TEAMS_PERMISSIONS\" (\"TEAM_ID\", \"PERMISSION_ID\") VALUES (?, ?)";
     private static final String STMT_11 = "UPDATE \"VULNERABILITY\" SET \"CWE\" = NULL";
+    private static final String STMT_12 = "UPDATE \"REPOSITORY\" SET \"URL\" = 'https://packages.atlassian.com/content/repositories/atlassian-public/' WHERE \"TYPE\" = 'MAVEN' AND \"IDENTIFIER\" = 'atlassian-public'";
 
     @Override
     public String getSchemaVersion() {
@@ -121,6 +122,9 @@ public class v450Updater extends AbstractUpgradeItem {
                 ps.executeUpdate();
             }
         }
+
+        LOGGER.info("Updating Atlassian Maven Repository URL");
+        DbUtil.executeUpdate(connection, STMT_12);
     }
 
     private long getPermissionId(final Connection connection, final Permissions permission) throws SQLException, UpgradeException {

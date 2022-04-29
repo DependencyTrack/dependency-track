@@ -27,6 +27,7 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
 import org.apache.http.HttpStatus;
+import org.assertj.core.api.Assertions;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
@@ -55,11 +56,16 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
 public class AnalysisResourceTest extends ResourceTest {
 
@@ -284,7 +290,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewTest() {
+    public void updateAnalysisCreateNewTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -328,7 +334,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -339,7 +345,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewWithEmptyRequestTest() {
+    public void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -376,7 +382,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getJsonArray("analysisComments")).isEmpty();
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -387,7 +393,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingTest() {
+    public void updateAnalysisUpdateExistingTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -452,7 +458,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -513,7 +519,7 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingWithEmptyRequestTest() {
+    public void updateAnalysisUpdateExistingWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -567,7 +573,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: WILL_NOT_FIX → NOT_SET"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -678,7 +684,7 @@ public class AnalysisResourceTest extends ResourceTest {
     // Performing an analysis with those request fields set in >= 4.4.0 then resulted in NPEs,
     // see https://github.com/DependencyTrack/dependency-track/issues/1409
     @Test
-    public void updateAnalysisIssue1409Test() {
+    public void updateAnalysisIssue1409Test() throws InterruptedException {
         initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -735,7 +741,7 @@ public class AnalysisResourceTest extends ResourceTest {
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());

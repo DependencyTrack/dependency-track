@@ -26,6 +26,7 @@ import alpine.notification.Subscription;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import net.jcip.annotations.NotThreadSafe;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -56,12 +57,15 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Duration;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
+@NotThreadSafe
 public class ViolationAnalysisResourceTest extends ResourceTest {
 
     @Override
@@ -200,7 +204,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewTest() {
+    public void updateAnalysisCreateNewTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -244,7 +248,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key;
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -255,7 +259,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisCreateNewWithEmptyRequestTest() {
+    public void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -292,7 +296,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
         assertThat(jsonObject.getBoolean("isSuppressed")).isFalse();
         assertThat(jsonObject.getJsonArray("analysisComments")).isEmpty();
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -303,7 +307,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingTest() {
+    public void updateAnalysisUpdateExistingTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -358,7 +362,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
@@ -417,7 +421,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
-    public void updateAnalysisUpdateExistingWithEmptyRequestTest() {
+    public void updateAnalysisUpdateExistingWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
@@ -464,7 +468,7 @@ public class ViolationAnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("APPROVED → NOT_SET"))
                 .doesNotContainKey("commenter"); // Not set when authenticating via API key
 
-        assertThat(NOTIFICATIONS.size()).isEqualTo(1);
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification notification = NOTIFICATIONS.poll();
         assertThat(notification).isNotNull();
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());

@@ -26,6 +26,7 @@ import alpine.notification.Subscription;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
+import net.jcip.annotations.NotThreadSafe;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -64,6 +65,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
+@NotThreadSafe
 public class ViolationAnalysisResourceTest extends ResourceTest {
 
     @Override

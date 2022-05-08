@@ -180,6 +180,33 @@ public class ProjectResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("/classifier/{classifier}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all projects by classifier",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects of the specified classifier")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getProjectsByClassifier(
+            @ApiParam(value = "The classifier to query on", required = true)
+            @PathParam("classifier") String classifierString,
+            @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+            @QueryParam("excludeInactive") boolean excludeInactive) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            Classifier classifier = Classifier.valueOf(classifierString);
+            final PaginatedResult result = qm.getProjects(classifier, true, excludeInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The classifier type specified is not valid.").build();
+        }
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)

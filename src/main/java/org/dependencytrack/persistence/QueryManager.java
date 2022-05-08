@@ -36,6 +36,7 @@ import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ComponentIdentity;
@@ -333,6 +334,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
         return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive);
+    }
+
+    public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive) {
+        return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive);
     }
 
     public PaginatedResult getProjects(final Tag tag) {

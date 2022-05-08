@@ -15,6 +15,7 @@ import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
 
@@ -41,12 +42,12 @@ public class NewMetricsUpdateTask implements Subscriber {
             return;
         }
 
+        LOGGER.debug("Starting metrics update task");
         final var event = (MetricsUpdateEvent) e;
         try {
             if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
                 updatePortfolioMetrics();
-            }
-            if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
+            } else if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
                 updateProjectMetrics(((Project) event.getTarget()).getId());
             } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
                 updateComponentMetrics(((Component) event.getTarget()).getId());
@@ -54,6 +55,7 @@ public class NewMetricsUpdateTask implements Subscriber {
         } catch (Exception ex) {
             LOGGER.error("An unknown error occurred while updating metrics", ex);
         }
+        LOGGER.debug("Metrics update complete");
     }
 
     private Counters updatePortfolioMetrics() throws Exception {
@@ -251,7 +253,6 @@ public class NewMetricsUpdateTask implements Subscriber {
 
         try (final var qm = new QueryManager()) {
             final Project project = qm.getObjectById(Project.class, projectId);
-            final Double inheritedRiskScore;
 
             Transaction trx = qm.getPersistenceManager().currentTransaction();
             try {
@@ -287,7 +288,6 @@ public class NewMetricsUpdateTask implements Subscriber {
                         && latestMetrics.getComponents() == counters.components
                         && latestMetrics.getVulnerableComponents() == counters.vulnerableComponents) {
                     latestMetrics.setLastOccurrence(counters.measuredAt);
-                    inheritedRiskScore = latestMetrics.getInheritedRiskScore();
                 } else {
                     final var metrics = new ProjectMetrics();
                     metrics.setProject(project);
@@ -322,7 +322,6 @@ public class NewMetricsUpdateTask implements Subscriber {
                     metrics.setFirstOccurrence(counters.measuredAt);
                     metrics.setLastOccurrence(counters.measuredAt);
                     qm.getPersistenceManager().makePersistent(metrics);
-                    inheritedRiskScore = metrics.getInheritedRiskScore();
                 }
                 trx.commit();
             } finally {
@@ -331,12 +330,12 @@ public class NewMetricsUpdateTask implements Subscriber {
                 }
             }
 
-            if (project.getLastInheritedRiskScore() != null &&
-                    !inheritedRiskScore.equals(project.getLastInheritedRiskScore())) {
+            if (project.getLastInheritedRiskScore() == null ||
+                    project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
-                    project.setLastInheritedRiskScore(inheritedRiskScore);
+                    project.setLastInheritedRiskScore(counters.inheritedRiskScore);
                     trx.commit();
                 } finally {
                     if (trx.isActive()) {
@@ -362,6 +361,7 @@ public class NewMetricsUpdateTask implements Subscriber {
             for (final VulnerabilityProjection vulnerability : getVulnerabilities(pm, componentId)) {
                 counters.vulnerabilities++;
 
+                // Replicate the behavior of Vulnerability#getSeverity
                 final Severity severity;
                 if (vulnerability.severity != null) {
                     severity = vulnerability.severity;
@@ -503,11 +503,12 @@ public class NewMetricsUpdateTask implements Subscriber {
             }
 
             if (component.getLastInheritedRiskScore() == null ||
-                    counters.inheritedRiskScore != component.getLastInheritedRiskScore()) {
+                    component.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
                     component.setLastInheritedRiskScore(counters.inheritedRiskScore);
+                    //qm.getPersistenceManager().makePersistent(component);
                     trx.commit();
                 } finally {
                     if (trx.isActive()) {
@@ -550,16 +551,19 @@ public class NewMetricsUpdateTask implements Subscriber {
 
     private List<VulnerabilityProjection> getVulnerabilities(final PersistenceManager pm, final long componentId) throws Exception {
         try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
-                "SELECT \"v\".\"SEVERITY\", \"v\".\"CVSSV2BASESCORE\", \"v\".\"CVSSV3BASESCORE\" " +
-                "FROM \"COMPONENTS_VULNERABILITIES\" AS \"cv\" " +
-                "  INNER JOIN \"COMPONENT\" AS \"c\" ON \"c\".\"ID\" = \"cv\".\"COMPONENT_ID\" " +
-                "  INNER JOIN \"VULNERABILITY\" AS \"v\" ON \"v\".\"ID\" = \"cv\".\"VULNERABILITY_ID\" " +
-                "  LEFT JOIN \"ANALYSIS\" AS \"a\" " +
-                "    ON \"a\".\"COMPONENT_ID\" = \"cv\".\"COMPONENT_ID\" " +
-                "    AND \"a\".\"VULNERABILITY_ID\" = \"cv\".\"VULNERABILITY_ID\" " +
-                "WHERE \"cv\".\"COMPONENT_ID\" = ? " +
-                "  AND (\"a\".\"SUPPRESSED\" IS NULL OR \"a\".\"SUPPRESSED\" = false) " +
-                "ORDER BY \"v\".\"ID\"")) {
+                "SELECT " +
+                "  \"VULNERABILITY\".\"SEVERITY\", " +
+                "  \"VULNERABILITY\".\"CVSSV2BASESCORE\", " +
+                "  \"VULNERABILITY\".\"CVSSV3BASESCORE\" " +
+                "FROM \"COMPONENTS_VULNERABILITIES\" " +
+                "  INNER JOIN \"COMPONENT\" ON \"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
+                "  INNER JOIN \"VULNERABILITY\" ON \"VULNERABILITY\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" " +
+                "  LEFT JOIN \"ANALYSIS\" " +
+                "    ON \"ANALYSIS\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
+                "    AND \"ANALYSIS\".\"VULNERABILITY_ID\" = \"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" " +
+                "WHERE \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" = ? " +
+                "  AND (\"ANALYSIS\".\"SUPPRESSED\" IS NULL OR \"ANALYSIS\".\"SUPPRESSED\" = false) " +
+                "ORDER BY \"VULNERABILITY\".\"ID\"")) {
             query.setParameters(componentId);
             return List.copyOf(query.executeResultList(VulnerabilityProjection.class));
         }
@@ -592,15 +596,15 @@ public class NewMetricsUpdateTask implements Subscriber {
 
     private List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final long componentId) throws Exception {
         try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
-                "SELECT \"pv\".\"TYPE\", \"p\".\"VIOLATIONSTATE\" " +
-                "FROM \"POLICYVIOLATION\" AS \"pv\" " +
-                "  INNER JOIN \"POLICYCONDITION\" AS \"pc\" ON \"pc\".\"ID\" = \"pv\".\"POLICYCONDITION_ID\" " +
-                "  INNER JOIN \"POLICY\" AS \"p\" ON \"p\".\"ID\" = \"pc\".\"POLICY_ID\" " +
-                "  LEFT JOIN \"VIOLATIONANALYSIS\" AS \"va\" " +
-                "    ON \"va\".\"COMPONENT_ID\" = \"pv\".\"COMPONENT_ID\" " +
-                "    AND \"va\".\"POLICYVIOLATION_ID\" = \"pv\".\"ID\" " +
-                "WHERE \"pv\".\"COMPONENT_ID\" = ? " +
-                "  AND (\"va\".\"SUPPRESSED\" IS NULL OR \"va\".\"SUPPRESSED\" = false)")) {
+                "SELECT \"POLICYVIOLATION\".\"TYPE\", \"POLICY\".\"VIOLATIONSTATE\" " +
+                "FROM \"POLICYVIOLATION\" " +
+                "  INNER JOIN \"POLICYCONDITION\" ON \"POLICYCONDITION\".\"ID\" = \"POLICYVIOLATION\".\"POLICYCONDITION_ID\" " +
+                "  INNER JOIN \"POLICY\" ON \"POLICY\".\"ID\" = \"POLICYCONDITION\".\"POLICY_ID\" " +
+                "  LEFT JOIN \"VIOLATIONANALYSIS\" " +
+                "    ON \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = \"POLICYVIOLATION\".\"COMPONENT_ID\" " +
+                "    AND \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" = \"POLICYVIOLATION\".\"ID\" " +
+                "WHERE \"POLICYVIOLATION\".\"COMPONENT_ID\" = ? " +
+                "  AND (\"VIOLATIONANALYSIS\".\"SUPPRESSED\" IS NULL OR \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = false)")) {
             query.setParameters(componentId);
             return List.copyOf(query.executeResultList(PolicyViolationProjection.class));
         }
@@ -608,11 +612,14 @@ public class NewMetricsUpdateTask implements Subscriber {
 
     private long getTotalAuditedPolicyViolations(final PersistenceManager pm, final long componentId, final PolicyViolation.Type violationType) throws Exception {
         try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
-                "SELECT COUNT(*) FROM \"VIOLATIONANALYSIS\" AS \"va\" " +
-                "  INNER JOIN \"POLICYVIOLATION\" AS \"pv\" ON \"pv\".\"ID\" = \"va\".\"POLICYVIOLATION_ID\" " +
-                "WHERE \"va\".\"COMPONENT_ID\" = ? " +
-                "  AND \"pv\".\"TYPE\" = ?")) {
-            query.setParameters(componentId, violationType.name());
+                "SELECT COUNT(*) FROM \"VIOLATIONANALYSIS\" " +
+                "  INNER JOIN \"POLICYVIOLATION\" ON \"POLICYVIOLATION\".\"ID\" = \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" " +
+                "WHERE \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = ? " +
+                "  AND \"POLICYVIOLATION\".\"TYPE\" = ? " +
+                "  AND \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = false " +
+                "  AND \"VIOLATIONANALYSIS\".\"STATE\" IS NOT NULL " +
+                "  AND \"VIOLATIONANALYSIS\".\"STATE\" != ?")) {
+            query.setParameters(componentId, violationType.name(), ViolationAnalysisState.NOT_SET.name());
             return query.executeResultUnique(Long.class);
         }
     }

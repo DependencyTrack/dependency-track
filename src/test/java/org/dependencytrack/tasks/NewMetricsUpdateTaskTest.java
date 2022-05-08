@@ -63,6 +63,23 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testUpdatePortfolioMetricsUnchanged() {
+        // Record initial portfolio metrics
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+        final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        // Run the task a second time, without any metric being changed
+        final var beforeSecondRun = new Date();
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+
+        // Ensure that the lastOccurrence timestamp was correctly updated
+        qm.getPersistenceManager().refresh(metrics);
+        assertThat(metrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
+    }
+
+    @Test
     public void testUpdatePortfolioMetricsVulnerabilities() {
         var vuln = new Vulnerability();
         vuln.setVulnId("INTERNAL-001");
@@ -135,6 +152,15 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(projectUnaudited, projectAudited, projectSuppressed,
+                componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(projectUnaudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(projectAudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(projectSuppressed.getLastInheritedRiskScore()).isZero();
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentAudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -204,6 +230,15 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(projectUnaudited, projectAudited, projectSuppressed,
+                componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(projectUnaudited.getLastInheritedRiskScore()).isZero();
+        assertThat(projectAudited.getLastInheritedRiskScore()).isZero();
+        assertThat(projectSuppressed.getLastInheritedRiskScore()).isZero();
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentAudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -243,6 +278,30 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateProjectMetricsUnchanged() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+
+        // Record initial project metrics
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        // Run the task a second time, without any metric being changed
+        final var beforeSecondRun = new Date();
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+
+        // Ensure that the lastOccurrence timestamp was correctly updated
+        qm.getPersistenceManager().refresh(metrics);
+        assertThat(metrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
     }
 
     @Test
@@ -311,6 +370,12 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(project, componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(project.getLastInheritedRiskScore()).isEqualTo(10.0);
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentAudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -373,6 +438,12 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(project, componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(project.getLastInheritedRiskScore()).isZero();
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentAudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -418,6 +489,32 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
 
         qm.getPersistenceManager().refresh(component);
         assertThat(component.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateComponentMetricsUnchanged() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component = qm.createComponent(component, false);
+
+        // Record initial project metrics
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        // Run the task a second time, without any metric being changed
+        final var beforeSecondRun = new Date();
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+
+        // Ensure that the lastOccurrence timestamp was correctly updated
+        qm.getPersistenceManager().refresh(metrics);
+        assertThat(metrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
     }
 
     @Test
@@ -487,7 +584,7 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
 
-        component = qm.getObjectById(Component.class, component.getId());
+        qm.getPersistenceManager().refresh(component);
         assertThat(component.getLastInheritedRiskScore()).isEqualTo(8.0);
     }
 
@@ -542,6 +639,9 @@ public class NewMetricsUpdateTaskTest extends PersistenceCapableTest {
         assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getLastInheritedRiskScore()).isZero();
     }
 
     private PolicyViolation createPolicyViolation(final Component component, final Policy.ViolationState violationState, final PolicyViolation.Type type) {

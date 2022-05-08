@@ -1,3 +1,21 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
@@ -16,6 +34,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
 
@@ -23,6 +42,9 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -51,6 +73,8 @@ public class NewMetricsUpdateTask implements Subscriber {
                 updateProjectMetrics(((Project) event.getTarget()).getId());
             } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
                 updateComponentMetrics(((Component) event.getTarget()).getId());
+            } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
+                updateVulnerabilityMetrics();
             }
         } catch (Exception ex) {
             LOGGER.error("An unknown error occurred while updating metrics", ex);
@@ -522,6 +546,43 @@ public class NewMetricsUpdateTask implements Subscriber {
         return counters;
     }
 
+    private void updateVulnerabilityMetrics() throws Exception {
+        LOGGER.info("Executing metrics update on vulnerability database");
+
+        final var measuredAt = new Date();
+        final var yearMonthCounters = new VulnerabilityDateCounters(measuredAt, true);
+        final var yearCounters = new VulnerabilityDateCounters(measuredAt, false);
+
+        try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
+            List<VulnerabilityDateProjection> vulnerabilities = getVulnerabilityDates(pm, 0);
+            while (!vulnerabilities.isEmpty()) {
+                for (final VulnerabilityDateProjection vulnerability : vulnerabilities) {
+                    if (vulnerability.created != null) {
+                        yearMonthCounters.updateMetrics(vulnerability.created);
+                        yearCounters.updateMetrics(vulnerability.created);
+                    } else if (vulnerability.published != null) {
+                        yearMonthCounters.updateMetrics(vulnerability.published);
+                        yearCounters.updateMetrics(vulnerability.published);
+                    }
+                }
+
+                final long lastId = vulnerabilities.get(vulnerabilities.size() - 1).id;
+                vulnerabilities = getVulnerabilityDates(pm, lastId);
+            }
+        }
+
+        try (final var qm = new QueryManager()) {
+            for (final VulnerabilityMetrics metric : yearMonthCounters.getMetrics()) {
+                qm.synchronizeVulnerabilityMetrics(metric);
+            }
+            for (final VulnerabilityMetrics metric : yearCounters.getMetrics()) {
+                qm.synchronizeVulnerabilityMetrics(metric);
+            }
+        }
+
+        LOGGER.info("Completed metrics update on vulnerability database");
+    }
+
     private List<Long> getActiveProjects(final PersistenceManager pm) throws Exception {
         try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"ID\" FROM \"PROJECT\" WHERE \"ACTIVE\" IS NULL OR \"ACTIVE\" = true")) {
             return List.copyOf(query.executeResultList(Long.class));
@@ -624,6 +685,27 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
     }
 
+    private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
+        try (final Query<?> query = pm.newQuery("javax.jdo.query.SQL", "" +
+                "SELECT \"ID\", \"CREATED\", \"PUBLISHED\" " +
+                "FROM \"VULNERABILITY\" " +
+                "WHERE \"ID\" > ? " +
+                "ORDER BY \"ID\" ASC " +
+                "FETCH FIRST 500 ROWS ONLY")) {
+            query.setParameters(lastId);
+            return List.copyOf(query.executeResultList(VulnerabilityDateProjection.class));
+        }
+    }
+
+    /**
+     * Projection of a policy violation that holds the information
+     * needed to calculate component metrics.
+     * <p>
+     * Class and setters must be public in order for DataNucleus to be
+     * able to set the fields.
+     *
+     * @since 4.5.0
+     */
     public static final class PolicyViolationProjection {
         private PolicyViolation.Type type;
         private Policy.ViolationState violationState;
@@ -639,6 +721,15 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
     }
 
+    /**
+     * Projection of a vulnerability that contains the information
+     * needed to calculate component metrics.
+     * <p>
+     * Class and setters must be public in order for DataNucleus to be
+     * able to set the fields.
+     *
+     * @since 4.5.0
+     */
     public static final class VulnerabilityProjection {
         private Severity severity;
         private BigDecimal cvssV2BaseScore;
@@ -659,6 +750,33 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
     }
 
+    /**
+     * Projection of a vulnerability that holds the information
+     * needed to calculate vulnerabilities metrics.
+     * <p>
+     * Class and setters must be public in order for DataNucleus to be
+     * able to set the fields.
+     *
+     * @since 4.5.0
+     */
+    public static final class VulnerabilityDateProjection {
+        private long id;
+        private Date created;
+        private Date published;
+
+        public void setId(final long id) {
+            this.id = id;
+        }
+
+        public void setCreated(final Date created) {
+            this.created = created;
+        }
+
+        public void setPublished(final Date published) {
+            this.published = published;
+        }
+    }
+
     private static class Counters {
         private int critical, high, medium, low, unassigned;
         private double inheritedRiskScore;
@@ -674,6 +792,50 @@ public class NewMetricsUpdateTask implements Subscriber {
         private Counters() {
             this.measuredAt = new Date();
         }
+    }
+
+    private static final class VulnerabilityDateCounters {
+
+        private final Date measuredAt;
+        private final boolean trackMonth;
+        private final List<VulnerabilityMetrics> metrics = new ArrayList<>();
+
+        private VulnerabilityDateCounters(final Date measuredAt, final boolean trackMonth) {
+            this.measuredAt = measuredAt;
+            this.trackMonth = trackMonth;
+        }
+
+        private void updateMetrics(final Date timestamp) {
+            final LocalDateTime date = LocalDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault());
+            final int year = date.getYear();
+            final int month = date.getMonthValue();
+
+            boolean found = false;
+            for (final VulnerabilityMetrics metric : metrics) {
+                if (trackMonth && metric.getYear() == year && metric.getMonth() == month) {
+                    metric.setCount(metric.getCount() + 1);
+                    found = true;
+                } else if (!trackMonth && metric.getYear() == year) {
+                    metric.setCount(metric.getCount() + 1);
+                    found = true;
+                }
+            }
+            if (!found) {
+                final VulnerabilityMetrics metric = new VulnerabilityMetrics();
+                metric.setYear(year);
+                if (trackMonth) {
+                    metric.setMonth(month);
+                }
+                metric.setCount(1);
+                metric.setMeasuredAt(measuredAt);
+                metrics.add(metric);
+            }
+        }
+
+        private List<VulnerabilityMetrics> getMetrics() {
+            return metrics;
+        }
+
     }
 
 }

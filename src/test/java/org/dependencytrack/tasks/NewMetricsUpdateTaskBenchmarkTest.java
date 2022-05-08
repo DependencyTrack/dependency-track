@@ -13,7 +13,7 @@ import org.junit.Test;
 /**
  * FIXME: Remove before creating a PR
  */
-public class NewMtricsUpdateTaskBenchmarkTest extends JerseyTest {
+public class NewMetricsUpdateTaskBenchmarkTest extends JerseyTest {
 
     @Override
     protected TestContainerFactory getTestContainerFactory() {
@@ -34,6 +34,16 @@ public class NewMtricsUpdateTaskBenchmarkTest extends JerseyTest {
     @Test
     public void testCurrentImpl() {
         new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+    }
+
+    @Test
+    public void testVulnNewImpl() {
+        new NewMetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+    }
+
+    @Test
+    public void testVulnCurrentImpl() {
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
     }
 
 }

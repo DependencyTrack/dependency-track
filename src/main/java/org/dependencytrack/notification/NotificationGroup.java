@@ -38,5 +38,7 @@ public enum NotificationGroup {
     //GLOBAL_AUDIT_CHANGE,
     PROJECT_AUDIT_CHANGE,
     BOM_CONSUMED,
-    BOM_PROCESSED
+    BOM_PROCESSED,
+    VEX_CONSUMED,
+    VEX_PROCESSED
 }

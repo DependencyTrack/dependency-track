@@ -427,7 +427,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param cid the identity values of the component
      * @return a Component object, or null if not found
      */
-    public Component matchIdentity(final Project project, final ComponentIdentity cid) {
+    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
         String purlString = null;
         String purlCoordinates = null;
         if (cid.getPurl() != null) {
@@ -440,6 +440,28 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
         final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
         return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
+    }
+
+    /**
+     * Returns a list of components by matching its identity information.
+     * @param project the Project the component is a dependency of
+     * @param cid the identity values of the component
+     * @return a List of Component objects, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
+        String purlString = null;
+        String purlCoordinates = null;
+        if (cid.getPurl() != null) {
+            try {
+                final PackageURL purl = cid.getPurl();
+                purlString = cid.getPurl().canonicalize();
+                purlCoordinates = new PackageURL(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion(), null, null).canonicalize();
+            } catch (MalformedPackageURLException e) { // throw it away
+            }
+        }
+        final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
+        return (List<Component>) query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion());
     }
 
     /**

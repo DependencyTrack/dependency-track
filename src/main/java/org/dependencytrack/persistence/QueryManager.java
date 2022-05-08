@@ -30,7 +30,44 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisComment;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentAnalysisCache;
+import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Cpe;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.DependencyMetrics;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.FindingAttribution;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.LicenseGroup;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.PortfolioMetrics;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.Repository;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vex;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisComment;
+import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityMetrics;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -64,6 +101,7 @@ public class QueryManager extends AlpineQueryManager {
     private ProjectQueryManager projectQueryManager;
     private RepositoryQueryManager repositoryQueryManager;
     private ServiceComponentQueryManager serviceComponentQueryManager;
+    private VexQueryManager vexQueryManager;
     private VulnerabilityQueryManager vulnerabilityQueryManager;
     private VulnerableSoftwareQueryManager vulnerableSoftwareQueryManager;
 
@@ -142,6 +180,17 @@ public class QueryManager extends AlpineQueryManager {
             bomQueryManager = (request == null) ? new BomQueryManager(getPersistenceManager()) : new BomQueryManager(getPersistenceManager(), request);
         }
         return bomQueryManager;
+    }
+
+    /**
+     * Lazy instantiation of VexQueryManager.
+     * @return a VexQueryManager object
+     */
+    private VexQueryManager getVexQueryManager() {
+        if (vexQueryManager == null) {
+            vexQueryManager = (request == null) ? new VexQueryManager(getPersistenceManager()) : new VexQueryManager(getPersistenceManager(), request);
+        }
+        return vexQueryManager;
     }
 
     /**
@@ -356,6 +405,18 @@ public class QueryManager extends AlpineQueryManager {
 
     public void deleteBoms(Project project) {
         getBomQueryManager().deleteBoms(project);
+    }
+
+    public Vex createVex(Project project, Date imported, Vex.Format format, String specVersion, Integer vexVersion, String serialNumber) {
+        return getVexQueryManager().createVex(project, imported, format, specVersion, vexVersion, serialNumber);
+    }
+
+    public List<Vex> getAllVexs(Project project) {
+        return getVexQueryManager().getAllVexs(project);
+    }
+
+    public void deleteVexs(Project project) {
+        getVexQueryManager().deleteVexs(project);
     }
 
     public PaginatedResult getComponents(final boolean includeMetrics) {
@@ -669,7 +730,11 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getAllCwes();
     }
 
-    public Component matchIdentity(final Project project, final ComponentIdentity cid) {
+    public Component matchSingleIdentity(final Project project, final ComponentIdentity cid) {
+        return getComponentQueryManager().matchSingleIdentity(project, cid);
+    }
+
+    public List<Component> matchIdentity(final Project project, final ComponentIdentity cid) {
         return getComponentQueryManager().matchIdentity(project, cid);
     }
 
@@ -743,6 +808,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getVulnerabilities(Component component, boolean includeSuppressed) {
         return getVulnerabilityQueryManager().getVulnerabilities(component, includeSuppressed);
+    }
+
+    public List<Component> getAllVulnerableComponents(Project project, Vulnerability vulnerability, boolean includeSuppressed) {
+        return getVulnerabilityQueryManager().getAllVulnerableComponents(project, vulnerability, includeSuppressed);
     }
 
     public List<Vulnerability> getAllVulnerabilities(Component component) {

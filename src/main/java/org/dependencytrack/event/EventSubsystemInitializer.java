@@ -24,7 +24,22 @@ import alpine.event.framework.EventService;
 import alpine.event.framework.SingleThreadedEventService;
 import alpine.server.tasks.LdapSyncTask;
 import org.dependencytrack.RequirementsVerifier;
-import org.dependencytrack.tasks.*;
+import org.dependencytrack.tasks.BomUploadProcessingTask;
+import org.dependencytrack.tasks.ClearComponentAnalysisCacheTask;
+import org.dependencytrack.tasks.CloneProjectTask;
+import org.dependencytrack.tasks.DefectDojoUploadTask;
+import org.dependencytrack.tasks.EpssMirrorTask;
+import org.dependencytrack.tasks.FortifySscUploadTask;
+import org.dependencytrack.tasks.GitHubAdvisoryMirrorTask;
+import org.dependencytrack.tasks.IndexTask;
+import org.dependencytrack.tasks.InternalComponentIdentificationTask;
+import org.dependencytrack.tasks.KennaSecurityUploadTask;
+import org.dependencytrack.tasks.MetricsUpdateTask;
+import org.dependencytrack.tasks.NistMirrorTask;
+import org.dependencytrack.tasks.TaskScheduler;
+import org.dependencytrack.tasks.VexUploadProcessingTask;
+import org.dependencytrack.tasks.VulnDbSyncTask;
+import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
 import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
 import org.dependencytrack.tasks.scanners.InternalAnalysisTask;
 import org.dependencytrack.tasks.scanners.OssIndexAnalysisTask;
@@ -60,6 +75,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
             return;
         }
         EVENT_SERVICE.subscribe(BomUploadEvent.class, BomUploadProcessingTask.class);
+        EVENT_SERVICE.subscribe(VexUploadEvent.class, VexUploadProcessingTask.class);
         EVENT_SERVICE.subscribe(LdapSyncEvent.class, LdapSyncTask.class);
         EVENT_SERVICE.subscribe(InternalAnalysisEvent.class, InternalAnalysisTask.class);
         EVENT_SERVICE.subscribe(OssIndexAnalysisEvent.class, OssIndexAnalysisTask.class);
@@ -93,6 +109,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         TaskScheduler.getInstance().shutdown();
 
         EVENT_SERVICE.unsubscribe(BomUploadProcessingTask.class);
+        EVENT_SERVICE.unsubscribe(VexUploadProcessingTask.class);
         EVENT_SERVICE.unsubscribe(LdapSyncTask.class);
         EVENT_SERVICE.unsubscribe(InternalAnalysisTask.class);
         EVENT_SERVICE.unsubscribe(OssIndexAnalysisTask.class);

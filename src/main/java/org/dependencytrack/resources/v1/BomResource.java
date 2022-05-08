@@ -95,7 +95,7 @@ public class BomResource extends AlpineResource {
             @PathParam("uuid") String uuid,
             @ApiParam(value = "The format to output (defaults to JSON)")
             @QueryParam("format") String format,
-            @ApiParam(value = "Specifies the CycloneDX variant to export. Value options are 'inventory', 'withVulnerabilities', and 'vex'. (defaults to 'inventory')")
+            @ApiParam(value = "Specifies the CycloneDX variant to export. Value options are 'inventory' and 'withVulnerabilities'. (defaults to 'inventory')")
             @QueryParam("variant") String variant,
             @ApiParam(value = "Force the resulting BOM to be downloaded as a file (defaults to 'false')")
             @QueryParam("download") boolean download) {
@@ -113,8 +113,6 @@ public class BomResource extends AlpineResource {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             } else if (variant.equalsIgnoreCase("withVulnerabilities")) {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES, qm);
-            } else if (variant.equalsIgnoreCase("vex")) {
-                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
             } else {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM variant specified.").build();
             }

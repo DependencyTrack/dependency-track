@@ -35,14 +35,13 @@ import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisJustification;
-import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
+import org.dependencytrack.util.AnalysisCommentUtil;
 import org.dependencytrack.util.NotificationUtil;
 
 import javax.validation.Validator;
@@ -156,33 +155,11 @@ public class AnalysisResource extends AlpineResource {
             boolean suppressionChange = false;
             Analysis analysis = qm.getAnalysis(component, vulnerability);
             if (analysis != null) {
-                if (request.getAnalysisState() != null && analysis.getAnalysisState() != request.getAnalysisState()) {
-                    analysisStateChange = true;
-                    qm.makeAnalysisComment(analysis, String.format("Analysis: %s → %s", analysis.getAnalysisState(), request.getAnalysisState()), commenter);
-                }
-                if (request.getAnalysisJustification() != null) {
-                    if (analysis.getAnalysisJustification() == null && request.getAnalysisJustification() != AnalysisJustification.NOT_SET) {
-                        qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", AnalysisJustification.NOT_SET, request.getAnalysisJustification()), commenter);
-                    } else if (analysis.getAnalysisJustification() != null && request.getAnalysisJustification() != analysis.getAnalysisJustification()) {
-                        qm.makeAnalysisComment(analysis, String.format("Justification: %s → %s", analysis.getAnalysisJustification(), request.getAnalysisJustification()), commenter);
-                    }
-                }
-                if (request.getAnalysisResponse() != null) {
-                    if (analysis.getAnalysisResponse() == null && analysis.getAnalysisResponse() != request.getAnalysisResponse()) {
-                        qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", AnalysisResponse.NOT_SET, request.getAnalysisResponse()), commenter);
-                    } else if (analysis.getAnalysisResponse() != null && request.getAnalysisResponse() != analysis.getAnalysisResponse()) {
-                        qm.makeAnalysisComment(analysis, String.format("Vendor Response: %s → %s", analysis.getAnalysisResponse(), request.getAnalysisResponse()), commenter);
-                    }
-                }
-                if (request.getAnalysisDetails() != null && !request.getAnalysisDetails().equals(analysis.getAnalysisDetails())) {
-                    final String message = "Details: " + request.getAnalysisDetails().trim();
-                    qm.makeAnalysisComment(analysis, message, commenter);
-                }
-                if (request.isSuppressed() != null && analysis.isSuppressed() != request.isSuppressed()) {
-                    suppressionChange = true;
-                    final String message = (request.isSuppressed()) ? "Suppressed" : "Unsuppressed";
-                    qm.makeAnalysisComment(analysis, message, commenter);
-                }
+                analysisStateChange = AnalysisCommentUtil.makeStateComment(qm, analysis, request.getAnalysisState(), commenter);
+                AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
+                AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
+                AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
+                suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
                 analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
             } else {
                 analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
@@ -194,7 +171,7 @@ public class AnalysisResource extends AlpineResource {
 
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);
-            analysis = qm.getObjectById(Analysis.class, analysis.getId());
+            analysis = qm.getAnalysis(component, vulnerability);
             NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange, suppressionChange);
             return Response.ok(analysis).build();
         }

@@ -569,6 +569,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             recursivelyDelete(s, false);
         }
         deleteBoms(project);
+        deleteVexs(project);
         removeProjectFromNotificationRules(project);
         delete(project.getProperties());
         delete(getAllBoms(project));

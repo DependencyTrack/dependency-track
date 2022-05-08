@@ -55,6 +55,8 @@ public class NotificationConstants {
         public static final String VIOLATIONANALYSIS_DECISION_UNSUPPRESSED = "Violation Analysis Decision: Violation UnSuppressed";
         public static final String BOM_CONSUMED = "Bill of Materials Consumed";
         public static final String BOM_PROCESSED = "Bill of Materials Processed";
+        public static final String VEX_CONSUMED = "Vulnerability Exploitability Exchange (VEX) Consumed";
+        public static final String VEX_PROCESSED = "Vulnerability Exploitability Exchange (VEX) Processed";
     }
 
 }

@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
+import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
@@ -72,7 +73,7 @@ public class NewMetricsUpdateTask implements Subscriber {
         final var event = (MetricsUpdateEvent) e;
         try {
             if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                final int threadPoolSize = 2; // TODO: Can we make this dynamic in a smart way?
+                final int threadPoolSize = SystemUtil.getCpuCores() / 2; // TODO: Can we make this dynamic in a smart way?
                 LOGGER.debug("Starting executor service with thread pool size " + threadPoolSize);
                 final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
                 try {

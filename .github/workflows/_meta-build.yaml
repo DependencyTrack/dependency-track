@@ -84,7 +84,7 @@ jobs:
           password: ${{ secrets.registry-0-psw }}
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@v2.9.0
+        uses: docker/build-push-action@v3.0.0
         with:
           tags: |-
             docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}

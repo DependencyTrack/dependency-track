@@ -58,11 +58,27 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.toIntExact;
 
+/**
+ * Subscriber task that performs calculations of various metrics.
+ * <p>
+ * The functionality offered by this task has been optimized to have a
+ * minimal footprint in order to only have a small impact on overall system performance.
+ * <p>
+ * For read-only database operations, raw SQL queries are preferred,
+ * due to the high overhead of DataNucleus' object lifecycles and caches.
+ *
+ * @author Steve Springett
+ * @author Niklas Düster
+ * @since 3.0.0
+ */
 public class NewMetricsUpdateTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NewMetricsUpdateTask.class);
     private static final String QUERY_LANGUAGE_SQL = "javax.jdo.query.SQL";
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void inform(final Event e) {
         if (!(e instanceof MetricsUpdateEvent)) {
@@ -81,7 +97,7 @@ public class NewMetricsUpdateTask implements Subscriber {
                 // This is only a viable option as long as MetricsUpdateEvents of type PORTFOLIO
                 // are singletons and guaranteed to not be executed in parallel.
 
-                final int threadPoolSize = SystemUtil.getCpuCores() / 2;
+                final int threadPoolSize = SystemUtil.getCpuCores() / 2; // TODO: Should this be configurable?
                 LOGGER.debug("Starting executor service with thread pool size " + threadPoolSize);
                 final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
                 try {
@@ -106,6 +122,16 @@ public class NewMetricsUpdateTask implements Subscriber {
         LOGGER.debug("Metrics update complete");
     }
 
+    /**
+     * Performs high-level metric updates on the portfolio.
+     * <p>
+     * Portfolio metrics are the aggregate of all project metrics.
+     * <p>
+     * Project metrics updates can be parallelized by supplying an {@link ExecutorService}
+     * with a thread pool size greater than {@code 1}.
+     *
+     * @param executorService The {@link ExecutorService} to use for project metrics updates
+     */
     private void updatePortfolioMetrics(final ExecutorService executorService) throws Exception {
         LOGGER.info("Executing portfolio metrics update");
         final var counters = new Counters();
@@ -269,6 +295,14 @@ public class NewMetricsUpdateTask implements Subscriber {
         LOGGER.info("Completed portfolio metrics update");
     }
 
+    /**
+     * Perform metric updates on a specific project.
+     * <p>
+     * Project metrics are the aggregate of all components within a project.
+     *
+     * @param projectId ID of the project to update metrics for
+     * @return A {@link Counters} instance resembling the calculated metrics
+     */
     private Counters updateProjectMetrics(final long projectId) throws Exception {
         final var counters = new Counters();
 
@@ -328,6 +362,9 @@ public class NewMetricsUpdateTask implements Subscriber {
             counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
             counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
         }
+
+        // TODO: Consider checking for abnormally many failures when updating component metrics.
+        // If we have "too many" failures, we probably shouldn't update project metrics either.
 
         try (final var qm = new QueryManager()) {
             final Project project = qm.getObjectById(Project.class, projectId);
@@ -430,6 +467,12 @@ public class NewMetricsUpdateTask implements Subscriber {
         return counters;
     }
 
+    /**
+     * Perform metric updates on a specific component.
+     *
+     * @param componentId ID of the component to update metrics for
+     * @return A {@link Counters} instance resembling the calculated metrics
+     */
     private Counters updateComponentMetrics(final long componentId) throws Exception {
         final var counters = new Counters();
         final UUID componentUuid;
@@ -775,7 +818,7 @@ public class NewMetricsUpdateTask implements Subscriber {
      * Class and setters must be public in order for DataNucleus to be
      * able to set the fields.
      *
-     * @since 4.5.0
+     * @since 4.6.0
      */
     public static final class PolicyViolationProjection {
         private PolicyViolation.Type type;
@@ -799,7 +842,7 @@ public class NewMetricsUpdateTask implements Subscriber {
      * Class and setters must be public in order for DataNucleus to be
      * able to set the fields.
      *
-     * @since 4.5.0
+     * @since 4.6.0
      */
     public static final class VulnerabilityProjection {
         private Severity severity;
@@ -828,7 +871,7 @@ public class NewMetricsUpdateTask implements Subscriber {
      * Class and setters must be public in order for DataNucleus to be
      * able to set the fields.
      *
-     * @since 4.5.0
+     * @since 4.6.0
      */
     public static final class VulnerabilityDateProjection {
         private long id;

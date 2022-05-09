@@ -99,7 +99,7 @@ jobs:
 
       - name: Run Trivy Vulnerability Scanner
         if: ${{ github.ref == 'refs/heads/master' }}
-        uses: aquasecurity/trivy-action@0.2.2
+        uses: aquasecurity/trivy-action@0.2.5
         with:
           image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
           format: 'sarif'

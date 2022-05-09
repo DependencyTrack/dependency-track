@@ -199,7 +199,7 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
             @QueryParam("excludeInactive") boolean excludeInactive) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            Classifier classifier = Classifier.valueOf(classifierString);
+            final Classifier classifier = Classifier.valueOf(classifierString);
             final PaginatedResult result = qm.getProjects(classifier, true, excludeInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         } catch (IllegalArgumentException e) {

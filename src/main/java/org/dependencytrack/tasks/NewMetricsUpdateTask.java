@@ -97,16 +97,16 @@ public class NewMetricsUpdateTask implements Subscriber {
         LOGGER.debug("Metrics update complete");
     }
 
-    private Counters updatePortfolioMetrics(final ExecutorService executorService) throws Exception {
+    private void updatePortfolioMetrics(final ExecutorService executorService) throws Exception {
         LOGGER.info("Executing portfolio metrics update");
         final var counters = new Counters();
 
-        LOGGER.debug("Fetching IDs of active projects");
         final List<Long> activeProjectIds;
         try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
+            LOGGER.debug("Fetching IDs of active projects");
             activeProjectIds = getActiveProjects(pm);
+            LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
         }
-        LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
 
         LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
         final List<CompletableFuture<Counters>> projectCountersFutures = new ArrayList<>();
@@ -257,62 +257,67 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
 
         LOGGER.info("Completed portfolio metrics update");
-        return counters;
     }
 
     private Counters updateProjectMetrics(final long projectId) throws Exception {
         final var counters = new Counters();
-        final UUID projectUuid;
 
+        final UUID projectUuid;
+        final List<Long> componentIds;
         try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
+            LOGGER.debug("Fetching UUID for project with ID " + projectId);
             projectUuid = getProjectUuid(pm, projectId)
                     .orElseThrow(() -> new NoSuchElementException("Project with ID " + projectId + " does not exist"));
             LOGGER.info("Executing metrics update for project: " + projectUuid);
 
-            for (final long componentId : getComponents(pm, projectId)) {
-                final Counters componentCounters;
-                try {
-                    componentCounters = updateComponentMetrics(componentId);
-                } catch (Exception e) {
-                    LOGGER.error("An unexpected error occurred while updating project metrics and iterating through components. " +
-                            "The error occurred while updating metrics for project: " + projectId + " and component: " + componentId, e);
-                    continue;
-                }
+            LOGGER.debug("Fetching IDs of components for project " + projectUuid);
+            componentIds = getComponents(pm, projectId);
+            LOGGER.debug("Metrics update for project " + projectUuid + " will include " + componentIds.size() + " components");
+        }
 
-                counters.critical += componentCounters.critical;
-                counters.high += componentCounters.high;
-                counters.medium += componentCounters.medium;
-                counters.low += componentCounters.low;
-                counters.unassigned += componentCounters.unassigned;
-                counters.vulnerabilities += componentCounters.vulnerabilities;
-
-                counters.findingsTotal += componentCounters.findingsTotal;
-                counters.findingsAudited += componentCounters.findingsAudited;
-                counters.findingsUnaudited += componentCounters.findingsUnaudited;
-                counters.suppressions += componentCounters.suppressions;
-                counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                counters.components++;
-                if (componentCounters.vulnerabilities > 0) {
-                    counters.vulnerableComponents += 1;
-                }
-
-                counters.policyViolationsFail += componentCounters.policyViolationsFail;
-                counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
-                counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
-                counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
-                counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
-                counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;
-                counters.policyViolationsSecurityTotal += componentCounters.policyViolationsSecurityTotal;
-                counters.policyViolationsSecurityAudited += componentCounters.policyViolationsSecurityAudited;
-                counters.policyViolationsSecurityUnaudited += componentCounters.policyViolationsSecurityUnaudited;
-                counters.policyViolationsLicenseTotal += componentCounters.policyViolationsLicenseTotal;
-                counters.policyViolationsLicenseAudited += componentCounters.policyViolationsLicenseAudited;
-                counters.policyViolationsLicenseUnaudited += componentCounters.policyViolationsLicenseUnaudited;
-                counters.policyViolationsOperationalTotal += componentCounters.policyViolationsOperationalTotal;
-                counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
-                counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
+        for (final long componentId : componentIds) {
+            final Counters componentCounters;
+            try {
+                componentCounters = updateComponentMetrics(componentId);
+            } catch (Exception e) {
+                LOGGER.error("An unexpected error occurred while updating project metrics and iterating through components. " +
+                        "The error occurred while updating metrics for project: " + projectUuid + " and component: " + componentId, e);
+                continue;
             }
+
+            counters.critical += componentCounters.critical;
+            counters.high += componentCounters.high;
+            counters.medium += componentCounters.medium;
+            counters.low += componentCounters.low;
+            counters.unassigned += componentCounters.unassigned;
+            counters.vulnerabilities += componentCounters.vulnerabilities;
+
+            counters.findingsTotal += componentCounters.findingsTotal;
+            counters.findingsAudited += componentCounters.findingsAudited;
+            counters.findingsUnaudited += componentCounters.findingsUnaudited;
+            counters.suppressions += componentCounters.suppressions;
+            counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+            counters.components++;
+            if (componentCounters.vulnerabilities > 0) {
+                counters.vulnerableComponents += 1;
+            }
+
+            counters.policyViolationsFail += componentCounters.policyViolationsFail;
+            counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
+            counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
+            counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
+            counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
+            counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;
+            counters.policyViolationsSecurityTotal += componentCounters.policyViolationsSecurityTotal;
+            counters.policyViolationsSecurityAudited += componentCounters.policyViolationsSecurityAudited;
+            counters.policyViolationsSecurityUnaudited += componentCounters.policyViolationsSecurityUnaudited;
+            counters.policyViolationsLicenseTotal += componentCounters.policyViolationsLicenseTotal;
+            counters.policyViolationsLicenseAudited += componentCounters.policyViolationsLicenseAudited;
+            counters.policyViolationsLicenseUnaudited += componentCounters.policyViolationsLicenseUnaudited;
+            counters.policyViolationsOperationalTotal += componentCounters.policyViolationsOperationalTotal;
+            counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
+            counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
         }
 
         try (final var qm = new QueryManager()) {

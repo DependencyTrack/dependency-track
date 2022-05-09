@@ -55,7 +55,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
             final ConfigProperty property = qm.getConfigProperty(
                     configPropertyConstants.getGroupName(), configPropertyConstants.getPropertyName()
             );
-            if (ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
+            if (property != null && ConfigProperty.PropertyType.BOOLEAN == property.getPropertyType()) {
                 return BooleanUtil.valueOf(property.getPropertyValue());
             }
             return false;

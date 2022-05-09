@@ -50,6 +50,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.toIntExact;
 
@@ -68,7 +72,18 @@ public class NewMetricsUpdateTask implements Subscriber {
         final var event = (MetricsUpdateEvent) e;
         try {
             if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                updatePortfolioMetrics();
+                final int threadPoolSize = 2; // TODO: Can we make this dynamic in a smart way?
+                LOGGER.debug("Starting executor service with thread pool size " + threadPoolSize);
+                final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
+                try {
+                    updatePortfolioMetrics(executorService);
+                } finally {
+                    LOGGER.debug("Shutting down executor service");
+                    executorService.shutdown();
+                    if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                        LOGGER.warn("Executor service shutdown timed out, running tasks have been interrupted");
+                    }
+                }
             } else if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
                 updateProjectMetrics(((Project) event.getTarget()).getId());
             } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
@@ -82,58 +97,83 @@ public class NewMetricsUpdateTask implements Subscriber {
         LOGGER.debug("Metrics update complete");
     }
 
-    private Counters updatePortfolioMetrics() throws Exception {
+    private Counters updatePortfolioMetrics(final ExecutorService executorService) throws Exception {
         LOGGER.info("Executing portfolio metrics update");
         final var counters = new Counters();
 
+        LOGGER.debug("Fetching IDs of active projects");
+        final List<Long> activeProjectIds;
         try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
-            for (final long projectId : getActiveProjects(pm)) {
-                final Counters projectCounters;
-                try {
-                    projectCounters = updateProjectMetrics(projectId);
-                } catch (Exception e) {
-                    LOGGER.error("An unexpected error occurred while updating portfolio metrics and iterating through projects. " +
-                            "The error occurred while updating metrics for project: " + projectId, e);
-                    continue;
-                }
-
-                counters.critical += projectCounters.critical;
-                counters.high += projectCounters.high;
-                counters.medium += projectCounters.medium;
-                counters.low += projectCounters.low;
-                counters.unassigned += projectCounters.unassigned;
-                counters.vulnerabilities += projectCounters.vulnerabilities;
-
-                counters.findingsTotal += projectCounters.findingsTotal;
-                counters.findingsAudited += projectCounters.findingsAudited;
-                counters.findingsUnaudited += projectCounters.findingsUnaudited;
-                counters.suppressions += projectCounters.suppressions;
-                counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                counters.projects++;
-                if (projectCounters.vulnerabilities > 0) {
-                    counters.vulnerableProjects++;
-                }
-                counters.components += projectCounters.components;
-                counters.vulnerableComponents += projectCounters.vulnerableComponents;
-
-                counters.policyViolationsFail += projectCounters.policyViolationsFail;
-                counters.policyViolationsWarn += projectCounters.policyViolationsWarn;
-                counters.policyViolationsInfo += projectCounters.policyViolationsInfo;
-                counters.policyViolationsTotal += projectCounters.policyViolationsTotal;
-                counters.policyViolationsAudited += projectCounters.policyViolationsAudited;
-                counters.policyViolationsUnaudited += projectCounters.policyViolationsUnaudited;
-                counters.policyViolationsSecurityTotal += projectCounters.policyViolationsSecurityTotal;
-                counters.policyViolationsSecurityAudited += projectCounters.policyViolationsSecurityAudited;
-                counters.policyViolationsSecurityUnaudited += projectCounters.policyViolationsSecurityUnaudited;
-                counters.policyViolationsLicenseTotal += projectCounters.policyViolationsLicenseTotal;
-                counters.policyViolationsLicenseAudited += projectCounters.policyViolationsLicenseAudited;
-                counters.policyViolationsLicenseUnaudited += projectCounters.policyViolationsLicenseUnaudited;
-                counters.policyViolationsOperationalTotal += projectCounters.policyViolationsOperationalTotal;
-                counters.policyViolationsOperationalAudited += projectCounters.policyViolationsOperationalAudited;
-                counters.policyViolationsOperationalUnaudited += projectCounters.policyViolationsOperationalUnaudited;
-            }
+            activeProjectIds = getActiveProjects(pm);
         }
+        LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
+
+        LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
+        final List<CompletableFuture<Counters>> projectCountersFutures = new ArrayList<>();
+        for (final long projectId : activeProjectIds) {
+            projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    return updateProjectMetrics(projectId);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }, executorService));
+        }
+
+        LOGGER.debug("Waiting for all project metrics updates to complete");
+        CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
+        LOGGER.debug("All project metrics updates completed");
+
+        LOGGER.debug("Processing project metrics updates results");
+        for (final CompletableFuture<Counters> projectCountersFuture : projectCountersFutures) {
+            final Counters projectCounters;
+            try {
+                projectCounters = projectCountersFuture.get();
+            } catch (Exception e) {
+                LOGGER.error("An unexpected error occurred while updating portfolio metrics and iterating through projects. " +
+                        "The error occurred while updating metrics for project: ", e);
+                continue;
+            }
+
+            counters.critical += projectCounters.critical;
+            counters.high += projectCounters.high;
+            counters.medium += projectCounters.medium;
+            counters.low += projectCounters.low;
+            counters.unassigned += projectCounters.unassigned;
+            counters.vulnerabilities += projectCounters.vulnerabilities;
+
+            counters.findingsTotal += projectCounters.findingsTotal;
+            counters.findingsAudited += projectCounters.findingsAudited;
+            counters.findingsUnaudited += projectCounters.findingsUnaudited;
+            counters.suppressions += projectCounters.suppressions;
+            counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+            counters.projects++;
+            if (projectCounters.vulnerabilities > 0) {
+                counters.vulnerableProjects++;
+            }
+            counters.components += projectCounters.components;
+            counters.vulnerableComponents += projectCounters.vulnerableComponents;
+
+            counters.policyViolationsFail += projectCounters.policyViolationsFail;
+            counters.policyViolationsWarn += projectCounters.policyViolationsWarn;
+            counters.policyViolationsInfo += projectCounters.policyViolationsInfo;
+            counters.policyViolationsTotal += projectCounters.policyViolationsTotal;
+            counters.policyViolationsAudited += projectCounters.policyViolationsAudited;
+            counters.policyViolationsUnaudited += projectCounters.policyViolationsUnaudited;
+            counters.policyViolationsSecurityTotal += projectCounters.policyViolationsSecurityTotal;
+            counters.policyViolationsSecurityAudited += projectCounters.policyViolationsSecurityAudited;
+            counters.policyViolationsSecurityUnaudited += projectCounters.policyViolationsSecurityUnaudited;
+            counters.policyViolationsLicenseTotal += projectCounters.policyViolationsLicenseTotal;
+            counters.policyViolationsLicenseAudited += projectCounters.policyViolationsLicenseAudited;
+            counters.policyViolationsLicenseUnaudited += projectCounters.policyViolationsLicenseUnaudited;
+            counters.policyViolationsOperationalTotal += projectCounters.policyViolationsOperationalTotal;
+            counters.policyViolationsOperationalAudited += projectCounters.policyViolationsOperationalAudited;
+            counters.policyViolationsOperationalUnaudited += projectCounters.policyViolationsOperationalUnaudited;
+        }
+
+        // TODO: Consider checking for abnormally many failures when updating project metrics.
+        // If we have "too many" failures, we probably shouldn't update portfolio metrics either.
 
         try (final var qm = new QueryManager()) {
             Transaction trx = qm.getPersistenceManager().currentTransaction();
@@ -685,6 +725,18 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
     }
 
+    /**
+     * Fetch {@link VulnerabilityDateProjection}s in pages of {@code 500}.
+     * <p>
+     * In order to not load multiple thousands of objects at once, paging is used.
+     * The first call should provide a {@code lastId} of {@code 0}, subsequent calls
+     * are expected to provide the highest ID of the previously fetched page.
+     *
+     * @param pm     The {@link  PersistenceManager} to use
+     * @param lastId Highest ID of the previously fetched page
+     * @return Up to {@code 500} {@link VulnerabilityDateProjection} objects
+     * @throws Exception If the query could not be closed
+     */
     private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
         try (final Query<?> query = pm.newQuery("javax.jdo.query.SQL", "" +
                 "SELECT \"ID\", \"CREATED\", \"PUBLISHED\" " +

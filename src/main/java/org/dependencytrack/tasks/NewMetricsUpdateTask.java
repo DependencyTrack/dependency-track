@@ -73,7 +73,15 @@ public class NewMetricsUpdateTask implements Subscriber {
         final var event = (MetricsUpdateEvent) e;
         try {
             if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                final int threadPoolSize = SystemUtil.getCpuCores() / 2; // TODO: Can we make this dynamic in a smart way?
+                // In order to speed up metrics updates for large portfolios,
+                // project metrics updates will be performed in their own thread pool.
+                // Because the pool is only required for this specific use case,
+                // it is created and destroyed on each run of the task.
+                //
+                // This is only a viable option as long as MetricsUpdateEvents of type PORTFOLIO
+                // are singletons and guaranteed to not be executed in parallel.
+
+                final int threadPoolSize = SystemUtil.getCpuCores() / 2;
                 LOGGER.debug("Starting executor service with thread pool size " + threadPoolSize);
                 final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
                 try {
@@ -131,8 +139,7 @@ public class NewMetricsUpdateTask implements Subscriber {
             try {
                 projectCounters = projectCountersFuture.get();
             } catch (Exception e) {
-                LOGGER.error("An unexpected error occurred while updating portfolio metrics and iterating through projects. " +
-                        "The error occurred while updating metrics for project: ", e);
+                LOGGER.error("An unexpected error occurred while updating project metrics", e);
                 continue;
             }
 
@@ -212,8 +219,10 @@ public class NewMetricsUpdateTask implements Subscriber {
                         && latestMetrics.getFindingsUnaudited() == counters.findingsUnaudited
                         && latestMetrics.getProjects() == counters.projects
                         && latestMetrics.getVulnerableProjects() == counters.vulnerableProjects) {
+                    LOGGER.debug("Portfolio metrics did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
+                    LOGGER.debug("Portfolio metrics changed");
                     final var metrics = new PortfolioMetrics();
                     metrics.setCritical(counters.critical);
                     metrics.setHigh(counters.high);
@@ -281,8 +290,7 @@ public class NewMetricsUpdateTask implements Subscriber {
             try {
                 componentCounters = updateComponentMetrics(componentId);
             } catch (Exception e) {
-                LOGGER.error("An unexpected error occurred while updating project metrics and iterating through components. " +
-                        "The error occurred while updating metrics for project: " + projectUuid + " and component: " + componentId, e);
+                LOGGER.error("An unexpected error occurred while updating component metrics", e);
                 continue;
             }
 
@@ -357,8 +365,10 @@ public class NewMetricsUpdateTask implements Subscriber {
                         && latestMetrics.getPolicyViolationsOperationalUnaudited() == counters.policyViolationsOperationalUnaudited
                         && latestMetrics.getComponents() == counters.components
                         && latestMetrics.getVulnerableComponents() == counters.vulnerableComponents) {
+                    LOGGER.debug("Metrics of project " + projectUuid + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
+                    LOGGER.debug("Metrics of project " + projectUuid + " changed");
                     final var metrics = new ProjectMetrics();
                     metrics.setProject(project);
                     metrics.setCritical(counters.critical);
@@ -402,6 +412,7 @@ public class NewMetricsUpdateTask implements Subscriber {
 
             if (project.getLastInheritedRiskScore() == null ||
                     project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
+                LOGGER.debug("Updating inherited risk score of project " + projectUuid);
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
@@ -530,8 +541,10 @@ public class NewMetricsUpdateTask implements Subscriber {
                         && latestMetrics.getPolicyViolationsOperationalTotal() == counters.policyViolationsOperationalTotal
                         && latestMetrics.getPolicyViolationsOperationalAudited() == counters.policyViolationsOperationalAudited
                         && latestMetrics.getPolicyViolationsOperationalUnaudited() == counters.policyViolationsOperationalUnaudited) {
+                    LOGGER.debug("Metrics of component " + componentUuid + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
+                    LOGGER.debug("Metrics of component " + componentUuid + " changed");
                     final var metrics = new DependencyMetrics();
                     metrics.setComponent(component);
                     metrics.setProject(component.getProject());
@@ -574,11 +587,11 @@ public class NewMetricsUpdateTask implements Subscriber {
 
             if (component.getLastInheritedRiskScore() == null ||
                     component.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
+                LOGGER.debug("Updating inherited risk score of component " + componentUuid);
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
                     component.setLastInheritedRiskScore(counters.inheritedRiskScore);
-                    //qm.getPersistenceManager().makePersistent(component);
                     trx.commit();
                 } finally {
                     if (trx.isActive()) {

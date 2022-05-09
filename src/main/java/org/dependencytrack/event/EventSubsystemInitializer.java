@@ -69,7 +69,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(PortfolioVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EVENT_SERVICE.subscribe(RepositoryMetaEvent.class, RepositoryMetaAnalyzerTask.class);
-        EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
+        EVENT_SERVICE.subscribe(MetricsUpdateEvent.class, NewMetricsUpdateTask.class);
         EVENT_SERVICE.subscribe(CloneProjectEvent.class, CloneProjectTask.class);
         EVENT_SERVICE.subscribe(FortifySscUploadEventAbstract.class, FortifySscUploadTask.class);
         EVENT_SERVICE.subscribe(DefectDojoUploadEventAbstract.class, DefectDojoUploadTask.class);

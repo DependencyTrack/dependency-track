@@ -4,8 +4,8 @@ FROM debian:bullseye-20220418-slim@sha256:f75d8a3ac10acdaa9be6052ea5f28bcfa56015
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
-ARG COMMIT_SHA
-ARG APP_VERSION
+ARG COMMIT_SHA=unknown
+ARG APP_VERSION=0.0.0
 ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
 ARG UID=1000
@@ -25,7 +25,9 @@ ENV TZ=Etc/UTC \
     # Set JAVA_HOME for the copied over JRE
     JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:${PATH}" \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    # Ensure user home is always set to DATA_DIR, even for arbitrary UIDs (such as used by OpenShift)
+    HOME=${DATA_DIR}
 
 # Create the directories where the WAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}
@@ -38,7 +40,7 @@ RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
     \
     # Install wget for health check
     && apt-get -yqq update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq wget \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy JRE from temurin base image

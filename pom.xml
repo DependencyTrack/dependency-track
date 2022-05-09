@@ -98,7 +98,6 @@
         <lib.jdbc-driver.postgresql.version>42.3.5</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
-        <plugin.github-release-plugin.version>1.4.0</plugin.github-release-plugin.version>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
@@ -340,7 +339,8 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
+                                <copy file="${project.build.directory}/bom.json"
+                                      tofile="${project.build.directory}/${project.artifactId}/.well-known/sbom"/>
                             </target>
                         </configuration>
                         <goals>
@@ -348,66 +348,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>de.jutzig</groupId>
-                <artifactId>github-release-plugin</artifactId>
-                <version>${plugin.github-release-plugin.version}</version>
-                <configuration>
-                    <releaseName>${project.version}</releaseName>
-                    <tag>${project.version}</tag>
-                    <description>For official releases, refer to https://docs.dependencytrack.org/changelog/ for information about improvements and upgrade notes. If additional details are required, consult the closed issues for this release milestone.</description>
-                    <!--
-                         For snapshot pre-releases we want to override the existing snapshot
-                         by deleting it first and re-uploading the artifact. Caution should
-                         be taken to not re-release GA builds.
-                    -->
-                    <overwriteArtifact>true</overwriteArtifact>
-                    <deleteRelease>true</deleteRelease>
-                    <fileSets>
-                        <fileSet>
-                            <directory>${project.build.directory}</directory>
-                            <includes>
-                                <include>dependency-track-apiserver.jar</include>
-                                <include>dependency-track-bundled.jar</include>
-                                <include>checksums.xml</include>
-                                <include>bom.xml</include>
-                                <include>bom.json</include>
-                            </includes>
-                        </fileSet>
-                    </fileSets>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>net.nicoulaj.maven.plugins</groupId>
-                <artifactId>checksum-maven-plugin</artifactId>
-                <version>1.11</version>
-                <executions>
-                    <execution>
-                        <phase>none</phase>
-                        <goals>
-                            <goal>files</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <csvSummary>false</csvSummary>
-                    <individualFiles>false</individualFiles>
-                    <xmlSummary>true</xmlSummary>
-                    <algorithms>
-                        <algorithm>SHA-1</algorithm>
-                        <algorithm>SHA-256</algorithm>
-                        <algorithm>SHA-512</algorithm>
-                    </algorithms>
-                    <fileSets>
-                        <fileSet>
-                            <directory>${project.build.directory}</directory>
-                            <includes>
-                                <include>dependency-track*.jar</include>
-                            </includes>
-                        </fileSet>
-                    </fileSets>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>

@@ -18,7 +18,7 @@ jobs:
       release-branch: ${{ steps.variables.outputs.release-branch }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.2
 
       - name: Setup Environment
         id: variables
@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.2
 
       - name: Download Artifacts
         uses: actions/download-artifact@v3.0.0
@@ -152,7 +152,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.2
         with:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
 

@@ -243,7 +243,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             qm.createRepository(RepositoryType.GEM, "rubygems.org", "https://rubygems.org/", true, false);
             qm.createRepository(RepositoryType.HEX, "hex.pm", "https://hex.pm/", true, false);
             qm.createRepository(RepositoryType.MAVEN, "central", "https://repo1.maven.org/maven2/", true, false);
-            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://maven.atlassian.com/content/repositories/atlassian-public/", true, false);
+            qm.createRepository(RepositoryType.MAVEN, "atlassian-public", "https://packages.atlassian.com/content/repositories/atlassian-public/", true, false);
             qm.createRepository(RepositoryType.MAVEN, "jboss-releases", "https://repository.jboss.org/nexus/content/repositories/releases/", true, false);
             qm.createRepository(RepositoryType.MAVEN, "clojars", "https://repo.clojars.org/", true, false);
             qm.createRepository(RepositoryType.MAVEN, "google-android", "https://maven.google.com/", true, false);

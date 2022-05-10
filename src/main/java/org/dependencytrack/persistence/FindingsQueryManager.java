@@ -165,7 +165,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * Documents a new analysis. Creates a new Analysis object if one doesn't already exists and appends
+     * Documents a new analysis. Creates a new Analysis object if one doesn't already exist and appends
      * the specified comment along with a timestamp in the AnalysisComment trail.
      * @param component the Component
      * @param vulnerability the Vulnerability
@@ -174,22 +174,33 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
                                  String analysisDetails, Boolean isSuppressed) {
-        if (analysisState == null) {
-            analysisState = AnalysisState.NOT_SET;
-        }
         Analysis analysis = getAnalysis(component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
             analysis.setComponent(component);
             analysis.setVulnerability(vulnerability);
         }
+
+        // In case we're updating an existing analysis, setting any of the fields
+        // to null will wipe them. That is not the expected behavior when an AnalysisRequest
+        // has some fields unset (so they're null). If fields are not set, there shouldn't
+        // be any modifications to the existing data.
+        if (analysisState != null) {
+            analysis.setAnalysisState(analysisState);
+        }
+        if (analysisJustification != null) {
+            analysis.setAnalysisJustification(analysisJustification);
+        }
+        if (analysisResponse != null) {
+            analysis.setAnalysisResponse(analysisResponse);
+        }
+        if (analysisDetails != null) {
+            analysis.setAnalysisDetails(analysisDetails);
+        }
         if (isSuppressed != null) {
             analysis.setSuppressed(isSuppressed);
         }
-        analysis.setAnalysisState(analysisState);
-        analysis.setAnalysisJustification(analysisJustification);
-        analysis.setAnalysisResponse(analysisResponse);
-        analysis.setAnalysisDetails(analysisDetails);
+
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
     }

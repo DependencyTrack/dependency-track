@@ -23,10 +23,10 @@ import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
 import alpine.server.upgrade.UpgradeException;
-import org.dependencytrack.auth.Permissions;
 import alpine.server.util.DbUtil;
 import org.apache.commons.io.FileDeleteStrategy;
 import org.dependencytrack.auth.Permissions;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -34,6 +34,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 
 public class v450Updater extends AbstractUpgradeItem {
 
@@ -50,6 +51,9 @@ public class v450Updater extends AbstractUpgradeItem {
     private static final String STMT_9 = "SELECT \"t\".\"ID\" FROM \"TEAM\" AS \"t\" INNER JOIN \"TEAMS_PERMISSIONS\" AS \"tp\" ON \"tp\".\"TEAM_ID\" = \"t\".\"ID\" WHERE \"tp\".\"PERMISSION_ID\" = %d";
     private static final String STMT_10 = "INSERT INTO \"TEAMS_PERMISSIONS\" (\"TEAM_ID\", \"PERMISSION_ID\") VALUES (?, ?)";
     private static final String STMT_11 = "UPDATE \"VULNERABILITY\" SET \"CWE\" = NULL";
+    private static final String STMT_12 = "UPDATE \"REPOSITORY\" SET \"URL\" = 'https://packages.atlassian.com/content/repositories/atlassian-public/' WHERE \"TYPE\" = 'MAVEN' AND \"IDENTIFIER\" = 'atlassian-public'";
+    private static final String STMT_13 = "SELECT \"ID\", \"PURL_NAME\" FROM \"VULNERABLESOFTWARE\" WHERE \"PURL_TYPE\" = 'golang' AND \"PURL_NAMESPACE\" IS NULL AND \"PURL_NAME\" LIKE '%/%'";
+    private static final String STMT_14 = "UPDATE \"VULNERABLESOFTWARE\" SET \"PURL_NAMESPACE\" = ?, \"PURL_NAME\" = ? WHERE \"ID\" = ?";
 
     @Override
     public String getSchemaVersion() {
@@ -118,6 +122,26 @@ public class v450Updater extends AbstractUpgradeItem {
                 ps = connection.prepareStatement(STMT_10);
                 ps.setLong(1, rs.getLong(1));
                 ps.setLong(2, viewVulnPermissionId);
+                ps.executeUpdate();
+            }
+        }
+
+        LOGGER.info("Updating Atlassian Maven Repository URL");
+        DbUtil.executeUpdate(connection, STMT_12);
+
+        LOGGER.info("Updating Package URLs of Go Packages for GHSA Vulnerabilities");
+        try (final Statement stmt = connection.createStatement()) {
+            final ResultSet rs = stmt.executeQuery(STMT_13);
+            while (rs.next()) {
+                final String purlName = rs.getString(2);
+                final String[] purlParts = purlName.split("/");
+
+                final String namespace = String.join("/", Arrays.copyOfRange(purlParts, 0, purlParts.length - 1));
+
+                ps = connection.prepareStatement(STMT_14);
+                ps.setString(1, namespace);
+                ps.setString(2, purlParts[purlParts.length - 1]);
+                ps.setLong(3, rs.getLong(1));
                 ps.executeUpdate();
             }
         }

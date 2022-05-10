@@ -101,22 +101,40 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             }
         }
         List<VulnerableSoftware> vsList = Collections.emptyList();
-        String version = null;
-        String update = null;
+        // https://github.com/DependencyTrack/dependency-track/issues/1574
+        // Some ecosystems use the "v" version prefix (e.g. v1.2.3) for their components.
+        // However, both the NVD and GHSA store versions without that prefix.
+        // For this reason, the prefix is stripped before running analyzeVersionRange.
+        //
+        // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
+        String componentVersion;
+        String componentUpdate = null;
+        if (parsedCpe != null) {
+            componentVersion = parsedCpe.getVersion();
+            componentUpdate = parsedCpe.getUpdate();
+        } else if (component.getPurl() != null) {
+            componentVersion = component.getPurl().getVersion();
+        } else {
+            // Catch cases where the CPE couldn't be parsed and no PURL exists.
+            // Should be rare, but could lead to NPEs later.
+            LOGGER.debug("Neither CPE nor PURL of component " + component.getUuid() + " provide a version - skipping analysis");
+            return;
+        }
+        if (componentVersion.length() > 1 && componentVersion.startsWith("v")) {
+            componentVersion = componentVersion.substring(1);
+        }
+
         if (parsedCpe != null) {
             vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
-            version = parsedCpe.getVersion();
-            update = parsedCpe.getUpdate();
         } else {
             vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
-            version = component.getPurl().getVersion();
         }
 
         if (fuzzyEnabled && vsList.isEmpty()) {
             FuzzyVulnerableSoftwareSearchMananger fm = new FuzzyVulnerableSoftwareSearchMananger(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
-        super.analyzeVersionRange(qm, vsList, version, update, component);
+        super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component);
     }
 
 }

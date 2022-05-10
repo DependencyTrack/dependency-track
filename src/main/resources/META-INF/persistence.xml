@@ -45,6 +45,7 @@
         <class>org.dependencytrack.model.RepositoryMetaComponent</class>
         <class>org.dependencytrack.model.ServiceComponent</class>
         <class>org.dependencytrack.model.Tag</class>
+        <class>org.dependencytrack.model.Vex</class>
         <class>org.dependencytrack.model.ViolationAnalysis</class>
         <class>org.dependencytrack.model.ViolationAnalysisComment</class>
         <class>org.dependencytrack.model.ViolationAnalysisState</class>

@@ -23,6 +23,7 @@ import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
+import io.jsonwebtoken.lang.Collections;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -40,11 +41,15 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 
 import java.security.Principal;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -175,6 +180,33 @@ public class ProjectResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Path("/classifier/{classifier}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all projects by classifier",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects of the specified classifier")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getProjectsByClassifier(
+            @ApiParam(value = "The classifier to query on", required = true)
+            @PathParam("classifier") String classifierString,
+            @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+            @QueryParam("excludeInactive") boolean excludeInactive) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Classifier classifier = Classifier.valueOf(classifierString);
+            final PaginatedResult result = qm.getProjects(classifier, true, excludeInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("The classifier type specified is not valid.").build();
+        }
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -273,6 +305,99 @@ public class ProjectResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
+        }
+    }
+    
+    @PATCH
+    @Path("/{uuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Partially updates a project",
+            response = Project.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The UUID of the project could not be found"),
+            @ApiResponse(code = 409, message = "A project with the specified name already exists")
+    })
+    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    public Response patchProject(
+            @ApiParam(value = "The UUID of the project to modify", required = true)
+            @PathParam("uuid") String uuid,
+            Project jsonProject) {
+        final Validator validator = getValidator();
+        failOnValidationError(
+                validator.validateProperty(jsonProject, "author"),
+                validator.validateProperty(jsonProject, "publisher"),
+                validator.validateProperty(jsonProject, "group"),
+                jsonProject.getName() != null ? validator.validateProperty(jsonProject, "name") : Set.of(),
+                validator.validateProperty(jsonProject, "description"),
+                validator.validateProperty(jsonProject, "version"),
+                validator.validateProperty(jsonProject, "classifier"),
+                validator.validateProperty(jsonProject, "cpe"),
+                validator.validateProperty(jsonProject, "purl"),
+                validator.validateProperty(jsonProject, "swidTagId")
+        );
+
+        try (QueryManager qm = new QueryManager()) {
+            Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project != null) {
+                var modified = false;
+                project = qm.detach(Project.class, project.getId());
+                modified |= setIfDifferent(jsonProject, project, Project::getName, Project::setName);
+                modified |= setIfDifferent(jsonProject, project, Project::getVersion, Project::setVersion);
+                // if either name or version has been changed, verify that this new combination does not already exist
+                if (modified && qm.getProject(project.getName(), project.getVersion()) != null) {
+                    return Response.status(Response.Status.CONFLICT).entity("A project with the specified name and version already exists.").build();
+                }
+                modified |= setIfDifferent(jsonProject, project, Project::getAuthor, Project::setAuthor);
+                modified |= setIfDifferent(jsonProject, project, Project::getPublisher, Project::setPublisher);
+                modified |= setIfDifferent(jsonProject, project, Project::getGroup, Project::setGroup);
+                modified |= setIfDifferent(jsonProject, project, Project::getDescription, Project::setDescription);
+                modified |= setIfDifferent(jsonProject, project, Project::getClassifier, Project::setClassifier);
+                modified |= setIfDifferent(jsonProject, project, Project::getCpe, Project::setCpe);
+                modified |= setIfDifferent(jsonProject, project, Project::getPurl, Project::setPurl);
+                modified |= setIfDifferent(jsonProject, project, Project::getSwidTagId, Project::setSwidTagId);
+                modified |= setIfDifferent(jsonProject, project, Project::isActive, Project::setActive);
+                if (jsonProject.getTags() != null && (!Collections.isEmpty(jsonProject.getTags()) || !Collections.isEmpty(project.getTags()))) {
+                    modified = true;
+                    project.setTags(jsonProject.getTags());
+                }
+                if (modified) {
+                    project = qm.updateProject(project, true);
+                    return Response.ok(project).build();
+                } else {
+                    return Response.notModified().build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
+            }
+        }
+    }
+
+    /**
+     * updates the given target object using the supplied setter method with the
+     * new value from the source object using the supplied getter method. But
+     * only if the new value is not {@code null} and it is not
+     * {@link Object#equals(java.lang.Object) equal to} the old value.
+     *
+     * @param <T> the type of the old and new value
+     * @param source the source object that contains the new value
+     * @param target the target object that should be updated
+     * @param getter the method to retrieve the new value from {@code source}
+     * and the old value from {@code target}
+     * @param setter the method to set the new value on {@code target}
+     * @return {@code true} if {@code target} has been changed, else
+     * {@code false}
+     */
+    private <T> boolean setIfDifferent(final Project source, final Project target, final Function<Project, T> getter, final BiConsumer<Project, T> setter) {
+        final T newValue = getter.apply(source);
+        if (newValue != null && !newValue.equals(getter.apply(target))) {
+            setter.accept(target, newValue);
+            return true;
+        } else {
+            return false;
         }
     }
 

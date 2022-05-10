@@ -1,0 +1,175 @@
+name: Release CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-overwrite:
+        required: false
+        default: ''
+        description: 'Use this to overwrite the version number to release, otherwise uses the current SNAPSHOT version (expected format x.y.z)'
+        type: string
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.variables.outputs.version }}
+      next-version: ${{ steps.variables.outputs.next-version }}
+      release-branch: ${{ steps.variables.outputs.release-branch }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Setup Environment
+        id: variables
+        run: |-
+          VERSION="${{ github.event.inputs.version-overwrite }}"
+          if [[ -z ${VERSION} ]]; then
+            CURRENT_SNAPSHOT=`yq -p=xml '.project.version' pom.xml`
+            VERSION=${CURRENT_SNAPSHOT%-SNAPSHOT}
+          fi
+          NEXT_VERSION="${VERSION%.*}.$((${VERSION##*.} + 1))-SNAPSHOT"
+
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=next-version::${NEXT_VERSION}"
+          echo "::set-output name=release-branch::${VERSION%.*}.x"
+
+  call-build:
+    needs:
+      - prepare-release
+    uses: ./.github/workflows/_meta-build.yaml
+    with:
+      app-version: ${{ needs.prepare-release.outputs.version }}
+    secrets:
+      registry-0-usr: ${{ secrets.HUB_USERNAME }}
+      registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-release
+      - call-build
+
+    env:
+      VERSION: ${{ needs.prepare-release.outputs.version }}
+      BRANCH_NAME: ${{ needs.prepare-release.outputs.release-branch }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: assembled-wars
+          path: target
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3.3.0
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Set Version
+        run: mvn versions:set -DnewVersion=${VERSION}
+
+      - name: Commit Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          MESSAGE="prepare-release: set version to ${VERSION}"
+          CONTENT=$(base64 -i pom.xml)
+
+          if [[ -z `git ls-remote --quiet --heads origin "${BRANCH_NAME}"` ]]; then
+            SHA=$(git rev-parse ${GITHUB_REF#refs/heads/}:pom.xml)
+
+            # https://gist.github.com/swinton/03e84635b45c78353b1f71e41007fc7c
+            gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
+              --field message="${MESSAGE}" \
+              --field content="${CONTENT}" \
+              --field encoding="base64" \
+              --field branch="${GITHUB_REF_NAME}" \
+              --field sha="${SHA}"
+
+            git fetch
+            git reset --hard "origin/${GITHUB_REF_NAME}"
+            git checkout -b "${BRANCH_NAME}"
+            git push origin "${BRANCH_NAME}"
+          else
+            git checkout "${BRANCH_NAME}"
+            SHA=$(git rev-parse ${BRANCH_NAME}:pom.xml)
+
+            gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
+              --field message="${MESSAGE}" \
+              --field content="${CONTENT}" \
+              --field encoding="base64" \
+              --field branch="${BRANCH_NAME}" \
+              --field sha="${SHA}"
+          fi
+
+      - name: Create Checksums and SBOM
+        run: |-
+          pushd target
+          echo "# SHA1" >> checksums.txt
+          sha1sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
+          echo "# SHA256" >> checksums.txt
+          sha256sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
+          echo "# SHA512" >> checksums.txt
+          sha512sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
+          popd
+          mvn cyclonedx:makeBom
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          cat << EOF >> .github/default-release-notes.md
+          \`\`\`text
+          $(cat target/checksums.txt)
+          \`\`\`
+          EOF
+
+          gh release create "${{ needs.prepare-release.outputs.version }}" \
+            --target "${{ needs.prepare-release.outputs.release-branch }}" \
+            --title "${{ needs.prepare-release.outputs.version }}" \
+            --notes-file ".github/default-release-notes.md" \
+            target/dependency-track-apiserver.jar \
+            target/dependency-track-bundled.jar \
+            target/checksums.txt \
+            target/bom.json \
+            target/bom.xml
+
+  post-release:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-release
+      - create-release
+
+    env:
+      NEXT_VERSION: ${{ needs.prepare-release.outputs.next-version }}
+      BRANCH_NAME: ${{ needs.prepare-release.outputs.release-branch }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3.0.2
+        with:
+          ref: ${{ needs.prepare-release.outputs.release-branch }}
+
+      - name: Set SNAPSHOT Version
+        run: mvn versions:set -DnewVersion=${NEXT_VERSION}
+
+      - name: Commit SNAPSHOT Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          MESSAGE="prepare-iteration: set version to ${NEXT_VERSION}"
+          CONTENT=$(base64 -i pom.xml)
+          SHA=$(git rev-parse ${BRANCH_NAME}:pom.xml)
+
+          gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
+            --field message="${MESSAGE}" \
+            --field content="${CONTENT}" \
+            --field encoding="base64" \
+            --field branch="${BRANCH_NAME}" \
+            --field sha="${SHA}"

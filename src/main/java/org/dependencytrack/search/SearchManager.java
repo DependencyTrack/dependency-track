@@ -154,6 +154,9 @@ public class SearchManager {
         return searchIndex(VulnerabilityIndexer.getInstance(), queryString, limit);
     }
 
+    public SearchResult searchVulnerableSoftwareIndex(final String queryString, final int limit) {
+        return searchIndex(VulnerableSoftwareIndexer.getInstance(), queryString, limit);
+    }
     /**
      * Escapes special characters used in Lucene query syntax.
      * + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /

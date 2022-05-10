@@ -69,8 +69,8 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
     public void add(final VulnerableSoftware vs) {
         final Document doc = new Document();
         addField(doc, IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString(), Field.Store.YES, false);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.getCpe22(), Field.Store.YES, true);
-        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.getCpe23(), Field.Store.YES, true);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_22, vs.getCpe22(), Field.Store.YES, false);
+        addField(doc, IndexConstants.VULNERABLESOFTWARE_CPE_23, vs.getCpe23(), Field.Store.YES, false);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_VENDOR, vs.getVendor(), Field.Store.YES, true);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_PRODUCT, vs.getProduct(), Field.Store.YES, true);
         addField(doc, IndexConstants.VULNERABLESOFTWARE_VERSION, vs.getVersion(), Field.Store.YES, true);

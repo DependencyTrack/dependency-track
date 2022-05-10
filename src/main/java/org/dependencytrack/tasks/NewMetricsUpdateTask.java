@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
@@ -686,7 +687,8 @@ public class NewMetricsUpdateTask implements Subscriber {
     }
 
     private List<Long> getActiveProjects(final PersistenceManager pm) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"ID\" FROM \"PROJECT\" WHERE \"ACTIVE\" IS NULL OR \"ACTIVE\" = true")) {
+        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"ID\" FROM \"PROJECT\" WHERE \"ACTIVE\" IS NULL OR \"ACTIVE\" = ?")) {
+            query.setParameters(true);
             return List.copyOf(query.executeResultList(Long.class));
         }
     }
@@ -725,9 +727,9 @@ public class NewMetricsUpdateTask implements Subscriber {
                 "    ON \"ANALYSIS\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
                 "    AND \"ANALYSIS\".\"VULNERABILITY_ID\" = \"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" " +
                 "WHERE \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" = ? " +
-                "  AND (\"ANALYSIS\".\"SUPPRESSED\" IS NULL OR \"ANALYSIS\".\"SUPPRESSED\" = false) " +
+                "  AND (\"ANALYSIS\".\"SUPPRESSED\" IS NULL OR \"ANALYSIS\".\"SUPPRESSED\" = ?) " +
                 "ORDER BY \"VULNERABILITY\".\"ID\"")) {
-            query.setParameters(componentId);
+            query.setParameters(componentId, false);
             return List.copyOf(query.executeResultList(VulnerabilityProjection.class));
         }
     }
@@ -736,11 +738,11 @@ public class NewMetricsUpdateTask implements Subscriber {
         try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
                 "SELECT COUNT(*) FROM \"ANALYSIS\" " +
                 "WHERE \"COMPONENT_ID\" = ? " +
-                "  AND \"SUPPRESSED\" = false " +
+                "  AND \"SUPPRESSED\" = ? " +
                 "  AND \"STATE\" IS NOT NULL " +
                 "  AND \"STATE\" != ? " +
                 "  AND \"STATE\" != ?")) {
-            query.setParameters(componentId,
+            query.setParameters(componentId, false,
                     AnalysisState.NOT_SET.name(),
                     AnalysisState.IN_TRIAGE.name());
             return query.executeResultUnique(Long.class);
@@ -751,8 +753,8 @@ public class NewMetricsUpdateTask implements Subscriber {
         try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
                 "SELECT COUNT(*) FROM \"ANALYSIS\" " +
                 "WHERE \"COMPONENT_ID\" = ? " +
-                "  AND \"SUPPRESSED\" = true")) {
-            query.setParameters(componentId);
+                "  AND \"SUPPRESSED\" = ?")) {
+            query.setParameters(componentId, true);
             return query.executeResultUnique(Long.class);
         }
     }
@@ -767,8 +769,8 @@ public class NewMetricsUpdateTask implements Subscriber {
                 "    ON \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = \"POLICYVIOLATION\".\"COMPONENT_ID\" " +
                 "    AND \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" = \"POLICYVIOLATION\".\"ID\" " +
                 "WHERE \"POLICYVIOLATION\".\"COMPONENT_ID\" = ? " +
-                "  AND (\"VIOLATIONANALYSIS\".\"SUPPRESSED\" IS NULL OR \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = false)")) {
-            query.setParameters(componentId);
+                "  AND (\"VIOLATIONANALYSIS\".\"SUPPRESSED\" IS NULL OR \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = ?)")) {
+            query.setParameters(componentId, false);
             return List.copyOf(query.executeResultList(PolicyViolationProjection.class));
         }
     }
@@ -779,10 +781,11 @@ public class NewMetricsUpdateTask implements Subscriber {
                 "  INNER JOIN \"POLICYVIOLATION\" ON \"POLICYVIOLATION\".\"ID\" = \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" " +
                 "WHERE \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = ? " +
                 "  AND \"POLICYVIOLATION\".\"TYPE\" = ? " +
-                "  AND \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = false " +
+                "  AND \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = ? " +
                 "  AND \"VIOLATIONANALYSIS\".\"STATE\" IS NOT NULL " +
                 "  AND \"VIOLATIONANALYSIS\".\"STATE\" != ?")) {
-            query.setParameters(componentId, violationType.name(), ViolationAnalysisState.NOT_SET.name());
+            query.setParameters(componentId, violationType.name(),
+                    false, ViolationAnalysisState.NOT_SET.name());
             return query.executeResultUnique(Long.class);
         }
     }
@@ -800,12 +803,22 @@ public class NewMetricsUpdateTask implements Subscriber {
      * @throws Exception If the query could not be closed
      */
     private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
+        final String limitClause;
+        final String databaseDriver = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER);
+        if (com.microsoft.sqlserver.jdbc.SQLServerDriver.class.getName().equals(databaseDriver)) {
+            limitClause = "" +
+                    "OFFSET 0 ROWS " +
+                    "FETCH NEXT 500 ROWS ONLY";
+        } else {
+            limitClause = "LIMIT 500";
+        }
+
         try (final Query<?> query = pm.newQuery("javax.jdo.query.SQL", "" +
                 "SELECT \"ID\", \"CREATED\", \"PUBLISHED\" " +
                 "FROM \"VULNERABILITY\" " +
                 "WHERE \"ID\" > ? " +
                 "ORDER BY \"ID\" ASC " +
-                "FETCH FIRST 500 ROWS ONLY")) {
+                limitClause)) {
             query.setParameters(lastId);
             return List.copyOf(query.executeResultList(VulnerabilityDateProjection.class));
         }

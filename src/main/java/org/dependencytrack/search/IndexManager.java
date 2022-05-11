@@ -33,7 +33,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -66,6 +65,7 @@ public abstract class IndexManager implements AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(IndexManager.class);
     private IndexWriter iwriter;
     private MultiFieldQueryParser qparser;
+    private DirectoryReader searchReader;
     private final IndexType indexType;
 
     /**
@@ -159,20 +159,22 @@ public abstract class IndexManager implements AutoCloseable {
     }
 
     /**
-     * Returns an {@link IndexSearcher}.
-     * <p>
-     * A new instance is created on every invocation. This is necessary because
-     * searchers operate on the state of the index they've been given upon construction.
-     * If the index changed, a new searcher must be created in order to have those changes
-     * being reflected in search results. See {@link IndexSearcher} documentation.
+     * Returns an {@link IndexSearcher} by opening the index directory first, if necessary.
      *
      * @return an {@link IndexSearcher}
      * @throws IOException when the index directory cannot be opened
      * @since 3.0.0
      */
-    protected IndexSearcher getIndexSearcher() throws IOException {
-        final IndexReader reader = DirectoryReader.open(getDirectory());
-        return new IndexSearcher(reader);
+    protected synchronized IndexSearcher getIndexSearcher() throws IOException {
+        if (searchReader == null) {
+            searchReader = DirectoryReader.open(getDirectory());
+        } else {
+            final var changedReader = DirectoryReader.openIfChanged(searchReader);
+            if (changedReader != null) {
+                searchReader = changedReader;
+            }
+        }
+        return new IndexSearcher(searchReader);
     }
 
     /**

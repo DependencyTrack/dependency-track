@@ -169,7 +169,7 @@ public class SearchResource extends AlpineResource {
     public Response vulnerableSoftwareSearch(@QueryParam("query") String query, @QueryParam("cpe") String cpe) {
         if (StringUtils.isNotBlank(cpe)) {
             final FuzzyVulnerableSoftwareSearchMananger searchManager = new FuzzyVulnerableSoftwareSearchMananger(false);
-            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchMananger.getCpeRegexp(cpe));
+            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchMananger.getLuceneCpeRegexp(cpe));
             return Response.ok(searchResult).build();
         } else {
             final SearchManager searchManager = new SearchManager();

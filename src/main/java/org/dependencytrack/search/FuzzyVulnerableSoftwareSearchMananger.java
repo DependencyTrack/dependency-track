@@ -30,7 +30,6 @@ public class FuzzyVulnerableSoftwareSearchMananger {
     private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchMananger.class);
 
     private final boolean excludeComponentsWithPurl;
-    private final SearchManager sm = new SearchManager();
 
     public FuzzyVulnerableSoftwareSearchMananger(boolean excludeComponentsWithPurl) {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
@@ -47,22 +46,22 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                     vendor = parsedCpe.getVendor();
                 }
                 us.springett.parsers.cpe.Cpe omitVersion = new us.springett.parsers.cpe.Cpe(part, vendor, component.getName(), "*", "*", "*","*", "*", "*", "*", "*");
-                String cpeSearch = getCpeRegexp(omitVersion.toCpe23FS());
-                fuzzyList = fuzzySearch(qm, component, cpeSearch);
+                String cpeSearch = getLuceneCpeRegexp(omitVersion.toCpe23FS());
+                fuzzyList = fuzzySearch(qm, cpeSearch);
                 if (fuzzyList.isEmpty()) {
                     // Next search product without vendor
                     us.springett.parsers.cpe.Cpe justProduct = new us.springett.parsers.cpe.Cpe(part, "*", component.getName(), "*", "*", "*","*", "*", "*", "*", "*");
-                    String justProductSearch = getCpeRegexp(justProduct.toCpe23FS());
-                    if (!justProduct.equals(cpeSearch)) {
-                        fuzzyList = fuzzySearch(qm, component, justProductSearch);
+                    String justProductSearch = getLuceneCpeRegexp(justProduct.toCpe23FS());
+                    if (!justProductSearch.equals(cpeSearch)) {
+                        fuzzyList = fuzzySearch(qm, justProductSearch);
                     }
                     // If no luck, get fuzzier but not with small values as fuzzy 2 chars are easy to match
                     if (fuzzyList.isEmpty() && component.getName().length() > 2) {
                         us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
                         // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
-                        String fuzzyTerm = getCpeRegexp(justThePart.toCpe23FS());
+                        String fuzzyTerm = getLuceneCpeRegexp(justThePart.toCpe23FS());
                         //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
-                        fuzzyList = fuzzySearch(qm, component, "product:" + component.getName() + "~0.88 AND " + fuzzyTerm);
+                        fuzzyList = fuzzySearch(qm, "product:" + component.getName() + "~0.88 AND " + fuzzyTerm);
                     }
                 }
             } catch (CpeValidationException cve) {
@@ -128,9 +127,8 @@ public class FuzzyVulnerableSoftwareSearchMananger {
         return searchResult;
     }
 
-    private List<VulnerableSoftware> fuzzySearch(QueryManager qm, final Component component, String luceneQuery) {
+    private List<VulnerableSoftware> fuzzySearch(QueryManager qm, String luceneQuery) {
         List<VulnerableSoftware>  fuzzyList = new LinkedList<>();
-        //First Search product without vendor
         SearchResult sr = searchIndex(luceneQuery);
         if (sr.getResults().containsKey("vulnerablesoftware")) {
             for (Map<String, String> result : sr.getResults().get("vulnerablesoftware")) {
@@ -140,7 +138,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
         return fuzzyList;
     }
 
-    public static String getCpeRegexp(String cpeString) {
+    public static String getLuceneCpeRegexp(String cpeString) {
         StringBuilder exp = new StringBuilder("cpe\\:");
         try {
             us.springett.parsers.cpe.Cpe cpe = CpeParser.parse(cpeString, true);
@@ -149,7 +147,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                 exp.append("2\\.3\\:").append(cpe.getPart().getAbbreviation());
             } else {
                 exp.insert(0, "cpe22:/");
-                exp.append("\\/" + cpe.getPart().getAbbreviation());
+                exp.append("\\/").append(cpe.getPart().getAbbreviation());
             }
             exp.append("\\:").append(getComponentRegex(cpe.getVendor()));
             exp.append("\\:").append(getComponentRegex(cpe.getProduct()));
@@ -172,7 +170,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
 
     private static String getComponentRegex(String component) {
         if (component != null) {
-            return component.replaceAll("\\*", ".*");
+            return component.replace("*", ".*");
         } else {
             return ".*";
         }

@@ -24,16 +24,6 @@ Description:
 {{ vulnerability.description }}
 
 {% endfor %}
-{% elseif notification.group == "GLOBAL_AUDIT_CHANGE" %}
-Analysis Type:  Global Component Analysis
-Analysis State:    {{ subject.analysis.analysisState }}
-Suppressed:        {{ subject.analysis.suppressed }}
-Vulnerability ID:  {{ subject.vulnerability.vulnId }}
-Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
-Severity:          {{ subject.vulnerability.severity }}
-Source:            {{ subject.vulnerability.source }}
-Component:         {{ subject.component.toString }}
-Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
 Analysis Type:  Project Analysis
 Analysis State:    {{ subject.analysis.analysisState }}
@@ -52,6 +42,21 @@ Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
 {% elseif notification.group == "BOM_PROCESSED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "VEX_CONSUMED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "VEX_PROCESSED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "POLICY_VIOLATION" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}

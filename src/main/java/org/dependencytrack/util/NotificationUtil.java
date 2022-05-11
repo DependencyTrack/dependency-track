@@ -24,10 +24,12 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -36,6 +38,8 @@ import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
@@ -194,6 +198,20 @@ public final class NotificationUtil {
         }
     }
 
+    public static void analyzeNotificationCriteria(final QueryManager qm, final PolicyViolation policyViolation) {
+        final ViolationAnalysis violationAnalysis = qm.getViolationAnalysis(policyViolation.getComponent(), policyViolation);
+        if (violationAnalysis != null && (violationAnalysis.isSuppressed() || ViolationAnalysisState.APPROVED == violationAnalysis.getAnalysisState())) return;
+        final PolicyViolation pv = qm.detach(PolicyViolation.class, policyViolation.getId());
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.POLICY_VIOLATION)
+                .title(NotificationConstants.Title.POLICY_VIOLATION)
+                .level(NotificationLevel.INFORMATIONAL)
+                .content(generateNotificationContent(pv))
+                .subject(new PolicyViolationIdentified(pv, pv.getComponent(), pv.getProject()))
+        );
+    }
+
     public static JsonObject toJson(final Project project) {
         final JsonObjectBuilder projectBuilder = Json.createObjectBuilder();
         projectBuilder.add("uuid", project.getUuid().toString());
@@ -346,6 +364,53 @@ public final class NotificationUtil {
         return builder.build();
     }
 
+    public static JsonObject toJson(final VexConsumedOrProcessed vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getProject() != null) {
+            builder.add("project", toJson(vo.getProject()));
+        }
+        if (vo.getVex() != null) {
+            builder.add("vex", Json.createObjectBuilder()
+                    .add("content", vo.getVex())
+                    .add("format", vo.getFormat().getFormatShortName())
+                    .add("specVersion", vo.getSpecVersion()).build()
+            );
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final PolicyViolationIdentified vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getComponent().getProject() != null) {
+            builder.add("project", toJson(vo.getComponent().getProject()));
+        }
+        if (vo.getComponent() != null) {
+            builder.add("component", toJson(vo.getComponent()));
+        }
+        if (vo.getPolicyViolation() != null) {
+            builder.add("policyViolation", toJson(vo.getPolicyViolation()));
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final PolicyViolation pv) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("uuid", pv.getUuid().toString());
+        builder.add("type", pv.getType().name());
+        builder.add("timestamp", DateUtil.toISO8601(pv.getTimestamp()));
+        builder.add("policyCondition", toJson(pv.getPolicyCondition()));
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final PolicyCondition pc) {
+        final JsonObjectBuilder componentBuilder = Json.createObjectBuilder();
+        componentBuilder.add("uuid", pc.getUuid().toString());
+        JsonUtil.add(componentBuilder, "subject", pc.getSubject().name());
+        JsonUtil.add(componentBuilder, "operator", pc.getOperator().name());
+        JsonUtil.add(componentBuilder, "value", pc.getValue());
+        return componentBuilder.build();
+    }
+
     private static String generateNotificationContent(final Vulnerability vulnerability) {
         final String content;
         if (vulnerability.getDescription() != null) {
@@ -356,15 +421,8 @@ public final class NotificationUtil {
         return content;
     }
 
-    // TODO
     private static String generateNotificationContent(final PolicyViolation policyViolation) {
-        final String content = null;
-        if (policyViolation.getPolicyCondition().getSubject() != null) {
-            //content = policyViolation.getText();
-        } else {
-            //content = (vulnerability.getTitle() != null) ? vulnerability.getVulnId() + ": " +vulnerability.getTitle() : vulnerability.getVulnId();
-        }
-        return content;
+        return "A " + policyViolation.getType().name().toLowerCase() + " policy violation occurred";
     }
 
     private static String generateNotificationContent(final Component component, final List<Vulnerability> vulnerabilities) {

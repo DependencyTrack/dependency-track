@@ -422,8 +422,8 @@ public class ProjectResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    LOGGER.info("Project " + project.toString() + " deletion request by " + super.getPrincipal().getName());
-                    qm.recursivelyDelete(project);
+                    LOGGER.info("Project " + project + " deletion request by " + super.getPrincipal().getName());
+                    qm.recursivelyDelete(project, true);
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();

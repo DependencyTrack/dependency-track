@@ -65,7 +65,6 @@ public abstract class IndexManager implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(IndexManager.class);
     private IndexWriter iwriter;
-    private IndexSearcher isearcher;
     private MultiFieldQueryParser qparser;
     private final IndexType indexType;
 
@@ -160,17 +159,20 @@ public abstract class IndexManager implements AutoCloseable {
     }
 
     /**
-     * Returns an IndexSearcher by opening the index directory first, if necessary.
-     * @return an IndexSearcher
+     * Returns an {@link IndexSearcher}.
+     * <p>
+     * A new instance is created on every invocation. This is necessary because
+     * searchers operate on the state of the index they've been given upon construction.
+     * If the index changed, a new searcher must be created in order to have those changes
+     * being reflected in search results. See {@link IndexSearcher} documentation.
+     *
+     * @return an {@link IndexSearcher}
      * @throws IOException when the index directory cannot be opened
      * @since 3.0.0
      */
     protected IndexSearcher getIndexSearcher() throws IOException {
-        if (isearcher == null) {
-            final IndexReader reader = DirectoryReader.open(getDirectory());
-            isearcher = new IndexSearcher(reader);
-        }
-        return isearcher;
+        final IndexReader reader = DirectoryReader.open(getDirectory());
+        return new IndexSearcher(reader);
     }
 
     /**

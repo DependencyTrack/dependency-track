@@ -24,6 +24,7 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
@@ -44,6 +45,7 @@ import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
+import javax.jdo.FetchPlan;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
@@ -201,7 +203,10 @@ public final class NotificationUtil {
     public static void analyzeNotificationCriteria(final QueryManager qm, final PolicyViolation policyViolation) {
         final ViolationAnalysis violationAnalysis = qm.getViolationAnalysis(policyViolation.getComponent(), policyViolation);
         if (violationAnalysis != null && (violationAnalysis.isSuppressed() || ViolationAnalysisState.APPROVED == violationAnalysis.getAnalysisState())) return;
-        final PolicyViolation pv = qm.detach(PolicyViolation.class, policyViolation.getId());
+        policyViolation.getPolicyCondition().getPolicy(); // Force loading of policy
+        qm.getPersistenceManager().getFetchPlan().setMaxFetchDepth(3); // Ensure policy is included
+        qm.getPersistenceManager().getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        final PolicyViolation pv = qm.getPersistenceManager().detachCopy(policyViolation);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.POLICY_VIOLATION)
@@ -408,7 +413,16 @@ public final class NotificationUtil {
         JsonUtil.add(componentBuilder, "subject", pc.getSubject().name());
         JsonUtil.add(componentBuilder, "operator", pc.getOperator().name());
         JsonUtil.add(componentBuilder, "value", pc.getValue());
+        componentBuilder.add("policy", toJson(pc.getPolicy()));
         return componentBuilder.build();
+    }
+
+    public static JsonObject toJson(final Policy policy) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("uuid", policy.getUuid().toString());
+        builder.add("name", policy.getName());
+        builder.add("violationState", policy.getViolationState().name());
+        return builder.build();
     }
 
     private static String generateNotificationContent(final Vulnerability vulnerability) {

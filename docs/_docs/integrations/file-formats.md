@@ -24,7 +24,7 @@ FPF's are json files and have the following sections:
 
 To export findings in the FPF format, the `/api/v1/finding/project/{uuid}/export` API endpoint is used.
 
-The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
+The **VIEW_VULNERABILITY** permission is required to use the findings API.
 
 > Finding Packaging Format v1.1 was introduced in Dependency-Track v4.5 and supports an array of CWEs per vulnerability.
 > Previous versions of Dependency-Track supported only a single CWE (cweId and cweName fields respectively) per

@@ -30,7 +30,7 @@ conformance with [U.S. Executive Order 14028](https://www.whitehouse.gov/briefin
 * Create and consume CycloneDX SBOMs in development pipelines
 * SBOMs will be analyzed for known security, operational, and license risk
 * Evaluates the portfolio of applications against user-configurable security, operational, and license policies
-* Inspect security findings and make audit decisions about the relevance and severity of each vulnerability
+* Inspect security findings and make audit decisions about the relevance and exploitability of each vulnerability
 * CycloneDX BOMs can be dynamically generated from current inventory for any application
 * CycloneDX VEX is dynamically generated from audit decisions for each application
 * An API-first design allows software producers to extract SBOMs for released products, produce VEX whenever updated audit decisions are made, and make data available to internal systems responsible for SBOM and VEX distribution.

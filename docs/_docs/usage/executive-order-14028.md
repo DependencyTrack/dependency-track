@@ -5,7 +5,7 @@ chapter: 2
 order: 6
 ---
 
-Since inception in 2013, OWASP Dependency-Track has been at the forefront of analyzing bill of materials for cybersecurity
+Since its inception in 2013, OWASP Dependency-Track has been at the forefront of analyzing bill of materials for cybersecurity
 risk identification and reduction. Dependency-Track allows organizations and governments to operationalize SBOM in
 conformance with [U.S. Executive Order 14028](https://www.whitehouse.gov/briefing-room/presidential-actions/2021/05/12/executive-order-on-improving-the-nations-cybersecurity/).
 

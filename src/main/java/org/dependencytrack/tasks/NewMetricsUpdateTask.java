@@ -40,6 +40,7 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
 
+import javax.annotation.Nullable;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
@@ -50,11 +51,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.toIntExact;
@@ -90,26 +94,7 @@ public class NewMetricsUpdateTask implements Subscriber {
         final var event = (MetricsUpdateEvent) e;
         try {
             if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                // In order to speed up metrics updates for large portfolios,
-                // project metrics updates will be performed in their own thread pool.
-                // Because the pool is only required for this specific use case,
-                // it is created and destroyed on each run of the task.
-                //
-                // This is only a viable option as long as MetricsUpdateEvents of type PORTFOLIO
-                // are singletons and guaranteed to not be executed in parallel.
-
-                final int threadPoolSize = SystemUtil.getCpuCores() / 2; // TODO: Should this be configurable?
-                LOGGER.debug("Starting executor service with thread pool size " + threadPoolSize);
-                final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
-                try {
-                    updatePortfolioMetrics(executorService);
-                } finally {
-                    LOGGER.debug("Shutting down executor service");
-                    executorService.shutdown();
-                    if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
-                        LOGGER.warn("Executor service shutdown timed out, running tasks have been interrupted");
-                    }
-                }
+                updatePortfolioMetrics();
             } else if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
                 updateProjectMetrics(((Project) event.getTarget()).getId());
             } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
@@ -127,13 +112,8 @@ public class NewMetricsUpdateTask implements Subscriber {
      * Performs high-level metric updates on the portfolio.
      * <p>
      * Portfolio metrics are the aggregate of all project metrics.
-     * <p>
-     * Project metrics updates can be parallelized by supplying an {@link ExecutorService}
-     * with a thread pool size greater than {@code 1}.
-     *
-     * @param executorService The {@link ExecutorService} to use for project metrics updates
      */
-    private void updatePortfolioMetrics(final ExecutorService executorService) throws Exception {
+    private void updatePortfolioMetrics() throws Exception {
         LOGGER.info("Executing portfolio metrics update");
         final var counters = new Counters();
 
@@ -144,21 +124,38 @@ public class NewMetricsUpdateTask implements Subscriber {
             LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
         }
 
-        LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
-        final List<CompletableFuture<Counters>> projectCountersFutures = new ArrayList<>();
-        for (final long projectId : activeProjectIds) {
-            projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
-                try {
-                    return updateProjectMetrics(projectId);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }, executorService));
+        // TODO: Any better way to determine this?
+        int threadPoolSize = SystemUtil.getCpuCores() / 2;
+        if (threadPoolSize > activeProjectIds.size()) {
+            threadPoolSize = activeProjectIds.size();
         }
+        LOGGER.debug("Using thread pool size of " + threadPoolSize);
 
-        LOGGER.debug("Waiting for all project metrics updates to complete");
-        CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
-        LOGGER.debug("All project metrics updates completed");
+        final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
+        final var limitingExecutor = new LimitingExecutor(executorService, threadPoolSize);
+        final var projectCountersFutures = new ArrayList<CompletableFuture<Counters>>();
+        try {
+            LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
+            for (final long projectId : activeProjectIds) {
+                projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return updateProjectMetrics(projectId);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }, limitingExecutor));
+            }
+
+            LOGGER.debug("Waiting for all project metrics updates to complete");
+            CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
+            LOGGER.debug("All project metrics updates completed");
+        } finally {
+            LOGGER.debug("Shutting down executor service");
+            executorService.shutdown();
+            if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                LOGGER.warn("Executor service shutdown timed out, running tasks have been interrupted");
+            }
+        }
 
         LOGGER.debug("Processing project metrics updates results");
         for (final CompletableFuture<Counters> projectCountersFuture : projectCountersFutures) {
@@ -166,6 +163,12 @@ public class NewMetricsUpdateTask implements Subscriber {
             try {
                 projectCounters = projectCountersFuture.get();
             } catch (Exception e) {
+                if (e.getCause() != null && e.getCause() instanceof NoSuchElementException) {
+                    LOGGER.warn("Couldn't update project metrics because the project was not found. " +
+                            "It was most likely deleted after the metrics update task was started.", e.getCause());
+                    continue;
+                }
+
                 LOGGER.error("An unexpected error occurred while updating project metrics", e);
                 continue;
             }
@@ -324,6 +327,10 @@ public class NewMetricsUpdateTask implements Subscriber {
             final Counters componentCounters;
             try {
                 componentCounters = updateComponentMetrics(componentId);
+            } catch (NoSuchElementException e) {
+                LOGGER.warn("Couldn't update component metrics because the component was not found. " +
+                        "It was most likely deleted after the metrics update task was started.", e);
+                continue;
             } catch (Exception e) {
                 LOGGER.error("An unexpected error occurred while updating component metrics", e);
                 continue;
@@ -862,16 +869,19 @@ public class NewMetricsUpdateTask implements Subscriber {
         private BigDecimal cvssV2BaseScore;
         private BigDecimal cvssV3BaseScore;
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setSeverity(final String severity) {
             if (severity != null) {
                 this.severity = Severity.valueOf(severity);
             }
         }
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setCvssV2BaseScore(final BigDecimal cvssV2BaseScore) {
             this.cvssV2BaseScore = cvssV2BaseScore;
         }
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setCvssV3BaseScore(final BigDecimal cvssV3BaseScore) {
             this.cvssV3BaseScore = cvssV3BaseScore;
         }
@@ -891,14 +901,18 @@ public class NewMetricsUpdateTask implements Subscriber {
         private Date created;
         private Date published;
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setId(final long id) {
             this.id = id;
         }
+
+        @SuppressWarnings("unused") // Called by DataNucleus
 
         public void setCreated(final Date created) {
             this.created = created;
         }
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setPublished(final Date published) {
             this.published = published;
         }
@@ -963,6 +977,47 @@ public class NewMetricsUpdateTask implements Subscriber {
             return metrics;
         }
 
+    }
+
+    /**
+     * An {@link Executor} that ensures that only a maximum amount of tasks
+     * is being submitted to a delegate {@link Executor} at any point in time.
+     * <p>
+     * This is used to prevent scenarios where an {@link Executor} must be shut down
+     * but still has multiple hundreds or thousands of tasks queued.
+     */
+    private static class LimitingExecutor implements Executor {
+
+        private final Semaphore semaphore;
+        private final Executor delegateExecutor;
+
+        private LimitingExecutor(final Executor delegateExecutor, final int limit) {
+            this.delegateExecutor = delegateExecutor;
+            this.semaphore = new Semaphore(limit);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void execute(@Nullable final Runnable command) {
+            Objects.requireNonNull(command);
+
+            try {
+                semaphore.acquire();
+            } catch (InterruptedException e) {
+                LOGGER.debug("Interrupted while waiting for permit to be acquired from semaphore", e);
+                return;
+            }
+
+            delegateExecutor.execute(() -> {
+                try {
+                    command.run();
+                } finally {
+                    semaphore.release();
+                }
+            });
+        }
     }
 
 }

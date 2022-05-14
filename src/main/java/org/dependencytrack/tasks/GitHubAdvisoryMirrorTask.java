@@ -90,13 +90,17 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        if (e instanceof GitHubAdvisoryMirrorEvent && this.isEnabled && this.accessToken != null) {
-            final long start = System.currentTimeMillis();
-            LOGGER.info("Starting GitHub Advisory mirroring task");
-            retrieveAdvisories(null);
-            final long end = System.currentTimeMillis();
-            LOGGER.info("GitHub Advisory mirroring complete");
-            LOGGER.info("Time spent (total): " + (end - start) + "ms");
+        if (e instanceof GitHubAdvisoryMirrorEvent && this.isEnabled) {
+            if (this.accessToken != null) {
+                final long start = System.currentTimeMillis();
+                LOGGER.info("Starting GitHub Advisory mirroring task");
+                retrieveAdvisories(null);
+                final long end = System.currentTimeMillis();
+                LOGGER.info("GitHub Advisory mirroring complete");
+                LOGGER.info("Time spent (total): " + (end - start) + "ms");
+            } else {
+                LOGGER.warn("GitHub Advisory mirroring is enabled, but no personal access token is configured. Skipping.");
+            }
         }
     }
 

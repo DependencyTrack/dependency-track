@@ -78,6 +78,7 @@ jobs:
 
       - name: Login to Docker.io
         uses: docker/login-action@v2.0.0
+        if: ${{ github.ref == 'refs/heads/master' }}
         with:
           registry: docker.io
           username: ${{ secrets.registry-0-usr }}
@@ -93,7 +94,7 @@ jobs:
             COMMIT_SHA=${{ github.sha }}
             WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.ref == 'refs/heads/master' }}
           context: .
           file: src/main/docker/Dockerfile
 
@@ -108,7 +109,7 @@ jobs:
           vuln-type: 'os'
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
-        if: github.ref == 'refs/heads/master'
+        if: ${{ github.ref == 'refs/heads/master' }}
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results.sarif'

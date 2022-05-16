@@ -1,0 +1,84 @@
+{
+  "cards": [
+    {
+      "header": {
+        "title": "Dependency-Track",
+        "subtitle": "{{ notification.title | escape(strategy="json") }}",
+        "imageUrl": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-icon-dark-background.png",
+        "imageStyle": "IMAGE"
+      },
+      "sections": [
+        {
+          "widgets": [
+            {
+              "textParagraph": {
+                {% if notification.group == "PROJECT_AUDIT_CHANGE" %}
+                  "text": "<b>Analysis State:</b>{{ subject.analysis.analysisState | escape(strategy="json") }} \n<b>Suppressed</b>{{ subject.analysis.suppressed | escape(strategy="json") }} \n<b>Vulnerability:</b> \nVulnID: {{ subject.vulnerability.vulnId | escape(strategy="json") }} \nSeverity: {{ subject.vulnerability.severity | escape(strategy="json") }} \nSource: {{ subject.vulnerability.source | escape(strategy="json") }}"
+                {% elseif notification.group == "NEW_VULNERABILITY" or notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+                  "text": "<b>Component:</b> {{ subject.component.toString | escape(strategy="json") }} \n<b>Vulnerability:</b>  \nVulnID: {{ subject.vulnerability.vulnId | escape(strategy="json") }} \nSeverity: {{ subject.vulnerability.severity | escape(strategy="json") }} \nSource: {{ subject.vulnerability.source | escape(strategy="json") }}"
+                {% else  %}
+                   "text": ""
+                {% endif %}
+              }
+            }
+          ]
+        },
+        {
+          "widgets": [
+              {
+                "textParagraph" : {
+                  {% if notification.group == "NEW_VULNERABILITY" %}
+                    "text" : "<b>Affected project(s):</b>"
+                  {% else %}
+                    "text" : "<b>Project:</b>"
+                  {% endif %}
+                }
+              },
+              {% if notification.group == "NEW_VULNERABILITY" %}
+                {% for project in subject.affectedProjects %}
+                {
+                  "keyValue" : {
+                    "content" : "{{ project.toString | escape(strategy="json") }}",
+                    "bottomLabel" : "{{ baseUrl }}/projects/{{ project.uuid.toString | escape(strategy="json") }}",
+                    "onClick" : {
+                      "openLink" : {
+                        "url" : "{{ baseUrl }}/projects/{{ project.uuid.toString | escape(strategy="json") }}"
+                      }
+                    }
+                  }
+                },
+                {% endfor %}
+                {
+                  "textParagraph" :{}
+                }
+                {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+                {
+                  "keyValue" : {
+                    "content" : "{{ subject.dependency.project.toString | escape(strategy="json") }}",
+                    "bottomLabel" : "{{ baseUrl }}/projects/{{ subject.dependency.project.uuid.toString | escape(strategy="json") }}"
+                    "onClick" : {
+                      "openLink" : {
+                        "url" : "{{ baseUrl }}/projects/{{ subject.dependency.project.uuid.toString | escape(strategy="json") }}"
+                      }
+                    }
+                  }
+                }
+                {% else %}
+                {
+                  "keyValue" : {
+                    "content" : "{{ subject.project.toString | escape(strategy="json") }}",
+                    "bottomLabel" : "{{ baseUrl }}/projects/{{ subject.project.uuid.toString | escape(strategy="json") }}",
+                    "onClick" : {
+                      "openLink" : {
+                        "url" : "{{ baseUrl }}/projects/{{ subject.project.uuid.toString | escape(strategy="json") }}"
+                      }
+                    }
+                  }
+                }
+                {% endif %}
+          ]
+        }
+      ]
+    }
+  ]
+}

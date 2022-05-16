@@ -39,6 +39,7 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
 
 public class NotificationRouter implements Subscriber {
 
@@ -61,7 +62,42 @@ public class NotificationRouter implements Subscriber {
                 final Class<?> publisherClass = Class.forName(rule.getPublisher().getPublisherClass());
                 if (Publisher.class.isAssignableFrom(publisherClass)) {
                     final Publisher publisher = (Publisher)publisherClass.getDeclaredConstructor().newInstance();
-                    publisher.inform(notification, config);
+
+                    if (notification.getSubject() instanceof NewVulnerabilityIdentified && !rule.getProjects().isEmpty() ) {
+                        List<Project> limited_to = rule.getProjects();
+                        Notification modified = new Notification();
+                        modified.setScope(notification.getScope());
+                        modified.setGroup(notification.getGroup());
+                        modified.setLevel(notification.getLevel());
+                        modified.setTitle(notification.getTitle());
+                        modified.setContent(notification.getContent());
+
+                        HashSet<Project> list = new HashSet<Project>();
+                        NewVulnerabilityIdentified old_subj = (NewVulnerabilityIdentified) notification.getSubject();
+                        for (Project p : old_subj.getAffectedProjects()) {
+                            int found = 0;
+                            for (Project q : limited_to) {
+                                if (p.getUuid().equals(q.getUuid())) {
+                                    LOGGER.debug("project " + p.getUuid() + " is added to notification");
+                                    list.add(p);
+                                    found = 1;
+                                    break;
+                                }
+                            }
+                            if (found == 0) {
+                                LOGGER.debug("project " + p.getUuid() + " is skipped for notification");
+                            }
+                        }
+                        if (list.isEmpty()) {
+                            LOGGER.error("Could not apply notification rule " + rule.getId());
+                        } else {
+                            NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(old_subj.getVulnerability(), old_subj.getComponent(), list);
+                            modified.setSubject(subject);
+                            publisher.inform(modified, config);
+                        }
+                    } else {
+                        publisher.inform(notification, config);
+                    }
                 } else {
                     LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
                 }

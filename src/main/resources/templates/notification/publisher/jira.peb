@@ -1,0 +1,21 @@
+{
+    "fields": {
+       "project":
+       {
+          "key": "{{ jiraProjectKey | escape(strategy="json") }}"
+       },
+       "summary": "[{{ notification.group | escape(strategy="json") }}] {% if notification.group == "NEW_VULNERABILITY" %}[{{ subject.vulnerability.severity }}] {{ subject.vulnerability.vulnId }} | {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %} {{ subject.dependency.project.name | escape(strategy="json") }} | {% else %} {{ subject.project.name | escape(strategy="json") }} | {% endif  %} {{ notification.title | escape(strategy="json") }}",
+       {% if notification.group ==  "NEW_VULNERABILITY" %}
+       "description": "{{ notification.content | escape(strategy="json") }} \n\n*Vulnerability* \nVulnID: {{ subject.vulnerability.vulnId | escape(strategy="json") }} \nSeverity: {{ subject.vulnerability.severity | escape(strategy="json") }} \nSource: {{ subject.vulnerability.source | escape(strategy="json") }} \nDescription: {{ subject.vulnerability.description | escape(strategy="json") }} \n\n*Component:* {{ subject.component.toString | escape(strategy="json") }} \n\n*Update your projects using a new dependency version!* \n\nAffected project(s): {% for project in subject.affectedProjects %}\n* {{ project.toString | escape(strategy="json") }}\n{{ baseUrl }}/projects/{{ project.uuid.toString | escape(strategy="json") }}{% endfor %}",
+       {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+       "description": "{{ notification.content | escape(strategy="json") }} \n\n*Project:* {{ subject.dependency.project.toString | escape(strategy="json") }} \n*Component:* {{ subject.dependency.component.toString | escape(strategy="json") }} \n*Project-Link:* {{ baseUrl }}/projects/{{ subject.dependency.project.uuid.toString | escape(strategy="json") }} \n\n*Vulnerabilities* \n{% for vulnerability in subject.vulnerabilities %}\nVuln ID:   {{ vulnerability.vulnId  | escape(strategy="json")}}\nSeverity:  {{ vulnerability.severity | escape(strategy="json") }}\nSource: {{ vulnerability.source | escape(strategy="json") }}\nDescription: {{ vulnerability.description | escape(strategy="json") }}\n{% endfor %}\n\n{{ notification.content | escape(strategy="json") }}\n\n*Update your project using new dependency versions!*",
+       {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
+       "description": "{{ notification.content | escape(strategy="json") }} \n\n*Project:* {{ subject.project.toString | escape(strategy="json") }} \n{{ baseUrl }}/projects/{{ subject.project.uuid.toString }} \n*Component:* {{ subject.component.toString | escape(strategy="json") }} \n\n*Analysis* \nAnalysis State: {{ subject.analysis.analysisState | escape(strategy="json") }} \nSurpressed: {{ subject.analysis.suppressed | escape(strategy="json") }} \nVulnID: {{ subject.vulnerability.vulnId | escape(strategy="json") }} \nSeverity: {{ subject.vulnerability.severity | escape(strategy="json") }} \nSource: {{ subject.vulnerability.source | escape(strategy="json") }}",
+       {% else %}
+       "description": "{{ notification.content | escape(strategy="json") }} \n\n*Level:* {{ notification.level | escape(strategy="json") }} \n\n*Scope:* {{ notification.scope | escape(strategy="json") }} \n\n*Project:* {{ subject.project.toString | escape(strategy="json") }} \n{{ baseUrl }}/projects/{{ subject.project.uuid.toString | escape(strategy="json") }}",
+       {% endif %}
+       "issuetype": {
+          "name": "Task"
+       }
+   }
+}

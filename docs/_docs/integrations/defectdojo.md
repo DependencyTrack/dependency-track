@@ -39,8 +39,9 @@ Requirements:
 #### Step 5: Add the API key in Dependency-Track configuration
 ![Configure DefectDojo Integration](/images/screenshots/defectdojo_config.png)
 
-#### Per-project configuration
-Dependency-Track includes the ability to specify configuration properties on a per-project basis.
+#### Step 6: Add Per-project configuration
+![Configure Project](/images/screenshots/dtrack_project_properties.png)
+Dependency-Track includes the ability to specify configuration properties on a per-project basis. Navigate to Projects / 'Your Project', then click on 'View Details' to open 'Project Details' page; then click on 'Properties' button; click on 'Create Property'.
 This feature is used to map projects in Dependency-Track to engagements in DefectDojo.
 
 | Attribute      | Value                             |

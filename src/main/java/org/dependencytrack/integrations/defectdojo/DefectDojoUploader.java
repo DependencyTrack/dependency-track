@@ -78,7 +78,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
             final ArrayList testsIds = client.getDojoTestIds(apiKey.getPropertyValue());
             final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
             LOGGER.debug("Found existing test Id: " + testId);
-            if (testId == "") {
+            if (testId.equals("")) {
                 client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
             } else {
                 client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId);

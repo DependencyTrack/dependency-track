@@ -118,7 +118,8 @@ public class Finding implements Serializable {
         final List<Cwe> cwes = getCwes(o[18]);
         if (cwes != null && !cwes.isEmpty()) {
             // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
-            optValue(vulnerability, "cwe", cwes.get(0));
+            optValue(vulnerability, "cweId", cwes.get(0).getCweId());
+            optValue(vulnerability, "cweName", cwes.get(0).getName());
         }
         optValue(vulnerability, "cwes", cwes);
         optValue(attribution, "analyzerIdentity", o[19]);

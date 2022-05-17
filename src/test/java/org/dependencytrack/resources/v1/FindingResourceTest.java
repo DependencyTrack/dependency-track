@@ -89,8 +89,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("1.0", json.getJsonObject(0).getJsonObject("component").getString("version"));
         Assert.assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
         Assert.assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
-        Assert.assertNotNull(json.getJsonObject(0).getJsonObject("vulnerability").getJsonObject("cwe"));
-        Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonObject("cwe").getInt("cweId"));
+        Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getInt("cweId"));
         Assert.assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
@@ -100,8 +99,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("1.0", json.getJsonObject(1).getJsonObject("component").getString("version"));
         Assert.assertEquals("Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
         Assert.assertEquals(Severity.HIGH.name(), json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
-        Assert.assertNotNull(json.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe"));
-        Assert.assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe").getInt("cweId"));
+        Assert.assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getInt("cweId"));
         Assert.assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
@@ -111,8 +109,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("1.0", json.getJsonObject(2).getJsonObject("component").getString("version"));
         Assert.assertEquals("Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
         Assert.assertEquals(Severity.MEDIUM.name(), json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
-        Assert.assertNotNull(json.getJsonObject(2).getJsonObject("vulnerability").getJsonObject("cwe"));
-        Assert.assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonObject("cwe").getInt("cweId"));
+        Assert.assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getInt("cweId"));
         Assert.assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
@@ -169,8 +166,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("1.0", findings.getJsonObject(0).getJsonObject("component").getString("version"));
         Assert.assertEquals("Vuln-1", findings.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
         Assert.assertEquals(Severity.CRITICAL.name(), findings.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
-        Assert.assertNotNull(findings.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe"));
-        Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe").getInt("cweId"));
+        Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getInt("cweId"));
         Assert.assertEquals(2, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
@@ -180,8 +176,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("1.0", findings.getJsonObject(1).getJsonObject("component").getString("version"));
         Assert.assertEquals("Vuln-2", findings.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
         Assert.assertEquals(Severity.HIGH.name(), findings.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
-        Assert.assertNotNull(findings.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe"));
-        Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe").getInt("cweId"));
+        Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getInt("cweId"));
         Assert.assertEquals(2, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
@@ -191,8 +186,7 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("1.0", findings.getJsonObject(2).getJsonObject("component").getString("version"));
         Assert.assertEquals("Vuln-3", findings.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
         Assert.assertEquals(Severity.MEDIUM.name(), findings.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
-        Assert.assertNotNull(findings.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe"));
-        Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonObject("cwe").getInt("cweId"));
+        Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getInt("cweId"));
         Assert.assertEquals(2, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assert.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
         Assert.assertEquals(666, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));

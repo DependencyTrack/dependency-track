@@ -47,6 +47,7 @@ import org.dependencytrack.persistence.QueryManager;
 
 import javax.jdo.FetchPlan;
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -281,7 +282,12 @@ public final class NotificationUtil {
                 }
             }
         }
-        vulnerabilityBuilder.add("cwes", cwesBuilder.build());
+        final JsonArray cwes = cwesBuilder.build();
+        if (cwes != null && !cwes.isEmpty()) {
+            // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
+            vulnerabilityBuilder.add("cwe", cwes.getJsonObject(0));
+        }
+        vulnerabilityBuilder.add("cwes", cwes);
         return vulnerabilityBuilder.build();
     }
 

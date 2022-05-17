@@ -63,7 +63,11 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
       "subtitle": "timespan",
       "severity": "LOW",
       "severityRank": 3,
-      "cwe": [
+      "cwe": {
+        "cweId": 400,
+        "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
+      },
+      "cwes": [
         {
           "cweId": 400,
           "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
@@ -93,7 +97,11 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
       "subtitle": "uglify-js",
       "severity": "LOW",
       "severityRank": 3,
-      "cwe": [
+      "cwe": {
+        "cweId": 400,
+        "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
+      },
+      "cwes": [
         {
           "cweId": 400,
           "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
@@ -109,3 +117,5 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
   }]
 }
 ```
+
+> The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.

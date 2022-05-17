@@ -117,7 +117,11 @@ This type of notification will always contain:
         "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
         "cvssv2": 5.8,
         "severity": "MEDIUM",
-        "cwe": [
+        "cwe": {
+          "cweId": 20,
+          "name": "Improper Input Validation"
+        },
+        "cwes": [
           {
             "cweId": 20,
             "name": "Improper Input Validation"
@@ -135,6 +139,8 @@ This type of notification will always contain:
   }
 }
 ```
+
+> The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
 
 #### NEW_VULNERABLE_DEPENDENCY
 This type of notification will always contain:
@@ -175,7 +181,11 @@ This type of notification will always contain:
           "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
           "cvssv2": 5.8,
           "severity": "MEDIUM",
-          "cwe": [
+          "cwe": {
+            "cweId": 20,
+            "name": "Improper Input Validation"
+          },
+          "cwes": [
             {
               "cweId": 20,
               "name": "Improper Input Validation"
@@ -195,6 +205,8 @@ This type of notification will always contain:
   }
 }
 ```
+
+> The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
 
 #### PROJECT_AUDIT_CHANGE and GLOBAL_AUDIT_CHANGE
 This type of notification will always contain:

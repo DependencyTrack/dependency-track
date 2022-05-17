@@ -115,7 +115,12 @@ public class Finding implements Serializable {
         optValue(vulnerability, "severityRank", severity.ordinal());
         optValue(vulnerability, "epssScore", o[16]);
         optValue(vulnerability, "epssPercentile", o[17]);
-        optValue(vulnerability, "cwe", getCwes(o[18]));
+        final List<Cwe> cwes = getCwes(o[18]);
+        if (cwes != null && !cwes.isEmpty()) {
+            // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
+            optValue(vulnerability, "cwe", cwes.get(0));
+        }
+        optValue(vulnerability, "cwes", cwes);
         optValue(attribution, "analyzerIdentity", o[19]);
         optValue(attribution, "attributedOn", o[20]);
         optValue(attribution, "alternateIdentifier", o[21]);

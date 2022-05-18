@@ -83,3 +83,4 @@ CI/CD environments.
 [Software Bill of Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom
 [CycloneDX]: https://cyclonedx.org
 [Exploit Prediction Scoring System (EPSS)]: https://www.first.org/epss/
+ 

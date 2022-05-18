@@ -89,6 +89,7 @@ jobs:
         with:
           tags: |-
             docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
+            docker.io/dependencytrack/${{ matrix.distribution }}:latest
           build-args: |-
             APP_VERSION=${{ inputs.app-version }}
             COMMIT_SHA=${{ github.sha }}

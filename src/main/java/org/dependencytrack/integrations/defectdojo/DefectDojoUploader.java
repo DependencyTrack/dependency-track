@@ -75,7 +75,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         try {
             final DefectDojoClient client = new DefectDojoClient(this, new URL(defectDojoUrl.getPropertyValue()));
-            final ArrayList testsIds = client.getDojoTestIds(apiKey.getPropertyValue());
+            final ArrayList testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
             final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
             LOGGER.debug("Found existing test Id: " + testId);
             if (testId.equals("")) {

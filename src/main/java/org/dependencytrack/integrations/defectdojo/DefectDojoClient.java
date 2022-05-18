@@ -73,13 +73,13 @@ public class DefectDojoClient {
         }
     }
 
-    // Pulling DefectDojo 'tests' API endpoint, and retrieve a list of existing tests
-    public ArrayList getDojoTestIds(final String token) {
+    // Pulling DefectDojo 'tests' API endpoint with engagementID filter on, and retrieve a list of existing tests
+    public ArrayList getDojoTestIds(final String token, final String eid) {
         LOGGER.debug("Pulling DefectDojo Tests API ...");
         String tests_uri = "/api/v2/tests/";
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         LOGGER.debug("Make the first pagination call");
-        HttpResponse<JsonNode> response = ui.get(baseURL + tests_uri + "?limit=100")
+        HttpResponse<JsonNode> response = ui.get(baseURL + tests_uri + "?limit=100&engagement=" + eid)
                 .header("accept", "application/json")
                 .header("Authorization", "Token " + token)
                 .asJson();

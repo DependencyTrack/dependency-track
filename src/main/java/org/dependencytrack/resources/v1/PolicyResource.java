@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.validation.Validator;
@@ -260,6 +261,84 @@ public class PolicyResource extends AlpineResource {
             final List<Project> projects = policy.getProjects();
             if (projects != null && projects.contains(project)) {
                 policy.getProjects().remove(project);
+                qm.persist(policy);
+                return Response.ok(policy).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @POST
+    @Path("/{policyUuid}/tag/{tagUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Adds a tag to a policy",
+            response = Policy.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The policy already has the specified tag assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The policy or tag could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
+    public Response addTagToPolicy(
+            @ApiParam(value = "The UUID of the policy to add a project to", required = true)
+            @PathParam("policyUuid") String policyUuid,
+            @ApiParam(value = "The UUID of the tag to add to the rule", required = true)
+            @PathParam("tagUuid") String tagUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
+            if (policy == null) {
+                System.out.println("The policy could not be found");
+                return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
+            }
+            final Tag tag = qm.getObjectByUuid(Tag.class, tagUuid);
+            if (tag == null) {
+                System.out.println("The tag with id could not be found "+tagUuid);
+                return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
+            }
+            final List<Tag> tags = policy.getTags();
+            if (tags != null && !tags.contains(tag)) {
+                policy.getTags().add(tag);
+                qm.persist(policy);
+                return Response.ok(policy).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{policyUuid}/tag/{tagUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Removes a tag from a policy",
+            response = Policy.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The policy does not have the specified tag assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The policy or tag could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.POLICY_MANAGEMENT)
+    public Response removeTagFromPolicy(
+            @ApiParam(value = "The UUID of the policy to remove the tag from", required = true)
+            @PathParam("policyUuid") String policyUuid,
+            @ApiParam(value = "The UUID of the tag to remove from the policy", required = true)
+            @PathParam("tagUuid") String tagUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
+            if (policy == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
+            }
+            final Tag tag = qm.getObjectByUuid(Tag.class, tagUuid);
+            if (tag == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
+            }
+            final List<Tag> tags = policy.getTags();
+            if (tags != null && tags.contains(tag)) {
+                policy.getTags().remove(tag);
                 qm.persist(policy);
                 return Response.ok(policy).build();
             }

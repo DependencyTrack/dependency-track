@@ -19,11 +19,7 @@
 package org.dependencytrack.policy;
 
 import alpine.common.logging.Logger;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Policy;
-import org.dependencytrack.model.PolicyCondition;
-import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.Project;
+import org.dependencytrack.model.*;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -71,7 +67,8 @@ public class PolicyEngine {
     private void evaluate(final QueryManager qm, final List<Policy> policies, final Component component) {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
         for (final Policy policy : policies) {
-            if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())) {
+            if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())
+                    || isPolicyAssignedToProjectTag(policy, component.getProject())) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
                 final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
                 for (final PolicyEvaluator evaluator : evaluators) {
@@ -130,5 +127,15 @@ public class PolicyEngine {
                 return PolicyViolation.Type.LICENSE;
         }
         return null;
+    }
+
+    private boolean isPolicyAssignedToProjectTag(Policy policy, Project project) {
+        if (policy.getTags() == null || policy.getTags().size() == 0) {
+            return false;
+        }
+        for(Tag projectTag : project.getTags()){
+            return policy.getTags().stream().anyMatch(p -> p.getId() == projectTag.getId());
+        }
+        return false;
     }
 }

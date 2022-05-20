@@ -84,12 +84,19 @@ jobs:
           username: ${{ secrets.registry-0-usr }}
           password: ${{ secrets.registry-0-psw }}
 
+      - name: Set Container Tags
+        id: tags
+        run: |-
+          TAGS="docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}"
+          if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
+            TAGS="${TAGS},docker.io/dependencytrack/${{ matrix.distribution }}:latest"
+          fi
+          echo "::set-output name=tags::${TAGS}"
+
       - name: Build multi-arch Container Image
         uses: docker/build-push-action@v3.0.0
         with:
-          tags: |-
-            docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
-            docker.io/dependencytrack/${{ matrix.distribution }}:latest
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
             APP_VERSION=${{ inputs.app-version }}
             COMMIT_SHA=${{ github.sha }}

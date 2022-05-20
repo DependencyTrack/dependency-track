@@ -24,6 +24,7 @@ import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -241,6 +242,7 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals("Acme Example", json.getString("name"));
         Assert.assertEquals("1.0", json.getString("version"));
         Assert.assertEquals("Test project", json.getString("description"));
+        Assert.assertTrue(json.getBoolean("active"));
         Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
     }
 
@@ -390,6 +392,79 @@ public class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
+    @Test
+    public void patchProjectNotModifiedTest() {
+        final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
+        final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+
+        final var jsonProject = new Project();
+        jsonProject.setDescription(p1.getDescription());
+        final var response = target(V1_PROJECT + "/" + p1.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method("PATCH", Entity.json(jsonProject));
+        Assert.assertEquals(Response.Status.NOT_MODIFIED.getStatusCode(), response.getStatus());
+        Assert.assertEquals(p1, qm.getObjectByUuid(Project.class, p1.getUuid()));
+    }
+
+    @Test
+    public void patchProjectNameVersionConflictTest() {
+        final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
+        final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+        qm.createProject("ABC", "Test project", "0.9", null, null, null, false, false);
+        final var jsonProject = new Project();
+        jsonProject.setVersion("0.9");
+        final var response = target(V1_PROJECT + "/" + p1.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method("PATCH", Entity.json(jsonProject));
+        Assert.assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
+        Assert.assertEquals(p1, qm.getObjectByUuid(Project.class, p1.getUuid()));
+    }
+
+    @Test
+    public void patchProjectNotFoundTest() {
+        final var response = target(V1_PROJECT + "/" + UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method("PATCH", Entity.json(new Project()));
+        Assert.assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void patchProjectSuccessfullyPatchedTest() {
+        final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
+        final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);
+        final var jsonProject = new Project();
+        jsonProject.setActive(false);
+        jsonProject.setName("new name");
+        jsonProject.setPublisher("new publisher");
+        jsonProject.setTags(Stream.of("tag4").map(name -> {
+            var t = new Tag();
+            t.setName(name);
+            return t;
+        }).collect(Collectors.toUnmodifiableList()));
+        final var response = target(V1_PROJECT + "/" + p1.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method("PATCH", Entity.json(jsonProject));
+        Assert.assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        final var json = parseJsonObject(response);
+        Assert.assertEquals(p1.getUuid().toString(), json.getString("uuid"));
+        Assert.assertEquals(p1.getDescription(), json.getString("description"));
+        Assert.assertEquals(p1.getVersion(), json.getString("version"));
+        Assert.assertEquals(jsonProject.getName(), json.getString("name"));
+        Assert.assertEquals(jsonProject.getPublisher(), json.getString("publisher"));
+        Assert.assertEquals(false, json.getBoolean("active"));
+        final var jsonTags = json.getJsonArray("tags");
+        Assert.assertEquals(1, jsonTags.size());
+        Assert.assertEquals("tag4", jsonTags.get(0).asJsonObject().getString("name"));
     }
 
     //todo: add clone tests

@@ -31,19 +31,20 @@ Dependency-Track notifications come in two flavors:
 
 Each scope contains a set of notification groups that can be used to subscribe to.
 
-| Scope | Group | Description |
-| ------|-------|-------------|
-| SYSTEM | ANALYZER | Notifications generated as a result of interacting with an external source of vulnerability intelligence |
-| SYSTEM | DATASOURCE_MIRRORING | Notifications generated when performing mirroring of one of the supported datasources such as the NVD |
-| SYSTEM | INDEXING_SERVICE | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching |
-| SYSTEM | FILE_SYSTEM | Notifications generated as a result of a file system operation. These are typically only generated on error conditions |
+| Scope | Group | Description                                                                                                                       |
+| ------|-------|-----------------------------------------------------------------------------------------------------------------------------------|
+| SYSTEM | ANALYZER | Notifications generated as a result of interacting with an external source of vulnerability intelligence                          |
+| SYSTEM | DATASOURCE_MIRRORING | Notifications generated when performing mirroring of one of the supported datasources such as the NVD                             |
+| SYSTEM | INDEXING_SERVICE | Notifications generated as a result of performing maintenance on Dependency-Tracks internal index used for global searching       |
+| SYSTEM | FILE_SYSTEM | Notifications generated as a result of a file system operation. These are typically only generated on error conditions            |
 | SYSTEM | REPOSITORY | Notifications generated as a result of interacting with one of the supported repositories such as Maven Central, RubyGems, or NPM |
-| PORTFOLIO | NEW_VULNERABILITY | Notifications generated whenever a new vulnerability is identified |
-| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | Notifications generated as a result of a vulnerable component becoming a dependency of a project |
-| PORTFOLIO | GLOBAL_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global) |
-| PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project |
-| PORTFOLIO | BOM_CONSUMED | Notifications generated whenever a supported BOM is ingested and identified |
-| PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed |
+| PORTFOLIO | NEW_VULNERABILITY | Notifications generated whenever a new vulnerability is identified                                                                |
+| PORTFOLIO | NEW_VULNERABLE_DEPENDENCY | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
+| PORTFOLIO | GLOBAL_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
+| PORTFOLIO | PROJECT_AUDIT_CHANGE | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
+| PORTFOLIO | BOM_CONSUMED | Notifications generated whenever a supported BOM is ingested and identified                                                       |
+| PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
+| PORTFOLIO | POLICY_VIOLATION | Notifications generated whenever a policy violation is identified                                                                 |
 
 
 ## Configuring Notifications
@@ -119,7 +120,13 @@ This type of notification will always contain:
         "cwe": {
           "cweId": 20,
           "name": "Improper Input Validation"
-        }
+        },
+        "cwes": [
+          {
+            "cweId": 20,
+            "name": "Improper Input Validation"
+          }
+        ]
       },
       "affectedProjects": [
         {
@@ -132,6 +139,8 @@ This type of notification will always contain:
   }
 }
 ```
+
+> The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
 
 #### NEW_VULNERABLE_DEPENDENCY
 This type of notification will always contain:
@@ -175,7 +184,13 @@ This type of notification will always contain:
           "cwe": {
             "cweId": 20,
             "name": "Improper Input Validation"
-          }
+          },
+          "cwes": [
+            {
+              "cweId": 20,
+              "name": "Improper Input Validation"
+            }
+          ]
         },
         {
           "uuid": "ca318ca7-616f-4af0-9c6b-15b8e208c586",
@@ -190,6 +205,8 @@ This type of notification will always contain:
   }
 }
 ```
+
+> The `cwe` field is deprecated and will be removed in a later version. Please use `cwes` instead.
 
 #### PROJECT_AUDIT_CHANGE and GLOBAL_AUDIT_CHANGE
 This type of notification will always contain:
@@ -270,6 +287,50 @@ This type of notification will always contain:
         "content": "<base64 encoded bom>",
         "format": "CycloneDX",
         "specVersion": "1.1"
+      }
+    }
+  }
+}
+```
+
+#### POLICY_VIOLATION
+
+```json
+{
+  "notification": {
+    "level": "INFORMATIONAL",
+    "scope": "PORTFOLIO",
+    "group": "POLICY_VIOLATION",
+    "timestamp": "2022-05-12T23:07:59.611303",
+    "title": "Policy Violation",
+    "content": "A operational policy violation occurred",
+    "subject": {
+      "project": {
+        "uuid": "7a36e5c0-9f09-42dd-b401-360da56c2abe",
+        "name": "Acme Example",
+        "version": "1.0.0"
+      },
+      "component": {
+        "uuid": "4e04c695-9acd-46fc-9bf6-ed23d7eb551e",
+        "group": "apache",
+        "name": "axis",
+        "version": "1.4"
+      },
+      "policyViolation": {
+        "uuid": "c82fcb50-029a-4636-a657-96242b20680e",
+        "type": "OPERATIONAL",
+        "timestamp": "2022-05-12T20:34:46Z",
+        "policyCondition": {
+          "uuid": "8e5c0a5b-71fb-45c5-afac-6c6a99742cbe",
+          "subject": "COORDINATES",
+          "operator": "MATCHES",
+          "value": "{\"group\":\"apache\",\"name\":\"axis\",\"version\":\"*\"}",
+          "policy": {
+            "uuid": "6d4c7398-689a-4ec7-b5c5-9abb6b5393e9",
+            "name": "Banned Components",
+            "violationState": "FAIL"
+          }
+        }
       }
     }
   }

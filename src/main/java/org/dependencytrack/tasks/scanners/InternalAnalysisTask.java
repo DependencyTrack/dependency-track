@@ -102,12 +102,34 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
         }
+
+        // https://github.com/DependencyTrack/dependency-track/issues/1574
+        // Some ecosystems use the "v" version prefix (e.g. v1.2.3) for their components.
+        // However, both the NVD and GHSA store versions without that prefix.
+        // For this reason, the prefix is stripped before running analyzeVersionRange.
+        //
+        // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
+        String componentVersion;
+        if (parsedCpe != null) {
+            componentVersion = parsedCpe.getVersion();
+        } else if (component.getPurl() != null) {
+            componentVersion = component.getPurl().getVersion();
+        } else {
+            // Catch cases where the CPE couldn't be parsed and no PURL exists.
+            // Should be rare, but could lead to NPEs later.
+            LOGGER.debug("Neither CPE nor PURL of component " + component.getUuid() + " provide a version - skipping analysis");
+            return;
+        }
+        if (componentVersion.length() > 1 && componentVersion.startsWith("v")) {
+            componentVersion = componentVersion.substring(1);
+        }
+
         if (parsedCpe != null) {
             final List<VulnerableSoftware> vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
-            super.analyzeVersionRange(qm, vsList, parsedCpe.getVersion(), parsedCpe.getUpdate(), component);
+            super.analyzeVersionRange(qm, vsList, componentVersion, parsedCpe.getUpdate(), component);
         } else {
             final List<VulnerableSoftware> vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
-            super.analyzeVersionRange(qm, vsList, component.getPurl().getVersion(), null, component);
+            super.analyzeVersionRange(qm, vsList, componentVersion, null, component);
         }
     }
 

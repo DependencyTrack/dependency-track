@@ -90,13 +90,17 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        if (e instanceof GitHubAdvisoryMirrorEvent && this.isEnabled && this.accessToken != null) {
-            final long start = System.currentTimeMillis();
-            LOGGER.info("Starting GitHub Advisory mirroring task");
-            retrieveAdvisories(null);
-            final long end = System.currentTimeMillis();
-            LOGGER.info("GitHub Advisory mirroring complete");
-            LOGGER.info("Time spent (total): " + (end - start) + "ms");
+        if (e instanceof GitHubAdvisoryMirrorEvent && this.isEnabled) {
+            if (this.accessToken != null) {
+                final long start = System.currentTimeMillis();
+                LOGGER.info("Starting GitHub Advisory mirroring task");
+                retrieveAdvisories(null);
+                final long end = System.currentTimeMillis();
+                LOGGER.info("GitHub Advisory mirroring complete");
+                LOGGER.info("Time spent (total): " + (end - start) + "ms");
+            } else {
+                LOGGER.warn("GitHub Advisory mirroring is enabled, but no personal access token is configured. Skipping.");
+            }
         }
     }
 
@@ -313,6 +317,10 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             } else if (PackageURL.StandardTypes.MAVEN.equals(purlType) && vuln.getPackageName().contains(":")) {
                 final String[] parts = vuln.getPackageName().split(":");
                 return PackageURLBuilder.aPackageURL().withType(purlType).withNamespace(parts[0]).withName(parts[1]).build();
+            } else if (PackageURL.StandardTypes.GOLANG.equals(purlType) && vuln.getPackageName().contains("/")) {
+                final String[] parts = vuln.getPackageName().split("/");
+                final String namespace = String.join("/", Arrays.copyOfRange(parts, 0, parts.length - 1));
+                return PackageURLBuilder.aPackageURL().withType(purlType).withNamespace(namespace).withName(parts[parts.length - 1]).build();
             } else {
                 return PackageURLBuilder.aPackageURL().withType(purlType).withName(vuln.getPackageName()).build();
             }

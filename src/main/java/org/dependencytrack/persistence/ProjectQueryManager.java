@@ -32,6 +32,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
+import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
@@ -235,7 +236,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Query<Project> query = pm.newQuery(Project.class);
         final String queryFilter;
         if (excludeInactive) {
-            queryFilter = "(tags.contains(:tag)) && (active == true || active == null))";
+            queryFilter = "(tags.contains(:tag)) && (active == true || active == null)";
         } else {
             queryFilter = "(tags.contains(:tag))";
         }
@@ -244,6 +245,37 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         final Map<String, Object> params = new HashMap<>();
         params.put("tag", tag);
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a paginated result of projects by classifier.
+     * @param classifier the classifier of the Project
+     * @return a List of Projects of the specified classifier
+     */
+    public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive) {
+        final PaginatedResult result;
+        final Query<Project> query = pm.newQuery(Project.class);
+        final String queryFilter;
+        if (excludeInactive) {
+            queryFilter = "(classifier == :classifier) && (active == true || active == null)";
+        } else {
+            queryFilter = "(classifier == :classifier)";
+        }
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+        final Map<String, Object> params = new HashMap<>();
+        params.put("classifier", classifier);
         preprocessACLs(query, queryFilter, params, false);
         result = execute(query, params);
         if (includeMetrics) {
@@ -547,16 +579,18 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     /**
      * Deletes a Project and all objects dependant on the project.
      * @param project the Project to delete
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
-    public void recursivelyDelete(Project project) {
+    public void recursivelyDelete(final Project project, final boolean commitIndex) {
         if (project.getChildren() != null) {
             for (final Project child: project.getChildren()) {
-                recursivelyDelete(child);
+                recursivelyDelete(child, false);
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
         Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
 
         deleteAnalysisTrail(project);
         deleteViolationAnalysisTrail(project);
@@ -569,6 +603,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             recursivelyDelete(s, false);
         }
         deleteBoms(project);
+        deleteVexs(project);
         removeProjectFromNotificationRules(project);
         delete(project.getProperties());
         delete(getAllBoms(project));

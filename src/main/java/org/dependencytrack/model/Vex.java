@@ -20,7 +20,6 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -33,20 +32,19 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * Model class for tracking the importing of bill-of-material documents.
+ * Model class for tracking the importing of VEX documents.
  *
  * @author Steve Springett
- * @since 3.0.0
+ * @since 4.5.0
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Bom implements Serializable {
+public class Vex implements Serializable {
 
     private static final long serialVersionUID = -4378439983100141050L;
 
     public enum Format {
-        CYCLONEDX("CycloneDX", "CycloneDX BOM Standard"),
-        SPDX("SPDX", "Software Package Data Exchange");
+        CYCLONEDX("CycloneDX", "CycloneDX BOM Standard");
 
         private final String formatShortName;
         private final String formatLongName;
@@ -76,16 +74,16 @@ public class Bom implements Serializable {
     private Date imported;
 
     @Persistent
-    @Column(name = "BOM_FORMAT")
-    private String bomFormat;
+    @Column(name = "VEX_FORMAT")
+    private String vexFormat;
 
     @Persistent
     @Column(name = "SPEC_VERSION")
     private String specVersion;
 
     @Persistent
-    @Column(name = "BOM_VERSION")
-    private Integer bomVersion;
+    @Column(name = "VEX_VERSION")
+    private Integer vexVersion;
 
     @Persistent
     @Column(name = "SERIAL_NUMBER")
@@ -97,7 +95,7 @@ public class Bom implements Serializable {
     private Project project;
 
     @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "BOM_UUID_IDX")
+    @Unique(name = "VEX_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     @NotNull
     private UUID uuid;
@@ -118,12 +116,12 @@ public class Bom implements Serializable {
         this.imported = imported;
     }
 
-    public String getBomFormat() {
-        return bomFormat;
+    public String getVexFormat() {
+        return vexFormat;
     }
 
-    public void setBomFormat(Format format) {
-        this.bomFormat = format.formatShortName;
+    public void setVexFormat(Format format) {
+        this.vexFormat = format.formatShortName;
     }
 
     public String getSpecVersion() {
@@ -134,12 +132,12 @@ public class Bom implements Serializable {
         this.specVersion = specVersion;
     }
 
-    public Integer getBomVersion() {
-        return bomVersion;
+    public Integer getVexVersion() {
+        return vexVersion;
     }
 
-    public void setBomVersion(Integer bomVersion) {
-        this.bomVersion = bomVersion;
+    public void setVexVersion(Integer vexVersion) {
+        this.vexVersion = vexVersion;
     }
 
     public String getSerialNumber() {

@@ -24,9 +24,13 @@ compliance, regulatory, legal, or economic reasons.
 * Enable Internal Analyzer
 * Enable OSS Index
 
+### Data Sources
+* Enable National Vulnerability Database mirroring
+* Enable GitHub Advisories mirroring
+
 #### Summary
-Sonatype OSS Index and NPM Audit provides accurate vulnerability information for application dependencies.
-All components in the portfolio should have valid Package URLs to take advantage of OSS Index and NPM Audit.
+Sonatype OSS Index provides accurate vulnerability information for application dependencies.
+All components in the portfolio should have valid Package URLs to take advantage of OSS Index and GitHub Advisories.
 Non-application dependencies such as operating systems, hardware, firmware, etc, should have valid CPEs to
 take advantage of the internal CPE analyzer.
 

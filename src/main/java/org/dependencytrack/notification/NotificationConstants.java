@@ -53,8 +53,11 @@ public class NotificationConstants {
         public static final String VIOLATIONANALYSIS_DECISION_NOT_SET = "Violation Analysis Decision: Marking Finding as NOT SET";
         public static final String VIOLATIONANALYSIS_DECISION_SUPPRESSED = "Violation Analysis Decision: Violation Suppressed";
         public static final String VIOLATIONANALYSIS_DECISION_UNSUPPRESSED = "Violation Analysis Decision: Violation UnSuppressed";
+        public static final String POLICY_VIOLATION = "Policy Violation";
         public static final String BOM_CONSUMED = "Bill of Materials Consumed";
         public static final String BOM_PROCESSED = "Bill of Materials Processed";
+        public static final String VEX_CONSUMED = "Vulnerability Exploitability Exchange (VEX) Consumed";
+        public static final String VEX_PROCESSED = "Vulnerability Exploitability Exchange (VEX) Processed";
     }
 
 }

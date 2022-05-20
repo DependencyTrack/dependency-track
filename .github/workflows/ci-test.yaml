@@ -1,0 +1,44 @@
+name: Tests CI
+
+on:
+  push:
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only;
+# if github.head_ref is undefined, the concurrency group will fallback to the run ID,
+# which is guaranteed to be both unique and defined for the run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3.3.0
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Execute unit tests
+        run: |-
+          mvn clean
+          mvn test -P enhance
+
+      - name: Publish test coverage
+        if: ${{ github.ref == 'refs/heads/master' && contains(github.repository, 'DependencyTrack/') }}
+        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: Java
+          coverage-reports: target/jacoco-ut/jacoco.xml

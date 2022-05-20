@@ -1,0 +1,116 @@
+on:
+  workflow_call:
+    inputs:
+      app-version:
+        type: string
+        required: false
+        default: "snapshot"
+        description: "the version that should be set/used as tag for the container image"
+    secrets:
+      registry-0-usr:
+        required: true
+      registry-0-psw:
+        required: true
+
+jobs:
+  build-java:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3.3.0
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Overwrite Version in pom.xml
+        if: ${{ ! contains(inputs.app-version, 'snapshot') }}
+        run: |-
+          mvn versions:set -DnewVersion=${{ inputs.app-version }}
+
+      - name: Build with Maven
+        run: |-
+          mvn clean
+          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn clean -P clean-exclude-wars
+          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn clean -P clean-exclude-wars
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: assembled-wars
+          path: target/*.jar
+
+  build-container:
+    runs-on: ubuntu-latest
+    needs:
+      - build-java
+
+    strategy:
+      matrix:
+        distribution:
+          - apiserver
+          - bundled
+      fail-fast: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: assembled-wars
+          path: target
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2.0.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2.0.0
+        id: buildx
+        with:
+          install: true
+
+      - name: Login to Docker.io
+        uses: docker/login-action@v2.0.0
+        if: ${{ github.ref == 'refs/heads/master' }}
+        with:
+          registry: docker.io
+          username: ${{ secrets.registry-0-usr }}
+          password: ${{ secrets.registry-0-psw }}
+
+      - name: Build multi-arch Container Image
+        uses: docker/build-push-action@v3.0.0
+        with:
+          tags: |-
+            docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
+            docker.io/dependencytrack/${{ matrix.distribution }}:latest
+          build-args: |-
+            APP_VERSION=${{ inputs.app-version }}
+            COMMIT_SHA=${{ github.sha }}
+            WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref == 'refs/heads/master' }}
+          context: .
+          file: src/main/docker/Dockerfile
+
+      - name: Run Trivy Vulnerability Scanner
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: aquasecurity/trivy-action@0.3.0
+        with:
+          image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          ignore-unfixed: true
+          vuln-type: 'os'
+
+      - name: Upload Trivy Scan Results to GitHub Security Tab
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'

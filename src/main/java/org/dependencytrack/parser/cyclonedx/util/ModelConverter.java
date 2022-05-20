@@ -28,7 +28,24 @@ import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Hash;
 import org.cyclonedx.model.LicenseChoice;
 import org.cyclonedx.model.Swid;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
+import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.DataClassification;
+import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.OrganizationalContact;
+import org.dependencytrack.model.OrganizationalEntity;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
@@ -69,7 +86,7 @@ public class ModelConverter {
 
     @SuppressWarnings("deprecation")
     public static Component convert(final QueryManager qm, final org.cyclonedx.model.Component cycloneDxComponent, final Project project) {
-        Component component = qm.matchIdentity(project, new ComponentIdentity(cycloneDxComponent));
+        Component component = qm.matchSingleIdentity(project, new ComponentIdentity(cycloneDxComponent));
         if (component == null) {
             component = new Component();
             component.setProject(project);
@@ -736,6 +753,26 @@ public class ModelConverter {
         }
     }
 
+    public static AnalysisResponse convertCdxVulnAnalysisResponseToDtAnalysisResponse(final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response cdxAnalysisResponse) {
+        if (cdxAnalysisResponse == null) {
+            return null;
+        }
+        switch (cdxAnalysisResponse) {
+            case UPDATE:
+                return AnalysisResponse.UPDATE;
+            case CAN_NOT_FIX:
+                return AnalysisResponse.CAN_NOT_FIX;
+            case WILL_NOT_FIX:
+                return AnalysisResponse.WILL_NOT_FIX;
+            case ROLLBACK:
+                return AnalysisResponse.ROLLBACK;
+            case WORKAROUND_AVAILABLE:
+                return AnalysisResponse.WORKAROUND_AVAILABLE;
+            default:
+                return AnalysisResponse.NOT_SET;
+        }
+    }
+
     private static org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State convertDtVulnAnalysisStateToCdxAnalysisState(final AnalysisState analysisState) {
         if (analysisState == null) {
             return null;
@@ -753,6 +790,26 @@ public class ModelConverter {
                 return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.RESOLVED;
             default:
                 return null;
+        }
+    }
+
+    public static AnalysisState convertCdxVulnAnalysisStateToDtAnalysisState(final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State cdxAnalysisState) {
+        if (cdxAnalysisState == null) {
+            return null;
+        }
+        switch (cdxAnalysisState) {
+            case EXPLOITABLE:
+                return AnalysisState.EXPLOITABLE;
+            case FALSE_POSITIVE:
+                return AnalysisState.FALSE_POSITIVE;
+            case IN_TRIAGE:
+                return AnalysisState.IN_TRIAGE;
+            case NOT_AFFECTED:
+                return AnalysisState.NOT_AFFECTED;
+            case RESOLVED:
+                return AnalysisState.RESOLVED;
+            default:
+                return AnalysisState.NOT_SET;
         }
     }
 
@@ -781,6 +838,34 @@ public class ModelConverter {
                 return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.REQUIRES_ENVIRONMENT;
             default:
                 return null;
+        }
+    }
+
+    public static AnalysisJustification convertCdxVulnAnalysisJustificationToDtAnalysisJustification(final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification cdxAnalysisJustification) {
+        if (cdxAnalysisJustification == null) {
+            return null;
+        }
+        switch (cdxAnalysisJustification) {
+            case CODE_NOT_PRESENT:
+                return AnalysisJustification.CODE_NOT_PRESENT;
+            case CODE_NOT_REACHABLE:
+                return AnalysisJustification.CODE_NOT_REACHABLE;
+            case PROTECTED_AT_PERIMETER:
+                return AnalysisJustification.PROTECTED_AT_PERIMETER;
+            case PROTECTED_AT_RUNTIME:
+                return AnalysisJustification.PROTECTED_AT_RUNTIME;
+            case PROTECTED_BY_COMPILER:
+                return AnalysisJustification.PROTECTED_BY_COMPILER;
+            case PROTECTED_BY_MITIGATING_CONTROL:
+                return AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL;
+            case REQUIRES_CONFIGURATION:
+                return AnalysisJustification.REQUIRES_CONFIGURATION;
+            case REQUIRES_DEPENDENCY:
+                return AnalysisJustification.REQUIRES_DEPENDENCY;
+            case REQUIRES_ENVIRONMENT:
+                return AnalysisJustification.REQUIRES_ENVIRONMENT;
+            default:
+                return AnalysisJustification.NOT_SET;
         }
     }
 }

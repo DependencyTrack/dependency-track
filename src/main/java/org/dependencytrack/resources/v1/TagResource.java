@@ -39,6 +39,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
 import java.util.List;
@@ -78,10 +79,10 @@ public class TagResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getTags(@ApiParam(value = "Optional list of projects to filter tags", required = false)
-                                @QueryParam("projects") List<Project> projects){
+    public Response getTags(@ApiParam(value = "Policy Id", required = true)
+                            @QueryParam("policyId") String policyId){
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = projects == null ? qm.getAllTags() : qm.getTags(projects);
+            final PaginatedResult result = qm.getTags(policyId);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

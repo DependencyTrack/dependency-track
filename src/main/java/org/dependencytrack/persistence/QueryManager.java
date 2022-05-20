@@ -1102,11 +1102,7 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().hasAccessManagementPermission(apiKey);
     }
 
-    public PaginatedResult getAllTags() {
-        return getTagQueryManager().getAllTags();
-    }
-
-    public PaginatedResult getTags(List<Project> projects) {
-        return getTagQueryManager().getTags(projects);
+    public PaginatedResult getTags(String policyId) {
+        return getTagQueryManager().getTags(policyId);
     }
 }

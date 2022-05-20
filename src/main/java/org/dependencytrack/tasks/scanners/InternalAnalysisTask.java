@@ -29,6 +29,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchMananger;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
+import us.springett.parsers.cpe.values.LogicalValue;
 
 import java.util.Collections;
 import java.util.List;
@@ -108,7 +109,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         //
         // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
         String componentVersion;
-        String componentUpdate = null;
+        String componentUpdate = LogicalValue.ANY.getAbbreviation();
         if (parsedCpe != null) {
             componentVersion = parsedCpe.getVersion();
             componentUpdate = parsedCpe.getUpdate();

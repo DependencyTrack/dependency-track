@@ -214,11 +214,14 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         if (vs.getUpdate() == null && targetUpdate == null) {
             return true;
         }
-        if (vs.getUpdate() == null || targetUpdate == null) {
-            return false;
-        }
+        // Moving this above the null OR check to reflect method comments (ANY should mean ANY)
+        // This is necessary for fuzz matching when a PURL which assumes null
+        // is matched to a CPE which defaults to ANY
         if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate)) {
             return true;
+        }
+        if (vs.getUpdate() == null || targetUpdate == null) {
+            return false;
         }
         return compareAttributes(vs.getUpdate(), targetUpdate);
     }

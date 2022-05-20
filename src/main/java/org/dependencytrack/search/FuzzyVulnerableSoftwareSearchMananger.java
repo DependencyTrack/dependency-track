@@ -35,26 +35,63 @@ public class FuzzyVulnerableSoftwareSearchMananger {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
     }
 
+    private class SearchTerm {
+        private String product;
+        private String vendor;
+
+        public SearchTerm(String vendor,String product) {
+            this.product = product;
+            this.vendor = StringUtils.isBlank(vendor) ? "*" : vendor;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SearchTerm that = (SearchTerm) o;
+            return product.equals(that.product) && Objects.equals(vendor, that.vendor);
+        }
+
+        public String getVendor() {
+            return vendor;
+        }
+
+        public String getProduct() {
+            return product;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(product, vendor);
+        }
+    }
+
     public List<VulnerableSoftware> fuzzyAnalysis(QueryManager qm, final Component component, us.springett.parsers.cpe.Cpe parsedCpe) {
         List<VulnerableSoftware>  fuzzyList = Collections.emptyList();
         if (component.getPurl() == null || !excludeComponentsWithPurl) {
+            HashSet<SearchTerm> searches = new HashSet<>();
             try {
                 Part part = Part.ANY;
                 String vendor = "*";
                 if (parsedCpe != null) {
                     part = parsedCpe.getPart();
                     vendor = parsedCpe.getVendor();
+                    searches.add(new SearchTerm(parsedCpe.getVendor(), parsedCpe.getProduct()));
                 }
-                us.springett.parsers.cpe.Cpe omitVersion = new us.springett.parsers.cpe.Cpe(part, vendor, component.getName(), "*", "*", "*","*", "*", "*", "*", "*");
-                String cpeSearch = getLuceneCpeRegexp(omitVersion.toCpe23FS());
-                fuzzyList = fuzzySearch(qm, cpeSearch);
-                if (fuzzyList.isEmpty()) {
-                    // Next search product without vendor
-                    us.springett.parsers.cpe.Cpe justProduct = new us.springett.parsers.cpe.Cpe(part, "*", component.getName(), "*", "*", "*","*", "*", "*", "*", "*");
-                    String justProductSearch = getLuceneCpeRegexp(justProduct.toCpe23FS());
-                    if (!justProductSearch.equals(cpeSearch)) {
-                        fuzzyList = fuzzySearch(qm, justProductSearch);
+                if (component.getPurl() != null) {
+                    searches.add(new SearchTerm(component.getPurl().getNamespace(), component.getPurl().getName()));
+                }
+                searches.add(new SearchTerm(component.getGroup(), component.getName()));
+                for (SearchTerm search : searches) {
+                    fuzzyList = fuzzySearch(qm, part, search.getVendor(), search.getProduct());
+                    if (fuzzyList.isEmpty() && !"*".equals(search.getVendor())) {
+                        fuzzyList = fuzzySearch(qm, part, "*", search.getProduct());
                     }
+                    if (!fuzzyList.isEmpty()) {
+                        break;
+                    }
+                }
+                if (fuzzyList.isEmpty()) {
                     // If no luck, get fuzzier but not with small values as fuzzy 2 chars are easy to match
                     if (fuzzyList.isEmpty() && component.getName().length() > 2) {
                         us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
@@ -69,6 +106,16 @@ public class FuzzyVulnerableSoftwareSearchMananger {
             }
         }
         return fuzzyList;
+    }
+    private List<VulnerableSoftware> fuzzySearch(QueryManager qm, Part part, String vendor, String product)  {
+        try {
+            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, vendor, product, "*", "*", "*", "*", "*", "*", "*", "*");
+            String cpeSearch = getLuceneCpeRegexp(cpe.toCpe23FS());
+            return fuzzySearch(qm, cpeSearch);
+        } catch (CpeValidationException cpeValidationException) {
+            LOGGER.error("Failed to validate fuzz search CPE", cpeValidationException);
+            return Collections.emptyList();
+        }
     }
 
     public SearchResult searchIndex(final String luceneQuery) {

@@ -102,25 +102,26 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             }
         }
         List<VulnerableSoftware> vsList = Collections.emptyList();
-        // https://github.com/DependencyTrack/dependency-track/issues/1574
-        // Some ecosystems use the "v" version prefix (e.g. v1.2.3) for their components.
-        // However, both the NVD and GHSA store versions without that prefix.
-        // For this reason, the prefix is stripped before running analyzeVersionRange.
-        //
-        // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
         String componentVersion;
-        String componentUpdate = LogicalValue.ANY.getAbbreviation();
+        String componentUpdate;
         if (parsedCpe != null) {
             componentVersion = parsedCpe.getVersion();
             componentUpdate = parsedCpe.getUpdate();
         } else if (component.getPurl() != null) {
             componentVersion = component.getPurl().getVersion();
+            componentUpdate = null;
         } else {
             // Catch cases where the CPE couldn't be parsed and no PURL exists.
             // Should be rare, but could lead to NPEs later.
             LOGGER.debug("Neither CPE nor PURL of component " + component.getUuid() + " provide a version - skipping analysis");
             return;
         }
+        // https://github.com/DependencyTrack/dependency-track/issues/1574
+        // Some ecosystems use the "v" version prefix (e.g. v1.2.3) for their components.
+        // However, both the NVD and GHSA store versions without that prefix.
+        // For this reason, the prefix is stripped before running analyzeVersionRange.
+        //
+        // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
         if (componentVersion.length() > 1 && componentVersion.startsWith("v")) {
             componentVersion = componentVersion.substring(1);
         }

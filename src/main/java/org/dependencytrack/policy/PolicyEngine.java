@@ -52,19 +52,21 @@ public class PolicyEngine {
         evaluators.add(new VersionPolicyEvaluator());
     }
 
-    public void evaluate(final List<Component> components) {
+    public List<PolicyViolation> evaluate(final List<Component> components) {
+        List<PolicyViolation> violations = new ArrayList<>();
         LOGGER.info("Evaluating " + components.size() + " component(s) against applicable policies");
         try (final QueryManager qm = new QueryManager()) {
             final List<Policy> policies = qm.getAllPolicies();
             for (final Component c: components) {
                 final Component component = qm.getObjectById(Component.class, c.getId());
-                this.evaluate(qm, policies, component);
+                violations = this.evaluate(qm, policies, component);
             }
         }
         LOGGER.info("Policy analysis complete");
+        return violations;
     }
 
-    private void evaluate(final QueryManager qm, final List<Policy> policies, final Component component) {
+    private List<PolicyViolation> evaluate(final QueryManager qm, final List<Policy> policies, final Component component) {
         final List<PolicyViolation> policyViolations = new ArrayList<>();
         for (final Policy policy : policies) {
             if (policy.isGlobal() || isPolicyAssignedToProject(policy, component.getProject())
@@ -90,6 +92,7 @@ public class PolicyEngine {
         for (final PolicyViolation pv: qm.getAllPolicyViolations(component)) {
             NotificationUtil.analyzeNotificationCriteria(qm, pv);
         }
+        return policyViolations;
     }
 
     private boolean isPolicyAssignedToProject(Policy policy, Project project) {

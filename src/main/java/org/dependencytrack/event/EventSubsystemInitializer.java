@@ -35,6 +35,7 @@ import org.dependencytrack.tasks.IndexTask;
 import org.dependencytrack.tasks.InternalComponentIdentificationTask;
 import org.dependencytrack.tasks.KennaSecurityUploadTask;
 import org.dependencytrack.tasks.MetricsUpdateTask;
+import org.dependencytrack.tasks.NewMetricsUpdateTask;
 import org.dependencytrack.tasks.NistMirrorTask;
 import org.dependencytrack.tasks.TaskScheduler;
 import org.dependencytrack.tasks.VexUploadProcessingTask;

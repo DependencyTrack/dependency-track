@@ -124,90 +124,92 @@ public class NewMetricsUpdateTask implements Subscriber {
             LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
         }
 
-        // TODO: Any better way to determine this?
-        int threadPoolSize = SystemUtil.getCpuCores() / 2;
-        if (threadPoolSize > activeProjectIds.size()) {
-            threadPoolSize = activeProjectIds.size();
-        }
-        LOGGER.debug("Using thread pool size of " + threadPoolSize);
-
-        final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
-        final var limitingExecutor = new LimitingExecutor(executorService, threadPoolSize);
-        final var projectCountersFutures = new ArrayList<CompletableFuture<Counters>>();
-        try {
-            LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
-            for (final long projectId : activeProjectIds) {
-                projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
-                    try {
-                        return updateProjectMetrics(projectId);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }, limitingExecutor));
+        if (activeProjectIds.size() > 0) {
+            // TODO: Any better way to determine this?
+            int threadPoolSize = SystemUtil.getCpuCores() / 2;
+            if (threadPoolSize > activeProjectIds.size()) {
+                threadPoolSize = activeProjectIds.size();
             }
+            LOGGER.debug("Using thread pool size of " + threadPoolSize);
 
-            LOGGER.debug("Waiting for all project metrics updates to complete");
-            CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
-            LOGGER.debug("All project metrics updates completed");
-        } finally {
-            LOGGER.debug("Shutting down executor service");
-            executorService.shutdown();
-            if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
-                LOGGER.warn("Executor service shutdown timed out, running tasks have been interrupted");
-            }
-        }
-
-        LOGGER.debug("Processing project metrics updates results");
-        for (final CompletableFuture<Counters> projectCountersFuture : projectCountersFutures) {
-            final Counters projectCounters;
+            final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
+            final var limitingExecutor = new LimitingExecutor(executorService, threadPoolSize);
+            final var projectCountersFutures = new ArrayList<CompletableFuture<Counters>>();
             try {
-                projectCounters = projectCountersFuture.get();
-            } catch (Exception e) {
-                if (e.getCause() != null && e.getCause() instanceof NoSuchElementException) {
-                    LOGGER.warn("Couldn't update project metrics because the project was not found. " +
-                            "It was most likely deleted after the metrics update task was started.", e.getCause());
+                LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
+                for (final long projectId : activeProjectIds) {
+                    projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return updateProjectMetrics(projectId);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }, limitingExecutor));
+                }
+
+                LOGGER.debug("Waiting for all project metrics updates to complete");
+                CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
+                LOGGER.debug("All project metrics updates completed");
+            } finally {
+                LOGGER.debug("Shutting down executor service");
+                executorService.shutdown();
+                if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOGGER.warn("Executor service shutdown timed out, running tasks have been interrupted");
+                }
+            }
+
+            LOGGER.debug("Processing project metrics updates results");
+            for (final CompletableFuture<Counters> projectCountersFuture : projectCountersFutures) {
+                final Counters projectCounters;
+                try {
+                    projectCounters = projectCountersFuture.get();
+                } catch (Exception e) {
+                    if (e.getCause() != null && e.getCause() instanceof NoSuchElementException) {
+                        LOGGER.warn("Couldn't update project metrics because the project was not found. " +
+                                "It was most likely deleted after the metrics update task was started.", e.getCause());
+                        continue;
+                    }
+
+                    LOGGER.error("An unexpected error occurred while updating project metrics", e);
                     continue;
                 }
 
-                LOGGER.error("An unexpected error occurred while updating project metrics", e);
-                continue;
+                counters.critical += projectCounters.critical;
+                counters.high += projectCounters.high;
+                counters.medium += projectCounters.medium;
+                counters.low += projectCounters.low;
+                counters.unassigned += projectCounters.unassigned;
+                counters.vulnerabilities += projectCounters.vulnerabilities;
+
+                counters.findingsTotal += projectCounters.findingsTotal;
+                counters.findingsAudited += projectCounters.findingsAudited;
+                counters.findingsUnaudited += projectCounters.findingsUnaudited;
+                counters.suppressions += projectCounters.suppressions;
+                counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+                counters.projects++;
+                if (projectCounters.vulnerabilities > 0) {
+                    counters.vulnerableProjects++;
+                }
+                counters.components += projectCounters.components;
+                counters.vulnerableComponents += projectCounters.vulnerableComponents;
+
+                counters.policyViolationsFail += projectCounters.policyViolationsFail;
+                counters.policyViolationsWarn += projectCounters.policyViolationsWarn;
+                counters.policyViolationsInfo += projectCounters.policyViolationsInfo;
+                counters.policyViolationsTotal += projectCounters.policyViolationsTotal;
+                counters.policyViolationsAudited += projectCounters.policyViolationsAudited;
+                counters.policyViolationsUnaudited += projectCounters.policyViolationsUnaudited;
+                counters.policyViolationsSecurityTotal += projectCounters.policyViolationsSecurityTotal;
+                counters.policyViolationsSecurityAudited += projectCounters.policyViolationsSecurityAudited;
+                counters.policyViolationsSecurityUnaudited += projectCounters.policyViolationsSecurityUnaudited;
+                counters.policyViolationsLicenseTotal += projectCounters.policyViolationsLicenseTotal;
+                counters.policyViolationsLicenseAudited += projectCounters.policyViolationsLicenseAudited;
+                counters.policyViolationsLicenseUnaudited += projectCounters.policyViolationsLicenseUnaudited;
+                counters.policyViolationsOperationalTotal += projectCounters.policyViolationsOperationalTotal;
+                counters.policyViolationsOperationalAudited += projectCounters.policyViolationsOperationalAudited;
+                counters.policyViolationsOperationalUnaudited += projectCounters.policyViolationsOperationalUnaudited;
             }
-
-            counters.critical += projectCounters.critical;
-            counters.high += projectCounters.high;
-            counters.medium += projectCounters.medium;
-            counters.low += projectCounters.low;
-            counters.unassigned += projectCounters.unassigned;
-            counters.vulnerabilities += projectCounters.vulnerabilities;
-
-            counters.findingsTotal += projectCounters.findingsTotal;
-            counters.findingsAudited += projectCounters.findingsAudited;
-            counters.findingsUnaudited += projectCounters.findingsUnaudited;
-            counters.suppressions += projectCounters.suppressions;
-            counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-            counters.projects++;
-            if (projectCounters.vulnerabilities > 0) {
-                counters.vulnerableProjects++;
-            }
-            counters.components += projectCounters.components;
-            counters.vulnerableComponents += projectCounters.vulnerableComponents;
-
-            counters.policyViolationsFail += projectCounters.policyViolationsFail;
-            counters.policyViolationsWarn += projectCounters.policyViolationsWarn;
-            counters.policyViolationsInfo += projectCounters.policyViolationsInfo;
-            counters.policyViolationsTotal += projectCounters.policyViolationsTotal;
-            counters.policyViolationsAudited += projectCounters.policyViolationsAudited;
-            counters.policyViolationsUnaudited += projectCounters.policyViolationsUnaudited;
-            counters.policyViolationsSecurityTotal += projectCounters.policyViolationsSecurityTotal;
-            counters.policyViolationsSecurityAudited += projectCounters.policyViolationsSecurityAudited;
-            counters.policyViolationsSecurityUnaudited += projectCounters.policyViolationsSecurityUnaudited;
-            counters.policyViolationsLicenseTotal += projectCounters.policyViolationsLicenseTotal;
-            counters.policyViolationsLicenseAudited += projectCounters.policyViolationsLicenseAudited;
-            counters.policyViolationsLicenseUnaudited += projectCounters.policyViolationsLicenseUnaudited;
-            counters.policyViolationsOperationalTotal += projectCounters.policyViolationsOperationalTotal;
-            counters.policyViolationsOperationalAudited += projectCounters.policyViolationsOperationalAudited;
-            counters.policyViolationsOperationalUnaudited += projectCounters.policyViolationsOperationalUnaudited;
         }
 
         // TODO: Consider checking for abnormally many failures when updating project metrics.

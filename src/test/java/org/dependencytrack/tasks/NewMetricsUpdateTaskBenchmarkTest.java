@@ -8,11 +8,13 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * FIXME: Remove before creating a PR
  */
+@Ignore
 public class NewMetricsUpdateTaskBenchmarkTest extends JerseyTest {
 
     @Override

@@ -88,8 +88,8 @@ jobs:
         uses: docker/build-push-action@v3.0.0
         with:
           tags: |-
-            docker.io/sahibamittal/${{ matrix.distribution }}:${{ inputs.app-version }}
-            docker.io/sahibamittal/${{ matrix.distribution }}:latest
+            docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
+            docker.io/dependencytrack/${{ matrix.distribution }}:latest
           build-args: |-
             APP_VERSION=${{ inputs.app-version }}
             COMMIT_SHA=${{ github.sha }}
@@ -103,7 +103,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/master' }}
         uses: aquasecurity/trivy-action@0.3.0
         with:
-          image-ref: docker.io/sahibamittal/${{ matrix.distribution }}:${{ inputs.app-version }}
+          image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           ignore-unfixed: true

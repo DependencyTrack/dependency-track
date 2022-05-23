@@ -68,7 +68,7 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
 
             final String packageName;
             if (component.getPurl().getNamespace() != null) {
-                packageName = component.getPurl().getNamespace().replace("@", "%40") + "%2F" + component.getPurl().getName();
+                packageName = "@" + component.getPurl().getNamespace().replace("@", "") + "/" + component.getPurl().getName();
             } else {
                 packageName = component.getPurl().getName();
             }

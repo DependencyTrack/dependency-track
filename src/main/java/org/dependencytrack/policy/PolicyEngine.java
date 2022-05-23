@@ -19,7 +19,12 @@
 package org.dependencytrack.policy;
 
 import alpine.common.logging.Logger;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 

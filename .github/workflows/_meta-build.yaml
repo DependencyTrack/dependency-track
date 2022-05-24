@@ -6,6 +6,11 @@ on:
         required: false
         default: "snapshot"
         description: "the version that should be set/used as tag for the container image"
+      publish-container:
+        type: boolean
+        required: false
+        default: false
+        description: "publish and scan the container image once its build"
     secrets:
       registry-0-usr:
         required: true
@@ -26,11 +31,6 @@ jobs:
           java-version: '11'
           cache: 'maven'
 
-      - name: Overwrite Version in pom.xml
-        if: ${{ ! contains(inputs.app-version, 'snapshot') }}
-        run: |-
-          mvn versions:set -DnewVersion=${{ inputs.app-version }}
-
       - name: Build with Maven
         run: |-
           mvn clean
@@ -38,12 +38,16 @@ jobs:
           mvn clean -P clean-exclude-wars
           mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
           mvn clean -P clean-exclude-wars
+          mvn cyclonedx:makeBom
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: assembled-wars
-          path: target/*.jar
+          path: |-
+            target/*.jar
+            target/bom.json
+            target/bom.xml
 
   build-container:
     runs-on: ubuntu-latest
@@ -78,7 +82,7 @@ jobs:
 
       - name: Login to Docker.io
         uses: docker/login-action@v2.0.0
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
           username: ${{ secrets.registry-0-usr }}
@@ -102,12 +106,12 @@ jobs:
             COMMIT_SHA=${{ github.sha }}
             WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'push' }}
+          push: ${{ inputs.publish-container }}
           context: .
           file: src/main/docker/Dockerfile
 
       - name: Run Trivy Vulnerability Scanner
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ inputs.publish-container }}
         uses: aquasecurity/trivy-action@0.3.0
         with:
           image-ref: docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}
@@ -117,7 +121,7 @@ jobs:
           vuln-type: 'os'
 
       - name: Upload Trivy Scan Results to GitHub Security Tab
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ inputs.publish-container }}
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results.sarif'

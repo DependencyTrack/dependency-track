@@ -75,6 +75,7 @@ jobs:
             --notes-file ".github/default-release-notes.md"
 
           gh release upload ${{ needs.read-version.outputs.version }} \
+            --clobber \
             target/dependency-track-apiserver.jar \
             target/dependency-track-bundled.jar \
             target/checksums.txt \

@@ -14,6 +14,13 @@ jobs:
     outputs:
       version: ${{ steps.parse.outputs.version }}
     steps:
+      - name: Assert ref type
+        run: |-
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then
+            echo "::error::Publishing is only supported for tags!"
+            exit 1
+          fi
+
       - name: Checkout Repository
         uses: actions/checkout@v3.0.2
 

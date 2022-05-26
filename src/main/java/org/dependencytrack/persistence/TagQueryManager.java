@@ -3,7 +3,6 @@ package org.dependencytrack.persistence;
 import alpine.common.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
-import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -14,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashSet;
 
 final class TagQueryManager extends QueryManager implements IQueryManager {
 
@@ -36,23 +36,26 @@ final class TagQueryManager extends QueryManager implements IQueryManager {
         super(pm, request);
     }
 
-    public PaginatedResult getTags(String policyId) {
+    public PaginatedResult getTags(String policyUuid) {
 
-        LOGGER.info("Retrieving tags under policy " + policyId);
-        
-        Policy policy = pm.getObjectById(Policy.class, policyId);
+        LOGGER.debug("Retrieving tags under policy " + policyUuid);
+
+        QueryManager qm = new QueryManager();
+        Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
         List<Project> projects = policy.getProjects();
         final Query<Tag> query = pm.newQuery(Tag.class);
 
         List<Tag> tagsQueried = query.executeList();
-        List<Tag> tagsToShow = new ArrayList<>(tagsQueried);
+        List<Tag> tagsToShow;
 
         if(projects != null && projects.size() != 0){
-            for(Tag tag : tagsQueried) {
-                if(!CollectionUtils.containsAny(tag.getProjects(), projects)){
-                    tagsToShow.remove(tag);
-                }
+            HashSet<Tag> filteredTags = new HashSet<>();
+            for(Project project : projects) {
+                filteredTags.addAll(project.getTags());
             }
+            tagsToShow = new ArrayList<>(filteredTags);
+        } else {
+            tagsToShow = new ArrayList<>(tagsQueried);
         }
         tagsToShow.sort(Comparator.comparingInt(tag -> tag.getProjects().size()));
         Collections.reverse(tagsToShow);

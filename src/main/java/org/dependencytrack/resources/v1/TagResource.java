@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.logging.Logger;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
@@ -36,7 +35,7 @@ import org.dependencytrack.persistence.QueryManager;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -44,9 +43,8 @@ import javax.ws.rs.core.Response;
 @Api(value = "tag", authorizations = @Authorization(value = "X-Api-Key"))
 public class TagResource extends AlpineResource {
 
-    private static final Logger LOGGER = Logger.getLogger(ProjectResource.class);
-
     @GET
+    @Path("/{policyUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all tags",
@@ -58,10 +56,10 @@ public class TagResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getTags(@ApiParam(value = "Policy Id", required = true)
-                            @QueryParam("policyId") String policyId){
+    public Response getTags(@ApiParam(value = "The UUID of the policy", required = true)
+                                @PathParam("policyUuid") String policyUuid){
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getTags(policyId);
+            final PaginatedResult result = qm.getTags(policyUuid);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }

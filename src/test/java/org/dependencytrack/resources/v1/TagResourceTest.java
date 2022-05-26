@@ -35,8 +35,7 @@ public class TagResourceTest extends ResourceTest {
         qm.createProject("Project B", null, "1", List.of(qm.getTagByName("Tag 2"), qm.getTagByName("Tag 3"), qm.getTagByName("Tag 4")), null, null, true, false);
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
-        Response response = target(V1_TAG)
-                .queryParam("policyId", policy.getId())
+        Response response = target(V1_TAG + "/" + policy.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -60,8 +59,7 @@ public class TagResourceTest extends ResourceTest {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         policy.setProjects(List.of(qm.getProject("Project A", "1"), qm.getProject("Project C", "1")));
 
-        Response response = target(V1_TAG)
-                .queryParam("policyId", policy.getId())
+        Response response = target(V1_TAG + "/" + policy.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();

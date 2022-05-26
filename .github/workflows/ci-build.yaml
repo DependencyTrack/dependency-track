@@ -3,11 +3,11 @@ name: Build CI
 on:
   push:
     branches:
-      - 'master'          # Default branch
+      - 'policy-tag-feature'          # Default branch
       - '[0-9]+.[0-9]+.x' # Release branches
   pull_request:
     branches:
-      - 'master'          # Default branch
+      - 'policy-tag-feature'          # Default branch
   workflow_dispatch:
 
 jobs:

@@ -269,7 +269,7 @@ public class PolicyResource extends AlpineResource {
     }
 
     @POST
-    @Path("/{policyUuid}/tag/{tagUuid}")
+    @Path("/{policyUuid}/tag/{tagName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -285,17 +285,16 @@ public class PolicyResource extends AlpineResource {
     public Response addTagToPolicy(
             @ApiParam(value = "The UUID of the policy to add a project to", required = true)
             @PathParam("policyUuid") String policyUuid,
-            @ApiParam(value = "The UUID of the tag to add to the rule", required = true)
-            @PathParam("tagUuid") String tagUuid) {
+            @ApiParam(value = "The name of the tag to add to the rule", required = true)
+            @PathParam("tagName") String tagName) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
             if (policy == null) {
-                System.out.println("The policy could not be found");
                 return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
             }
-            final Tag tag = qm.getObjectByUuid(Tag.class, tagUuid);
+
+            final Tag tag = qm.getTagByName(tagName);
             if (tag == null) {
-                System.out.println("The tag with id could not be found "+tagUuid);
                 return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
             }
             final List<Tag> tags = policy.getTags();
@@ -309,7 +308,7 @@ public class PolicyResource extends AlpineResource {
     }
 
     @DELETE
-    @Path("/{policyUuid}/tag/{tagUuid}")
+    @Path("/{policyUuid}/tag/{tagName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -325,14 +324,14 @@ public class PolicyResource extends AlpineResource {
     public Response removeTagFromPolicy(
             @ApiParam(value = "The UUID of the policy to remove the tag from", required = true)
             @PathParam("policyUuid") String policyUuid,
-            @ApiParam(value = "The UUID of the tag to remove from the policy", required = true)
-            @PathParam("tagUuid") String tagUuid) {
+            @ApiParam(value = "The name of the tag to remove from the policy", required = true)
+            @PathParam("tagName") String tagName) {
         try (QueryManager qm = new QueryManager()) {
             final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
             if (policy == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The policy could not be found.").build();
             }
-            final Tag tag = qm.getObjectByUuid(Tag.class, tagUuid);
+            final Tag tag = qm.getTagByName(tagName);
             if (tag == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
             }

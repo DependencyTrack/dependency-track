@@ -33,13 +33,11 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Model for assigning tags to specific objects.
@@ -57,12 +55,6 @@ public class Tag implements Serializable {
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
     @JsonIgnore
     private long id;
-
-    @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "TAG_UUID_IDX")
-    @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
-    @NotNull
-    private UUID uuid;
 
     @Persistent
     @Column(name = "NAME", allowsNull = "false")
@@ -99,10 +91,6 @@ public class Tag implements Serializable {
     public void setProjects(List<Project> projects) {
         this.projects = projects;
     }
-
-    public UUID getUuid() { return uuid; }
-
-    public void setUuid(UUID uuid) { this.uuid = uuid; }
 
     @Override
     public boolean equals(Object object) {

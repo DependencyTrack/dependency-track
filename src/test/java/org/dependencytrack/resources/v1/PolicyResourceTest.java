@@ -249,7 +249,7 @@ public class PolicyResourceTest extends ResourceTest {
         final Tag tag = qm.createTag("Policy Tag");
         System.out.println("Tag being created is "+qm.getTagByName("Policy Tag"));
 
-        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getUuid())
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -258,7 +258,7 @@ public class PolicyResourceTest extends ResourceTest {
 
         final JsonObject json = parseJsonObject(response);
         assertThat(json.getJsonArray("tags")).hasSize(1);
-        assertThat(json.getJsonArray("tags").get(0).asJsonObject().getString("uuid")).isEqualTo(tag.getUuid().toString());
+        assertThat(json.getJsonArray("tags").get(0).asJsonObject().getString("name")).isEqualTo(tag.getName());
     }
 
     @Test
@@ -269,7 +269,7 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setTags(singletonList(tag));
         qm.persist(policy);
 
-        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getUuid())
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -285,7 +285,7 @@ public class PolicyResourceTest extends ResourceTest {
         policy.setTags(singletonList(tag));
         qm.persist(policy);
 
-        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getUuid())
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -298,7 +298,7 @@ public class PolicyResourceTest extends ResourceTest {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         final Tag tag = qm.createTag("Policy Tag");
 
-        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getUuid())
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();

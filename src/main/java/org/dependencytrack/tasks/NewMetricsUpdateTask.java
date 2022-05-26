@@ -79,7 +79,6 @@ import static java.lang.Math.toIntExact;
 public class NewMetricsUpdateTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(NewMetricsUpdateTask.class);
-    private static final String QUERY_LANGUAGE_SQL = "javax.jdo.query.SQL";
 
     /**
      * {@inheritDoc}
@@ -696,35 +695,35 @@ public class NewMetricsUpdateTask implements Subscriber {
     }
 
     private List<Long> getActiveProjects(final PersistenceManager pm) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"ID\" FROM \"PROJECT\" WHERE \"ACTIVE\" IS NULL OR \"ACTIVE\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"ID\" FROM \"PROJECT\" WHERE \"ACTIVE\" IS NULL OR \"ACTIVE\" = ?")) {
             query.setParameters(true);
             return List.copyOf(query.executeResultList(Long.class));
         }
     }
 
     private Optional<UUID> getProjectUuid(final PersistenceManager pm, final long projectId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"UUID\" FROM \"PROJECT\" WHERE \"ID\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"UUID\" FROM \"PROJECT\" WHERE \"ID\" = ?")) {
             query.setParameters(projectId);
             return Optional.ofNullable(query.executeResultUnique(String.class)).map(UUID::fromString);
         }
     }
 
     private List<Long> getComponents(final PersistenceManager pm, final long projectId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"ID\" FROM \"COMPONENT\" WHERE \"PROJECT_ID\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"ID\" FROM \"COMPONENT\" WHERE \"PROJECT_ID\" = ?")) {
             query.setParameters(projectId);
             return List.copyOf(query.executeResultList(Long.class));
         }
     }
 
     private Optional<UUID> getComponentUuid(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "SELECT \"UUID\" FROM \"COMPONENT\" WHERE \"ID\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"UUID\" FROM \"COMPONENT\" WHERE \"ID\" = ?")) {
             query.setParameters(componentId);
             return Optional.ofNullable(query.executeResultUnique(String.class)).map(UUID::fromString);
         }
     }
 
     private List<VulnerabilityProjection> getVulnerabilities(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
+        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
                 "SELECT " +
                 "  \"VULNERABILITY\".\"SEVERITY\", " +
                 "  \"VULNERABILITY\".\"CVSSV2BASESCORE\", " +
@@ -744,7 +743,7 @@ public class NewMetricsUpdateTask implements Subscriber {
     }
 
     private long getTotalAuditedFindings(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
+        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
                 "SELECT COUNT(*) FROM \"ANALYSIS\" " +
                 "WHERE \"COMPONENT_ID\" = ? " +
                 "  AND \"SUPPRESSED\" = ? " +
@@ -759,7 +758,7 @@ public class NewMetricsUpdateTask implements Subscriber {
     }
 
     private long getTotalSuppressedFindings(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
+        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
                 "SELECT COUNT(*) FROM \"ANALYSIS\" " +
                 "WHERE \"COMPONENT_ID\" = ? " +
                 "  AND \"SUPPRESSED\" = ?")) {
@@ -769,7 +768,7 @@ public class NewMetricsUpdateTask implements Subscriber {
     }
 
     private List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
+        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
                 "SELECT \"POLICYVIOLATION\".\"TYPE\", \"POLICY\".\"VIOLATIONSTATE\" " +
                 "FROM \"POLICYVIOLATION\" " +
                 "  INNER JOIN \"POLICYCONDITION\" ON \"POLICYCONDITION\".\"ID\" = \"POLICYVIOLATION\".\"POLICYCONDITION_ID\" " +
@@ -785,7 +784,7 @@ public class NewMetricsUpdateTask implements Subscriber {
     }
 
     private long getTotalAuditedPolicyViolations(final PersistenceManager pm, final long componentId, final PolicyViolation.Type violationType) throws Exception {
-        try (final Query<?> query = pm.newQuery(QUERY_LANGUAGE_SQL, "" +
+        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
                 "SELECT COUNT(*) FROM \"VIOLATIONANALYSIS\" " +
                 "  INNER JOIN \"POLICYVIOLATION\" ON \"POLICYVIOLATION\".\"ID\" = \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" " +
                 "WHERE \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = ? " +
@@ -822,7 +821,7 @@ public class NewMetricsUpdateTask implements Subscriber {
             limitClause = "LIMIT 500";
         }
 
-        try (final Query<?> query = pm.newQuery("javax.jdo.query.SQL", "" +
+        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
                 "SELECT \"ID\", \"CREATED\", \"PUBLISHED\" " +
                 "FROM \"VULNERABILITY\" " +
                 "WHERE \"ID\" > ? " +

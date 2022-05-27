@@ -44,7 +44,7 @@ public class CollectionIntegerConverter implements AttributeConverter<Collection
     }
 
     public Collection<Integer> convertToAttribute(final String columnValue) {
-        if (columnValue == null) {
+        if (columnValue == null || columnValue.isEmpty()) {
             return null;
         }
         final Collection<Integer> collection = new ArrayList<>();

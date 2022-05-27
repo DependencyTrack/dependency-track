@@ -164,6 +164,9 @@ public class Finding implements Serializable {
     private List<Cwe> getCwes(final Object value) {
         if (value instanceof String) {
             final String cweIds = (String)value;
+            if (cweIds.isEmpty()) {
+                return null;
+            }
             final List<Cwe> cwes = new ArrayList<>();
             for (final String s : cweIds.split(",")) {
                 final Cwe cwe = CweResolver.getInstance().lookup(Integer.valueOf(s));

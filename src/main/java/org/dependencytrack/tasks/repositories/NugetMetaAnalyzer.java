@@ -45,7 +45,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final Logger LOGGER = Logger.getLogger(NugetMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://api.nuget.org";
     private static final String VERSION_QUERY_URL = "/v3-flatcontainer/%s/index.json";
-    private static final String REGISTRATION_URL = "/v3/registration3/%s/%s.json";
+    private static final String REGISTRATION_URL = "/v3/registration5-semver1/%s/%s.json";
 
     NugetMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;

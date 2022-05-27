@@ -22,16 +22,11 @@ import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class NugetMetaAnalyzerTest {
 
-    //@Test
-    /*
-     * Noticed that Microsoft NuGet is broken for package 3.13.0, which as of this moment, is the latest
-     * version available. However, the registration3 API returns a 404 when making queries for it and the call
-     * to index.json for the nuget package returns 3.12.0 as the latest version. This is breaking DT unit tests.
-     * Commenting out for now.
-     */
+    @Test
     public void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/NUnit@3.8.0"));

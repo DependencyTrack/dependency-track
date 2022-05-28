@@ -24,6 +24,9 @@ import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
+import com.microsoft.sqlserver.jdbc.SQLServerDriver;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.dependencytrack.common.LimitingExecutor;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.AnalysisState;
@@ -40,7 +43,6 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
 
-import javax.annotation.Nullable;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
@@ -51,14 +53,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.toIntExact;
@@ -124,7 +124,12 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
 
         if (activeProjectIds.size() > 0) {
-            // TODO: Any better way to determine this?
+            // In order to speed up the process of updating metrics for all projects,
+            // we parallelize the work using a fixed-size thread pool.
+            // The pool is intentionally left small for now, as we want to limit the
+            // impact on other functions of DT. We may increase this in the future,
+            // or allow it to be configured by users.
+
             int threadPoolSize = SystemUtil.getCpuCores() / 2;
             if (threadPoolSize > activeProjectIds.size()) {
                 threadPoolSize = activeProjectIds.size();
@@ -135,8 +140,8 @@ public class NewMetricsUpdateTask implements Subscriber {
             final var limitingExecutor = new LimitingExecutor(executorService, threadPoolSize);
             final var projectCountersFutures = new ArrayList<CompletableFuture<Counters>>();
             try {
-                LOGGER.debug("Submitting " + activeProjectIds.size() + " project metrics update tasks");
                 for (final long projectId : activeProjectIds) {
+                    LOGGER.debug("Submitting metrics update task for project ID " + projectId);
                     projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
                         try {
                             return updateProjectMetrics(projectId);
@@ -149,6 +154,10 @@ public class NewMetricsUpdateTask implements Subscriber {
                 LOGGER.debug("Waiting for all project metrics updates to complete");
                 CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
                 LOGGER.debug("All project metrics updates completed");
+            } catch (CompletionException e) {
+                // TODO: Consider logging this as DEBUG and omitting the exception argument.
+                // Exceptions are handled on a per-future basis later.
+                LOGGER.warn("At least one project metrics update task failed", e);
             } finally {
                 LOGGER.debug("Shutting down executor service");
                 executorService.shutdown();
@@ -163,9 +172,8 @@ public class NewMetricsUpdateTask implements Subscriber {
                 try {
                     projectCounters = projectCountersFuture.get();
                 } catch (Exception e) {
-                    if (e.getCause() != null && e.getCause() instanceof NoSuchElementException) {
-                        LOGGER.warn("Couldn't update project metrics because the project was not found. " +
-                                "It was most likely deleted after the metrics update task was started.", e.getCause());
+                    if (ExceptionUtils.getRootCause(e) instanceof NoSuchElementException) {
+                        LOGGER.warn("Couldn't update project metrics because the project was not found", e);
                         continue;
                     }
 
@@ -329,8 +337,7 @@ public class NewMetricsUpdateTask implements Subscriber {
             try {
                 componentCounters = updateComponentMetrics(componentId);
             } catch (NoSuchElementException e) {
-                LOGGER.warn("Couldn't update component metrics because the component was not found. " +
-                        "It was most likely deleted after the metrics update task was started.", e);
+                LOGGER.warn("Couldn't update component metrics because the component was not found", e);
                 continue;
             } catch (Exception e) {
                 LOGGER.error("An unexpected error occurred while updating component metrics", e);
@@ -560,7 +567,7 @@ public class NewMetricsUpdateTask implements Subscriber {
         }
 
         try (final var qm = new QueryManager()) {
-            Component component = qm.getObjectById(Component.class, componentId);
+            final Component component = qm.getObjectById(Component.class, componentId);
 
             Transaction trx = qm.getPersistenceManager().currentTransaction();
             try {
@@ -812,8 +819,7 @@ public class NewMetricsUpdateTask implements Subscriber {
      */
     private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
         final String limitClause;
-        final String databaseDriver = Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER);
-        if (com.microsoft.sqlserver.jdbc.SQLServerDriver.class.getName().equals(databaseDriver)) {
+        if (SQLServerDriver.class.getName().equals(Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER))) {
             limitClause = "" +
                     "OFFSET 0 ROWS " +
                     "FETCH NEXT 500 ROWS ONLY";
@@ -978,47 +984,6 @@ public class NewMetricsUpdateTask implements Subscriber {
             return metrics;
         }
 
-    }
-
-    /**
-     * An {@link Executor} that ensures that only a maximum amount of tasks
-     * is being submitted to a delegate {@link Executor} at any point in time.
-     * <p>
-     * This is used to prevent scenarios where an {@link Executor} must be shut down
-     * but still has multiple hundreds or thousands of tasks queued.
-     */
-    private static class LimitingExecutor implements Executor {
-
-        private final Semaphore semaphore;
-        private final Executor delegateExecutor;
-
-        private LimitingExecutor(final Executor delegateExecutor, final int limit) {
-            this.delegateExecutor = delegateExecutor;
-            this.semaphore = new Semaphore(limit);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void execute(@Nullable final Runnable command) {
-            Objects.requireNonNull(command);
-
-            try {
-                semaphore.acquire();
-            } catch (InterruptedException e) {
-                LOGGER.debug("Interrupted while waiting for permit to be acquired from semaphore", e);
-                return;
-            }
-
-            delegateExecutor.execute(() -> {
-                try {
-                    command.run();
-                } finally {
-                    semaphore.release();
-                }
-            });
-        }
     }
 
 }

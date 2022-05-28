@@ -34,21 +34,10 @@ jobs:
           echo "::set-output name=next-version::${NEXT_VERSION}"
           echo "::set-output name=release-branch::${VERSION%.*}.x"
 
-  call-build:
-    needs:
-      - prepare-release
-    uses: ./.github/workflows/_meta-build.yaml
-    with:
-      app-version: ${{ needs.prepare-release.outputs.version }}
-    secrets:
-      registry-0-usr: ${{ secrets.HUB_USERNAME }}
-      registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}
-
   create-release:
     runs-on: ubuntu-latest
     needs:
       - prepare-release
-      - call-build
 
     env:
       VERSION: ${{ needs.prepare-release.outputs.version }}
@@ -57,12 +46,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3.0.2
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3.0.0
-        with:
-          name: assembled-wars
-          path: target
 
       - name: Set up JDK
         uses: actions/setup-java@v3.3.0
@@ -76,6 +59,7 @@ jobs:
 
       - name: Commit Version
         env:
+          # or change it to a custom PAT that has push rights to the branch
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
           MESSAGE="prepare-release: set version to ${VERSION}"
@@ -108,37 +92,15 @@ jobs:
               --field sha="${SHA}"
           fi
 
-      - name: Create Checksums and SBOM
-        run: |-
-          pushd target
-          echo "# SHA1" >> checksums.txt
-          sha1sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
-          echo "# SHA256" >> checksums.txt
-          sha256sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
-          echo "# SHA512" >> checksums.txt
-          sha512sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
-          popd
-          mvn cyclonedx:makeBom
-
       - name: Create GitHub Release
         env:
+          # or change it to a custom PAT that should be credited for the release
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
-          cat << EOF >> .github/default-release-notes.md
-          \`\`\`text
-          $(cat target/checksums.txt)
-          \`\`\`
-          EOF
-
           gh release create "${{ needs.prepare-release.outputs.version }}" \
             --target "${{ needs.prepare-release.outputs.release-branch }}" \
             --title "${{ needs.prepare-release.outputs.version }}" \
-            --notes-file ".github/default-release-notes.md" \
-            target/dependency-track-apiserver.jar \
-            target/dependency-track-bundled.jar \
-            target/checksums.txt \
-            target/bom.json \
-            target/bom.xml
+            --notes-file ".github/default-release-notes.md"
 
   post-release:
     runs-on: ubuntu-latest
@@ -156,11 +118,12 @@ jobs:
         with:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
 
-      - name: Set SNAPSHOT Version
+      - name: Set SNAPSHOT Version after Release
         run: mvn versions:set -DnewVersion=${NEXT_VERSION}
 
       - name: Commit SNAPSHOT Version
         env:
+          # or change it to a custom PAT that has push rights to the branch
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
           MESSAGE="prepare-iteration: set version to ${NEXT_VERSION}"

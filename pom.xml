@@ -357,6 +357,7 @@
                     <webApp>
                         <contextPath>/</contextPath>
                     </webApp>
+                    <reload>manual</reload>
                     <scanIntervalSeconds>10</scanIntervalSeconds>
                 </configuration>
             </plugin>

@@ -57,7 +57,11 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     private String registrationUrl;
 
     NugetMetaAnalyzer() {
-        setRepositoryBaseUrl(DEFAULT_BASE_URL);
+        this.baseUrl = DEFAULT_BASE_URL;
+
+        // Set defaults that work with NuGet.org just in case the index endpoint is not available
+        this.versionQueryUrl = baseUrl + DEFAULT_VERSION_QUERY_ENDPOINT;
+        this.registrationUrl = baseUrl + DEFAULT_REGISTRATION_ENDPOINT;
     }
 
     @Override
@@ -148,10 +152,6 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private void initializeEndpoints() {
-        // Set defaults that work with NuGet.org just in case the index endpoint is not available
-        versionQueryUrl = baseUrl + DEFAULT_VERSION_QUERY_ENDPOINT;
-        registrationUrl = baseUrl + DEFAULT_REGISTRATION_ENDPOINT;
-
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         final String url = baseUrl + INDEX_URL;
         try {

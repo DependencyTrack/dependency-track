@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import alpine.common.validation.RegexSequence;
 import alpine.server.json.TrimmedStringDeserializer;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -65,6 +66,7 @@ public class Tag implements Serializable {
     private String name;
 
     @Persistent
+    @JsonBackReference
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Project> projects;
 

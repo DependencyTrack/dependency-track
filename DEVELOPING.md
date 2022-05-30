@@ -26,6 +26,21 @@ There are a few things you'll need on your journey:
 > We provide common run configurations for IntelliJ in the [`.run`](./.run) directory. 
 > IntelliJ will automatically pick those up when you open this repository. 
 
+## Core Technologies
+
+| Technology                                                                                  | Purpose                   |
+|:--------------------------------------------------------------------------------------------|:--------------------------|
+| [JAX-RS](https://projects.eclipse.org/projects/ee4j.rest)                                   | REST API specification    |
+| [Jersey](https://eclipse-ee4j.github.io/jersey/)                                            | JAX-RS implementation     |
+| [Java Data Objects](https://db.apache.org/jdo/) (JDO)                                       | Persistence specification |
+| [DataNucleus](https://www.datanucleus.org/products/accessplatform/jdo/getting_started.html) | JDO implementation        |
+| [Jetty](https://www.eclipse.org/jetty/)                                                     | Servlet Container         |
+| [Alpine](https://github.com/stevespringett/Alpine)                                          | Framework / Scaffolding   |
+
+## Architecture
+
+TODO: Broad overview of the API server architecture
+
 ## Building
 
 Build an executable JAR containing just the API server:
@@ -86,8 +101,8 @@ The documentation is built using [Jekyll](https://jekyllrb.com/) and published t
 
 There is a lot going on in `docs`, but most of the time you'll want to spend your time in these directories:
 
-* `docs/_docs`: The *actual* documentation
-* `docs/_posts`: The changelogs
+* [`docs/_docs`](./docs/_docs): The *actual* documentation
+* [`docs/_posts`](./docs/_posts): The changelogs
 
 To build the docs, run:
 
@@ -98,5 +113,9 @@ To build the docs, run:
 This installs all required dependencies (among them Jekyll) to `docs/vendor/bundle`, generates the documentation
 website and stores it in `docs/_site`. You can view the site by opening `docs/_site/index.html` in a browser.
 
-For local development, you may want to use `./scripts/docs-dev.sh` instead. This will start a local webserver
-that listens on `127.0.0.1:4000` and rebuilds the site whenever you change the sources.
+For local development, you may want to run this instead: 
+```shell
+./scripts/docs-dev.sh
+```
+
+instead. This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you change the sources.

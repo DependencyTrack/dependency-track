@@ -1,6 +1,6 @@
 package org.dependencytrack.tasks;
 
-import org.dependencytrack.TaskTest;
+import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
@@ -22,7 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MetricsUpdateTaskTest extends TaskTest {
+public class MetricsUpdateTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testUpdatePortfolioMetricsEmpty() {

@@ -407,7 +407,7 @@ This file resides in `<BASE_URL>/static/config.json`.
 
 For containerized deployments, these settings can be overridden by either:
 
-* mounting a customized `config.json` to `/app/static/config.json` inside the container
+* mounting a customized `config.json` to `/opt/owasp/dependency-track-frontend/static/config.json` inside the container
 * providing them as environment variables
 
 The names of the environment variables are equivalent to their counterparts in `config.json`.

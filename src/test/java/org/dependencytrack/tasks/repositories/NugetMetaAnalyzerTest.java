@@ -30,11 +30,13 @@ public class NugetMetaAnalyzerTest {
     public void testAnalyzer() throws Exception {
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/NUnit@3.8.0"));
-
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
+
+        analyzer.setRepositoryBaseUrl("https://api.nuget.org");
+        MetaModel metaModel = analyzer.analyze(component);
+
         Assert.assertTrue(analyzer.isApplicable(component));
         Assert.assertEquals(RepositoryType.NUGET, analyzer.supportedRepositoryType());
-        MetaModel metaModel = analyzer.analyze(component);
         Assert.assertNotNull(metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }

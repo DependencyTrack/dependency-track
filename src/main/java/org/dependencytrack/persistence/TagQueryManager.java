@@ -8,7 +8,6 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,12 +39,9 @@ final class TagQueryManager extends QueryManager implements IQueryManager {
 
         LOGGER.debug("Retrieving tags under policy " + policyUuid);
 
-        QueryManager qm = new QueryManager();
-        Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
+        Policy policy = getObjectByUuid(Policy.class, policyUuid);
         List<Project> projects = policy.getProjects();
-        final Query<Tag> query = pm.newQuery(Tag.class);
 
-        List<Tag> tagsQueried = query.executeList();
         List<Tag> tagsToShow;
 
         if(projects != null && projects.size() != 0){
@@ -55,6 +51,7 @@ final class TagQueryManager extends QueryManager implements IQueryManager {
             }
             tagsToShow = new ArrayList<>(filteredTags);
         } else {
+            List<Tag> tagsQueried = pm.newQuery(Tag.class).executeList();
             tagsToShow = new ArrayList<>(tagsQueried);
         }
         tagsToShow.sort(Comparator.comparingInt(tag -> tag.getProjects().size()));

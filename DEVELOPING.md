@@ -28,14 +28,14 @@ There are a few things you'll need on your journey:
 
 ## Core Technologies
 
-| Technology                                                                                  | Purpose                   |
-|:--------------------------------------------------------------------------------------------|:--------------------------|
-| [JAX-RS](https://projects.eclipse.org/projects/ee4j.rest)                                   | REST API specification    |
-| [Jersey](https://eclipse-ee4j.github.io/jersey/)                                            | JAX-RS implementation     |
-| [Java Data Objects](https://db.apache.org/jdo/) (JDO)                                       | Persistence specification |
-| [DataNucleus](https://www.datanucleus.org/products/accessplatform/jdo/getting_started.html) | JDO implementation        |
-| [Jetty](https://www.eclipse.org/jetty/)                                                     | Servlet Container         |
-| [Alpine](https://github.com/stevespringett/Alpine)                                          | Framework / Scaffolding   |
+| Technology                                                                                      | Purpose                   |
+|:------------------------------------------------------------------------------------------------|:--------------------------|
+| [JAX-RS](https://projects.eclipse.org/projects/ee4j.rest)                                       | REST API specification    |
+| [Jersey](https://eclipse-ee4j.github.io/jersey/)                                                | JAX-RS implementation     |
+| [Java Data Objects (JDO)](https://db.apache.org/jdo/)                                           | Persistence specification |
+| [DataNucleus](https://www.datanucleus.org/products/accessplatform/jdo/getting_started.html)     | JDO implementation        |
+| [Jetty](https://www.eclipse.org/jetty/)                                                         | Servlet Container         |
+| [Alpine](https://github.com/stevespringett/Alpine)                                              | Framework / Scaffolding   |
 
 ## Architecture
 
@@ -55,7 +55,7 @@ Build an executable JAR that contains both API server and frontend (aka "bundled
 mvn clean package -P enhance -P embedded-jetty -P bundle-ui -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
-> When using the `bundle-ui` profile, Maven will download a DependencyTrack/frontend release and include it in the JAR.
+> When using the `bundle-ui` profile, Maven will download a `DependencyTrack/frontend` release and include it in the JAR.
 > The frontend version is specified via the `frontend.version` property in [`pom.xml`](./pom.xml).
 
 The resulting files are placed in `target` as `dependency-track-apiserver.jar` or `dependency-track-bundled.jar` respectively.

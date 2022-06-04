@@ -1,7 +1,6 @@
 # Contributing to OWASP Dependency-Track
 
-Thank you for participating in making Dependency-Track better! We appreciate and are thankful for contributions in
-all shapes and sizes.
+Thank you for contributing to Dependency-Track! We appreciate and are thankful for contributions in all shapes and sizes.
 
 ## Asking Questions
 
@@ -70,7 +69,10 @@ Please refer to our security policy in [`SECURITY.md`](./SECURITY.md) for how to
 
 ## Improving Documentation
 
-TODO
+Beside extending existing documentation or correcting any errors it may contain, another great way to contribute is to
+update the FAQ with questions and answers that benefit the community.
+
+Refer to the *Documentation* section of [`DEVELOPING.md`](./DEVELOPING.md) for a guide on how to build the documentation locally.
 
 ## Contributing Code
 

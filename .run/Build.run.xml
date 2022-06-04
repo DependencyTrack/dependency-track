@@ -20,6 +20,7 @@
           <option name="profilesMap">
             <map>
               <entry key="embedded-jetty" value="true" />
+              <entry key="clean-exclude-wars" value="true" />
               <entry key="enhance" value="true" />
             </map>
           </option>

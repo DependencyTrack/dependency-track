@@ -21,6 +21,7 @@
             <map>
               <entry key="bundle-ui" value="true" />
               <entry key="embedded-jetty" value="true" />
+              <entry key="clean-exclude-wars" value="true" />
               <entry key="enhance" value="true" />
             </map>
           </option>

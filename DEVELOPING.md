@@ -9,24 +9,26 @@ Want to hack on Dependency-Track? Awesome, here's what you need to know to get s
 
 As of now, the Dependency-Track project consists of two separate repositories:
 
-* [DependencyTrack/dependency-track](https://github.com/DependencyTrack/dependency-track)
-* [DependencyTrack/frontend](https://github.com/DependencyTrack/frontend)
+* [DependencyTrack/dependency-track](https://github.com/DependencyTrack/dependency-track) - The main application, also referred to as API server, based on Java and [Alpine](https://github.com/stevespringett/Alpine).
+* [DependencyTrack/frontend](https://github.com/DependencyTrack/frontend) - The frontend, a single page application (SPA), based on JavaScript and [Vue](https://vuejs.org/).
 
-TODO: Quick description of what each repo consists of and what their purpose is.
+This document primarily covers the API server. Please refer to the frontend repository for frontend-specific instructions.
 
 ## Prerequisites
 
 There are a few things you'll need on your journey:
 
-* JDK 11 ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
+* JDK 11+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven (comes bundled with IntelliJ and Eclipse)
-* Docker (optional, but very useful)
 * A Java IDE of your preference
+* Docker (optional)
 
-> We provide common run configurations for IntelliJ in the [`.run`](./.run) directory. 
-> IntelliJ will automatically pick those up when you open this repository. 
+> We provide common [run configurations](https://www.jetbrains.com/help/idea/run-debug-configuration.html) for IntelliJ 
+> in the [`.run`](./.run) directory for convenience. IntelliJ will automatically pick those up when you open this repository.
 
 ## Core Technologies
+
+Knowing about the core technologies used for the API server may help you with understanding its codebase.
 
 | Technology                                                                                      | Purpose                   |
 |:------------------------------------------------------------------------------------------------|:--------------------------|
@@ -37,35 +39,36 @@ There are a few things you'll need on your journey:
 | [Jetty](https://www.eclipse.org/jetty/)                                                         | Servlet Container         |
 | [Alpine](https://github.com/stevespringett/Alpine)                                              | Framework / Scaffolding   |
 
-## Architecture
-
-TODO: Broad overview of the API server architecture
-
 ## Building
 
 Build an executable JAR containing just the API server:
 
 ```shell
-mvn clean package -P enhance -P embedded-jetty -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 Build an executable JAR that contains both API server and frontend (aka "bundled" distribution):
 
 ```shell
-mvn clean package -P enhance -P embedded-jetty -P bundle-ui -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
 > When using the `bundle-ui` profile, Maven will download a `DependencyTrack/frontend` release and include it in the JAR.
 > The frontend version is specified via the `frontend.version` property in [`pom.xml`](./pom.xml).
 
-The resulting files are placed in `target` as `dependency-track-apiserver.jar` or `dependency-track-bundled.jar` respectively.
-Both JARs ship with an embedded Jetty server, there's no need to deploy them in an application server like Tomcat or Wildfly.
+The resulting files are placed in `./target` as `dependency-track-apiserver.jar` or `dependency-track-bundled.jar` respectively.
+Both JARs ship with an embedded Jetty server, there's no need to deploy them in an application server like Tomcat or WildFly.
 
-To run them, just invoke them with `java -jar`, e.g.:
+## Running
+
+To run a previously built executable JAR, just invoke it with `java -jar`, e.g.:
 
 ```shell
 java -jar ./target/dependency-track-apiserver.jar
 ```
+
+Additional configuration (e.g. database connection details) can be provided as usual via `application.properties`
+or environment variables. Refer to the [configuration documentation](https://docs.dependencytrack.org/getting-started/configuration/).
 
 ## Debugging
 
@@ -75,13 +78,30 @@ To build and run the API server in one go, invoke the Jetty Maven plugin as foll
 mvn jetty:run -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
 ```
 
-> The `bundle-ui` profile has no effect using this method. 
+> Note that the `bundle-ui` profile has no effect using this method. 
 > It works only for the API server, not the bundled distribution.
 
 The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.run/Jetty.run.xml) run configuration.
 
-> While the Jetty Maven plugin supports automatic reloading, we disabled it by default. 
-> It doesn't play well with Dependency-Track for the time being.
+## Debugging with Frontend
+
+Start the API server via the Jetty Maven plugin (see [Debugging](#debugging) above). The API server will listen on 
+`http://127.0.0.1:8080`.
+
+Clone the frontend repository, install its required dependencies and launch the Vue development server:
+
+```shell
+git clone https://github.com/DependencyTrack/frontend.git dependency-track-frontend
+cd ./dependency-track-frontend
+npm ci
+npm run serve
+```
+
+Per default, the Vue development server would listen on port `8080`. If that port is taken, it will choose a higher,
+unused port (typically `8081`). Due to this behavior, it is important to always start the API server first, unless
+you want to fiddle with default configurations of both API server and frontend.
+
+Now visit `http://127.0.0.1:8081` in your browser and use Dependency-Track as usual.
 
 ## Testing
 
@@ -91,8 +111,24 @@ To run all tests:
 mvn clean verify
 ```
 
-Depending on your machine, this will take roughly 10-40min. Unless you modified central parts of the application,
+Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
 starting single tests separately via IDE is a better choice. 
+
+## Building Container Images
+
+Ensure you've built either API server or the bundled distribution, or both.
+
+To build the API server image:
+
+```shell
+docker build --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t dependencytrack/apiserver:local -f ./src/main/docker/Dockerfile .
+```
+
+To build the bundled image:
+
+```shell
+docker build --build-arg WAR_FILENAME=dependency-track-bundled.jar -t dependencytrack/bundled:local -f ./src/main/docker/Dockerfile .
+```
 
 ## Documentation
 

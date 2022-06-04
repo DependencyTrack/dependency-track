@@ -22,8 +22,9 @@ do not work anymore.
 Before you create a new issue, please do a search in [open issues](https://github.com/DependencyTrack/dependency-track/issues?q=is%3Aissue+is%3Aopen+) 
 to see if the issue or feature request has already been filed.
 
-If you find your issue already exists, add relevant comments to the existing issue and optionally indicate your 
-interest by reacting with a thumbs up (👍). Issues with higher interest count are more likely to be addressed sooner.
+If you find your issue already exists, add relevant comments to the existing issue. 
+
+Optionally indicate your interest by reacting with *thumbs up* (👍). Issues with higher community attention are more likely to be addressed sooner.
 
 If you cannot find an existing issue for your bug or feature request, create a new issue using the guidelines below.
 
@@ -43,6 +44,7 @@ Please include the following with each bug report:
 
 * The Dependency-Track version you are using (for both API server and frontend)
 * The Dependency-Track [distribution](https://github.com/DependencyTrack/dependency-track#distributions) you are using
+* The database you are using
 * Your operating system and version
 * What you expected, versus what happened
 * Reproducible steps (1 2 3...) that cause the defect including any required files

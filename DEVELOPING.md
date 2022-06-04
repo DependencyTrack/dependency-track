@@ -118,4 +118,4 @@ For local development, you may want to run this instead:
 ./scripts/docs-dev.sh
 ```
 
-instead. This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you change the sources.
+This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you make changes.

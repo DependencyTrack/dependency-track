@@ -188,6 +188,10 @@ helm install evryfs-oss/dependency-track --name dependency-track --namespace dep
 
 by default, it will install PostgreSQL and use persistent volume claims for the data-directory used for vulnerability feeds.
 
+## Contributing
+
+Interested in contributing to Dependency-Track? Please check [`CONTRIBUTING.md`](./CONTRIBUTING.md) to see how you can help!
+
 ## Resources
 
 * Website: <https://dependencytrack.org/>
@@ -200,7 +204,6 @@ by default, it will install PostgreSQL and use persistent volume claims for the 
 * YouTube: <https://dependencytrack.org/youtube>
 * Slack: <https://dependencytrack.org/slack> (Invite:  <https://dependencytrack.org/slack/invite>)
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
-
 
 ## Copyright & License
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.

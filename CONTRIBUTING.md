@@ -6,8 +6,8 @@ Thank you for contributing to Dependency-Track! We appreciate and are thankful f
 
 * Use either Slack or GitHub Discussions to ask questions.
 * Do not open issues for questions. **Questions submitted through GitHub issues will be closed**.
-* Consult the [community-maintained FAQ](https://docs.dependencytrack.org/FAQ/) whether your question has already been answered.
-* Avoid contacting individual contributors directly and ask questions in public instead. A well worded question will help serve as a resource to others searching for help.
+* Consult the [community-maintained FAQ](https://docs.dependencytrack.org/FAQ/) to see whether your question has already been answered.
+* Avoid contacting individual contributors directly; ask questions in public instead. A well-worded question will help serve as a resource to others searching for help.
 
 The [`#proj-dependency-track` channel](https://dependencytrack.org/slack) in the OWASP Slack space is the best place 
 to ask questions and get in touch with other users and contributors. We provide an invitation to the Slack space 
@@ -70,9 +70,22 @@ Please refer to our security policy in [`SECURITY.md`](./SECURITY.md) for how to
 ## Improving Documentation
 
 Beside extending existing documentation or correcting any errors it may contain, another great way to contribute is to
-update the FAQ with questions and answers that benefit the community.
+update the [FAQ](https://docs.dependencytrack.org/FAQ/) with questions and answers that benefit the community.
 
 Refer to the *Documentation* section of [`DEVELOPING.md`](./DEVELOPING.md) for a guide on how to build the documentation locally.
+
+## Testing Snapshot Versions
+
+Every time a commit is pushed to the `master` branch, container images are built and published to the `snapshot` tag.
+This is true for both API server and frontend:
+
+* [`dependencytrack/apiserver:snapshot`](https://hub.docker.com/r/dependencytrack/apiserver/tags?name=snapshot)
+* [`dependencytrack/bundled:snapshot`](https://hub.docker.com/r/dependencytrack/bundled/tags?name=snapshot)
+* [`dependencytrack/frontend:snapshot`](https://hub.docker.com/r/dependencytrack/frontend/tags?name=snapshot)
+
+Testing `snapshot` versions and providing early feedback helps in improving the quality of new releases.
+The private `#proj-dependency-track-beta` Slack channel is intended for discussions about and feedback for `snapshot`
+versions. If you are interested in participating, please let us know in [`#proj-dependency-track`](https://dependencytrack.org/slack).
 
 ## Contributing Code
 

@@ -25,6 +25,7 @@ import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONArray;
+import kong.unirest.json.JSONObject;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -44,11 +45,30 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(NugetMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://api.nuget.org";
-    private static final String VERSION_QUERY_URL = "/v3-flatcontainer/%s/index.json";
-    private static final String REGISTRATION_URL = "/v3/registration3/%s/%s.json";
+
+    private static final String INDEX_URL = "/v3/index.json";
+
+    private static final String DEFAULT_VERSION_QUERY_ENDPOINT = "/v3-flatcontainer/%s/index.json";
+
+    private static final String DEFAULT_REGISTRATION_ENDPOINT = "/v3/registration5-semver1/%s/%s.json";
+
+    private String versionQueryUrl;
+
+    private String registrationUrl;
 
     NugetMetaAnalyzer() {
         this.baseUrl = DEFAULT_BASE_URL;
+
+        // Set defaults that work with NuGet.org just in case the index endpoint is not available
+        this.versionQueryUrl = baseUrl + DEFAULT_VERSION_QUERY_ENDPOINT;
+        this.registrationUrl = baseUrl + DEFAULT_REGISTRATION_ENDPOINT;
+    }
+
+    @Override
+    public void setRepositoryBaseUrl(String baseUrl) {
+        super.setRepositoryBaseUrl(baseUrl);
+
+        initializeEndpoints();
     }
 
     /**
@@ -80,7 +100,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private boolean performVersionCheck(final MetaModel meta, final Component component) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final String url = String.format(baseUrl + VERSION_QUERY_URL, component.getPurl().getName().toLowerCase());
+        final String url = String.format(versionQueryUrl, component.getPurl().getName().toLowerCase());
         try {
             final HttpResponse<JsonNode> response = ui.get(url)
                     .header("accept", "application/json")
@@ -103,7 +123,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final String url = String.format(baseUrl + REGISTRATION_URL, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
+        final String url = String.format(registrationUrl, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
         try {
             final HttpResponse<JsonNode> response = ui.get(url)
                     .header("accept", "application/json")
@@ -129,5 +149,38 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
             handleRequestException(LOGGER, e);
         }
         return false;
+    }
+
+    private void initializeEndpoints() {
+        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
+        final String url = baseUrl + INDEX_URL;
+        try {
+            final HttpResponse<JsonNode> response = ui
+                    .get(url)
+                    .header("accept", "application/json")
+                    .asJson();
+            if (response.getStatus() == 200 && response.getBody() != null && response.getBody().getObject() != null) {
+                final JSONArray resources = response.getBody().getObject().getJSONArray("resources");
+                final JSONObject packageBaseResource = findResourceByType(resources, "PackageBaseAddress");
+                final JSONObject registrationsBaseResource = findResourceByType(resources, "RegistrationsBaseUrl");
+                if (packageBaseResource != null && registrationsBaseResource != null) {
+                    versionQueryUrl = packageBaseResource.getString("@id") + "%s/index.json";
+                    registrationUrl = registrationsBaseResource.getString("@id") + "%s/%s.json";
+                }
+            }
+        } catch (UnirestException e) {
+            handleRequestException(LOGGER, e);
+        }
+    }
+
+    private JSONObject findResourceByType(JSONArray resources, String type) {
+        for (int i = 0; i < resources.length(); i++) {
+            String resourceType = resources.getJSONObject(i).getString("@type");
+            if (resourceType != null && resourceType.toLowerCase().startsWith(type.toLowerCase())) {
+                return resources.getJSONObject(i);
+            }
+        }
+
+        return null;
     }
 }

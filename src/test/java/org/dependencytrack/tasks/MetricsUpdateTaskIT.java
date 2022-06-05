@@ -37,12 +37,11 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.containers.Container;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import javax.jdo.JDOHelper;
@@ -55,29 +54,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MetricsUpdateTaskIT {
 
-    @Ignore // There is no image for arm64
     public static class MssqlIT {
+
+        private static final DockerImageName IMAGE_NAME = DockerImageName.parse("mcr.microsoft.com/mssql/server:2019-latest");
 
         @Rule
         @SuppressWarnings("rawtypes")
-        public final GenericContainer<?> container = new GenericContainer(DockerImageName.parse("mcr.microsoft.com/mssql/server:2019-latest"))
-                .withEnv("SA_PASSWORD", "DTrack1234!")
-                .withEnv("ACCEPT_EULA", "y")
-                .withExposedPorts(1433)
-                .waitingFor(new HostPortWaitStrategy());
+        public final MSSQLServerContainer container = new MSSQLServerContainer(IMAGE_NAME).acceptLicense();
 
         @Before
         public void setUp() throws Exception {
             // We need to create the database manually because the container won't do it automatically.
-            final Container.ExecResult execResult = container.execInContainer("/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "DTrack1234!", "-Q", "CREATE DATABASE dtrack");
+            final Container.ExecResult execResult = container.execInContainer("/opt/mssql-tools/bin/sqlcmd",
+                    "-S", "localhost",
+                    "-U", container.getUsername(),
+                    "-P", container.getPassword(),
+                    "-Q", "CREATE DATABASE dtrack");
             assertThat(execResult.getExitCode()).isZero();
 
             final Properties jdoProps = JdoProperties.get();
-            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_URL, "jdbc:sqlserver://localhost:" + container.getFirstMappedPort() +
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_URL, container.getJdbcUrl() +
                     ";databaseName=dtrack;sendStringParametersAsUnicode=false;trustServerCertificate=true");
             jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_DRIVER_NAME, com.microsoft.sqlserver.jdbc.SQLServerDriver.class.getName());
-            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_USER_NAME, "sa");
-            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_PASSWORD, "DTrack1234!");
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_USER_NAME, container.getUsername());
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_PASSWORD, container.getPassword());
 
             final var pmf = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(jdoProps, "Alpine");
             PersistenceManagerFactory.setJdoPersistenceManagerFactory(pmf);
@@ -103,22 +103,19 @@ public class MetricsUpdateTaskIT {
 
     public static class PostgresIT {
 
+        private static final DockerImageName IMAGE_NAME = DockerImageName.parse("postgres:14-alpine");
+
         @Rule
         @SuppressWarnings("rawtypes")
-        public final GenericContainer<?> container = new GenericContainer(DockerImageName.parse("postgres:14-alpine"))
-                .withEnv("POSTGRES_DB", "dtrack")
-                .withEnv("POSTGRES_USER", "dtrack")
-                .withEnv("POSTGRES_PASSWORD", "dtrack")
-                .withExposedPorts(5432)
-                .waitingFor(new HostPortWaitStrategy());
+        public final PostgreSQLContainer container = new PostgreSQLContainer(IMAGE_NAME);
 
         @Before
         public void setUp() {
             final Properties jdoProps = JdoProperties.get();
-            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_URL, "jdbc:postgresql://localhost:" + container.getFirstMappedPort() + "/dtrack");
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_URL, container.getJdbcUrl());
             jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_DRIVER_NAME, org.postgresql.Driver.class.getName());
-            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_USER_NAME, "dtrack");
-            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_PASSWORD, "dtrack");
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_USER_NAME, container.getUsername());
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_PASSWORD, container.getPassword());
 
             final var pmf = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(jdoProps, "Alpine");
             PersistenceManagerFactory.setJdoPersistenceManagerFactory(pmf);

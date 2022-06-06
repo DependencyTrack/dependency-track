@@ -31,23 +31,23 @@ import java.nio.charset.StandardCharsets;
 public class BadgerTest {
 
     @Test
-    public void generateWithoutMetricsGenerateExpectedSvg() {
+    public void generateVulnerabilitiesWithoutMetricsGenerateExpectedSvg() {
         Badger badger = new Badger();
-        String svg = badger.generate(null);
-        Assert.assertEquals(strip(svg), strip(expectedSvg("vulnerabilities.nometrics.svg")));
+        String svg = badger.generateVulnerabilities(null);
+        Assert.assertEquals(strip(svg), strip(expectedSvg("project-vulns-nometrics.svg")));
     }
 
     @Test
-    public void generateWithoutVulnerabilitiesGenerateExpectedSvg() {
+    public void generateVulnerabilitiesWithoutVulnerabilitiesGenerateExpectedSvg() {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setVulnerabilities(0);
         Badger badger = new Badger();
-        String svg = badger.generate(metrics);
-        Assert.assertEquals(strip(svg), strip(expectedSvg("vulnerabilities.novulns.svg")));
+        String svg = badger.generateVulnerabilities(metrics);
+        Assert.assertEquals(strip(svg), strip(expectedSvg("project-vulns-none.svg")));
     }
 
     @Test
-    public void generateWithVulnerabilitiesGenerateExpectedSvg() {
+    public void generateVulnerabilitiesWithVulnerabilitiesGenerateExpectedSvg() {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setVulnerabilities(1 + 2 + 3 + 4 + 5);
         metrics.setCritical(1);
@@ -56,15 +56,15 @@ public class BadgerTest {
         metrics.setLow(4);
         metrics.setUnassigned(5);
         Badger badger = new Badger();
-        String svg = badger.generate(metrics);
-        Assert.assertEquals(strip(svg), strip(expectedSvg("vulnerabilities.vulns.svg")));
+        String svg = badger.generateVulnerabilities(metrics);
+        Assert.assertEquals(strip(svg), strip(expectedSvg("project-vulns.svg")));
     }
 
     @Test
     public void generateViolationsWithoutMetricsGenerateExpectedSvg() {
         Badger badger = new Badger();
         String svg = badger.generateViolations(null);
-        Assert.assertEquals(strip(svg), strip(expectedSvg("violations.nometrics.svg")));
+        Assert.assertEquals(strip(svg), strip(expectedSvg("project-violations-nometrics.svg")));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class BadgerTest {
         metrics.setPolicyViolationsTotal(0);
         Badger badger = new Badger();
         String svg = badger.generateViolations(metrics);
-        Assert.assertEquals(strip(svg), strip(expectedSvg("violations.novio.svg")));
+        Assert.assertEquals(strip(svg), strip(expectedSvg("project-violations-none.svg")));
     }
 
     @Test
@@ -85,7 +85,7 @@ public class BadgerTest {
         metrics.setPolicyViolationsInfo(3);
         Badger badger = new Badger();
         String svg = badger.generateViolations(metrics);
-        Assert.assertEquals(strip(svg), strip(expectedSvg("violations.vio.svg")));
+        Assert.assertEquals(strip(svg), strip(expectedSvg("project-violations.svg")));
     }
 
     private String expectedSvg(String filename) {

@@ -80,7 +80,7 @@ public class BadgeResource extends AlpineResource {
                 if (project != null) {
                     final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                     final Badger badger = new Badger();
-                    return Response.ok(badger.generate(metrics)).build();
+                    return Response.ok(badger.generateVulnerabilities(metrics)).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
                 }
@@ -114,7 +114,7 @@ public class BadgeResource extends AlpineResource {
                 if (project != null) {
                     final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                     final Badger badger = new Badger();
-                    return Response.ok(badger.generate(metrics)).build();
+                    return Response.ok(badger.generateVulnerabilities(metrics)).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
                 }

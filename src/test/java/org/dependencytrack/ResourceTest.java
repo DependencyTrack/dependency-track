@@ -46,6 +46,7 @@ import java.util.List;
 public abstract class ResourceTest extends JerseyTest {
 
     protected final String V1_ANALYSIS = "/v1/analysis";
+    protected final String V1_BADGE = "/v1/badge";
     protected final String V1_BOM = "/v1/bom";
     protected final String V1_CALCULATOR = "/v1/calculator";
     protected final String V1_COMPONENT = "/v1/component";

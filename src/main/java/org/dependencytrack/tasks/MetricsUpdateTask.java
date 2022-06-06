@@ -155,9 +155,10 @@ public class MetricsUpdateTask implements Subscriber {
                 CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
                 LOGGER.debug("All project metrics updates completed");
             } catch (CompletionException e) {
-                // TODO: Consider logging this as DEBUG and omitting the exception argument.
-                // Exceptions are handled on a per-future basis later.
-                LOGGER.warn("At least one project metrics update task failed", e);
+                // This exception is thrown when any of the CompletableFutures failed.
+                // We handle exceptions on a per-future basis later when calling .get(),
+                // so we don't need to handle this one.
+                LOGGER.debug("At least one project metrics update task failed", e);
             } finally {
                 LOGGER.debug("Shutting down executor service");
                 executorService.shutdown();
@@ -166,14 +167,15 @@ public class MetricsUpdateTask implements Subscriber {
                 }
             }
 
-            LOGGER.debug("Processing project metrics updates results");
+            LOGGER.debug("Processing project metrics update results");
             for (final CompletableFuture<Counters> projectCountersFuture : projectCountersFutures) {
                 final Counters projectCounters;
                 try {
                     projectCounters = projectCountersFuture.get();
                 } catch (Exception e) {
                     if (ExceptionUtils.getRootCause(e) instanceof NoSuchElementException) {
-                        LOGGER.warn("Couldn't update project metrics because the project was not found", e);
+                        LOGGER.warn("Couldn't update project metrics because the project was not found. " +
+                                "This typically happens when the project was deleted after the metrics update task started.", e);
                         continue;
                     }
 
@@ -218,9 +220,6 @@ public class MetricsUpdateTask implements Subscriber {
                 counters.policyViolationsOperationalUnaudited += projectCounters.policyViolationsOperationalUnaudited;
             }
         }
-
-        // TODO: Consider checking for abnormally many failures when updating project metrics.
-        // If we have "too many" failures, we probably shouldn't update portfolio metrics either.
 
         try (final var qm = new QueryManager()) {
             Transaction trx = qm.getPersistenceManager().currentTransaction();
@@ -327,7 +326,7 @@ public class MetricsUpdateTask implements Subscriber {
                     .orElseThrow(() -> new NoSuchElementException("Project with ID " + projectId + " does not exist"));
             LOGGER.info("Executing metrics update for project: " + projectUuid);
 
-            LOGGER.debug("Fetching IDs of components for project " + projectUuid);
+            LOGGER.debug("Fetching component IDs for project " + projectUuid);
             componentIds = getComponents(pm, projectId);
             LOGGER.debug("Metrics update for project " + projectUuid + " will include " + componentIds.size() + " components");
         }
@@ -337,7 +336,8 @@ public class MetricsUpdateTask implements Subscriber {
             try {
                 componentCounters = updateComponentMetrics(componentId);
             } catch (NoSuchElementException e) {
-                LOGGER.warn("Couldn't update component metrics because the component was not found", e);
+                LOGGER.warn("Couldn't update component metrics because the component was not found." +
+                        "This typically happens when the project was deleted after the metrics update task started.", e);
                 continue;
             } catch (Exception e) {
                 LOGGER.error("An unexpected error occurred while updating component metrics", e);
@@ -378,9 +378,6 @@ public class MetricsUpdateTask implements Subscriber {
             counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
             counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
         }
-
-        // TODO: Consider checking for abnormally many failures when updating component metrics.
-        // If we have "too many" failures, we probably shouldn't update project metrics either.
 
         try (final var qm = new QueryManager()) {
             final Project project = qm.getObjectById(Project.class, projectId);

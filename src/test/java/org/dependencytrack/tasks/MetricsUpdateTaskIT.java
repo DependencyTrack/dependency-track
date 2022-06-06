@@ -20,6 +20,7 @@ package org.dependencytrack.tasks;
 
 import alpine.persistence.JdoProperties;
 import alpine.server.persistence.PersistenceManagerFactory;
+import org.apache.commons.lang3.SystemUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.dependencytrack.event.MetricsUpdateEvent;
@@ -37,10 +38,12 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -51,16 +54,22 @@ import java.util.Properties;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeFalse;
 
 public class MetricsUpdateTaskIT {
 
-    public static class MssqlIT {
+    public static class MicrosoftSqlServerIT {
 
         private static final DockerImageName IMAGE_NAME = DockerImageName.parse("mcr.microsoft.com/mssql/server:2019-latest");
 
         @Rule
         @SuppressWarnings("rawtypes")
         public final MSSQLServerContainer container = new MSSQLServerContainer(IMAGE_NAME).acceptLicense();
+
+        @BeforeClass
+        public static void setUpClass() {
+            assumeFalse("The SQL Server image is not compatible with ARM", "aarch64".equals(SystemUtils.OS_ARCH));
+        }
 
         @Before
         public void setUp() throws Exception {
@@ -101,7 +110,46 @@ public class MetricsUpdateTaskIT {
 
     }
 
-    public static class PostgresIT {
+    public static class MySqlIT {
+
+        private static final DockerImageName IMAGE_NAME = DockerImageName.parse("mysql:5.7");
+
+        @Rule
+        @SuppressWarnings("rawtypes")
+        public final MySQLContainer container = new MySQLContainer(IMAGE_NAME)
+                .withConfigurationOverride("testcontainers/mysql");
+
+        @Before
+        public void setUp() {
+            final Properties jdoProps = JdoProperties.get();
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_URL, container.getJdbcUrl());
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_DRIVER_NAME, com.mysql.cj.jdbc.Driver.class.getName());
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_USER_NAME, container.getUsername());
+            jdoProps.setProperty(PropertyNames.PROPERTY_CONNECTION_PASSWORD, container.getPassword());
+
+            final var pmf = (JDOPersistenceManagerFactory) JDOHelper.getPersistenceManagerFactory(jdoProps, "Alpine");
+            PersistenceManagerFactory.setJdoPersistenceManagerFactory(pmf);
+
+            populateTestData();
+        }
+
+        @Test
+        public void test() {
+            new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+
+            try (final var qm = new QueryManager()) {
+                assertResult(qm.getMostRecentPortfolioMetrics());
+            }
+        }
+
+        @After
+        public void tearDown() {
+            PersistenceManagerFactory.tearDown();
+        }
+
+    }
+
+    public static class PostgreSqlIT {
 
         private static final DockerImageName IMAGE_NAME = DockerImageName.parse("postgres:14-alpine");
 

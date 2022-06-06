@@ -41,6 +41,9 @@ public class Badger {
     private static final PebbleTemplate PROJECT_VULNS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-vulns.peb");
     private static final PebbleTemplate PROJECT_NO_VULNS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-novulns.peb");
     private static final PebbleTemplate PROJECT_NO_METRICS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-nometrics.peb");
+    private static final PebbleTemplate PROJECT_VIO_NO_METRICS_TEMPLATE = ENGINE.getTemplate("templates/badge/project-vio-nometrics.peb");
+    private static final PebbleTemplate PROJECT_VIO_TEMPLATE = ENGINE.getTemplate("templates/badge/project-vio.peb");
+    private static final PebbleTemplate PROJECT_NO_VIO_TEMPLATE = ENGINE.getTemplate("templates/badge/project-novio.peb");
 
     public String generate(ProjectMetrics metrics) {
         final Map<String, Object> context = new HashMap<>();
@@ -56,6 +59,21 @@ public class Badger {
             return writeSvg(PROJECT_VULNS_TEMPLATE, context);
         } else {
             return writeSvg(PROJECT_NO_VULNS_TEMPLATE, context);
+        }
+    }
+
+    public String generateViolations(ProjectMetrics metrics) {
+        final Map<String, Object> context = new HashMap<>();
+        context.put("roundedPixels", "3");
+        if (metrics == null) {
+            return writeSvg(PROJECT_VIO_NO_METRICS_TEMPLATE, context);
+        } else if (metrics.getPolicyViolationsTotal() > 0) {
+            context.put("fail", String.valueOf(metrics.getPolicyViolationsFail()));
+            context.put("warn", String.valueOf(metrics.getPolicyViolationsWarn()));
+            context.put("info", String.valueOf(metrics.getPolicyViolationsInfo()));
+            return writeSvg(PROJECT_VIO_TEMPLATE, context);
+        } else {
+            return writeSvg(PROJECT_NO_VIO_TEMPLATE, context);
         }
     }
 

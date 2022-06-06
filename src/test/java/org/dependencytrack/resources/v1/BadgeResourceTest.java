@@ -113,6 +113,64 @@ public class BadgeResourceTest extends ResourceTest {
         Assert.assertEquals(404, response.getStatus(), 0);
     }
 
+    @Test
+    public void projectPolicyViolationsByUuidTest() {
+        Project project = qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = target(V1_BADGE + "/violations/project/" + project.getUuid()).request()
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+    }
+
+    @Test
+    public void projectPolicyViolationsByUuidProjectDisabledTest() {
+        disableBadge();
+        Response response = target(V1_BADGE + "/violations/project/" + UUID.randomUUID()).request()
+                .get(Response.class);
+        Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void projectPolicyViolationsByUuidProjectNotFoundTest() {
+        Response response = target(V1_BADGE + "/violations/project/" + UUID.randomUUID()).request()
+                .get(Response.class);
+        Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
+    @Test
+    public void projectPolicyViolationsByNameAndVersionTest() {
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = target(V1_BADGE + "/violations/project/Acme%20Example/1.0.0").request()
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals("image/svg+xml", response.getHeaderString("Content-Type"));
+        Assert.assertTrue(isLikelySvg(getPlainTextBody(response)));
+    }
+
+    @Test
+    public void projectPolicyViolationsByNameAndVersionDisabledTest() {
+        disableBadge();
+        Response response = target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0").request()
+                .get(Response.class);
+        Assert.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void projectPolicyViolationsByNameAndVersionProjectNotFoundTest() {
+        Response response = target(V1_BADGE + "/violations/project/ProjectNameDoesNotExist/1.0.0").request()
+                .get(Response.class);
+        Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
+    @Test
+    public void projectPolicyViolationsByNameAndVersionVersionNotFoundTest() {
+        qm.createProject("Acme Example", null, "1.0.0", null, null, null, true, false);
+        Response response = target(V1_BADGE + "/violations/project/Acme%20Example/1.2.0").request()
+                .get(Response.class);
+        Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
     private void disableBadge() {
         qm.getConfigProperty(GENERAL_BADGE_ENABLED.getGroupName(), GENERAL_BADGE_ENABLED.getPropertyName())
                 .setPropertyValue("false");

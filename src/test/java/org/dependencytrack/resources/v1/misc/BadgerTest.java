@@ -60,6 +60,34 @@ public class BadgerTest {
         Assert.assertEquals(strip(svg), strip(expectedSvg("vulnerabilities.vulns.svg")));
     }
 
+    @Test
+    public void generateViolationsWithoutMetricsGenerateExpectedSvg() {
+        Badger badger = new Badger();
+        String svg = badger.generateViolations(null);
+        Assert.assertEquals(strip(svg), strip(expectedSvg("violations.nometrics.svg")));
+    }
+
+    @Test
+    public void generateViolationsWithoutViolationsGenerateExpectedSvg() {
+        ProjectMetrics metrics = new ProjectMetrics();
+        metrics.setPolicyViolationsTotal(0);
+        Badger badger = new Badger();
+        String svg = badger.generateViolations(metrics);
+        Assert.assertEquals(strip(svg), strip(expectedSvg("violations.novio.svg")));
+    }
+
+    @Test
+    public void generateViolationsWithViolationsGenerateExpectedSvg() {
+        ProjectMetrics metrics = new ProjectMetrics();
+        metrics.setPolicyViolationsTotal(1 + 2 + 3);
+        metrics.setPolicyViolationsFail(1);
+        metrics.setPolicyViolationsWarn(2);
+        metrics.setPolicyViolationsInfo(3);
+        Badger badger = new Badger();
+        String svg = badger.generateViolations(metrics);
+        Assert.assertEquals(strip(svg), strip(expectedSvg("violations.vio.svg")));
+    }
+
     private String expectedSvg(String filename) {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         URL resource = contextClassLoader.getResource("badge/" + filename);

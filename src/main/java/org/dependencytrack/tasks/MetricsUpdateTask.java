@@ -119,7 +119,7 @@ public class MetricsUpdateTask implements Subscriber {
 
         final List<Long> activeProjectIds;
         try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
-            LOGGER.debug("Fetching IDs of active projects");
+            LOGGER.debug("Fetching active projects");
             activeProjectIds = getActiveProjects(pm);
             LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
         }
@@ -169,14 +169,15 @@ public class MetricsUpdateTask implements Subscriber {
             }
 
             LOGGER.debug("Processing project metrics update results");
-            for (final CompletableFuture<Counters> projectCountersFuture : projectCountersFutures) {
+            for (final CompletableFuture<Counters> countersFuture : projectCountersFutures) {
                 final Counters projectCounters;
                 try {
-                    projectCounters = projectCountersFuture.get();
+                    projectCounters = countersFuture.get();
                 } catch (Exception e) {
-                    if (ExceptionUtils.getRootCause(e) instanceof NoSuchElementException) {
+                    final Throwable rootCause = ExceptionUtils.getRootCause(e);
+                    if (rootCause instanceof NoSuchElementException) {
                         LOGGER.warn("Couldn't update project metrics because the project was not found. " +
-                                "This typically happens when the project was deleted after the metrics update task started.", e);
+                                "This typically happens when the project was deleted after the metrics update task started.", rootCause);
                         continue;
                     }
 
@@ -328,7 +329,7 @@ public class MetricsUpdateTask implements Subscriber {
                     .orElseThrow(() -> new NoSuchElementException("Project with ID " + projectId + " does not exist"));
             LOGGER.info("Executing metrics update for project " + projectUuid);
 
-            LOGGER.debug("Fetching component IDs for project " + projectUuid);
+            LOGGER.debug("Fetching components for project " + projectUuid);
             componentIds = getComponents(pm, projectId);
             LOGGER.debug("Metrics update for project " + projectUuid + " will include " + componentIds.size() + " components");
         }
@@ -853,10 +854,12 @@ public class MetricsUpdateTask implements Subscriber {
         private PolicyViolation.Type type;
         private Policy.ViolationState violationState;
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setType(final String type) {
             this.type = PolicyViolation.Type.valueOf(type);
         }
 
+        @SuppressWarnings("unused") // Called by DataNucleus
         public void setViolationState(final String violationState) {
             if (violationState != null) {
                 this.violationState = Policy.ViolationState.valueOf(violationState);
@@ -916,7 +919,6 @@ public class MetricsUpdateTask implements Subscriber {
         }
 
         @SuppressWarnings("unused") // Called by DataNucleus
-
         public void setCreated(final Date created) {
             this.created = created;
         }
@@ -931,12 +933,12 @@ public class MetricsUpdateTask implements Subscriber {
         private int critical, high, medium, low, unassigned;
         private double inheritedRiskScore;
         private int components, vulnerableComponents, projects, vulnerableProjects;
-        private int vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited,
-                policyViolationsFail, policyViolationsWarn, policyViolationsInfo, policyViolationsTotal,
-                policyViolationsAudited, policyViolationsUnaudited, policyViolationsSecurityTotal,
-                policyViolationsSecurityAudited, policyViolationsSecurityUnaudited, policyViolationsLicenseTotal,
-                policyViolationsLicenseAudited, policyViolationsLicenseUnaudited, policyViolationsOperationalTotal,
-                policyViolationsOperationalAudited, policyViolationsOperationalUnaudited;
+        private int vulnerabilities, suppressions, findingsTotal, findingsAudited, findingsUnaudited;
+        private int policyViolationsFail, policyViolationsWarn, policyViolationsInfo,
+                policyViolationsTotal, policyViolationsAudited, policyViolationsUnaudited,
+                policyViolationsSecurityTotal, policyViolationsSecurityAudited, policyViolationsSecurityUnaudited,
+                policyViolationsLicenseTotal, policyViolationsLicenseAudited, policyViolationsLicenseUnaudited,
+                policyViolationsOperationalTotal, policyViolationsOperationalAudited, policyViolationsOperationalUnaudited;
         private final Date measuredAt;
 
         private Counters() {
@@ -945,7 +947,6 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     private static final class VulnerabilityDateCounters {
-
         private final Date measuredAt;
         private final boolean trackMonth;
         private final List<VulnerabilityMetrics> metrics = new ArrayList<>();
@@ -985,7 +986,6 @@ public class MetricsUpdateTask implements Subscriber {
         private List<VulnerabilityMetrics> getMetrics() {
             return metrics;
         }
-
     }
 
 }

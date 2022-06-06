@@ -26,6 +26,7 @@ import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
 import com.microsoft.sqlserver.jdbc.SQLServerDriver;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.common.LimitingExecutor;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
@@ -304,7 +305,8 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.info("Completed portfolio metrics update");
+        LOGGER.info("Completed portfolio metrics update in " +
+                DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 
     /**
@@ -324,7 +326,7 @@ public class MetricsUpdateTask implements Subscriber {
             LOGGER.debug("Fetching UUID for project with ID " + projectId);
             projectUuid = getProjectUuid(pm, projectId)
                     .orElseThrow(() -> new NoSuchElementException("Project with ID " + projectId + " does not exist"));
-            LOGGER.info("Executing metrics update for project: " + projectUuid);
+            LOGGER.info("Executing metrics update for project " + projectUuid);
 
             LOGGER.debug("Fetching component IDs for project " + projectUuid);
             componentIds = getComponents(pm, projectId);
@@ -476,7 +478,8 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.info("Completed metrics update for project: " + projectUuid);
+        LOGGER.info("Completed metrics update for project " + projectUuid + " in " +
+                DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
         return counters;
     }
 
@@ -493,7 +496,7 @@ public class MetricsUpdateTask implements Subscriber {
         try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
             componentUuid = getComponentUuid(pm, componentId)
                     .orElseThrow(() -> new NoSuchElementException("Component with ID " + componentId + " does not exist"));
-            LOGGER.debug("Executing metrics update for component: " + componentUuid);
+            LOGGER.debug("Executing metrics update for component " + componentUuid);
 
             for (final VulnerabilityProjection vulnerability : getVulnerabilities(pm, componentId)) {
                 counters.vulnerabilities++;
@@ -657,7 +660,8 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.debug("Completed metrics update for component: " + componentUuid);
+        LOGGER.debug("Completed metrics update for component " + componentUuid + " in " +
+                DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
         return counters;
     }
 
@@ -695,7 +699,8 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.info("Completed metrics update on vulnerability database");
+        LOGGER.info("Completed metrics update on vulnerability database in " +
+                DurationFormatUtils.formatDuration(new Date().getTime() - measuredAt.getTime(), "mm:ss:SS"));
     }
 
     private List<Long> getActiveProjects(final PersistenceManager pm) throws Exception {

@@ -7,16 +7,20 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +34,15 @@ abstract class AbstractMetricsUpdateTaskIT {
     @Before
     public void setUp() throws Exception {
         setUpDatabase();
+    }
 
+    @After
+    public void tearDown() {
+        PersistenceManagerFactory.tearDown();
+    }
+
+    @Test
+    public void testPortfolioMetricsUpdate() {
         try (final var qm = new QueryManager()) {
             var project = new Project();
             project.setName("acme-app");
@@ -60,19 +72,11 @@ abstract class AbstractMetricsUpdateTaskIT {
             policyViolation = qm.addPolicyViolationIfNotExist(policyViolation);
             qm.makeViolationAnalysis(component, policyViolation, ViolationAnalysisState.APPROVED, false);
         }
-    }
 
-    @After
-    public void tearDown() {
-        PersistenceManagerFactory.tearDown();
-    }
-
-    @Test
-    public void test() {
         new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
 
         try (final var qm = new QueryManager()) {
-            final var metrics = qm.getMostRecentPortfolioMetrics();
+            final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
             assertThat(metrics).isNotNull();
             assertThat(metrics.getProjects()).isEqualTo(1);
             assertThat(metrics.getVulnerableProjects()).isEqualTo(1);
@@ -104,6 +108,43 @@ abstract class AbstractMetricsUpdateTaskIT {
             assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
             assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
             assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+        }
+    }
+
+    @Test
+    public void testVulnerabilityMetricsUpdate() {
+        try (final var qm = new QueryManager()) {
+            // Test that paging works by creating more vulnerabilities
+            // than fit on a single page (of size 500). Paging currently
+            // the primary area where the supported databases behave differently.
+            for (int i = 0; i < 750; i++) {
+                var vuln = new Vulnerability();
+                vuln.setVulnId("INTERNAL-" + i);
+                vuln.setSource(Vulnerability.Source.INTERNAL);
+                vuln.setSeverity(Severity.HIGH);
+                vuln.setCreated(Date.from(LocalDateTime.of(2020, 10, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+                qm.createVulnerability(vuln, false);
+            }
+        }
+
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+
+        try (final var qm = new QueryManager()) {
+            final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+
+            assertThat(metrics).hasSize(2);
+            assertThat(metrics).satisfiesExactlyInAnyOrder(
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2020);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(750);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2020);
+                    assertThat(vm.getMonth()).isEqualTo(10);
+                    assertThat(vm.getCount()).isEqualTo(750);
+                }
+            );
         }
     }
 

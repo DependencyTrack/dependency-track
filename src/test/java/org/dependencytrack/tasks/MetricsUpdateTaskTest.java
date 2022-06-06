@@ -32,9 +32,12 @@ import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -660,6 +663,86 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
 
         qm.getPersistenceManager().refresh(component);
         assertThat(component.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateVulnerabilityMetricsEmpty() {
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+
+        final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+        assertThat(metrics).isEmpty();
+    }
+
+    @Test
+    public void testUpdateVulnerabilityMetrics() {
+        // Create vulnerability with published timestamp.
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.LOW);
+        vuln.setPublished(Date.from(LocalDateTime.of(2020, 10, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        qm.createVulnerability(vuln, false);
+
+        // Create vulnerability with created timestamp.
+        vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-002");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.MEDIUM);
+        vuln.setCreated(Date.from(LocalDateTime.of(2021, 11, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        qm.createVulnerability(vuln, false);
+
+        // Create vulnerability with created AND published timestamp.
+        vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-003");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setCreated(Date.from(LocalDateTime.of(2022, 12, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        vuln.setPublished(Date.from(LocalDateTime.of(2022, 12, 2, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        qm.createVulnerability(vuln, false);
+
+        // Create vulnerability without created or published timestamps.
+        vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-004");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.CRITICAL);
+        qm.createVulnerability(vuln, false);
+
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+
+        final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+        assertThat(metrics).hasSize(6);
+        assertThat(metrics).satisfiesExactlyInAnyOrder(
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2020);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2020);
+                    assertThat(vm.getMonth()).isEqualTo(10);
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2021);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2021);
+                    assertThat(vm.getMonth()).isEqualTo(11);
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2022);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2022);
+                    assertThat(vm.getMonth()).isEqualTo(12);
+                    assertThat(vm.getCount()).isEqualTo(1);
+                }
+        );
     }
 
     private PolicyViolation createPolicyViolation(final Component component, final Policy.ViolationState violationState, final PolicyViolation.Type type) {

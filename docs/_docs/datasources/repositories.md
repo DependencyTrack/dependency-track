@@ -33,7 +33,9 @@ Dependency-Track supports the following default repositories:
 
 
 Additional repositories can be added for each supported ecosystem. Additionally, repositories can be enabled or disabled
-as well as identified as 'internal'.
+as well as identified as 'internal'. For internal repositories, a username and/or password may be specified. This allows 
+Dependency-Track to scan packages from private repositories that require basic authentication, like Azure Artifacts or 
+Artifactory.
 
 ![repositories](/images/screenshots/repositories.png)
 

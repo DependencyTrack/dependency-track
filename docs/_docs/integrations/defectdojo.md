@@ -47,6 +47,19 @@ This feature is used to map projects in Dependency-Track to engagements in Defec
 | Attribute      | Value                             |
 | ---------------| --------------------------------- |
 | Group Name     | `integrations`                    |
-| Property Name  | `defectdojo.engagementId`       |
+| Property Name  | `defectdojo.engagementId`         |
 | Property Value | The CI/CD engagement ID to upload findings to, noted in Step 3 |
 | Property Type  | `STRING`                          |
+
+#### Step 7: Add Per-project configuration for Reimport Enhancement (Optional)
+* Dependency-Track v4.6.0 or higher
+![Configure Project](/images/screenshots/defectdojo_reimport.png)
+Instead of creating numerous tests per DefectDojo engagement, now you have the option to deduplicate the tests automatically with this configuration. Once configured, Dependency Track server will try to determine if previous test exist or not. If no, a new test will be created. Otherwise, the test results will be published into the existing one.
+The additional configuration property is defined as below:
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.reimport`             |
+| Property Value | 'true' or 'false'                 |
+| Property Type  | `BOOLEAN`                         |

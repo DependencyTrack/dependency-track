@@ -994,8 +994,8 @@ public class QueryManager extends AlpineQueryManager {
         return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal);
     }
 
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean enabled) {
-        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, enabled);
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, String username, String password, boolean enabled) {
+        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, username, password, enabled);
     }
 
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {

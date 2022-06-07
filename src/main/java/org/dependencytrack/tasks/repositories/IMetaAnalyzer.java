@@ -39,6 +39,15 @@ public interface IMetaAnalyzer {
     void setRepositoryBaseUrl(String baseUrl);
 
     /**
+     * Sets the username and password (or access token) to use for authentication with the repository. Should not be used for repositories that do not
+     * use Basic authentication.
+     * @param username the username for access to the repository.
+     * @param password the password or access token to be used for the repository.
+     * @since 4.6.0
+     */
+    void setRepositoryUsernameAndPassword(String username, String password);
+
+    /**
      * Returns the type of repositry the analyzer supports.
      * @since 3.1.0
      */
@@ -115,6 +124,11 @@ public interface IMetaAnalyzer {
         return new IMetaAnalyzer() {
             @Override
             public void setRepositoryBaseUrl(String baseUrl) {
+            }
+
+            @Override
+            public void setRepositoryUsernameAndPassword(String username, String password) {
+
             }
 
             @Override

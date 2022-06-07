@@ -35,7 +35,11 @@ import org.dependencytrack.notification.NotificationScope;
  */
 public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
 
-    String baseUrl;
+    protected String baseUrl;
+
+    protected String username;
+
+    protected String password;
 
     /**
      * {@inheritDoc}
@@ -51,7 +55,12 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         this.baseUrl = baseUrl;
     }
 
-    public void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText, final Component component) {
+    public void setRepositoryUsernameAndPassword(String username, String password) {
+        this.username = StringUtils.trimToNull(username);
+        this.password = StringUtils.trimToNull(password);
+    }
+
+    protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText, final Component component) {
         logger.debug("HTTP Status : " + statusCode + " " + statusText);
         logger.debug(" - RepositoryType URL : " + url);
         logger.debug(" - Package URL : " + component.getPurl().canonicalize());
@@ -64,7 +73,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
         );
     }
 
-    public void handleRequestException(final Logger logger, final Exception e) {
+    protected void handleRequestException(final Logger logger, final Exception e) {
         logger.error("Request failure", e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

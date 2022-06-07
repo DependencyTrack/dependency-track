@@ -28,8 +28,7 @@ This workflow has a workflow_dispatch event trigger.
 5. ensure that the *Default Branch* is selected in the branch dropdown
 6. (optional) if the version you intend to release differs from the version in the branch you can overwrite it by specifying it in the input variable designated for it
 7. finally, once all inputs are checked press the "*Run Workflow*" button
-8. sit back and relax, once the build runs through successfully, a new release will be created and all the relevant artifacts will be published.
-   Finally, a new release branch will get created based on the current state of the Default Branch.
+8. Assuming no custom GitHub PAT was provided to the *Release CI* you will have to follow the instructions under link:#publish-release-artifacts[Publish Release Artifacts] once this workflow ran through successfully.
 
 NOTE: While setting the right versions is also part of the workflow be sure that you set the version to the next correct SNAPSHOT in the _Default Branch_ again (Maybe an improvement to be made down the line to this workflow). However, the release branch versions are already properly handled.
 
@@ -46,6 +45,22 @@ This workflow has a workflow_dispatch event trigger.
 5. ensure that the correct *Release Branch* is selected in the branch dropdown
 6. (optional) if the version you intend to release differs from the version in the branch you can overwrite it by specifying it in the input variable designated for it
 7. finally, once all inputs are checked press the "*Run Workflow*" button
-8. sit back and relax, once the build runs through successfully, a new release will be created and all the relevant artifacts will be published.
+8. Assuming no custom GitHub PAT was provided to the *Release CI* you will have to follow the instructions under link:#publish-release-artifacts[Publish Release Artifacts] once this workflow ran through successfully.
 
 NOTE: This workflow already sets the proper SNAPSHOT version on the release branch to follow a release.
+
+[#publish-release-artifacts]
+=== Publish Release Artifacts
+
+NOTE: This section is only required if you intend to manually re-trigger a release artifact build or if the default GITHUB_TOKEN is used within the Release CI. The latter is caused by a limitation for that token and GitHub ignoring any events triggered by it (i.e. _git push_, _gh release_, ...).
+
+1. head over to the *Actions* tab in GitHub
+2. Select "*Publish CI*" under the _Workflows_ Section
+3. The following UI element will have a button to trigger the CI, once clicked the _Use workflow from_ will appear
++
+----
+This workflow has a workflow_dispatch event trigger.
+----
+4. ensure the tag you want to publish release artifacts for is selected in the *_Use workflow from_* dropdown
+5. finally, once all inputs are checked press the "*Run Workflow*" button
+6. the rest is handled by the workflow and your release artifacts will be available as soon as this workflow runs through successfully

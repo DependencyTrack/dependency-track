@@ -152,14 +152,25 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      * @param identifier the identifier of the repository
      * @param url a url of the repository
      * @param internal specifies if the repository is internal
+     * @param username the username to access the (internal) repository with
+     * @param password the password to access the (internal) repository with
      * @param enabled specifies if the repository is enabled
      * @return the updated Repository
      */
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean enabled) {
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, String username, String password, boolean enabled) {
         final Repository repository = getObjectByUuid(Repository.class, uuid);
         repository.setIdentifier(identifier);
         repository.setUrl(url);
         repository.setInternal(internal);
+
+        if (!internal) {
+            repository.setUsername(null);
+            repository.setPassword(null);
+        } else {
+            repository.setUsername(username);
+            repository.setPassword(password);
+        }
+
         repository.setEnabled(enabled);
         return persist(repository);
     }

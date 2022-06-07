@@ -106,6 +106,8 @@ public class QueryManager extends AlpineQueryManager {
     private VulnerabilityQueryManager vulnerabilityQueryManager;
     private VulnerableSoftwareQueryManager vulnerableSoftwareQueryManager;
 
+    private TagQueryManager tagQueryManager;
+
     /**
      * Default constructor.
      */
@@ -148,6 +150,17 @@ public class QueryManager extends AlpineQueryManager {
             projectQueryManager = (request == null) ? new ProjectQueryManager(getPersistenceManager()) : new ProjectQueryManager(getPersistenceManager(), request);
         }
         return projectQueryManager;
+    }
+
+    /**
+     * Lazy instantiation of TagQueryManager.
+     * @return a TagQueryManager object
+     */
+    private TagQueryManager getTagQueryManager() {
+        if (tagQueryManager == null) {
+            tagQueryManager = (request == null) ? new TagQueryManager(getPersistenceManager()) : new TagQueryManager(getPersistenceManager(), request);
+        }
+        return tagQueryManager;
     }
 
     /**
@@ -1087,5 +1100,9 @@ public class QueryManager extends AlpineQueryManager {
 
     public boolean hasAccessManagementPermission(final ApiKey apiKey) {
         return getProjectQueryManager().hasAccessManagementPermission(apiKey);
+    }
+
+    public PaginatedResult getTags(String policyUuid) {
+        return getTagQueryManager().getTags(policyUuid);
     }
 }

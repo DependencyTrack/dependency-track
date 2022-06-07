@@ -80,6 +80,8 @@ public abstract class ResourceTest extends JerseyTest {
     protected final String TOTAL_COUNT_HEADER = "X-Total-Count";
     protected final String X_API_KEY = "X-Api-Key";
 
+    protected final String V1_TAG = "/v1/tag";
+
     protected QueryManager qm;
     protected ManagedUser testUser;
     protected String jwt;

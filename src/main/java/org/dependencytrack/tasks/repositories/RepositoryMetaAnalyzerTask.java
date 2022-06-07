@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.repositories;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import alpine.security.crypto.DataEncryption;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -81,6 +82,15 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
             if (repository.isEnabled() && ((component.isInternal() && repository.isInternal()) || (!component.isInternal() && !repository.isInternal()))) {
                 LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
                         + repository.getIdentifier() + " (" + repository.getType() + ")");
+
+                if (repository.isInternal()) {
+                    try {
+                        analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), DataEncryption.decryptAsString(repository.getPassword()));
+                    } catch (Exception e) {
+                        LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
+                    }
+                }
+
                 analyzer.setRepositoryBaseUrl(repository.getUrl());
                 final MetaModel model = analyzer.analyze(component);
                 if (StringUtils.trimToNull(model.getLatestVersion()) != null) {

@@ -929,7 +929,7 @@ public class MetricsUpdateTask implements Subscriber {
         }
     }
 
-    private static class Counters {
+    private static final class Counters {
         private int critical, high, medium, low, unassigned;
         private double inheritedRiskScore;
         private int components, vulnerableComponents, projects, vulnerableProjects;

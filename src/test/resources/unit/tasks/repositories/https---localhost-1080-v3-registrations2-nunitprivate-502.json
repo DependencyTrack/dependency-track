@@ -1,0 +1,28 @@
+{
+  "@id": "http://localhost:1080/v3/registrations2/nugetprivate/5.0.2.json",
+  "@type": [
+    "Package",
+    "http://schema.nuget.org/catalog#Permalink"
+  ],
+  "catalogEntry": "http://localhost:1080/commitLog/82a44df5f3474a989c4ffc1fba9ffff4",
+  "listed": true,
+  "packageContent": "http://localhost:1080/v3/flat2/nugetprivate/5.0.2/nugetprivate.5.0.2.nupkg",
+  "published": "2022-04-13T13:30:25Z",
+  "registration": "http://localhost:1080/v3/registrations2/nugetprivate/index.json",
+  "@context": {
+    "@vocab": "http://schema.nuget.org/schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "catalogEntry": {
+      "@type": "@id"
+    },
+    "registration": {
+      "@type": "@id"
+    },
+    "packageContent": {
+      "type": "@id"
+    },
+    "published": {
+      "@type": "xsd:dateTime"
+    }
+  }
+}

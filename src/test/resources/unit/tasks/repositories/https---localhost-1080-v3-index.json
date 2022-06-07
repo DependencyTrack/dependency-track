@@ -1,0 +1,40 @@
+{
+  "@context": {
+    "@vocab": "http://schema.nuget.org/services#",
+    "comment": "http://www.w3.org/2000/01/rdf-schema#comment",
+    "label": "http://www.w3.org/2000/01/rdf-schema#label"
+  },
+  "resources": [
+    {
+      "@id": "http://localhost:1080/v2/",
+      "@type": "PackagePublish/2.0.0"
+    },
+    {
+      "@id": "http://localhost:1080/v2/",
+      "@type": "LegacyGallery/2.0.0"
+    },
+    {
+      "@id": "http://localhost:1080/v3/registrations2/",
+      "@type": "RegistrationsBaseUrl/3.0.0-beta"
+    },
+    {
+      "@id": "http://localhost:1080/v3/registrations2-semver2/",
+      "@type": "RegistrationsBaseUrl/3.6.0",
+      "comment": "This base URL includes SemVer 2.0.0 packages."
+    },
+    {
+      "@id": "http://localhost:1080/v3/registrations2-semver2/",
+      "@type": "RegistrationsBaseUrl/Versioned",
+      "comment": "This base URL includes SemVer 2.0.0 packages."
+    },
+    {
+      "@id": "http://localhost:1080/v3/query2/",
+      "@type": "SearchQueryService/3.0.0-beta"
+    },
+    {
+      "@id": "http://localhost:1080/v3/flat2/",
+      "@type": "PackageBaseAddress/3.0.0"
+    }
+  ],
+  "version": "3.0.0-beta"
+}

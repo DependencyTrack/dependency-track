@@ -20,6 +20,8 @@ package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
+import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
@@ -74,9 +76,13 @@ public class PypiMetaAnalyzer extends AbstractMetaAnalyzer {
         if (component.getPurl() != null) {
             final String url = String.format(baseUrl + API_URL, component.getPurl().getName());
             try {
-                final HttpResponse<JsonNode> response = ui.get(url)
-                        .header("accept", "application/json")
-                        .asJson();
+                final HttpRequest<GetRequest> request = ui.get(url)
+                        .header("accept", "application/json");
+                if (username != null || password != null) {
+                    request.basicAuth(username, password);
+                }
+                final HttpResponse<JsonNode> response = request.asJson();
+
                 if (response.getStatus() == 200) {
                     if (response.getBody() != null && response.getBody().getObject() != null) {
                         final JSONObject info = response.getBody().getObject().getJSONObject("info");

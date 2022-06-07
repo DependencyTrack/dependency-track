@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
+import alpine.security.crypto.DataEncryption;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
@@ -168,6 +169,18 @@ public class RepositoryResource extends AlpineResource {
                         StringUtils.trimToNull(jsonRepository.getUrl()),
                         jsonRepository.isEnabled(),
                         jsonRepository.isInternal());
+
+                if (Boolean.TRUE.equals(jsonRepository.isInternal()) && (jsonRepository.getUsername() != null || jsonRepository.getPassword() != null)) {
+                    repository.setUsername(StringUtils.trimToNull(jsonRepository.getUsername()));
+                    try {
+                        if (jsonRepository.getPassword() != null) {
+                            repository.setPassword(DataEncryption.encryptAsString(jsonRepository.getPassword()));
+                        }
+                    } catch (Exception e) {
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();
+                    }
+                }
+
                 return Response.status(Response.Status.CREATED).entity(repository).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A repository with the specified identifier already exists.").build();
@@ -197,10 +210,18 @@ public class RepositoryResource extends AlpineResource {
             Repository repository = qm.getObjectByUuid(Repository.class, jsonRepository.getUuid());
             if (repository != null) {
                 final String url = StringUtils.trimToNull(jsonRepository.getUrl());
-                repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
-                        jsonRepository.isInternal(),
-                        jsonRepository.isEnabled());
-                return Response.ok(repository).build();
+                try {
+                    // The password is not passed to the front-end, so it should only be overwritten if it is not null.
+                    final String updatedPassword = jsonRepository.getPassword() != null
+                            ? DataEncryption.encryptAsString(jsonRepository.getPassword())
+                            : repository.getPassword();
+
+                    repository = qm.updateRepository(jsonRepository.getUuid(), repository.getIdentifier(), url,
+                            jsonRepository.isInternal(), jsonRepository.getUsername(), updatedPassword, jsonRepository.isEnabled());
+                    return Response.ok(repository).build();
+                } catch (Exception e) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("The specified repository password could not be encrypted.").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the repository could not be found.").build();
             }

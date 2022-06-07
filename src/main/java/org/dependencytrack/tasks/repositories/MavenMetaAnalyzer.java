@@ -29,6 +29,7 @@ import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.util.DateUtil;
+import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.XmlUtil;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -82,6 +83,11 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
             final String url = String.format(baseUrl + REPO_METADATA_URL, mavenGavUrl);
             try {
                 final HttpUriRequest request = new HttpGet(url);
+
+                if (username != null || password != null) {
+                    request.setHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
+                }
+
                 try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                     final StatusLine status = response.getStatusLine();
                     if (status.getStatusCode() == 200) {

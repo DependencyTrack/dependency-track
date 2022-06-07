@@ -28,6 +28,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -242,4 +243,66 @@ public class PolicyResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(304);
     }
 
+    @Test
+    public void addTagToPolicyTest() {
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        final Tag tag = qm.createTag("Policy Tag");
+        System.out.println("Tag being created is "+qm.getTagByName("Policy Tag"));
+
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(null);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.getJsonArray("tags")).hasSize(1);
+        assertThat(json.getJsonArray("tags").get(0).asJsonObject().getString("name")).isEqualTo(tag.getName());
+    }
+
+    @Test
+    public void addTagToPolicyTagAlreadyAddedTest() {
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        final Tag tag = qm.createTag("Policy Tag");
+
+        policy.setTags(singletonList(tag));
+        qm.persist(policy);
+
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(null);
+
+        assertThat(response.getStatus()).isEqualTo(304);
+    }
+
+    @Test
+    public void removeTagFromPolicyTest() {
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        final Tag tag = qm.createTag("Policy Tag");
+
+        policy.setTags(singletonList(tag));
+        qm.persist(policy);
+
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    public void removeTagFromPolicyTagDoesNotExistTest() {
+        final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        final Tag tag = qm.createTag("Policy Tag");
+
+        final Response response = target(V1_POLICY + "/" + policy.getUuid() + "/tag/" + tag.getName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(304);
+    }
 }

@@ -18,13 +18,11 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
-import com.microsoft.sqlserver.jdbc.SQLServerDriver;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.common.LimitingExecutor;
@@ -821,22 +819,17 @@ public class MetricsUpdateTask implements Subscriber {
      * @throws Exception If the query could not be closed
      */
     private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
-        final String limitClause;
-        if (SQLServerDriver.class.getName().equals(Config.getInstance().getProperty(Config.AlpineKey.DATABASE_DRIVER))) {
-            limitClause = "" +
-                    "OFFSET 0 ROWS " +
-                    "FETCH NEXT 500 ROWS ONLY";
-        } else {
-            limitClause = "LIMIT 500";
-        }
-
-        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
-                "SELECT \"ID\", \"CREATED\", \"PUBLISHED\" " +
-                "FROM \"VULNERABILITY\" " +
-                "WHERE \"ID\" > ? " +
-                "ORDER BY \"ID\" ASC " +
-                limitClause)) {
+        // Use JDOQL instead of SQL in order to avoid incompatibilities with regard
+        // to LIMIT / FETCH FIRST X ROWS ONLY clauses. SQL Server does not support LIMIT,
+        // MySQL does not support FETCH FIRST X ROWS ONLY. And DataNucleus makes it really
+        // hard to identify which DB we're running on.
+        try (final Query<?> query = pm.newQuery(Query.JDOQL, "" +
+                "SELECT id, created, published " +
+                "FROM org.dependencytrack.model.Vulnerability " +
+                "WHERE id > :lastId " +
+                "ORDER BY id ASC")) {
             query.setParameters(lastId);
+            query.range(0, 500);
             return List.copyOf(query.executeResultList(VulnerabilityDateProjection.class));
         }
     }

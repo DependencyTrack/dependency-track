@@ -125,11 +125,11 @@ public class MetricsUpdateTask implements Subscriber {
         if (activeProjectIds.size() > 0) {
             // In order to speed up the process of updating metrics for all projects,
             // we parallelize the work using a fixed-size thread pool.
-            // The pool is intentionally left small for now, as we want to limit the
-            // impact on other functions of DT. We may increase this in the future,
+            // The pool size is intentionally left conservative for now, as we want to
+            // limit the impact on other functions of DT. We may increase this in the future,
             // or allow it to be configured by users.
 
-            int threadPoolSize = SystemUtil.getCpuCores() / 2;
+            int threadPoolSize = SystemUtil.getCpuCores();
             if (threadPoolSize > activeProjectIds.size()) {
                 threadPoolSize = activeProjectIds.size();
             }

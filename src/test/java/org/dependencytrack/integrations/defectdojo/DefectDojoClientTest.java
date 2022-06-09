@@ -61,6 +61,10 @@ public class DefectDojoClientTest {
                 request()
                     .withPath("/defectdojo/api/v2/import-scan/")
         );
+        testClient.clear(
+                request()
+                    .withPath("/defectdojo/api/v2/reimport-scan/")
+        );
     }
 
     @BeforeClass
@@ -122,6 +126,61 @@ public class DefectDojoClientTest {
                         .withMethod("POST")
                         .withHeader(HttpHeaders.AUTHORIZATION, "Token " + token)
                         .withPath("/defectdojo/api/v2/import-scan/"),
+                VerificationTimes.exactly(1)
+        );
+    }
+
+    @Test
+    public void testReimportFindingsPositiveCase() throws Exception {
+        String token = "db975c97-98b1-4988-8d6a-9c3e044dfff3";
+        String testId = "15";
+        String engagementId = "67890";
+        testClient.when(
+                        request()
+                                .withMethod("POST")
+                                .withHeader(HttpHeaders.AUTHORIZATION, "Token " + token)
+                                .withPath("/defectdojo/api/v2/reimport-scan/")
+                )
+                .respond(
+                        response()
+                                .withStatusCode(201)
+                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                );
+        DefectDojoUploader uploader = new DefectDojoUploader();
+        DefectDojoClient client = new DefectDojoClient(uploader, new URL("https://localhost/defectdojo"));
+        client.reimportDependencyTrackFindings(token, engagementId, new NullInputStream(0), testId);
+        testClient.verify(
+                request()
+                        .withMethod("POST")
+                        .withPath("/defectdojo/api/v2/reimport-scan/"),
+                VerificationTimes.exactly(1)
+        );
+    }
+
+    @Test
+    public void testReimportFindingsNegativeCase() throws Exception {
+        String token = "db975c97-98b1-4988-8d6a-9c3e044dfff2";
+        String testId = "14";
+        String engagementId = "";
+        testClient.when(
+                        request()
+                                .withMethod("POST")
+                                .withHeader(HttpHeaders.AUTHORIZATION, "Token " + token)
+                                .withPath("/defectdojo/api/v2/reimport-scan/")
+                )
+                .respond(
+                        response()
+                                .withStatusCode(400)
+                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                );
+        DefectDojoUploader uploader = new DefectDojoUploader();
+        DefectDojoClient client = new DefectDojoClient(uploader, new URL("https://localhost/defectdojo"));
+        client.reimportDependencyTrackFindings(token, engagementId, new NullInputStream(16), testId);
+        testClient.verify(
+                request()
+                        .withMethod("POST")
+                        .withHeader(HttpHeaders.AUTHORIZATION, "Token " + token)
+                        .withPath("/defectdojo/api/v2/reimport-scan/"),
                 VerificationTimes.exactly(1)
         );
     }

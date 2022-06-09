@@ -27,10 +27,10 @@ import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
 import org.json.JSONObject;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
@@ -39,6 +39,16 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     private static final Logger LOGGER = Logger.getLogger(DefectDojoUploader.class);
     private static final String ENGAGEMENTID_PROPERTY = "defectdojo.engagementId";
+    private static final String REIMPORT_PROPERTY = "defectdojo.reimport";
+
+    public boolean isReimportConfigured(final Project project) {
+        final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
+        if (reimport != null) {
+            return Boolean.parseBoolean(reimport.getPropertyValue());  
+        } else {
+            return false;
+        }
+    }
 
     @Override
     public String name() {
@@ -75,7 +85,18 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         try {
             final DefectDojoClient client = new DefectDojoClient(this, new URL(defectDojoUrl.getPropertyValue()));
-            client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+            if (isReimportConfigured(project)) {
+                final ArrayList testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
+                final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
+                LOGGER.debug("Found existing test Id: " + testId);
+                if (testId.equals("")) {
+                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+                } else {
+                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId);
+                }
+            } else {
+                client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);
+            }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);
             handleException(LOGGER, e);

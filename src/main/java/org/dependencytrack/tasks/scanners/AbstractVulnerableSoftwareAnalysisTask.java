@@ -217,7 +217,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         // Moving this above the null OR check to reflect method comments (ANY should mean ANY)
         // This is necessary for fuzz matching when a PURL which assumes null
         // is matched to a CPE which defaults to ANY
-        if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate)) {
+        if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate) || LogicalValue.ANY.getAbbreviation().equals(vs.getUpdate())) {
             return true;
         }
         if (vs.getUpdate() == null || targetUpdate == null) {

@@ -123,7 +123,11 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         //
         // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
         if (componentVersion.length() > 1 && componentVersion.startsWith("v")) {
-            componentVersion = componentVersion.substring(1);
+            if (componentVersion.matches("v0.0.0-\\d{14}-[a-f0-9]{12}")) {
+                componentVersion = componentVersion.substring(7,11) + "-" + componentVersion.substring(11,13) + "-" + componentVersion.substring(13,15);
+            } else {
+                componentVersion = componentVersion.substring(1);
+            }
         }
 
         if (parsedCpe != null) {

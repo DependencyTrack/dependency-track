@@ -3,6 +3,7 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -28,9 +29,10 @@ import java.util.*;
 public class FuzzyVulnerableSoftwareSearchMananger {
 
     private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchMananger.class);
+    private static final Set<String> DO_NOT_FUZZ = Collections.unmodifiableSet(Set.of("util", "utils", "url", "xml"));
 
     private final boolean excludeComponentsWithPurl;
-
+    private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Collections.unmodifiableSet(Sets.newHashSet("golang"));
     public FuzzyVulnerableSoftwareSearchMananger(boolean excludeComponentsWithPurl) {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
     }
@@ -68,18 +70,31 @@ public class FuzzyVulnerableSoftwareSearchMananger {
 
     public List<VulnerableSoftware> fuzzyAnalysis(QueryManager qm, final Component component, us.springett.parsers.cpe.Cpe parsedCpe) {
         List<VulnerableSoftware>  fuzzyList = Collections.emptyList();
-        if (component.getPurl() == null || !excludeComponentsWithPurl) {
-            HashSet<SearchTerm> searches = new HashSet<>();
+        if (component.getPurl() == null || !excludeComponentsWithPurl || "deb".equals(component.getPurl().getType())) {
+            Set<SearchTerm> searches = new LinkedHashSet<>();
             try {
+                boolean attemptLuceneFuzzing = true;
                 Part part = Part.ANY;
                 String vendor = "*";
+                String nameToFuzz = component.getName();
                 if (parsedCpe != null) {
                     part = parsedCpe.getPart();
                     vendor = parsedCpe.getVendor();
                     searches.add(new SearchTerm(parsedCpe.getVendor(), parsedCpe.getProduct()));
+                    nameToFuzz = parsedCpe.getProduct();
                 }
                 if (component.getPurl() != null) {
-                    searches.add(new SearchTerm(component.getPurl().getNamespace(), component.getPurl().getName()));
+                    if (component.getPurl().getType().equals("golang")) {
+                        String namespace = Arrays.stream(component.getPurl().getNamespace().split("/")).reduce((first, second) -> second)
+                                .orElse(null);
+                        searches.add(new SearchTerm(StringUtils.substringAfterLast(component.getPurl().getNamespace(), "/"), component.getPurl().getName()));
+                    } else {
+                        searches.add(new SearchTerm(component.getPurl().getNamespace(), component.getPurl().getName()));
+                        if (component.getName().equals(nameToFuzz)) {
+                            nameToFuzz = component.getPurl().getName();
+                        }
+                    }
+                    attemptLuceneFuzzing = !SKIP_LUCENE_FUZZING_FOR_TYPE.contains(component.getPurl().getType());
                 }
                 searches.add(new SearchTerm(component.getGroup(), component.getName()));
                 for (SearchTerm search : searches) {
@@ -91,15 +106,16 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                         break;
                     }
                 }
-                if (fuzzyList.isEmpty()) {
-                    // If no luck, get fuzzier but not with small values as fuzzy 2 chars are easy to match
-                    if (fuzzyList.isEmpty() && component.getName().length() > 2) {
-                        us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
-                        // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
-                        String fuzzyTerm = getLuceneCpeRegexp(justThePart.toCpe23FS());
-                        //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
-                        fuzzyList = fuzzySearch(qm, "product:" + component.getName() + "~0.88 AND " + fuzzyTerm);
-                    }
+
+                // If no luck, get fuzzier but not with small values as fuzzy 2 chars are easy to match
+                if (fuzzyList.isEmpty() && nameToFuzz.length() > 2 && attemptLuceneFuzzing && !DO_NOT_FUZZ.contains(nameToFuzz)) {
+                    us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
+                    // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
+                    // I would be nice if we could
+                    String fuzzyTerm = getLuceneCpeRegexp(justThePart.toCpe23FS());
+                    LOGGER.warn(null, "Performing lucene ~ fuzz matching on '{}'", nameToFuzz);
+                    //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
+                    fuzzyList = fuzzySearch(qm, "product:" + nameToFuzz + "~0.88 AND " + fuzzyTerm);
                 }
             } catch (CpeValidationException cve) {
                 LOGGER.error("Failed to validate fuzz search CPE", cve);
@@ -109,7 +125,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
     }
     private List<VulnerableSoftware> fuzzySearch(QueryManager qm, Part part, String vendor, String product)  {
         try {
-            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, vendor, product, "*", "*", "*", "*", "*", "*", "*", "*");
+            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, escape(vendor), escape(product), "*", "*", "*", "*", "*", "*", "*", "*");
             String cpeSearch = getLuceneCpeRegexp(cpe.toCpe23FS());
             return fuzzySearch(qm, cpeSearch);
         } catch (CpeValidationException cpeValidationException) {
@@ -196,8 +212,8 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                 exp.insert(0, "cpe22:/");
                 exp.append("\\/").append(cpe.getPart().getAbbreviation());
             }
-            exp.append("\\:").append(getComponentRegex(cpe.getVendor()));
-            exp.append("\\:").append(getComponentRegex(cpe.getProduct()));
+            exp.append("\\:").append(escape(getComponentRegex(cpe.getVendor())));
+            exp.append("\\:").append(escape(getComponentRegex(cpe.getProduct())));
             exp.append("\\:").append(getComponentRegex(cpe.getVersion()));
             exp.append("\\:").append(getComponentRegex(cpe.getUpdate()));
             exp.append("\\:").append(getComponentRegex(cpe.getEdition()));
@@ -221,5 +237,32 @@ public class FuzzyVulnerableSoftwareSearchMananger {
         } else {
             return ".*";
         }
+    }
+
+    private static String escape(final String input) {
+        if(input == null) {
+            return null;
+        } else if (input.equals(".*")) {
+            return input;
+        }
+        char[] specialChars = {'+', '-', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\', '/', '.'};
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            final char c = input.charAt(i);
+            if (contains(specialChars, c)) {
+                sb.append("\\" + c);
+            } else {
+                sb.append(String.valueOf(c));
+            }
+        }
+        return sb.toString();
+    }
+    private static boolean contains(char[] chars, char queryChar) {
+        for (char c : chars) {
+            if (c == queryChar) {
+                return true;
+            }
+        }
+        return false;
     }
 }

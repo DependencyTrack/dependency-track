@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.VulnerabilityUtil;
 import java.io.Serializable;
@@ -115,7 +116,13 @@ public class Finding implements Serializable {
         optValue(vulnerability, "severityRank", severity.ordinal());
         optValue(vulnerability, "epssScore", o[16]);
         optValue(vulnerability, "epssPercentile", o[17]);
-        optValue(vulnerability, "cwe", getCwes(o[18]));
+        final List<Cwe> cwes = getCwes(o[18]);
+        if (cwes != null && !cwes.isEmpty()) {
+            // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
+            optValue(vulnerability, "cweId", cwes.get(0).getCweId());
+            optValue(vulnerability, "cweName", cwes.get(0).getName());
+        }
+        optValue(vulnerability, "cwes", cwes);
         optValue(attribution, "analyzerIdentity", o[19]);
         optValue(attribution, "attributedOn", o[20]);
         optValue(attribution, "alternateIdentifier", o[21]);
@@ -158,6 +165,9 @@ public class Finding implements Serializable {
     private List<Cwe> getCwes(final Object value) {
         if (value instanceof String) {
             final String cweIds = (String)value;
+            if (StringUtils.isBlank(cweIds)) {
+                return null;
+            }
             final List<Cwe> cwes = new ArrayList<>();
             for (final String s : cweIds.split(",")) {
                 final Cwe cwe = CweResolver.getInstance().lookup(Integer.valueOf(s));

@@ -38,37 +38,6 @@
           "value": "{{ subject.dependency.component.toString | escape(strategy="json") }}"
         }
       ],
-      {% elseif notification.group == "GLOBAL_AUDIT_CHANGE" %}
-      "facts": [
-        {
-          "name": "Analysis Type",
-          "value": "Global Component Analysis"
-        },
-        {
-          "name": "Analysis State",
-          "value": "{{ subject.analysis.analysisState | escape(strategy="json") }}"
-        },
-        {
-          "name": "Suppressed",
-          "value": "{{ subject.analysis.suppressed | escape(strategy="json") }}"
-        },
-        {
-          "name": "VulnID",
-          "value": "{{ subject.vulnerability.vulnId | escape(strategy="json") }}"
-        },
-        {
-          "name": "Severity",
-          "value": "{{ subject.vulnerability.severity | escape(strategy="json") }}"
-        },
-        {
-          "name": "Source",
-          "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
-        },
-        {
-          "name": "Component",
-          "value": "{{ subject.component.toString | escape(strategy="json") }}"
-        }
-      ],
       {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
       "facts": [
         {
@@ -94,6 +63,29 @@
         {
           "name": "Source",
           "value": "{{ subject.vulnerability.source | escape(strategy="json") }}"
+        },
+        {
+          "name": "Component",
+          "value": "{{ subject.component.toString | escape(strategy="json") }}"
+        },
+        {
+          "name": "Project",
+          "value": "{{ subject.project.toString | escape(strategy="json") }}"
+        }
+      ],
+      {% elseif notification.group == "POLICY_VIOLATION" %}
+      "facts": [
+        {
+          "name": "Subject",
+          "value": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+        },
+        {
+          "name": "Operator",
+          "value": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+        },
+        {
+          "name": "Value",
+          "value": "{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}"
         },
         {
           "name": "Component",

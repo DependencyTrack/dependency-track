@@ -579,16 +579,18 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     /**
      * Deletes a Project and all objects dependant on the project.
      * @param project the Project to delete
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
-    public void recursivelyDelete(Project project) {
+    public void recursivelyDelete(final Project project, final boolean commitIndex) {
         if (project.getChildren() != null) {
             for (final Project child: project.getChildren()) {
-                recursivelyDelete(child);
+                recursivelyDelete(child, false);
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         final Project result = pm.getObjectById(Project.class, project.getId());
         Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, Project.class);
 
         deleteAnalysisTrail(project);
         deleteViolationAnalysisTrail(project);

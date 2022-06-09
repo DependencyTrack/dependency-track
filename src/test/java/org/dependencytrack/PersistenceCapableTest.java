@@ -25,11 +25,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.datastore.JDOConnection;
-import java.sql.Connection;
-import java.sql.Statement;
-
 public abstract class PersistenceCapableTest {
 
     protected QueryManager qm;
@@ -41,34 +36,12 @@ public abstract class PersistenceCapableTest {
 
     @Before
     public void before() throws Exception {
-        dbReset();
         this.qm = new QueryManager();
     }
 
     @After
-    public void after() throws Exception {
-        dbReset();
-        this.qm.close();
+    public void after() {
+        PersistenceManagerFactory.tearDown();
     }
 
-    @SuppressWarnings("unchecked")
-    static void dbReset() throws Exception {
-        PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager();
-        JDOConnection jdoConnection = pm.getDataStoreConnection();
-        Connection conn = null;
-        Statement stmt = null;
-        try {
-            conn = (Connection)jdoConnection.getNativeConnection();
-            stmt = conn.createStatement();
-            stmt.executeUpdate("DROP ALL OBJECTS DELETE FILES");
-        } finally {
-            if (conn != null) {
-                conn.close();
-            }
-            if (stmt != null) {
-                stmt.close();
-            }
-        }
-        pm.close();
-    }
 }

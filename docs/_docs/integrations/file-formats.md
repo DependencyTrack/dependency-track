@@ -24,11 +24,12 @@ FPF's are json files and have the following sections:
 
 To export findings in the FPF format, the `/api/v1/finding/project/{uuid}/export` API endpoint is used.
 
-The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
+The **VIEW_VULNERABILITY** permission is required to use the findings API.
 
 > Finding Packaging Format v1.1 was introduced in Dependency-Track v4.5 and supports an array of CWEs per vulnerability.
-> Previous versions of Dependency-Track supported only a single CWE (cweId and cweName fields respectively) per
+> Previous versions of Dependency-Track supported only a single CWE (`cweId` and `cweName` fields respectively) per
 > vulnerability.
+> The `cweId` and `cweName` fields are deprecated and will be removed in a later version. Please use `cwes` instead.
 
 #### Example
 
@@ -63,7 +64,9 @@ The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
       "subtitle": "timespan",
       "severity": "LOW",
       "severityRank": 3,
-      "cwe": [
+      "cweId": 400,
+      "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
+      "cwes": [
         {
           "cweId": 400,
           "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"
@@ -93,7 +96,9 @@ The **VULNERABILITY_ANALYSIS** permission is required to use the findings API.
       "subtitle": "uglify-js",
       "severity": "LOW",
       "severityRank": 3,
-      "cwe": [
+      "cweId": 400,
+      "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
+      "cwes": [
         {
           "cweId": 400,
           "name": "Uncontrolled Resource Consumption ('Resource Exhaustion')"

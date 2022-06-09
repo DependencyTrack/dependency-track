@@ -64,6 +64,7 @@ public class Tag implements Serializable {
     private String name;
 
     @Persistent
+    @JsonIgnore
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     private List<Project> projects;
 

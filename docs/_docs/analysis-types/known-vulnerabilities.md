@@ -19,7 +19,7 @@ Each of the analyzers above can be enabled or disabled independently from one an
 ### Internal Analyzer
 
 The internal analyzer relies on a dictionary of vulnerable software. This dictionary is automatically populated when 
-NVD, GitHub Advisory, or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid 
+NVD, GitHub Advisories, or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid 
 CPEs, including application, operating system, and hardware components, and all components with Package URLs.
 
 ### OSS Index Analyzer

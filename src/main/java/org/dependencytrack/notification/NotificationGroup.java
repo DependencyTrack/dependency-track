@@ -40,5 +40,6 @@ public enum NotificationGroup {
     BOM_CONSUMED,
     BOM_PROCESSED,
     VEX_CONSUMED,
-    VEX_PROCESSED
+    VEX_PROCESSED,
+    POLICY_VIOLATION
 }

@@ -21,9 +21,12 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -36,6 +39,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.UUID;
 
 public class ComponentResourceTest extends ResourceTest {
@@ -66,14 +70,25 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getComponentByUuidTest() {
+    public void getComponentByUuidTest() throws Exception {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();
         component.setProject(project);
         component.setName("ABC");
+        PackageURL purl = new PackageURL("pkg:nuget/ABC@1.0.0");
+        component.setPurl(purl);
         component = qm.createComponent(component, false);
+        RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
+        metaComponent.setRepositoryType(RepositoryType.NUGET);
+        metaComponent.setNamespace(purl.getNamespace());
+        metaComponent.setName(purl.getName());
+        metaComponent.setLastCheck(new Date());
+        metaComponent.setLatestVersion("1.0.1");
+        qm.synchronizeRepositoryMetaComponent(metaComponent);
+
         Response response = target(V1_COMPONENT + "/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get(Response.class);
+
         Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);

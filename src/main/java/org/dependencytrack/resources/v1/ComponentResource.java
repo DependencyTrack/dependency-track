@@ -40,6 +40,8 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
@@ -118,7 +120,11 @@ public class ComponentResource extends AlpineResource {
             if (component != null) {
                 final Project project = component.getProject();
                 if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final PackageURL purl = component.getPurl();
+                    final RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(
+                            RepositoryType.resolve(purl), purl.getNamespace(), purl.getName());
                     final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
+                    detachedComponent.setRepositoryMeta(metaComponent);
                     return Response.ok(detachedComponent).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();

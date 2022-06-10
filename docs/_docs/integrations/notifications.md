@@ -11,14 +11,15 @@ projects, as well as providing notifications on various system and error conditi
 
 The following notification publishers are included:
 
-| Publisher | Description |
-| ------|-------------|
-| Slack   | Publishes notifications to Slack channels |
-| Teams   | Publishes notifications to Microsoft Teams channels |
-| WebEx   | Publishes notifications to Cisco WebEx channels |
-| Webhook | Publishes notifications to a configurable endpoint |
-| Email   | Sends notifications to an email address |
-| Console | Displays notifications on the system console |
+| Publisher  | Description                                         |
+|------------|-----------------------------------------------------|
+| Slack      | Publishes notifications to Slack channels           |
+| Teams      | Publishes notifications to Microsoft Teams channels |
+| Mattermost | Publishes notifications to Mattermost channels      |
+| WebEx      | Publishes notifications to Cisco WebEx channels     |
+| Webhook    | Publishes notifications to a configurable endpoint  |
+| Email      | Sends notifications to an email address             |
+| Console    | Displays notifications on the system console        |
 
 
 Dependency-Track notifications come in two flavors:
@@ -56,7 +57,7 @@ and publisher to use.
 
 Once the alert is created it can be configured. Start with selecting from the list of available notification groups
 to notify on. Then specify the destination. The destination may be a comma speparated list of email addresses (when the Email publisher is used),
-or a URL. In the case of Slack and Microsoft Teams, this will be the incoming webhook URL generated from each respective
+or a URL. In the case of Slack, Mattermost and Microsoft Teams, this will be the incoming webhook URL generated from each respective
 platform. In the case of the Outbound Webhook publisher, this will be a URL to which to publish the notification.
 
 ![configure notification](/images/screenshots/notifications-configure.png)

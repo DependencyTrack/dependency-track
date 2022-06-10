@@ -1,21 +1,43 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.tasks;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Policy;
-import org.dependencytrack.model.Policy.ViolationState;
 import org.dependencytrack.model.PolicyCondition;
-import org.dependencytrack.model.PolicyCondition.Subject;
 import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.tasks.MetricsUpdateTask.MetricCounters;
+import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -26,36 +48,56 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testUpdatePortfolioMetricsEmpty() {
-        final MetricCounters counters = new MetricsUpdateTask().updatePortfolioMetrics(qm);
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isZero();
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isZero();
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isZero();
-        assertThat(counters.suppressions).isZero();
-        assertThat(counters.findingsTotal).isZero();
-        assertThat(counters.findingsAudited).isZero();
-        assertThat(counters.findingsUnaudited).isZero();
-        assertThat(counters.policyViolationsFail).isZero();
-        assertThat(counters.policyViolationsWarn).isZero();
-        assertThat(counters.policyViolationsInfo).isZero();
-        assertThat(counters.policyViolationsTotal).isZero();
-        assertThat(counters.policyViolationsAudited).isZero();
-        assertThat(counters.policyViolationsUnaudited).isZero();
-        assertThat(counters.policyViolationsSecurityTotal).isZero();
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isZero();
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isZero();
-        assertThat(counters.policyViolationsOperationalTotal).isZero();
-        assertThat(counters.policyViolationsOperationalAudited).isZero();
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+
+        final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
+        assertThat(metrics.getProjects()).isZero();
+        assertThat(metrics.getVulnerableProjects()).isZero();
+        assertThat(metrics.getComponents()).isZero();
+        assertThat(metrics.getVulnerableComponents()).isZero();
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isZero();
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isZero();
+        assertThat(metrics.getSuppressed()).isZero();
+        assertThat(metrics.getFindingsTotal()).isZero();
+        assertThat(metrics.getFindingsAudited()).isZero();
+        assertThat(metrics.getFindingsUnaudited()).isZero();
+        assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+    }
+
+    @Test
+    public void testUpdatePortfolioMetricsUnchanged() {
+        // Record initial portfolio metrics
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+        final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        // Run the task a second time, without any metric being changed
+        final var beforeSecondRun = new Date();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+
+        // Ensure that the lastOccurrence timestamp was correctly updated
+        qm.getPersistenceManager().refresh(metrics);
+        assertThat(metrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
     }
 
     @Test
@@ -98,36 +140,48 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentSuppressed, AnalyzerIdentity.NONE);
         qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
 
-        final MetricCounters counters = new MetricsUpdateTask().updatePortfolioMetrics(qm);
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isEqualTo(2); // One is suppressed
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isEqualTo(3);
-        assertThat(counters.vulnerableProjects).isEqualTo(2); // Finding for one project is suppressed
-        assertThat(counters.components).isEqualTo(3);
-        assertThat(counters.vulnerableComponents).isEqualTo(2); // Finding for one component is suppressed
-        assertThat(counters.vulnerabilities).isEqualTo(2); // One is suppressed
-        assertThat(counters.suppressions).isEqualTo(1);
-        assertThat(counters.findingsTotal).isEqualTo(2); // One is suppressed
-        assertThat(counters.findingsAudited).isEqualTo(1);
-        assertThat(counters.findingsUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsFail).isZero();
-        assertThat(counters.policyViolationsWarn).isZero();
-        assertThat(counters.policyViolationsInfo).isZero();
-        assertThat(counters.policyViolationsTotal).isZero();
-        assertThat(counters.policyViolationsAudited).isZero();
-        assertThat(counters.policyViolationsUnaudited).isZero();
-        assertThat(counters.policyViolationsSecurityTotal).isZero();
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isZero();
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isZero();
-        assertThat(counters.policyViolationsOperationalTotal).isZero();
-        assertThat(counters.policyViolationsOperationalAudited).isZero();
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+
+        final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
+        assertThat(metrics.getProjects()).isEqualTo(3);
+        assertThat(metrics.getVulnerableProjects()).isEqualTo(2); // Finding for one project is suppressed
+        assertThat(metrics.getComponents()).isEqualTo(3);
+        assertThat(metrics.getVulnerableComponents()).isEqualTo(2); // Finding for one component is suppressed
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getSuppressed()).isEqualTo(1);
+        assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getFindingsAudited()).isEqualTo(1);
+        assertThat(metrics.getFindingsUnaudited()).isEqualTo(1);
+        assertThat(metrics.getInheritedRiskScore()).isEqualTo(10.0);
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(projectUnaudited, projectAudited, projectSuppressed,
+                componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(projectUnaudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(projectAudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(projectSuppressed.getLastInheritedRiskScore()).isZero();
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentAudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -140,7 +194,7 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         componentUnaudited.setProject(projectUnaudited);
         componentUnaudited.setName("acme-lib-a");
         componentUnaudited = qm.createComponent(componentUnaudited, false);
-        createPolicyViolation(componentUnaudited, ViolationState.FAIL, PolicyViolation.Type.LICENSE);
+        createPolicyViolation(componentUnaudited, Policy.ViolationState.FAIL, PolicyViolation.Type.LICENSE);
 
         // Create a project with an audited violation.
         var projectAudited = new Project();
@@ -150,7 +204,7 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         componentAudited.setProject(projectAudited);
         componentAudited.setName("acme-lib-b");
         componentAudited = qm.createComponent(componentAudited, false);
-        final var violationAudited = createPolicyViolation(componentAudited, ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
+        final var violationAudited = createPolicyViolation(componentAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
         qm.makeViolationAnalysis(componentAudited, violationAudited, ViolationAnalysisState.APPROVED, false);
 
         // Create a project with a suppressed violation.
@@ -161,39 +215,51 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         componentSuppressed.setProject(projectSuppressed);
         componentSuppressed.setName("acme-lib-c");
         componentSuppressed = qm.createComponent(componentSuppressed, false);
-        final var violationSuppressed = createPolicyViolation(componentSuppressed, ViolationState.INFO, PolicyViolation.Type.SECURITY);
+        final var violationSuppressed = createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
         qm.makeViolationAnalysis(componentSuppressed, violationSuppressed, ViolationAnalysisState.REJECTED, true);
 
-        final MetricCounters counters = new MetricsUpdateTask().updatePortfolioMetrics(qm);
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isZero();
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isEqualTo(3);
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isEqualTo(3);
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isZero();
-        assertThat(counters.suppressions).isZero();
-        assertThat(counters.findingsTotal).isZero();
-        assertThat(counters.findingsAudited).isZero();
-        assertThat(counters.findingsUnaudited).isZero();
-        assertThat(counters.policyViolationsFail).isEqualTo(1);
-        assertThat(counters.policyViolationsWarn).isEqualTo(1);
-        assertThat(counters.policyViolationsInfo).isZero(); // Suppressed
-        assertThat(counters.policyViolationsTotal).isEqualTo(2);
-        assertThat(counters.policyViolationsAudited).isEqualTo(1);
-        assertThat(counters.policyViolationsUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsSecurityTotal).isZero(); // Suppressed
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isEqualTo(1);
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalTotal).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalAudited).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalUnaudited).isEqualTo(0);
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+
+        final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
+        assertThat(metrics.getProjects()).isEqualTo(3);
+        assertThat(metrics.getVulnerableProjects()).isZero();
+        assertThat(metrics.getComponents()).isEqualTo(3);
+        assertThat(metrics.getVulnerableComponents()).isZero();
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isZero();
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isZero();
+        assertThat(metrics.getSuppressed()).isZero();
+        assertThat(metrics.getFindingsTotal()).isZero();
+        assertThat(metrics.getFindingsAudited()).isZero();
+        assertThat(metrics.getFindingsUnaudited()).isZero();
+        assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsInfo()).isZero(); // Suppressed
+        assertThat(metrics.getPolicyViolationsTotal()).isEqualTo(2);
+        assertThat(metrics.getPolicyViolationsAudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero(); // Suppressed
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(projectUnaudited, projectAudited, projectSuppressed,
+                componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(projectUnaudited.getLastInheritedRiskScore()).isZero();
+        assertThat(projectAudited.getLastInheritedRiskScore()).isZero();
+        assertThat(projectSuppressed.getLastInheritedRiskScore()).isZero();
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentAudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -202,36 +268,61 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
 
-        final MetricCounters counters = new MetricsUpdateTask().updateProjectMetrics(qm, project.getId());
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isZero();
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isZero();
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isZero();
-        assertThat(counters.suppressions).isZero();
-        assertThat(counters.findingsTotal).isZero();
-        assertThat(counters.findingsAudited).isZero();
-        assertThat(counters.findingsUnaudited).isZero();
-        assertThat(counters.policyViolationsFail).isZero();
-        assertThat(counters.policyViolationsWarn).isZero();
-        assertThat(counters.policyViolationsInfo).isZero();
-        assertThat(counters.policyViolationsTotal).isZero();
-        assertThat(counters.policyViolationsAudited).isZero();
-        assertThat(counters.policyViolationsUnaudited).isZero();
-        assertThat(counters.policyViolationsSecurityTotal).isZero();
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isZero();
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isZero();
-        assertThat(counters.policyViolationsOperationalTotal).isZero();
-        assertThat(counters.policyViolationsOperationalAudited).isZero();
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getComponents()).isZero();
+        assertThat(metrics.getVulnerableComponents()).isZero();
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isZero();
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isZero();
+        assertThat(metrics.getSuppressed()).isZero();
+        assertThat(metrics.getFindingsTotal()).isZero();
+        assertThat(metrics.getFindingsAudited()).isZero();
+        assertThat(metrics.getFindingsUnaudited()).isZero();
+        assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateProjectMetricsUnchanged() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+
+        // Record initial project metrics
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        // Run the task a second time, without any metric being changed
+        final var beforeSecondRun = new Date();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+
+        // Ensure that the lastOccurrence timestamp was correctly updated
+        qm.getPersistenceManager().refresh(metrics);
+        assertThat(metrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
     }
 
     @Test
@@ -269,36 +360,43 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentSuppressed, AnalyzerIdentity.NONE);
         qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
 
-        final MetricCounters counters = new MetricsUpdateTask().updateProjectMetrics(qm, project.getId());
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isEqualTo(2); // One is suppressed
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isEqualTo(3);
-        assertThat(counters.vulnerableComponents).isEqualTo(2); // Finding for one component is suppressed
-        assertThat(counters.vulnerabilities).isEqualTo(2); // One is suppressed
-        assertThat(counters.suppressions).isEqualTo(1);
-        assertThat(counters.findingsTotal).isEqualTo(2); // One is suppressed
-        assertThat(counters.findingsAudited).isEqualTo(1);
-        assertThat(counters.findingsUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsFail).isZero();
-        assertThat(counters.policyViolationsWarn).isZero();
-        assertThat(counters.policyViolationsInfo).isZero();
-        assertThat(counters.policyViolationsTotal).isZero();
-        assertThat(counters.policyViolationsAudited).isZero();
-        assertThat(counters.policyViolationsUnaudited).isZero();
-        assertThat(counters.policyViolationsSecurityTotal).isZero();
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isZero();
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isZero();
-        assertThat(counters.policyViolationsOperationalTotal).isZero();
-        assertThat(counters.policyViolationsOperationalAudited).isZero();
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getComponents()).isEqualTo(3);
+        assertThat(metrics.getVulnerableComponents()).isEqualTo(2); // Finding for one component is suppressed
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getSuppressed()).isEqualTo(1);
+        assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getFindingsAudited()).isEqualTo(1);
+        assertThat(metrics.getFindingsUnaudited()).isEqualTo(1);
+        assertThat(metrics.getInheritedRiskScore()).isEqualTo(10.0);
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(project, componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(project.getLastInheritedRiskScore()).isEqualTo(10.0);
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentAudited.getLastInheritedRiskScore()).isEqualTo(5.0);
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -312,14 +410,14 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         componentUnaudited.setProject(project);
         componentUnaudited.setName("acme-lib-a");
         componentUnaudited = qm.createComponent(componentUnaudited, false);
-        createPolicyViolation(componentUnaudited, ViolationState.FAIL, PolicyViolation.Type.LICENSE);
+        createPolicyViolation(componentUnaudited, Policy.ViolationState.FAIL, PolicyViolation.Type.LICENSE);
 
         // Create a component with an audited violation.
         var componentAudited = new Component();
         componentAudited.setProject(project);
         componentAudited.setName("acme-lib-b");
         componentAudited = qm.createComponent(componentAudited, false);
-        final var violationAudited = createPolicyViolation(componentAudited, ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
+        final var violationAudited = createPolicyViolation(componentAudited, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
         qm.makeViolationAnalysis(componentAudited, violationAudited, ViolationAnalysisState.APPROVED, false);
 
         // Create a component with a suppressed violation.
@@ -327,39 +425,46 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         componentSuppressed.setProject(project);
         componentSuppressed.setName("acme-lib-c");
         componentSuppressed = qm.createComponent(componentSuppressed, false);
-        final var violationSuppressed = createPolicyViolation(componentSuppressed, ViolationState.INFO, PolicyViolation.Type.SECURITY);
+        final var violationSuppressed = createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
         qm.makeViolationAnalysis(componentSuppressed, violationSuppressed, ViolationAnalysisState.REJECTED, true);
 
-        final MetricCounters counters = new MetricsUpdateTask().updateProjectMetrics(qm, project.getId());
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isZero();
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isEqualTo(3);
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isZero();
-        assertThat(counters.suppressions).isZero();
-        assertThat(counters.findingsTotal).isZero();
-        assertThat(counters.findingsAudited).isZero();
-        assertThat(counters.findingsUnaudited).isZero();
-        assertThat(counters.policyViolationsFail).isEqualTo(1);
-        assertThat(counters.policyViolationsWarn).isEqualTo(1);
-        assertThat(counters.policyViolationsInfo).isZero(); // Suppressed
-        assertThat(counters.policyViolationsTotal).isEqualTo(2);
-        assertThat(counters.policyViolationsAudited).isEqualTo(1);
-        assertThat(counters.policyViolationsUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsSecurityTotal).isZero(); // Suppressed
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isEqualTo(1);
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalTotal).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalAudited).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+
+        final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+        assertThat(metrics.getComponents()).isEqualTo(3);
+        assertThat(metrics.getVulnerableComponents()).isZero();
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isZero();
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isZero();
+        assertThat(metrics.getSuppressed()).isZero();
+        assertThat(metrics.getFindingsTotal()).isZero();
+        assertThat(metrics.getFindingsAudited()).isZero();
+        assertThat(metrics.getFindingsUnaudited()).isZero();
+        assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsInfo()).isZero(); // Suppressed
+        assertThat(metrics.getPolicyViolationsTotal()).isEqualTo(2);
+        assertThat(metrics.getPolicyViolationsAudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero(); // Suppressed
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refreshAll(project, componentUnaudited, componentAudited, componentSuppressed);
+        assertThat(project.getLastInheritedRiskScore()).isZero();
+        assertThat(componentUnaudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentAudited.getLastInheritedRiskScore()).isZero();
+        assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
     }
 
     @Test
@@ -373,36 +478,64 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         component = qm.createComponent(component, false);
 
-        final MetricCounters counters = new MetricsUpdateTask().updateComponentMetrics(qm, component.getId());
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isZero();
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isZero();
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isZero();
-        assertThat(counters.suppressions).isZero();
-        assertThat(counters.findingsTotal).isZero();
-        assertThat(counters.findingsAudited).isZero();
-        assertThat(counters.findingsUnaudited).isZero();
-        assertThat(counters.policyViolationsFail).isZero();
-        assertThat(counters.policyViolationsWarn).isZero();
-        assertThat(counters.policyViolationsInfo).isZero();
-        assertThat(counters.policyViolationsTotal).isZero();
-        assertThat(counters.policyViolationsAudited).isZero();
-        assertThat(counters.policyViolationsUnaudited).isZero();
-        assertThat(counters.policyViolationsSecurityTotal).isZero();
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isZero();
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isZero();
-        assertThat(counters.policyViolationsOperationalTotal).isZero();
-        assertThat(counters.policyViolationsOperationalAudited).isZero();
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+
+        final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isZero();
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isZero();
+        assertThat(metrics.getSuppressed()).isZero();
+        assertThat(metrics.getFindingsTotal()).isZero();
+        assertThat(metrics.getFindingsAudited()).isZero();
+        assertThat(metrics.getFindingsUnaudited()).isZero();
+        assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateComponentMetricsUnchanged() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component = qm.createComponent(component, false);
+
+        // Record initial project metrics
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
+        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        // Run the task a second time, without any metric being changed
+        final var beforeSecondRun = new Date();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+
+        // Ensure that the lastOccurrence timestamp was correctly updated
+        qm.getPersistenceManager().refresh(metrics);
+        assertThat(metrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
+        assertThat(metrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
     }
 
     @Test
@@ -442,36 +575,38 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnSuppressed, component, AnalyzerIdentity.NONE);
         qm.makeAnalysis(component, vulnSuppressed, AnalysisState.FALSE_POSITIVE, null, null, null, true);
 
-        final MetricCounters counters = new MetricsUpdateTask().updateComponentMetrics(qm, component.getId());
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isEqualTo(1);
-        assertThat(counters.medium).isEqualTo(1); // One is suppressed
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isZero();
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isEqualTo(2); // One is suppressed
-        assertThat(counters.suppressions).isEqualTo(1);
-        assertThat(counters.findingsTotal).isEqualTo(2); // One is suppressed
-        assertThat(counters.findingsAudited).isEqualTo(1);
-        assertThat(counters.findingsUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsFail).isZero();
-        assertThat(counters.policyViolationsWarn).isZero();
-        assertThat(counters.policyViolationsInfo).isZero();
-        assertThat(counters.policyViolationsTotal).isZero();
-        assertThat(counters.policyViolationsAudited).isZero();
-        assertThat(counters.policyViolationsUnaudited).isZero();
-        assertThat(counters.policyViolationsSecurityTotal).isZero();
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isZero();
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isZero();
-        assertThat(counters.policyViolationsOperationalTotal).isZero();
-        assertThat(counters.policyViolationsOperationalAudited).isZero();
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+
+        final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isEqualTo(1);
+        assertThat(metrics.getMedium()).isEqualTo(1); // One is suppressed
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getSuppressed()).isEqualTo(1);
+        assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed
+        assertThat(metrics.getFindingsAudited()).isEqualTo(1);
+        assertThat(metrics.getFindingsUnaudited()).isEqualTo(1);
+        assertThat(metrics.getInheritedRiskScore()).isEqualTo(8.0);
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getLastInheritedRiskScore()).isEqualTo(8.0);
     }
 
     @Test
@@ -486,51 +621,133 @@ public class MetricsUpdateTaskTest extends PersistenceCapableTest {
         component = qm.createComponent(component, false);
 
         // Create an unaudited violation.
-        createPolicyViolation(component, ViolationState.FAIL, PolicyViolation.Type.LICENSE);
+        createPolicyViolation(component, Policy.ViolationState.FAIL, PolicyViolation.Type.LICENSE);
 
         // Create an audited violation.
-        final PolicyViolation auditedViolation = createPolicyViolation(component, ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
+        final PolicyViolation auditedViolation = createPolicyViolation(component, Policy.ViolationState.WARN, PolicyViolation.Type.OPERATIONAL);
         qm.makeViolationAnalysis(component, auditedViolation, ViolationAnalysisState.APPROVED, false);
 
         // Create a suppressed violation.
-        final PolicyViolation suppressedViolation = createPolicyViolation(component, ViolationState.INFO, PolicyViolation.Type.SECURITY);
+        final PolicyViolation suppressedViolation = createPolicyViolation(component, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
         qm.makeViolationAnalysis(component, suppressedViolation, ViolationAnalysisState.REJECTED, true);
 
-        final MetricCounters counters = new MetricsUpdateTask().updateComponentMetrics(qm, component.getId());
-        assertThat(counters.critical).isZero();
-        assertThat(counters.high).isZero();
-        assertThat(counters.medium).isZero();
-        assertThat(counters.low).isZero();
-        assertThat(counters.unassigned).isZero();
-        assertThat(counters.projects).isZero();
-        assertThat(counters.vulnerableProjects).isZero();
-        assertThat(counters.components).isZero();
-        assertThat(counters.vulnerableComponents).isZero();
-        assertThat(counters.vulnerabilities).isZero();
-        assertThat(counters.suppressions).isZero();
-        assertThat(counters.findingsTotal).isZero();
-        assertThat(counters.findingsAudited).isZero();
-        assertThat(counters.findingsUnaudited).isZero();
-        assertThat(counters.policyViolationsFail).isEqualTo(1);
-        assertThat(counters.policyViolationsWarn).isEqualTo(1);
-        assertThat(counters.policyViolationsInfo).isZero(); // Suppressed
-        assertThat(counters.policyViolationsTotal).isEqualTo(2);
-        assertThat(counters.policyViolationsAudited).isEqualTo(1);
-        assertThat(counters.policyViolationsUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsSecurityTotal).isZero(); // Suppressed
-        assertThat(counters.policyViolationsSecurityAudited).isZero();
-        assertThat(counters.policyViolationsSecurityUnaudited).isZero();
-        assertThat(counters.policyViolationsLicenseTotal).isEqualTo(1);
-        assertThat(counters.policyViolationsLicenseAudited).isZero();
-        assertThat(counters.policyViolationsLicenseUnaudited).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalTotal).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalAudited).isEqualTo(1);
-        assertThat(counters.policyViolationsOperationalUnaudited).isZero();
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+
+        final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isZero();
+        assertThat(metrics.getMedium()).isZero();
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isZero();
+        assertThat(metrics.getSuppressed()).isZero();
+        assertThat(metrics.getFindingsTotal()).isZero();
+        assertThat(metrics.getFindingsAudited()).isZero();
+        assertThat(metrics.getFindingsUnaudited()).isZero();
+        assertThat(metrics.getInheritedRiskScore()).isZero();
+        assertThat(metrics.getPolicyViolationsFail()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsWarn()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsInfo()).isZero(); // Suppressed
+        assertThat(metrics.getPolicyViolationsTotal()).isEqualTo(2);
+        assertThat(metrics.getPolicyViolationsAudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero(); // Suppressed
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isEqualTo(1);
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateVulnerabilityMetricsEmpty() {
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+
+        final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+        assertThat(metrics).isEmpty();
+    }
+
+    @Test
+    public void testUpdateVulnerabilityMetrics() {
+        // Create vulnerability with published timestamp.
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.LOW);
+        vuln.setPublished(Date.from(LocalDateTime.of(2020, 10, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        qm.createVulnerability(vuln, false);
+
+        // Create vulnerability with created timestamp.
+        vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-002");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.MEDIUM);
+        vuln.setCreated(Date.from(LocalDateTime.of(2021, 11, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        qm.createVulnerability(vuln, false);
+
+        // Create vulnerability with created AND published timestamp.
+        vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-003");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setCreated(Date.from(LocalDateTime.of(2022, 12, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        vuln.setPublished(Date.from(LocalDateTime.of(2022, 12, 2, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+        qm.createVulnerability(vuln, false);
+
+        // Create vulnerability without created or published timestamps.
+        vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-004");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.CRITICAL);
+        qm.createVulnerability(vuln, false);
+
+        new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+
+        final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+        assertThat(metrics).hasSize(6);
+        assertThat(metrics).satisfiesExactlyInAnyOrder(
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2020);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2020);
+                    assertThat(vm.getMonth()).isEqualTo(10);
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2021);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2021);
+                    assertThat(vm.getMonth()).isEqualTo(11);
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2022);
+                    assertThat(vm.getMonth()).isNull();
+                    assertThat(vm.getCount()).isEqualTo(1);
+                },
+                vm -> {
+                    assertThat(vm.getYear()).isEqualTo(2022);
+                    assertThat(vm.getMonth()).isEqualTo(12);
+                    assertThat(vm.getCount()).isEqualTo(1);
+                }
+        );
     }
 
     private PolicyViolation createPolicyViolation(final Component component, final Policy.ViolationState violationState, final PolicyViolation.Type type) {
         final var policy = qm.createPolicy(UUID.randomUUID().toString(), Policy.Operator.ALL, violationState);
-        final var policyCondition = qm.createPolicyCondition(policy, Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "");
+        final var policyCondition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COORDINATES, PolicyCondition.Operator.MATCHES, "");
         final var policyViolation = new PolicyViolation();
 
         policyViolation.setComponent(component);

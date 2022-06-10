@@ -64,7 +64,7 @@ CI/CD environments.
   * Trust boundary traversal
   * Authentication requirements
 * Includes a comprehensive auditing workflow for triaging results
-* Configurable notifications supporting Slack, Microsoft Teams, Webhooks, and Email
+* Configurable notifications supporting Slack, Microsoft Teams, Mattermost, Webhooks, and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Easy to read metrics for components, projects, and portfolio
 * Native support for Kenna Security, Fortify SSC, ThreadFix, and DefectDojo

@@ -5,6 +5,9 @@ import kong.unirest.json.JSONObject;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.parser.osv.model.OSVVulnerability;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
 /*
@@ -50,29 +53,71 @@ public class GoogleOSVAdvisoryParser {
                 }
             }
 
-            final JSONArray vulnerabilities = object.optJSONArray("affected");
-            if (vulnerabilities != null) {
-                for(int i=0; i<vulnerabilities.length(); i++) {
+            final JSONObject cvss = object.optJSONObject("severity");
+            if (cvss != null) {
+                advisory.setCvssVector(cvss.optString("vectorString", null));
+                // TODO: add cvss score calculation if required
+            }
 
-                    OSVVulnerability osvVulnerability = new OSVVulnerability();
-                    final JSONObject vulnerability = vulnerabilities.getJSONObject(i);
-                    final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
-                    osvVulnerability.setPackageName(affectedPackageJson.optString("name", null));
-                    osvVulnerability.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
-                    osvVulnerability.setPurl(affectedPackageJson.optString("purl", null));
+            final List<OSVVulnerability> vulnerabilities = parseVulnerabilities(object);
+            advisory.setVulnerabilities(vulnerabilities);
+        }
+        return advisory;
+    }
 
-                    final JSONArray versions = vulnerability.optJSONArray("versions");
-                    if (versions != null) {
-                        for (int j=0; j<versions.length(); j++) {
-                            osvVulnerability.addVersion(versions.optString(j));
+    private List<OSVVulnerability> parseVulnerabilities(JSONObject object) {
+
+        List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
+        final JSONArray vulnerabilities = object.optJSONArray("affected");
+        if (vulnerabilities != null) {
+            for(int i=0; i<vulnerabilities.length(); i++) {
+
+                final JSONObject vulnerability = vulnerabilities.getJSONObject(i);
+                final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
+                final JSONArray ranges = vulnerability.optJSONArray("ranges");
+
+                if (ranges != null) {
+                    for (int j=0; j<ranges.length(); j++) {
+                        final JSONObject range = ranges.getJSONObject(i);
+                        if(range.optString("type").equalsIgnoreCase("ECOSYSTEM")){
+                            osvVulnerabilityList = parseVersionRanges(affectedPackageJson, range);
                         }
+
                     }
-                    // TODO 1. set version ranges TBD
-                    // final JSONArray ranges = vulnerability.optJSONArray("ranges");
-                    advisory.addVulnerability(osvVulnerability);
                 }
             }
         }
-        return advisory;
+        return osvVulnerabilityList;
+    }
+
+    private List<OSVVulnerability> parseVersionRanges(JSONObject affectedPackageJson, JSONObject range) {
+
+        final List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
+        final JSONArray rangeEvents = range.optJSONArray("events");
+        if(rangeEvents != null) {
+            int k = 0;
+            while (k < rangeEvents.length()) {
+
+                OSVVulnerability osvVulnerability = new OSVVulnerability();
+                osvVulnerability.setPackageName(affectedPackageJson.optString("name", null));
+                osvVulnerability.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
+                osvVulnerability.setPurl(affectedPackageJson.optString("purl", null));
+
+                JSONObject event = rangeEvents.getJSONObject(k);
+                String lower = event.optString("introduced", null);
+                if(lower != null) {
+                    osvVulnerability.setLowerVersionRange(lower);
+                    k += 1;
+                }
+                event = rangeEvents.getJSONObject(k);
+                String upper = event.optString("fixed", null);
+                if(upper != null) {
+                    osvVulnerability.setUpperVersionRange(upper);
+                    k += 1;
+                }
+                osvVulnerabilityList.add(osvVulnerability);
+            }
+        }
+        return osvVulnerabilityList;
     }
 }

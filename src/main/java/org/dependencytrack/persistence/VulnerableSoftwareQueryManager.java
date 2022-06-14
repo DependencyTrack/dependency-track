@@ -173,6 +173,16 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      * @return a List of matching VulnerableSoftware objects
      */
     @SuppressWarnings("unchecked")
+    public VulnerableSoftware getVulnerableSoftwareByPurl(String purl, String versionEndExcluding, String versionStartIncluding) {
+        final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "purl == :purl && versionEndExcluding == :versionEndExcluding && versionStartIncluding == :versionStartIncluding");
+        return singleResult(query.executeWithArray(purl, versionEndExcluding, versionStartIncluding));
+    }
+
+    /**
+     * Returns a List of all VulnerableSoftware objects that match the specified PackageURL
+     * @return a List of matching VulnerableSoftware objects
+     */
+    @SuppressWarnings("unchecked")
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "(purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && purlVersion == :purlVersion)");
         return (List<VulnerableSoftware>)query.executeWithArray(purl.getType(), purl.getNamespace(), purl.getName(), purl.getVersion());

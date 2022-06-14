@@ -1,0 +1,31 @@
+package org.dependencytrack.parser.osv.model;
+
+public enum Ecosystem {
+
+    ANDROID("Android"),
+    GSD("GSD"),
+    GO("Go"),
+    HEX("Hex"),
+    JAVASCRIPT("JavaScript"),
+    LINUX("Linux"),
+    MAVEN("Maven"),
+    NUGET("NuGet"),
+    OSSFUZZ("OSS-Fuzz"),
+    PACKAGIST("Packagist"),
+    PYPI("PyPI"),
+    RUBYGEMS("RubyGems"),
+    UVI("UVI"),
+    CRATES("crates.io"),
+    NPM("npm"),
+    DWF("DWF");
+
+    private final String value;
+
+    Ecosystem(final String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
+}

@@ -101,7 +101,7 @@ public class GitHubSecurityAdvisoryParser {
         final JSONObject cvss = object.optJSONObject("cvss");
         if (cvss != null) {
             advisory.setCvssScore(cvss.optInt("score", 0));
-            advisory.setCvssVector(cvss.optString("vectorString", null));
+            advisory.setCvssVector(cvss.optString("score", null));
         }
 
         final JSONObject cwes = object.optJSONObject("cwes");

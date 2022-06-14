@@ -28,6 +28,10 @@ public class OSVAdvisory {
 
     private List<OSVVulnerability> vulnerabilities;
 
+    private double cvssScore;
+
+    private String cvssVector;
+
     public String getId() {
         return id;
     }
@@ -125,13 +129,6 @@ public class OSVAdvisory {
         return vulnerabilities;
     }
 
-    public void addVulnerability(OSVVulnerability vulnerability) {
-        if (this.vulnerabilities == null) {
-            this.vulnerabilities = new ArrayList<>();
-        }
-        this.vulnerabilities.add(vulnerability);
-    }
-
     public void setVulnerabilities(List<OSVVulnerability> vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
     }
@@ -142,5 +139,21 @@ public class OSVAdvisory {
 
     public void setSeverity(String severity) {
         this.severity = severity;
+    }
+
+    public double getCvssScore() {
+        return cvssScore;
+    }
+
+    public void setCvssScore(double cvssScore) {
+        this.cvssScore = cvssScore;
+    }
+
+    public String getCvssVector() {
+        return cvssVector;
+    }
+
+    public void setCvssVector(String cvssVector) {
+        this.cvssVector = cvssVector;
     }
 }

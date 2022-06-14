@@ -13,6 +13,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.GoogleOSVAdvisoryParser;
+import org.dependencytrack.parser.osv.model.Ecosystem;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.parser.osv.model.OSVVulnerability;
 import org.dependencytrack.persistence.QueryManager;
@@ -47,11 +48,12 @@ public class OSVDownloadTask implements LoggableSubscriber {
         if (e instanceof GoogleOSVMirrorEvent && this.isEnabled) {
 
             try {
-                // TODO: Below functionality is being run for one ecosystem for example, it will be run for all ecosystems
-                URL url = new URL("https://osv-vulnerabilities.storage.googleapis.com/PyPI/all.zip");
-                ZipInputStream zipIn = new ZipInputStream(url.openStream());
-                unzipFolder(zipIn);
-                zipIn.closeEntry();
+                for (Ecosystem ecosystem : Ecosystem.values()) {
+                    URL url = new URL("https://osv-vulnerabilities.storage.googleapis.com/"+ ecosystem.getValue() +"/all.zip");
+                    ZipInputStream zipIn = new ZipInputStream(url.openStream());
+                    unzipFolder(zipIn);
+                    zipIn.closeEntry();
+                }
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
@@ -151,49 +153,22 @@ public class OSVDownloadTask implements LoggableSubscriber {
 
     private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {
 
-        List<String> versions = vuln.getVersions();
-        String versionStartIncluding = null;
-        String versionEndIncluding = null;
-        if (versions != null) {
-            versionStartIncluding = versions.get(0);
-            versionEndIncluding = versions.get(versions.size() - 1);
-        }
+        String versionStartIncluding = vuln.getLowerVersionRange();
+        String versionEndExcluding = vuln.getUpperVersionRange();
+
         final String purl = vuln.getPurl();
         if (purl == null) return null;
 
-        VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl);
+        VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(vuln.getPurl(), versionEndExcluding, versionStartIncluding);
         if (vs != null) {
             return vs;
         }
         vs = new VulnerableSoftware();
         vs.setVulnerable(true);
         vs.setPurlType(vuln.getPackageEcosystem());
-        vs.setPurlNamespace(vuln.getPackageName());
-        vs.setPurlName(purl);
+        vs.setPurl(vuln.getPurl());
         vs.setVersionStartIncluding(versionStartIncluding);
-        vs.setVersionEndIncluding(versionEndIncluding);
+        vs.setVersionEndExcluding(versionEndExcluding);
         return vs;
     }
-
-//      WAY 2 : to use google storage library instead of downloading data from https
-
-//     private void downloadFromStorage() {
-//
-//         String bucketName = "osv-vulnerabilities";
-//
-//         Storage storage = StorageOptions.getUnauthenticatedInstance().getService();
-//         Page<Blob> blobs = storage.list(bucketName);
-//
-//            for (Blob blob : blobs.iterateAll()) {
-//                System.out.println(blob.getName());
-//            }
-//         Blob blob = blobs.getValues().iterator().next();
-//         System.out.println(blob);
-//         if (blob.getMetadata() != null) {
-//             System.out.println("\n\n\nUser metadata:");
-//             for (Map.Entry<String, String> userMetadata : blob.getMetadata().entrySet()) {
-//                 System.out.println(userMetadata.getKey() + "=" + userMetadata.getValue());
-//             }
-//         }
-//     }
 }

@@ -724,10 +724,6 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByPurl(purl);
     }
 
-    public VulnerableSoftware getVulnerableSoftwareByPurl(final String purl) {
-        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purl);
-    }
-
     public List<VulnerableSoftware> getAllVulnerableSoftware(final String cpePart, final String cpeVendor, final String cpeProduct, final String cpeVersion, final PackageURL purl) {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftware(cpePart, cpeVendor, cpeProduct, cpeVersion, purl);
     }
@@ -1108,5 +1104,9 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getTags(String policyUuid) {
         return getTagQueryManager().getTags(policyUuid);
+    }
+
+    public VulnerableSoftware getVulnerableSoftwareByPurl(String purl, String versionEndExcluding, String versionStartIncluding) {
+        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purl, versionEndExcluding, versionStartIncluding);
     }
 }

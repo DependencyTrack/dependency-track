@@ -85,7 +85,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         }
     }
 
-    private void updateDatasource(final OSVAdvisory advisory) {
+    public void updateDatasource(final OSVAdvisory advisory) {
         LOGGER.info("Updating datasource with Google OSV advisories");
         try (QueryManager qm = new QueryManager()) {
 

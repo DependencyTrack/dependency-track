@@ -56,7 +56,6 @@ public class GoogleOSVAdvisoryParser {
             final JSONObject cvss = object.optJSONObject("severity");
             if (cvss != null) {
                 advisory.setCvssVector(cvss.optString("vectorString", null));
-                // TODO: add cvss score calculation if required
             }
 
             final List<OSVVulnerability> vulnerabilities = parseVulnerabilities(object);

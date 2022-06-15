@@ -5,7 +5,7 @@ public enum Ecosystem {
     ANDROID("Android"),
     GSD("GSD"),
     GO("Go"),
-    HEX("Hex"),
+    ERLANG("Hex"),
     JAVASCRIPT("JavaScript"),
     LINUX("Linux"),
     MAVEN("Maven"),
@@ -15,7 +15,7 @@ public enum Ecosystem {
     PYPI("PyPI"),
     RUBYGEMS("RubyGems"),
     UVI("UVI"),
-    CRATES("crates.io"),
+    RUST("crates.io"),
     NPM("npm"),
     DWF("DWF");
 

@@ -83,7 +83,7 @@ public class Analysis implements Serializable {
     private AnalysisResponse analysisResponse;
 
     @Persistent(defaultFetchGroup = "true")
-    @Column(name = "DETAILS", jdbcType = "VARCHAR", allowsNull = "true")
+    @Column(name = "DETAILS", jdbcType = "CLOB", allowsNull = "true")
     @NotNull
     private String analysisDetails;
 

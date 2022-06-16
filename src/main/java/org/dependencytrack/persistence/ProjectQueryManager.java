@@ -359,10 +359,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a Tag object
      */
     public Tag getTagByName(final String name) {
-        final String trimmedTag = StringUtils.trimToNull(name);
+        final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
         final Query<Tag> query = pm.newQuery(Tag.class, "name == :name");
         query.setRange(0, 1);
-        return singleResult(query.execute(trimmedTag));
+        return singleResult(query.execute(loweredTrimmedTag));
     }
 
     /**
@@ -371,13 +371,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return the created Tag object
      */
     public Tag createTag(final String name) {
-        final String trimmedTag = StringUtils.trimToNull(name);
-        final Tag resolvedTag = getTagByName(trimmedTag);
+        final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
+        final Tag resolvedTag = getTagByName(loweredTrimmedTag);
         if (resolvedTag != null) {
             return resolvedTag;
         }
         final Tag tag = new Tag();
-        tag.setName(trimmedTag);
+        tag.setName(loweredTrimmedTag);
         return persist(tag);
     }
 
@@ -389,10 +389,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     private List<Tag> createTags(final List<String> names) {
         final List<Tag> newTags = new ArrayList<>();
         for (final String name: names) {
-            final String trimmedTag = StringUtils.trimToNull(name);
-            if (getTagByName(trimmedTag) == null) {
+            final String loweredTrimmedTag = StringUtils.lowerCase(StringUtils.trimToNull(name));
+            if (getTagByName(loweredTrimmedTag) == null) {
                 final Tag tag = new Tag();
-                tag.setName(trimmedTag);
+                tag.setName(loweredTrimmedTag);
                 newTags.add(tag);
             }
         }

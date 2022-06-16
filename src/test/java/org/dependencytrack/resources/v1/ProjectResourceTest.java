@@ -209,6 +209,24 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getProjectByCaseInsensitiveTagTest() {
+        List<Tag> tags = new ArrayList<>();
+        Tag tag = qm.createTag("PRODUCTION");
+        tags.add(tag);
+        qm.createProject("ABC", null, "1.0", tags, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, null, null, true, false);
+        Response response = target(V1_PROJECT + "/tag/" + "production")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+    }
+
+    @Test
     public void getProjectByUnknownTagTest() {
         List<Tag> tags = new ArrayList<>();
         Tag tag = qm.createTag("production");

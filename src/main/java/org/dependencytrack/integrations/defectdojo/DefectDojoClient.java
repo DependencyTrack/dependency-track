@@ -150,8 +150,6 @@ public class DefectDojoClient {
                 .header("accept", "application/json")
                 .header("Authorization", "Token " + token)
                 .field("file", findingsJson, "findings.json")
-                .field("product_name", "Cloud Data Services")
-                .field("engagement_name", "dash-services-dtrack-tst2")
                 .field("engagement", engagementId)
                 .field("scan_type", "Dependency Track Finding Packaging Format (FPF) Export")
                 .field("verified", "true")

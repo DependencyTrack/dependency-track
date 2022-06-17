@@ -2,6 +2,7 @@ package org.dependencytrack.parser.osv;
 
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.parser.osv.model.OSVVulnerability;
 
@@ -17,10 +18,16 @@ public class GoogleOSVAdvisoryParser {
 
     public OSVAdvisory parse(final JSONObject object) {
 
-        final OSVAdvisory advisory = new OSVAdvisory();
-        if(object != null) {
+        OSVAdvisory advisory = null;
+
+        // initial check if advisory is valid or withdrawn
+        String withdrawn = object.optString("withdrawn", null);
+
+        if(object != null && withdrawn == null) {
+
+            advisory = new OSVAdvisory();
             advisory.setId(object.optString("id", null));
-            advisory.setSummary(object.optString("summary", null));
+            advisory.setSummary(trimSummary(object.optString("summary", null)));
             advisory.setDetails(object.optString("details", null));
             advisory.setPublished(jsonStringToTimestamp(object.optString("published", null)));
             advisory.setModified(jsonStringToTimestamp(object.optString("modified", null)));
@@ -53,9 +60,18 @@ public class GoogleOSVAdvisoryParser {
                 }
             }
 
-            final JSONObject cvss = object.optJSONObject("severity");
-            if (cvss != null) {
-                advisory.setCvssVector(cvss.optString("vectorString", null));
+            final JSONArray cvssList = object.optJSONArray("severity");
+            if (cvssList != null) {
+                for (int i=0; i<cvssList.length(); i++) {
+                    final JSONObject cvss = cvssList.getJSONObject(i);
+                    final String type = cvss.optString("type", null);
+                    if (type.equalsIgnoreCase("CVSS_V3")) {
+                        advisory.setCvssV3Vector(cvss.optString("score", null));
+                    }
+                    if (type.equalsIgnoreCase("CVSS_V2")) {
+                        advisory.setCvssV2Vector(cvss.optString("score", null));
+                    }
+                }
             }
 
             final List<OSVVulnerability> vulnerabilities = parseVulnerabilities(object);
@@ -70,19 +86,23 @@ public class GoogleOSVAdvisoryParser {
         final JSONArray vulnerabilities = object.optJSONArray("affected");
         if (vulnerabilities != null) {
             for(int i=0; i<vulnerabilities.length(); i++) {
+                osvVulnerabilityList.addAll(parseVulnerabilityRange(vulnerabilities.getJSONObject(i)));
+            }
+        }
+        return osvVulnerabilityList;
+    }
 
-                final JSONObject vulnerability = vulnerabilities.getJSONObject(i);
-                final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
-                final JSONArray ranges = vulnerability.optJSONArray("ranges");
+    public List<OSVVulnerability> parseVulnerabilityRange(JSONObject vulnerability) {
 
-                if (ranges != null) {
-                    for (int j=0; j<ranges.length(); j++) {
-                        final JSONObject range = ranges.getJSONObject(i);
-                        if(range.optString("type").equalsIgnoreCase("ECOSYSTEM")){
-                            osvVulnerabilityList = parseVersionRanges(affectedPackageJson, range);
-                        }
+        List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
+        final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
+        final JSONArray ranges = vulnerability.optJSONArray("ranges");
 
-                    }
+        if (ranges != null) {
+            for (int j=0; j<ranges.length(); j++) {
+                final JSONObject range = ranges.getJSONObject(j);
+                if(range.optString("type").equalsIgnoreCase("ECOSYSTEM")){
+                    osvVulnerabilityList = parseVersionRanges(affectedPackageJson, range);
                 }
             }
         }
@@ -108,15 +128,24 @@ public class GoogleOSVAdvisoryParser {
                     osvVulnerability.setLowerVersionRange(lower);
                     k += 1;
                 }
-                event = rangeEvents.getJSONObject(k);
-                String upper = event.optString("fixed", null);
-                if(upper != null) {
-                    osvVulnerability.setUpperVersionRange(upper);
-                    k += 1;
+                if(k < rangeEvents.length()) {
+                    event = rangeEvents.getJSONObject(k);
+                    String upper = event.optString("fixed", null);
+                    if(upper != null) {
+                        osvVulnerability.setUpperVersionRange(upper);
+                        k += 1;
+                    }
                 }
                 osvVulnerabilityList.add(osvVulnerability);
             }
         }
         return osvVulnerabilityList;
+    }
+
+    public String trimSummary(String summary) {
+
+        final int MAX_LEN = 255;
+        // NPE safe
+        return StringUtils.substring(summary, 0, MAX_LEN-2) + "..";
     }
 }

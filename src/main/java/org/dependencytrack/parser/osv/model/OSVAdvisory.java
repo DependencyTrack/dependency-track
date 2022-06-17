@@ -20,6 +20,8 @@ public class OSVAdvisory {
 
     private ZonedDateTime published;
 
+    private ZonedDateTime withdrawn;
+
     private List<String> cweIds;
 
     private List<String> references;
@@ -28,9 +30,9 @@ public class OSVAdvisory {
 
     private List<OSVVulnerability> vulnerabilities;
 
-    private double cvssScore;
+    private String cvssV2Vector;
 
-    private String cvssVector;
+    private String cvssV3Vector;
 
     public String getId() {
         return id;
@@ -45,7 +47,7 @@ public class OSVAdvisory {
     }
 
     public void addCweId(String cweId) {
-        if (cweId == null) {
+        if (cweIds == null) {
             cweIds = new ArrayList<>();
         }
         cweIds.add(cweId);
@@ -76,7 +78,7 @@ public class OSVAdvisory {
     }
 
     public void addAlias(String alias) {
-        if (alias == null) {
+        if (aliases == null) {
             aliases = new ArrayList<>();
         }
         aliases.add(alias);
@@ -141,19 +143,27 @@ public class OSVAdvisory {
         this.severity = severity;
     }
 
-    public double getCvssScore() {
-        return cvssScore;
+    public ZonedDateTime getWithdrawn() {
+        return withdrawn;
     }
 
-    public void setCvssScore(double cvssScore) {
-        this.cvssScore = cvssScore;
+    public void setWithdrawn(ZonedDateTime withdrawn) {
+        this.withdrawn = withdrawn;
     }
 
-    public String getCvssVector() {
-        return cvssVector;
+    public String getCvssV2Vector() {
+        return cvssV2Vector;
     }
 
-    public void setCvssVector(String cvssVector) {
-        this.cvssVector = cvssVector;
+    public void setCvssV2Vector(String cvssV2Vector) {
+        this.cvssV2Vector = cvssV2Vector;
+    }
+
+    public String getCvssV3Vector() {
+        return cvssV3Vector;
+    }
+
+    public void setCvssV3Vector(String cvssV3Vector) {
+        this.cvssV3Vector = cvssV3Vector;
     }
 }

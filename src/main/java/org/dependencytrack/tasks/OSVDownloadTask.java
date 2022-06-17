@@ -49,13 +49,14 @@ public class OSVDownloadTask implements LoggableSubscriber {
 
             try {
                 for (Ecosystem ecosystem : Ecosystem.values()) {
-                    URL url = new URL("https://osv-vulnerabilities.storage.googleapis.com/"+ ecosystem.getValue() +"/all.zip");
-                    ZipInputStream zipIn = new ZipInputStream(url.openStream());
-                    unzipFolder(zipIn);
-                    zipIn.closeEntry();
+                    LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
+                    URL url = new URL("https://osv-vulnerabilities.storage.googleapis.com/" + ecosystem.getValue() +"/all.zip");
+                    try (ZipInputStream zipIn = new ZipInputStream(url.openStream())) {
+                        unzipFolder(zipIn);
+                    }
                 }
-            } catch (IOException exception) {
-                exception.printStackTrace();
+            } catch (Exception exception) {
+                LOGGER.error(exception.getMessage());
             }
         }
     }
@@ -64,29 +65,26 @@ public class OSVDownloadTask implements LoggableSubscriber {
 
         BufferedReader reader;
         GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
-        try {
-            ZipEntry zipEntry = zipIn.getNextEntry();
-            while (zipEntry != null) {
+        ZipEntry zipEntry = zipIn.getNextEntry();
+        while (zipEntry != null) {
 
-                reader = new BufferedReader(new InputStreamReader(zipIn));
-                String line = null;
-                StringBuilder out = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    out.append(line);
-                }
-                JSONObject json = new JSONObject(out.toString());
-                System.out.println(json);
-                final OSVAdvisory osvAdvisory = parser.parse(json);
-                updateDatasource(osvAdvisory);
-                zipEntry = zipIn.getNextEntry();
+            reader = new BufferedReader(new InputStreamReader(zipIn));
+            String line = null;
+            StringBuilder out = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                out.append(line);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            JSONObject json = new JSONObject(out.toString());
+            final OSVAdvisory osvAdvisory = parser.parse(json);
+            if (osvAdvisory != null) {
+                updateDatasource(osvAdvisory);
+            }
+            zipEntry = zipIn.getNextEntry();
         }
     }
 
     public void updateDatasource(final OSVAdvisory advisory) {
-        LOGGER.info("Updating datasource with Google OSV advisories");
+
         try (QueryManager qm = new QueryManager()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
@@ -115,6 +113,8 @@ public class OSVDownloadTask implements LoggableSubscriber {
         vuln.setDescription(advisory.getDetails());
         vuln.setPublished(Date.from(advisory.getPublished().toInstant()));
         vuln.setUpdated(Date.from(advisory.getModified().toInstant()));
+        vuln.setCvssV2Vector(advisory.getCvssV2Vector());
+        vuln.setCvssV3Vector(advisory.getCvssV3Vector());
 
         if (advisory.getReferences() != null && advisory.getReferences().size() > 0) {
             final StringBuilder sb = new StringBuilder();

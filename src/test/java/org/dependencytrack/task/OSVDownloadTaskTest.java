@@ -33,39 +33,44 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     private static final Logger LOGGER = Logger.getLogger(OSVDownloadTaskTest.class);
 
     @Test
-    public void testParseOSVJsonToAdvisoryAndSave() {
+    public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
 
-        try {
-            // parse OSV json file to Advisory object
-            GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
-            String file = "src/test/resources/unit/tasks/repositories/https---osv-GHSA-77rv-6vfw-x4gc.json";
-            String jsonString = readFileAsString(file);
-            JSONObject jsonObject = new JSONObject(jsonString);
-            OSVAdvisory advisory = parser.parse(jsonObject);
-            LOGGER.info("Advisory parsed is "+advisory);
-            Assert.assertNotNull(advisory);
-            Assert.assertEquals(advisory.getId(), "GHSA-77rv-6vfw-x4gc");
-            Assert.assertEquals(advisory.getSeverity(), "CRITICAL");
-            Assert.assertTrue(advisory.getCweIds().contains("CWE-601"));
-            Assert.assertEquals(advisory.getVulnerabilities().size(), 8);
-            Assert.assertEquals(advisory.getVulnerabilities().get(0).getUpperVersionRange(), "2.0.17");
-            Assert.assertEquals(advisory.getVulnerabilities().get(0).getPurl(), "pkg:maven/org.springframework.security.oauth/spring-security-oauth");
+        // parse OSV json file to Advisory object
+        GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
+        String file = "src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(file)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OSVAdvisory advisory = parser.parse(jsonObject);
+        LOGGER.info("Advisory parsed is "+advisory);
+        Assert.assertNotNull(advisory);
+        Assert.assertEquals(advisory.getVulnerabilities().size(), 8);
 
-            // pass the mapped advisory to OSV task to update the database
-            final var task = new OSVDownloadTask();
-            task.updateDatasource(advisory);
-            var qm = new QueryManager();
-            final var vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.0.17", "0");
-            Assert.assertNotNull(vulnerableSoftware);
-            Assert.assertEquals(vulnerableSoftware.getPurlNamespace(), "MAVEN");
+        // pass the mapped advisory to OSV task to update the database
+        final var task = new OSVDownloadTask();
+        task.updateDatasource(advisory);
+        var qm = new QueryManager();
+        var vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.0.17", "0");
+        Assert.assertNotNull(vulnerableSoftware);
+        Assert.assertEquals(vulnerableSoftware.getPurlType(), "Maven");
+        Assert.assertEquals(vulnerableSoftware.getVersionStartIncluding(), "0");
+        Assert.assertEquals(vulnerableSoftware.getVersionEndExcluding(), "2.0.17");
 
-        } catch (Exception ex) {
-            LOGGER.error("Exception reading JSON file");
-        }
+        vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.1.4", "2.1.0");
+        Assert.assertNotNull(vulnerableSoftware);
+        Assert.assertEquals(vulnerableSoftware.getPurlType(), "Maven");
+        Assert.assertEquals(vulnerableSoftware.getVersionStartIncluding(), "2.1.0");
+        Assert.assertEquals(vulnerableSoftware.getVersionEndExcluding(), "2.1.4");
     }
 
-    public static String readFileAsString(String file) throws Exception
-    {
-        return new String(Files.readAllBytes(Paths.get(file)));
+    @Test
+    public void testWithdrawnAdvisory() throws Exception {
+
+        GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
+        String file = "src/test/resources/unit/osv.jsons/osv-withdrawn.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(file)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OSVAdvisory advisory = parser.parse(jsonObject);
+        LOGGER.info("Advisory parsed is "+advisory);
+        Assert.assertNull(advisory);
     }
 }

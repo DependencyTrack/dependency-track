@@ -5,6 +5,11 @@ import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
 import kong.unirest.json.JSONObject;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.GoogleOSVMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
@@ -20,8 +25,8 @@ import org.dependencytrack.persistence.QueryManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +39,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OSVDownloadTask.class);
     private final boolean isEnabled;
+    private HttpUriRequest request;
 
     public OSVDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
@@ -50,9 +56,18 @@ public class OSVDownloadTask implements LoggableSubscriber {
             try {
                 for (Ecosystem ecosystem : Ecosystem.values()) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
-                    URL url = new URL("https://osv-vulnerabilities.storage.googleapis.com/" + ecosystem.getValue() +"/all.zip");
-                    try (ZipInputStream zipIn = new ZipInputStream(url.openStream())) {
-                        unzipFolder(zipIn);
+                    String url = "https://osv-vulnerabilities.storage.googleapis.com/" + ecosystem.getValue() + "/all.zip";
+                    request = new HttpGet(url);
+                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                        final StatusLine status = response.getStatusLine();
+                        if (status.getStatusCode() == 200) {
+                            try (InputStream in = response.getEntity().getContent()) {
+                                ZipInputStream zipInput = new ZipInputStream(in);
+                                unzipFolder(zipInput);
+                            }
+                        } else {
+                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                        }
                     }
                 }
             } catch (Exception exception) {

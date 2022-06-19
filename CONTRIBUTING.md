@@ -19,7 +19,7 @@ do not work anymore.
 ### Looking for existing Issues
 
 Before you create a new issue, please do a search in [open issues](https://github.com/DependencyTrack/dependency-track/issues?q=is%3Aissue+is%3Aopen+) 
-to see if the issue or feature request has already been filed.
+to see if the defect or enhancement request has already been filed.
 
 If you find your issue already exists, add relevant comments to the existing issue. 
 
@@ -91,6 +91,8 @@ versions. If you are interested in participating, please let us know in [`#proj-
 
 Before raising pull requests, please [file a defect](#reporting-defects) or [enhancement request](#requesting-enhancements) first. 
 
+* We use [GitHub milestones](https://github.com/DependencyTrack/dependency-track/milestones) to plan what will be included in the next release. 
+  * Depending on the size of your PR and whether it introduces breaking changes, we may schedule your change for a later release.
 * Issues for which community contributions are explicitly requested are labeled with [`help wanted`](https://github.com/DependencyTrack/dependency-track/issues?q=is%3Aopen+label%3A%22help+wanted%22+).
 * Issues suitable for first-time contributors are labeled with [`good first issue`](https://github.com/DependencyTrack/dependency-track/issues?q=is%3Aopen+label%3A%22good+first+issue%22+).
 

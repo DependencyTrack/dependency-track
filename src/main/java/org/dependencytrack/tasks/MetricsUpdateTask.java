@@ -23,7 +23,6 @@ import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.common.LimitingExecutor;
 import org.dependencytrack.event.MetricsUpdateEvent;
@@ -50,7 +49,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
@@ -135,26 +136,28 @@ public class MetricsUpdateTask implements Subscriber {
 
             final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
             final var limitingExecutor = new LimitingExecutor(executorService, threadPoolSize);
-            final var projectCountersFutures = new ArrayList<CompletableFuture<Counters>>();
+            final var projectCounterFutures = new HashMap<Long, CompletableFuture<Counters>>();
             try {
                 for (final long projectId : activeProjectIds) {
                     LOGGER.debug("Submitting metrics update task for project ID " + projectId);
-                    projectCountersFutures.add(CompletableFuture.supplyAsync(() -> {
+                    projectCounterFutures.put(projectId, CompletableFuture.supplyAsync(() -> {
                         try {
                             return updateProjectMetrics(projectId);
+                        } catch (NoSuchElementException e) {
+                            LOGGER.warn("Couldn't update project metrics because the project was not found. " +
+                                    "This typically happens when the project was deleted after the metrics update task started.", e);
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            LOGGER.error("An unexpected error occurred while updating metrics for project with ID " + projectId, e);
                         }
+                        return null;
                     }, limitingExecutor));
                 }
 
                 LOGGER.debug("Waiting for all project metrics updates to complete");
-                CompletableFuture.allOf(projectCountersFutures.toArray(new CompletableFuture[0])).join();
+                CompletableFuture.allOf(projectCounterFutures.values().toArray(new CompletableFuture[0])).join();
                 LOGGER.debug("All project metrics updates completed");
             } catch (CompletionException e) {
-                // This exception is thrown when any of the CompletableFutures failed.
-                // We handle exceptions on a per-future basis later when calling .get(),
-                // so we don't need to handle this one.
+                // This exception is thrown when any of the CompletableFutures failed
                 LOGGER.debug("At least one project metrics update task failed", e);
             } finally {
                 LOGGER.debug("Shutting down executor service");
@@ -165,19 +168,19 @@ public class MetricsUpdateTask implements Subscriber {
             }
 
             LOGGER.debug("Processing project metrics update results");
-            for (final CompletableFuture<Counters> countersFuture : projectCountersFutures) {
+            for (final Map.Entry<Long, CompletableFuture<Counters>> countersEntry : projectCounterFutures.entrySet()) {
                 final Counters projectCounters;
                 try {
-                    projectCounters = countersFuture.get();
+                    projectCounters = countersEntry.getValue().get();
                 } catch (Exception e) {
-                    final Throwable rootCause = ExceptionUtils.getRootCause(e);
-                    if (rootCause instanceof NoSuchElementException) {
-                        LOGGER.warn("Couldn't update project metrics because the project was not found. " +
-                                "This typically happens when the project was deleted after the metrics update task started.", rootCause);
-                        continue;
-                    }
+                    // Because all exceptions during metrics updates are handled in the CompletableFuture
+                    // directly, exceptions at this point will be about the future being interrupted or canceled,
+                    // which under normal circumstances won't happen.
+                    LOGGER.error("An unexpected error occurred while collecting metrics for project with ID " + countersEntry.getKey(), e);
+                    continue;
+                }
 
-                    LOGGER.error("An unexpected error occurred while updating project metrics", e);
+                if (projectCounters == null) {
                     continue;
                 }
 
@@ -336,7 +339,8 @@ public class MetricsUpdateTask implements Subscriber {
                 componentCounters = updateComponentMetrics(componentId);
             } catch (NoSuchElementException e) {
                 LOGGER.warn("Couldn't update component metrics because the component was not found." +
-                        "This typically happens when the project was deleted after the metrics update task started.", e);
+                        "This typically happens when the component or the project is was associated with " +
+                        "was deleted after the metrics update task started.", e);
                 continue;
             } catch (Exception e) {
                 LOGGER.error("An unexpected error occurred while updating component metrics", e);

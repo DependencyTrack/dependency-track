@@ -89,11 +89,11 @@ public class NotificationRouter implements Subscriber {
 
             final NotificationLevel level = notification.getLevel();
             if (NotificationLevel.INFORMATIONAL == level) {
-                sb.append("(notificationLevel == 'INFORMATIONAL' || notificationLevel == 'WARNING' || notificationLevel == 'ERROR') && ");
+                sb.append("notificationLevel == 'INFORMATIONAL' && ");
             } else if (NotificationLevel.WARNING == level) {
-                sb.append("(notificationLevel == 'WARNING' || notificationLevel == 'ERROR') && ");
+                sb.append("(notificationLevel == 'WARNING' || notificationLevel == 'INFORMATIONAL') && ");
             } else if (NotificationLevel.ERROR == level) {
-                sb.append("notificationLevel == 'ERROR' && ");
+                sb.append("(notificationLevel == 'INFORMATIONAL' || notificationLevel == 'WARNING' || notificationLevel == 'ERROR') && ");
             }
 
             sb.append("enabled == true && scope == :scope"); //todo: improve this - this only works for testing

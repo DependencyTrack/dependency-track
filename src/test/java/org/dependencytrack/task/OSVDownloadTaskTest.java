@@ -18,6 +18,7 @@ package org.dependencytrack.task;
 import alpine.common.logging.Logger;
 import kong.unirest.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.osv.GoogleOSVAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.persistence.QueryManager;
@@ -72,5 +73,25 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         OSVAdvisory advisory = parser.parse(jsonObject);
         LOGGER.info("Advisory parsed is "+advisory);
         Assert.assertNull(advisory);
+    }
+
+    @Test
+    public void testSourceOfVulnerability() {
+
+        String sourceTestId = "GHSA-77rv-6vfw-x4gc";
+        final var task = new OSVDownloadTask();
+        Vulnerability.Source source = task.extractSource(sourceTestId);
+        Assert.assertNotNull(source);
+        Assert.assertEquals(Vulnerability.Source.GITHUB, source);
+
+        sourceTestId = "CVE-2022-tyhg";
+        source = task.extractSource(sourceTestId);
+        Assert.assertNotNull(source);
+        Assert.assertEquals(Vulnerability.Source.NVD, source);
+
+        sourceTestId = "anyOther-2022-tyhg";
+        source = task.extractSource(sourceTestId);
+        Assert.assertNotNull(source);
+        Assert.assertEquals(Vulnerability.Source.GOOGLE, source);
     }
 }

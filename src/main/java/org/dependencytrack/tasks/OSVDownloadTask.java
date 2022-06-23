@@ -122,7 +122,9 @@ public class OSVDownloadTask implements LoggableSubscriber {
     private Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OSVAdvisory advisory) {
 
         final Vulnerability vuln = new Vulnerability();
-        vuln.setSource(Vulnerability.Source.GOOGLE);
+        if(advisory.getId() != null) {
+            vuln.setSource(extractSource(advisory.getId()));
+        }
         vuln.setVulnId(String.valueOf(advisory.getId()));
         vuln.setTitle(advisory.getSummary());
         vuln.setDescription(advisory.getDetails());
@@ -164,6 +166,16 @@ public class OSVDownloadTask implements LoggableSubscriber {
             vuln.setSeverity(Severity.UNASSIGNED);
         }
         return vuln;
+    }
+
+    public Vulnerability.Source extractSource(String vulnId) {
+
+        final String sourceId = vulnId.split("-")[0];
+        switch (sourceId) {
+            case "GHSA": return Vulnerability.Source.GITHUB;
+            case "CVE": return Vulnerability.Source.NVD;
+            default: return Vulnerability.Source.GOOGLE;
+        }
     }
 
     private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {

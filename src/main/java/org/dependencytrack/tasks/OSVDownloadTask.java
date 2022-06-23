@@ -119,7 +119,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
-    private Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OSVAdvisory advisory) {
+    public Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OSVAdvisory advisory) {
 
         final Vulnerability vuln = new Vulnerability();
         if(advisory.getId() != null) {
@@ -130,8 +130,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         vuln.setDescription(advisory.getDetails());
         vuln.setPublished(Date.from(advisory.getPublished().toInstant()));
         vuln.setUpdated(Date.from(advisory.getModified().toInstant()));
-        vuln.setCvssV2Vector(advisory.getCvssV2Vector());
-        vuln.setCvssV3Vector(advisory.getCvssV3Vector());
+        vuln.setCredits(String.join(", ", advisory.getCredits()));
 
         if (advisory.getReferences() != null && advisory.getReferences().size() > 0) {
             final StringBuilder sb = new StringBuilder();
@@ -165,6 +164,8 @@ public class OSVDownloadTask implements LoggableSubscriber {
         } else {
             vuln.setSeverity(Severity.UNASSIGNED);
         }
+        vuln.setCvssV2Vector(advisory.getCvssV2Vector());
+        vuln.setCvssV3Vector(advisory.getCvssV3Vector());
         return vuln;
     }
 

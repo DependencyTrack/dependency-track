@@ -40,6 +40,14 @@
       "url": "http://www.securityfocus.com/bid/107153"
     }
   ],
+  "credits": [
+    {
+      "name": "Skywalker"
+    },
+    {
+      "name": "Solo"
+    }
+  ],
   "affected": [
     {
       "package": {

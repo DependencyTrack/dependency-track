@@ -96,6 +96,7 @@ public class GoogleOSVAdvisoryParserTest {
         Assert.assertEquals(advisory.getSeverity(), "CRITICAL");
         Assert.assertEquals(advisory.getCweIds().size(), 1);
         Assert.assertEquals(advisory.getReferences().size(), 6);
+        Assert.assertEquals(advisory.getCredits().size(), 2);
         Assert.assertEquals(advisory.getVulnerabilities().size(), 8);
         Assert.assertEquals(advisory.getCvssV3Vector(), "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N");
         Assert.assertEquals(advisory.getAliases().get(0), "CVE-2019-3778");

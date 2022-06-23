@@ -42,6 +42,15 @@ public class GoogleOSVAdvisoryParser {
                 }
             }
 
+            final JSONArray credits = object.optJSONArray("credits");
+            if (credits != null) {
+                for (int i=0; i<credits.length(); i++) {
+                    final JSONObject credit = credits.getJSONObject(i);
+                    final String name = credit.optString("name", null);
+                    advisory.addCredit(name);
+                }
+            }
+
             final JSONArray aliases = object.optJSONArray("aliases");
             if(aliases != null) {
                 for (int i=0; i<aliases.length(); i++) {

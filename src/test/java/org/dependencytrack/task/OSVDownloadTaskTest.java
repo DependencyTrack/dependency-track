@@ -15,9 +15,9 @@
  */
 package org.dependencytrack.task;
 
-import alpine.common.logging.Logger;
 import kong.unirest.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.osv.GoogleOSVAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
@@ -26,28 +26,24 @@ import org.dependencytrack.tasks.OSVDownloadTask;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class OSVDownloadTaskTest extends PersistenceCapableTest {
-
-    private static final Logger LOGGER = Logger.getLogger(OSVDownloadTaskTest.class);
+    private JSONObject jsonObject;
+    private final GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
+    private final OSVDownloadTask task = new OSVDownloadTask();
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
 
-        // parse OSV json file to Advisory object
-        GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
-        String file = "src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json";
-        String jsonString = new String(Files.readAllBytes(Paths.get(file)));
-        JSONObject jsonObject = new JSONObject(jsonString);
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OSVAdvisory advisory = parser.parse(jsonObject);
-        LOGGER.info("Advisory parsed is "+advisory);
         Assert.assertNotNull(advisory);
         Assert.assertEquals(advisory.getVulnerabilities().size(), 8);
 
         // pass the mapped advisory to OSV task to update the database
-        final var task = new OSVDownloadTask();
         task.updateDatasource(advisory);
         var qm = new QueryManager();
         var vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.0.17", "0");
@@ -64,14 +60,24 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testParseAdvisoryToVulnerability() throws IOException {
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
+        OSVAdvisory advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+        Vulnerability vuln = task.mapAdvisoryToVulnerability(new QueryManager(), advisory);
+        Assert.assertNotNull(vuln);
+        Assert.assertEquals("Skywalker, Solo", vuln.getCredits());
+        Assert.assertEquals("GITHUB", vuln.getSource());
+        Assert.assertEquals(Severity.CRITICAL, vuln.getSeverity());
+        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N", vuln.getCvssV3Vector());
+    }
+
+    @Test
     public void testWithdrawnAdvisory() throws Exception {
 
-        GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
-        String file = "src/test/resources/unit/osv.jsons/osv-withdrawn.json";
-        String jsonString = new String(Files.readAllBytes(Paths.get(file)));
-        JSONObject jsonObject = new JSONObject(jsonString);
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-withdrawn.json");
         OSVAdvisory advisory = parser.parse(jsonObject);
-        LOGGER.info("Advisory parsed is "+advisory);
         Assert.assertNull(advisory);
     }
 
@@ -79,7 +85,6 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     public void testSourceOfVulnerability() {
 
         String sourceTestId = "GHSA-77rv-6vfw-x4gc";
-        final var task = new OSVDownloadTask();
         Vulnerability.Source source = task.extractSource(sourceTestId);
         Assert.assertNotNull(source);
         Assert.assertEquals(Vulnerability.Source.GITHUB, source);
@@ -93,5 +98,11 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         source = task.extractSource(sourceTestId);
         Assert.assertNotNull(source);
         Assert.assertEquals(Vulnerability.Source.GOOGLE, source);
+    }
+
+    private void prepareJsonObject(String filePath) throws IOException {
+        // parse OSV json file to Advisory object
+        String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
+        jsonObject = new JSONObject(jsonString);
     }
 }

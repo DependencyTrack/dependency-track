@@ -26,6 +26,8 @@ public class OSVAdvisory {
 
     private List<String> references;
 
+    private List<String> credits;
+
     private String schema_version;
 
     private List<OSVVulnerability> vulnerabilities;
@@ -166,4 +168,20 @@ public class OSVAdvisory {
     public void setCvssV3Vector(String cvssV3Vector) {
         this.cvssV3Vector = cvssV3Vector;
     }
+
+    public List<String> getCredits() {
+        return credits;
+    }
+
+    public void addCredit(String credit) {
+        if (this.credits == null) {
+            this.credits = new ArrayList<>();
+        }
+        this.credits.add(credit);
+    }
+
+    public void setCredits(List<String> credits) {
+        this.credits = credits;
+    }
+
 }

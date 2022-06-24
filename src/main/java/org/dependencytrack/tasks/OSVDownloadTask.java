@@ -78,12 +78,11 @@ public class OSVDownloadTask implements LoggableSubscriber {
 
     private void unzipFolder(ZipInputStream zipIn) throws IOException {
 
-        BufferedReader reader;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(zipIn));
         GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
         ZipEntry zipEntry = zipIn.getNextEntry();
         while (zipEntry != null) {
 
-            reader = new BufferedReader(new InputStreamReader(zipIn));
             String line = null;
             StringBuilder out = new StringBuilder();
             while ((line = reader.readLine()) != null) {
@@ -94,9 +93,10 @@ public class OSVDownloadTask implements LoggableSubscriber {
             if (osvAdvisory != null) {
                 updateDatasource(osvAdvisory);
             }
-            reader.close();
             zipEntry = zipIn.getNextEntry();
+            reader = new BufferedReader(new InputStreamReader(zipIn));
         }
+        reader.close();
     }
 
     public void updateDatasource(final OSVAdvisory advisory) {

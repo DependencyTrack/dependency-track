@@ -53,25 +53,25 @@ public class OSVDownloadTask implements LoggableSubscriber {
 
         if (e instanceof GoogleOSVMirrorEvent && this.isEnabled) {
 
-            try {
-                for (Ecosystem ecosystem : Ecosystem.values()) {
-                    LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
-                    String url = "https://osv-vulnerabilities.storage.googleapis.com/" + ecosystem.getValue() + "/all.zip";
-                    request = new HttpGet(url);
-                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                        final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == 200) {
-                            try (InputStream in = response.getEntity().getContent()) {
-                                ZipInputStream zipInput = new ZipInputStream(in);
-                                unzipFolder(zipInput);
-                            }
-                        } else {
-                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+            for (Ecosystem ecosystem : Ecosystem.values()) {
+                LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
+                String url = "https://osv-vulnerabilities.storage.googleapis.com/" + ecosystem.getValue() + "/all.zip";
+                request = new HttpGet(url);
+                request.setHeader("Accept", "*/*");
+                request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+                try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                    final StatusLine status = response.getStatusLine();
+                    if (status.getStatusCode() == 200) {
+                        try (InputStream in = response.getEntity().getContent();
+                            ZipInputStream zipInput = new ZipInputStream(in)) {
+                            unzipFolder(zipInput);
                         }
+                    } else {
+                        LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
                     }
+                } catch (Exception ex) {
+                    LOGGER.error("Exception while executing Http client request", ex);
                 }
-            } catch (Exception exception) {
-                LOGGER.error(exception.getMessage());
             }
         }
     }
@@ -94,6 +94,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
             if (osvAdvisory != null) {
                 updateDatasource(osvAdvisory);
             }
+            reader.close();
             zipEntry = zipIn.getNextEntry();
         }
     }
@@ -130,7 +131,10 @@ public class OSVDownloadTask implements LoggableSubscriber {
         vuln.setDescription(advisory.getDetails());
         vuln.setPublished(Date.from(advisory.getPublished().toInstant()));
         vuln.setUpdated(Date.from(advisory.getModified().toInstant()));
-        vuln.setCredits(String.join(", ", advisory.getCredits()));
+
+        if (advisory.getCredits() != null) {
+            vuln.setCredits(String.join(", ", advisory.getCredits()));
+        }
 
         if (advisory.getReferences() != null && advisory.getReferences().size() > 0) {
             final StringBuilder sb = new StringBuilder();

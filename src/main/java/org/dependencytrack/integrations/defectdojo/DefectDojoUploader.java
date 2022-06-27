@@ -44,7 +44,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     public boolean isReimportConfigured(final Project project) {
         final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
         if (reimport != null) {
-            return Boolean.parseBoolean(reimport.getPropertyValue());  
+            return Boolean.parseBoolean(reimport.getPropertyValue());
         } else {
             return false;
         }
@@ -82,12 +82,13 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     public void upload(final Project project, final InputStream payload) {
         final ConfigProperty defectDojoUrl = qm.getConfigProperty(DEFECTDOJO_URL.getGroupName(), DEFECTDOJO_URL.getPropertyName());
         final ConfigProperty apiKey = qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
+        final ConfigProperty globalReimportEnabled = qm.getConfigProperty(DEFECTDOJO_REIMPORT_ENABLED.getGroupName(), DEFECTDOJO_REIMPORT_ENABLED.getPropertyName());
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         try {
             final DefectDojoClient client = new DefectDojoClient(this, new URL(defectDojoUrl.getPropertyValue()));
-            if (isReimportConfigured(project)) {
-                final ArrayList testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
-                final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
+            final ArrayList testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
+            final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds);
+            if (isReimportConfigured(project) || Boolean.parseBoolean(globalReimportEnabled.getPropertyValue())) {
                 LOGGER.debug("Found existing test Id: " + testId);
                 if (testId.equals("")) {
                     client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload);

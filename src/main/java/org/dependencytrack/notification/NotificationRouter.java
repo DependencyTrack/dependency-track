@@ -74,7 +74,7 @@ public class NotificationRouter implements Subscriber {
     }
 
     @SuppressWarnings("unchecked")
-    private List<NotificationRule> resolveRules(final Notification notification) {
+    List<NotificationRule> resolveRules(final Notification notification) {
         // The notification rules to process for this specific notification
         final List<NotificationRule> rules = new ArrayList<>();
 

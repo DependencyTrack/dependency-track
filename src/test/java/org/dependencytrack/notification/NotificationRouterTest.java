@@ -31,50 +31,45 @@ import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SuppressWarnings("unchecked")
 public class NotificationRouterTest extends PersistenceCapableTest {
 
     @Test
-    public void testNullNotification() throws Exception {
+    public void testNullNotification() {
         Notification notification = null;
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>)method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testInvalidNotification() throws Exception {
+    public void testInvalidNotification() {
         Notification notification = new Notification();
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>)method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testNoRules() throws Exception {
+    public void testNoRules() {
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>)method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testValidMatchingRule() throws Exception {
+    public void testValidMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -91,14 +86,12 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>) method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testValidMatchingProjectLimitingRule() throws Exception {
+    public void testValidMatchingProjectLimitingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -122,14 +115,12 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>) method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testValidNonMatchingProjectLimitingRule() throws Exception {
+    public void testValidNonMatchingProjectLimitingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -154,14 +145,12 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>) method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testValidNonMatchingRule() throws Exception {
+    public void testValidNonMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -178,10 +167,71 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
-        Method method = router.getClass().getDeclaredMethod("resolveRules", Notification.class);
-        method.setAccessible(true);
-        List<NotificationRule> rules = (List<NotificationRule>) method.invoke(router, notification);
+        List<NotificationRule> rules = router.resolveRules(notification);
         Assert.assertEquals(0, rules.size());
+    }
+
+    @Test
+    public void testRuleLevelEqual() {
+        final NotificationPublisher publisher = createSlackPublisher();
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.WARNING); // Rule level is equal
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).hasSize(1);
+    }
+
+    @Test
+    public void testRuleLevelBelow() {
+        final NotificationPublisher publisher = createSlackPublisher();
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.ERROR); // Rule level is lower
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).hasSize(1);
+    }
+
+    @Test
+    public void testRuleLevelAbove() {
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL); // Rule level is higher
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+    }
+
+    @Test
+    public void testDisabledRule() {
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        rule.setEnabled(false);
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
     }
 
     private NotificationPublisher createSlackPublisher() {

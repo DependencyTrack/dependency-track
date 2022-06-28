@@ -115,16 +115,13 @@ public class GoogleOSVAdvisoryParser {
                 final JSONObject range = ranges.getJSONObject(j);
                 osvVulnerabilityList.addAll(parseVersionRanges(vulnerability, range));
             }
+        } else {
+            osvVulnerabilityList.add(createOSVVulnerability(vulnerability));
         }
         return osvVulnerabilityList;
     }
 
     private List<OSVVulnerability> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
-
-        final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
-        final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
-        final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
-        Severity ecosystemSeverity = parseEcosystemSeverity(ecosystemSpecific, databaseSpecific);
 
         final List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray rangeEvents = range.optJSONArray("events");
@@ -132,12 +129,7 @@ public class GoogleOSVAdvisoryParser {
             int k = 0;
             while (k < rangeEvents.length()) {
 
-                OSVVulnerability osvVulnerability = new OSVVulnerability();
-                osvVulnerability.setPackageName(affectedPackageJson.optString("name", null));
-                osvVulnerability.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
-                osvVulnerability.setPurl(affectedPackageJson.optString("purl", null));
-                osvVulnerability.setSeverity(ecosystemSeverity);
-
+                OSVVulnerability osvVulnerability = createOSVVulnerability(vulnerability);
                 JSONObject event = rangeEvents.getJSONObject(k);
                 String lower = event.optString("introduced", null);
                 if(lower != null) {
@@ -156,6 +148,20 @@ public class GoogleOSVAdvisoryParser {
             }
         }
         return osvVulnerabilityList;
+    }
+
+    private OSVVulnerability createOSVVulnerability(JSONObject vulnerability) {
+
+        OSVVulnerability osvVulnerability = new OSVVulnerability();
+        final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
+        final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
+        final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
+        Severity ecosystemSeverity = parseEcosystemSeverity(ecosystemSpecific, databaseSpecific);
+        osvVulnerability.setPackageName(affectedPackageJson.optString("name", null));
+        osvVulnerability.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
+        osvVulnerability.setPurl(affectedPackageJson.optString("purl", null));
+        osvVulnerability.setSeverity(ecosystemSeverity);
+        return osvVulnerability;
     }
 
     private Severity parseEcosystemSeverity(JSONObject ecosystemSpecific, JSONObject databaseSpecific) {

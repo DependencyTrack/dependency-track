@@ -120,6 +120,12 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         advisory = parser.parse(jsonObject);
         severity = task.calculateOSVSeverity(advisory);
         Assert.assertEquals(Severity.MEDIUM, severity);
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json");
+        advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+        severity = task.calculateOSVSeverity(advisory);
+        Assert.assertEquals(Severity.UNASSIGNED, severity);
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

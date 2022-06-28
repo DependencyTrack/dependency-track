@@ -66,7 +66,7 @@ public class GoogleOSVAdvisoryParserTest {
         // range test full pairs
         List<OSVVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(2));
         Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(osvVulnerabilityList.size(), 2);
+        Assert.assertEquals(osvVulnerabilityList.size(), 3);
         Assert.assertEquals(osvVulnerabilityList.get(0).getLowerVersionRange(), "1");
         Assert.assertEquals(osvVulnerabilityList.get(0).getUpperVersionRange(), "2");
         Assert.assertEquals(osvVulnerabilityList.get(1).getLowerVersionRange(), "3");
@@ -93,12 +93,12 @@ public class GoogleOSVAdvisoryParserTest {
         OSVAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals(advisory.getId(), "GHSA-77rv-6vfw-x4gc");
-        Assert.assertEquals(advisory.getSeverity(), "CRITICAL");
+        Assert.assertEquals(advisory.getSeverity(), "LOW");
         Assert.assertEquals(advisory.getCweIds().size(), 1);
         Assert.assertEquals(advisory.getReferences().size(), 6);
         Assert.assertEquals(advisory.getCredits().size(), 2);
         Assert.assertEquals(advisory.getVulnerabilities().size(), 8);
-        Assert.assertEquals(advisory.getCvssV3Vector(), "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N");
+        Assert.assertEquals(advisory.getCvssV3Vector(), "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H");
         Assert.assertEquals(advisory.getAliases().get(0), "CVE-2019-3778");
         Assert.assertEquals(advisory.getModified().toString(), "2022-06-09T07:01:32.587163Z");
     }

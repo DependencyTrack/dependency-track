@@ -23,17 +23,23 @@ import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.parser.osv.model.OSVVulnerability;
 import org.dependencytrack.persistence.QueryManager;
 
+import us.springett.cvss.Cvss;
+import us.springett.cvss.Score;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.Severity.getSeverityByLevel;
+import static org.dependencytrack.util.VulnerabilityUtil.*;
 
 public class OSVDownloadTask implements LoggableSubscriber {
 
@@ -152,25 +158,50 @@ public class OSVDownloadTask implements LoggableSubscriber {
                 }
             }
         }
-
-        if (advisory.getSeverity() != null) {
-            if (advisory.getSeverity().equalsIgnoreCase("CRITICAL")) {
-                vuln.setSeverity(Severity.CRITICAL);
-            } else if (advisory.getSeverity().equalsIgnoreCase("HIGH")) {
-                vuln.setSeverity(Severity.HIGH);
-            } else if (advisory.getSeverity().equalsIgnoreCase("MODERATE")) {
-                vuln.setSeverity(Severity.MEDIUM);
-            } else if (advisory.getSeverity().equalsIgnoreCase("LOW")) {
-                vuln.setSeverity(Severity.LOW);
-            } else {
-                vuln.setSeverity(Severity.UNASSIGNED);
-            }
-        } else {
-            vuln.setSeverity(Severity.UNASSIGNED);
-        }
+        vuln.setSeverity(calculateOSVSeverity(advisory));
         vuln.setCvssV2Vector(advisory.getCvssV2Vector());
         vuln.setCvssV3Vector(advisory.getCvssV3Vector());
         return vuln;
+    }
+
+    // calculate severity of vulnerability on priority-basis (database, ecosystem)
+    public Severity calculateOSVSeverity(OSVAdvisory advisory) {
+
+        // derive from database_specific cvss v3 vector if available
+        if(advisory.getCvssV3Vector() != null) {
+            Cvss cvss = Cvss.fromVector(advisory.getCvssV3Vector());
+            Score score = cvss.calculateScore();
+            return normalizedCvssV3Score(score.getBaseScore());
+        }
+        // derive from database_specific cvss v2 vector if available
+        if (advisory.getCvssV2Vector() != null) {
+            Cvss cvss = Cvss.fromVector(advisory.getCvssV2Vector());
+            Score score = cvss.calculateScore();
+            return normalizedCvssV2Score(score.getBaseScore());
+        }
+        // get database_specific severity string if available
+        if (advisory.getSeverity() != null) {
+            if (advisory.getSeverity().equalsIgnoreCase("CRITICAL")) {
+                return Severity.CRITICAL;
+            } else if (advisory.getSeverity().equalsIgnoreCase("HIGH")) {
+                return Severity.HIGH;
+            } else if (advisory.getSeverity().equalsIgnoreCase("MODERATE")) {
+                return Severity.MEDIUM;
+            } else if (advisory.getSeverity().equalsIgnoreCase("LOW")) {
+                return Severity.LOW;
+            }
+        }
+        // get largest ecosystem_specific severity from its affected packages
+        if (advisory.getVulnerabilities() != null) {
+            List<Integer> severityLevels = new ArrayList<>();
+            for (OSVVulnerability vuln : advisory.getVulnerabilities()) {
+                severityLevels.add(vuln.getSeverity().getLevel());
+            }
+            Collections.sort(severityLevels);
+            Collections.reverse(severityLevels);
+            return getSeverityByLevel(severityLevels.get(0));
+        }
+        return Severity.UNASSIGNED;
     }
 
     public Vulnerability.Source extractSource(String vulnId) {

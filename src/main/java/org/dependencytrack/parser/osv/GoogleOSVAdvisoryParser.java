@@ -3,13 +3,17 @@ package org.dependencytrack.parser.osv;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.parser.osv.model.OSVVulnerability;
+import us.springett.cvss.Cvss;
+import us.springett.cvss.Score;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
+import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 
 /*
     Parser for Google OSV, an aggregator of vulnerability databases including GitHub Security Advisories, PyPA, RustSec, and Global Security Database, and more.
@@ -104,21 +108,23 @@ public class GoogleOSVAdvisoryParser {
     public List<OSVVulnerability> parseVulnerabilityRange(JSONObject vulnerability) {
 
         List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
-        final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
         final JSONArray ranges = vulnerability.optJSONArray("ranges");
 
         if (ranges != null) {
             for (int j=0; j<ranges.length(); j++) {
                 final JSONObject range = ranges.getJSONObject(j);
-                if(range.optString("type").equalsIgnoreCase("ECOSYSTEM")){
-                    osvVulnerabilityList = parseVersionRanges(affectedPackageJson, range);
-                }
+                osvVulnerabilityList.addAll(parseVersionRanges(vulnerability, range));
             }
         }
         return osvVulnerabilityList;
     }
 
-    private List<OSVVulnerability> parseVersionRanges(JSONObject affectedPackageJson, JSONObject range) {
+    private List<OSVVulnerability> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
+
+        final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
+        final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
+        final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
+        Severity ecosystemSeverity = parseEcosystemSeverity(ecosystemSpecific, databaseSpecific);
 
         final List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray rangeEvents = range.optJSONArray("events");
@@ -130,6 +136,7 @@ public class GoogleOSVAdvisoryParser {
                 osvVulnerability.setPackageName(affectedPackageJson.optString("name", null));
                 osvVulnerability.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
                 osvVulnerability.setPurl(affectedPackageJson.optString("purl", null));
+                osvVulnerability.setSeverity(ecosystemSeverity);
 
                 JSONObject event = rangeEvents.getJSONObject(k);
                 String lower = event.optString("introduced", null);
@@ -149,6 +156,37 @@ public class GoogleOSVAdvisoryParser {
             }
         }
         return osvVulnerabilityList;
+    }
+
+    private Severity parseEcosystemSeverity(JSONObject ecosystemSpecific, JSONObject databaseSpecific) {
+
+        String severity = null;
+
+        if (databaseSpecific != null) {
+            String cvssVector = databaseSpecific.optString("cvss", null);
+            if (cvssVector != null) {
+                Cvss cvss = Cvss.fromVector(cvssVector);
+                Score score = cvss.calculateScore();
+                severity = String.valueOf(normalizedCvssV3Score(score.getBaseScore()));
+            }
+        }
+
+        if(severity == null && ecosystemSpecific != null) {
+            severity = ecosystemSpecific.optString("severity", null);
+        }
+
+        if (severity != null) {
+            if (severity.equalsIgnoreCase("CRITICAL")) {
+                return Severity.CRITICAL;
+            } else if (severity.equalsIgnoreCase("HIGH")) {
+                return Severity.HIGH;
+            } else if (severity.equalsIgnoreCase("MODERATE") || severity.equalsIgnoreCase("MEDIUM")) {
+                return Severity.MEDIUM;
+            } else if (severity.equalsIgnoreCase("LOW")) {
+                return Severity.LOW;
+            }
+        }
+        return Severity.UNASSIGNED;
     }
 
     public String trimSummary(String summary) {

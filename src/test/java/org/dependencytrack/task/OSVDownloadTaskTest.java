@@ -51,6 +51,8 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertEquals(vulnerableSoftware.getPurlType(), "Maven");
         Assert.assertEquals(vulnerableSoftware.getVersionStartIncluding(), "0");
         Assert.assertEquals(vulnerableSoftware.getVersionEndExcluding(), "2.0.17");
+        final Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
+        Assert.assertNotNull(vulnerability);
 
         vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.1.4", "2.1.0");
         Assert.assertNotNull(vulnerableSoftware);
@@ -70,7 +72,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertEquals("Skywalker, Solo", vuln.getCredits());
         Assert.assertEquals("GITHUB", vuln.getSource());
         Assert.assertEquals(Severity.CRITICAL, vuln.getSeverity());
-        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N", vuln.getCvssV3Vector());
+        Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", vuln.getCvssV3Vector());
     }
 
     @Test
@@ -98,6 +100,26 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         source = task.extractSource(sourceTestId);
         Assert.assertNotNull(source);
         Assert.assertEquals(Vulnerability.Source.GOOGLE, source);
+    }
+
+    @Test
+    public void testCalculateOSVSeverity() throws IOException {
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
+        OSVAdvisory advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+        Severity severity = task.calculateOSVSeverity(advisory);
+        Assert.assertEquals(Severity.CRITICAL, severity);
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-severity-test-ecosystem-cvss.json");
+        advisory = parser.parse(jsonObject);
+        severity = task.calculateOSVSeverity(advisory);
+        Assert.assertEquals(Severity.CRITICAL, severity);
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-severity-test-ecosystem.json");
+        advisory = parser.parse(jsonObject);
+        severity = task.calculateOSVSeverity(advisory);
+        Assert.assertEquals(Severity.MEDIUM, severity);
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

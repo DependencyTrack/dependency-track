@@ -113,10 +113,15 @@ public class OSVDownloadTask implements LoggableSubscriber {
             final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
             final List<VulnerableSoftware> vsList = new ArrayList<>();
             for (OSVVulnerability osvVulnerability: advisory.getVulnerabilities()) {
-                VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
-                if (vs != null) {
-                    vsList.add(vs);
+                try {
+                    VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
+                    if (vs != null) {
+                        vsList.add(vs);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Error while mapping the vulnerability " + osvVulnerability.getPurl());
                 }
+
             }
             LOGGER.debug("Updating vulnerable software for OSV advisory: " + advisory.getId());
             qm.persist(vsList);

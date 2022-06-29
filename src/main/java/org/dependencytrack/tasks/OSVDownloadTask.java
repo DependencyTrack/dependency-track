@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -110,8 +112,19 @@ public class OSVDownloadTask implements LoggableSubscriber {
         try (QueryManager qm = new QueryManager()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
-            final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
-            final List<VulnerableSoftware> vsList = new ArrayList<>();
+            // Set to avoid duplicates
+            Set<VulnerableSoftware> vsList = new HashSet<>();
+            Vulnerability synchronizedVulnerability;
+            Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
+            Vulnerability existingVuln = findExistingClashingVulnerability(qm, vulnerability, advisory);
+
+            if (existingVuln != null) {
+                synchronizedVulnerability = existingVuln;
+                vsList = new HashSet<>(existingVuln.getVulnerableSoftware());
+            } else {
+                synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            }
+
             for (OSVVulnerability osvVulnerability: advisory.getVulnerabilities()) {
                 try {
                     VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
@@ -121,12 +134,11 @@ public class OSVDownloadTask implements LoggableSubscriber {
                 } catch (Exception e) {
                     LOGGER.error("Error while mapping the vulnerability " + osvVulnerability.getPurl());
                 }
-
             }
+            synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
+            qm.persist(synchronizedVulnerability);
             LOGGER.debug("Updating vulnerable software for OSV advisory: " + advisory.getId());
             qm.persist(vsList);
-            synchronizedVulnerability.setVulnerableSoftware(vsList);
-            qm.persist(synchronizedVulnerability);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
@@ -238,5 +250,28 @@ public class OSVDownloadTask implements LoggableSubscriber {
         vs.setVersionStartIncluding(versionStartIncluding);
         vs.setVersionEndExcluding(versionEndExcluding);
         return vs;
+    }
+
+    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OSVAdvisory advisory) {
+
+        Vulnerability existing = null;
+        if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {
+            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
+        } else if (advisory.getAliases() != null) {
+            for(String alias : advisory.getAliases()) {
+                String sourceOfAlias = extractSource(alias).toString();
+                if(isVulnerabilitySourceClashingWithGithubOrNvd(sourceOfAlias)) {
+                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias, true);
+                    if (existing != null) break;
+                }
+            }
+        }
+        return existing;
+    }
+
+    private boolean isVulnerabilitySourceClashingWithGithubOrNvd(String source) {
+
+        return Vulnerability.Source.GITHUB.toString().equals(source)
+                || Vulnerability.Source.NVD.toString().equals(source);
     }
 }

@@ -46,19 +46,31 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         // pass the mapped advisory to OSV task to update the database
         task.updateDatasource(advisory);
         var qm = new QueryManager();
+
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
+        Assert.assertNotNull(vulnerability);
+
         var vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.0.17", "0");
         Assert.assertNotNull(vulnerableSoftware);
         Assert.assertEquals(vulnerableSoftware.getPurlType(), "Maven");
         Assert.assertEquals(vulnerableSoftware.getVersionStartIncluding(), "0");
         Assert.assertEquals(vulnerableSoftware.getVersionEndExcluding(), "2.0.17");
-        final Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
-        Assert.assertNotNull(vulnerability);
 
         vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.1.4", "2.1.0");
         Assert.assertNotNull(vulnerableSoftware);
         Assert.assertEquals(vulnerableSoftware.getPurlType(), "Maven");
         Assert.assertEquals(vulnerableSoftware.getVersionStartIncluding(), "2.1.0");
         Assert.assertEquals(vulnerableSoftware.getVersionEndExcluding(), "2.1.4");
+
+        // incoming vulnerability from osv when vulnerability already exists from github
+        prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
+        advisory = parser.parse(jsonObject);
+        Assert.assertNotNull(advisory);
+        task.updateDatasource(advisory);
+        vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
+        Assert.assertNotNull(vulnerability);
+        Assert.assertEquals(9, vulnerability.getVulnerableSoftware().size());
+        Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
     }
 
     @Test
@@ -126,6 +138,34 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertNotNull(advisory);
         severity = task.calculateOSVSeverity(advisory);
         Assert.assertEquals(Severity.UNASSIGNED, severity);
+    }
+
+    @Test
+    public void testFindExistingClashingVulnerability() throws IOException {
+
+        // insert a vulnerability in database
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
+        OSVAdvisory advisory = parser.parse(jsonObject);
+        task.updateDatasource(advisory);
+        var qm = new QueryManager();
+
+        // tests for incoming vulnerabilities if it or its alias already exists
+        prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
+        advisory = parser.parse(jsonObject);
+        Vulnerability vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
+        Vulnerability existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
+        Assert.assertNotNull(existingVuln);
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json");
+        advisory = parser.parse(jsonObject);
+        vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
+        existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
+        Assert.assertNull(existingVuln);
+
+        advisory.addAlias("GHSA-77rv-6vfw-x4gc");
+        vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
+        existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
+        Assert.assertNotNull(existingVuln);
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

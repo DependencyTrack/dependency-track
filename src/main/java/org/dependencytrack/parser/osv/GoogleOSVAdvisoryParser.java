@@ -198,7 +198,10 @@ public class GoogleOSVAdvisoryParser {
     public String trimSummary(String summary) {
 
         final int MAX_LEN = 255;
-        // NPE safe
-        return StringUtils.substring(summary, 0, MAX_LEN-2) + "..";
+        if(summary.length() > 255) {
+            // NPE safe
+            return StringUtils.substring(summary, 0, MAX_LEN-2) + "..";
+        }
+        return summary;
     }
 }

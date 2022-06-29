@@ -23,6 +23,12 @@ public class GoogleOSVAdvisoryParserTest {
         String trimmedSummary = parser.trimSummary(osvLongSummary);
         Assert.assertNotNull(trimmedSummary);
         Assert.assertEquals(trimmedSummary.length(), 255);
+        Assert.assertEquals("In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not ne..", trimmedSummary);
+
+        osvLongSummary = "I'm a short Summary";
+        trimmedSummary = parser.trimSummary(osvLongSummary);
+        Assert.assertNotNull(trimmedSummary);
+        Assert.assertEquals("I'm a short Summary", trimmedSummary);
     }
 
     @Test

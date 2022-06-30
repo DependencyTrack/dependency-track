@@ -4,6 +4,8 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -65,8 +67,6 @@ public class OSVDownloadTask implements LoggableSubscriber {
                 LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
                 String url = "https://osv-vulnerabilities.storage.googleapis.com/" + ecosystem.getValue() + "/all.zip";
                 request = new HttpGet(url);
-                request.setHeader("Accept", "*/*");
-                request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
                 try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                     final StatusLine status = response.getStatusLine();
                     if (status.getStatusCode() == 200) {
@@ -132,7 +132,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
                         vsList.add(vs);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Error while mapping the vulnerability " + osvVulnerability.getPurl());
+                    LOGGER.error("Error while mapping vulnerable software " + osvVulnerability.getPurl(), e);
                 }
             }
             synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
@@ -231,13 +231,14 @@ public class OSVDownloadTask implements LoggableSubscriber {
         }
     }
 
-    private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {
+    public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) throws MalformedPackageURLException {
 
         String versionStartIncluding = vuln.getLowerVersionRange();
         String versionEndExcluding = vuln.getUpperVersionRange();
 
-        final String purl = vuln.getPurl();
-        if (purl == null) return null;
+        if (vuln.getPurl() == null) return null;
+
+        PackageURL purl = new PackageURL(vuln.getPurl());
 
         VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(vuln.getPurl(), versionEndExcluding, versionStartIncluding);
         if (vs != null) {
@@ -245,10 +246,14 @@ public class OSVDownloadTask implements LoggableSubscriber {
         }
         vs = new VulnerableSoftware();
         vs.setVulnerable(true);
-        vs.setPurlType(vuln.getPackageEcosystem());
+        vs.setPurlType(purl.getType());
+        vs.setPurlNamespace(purl.getNamespace());
+        vs.setPurlName(purl.getName());
         vs.setPurl(vuln.getPurl());
+        vs.setVersion(vuln.getVersion());
         vs.setVersionStartIncluding(versionStartIncluding);
         vs.setVersionEndExcluding(versionEndExcluding);
+
         return vs;
     }
 

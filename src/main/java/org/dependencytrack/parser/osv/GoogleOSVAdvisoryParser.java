@@ -4,6 +4,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.osv.model.OSVAdvisory;
 import org.dependencytrack.parser.osv.model.OSVVulnerability;
 import us.springett.cvss.Cvss;
@@ -99,6 +100,7 @@ public class GoogleOSVAdvisoryParser {
         final JSONArray vulnerabilities = object.optJSONArray("affected");
         if (vulnerabilities != null) {
             for(int i=0; i<vulnerabilities.length(); i++) {
+
                 osvVulnerabilityList.addAll(parseVulnerabilityRange(vulnerabilities.getJSONObject(i)));
             }
         }
@@ -109,13 +111,26 @@ public class GoogleOSVAdvisoryParser {
 
         List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray ranges = vulnerability.optJSONArray("ranges");
-
+        final JSONArray versions = vulnerability.optJSONArray("versions");
         if (ranges != null) {
             for (int j=0; j<ranges.length(); j++) {
                 final JSONObject range = ranges.getJSONObject(j);
-                osvVulnerabilityList.addAll(parseVersionRanges(vulnerability, range));
+                String rangeType = range.optString("type", null);
+                if(rangeType != null && !rangeType.equalsIgnoreCase("GIT")) {
+                    osvVulnerabilityList.addAll(parseVersionRanges(vulnerability, range));
+                }
             }
-        } else {
+        }
+        // if ranges are not available or only commit hash range is available, look for versions
+        if (osvVulnerabilityList.size() == 0 && versions != null && versions.length() > 0) {
+            for (int j=0; j<versions.length(); j++) {
+                OSVVulnerability vuln = createOSVVulnerability(vulnerability);
+                vuln.setVersion(versions.getString(j));
+                osvVulnerabilityList.add(vuln);
+            }
+        }
+        // if no parsable range or version is avilable, add vulnerability without version
+        else if (osvVulnerabilityList.size() == 0) {
             osvVulnerabilityList.add(createOSVVulnerability(vulnerability));
         }
         return osvVulnerabilityList;
@@ -198,8 +213,7 @@ public class GoogleOSVAdvisoryParser {
     public String trimSummary(String summary) {
 
         final int MAX_LEN = 255;
-        if(summary.length() > 255) {
-            // NPE safe
+        if(summary != null && summary.length() > 255) {
             return StringUtils.substring(summary, 0, MAX_LEN-2) + "..";
         }
         return summary;

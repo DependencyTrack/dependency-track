@@ -84,7 +84,7 @@ CI/CD environments.
   * Trust boundary traversal
   * Authentication requirements
 * Includes a comprehensive auditing workflow for triaging results
-* Configurable notifications supporting Slack, Microsoft Teams, WebEx, Webhooks, and Email
+* Configurable notifications supporting Slack, Microsoft Teams, Mattermost, WebEx, Webhooks and Email
 * Supports standardized SPDX license ID’s and tracks license use by component
 * Supports importing [CycloneDX] Software Bill of Materials (SBOM)
 * Easy to read metrics for components, projects, and portfolio

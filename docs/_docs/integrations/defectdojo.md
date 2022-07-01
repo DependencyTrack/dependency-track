@@ -39,13 +39,32 @@ Requirements:
 #### Step 5: Add the API key in Dependency-Track configuration
 ![Configure DefectDojo Integration](/images/screenshots/defectdojo_config.png)
 
-#### Per-project configuration
-Dependency-Track includes the ability to specify configuration properties on a per-project basis.
+#### Step 6: Add Per-project configuration
+![Configure Project](/images/screenshots/dtrack_project_properties.png)
+Dependency-Track includes the ability to specify configuration properties on a per-project basis. Navigate to Projects / 'Your Project', then click on 'View Details' to open 'Project Details' page; then click on 'Properties' button; click on 'Create Property'.
 This feature is used to map projects in Dependency-Track to engagements in DefectDojo.
 
 | Attribute      | Value                             |
 | ---------------| --------------------------------- |
 | Group Name     | `integrations`                    |
-| Property Name  | `defectdojo.engagementId`       |
+| Property Name  | `defectdojo.engagementId`         |
 | Property Value | The CI/CD engagement ID to upload findings to, noted in Step 3 |
 | Property Type  | `STRING`                          |
+
+#### Step 7: Add Per-project configuration for Reimport Enhancement (Optional)
+* Dependency-Track v4.6.0 or higher
+![Configure Project](/images/screenshots/defectdojo_reimport.png)
+Instead of creating numerous tests per DefectDojo engagement, now you have the option to deduplicate the tests automatically with this configuration. Once configured, Dependency Track server will try to determine if previous test exist or not. If no, a new test will be created. Otherwise, the test results will be published into the existing one.
+The additional configuration property is defined as below:
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.reimport`             |
+| Property Value | 'true'                            |
+| Property Type  | `BOOLEAN`                         |
+
+#### Step 8: Global configuration for Reimport Enhancement (Optional)
+* Dependency-Track v4.6.0 or higher
+![Configure Project](/images/screenshots/defectdojo_global_reimport.png)
+Alternatively, you can turn on the above reimport feature for all projects in one click, by checking on 'Enable reimport' box as shown in the screenshot above.

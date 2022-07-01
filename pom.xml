@@ -87,15 +87,15 @@
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
         <lib.cyclonedx-java.version>7.1.5</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
-        <lib.lucene.version>8.11.1</lib.lucene.version>
+        <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.1.5</lib.pebble.version>
         <lib.unirest.version>3.13.10</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>11.1.1.jre11-preview</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>11.1.2.jre11-preview</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.0.29</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.3.6</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.4.0</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
@@ -239,7 +239,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.8.5</version>
+            <version>3.8.6</version>
         </dependency>
         <!-- Bundle JDBC drivers -->
         <dependency>
@@ -352,7 +352,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>9.4.15.v20190215</version>
+                <version>10.0.11</version>
                 <configuration>
                     <webApp>
                         <contextPath>/</contextPath>

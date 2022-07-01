@@ -230,16 +230,18 @@ public class OSVDownloadTask implements LoggableSubscriber {
     public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {
 
         String versionStartIncluding = vuln.getLowerVersionRange();
-        String versionEndExcluding = vuln.getUpperVersionRange();
+        String versionEndExcluding = vuln.getUpperVersionRangeExcluding();
+        String versionEndIncluding = vuln.getUpperVersionRangeIncluding();
 
         try {
-            VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(vuln.getPurl(), versionEndExcluding, versionStartIncluding);
+            PackageURL purl = new PackageURL(vuln.getPurl());
+            VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
+                    versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
             if (vs != null) {
                 return vs;
             }
             if (vuln.getPurl() == null) return null;
             vs = new VulnerableSoftware();
-            PackageURL purl = new PackageURL(vuln.getPurl());
             vs.setPurlType(purl.getType());
             vs.setPurlNamespace(purl.getNamespace());
             vs.setPurlName(purl.getName());
@@ -248,6 +250,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
             vs.setVersion(vuln.getVersion());
             vs.setVersionStartIncluding(versionStartIncluding);
             vs.setVersionEndExcluding(versionEndExcluding);
+            vs.setVersionEndIncluding(versionEndIncluding);
             return vs;
 
         } catch (Exception e) {

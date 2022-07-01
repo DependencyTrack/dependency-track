@@ -140,6 +140,7 @@ public class GoogleOSVAdvisoryParser {
 
         final List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray rangeEvents = range.optJSONArray("events");
+        final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
         if(rangeEvents != null) {
             int k = 0;
             while (k < rangeEvents.length()) {
@@ -153,10 +154,26 @@ public class GoogleOSVAdvisoryParser {
                 }
                 if(k < rangeEvents.length()) {
                     event = rangeEvents.getJSONObject(k);
-                    String upper = event.optString("fixed", null);
-                    if(upper != null) {
-                        osvVulnerability.setUpperVersionRange(upper);
+                    String fixed = event.optString("fixed", null);
+                    String lastAffected = event.optString("last_affected", null);
+                    String limit = event.optString("limit", null);
+                    if (fixed != null) {
+                        osvVulnerability.setUpperVersionRangeExcluding(fixed);
                         k += 1;
+                    } else if (lastAffected != null){
+                        osvVulnerability.setUpperVersionRangeIncluding(lastAffected);
+                        k += 1;
+                    } else if (limit != null) {
+                        osvVulnerability.setUpperVersionRangeExcluding(limit);
+                        k += 1;
+                    }
+                }
+                if (osvVulnerability.getUpperVersionRangeIncluding() == null
+                        && osvVulnerability.getUpperVersionRangeExcluding() == null
+                        && databaseSpecific != null) {
+                    String lastAffected = databaseSpecific.optString("last_known_affected_version_range", null);
+                    if (lastAffected != null) {
+                        osvVulnerability.setUpperVersionRangeIncluding(lastAffected.replaceAll("[^0-9.]+", "").trim());
                     }
                 }
                 osvVulnerabilityList.add(osvVulnerability);

@@ -126,13 +126,9 @@ public class OSVDownloadTask implements LoggableSubscriber {
             }
 
             for (OSVVulnerability osvVulnerability: advisory.getVulnerabilities()) {
-                try {
-                    VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
-                    if (vs != null) {
-                        vsList.add(vs);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Error while mapping vulnerable software " + osvVulnerability.getPurl(), e);
+                VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
+                if (vs != null) {
+                    vsList.add(vs);
                 }
             }
             synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
@@ -231,30 +227,33 @@ public class OSVDownloadTask implements LoggableSubscriber {
         }
     }
 
-    public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) throws MalformedPackageURLException {
+    public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {
 
         String versionStartIncluding = vuln.getLowerVersionRange();
         String versionEndExcluding = vuln.getUpperVersionRange();
 
-        if (vuln.getPurl() == null) return null;
-
-        PackageURL purl = new PackageURL(vuln.getPurl());
-
-        VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(vuln.getPurl(), versionEndExcluding, versionStartIncluding);
-        if (vs != null) {
+        try {
+            VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(vuln.getPurl(), versionEndExcluding, versionStartIncluding);
+            if (vs != null) {
+                return vs;
+            }
+            if (vuln.getPurl() == null) return null;
+            vs = new VulnerableSoftware();
+            PackageURL purl = new PackageURL(vuln.getPurl());
+            vs.setPurlType(purl.getType());
+            vs.setPurlNamespace(purl.getNamespace());
+            vs.setPurlName(purl.getName());
+            vs.setVulnerable(true);
+            vs.setPurl(vuln.getPurl());
+            vs.setVersion(vuln.getVersion());
+            vs.setVersionStartIncluding(versionStartIncluding);
+            vs.setVersionEndExcluding(versionEndExcluding);
             return vs;
-        }
-        vs = new VulnerableSoftware();
-        vs.setVulnerable(true);
-        vs.setPurlType(purl.getType());
-        vs.setPurlNamespace(purl.getNamespace());
-        vs.setPurlName(purl.getName());
-        vs.setPurl(vuln.getPurl());
-        vs.setVersion(vuln.getVersion());
-        vs.setVersionStartIncluding(versionStartIncluding);
-        vs.setVersionEndExcluding(versionEndExcluding);
 
-        return vs;
+        } catch (Exception e) {
+            LOGGER.error("Error while mapping vulnerable software " + vuln.getPurl(), e);
+            return null;
+        }
     }
 
     public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OSVAdvisory advisory) {

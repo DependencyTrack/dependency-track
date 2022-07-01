@@ -89,6 +89,19 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testParseAdvisoryToVulnerabilityWithInvalidPurl() throws IOException {
+
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-invalid-purl.json");
+        OSVAdvisory advisory = parser.parse(jsonObject);
+        task.updateDatasource(advisory);
+        Assert.assertNotNull(advisory);
+        Vulnerability vuln = qm.getVulnerabilityByVulnId("GOOGLE", "OSV-2021-60", true);
+        Assert.assertNotNull(vuln);
+        Assert.assertEquals(Severity.MEDIUM, vuln.getSeverity());
+        Assert.assertEquals(1, vuln.getVulnerableSoftware().size());
+    }
+
+    @Test
     public void testWithdrawnAdvisory() throws Exception {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-withdrawn.json");

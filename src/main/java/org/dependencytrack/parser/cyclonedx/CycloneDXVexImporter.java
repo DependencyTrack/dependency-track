@@ -50,7 +50,8 @@ public class CycloneDXVexImporter {
                 // NOTE: These vulnerability objects are detached
                 if ((vuln.getSource().equals(Vulnerability.Source.NVD.name())
                         || vuln.getSource().equals(Vulnerability.Source.OSSINDEX.name())
-                        || vuln.getSource().equals(Vulnerability.Source.GITHUB.name()))
+                        || vuln.getSource().equals(Vulnerability.Source.GITHUB.name())
+                        || vuln.getSource().equals(Vulnerability.Source.INTERNAL.name()))
                         && vuln.getVulnId().equals(cdxVuln.getId())) {
 
                     if (cdxVuln.getAffects() == null) continue;

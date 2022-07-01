@@ -61,5 +61,10 @@ The additional configuration property is defined as below:
 | ---------------| --------------------------------- |
 | Group Name     | `integrations`                    |
 | Property Name  | `defectdojo.reimport`             |
-| Property Value | 'true' or 'false'                 |
+| Property Value | 'true'                            |
 | Property Type  | `BOOLEAN`                         |
+
+#### Step 8: Global configuration for Reimport Enhancement (Optional)
+* Dependency-Track v4.6.0 or higher
+![Configure Project](/images/screenshots/defectdojo_global_reimport.png)
+Alternatively, you can turn on the above reimport feature for all projects in one click, by checking on 'Enable reimport' box as shown in the screenshot above.

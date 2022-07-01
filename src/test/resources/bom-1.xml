@@ -2,6 +2,7 @@
 <bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
     <components>
         <component type="application">
+			<author>Example Author</author>
             <publisher>Example Incorporated</publisher>
             <group>com.example</group>
             <name>xmlutil</name>

@@ -77,6 +77,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
         rule.setName(transientRule.getName());
+        rule.setEnabled(transientRule.isEnabled());
         rule.setNotificationLevel(transientRule.getNotificationLevel());
         rule.setPublisherConfig(transientRule.getPublisherConfig());
         rule.setNotifyOn(transientRule.getNotifyOn());

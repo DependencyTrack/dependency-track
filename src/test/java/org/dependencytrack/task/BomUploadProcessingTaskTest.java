@@ -18,6 +18,7 @@ package org.dependencytrack.task;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
@@ -47,6 +48,10 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
             final var updatedProject = qm2.getObjectById(Project.class, project.getId());
             Assert.assertEquals(Classifier.APPLICATION, updatedProject.getClassifier());
             Assert.assertNotNull(updatedProject.getLastBomImport());
+            final var components = qm2.getAllComponents(updatedProject);
+            for (Component component : components) {
+                Assert.assertNotNull(component.getAuthor());
+            }
             // todo: add some more assertions
         }
     }

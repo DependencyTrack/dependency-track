@@ -4,7 +4,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
-import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.http.StatusLine;
@@ -36,8 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -112,15 +109,14 @@ public class OSVDownloadTask implements LoggableSubscriber {
         try (QueryManager qm = new QueryManager()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
-            // Set to avoid duplicates
-            Set<VulnerableSoftware> vsList = new HashSet<>();
+            final List<VulnerableSoftware> vsList = new ArrayList<>();
             Vulnerability synchronizedVulnerability;
             Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
             Vulnerability existingVuln = findExistingClashingVulnerability(qm, vulnerability, advisory);
 
             if (existingVuln != null) {
                 synchronizedVulnerability = existingVuln;
-                vsList = new HashSet<>(existingVuln.getVulnerableSoftware());
+                vsList.addAll(existingVuln.getVulnerableSoftware());
             } else {
                 synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
             }
@@ -128,7 +124,11 @@ public class OSVDownloadTask implements LoggableSubscriber {
             for (OSVVulnerability osvVulnerability: advisory.getVulnerabilities()) {
                 VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
                 if (vs != null) {
-                    vsList.add(vs);
+                    // check if it already exists or not
+                    VulnerableSoftware existingVulnSoftware = qm.getVulnerableSoftwareByPurl(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(), vs.getVersionEndExcluding(), vs.getVersionEndIncluding(), vs.getVersionStartExcluding(), vs.getVersionStartIncluding());
+                    if(existingVulnSoftware == null) {
+                        vsList.add(vs);
+                    }
                 }
             }
             synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));

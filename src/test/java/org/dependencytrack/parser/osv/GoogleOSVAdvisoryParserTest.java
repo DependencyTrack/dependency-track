@@ -85,7 +85,7 @@ public class GoogleOSVAdvisoryParserTest {
         // range test half pairs
         osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(3));
         Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(osvVulnerabilityList.size(), 3);
+        Assert.assertEquals(3, osvVulnerabilityList.size());
         Assert.assertEquals(null, osvVulnerabilityList.get(0).getLowerVersionRange());
         Assert.assertEquals("2", osvVulnerabilityList.get(0).getUpperVersionRangeExcluding());
         Assert.assertEquals("3", osvVulnerabilityList.get(1).getLowerVersionRange());

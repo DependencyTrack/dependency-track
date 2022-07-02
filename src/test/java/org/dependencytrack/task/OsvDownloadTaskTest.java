@@ -15,13 +15,16 @@
  */
 package org.dependencytrack.task;
 
+import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.CweImporter;
 import org.dependencytrack.tasks.OsvDownloadTask;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,6 +32,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
@@ -37,6 +44,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
+        new CweImporter().processCweDefinitions(); // Necessary for resolving CWEs
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
@@ -45,23 +53,41 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
         // pass the mapped advisory to OSV task to update the database
         task.updateDatasource(advisory);
-        var qm = new QueryManager();
+
+        final Consumer<Vulnerability> assertVulnerability = (vulnerability) -> {
+            Assert.assertNotNull(vulnerability);
+            Assert.assertFalse(StringUtils.isEmpty(vulnerability.getTitle()));
+            Assert.assertFalse(StringUtils.isEmpty(vulnerability.getDescription()));
+            Assert.assertNotNull(vulnerability.getCwes());
+            Assert.assertEquals(1, vulnerability.getCwes().size());
+            Assert.assertEquals(601, vulnerability.getCwes().get(0).intValue());
+            Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", vulnerability.getCvssV3Vector());
+            Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+            Assert.assertNull(vulnerability.getCreated());
+            Assert.assertNotNull(vulnerability.getPublished());
+            Assert.assertEquals(LocalDateTime.of(2019, 3, 14, 15, 39, 30).toInstant(ZoneOffset.UTC), vulnerability.getPublished().toInstant());
+            Assert.assertNotNull(vulnerability.getUpdated());
+            Assert.assertEquals(LocalDateTime.of(2022, 6, 9, 7, 1, 32, 587000000).toInstant(ZoneOffset.UTC), vulnerability.getUpdated().toInstant());
+            Assert.assertEquals("Skywalker, Solo", vulnerability.getCredits());
+        };
 
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
-        Assert.assertNotNull(vulnerability);
+        assertVulnerability.accept(vulnerability);
 
-        var vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.0.17", "0");
-        Assert.assertNotNull(vulnerableSoftware);
-        Assert.assertEquals("maven", vulnerableSoftware.getPurlType());
-        Assert.assertEquals("org.springframework.security.oauth", vulnerableSoftware.getPurlNamespace());
-        Assert.assertEquals("spring-security-oauth", vulnerableSoftware.getPurlName());
-        Assert.assertEquals("0", vulnerableSoftware.getVersionStartIncluding());
-        Assert.assertEquals("2.0.17", vulnerableSoftware.getVersionEndExcluding());
+        List<VulnerableSoftware> vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth"));
+        Assert.assertEquals(4, vulnerableSoftware.size());
+        Assert.assertEquals("0", vulnerableSoftware.get(0).getVersionStartIncluding());
+        Assert.assertEquals("2.0.17", vulnerableSoftware.get(0).getVersionEndExcluding());
+        Assert.assertEquals("2.1.0", vulnerableSoftware.get(1).getVersionStartIncluding());
+        Assert.assertEquals("2.1.4", vulnerableSoftware.get(1).getVersionEndExcluding());
+        Assert.assertEquals("2.2.0", vulnerableSoftware.get(2).getVersionStartIncluding());
+        Assert.assertEquals("2.2.4", vulnerableSoftware.get(2).getVersionEndExcluding());
+        Assert.assertEquals("2.3.0", vulnerableSoftware.get(3).getVersionStartIncluding());
+        Assert.assertEquals("2.3.5", vulnerableSoftware.get(3).getVersionEndExcluding());
 
-        vulnerableSoftware = qm.getVulnerableSoftwareByPurl("pkg:maven/org.springframework.security.oauth/spring-security-oauth", "2.1.4", "2.1.0");
-        Assert.assertNotNull(vulnerableSoftware);
-        Assert.assertEquals("2.1.0", vulnerableSoftware.getVersionStartIncluding());
-        Assert.assertEquals("2.1.4", vulnerableSoftware.getVersionEndExcluding());
+        // The advisory reports both spring-security-oauth and spring-security-oauth2 as affected
+        vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
+        Assert.assertEquals(4, vulnerableSoftware.size());
 
         // incoming vulnerability from osv when vulnerability already exists from github
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
@@ -70,8 +96,10 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         task.updateDatasource(advisory);
         vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
         Assert.assertNotNull(vulnerability);
+        assertVulnerability.accept(vulnerability); // Ensure that the vulnerability was not modified
         Assert.assertEquals(9, vulnerability.getVulnerableSoftware().size());
-        Assert.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+        Assert.assertEquals("3.1.0", vulnerability.getVulnerableSoftware().get(8).getVersionStartIncluding());
+        Assert.assertEquals("3.3.0", vulnerability.getVulnerableSoftware().get(8).getVersionEndExcluding());
     }
 
     @Test
@@ -80,7 +108,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
-        Vulnerability vuln = task.mapAdvisoryToVulnerability(new QueryManager(), advisory);
+        Vulnerability vuln = task.mapAdvisoryToVulnerability(qm, advisory);
         Assert.assertNotNull(vuln);
         Assert.assertEquals("Skywalker, Solo", vuln.getCredits());
         Assert.assertEquals("GITHUB", vuln.getSource());
@@ -161,7 +189,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
-        var qm = new QueryManager();
 
         // tests for incoming vulnerabilities if it or its alias already exists
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
@@ -189,7 +216,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-git-commit-hash-ranges.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
-        var qm = new QueryManager();
 
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GOOGLE", "OSV-2021-1820", true);
         Assert.assertNotNull(vulnerability);

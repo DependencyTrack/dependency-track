@@ -1106,7 +1106,4 @@ public class QueryManager extends AlpineQueryManager {
         return getTagQueryManager().getTags(policyUuid);
     }
 
-    public VulnerableSoftware getVulnerableSoftwareByPurl(String purl, String versionEndExcluding, String versionStartIncluding) {
-        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purl, versionEndExcluding, versionStartIncluding);
-    }
 }

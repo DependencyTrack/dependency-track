@@ -12,17 +12,17 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
-import org.dependencytrack.event.GoogleOSVMirrorEvent;
+import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
-import org.dependencytrack.parser.osv.GoogleOSVAdvisoryParser;
+import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.Ecosystem;
-import org.dependencytrack.parser.osv.model.OSVAdvisory;
-import org.dependencytrack.parser.osv.model.OSVVulnerability;
+import org.dependencytrack.parser.osv.model.OsvAdvisory;
+import org.dependencytrack.parser.osv.model.OsvVulnerability;
 import org.dependencytrack.persistence.QueryManager;
 
 import us.springett.cvss.Cvss;
@@ -43,13 +43,13 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.*;
 
-public class OSVDownloadTask implements LoggableSubscriber {
+public class OsvDownloadTask implements LoggableSubscriber {
 
-    private static final Logger LOGGER = Logger.getLogger(OSVDownloadTask.class);
+    private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
     private final boolean isEnabled;
     private HttpUriRequest request;
 
-    public OSVDownloadTask() {
+    public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
             this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
@@ -59,7 +59,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
     @Override
     public void inform(Event e) {
 
-        if (e instanceof GoogleOSVMirrorEvent && this.isEnabled) {
+        if (e instanceof OsvMirrorEvent && this.isEnabled) {
 
             for (Ecosystem ecosystem : Ecosystem.values()) {
                 LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
@@ -85,7 +85,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
     private void unzipFolder(ZipInputStream zipIn) throws IOException {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(zipIn));
-        GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
+        OsvAdvisoryParser parser = new OsvAdvisoryParser();
         ZipEntry zipEntry = zipIn.getNextEntry();
         while (zipEntry != null) {
 
@@ -95,7 +95,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
                 out.append(line);
             }
             JSONObject json = new JSONObject(out.toString());
-            final OSVAdvisory osvAdvisory = parser.parse(json);
+            final OsvAdvisory osvAdvisory = parser.parse(json);
             if (osvAdvisory != null) {
                 updateDatasource(osvAdvisory);
             }
@@ -105,7 +105,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         reader.close();
     }
 
-    public void updateDatasource(final OSVAdvisory advisory) {
+    public void updateDatasource(final OsvAdvisory advisory) {
 
         try (QueryManager qm = new QueryManager()) {
 
@@ -122,7 +122,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
                 synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
             }
 
-            for (OSVVulnerability osvVulnerability: advisory.getVulnerabilities()) {
+            for (OsvVulnerability osvVulnerability: advisory.getVulnerabilities()) {
                 VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
                 if (vs != null) {
                     // check if it already exists or not
@@ -140,7 +140,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
 
-    public Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OSVAdvisory advisory) {
+    public Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OsvAdvisory advisory) {
 
         final Vulnerability vuln = new Vulnerability();
         if(advisory.getId() != null) {
@@ -179,7 +179,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
     }
 
     // calculate severity of vulnerability on priority-basis (database, ecosystem)
-    public Severity calculateOSVSeverity(OSVAdvisory advisory) {
+    public Severity calculateOSVSeverity(OsvAdvisory advisory) {
 
         // derive from database_specific cvss v3 vector if available
         if(advisory.getCvssV3Vector() != null) {
@@ -208,7 +208,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         // get largest ecosystem_specific severity from its affected packages
         if (advisory.getVulnerabilities() != null) {
             List<Integer> severityLevels = new ArrayList<>();
-            for (OSVVulnerability vuln : advisory.getVulnerabilities()) {
+            for (OsvVulnerability vuln : advisory.getVulnerabilities()) {
                 severityLevels.add(vuln.getSeverity().getLevel());
             }
             Collections.sort(severityLevels);
@@ -228,7 +228,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         }
     }
 
-    public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {
+    public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OsvVulnerability vuln) {
         if (vuln.getPurl() == null) {
             LOGGER.debug("No PURL provided for affected package " + vuln.getPackageName() + " - skipping");
             return null;
@@ -264,7 +264,7 @@ public class OSVDownloadTask implements LoggableSubscriber {
         return vs;
     }
 
-    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OSVAdvisory advisory) {
+    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OsvAdvisory advisory) {
 
         Vulnerability existing = null;
         if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {

@@ -19,10 +19,10 @@ import kong.unirest.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.parser.osv.GoogleOSVAdvisoryParser;
-import org.dependencytrack.parser.osv.model.OSVAdvisory;
+import org.dependencytrack.parser.osv.OsvAdvisoryParser;
+import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.tasks.OSVDownloadTask;
+import org.dependencytrack.tasks.OsvDownloadTask;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,16 +30,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class OSVDownloadTaskTest extends PersistenceCapableTest {
+public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
-    private final GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
-    private final OSVDownloadTask task = new OSVDownloadTask();
+    private final OsvAdvisoryParser parser = new OsvAdvisoryParser();
+    private final OsvDownloadTask task = new OsvDownloadTask();
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals(8, advisory.getVulnerabilities().size());
 
@@ -78,7 +78,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     public void testParseAdvisoryToVulnerability() throws IOException {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Vulnerability vuln = task.mapAdvisoryToVulnerability(new QueryManager(), advisory);
         Assert.assertNotNull(vuln);
@@ -92,7 +92,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     public void testParseAdvisoryToVulnerabilityWithInvalidPurl() throws IOException {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-invalid-purl.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
         Assert.assertNotNull(advisory);
         Vulnerability vuln = qm.getVulnerabilityByVulnId("GOOGLE", "OSV-2021-60", true);
@@ -105,7 +105,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     public void testWithdrawnAdvisory() throws Exception {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-withdrawn.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNull(advisory);
     }
 
@@ -132,7 +132,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
     public void testCalculateOSVSeverity() throws IOException {
 
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Severity severity = task.calculateOSVSeverity(advisory);
         Assert.assertEquals(Severity.CRITICAL, severity);
@@ -159,7 +159,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
 
         // insert a vulnerability in database
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
         var qm = new QueryManager();
 
@@ -187,7 +187,7 @@ public class OSVDownloadTaskTest extends PersistenceCapableTest {
 
         // insert a vulnerability in database
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-git-commit-hash-ranges.json");
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
         var qm = new QueryManager();
 

@@ -4,9 +4,8 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.parser.osv.model.OSVAdvisory;
-import org.dependencytrack.parser.osv.model.OSVVulnerability;
+import org.dependencytrack.parser.osv.model.OsvAdvisory;
+import org.dependencytrack.parser.osv.model.OsvVulnerability;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -19,18 +18,18 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 /*
     Parser for Google OSV, an aggregator of vulnerability databases including GitHub Security Advisories, PyPA, RustSec, and Global Security Database, and more.
  */
-public class GoogleOSVAdvisoryParser {
+public class OsvAdvisoryParser {
 
-    public OSVAdvisory parse(final JSONObject object) {
+    public OsvAdvisory parse(final JSONObject object) {
 
-        OSVAdvisory advisory = null;
+        OsvAdvisory advisory = null;
 
         // initial check if advisory is valid or withdrawn
         String withdrawn = object.optString("withdrawn", null);
 
         if(object != null && withdrawn == null) {
 
-            advisory = new OSVAdvisory();
+            advisory = new OsvAdvisory();
             advisory.setId(object.optString("id", null));
             advisory.setSummary(trimSummary(object.optString("summary", null)));
             advisory.setDetails(object.optString("details", null));
@@ -88,15 +87,15 @@ public class GoogleOSVAdvisoryParser {
                 }
             }
 
-            final List<OSVVulnerability> vulnerabilities = parseVulnerabilities(object);
+            final List<OsvVulnerability> vulnerabilities = parseVulnerabilities(object);
             advisory.setVulnerabilities(vulnerabilities);
         }
         return advisory;
     }
 
-    private List<OSVVulnerability> parseVulnerabilities(JSONObject object) {
+    private List<OsvVulnerability> parseVulnerabilities(JSONObject object) {
 
-        List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
+        List<OsvVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray vulnerabilities = object.optJSONArray("affected");
         if (vulnerabilities != null) {
             for(int i=0; i<vulnerabilities.length(); i++) {
@@ -107,9 +106,9 @@ public class GoogleOSVAdvisoryParser {
         return osvVulnerabilityList;
     }
 
-    public List<OSVVulnerability> parseVulnerabilityRange(JSONObject vulnerability) {
+    public List<OsvVulnerability> parseVulnerabilityRange(JSONObject vulnerability) {
 
-        List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
+        List<OsvVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray ranges = vulnerability.optJSONArray("ranges");
         final JSONArray versions = vulnerability.optJSONArray("versions");
         if (ranges != null) {
@@ -124,7 +123,7 @@ public class GoogleOSVAdvisoryParser {
         // if ranges are not available or only commit hash range is available, look for versions
         if (osvVulnerabilityList.size() == 0 && versions != null && versions.length() > 0) {
             for (int j=0; j<versions.length(); j++) {
-                OSVVulnerability vuln = createOSVVulnerability(vulnerability);
+                OsvVulnerability vuln = createOSVVulnerability(vulnerability);
                 vuln.setVersion(versions.getString(j));
                 osvVulnerabilityList.add(vuln);
             }
@@ -136,16 +135,16 @@ public class GoogleOSVAdvisoryParser {
         return osvVulnerabilityList;
     }
 
-    private List<OSVVulnerability> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
+    private List<OsvVulnerability> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
 
-        final List<OSVVulnerability> osvVulnerabilityList = new ArrayList<>();
+        final List<OsvVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray rangeEvents = range.optJSONArray("events");
         final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
         if(rangeEvents != null) {
             int k = 0;
             while (k < rangeEvents.length()) {
 
-                OSVVulnerability osvVulnerability = createOSVVulnerability(vulnerability);
+                OsvVulnerability osvVulnerability = createOSVVulnerability(vulnerability);
                 JSONObject event = rangeEvents.getJSONObject(k);
                 String lower = event.optString("introduced", null);
                 if(lower != null) {
@@ -182,9 +181,9 @@ public class GoogleOSVAdvisoryParser {
         return osvVulnerabilityList;
     }
 
-    private OSVVulnerability createOSVVulnerability(JSONObject vulnerability) {
+    private OsvVulnerability createOSVVulnerability(JSONObject vulnerability) {
 
-        OSVVulnerability osvVulnerability = new OSVVulnerability();
+        OsvVulnerability osvVulnerability = new OsvVulnerability();
         final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
         final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
         final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");

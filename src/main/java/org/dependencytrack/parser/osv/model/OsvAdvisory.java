@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OSVAdvisory {
+public class OsvAdvisory {
 
     private String id;
 
@@ -30,7 +30,7 @@ public class OSVAdvisory {
 
     private String schema_version;
 
-    private List<OSVVulnerability> vulnerabilities;
+    private List<OsvVulnerability> vulnerabilities;
 
     private String cvssV2Vector;
 
@@ -129,11 +129,11 @@ public class OSVAdvisory {
         this.schema_version = schema_version;
     }
 
-    public List<OSVVulnerability> getVulnerabilities() {
+    public List<OsvVulnerability> getVulnerabilities() {
         return vulnerabilities;
     }
 
-    public void setVulnerabilities(List<OSVVulnerability> vulnerabilities) {
+    public void setVulnerabilities(List<OsvVulnerability> vulnerabilities) {
         this.vulnerabilities = vulnerabilities;
     }
 

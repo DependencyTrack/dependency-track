@@ -2,8 +2,8 @@ package org.dependencytrack.parser.osv;
 
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
-import org.dependencytrack.parser.osv.model.OSVAdvisory;
-import org.dependencytrack.parser.osv.model.OSVVulnerability;
+import org.dependencytrack.parser.osv.model.OsvAdvisory;
+import org.dependencytrack.parser.osv.model.OsvVulnerability;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,9 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class GoogleOSVAdvisoryParserTest {
+public class OsvAdvisoryParserTest {
 
-    GoogleOSVAdvisoryParser parser = new GoogleOSVAdvisoryParser();
+    OsvAdvisoryParser parser = new OsvAdvisoryParser();
 
     @Test
     public void testTrimSummary() {
@@ -42,7 +42,7 @@ public class GoogleOSVAdvisoryParserTest {
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
         final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
-        List<OSVVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(0));
+        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(0));
         Assert.assertNotNull(osvVulnerabilityList);
         Assert.assertEquals(1, osvVulnerabilityList.size());
     }
@@ -54,10 +54,10 @@ public class GoogleOSVAdvisoryParserTest {
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
         final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
-        List<OSVVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(1));
+        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(1));
         Assert.assertNotNull(osvVulnerabilityList);
         Assert.assertEquals(1, osvVulnerabilityList.size());
-        OSVVulnerability vuln = osvVulnerabilityList.get(0);
+        OsvVulnerability vuln = osvVulnerabilityList.get(0);
         Assert.assertEquals("pkg:maven/org.springframework.security.oauth/spring-security-oauth", vuln.getPurl());
         Assert.assertEquals("0", vuln.getLowerVersionRange());
         Assert.assertEquals("2.0.17", vuln.getUpperVersionRangeExcluding());
@@ -74,7 +74,7 @@ public class GoogleOSVAdvisoryParserTest {
         final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
 
         // range test full pairs
-        List<OSVVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(2));
+        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(2));
         Assert.assertNotNull(osvVulnerabilityList);
         Assert.assertEquals(3, osvVulnerabilityList.size());
         Assert.assertEquals("1", osvVulnerabilityList.get(0).getLowerVersionRange());
@@ -103,7 +103,7 @@ public class GoogleOSVAdvisoryParserTest {
         final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
 
         // type last_affected
-        List<OSVVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(4));
+        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(4));
         Assert.assertNotNull(osvVulnerabilityList);
         Assert.assertEquals(1, osvVulnerabilityList.size());
         Assert.assertEquals("10", osvVulnerabilityList.get(0).getLowerVersionRange());
@@ -126,7 +126,7 @@ public class GoogleOSVAdvisoryParserTest {
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals("GHSA-77rv-6vfw-x4gc", advisory.getId());
         Assert.assertEquals("LOW", advisory.getSeverity());
@@ -145,7 +145,7 @@ public class GoogleOSVAdvisoryParserTest {
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-git-commit-hash-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
-        OSVAdvisory advisory = parser.parse(jsonObject);
+        OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals("OSV-2021-1820", advisory.getId());
         Assert.assertEquals(22, advisory.getVulnerabilities().size());

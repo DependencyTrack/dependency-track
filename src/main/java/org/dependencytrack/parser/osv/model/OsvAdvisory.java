@@ -30,7 +30,7 @@ public class OsvAdvisory {
 
     private String schema_version;
 
-    private List<OsvVulnerability> vulnerabilities;
+    private List<OsvAffectedPackage> affectedPackages;
 
     private String cvssV2Vector;
 
@@ -129,12 +129,12 @@ public class OsvAdvisory {
         this.schema_version = schema_version;
     }
 
-    public List<OsvVulnerability> getVulnerabilities() {
-        return vulnerabilities;
+    public List<OsvAffectedPackage> getAffectedPackages() {
+        return affectedPackages;
     }
 
-    public void setVulnerabilities(List<OsvVulnerability> vulnerabilities) {
-        this.vulnerabilities = vulnerabilities;
+    public void setAffectedPackages(List<OsvAffectedPackage> affectedPackages) {
+        this.affectedPackages = affectedPackages;
     }
 
     public String getSeverity() {

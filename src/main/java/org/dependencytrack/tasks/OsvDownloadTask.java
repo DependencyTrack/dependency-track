@@ -22,7 +22,7 @@ import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.Ecosystem;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.parser.osv.model.OsvVulnerability;
+import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
 
 import us.springett.cvss.Cvss;
@@ -122,8 +122,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
             }
 
-            for (OsvVulnerability osvVulnerability: advisory.getVulnerabilities()) {
-                VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, osvVulnerability);
+            for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
+                VulnerableSoftware vs = mapAffectedPackageToVulnerableSoftware(qm, osvAffectedPackage);
                 if (vs != null) {
                     // check if it already exists or not
                     VulnerableSoftware existingVulnSoftware = qm.getVulnerableSoftwareByPurl(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(), vs.getVersionEndExcluding(), vs.getVersionEndIncluding(), vs.getVersionStartExcluding(), vs.getVersionStartIncluding());
@@ -206,9 +206,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
             }
         }
         // get largest ecosystem_specific severity from its affected packages
-        if (advisory.getVulnerabilities() != null) {
+        if (advisory.getAffectedPackages() != null) {
             List<Integer> severityLevels = new ArrayList<>();
-            for (OsvVulnerability vuln : advisory.getVulnerabilities()) {
+            for (OsvAffectedPackage vuln : advisory.getAffectedPackages()) {
                 severityLevels.add(vuln.getSeverity().getLevel());
             }
             Collections.sort(severityLevels);
@@ -228,23 +228,23 @@ public class OsvDownloadTask implements LoggableSubscriber {
         }
     }
 
-    public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OsvVulnerability vuln) {
-        if (vuln.getPurl() == null) {
-            LOGGER.debug("No PURL provided for affected package " + vuln.getPackageName() + " - skipping");
+    public VulnerableSoftware mapAffectedPackageToVulnerableSoftware(final QueryManager qm, final OsvAffectedPackage affectedPackage) {
+        if (affectedPackage.getPurl() == null) {
+            LOGGER.debug("No PURL provided for affected package " + affectedPackage.getPackageName() + " - skipping");
             return null;
         }
 
         final PackageURL purl;
         try {
-            purl = new PackageURL(vuln.getPurl());
+            purl = new PackageURL(affectedPackage.getPurl());
         } catch (MalformedPackageURLException e) {
-            LOGGER.debug("Invalid PURL provided for affected package  " + vuln.getPackageName() + " - skipping", e);
+            LOGGER.debug("Invalid PURL provided for affected package  " + affectedPackage.getPackageName() + " - skipping", e);
             return null;
         }
 
-        final String versionStartIncluding = vuln.getLowerVersionRange();
-        final String versionEndExcluding = vuln.getUpperVersionRangeExcluding();
-        final String versionEndIncluding = vuln.getUpperVersionRangeIncluding();
+        final String versionStartIncluding = affectedPackage.getLowerVersionRange();
+        final String versionEndExcluding = affectedPackage.getUpperVersionRangeExcluding();
+        final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 
         VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
                 versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
@@ -257,7 +257,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setPurlNamespace(purl.getNamespace());
         vs.setPurlName(purl.getName());
         vs.setVulnerable(true);
-        vs.setVersion(vuln.getVersion());
+        vs.setVersion(affectedPackage.getVersion());
         vs.setVersionStartIncluding(versionStartIncluding);
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);

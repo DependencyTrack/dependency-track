@@ -3,7 +3,7 @@ package org.dependencytrack.parser.osv;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.parser.osv.model.OsvVulnerability;
+import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,10 +41,10 @@ public class OsvAdvisoryParserTest {
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
-        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(0));
-        Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(1, osvVulnerabilityList.size());
+        final JSONArray affected = jsonObject.optJSONArray("affected");
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(0));
+        Assert.assertNotNull(affectedPackages);
+        Assert.assertEquals(1, affectedPackages.size());
     }
 
     @Test
@@ -53,15 +53,15 @@ public class OsvAdvisoryParserTest {
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-with-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
-        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(1));
-        Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(1, osvVulnerabilityList.size());
-        OsvVulnerability vuln = osvVulnerabilityList.get(0);
-        Assert.assertEquals("pkg:maven/org.springframework.security.oauth/spring-security-oauth", vuln.getPurl());
-        Assert.assertEquals("0", vuln.getLowerVersionRange());
-        Assert.assertEquals("2.0.17", vuln.getUpperVersionRangeExcluding());
-        Assert.assertEquals("Maven", vuln.getPackageEcosystem());
+        final JSONArray affected = jsonObject.optJSONArray("affected");
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(1));
+        Assert.assertNotNull(affectedPackages);
+        Assert.assertEquals(1, affectedPackages.size());
+        OsvAffectedPackage affectedPackage = affectedPackages.get(0);
+        Assert.assertEquals("pkg:maven/org.springframework.security.oauth/spring-security-oauth", affectedPackage.getPurl());
+        Assert.assertEquals("0", affectedPackage.getLowerVersionRange());
+        Assert.assertEquals("2.0.17", affectedPackage.getUpperVersionRangeExcluding());
+        Assert.assertEquals("Maven", affectedPackage.getPackageEcosystem());
 
     }
 
@@ -71,27 +71,24 @@ public class OsvAdvisoryParserTest {
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-vulnerability-with-ranges.json";
         String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
         JSONObject jsonObject = new JSONObject(jsonString);
-        final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
+        final JSONArray affected = jsonObject.optJSONArray("affected");
 
         // range test full pairs
-        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(2));
-        Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(3, osvVulnerabilityList.size());
-        Assert.assertEquals("1", osvVulnerabilityList.get(0).getLowerVersionRange());
-        Assert.assertEquals("2", osvVulnerabilityList.get(0).getUpperVersionRangeExcluding());
-        Assert.assertEquals("3", osvVulnerabilityList.get(1).getLowerVersionRange());
-        Assert.assertEquals("4", osvVulnerabilityList.get(1).getUpperVersionRangeExcluding());
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(2));
+        Assert.assertNotNull(affectedPackages);
+        Assert.assertEquals(3, affectedPackages.size());
+        Assert.assertEquals("1", affectedPackages.get(0).getLowerVersionRange());
+        Assert.assertEquals("2", affectedPackages.get(0).getUpperVersionRangeExcluding());
+        Assert.assertEquals("3", affectedPackages.get(1).getLowerVersionRange());
+        Assert.assertEquals("4", affectedPackages.get(1).getUpperVersionRangeExcluding());
 
         // range test half pairs
-        osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(3));
-        Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(3, osvVulnerabilityList.size());
-        Assert.assertEquals(null, osvVulnerabilityList.get(0).getLowerVersionRange());
-        Assert.assertEquals("2", osvVulnerabilityList.get(0).getUpperVersionRangeExcluding());
-        Assert.assertEquals("3", osvVulnerabilityList.get(1).getLowerVersionRange());
-        Assert.assertEquals(null, osvVulnerabilityList.get(1).getUpperVersionRangeExcluding());
-        Assert.assertEquals("4", osvVulnerabilityList.get(2).getLowerVersionRange());
-        Assert.assertEquals("5", osvVulnerabilityList.get(2).getUpperVersionRangeExcluding());
+        affectedPackages = parser.parseAffectedPackageRange(affected.getJSONObject(3));
+        Assert.assertNotNull(affectedPackages);
+        Assert.assertEquals(2, affectedPackages.size());
+        Assert.assertEquals("3", affectedPackages.get(0).getLowerVersionRange());
+        Assert.assertEquals("4", affectedPackages.get(1).getLowerVersionRange());
+        Assert.assertEquals("5", affectedPackages.get(1).getUpperVersionRangeExcluding());
     }
 
     @Test
@@ -103,20 +100,20 @@ public class OsvAdvisoryParserTest {
         final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
 
         // type last_affected
-        List<OsvVulnerability> osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(4));
-        Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(1, osvVulnerabilityList.size());
-        Assert.assertEquals("10", osvVulnerabilityList.get(0).getLowerVersionRange());
-        Assert.assertEquals(null, osvVulnerabilityList.get(0).getUpperVersionRangeExcluding());
-        Assert.assertEquals("11", osvVulnerabilityList.get(0).getUpperVersionRangeIncluding());
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(4));
+        Assert.assertNotNull(affectedPackages);
+        Assert.assertEquals(1, affectedPackages.size());
+        Assert.assertEquals("10", affectedPackages.get(0).getLowerVersionRange());
+        Assert.assertEquals(null, affectedPackages.get(0).getUpperVersionRangeExcluding());
+        Assert.assertEquals("11", affectedPackages.get(0).getUpperVersionRangeIncluding());
 
         // type last_affected
-        osvVulnerabilityList = parser.parseVulnerabilityRange(vulnerabilities.getJSONObject(6));
-        Assert.assertNotNull(osvVulnerabilityList);
-        Assert.assertEquals(1, osvVulnerabilityList.size());
-        Assert.assertEquals("10", osvVulnerabilityList.get(0).getLowerVersionRange());
-        Assert.assertEquals(null, osvVulnerabilityList.get(0).getUpperVersionRangeExcluding());
-        Assert.assertEquals("29.0", osvVulnerabilityList.get(0).getUpperVersionRangeIncluding());
+        affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(6));
+        Assert.assertNotNull(affectedPackages);
+        Assert.assertEquals(1, affectedPackages.size());
+        Assert.assertEquals("10", affectedPackages.get(0).getLowerVersionRange());
+        Assert.assertEquals(null, affectedPackages.get(0).getUpperVersionRangeExcluding());
+        Assert.assertEquals("29.0", affectedPackages.get(0).getUpperVersionRangeIncluding());
 
     }
 
@@ -133,7 +130,7 @@ public class OsvAdvisoryParserTest {
         Assert.assertEquals(1, advisory.getCweIds().size());
         Assert.assertEquals(6, advisory.getReferences().size());
         Assert.assertEquals(2, advisory.getCredits().size());
-        Assert.assertEquals(8, advisory.getVulnerabilities().size());
+        Assert.assertEquals(8, advisory.getAffectedPackages().size());
         Assert.assertEquals("CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H", advisory.getCvssV3Vector());
         Assert.assertEquals("CVE-2019-3778", advisory.getAliases().get(0));
         Assert.assertEquals("2022-06-09T07:01:32.587163Z", advisory.getModified().toString());
@@ -148,7 +145,7 @@ public class OsvAdvisoryParserTest {
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
         Assert.assertEquals("OSV-2021-1820", advisory.getId());
-        Assert.assertEquals(22, advisory.getVulnerabilities().size());
-        Assert.assertEquals("4.4.0", advisory.getVulnerabilities().get(0).getVersion());
+        Assert.assertEquals(22, advisory.getAffectedPackages().size());
+        Assert.assertEquals("4.4.0", advisory.getAffectedPackages().get(0).getVersion());
     }
 }

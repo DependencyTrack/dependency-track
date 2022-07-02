@@ -49,7 +49,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
-        Assert.assertEquals(8, advisory.getVulnerabilities().size());
+        Assert.assertEquals(8, advisory.getAffectedPackages().size());
 
         // pass the mapped advisory to OSV task to update the database
         task.updateDatasource(advisory);

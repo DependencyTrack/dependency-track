@@ -5,7 +5,7 @@ import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
-import org.dependencytrack.parser.osv.model.OsvVulnerability;
+import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -87,112 +87,139 @@ public class OsvAdvisoryParser {
                 }
             }
 
-            final List<OsvVulnerability> vulnerabilities = parseVulnerabilities(object);
-            advisory.setVulnerabilities(vulnerabilities);
+            final List<OsvAffectedPackage> affectedPackages = parseAffectedPackages(object);
+            advisory.setAffectedPackages(affectedPackages);
         }
         return advisory;
     }
 
-    private List<OsvVulnerability> parseVulnerabilities(JSONObject object) {
+    private List<OsvAffectedPackage> parseAffectedPackages(final JSONObject advisory) {
 
-        List<OsvVulnerability> osvVulnerabilityList = new ArrayList<>();
-        final JSONArray vulnerabilities = object.optJSONArray("affected");
-        if (vulnerabilities != null) {
-            for(int i=0; i<vulnerabilities.length(); i++) {
+        List<OsvAffectedPackage> affectedPackages = new ArrayList<>();
+        final JSONArray affected = advisory.optJSONArray("affected");
+        if (affected != null) {
+            for(int i=0; i<affected.length(); i++) {
 
-                osvVulnerabilityList.addAll(parseVulnerabilityRange(vulnerabilities.getJSONObject(i)));
+                affectedPackages.addAll(parseAffectedPackageRange(affected.getJSONObject(i)));
             }
         }
-        return osvVulnerabilityList;
+        return affectedPackages;
     }
 
-    public List<OsvVulnerability> parseVulnerabilityRange(JSONObject vulnerability) {
+    public List<OsvAffectedPackage> parseAffectedPackageRange(final JSONObject affected) {
 
-        List<OsvVulnerability> osvVulnerabilityList = new ArrayList<>();
-        final JSONArray ranges = vulnerability.optJSONArray("ranges");
-        final JSONArray versions = vulnerability.optJSONArray("versions");
+        List<OsvAffectedPackage> osvAffectedPackageList = new ArrayList<>();
+        final JSONArray ranges = affected.optJSONArray("ranges");
+        final JSONArray versions = affected.optJSONArray("versions");
         if (ranges != null) {
             for (int j=0; j<ranges.length(); j++) {
                 final JSONObject range = ranges.getJSONObject(j);
-                String rangeType = range.optString("type", null);
-                if(rangeType != null && !rangeType.equalsIgnoreCase("GIT")) {
-                    osvVulnerabilityList.addAll(parseVersionRanges(vulnerability, range));
-                }
+                osvAffectedPackageList.addAll(parseVersionRanges(affected, range));
             }
         }
         // if ranges are not available or only commit hash range is available, look for versions
-        if (osvVulnerabilityList.size() == 0 && versions != null && versions.length() > 0) {
+        if (osvAffectedPackageList.size() == 0 && versions != null && versions.length() > 0) {
             for (int j=0; j<versions.length(); j++) {
-                OsvVulnerability vuln = createOSVVulnerability(vulnerability);
+                OsvAffectedPackage vuln = createAffectedPackage(affected);
                 vuln.setVersion(versions.getString(j));
-                osvVulnerabilityList.add(vuln);
+                osvAffectedPackageList.add(vuln);
             }
         }
-        // if no parsable range or version is avilable, add vulnerability without version
-        else if (osvVulnerabilityList.size() == 0) {
-            osvVulnerabilityList.add(createOSVVulnerability(vulnerability));
+        // if no parsable range or version is available, add vulnerability without version
+        else if (osvAffectedPackageList.size() == 0) {
+            osvAffectedPackageList.add(createAffectedPackage(affected));
         }
-        return osvVulnerabilityList;
+        return osvAffectedPackageList;
     }
 
-    private List<OsvVulnerability> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
+    private List<OsvAffectedPackage> parseVersionRanges(JSONObject vulnerability, JSONObject range) {
+        final String rangeType = range.optString("type");
+        if (!"ECOSYSTEM".equalsIgnoreCase(rangeType) && !"SEMVER".equalsIgnoreCase(rangeType)) {
+            // We can't support ranges of type GIT for now, as evaluating them requires knowledge of
+            // the entire Git history of a package. We don't have that, so there's no point in
+            // ingesting this data.
+            //
+            // We're also implicitly excluding ranges of types that we don't yet know of.
+            // This is a tradeoff of potentially missing new data vs. flooding our users'
+            // database with junk data.
+            return List.of();
+        }
 
-        final List<OsvVulnerability> osvVulnerabilityList = new ArrayList<>();
         final JSONArray rangeEvents = range.optJSONArray("events");
-        final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
-        if(rangeEvents != null) {
-            int k = 0;
-            while (k < rangeEvents.length()) {
-
-                OsvVulnerability osvVulnerability = createOSVVulnerability(vulnerability);
-                JSONObject event = rangeEvents.getJSONObject(k);
-                String lower = event.optString("introduced", null);
-                if(lower != null) {
-                    osvVulnerability.setLowerVersionRange(lower);
-                    k += 1;
-                }
-                if(k < rangeEvents.length()) {
-                    event = rangeEvents.getJSONObject(k);
-                    String fixed = event.optString("fixed", null);
-                    String lastAffected = event.optString("last_affected", null);
-                    String limit = event.optString("limit", null);
-                    if (fixed != null) {
-                        osvVulnerability.setUpperVersionRangeExcluding(fixed);
-                        k += 1;
-                    } else if (lastAffected != null){
-                        osvVulnerability.setUpperVersionRangeIncluding(lastAffected);
-                        k += 1;
-                    } else if (limit != null) {
-                        osvVulnerability.setUpperVersionRangeExcluding(limit);
-                        k += 1;
-                    }
-                }
-                if (osvVulnerability.getUpperVersionRangeIncluding() == null
-                        && osvVulnerability.getUpperVersionRangeExcluding() == null
-                        && databaseSpecific != null) {
-                    String lastAffected = databaseSpecific.optString("last_known_affected_version_range", null);
-                    if (lastAffected != null) {
-                        osvVulnerability.setUpperVersionRangeIncluding(lastAffected.replaceAll("[^0-9.]+", "").trim());
-                    }
-                }
-                osvVulnerabilityList.add(osvVulnerability);
-            }
+        if (rangeEvents == null) {
+            return List.of();
         }
-        return osvVulnerabilityList;
+
+        final List<OsvAffectedPackage> affectedPackages = new ArrayList<>();
+
+        for (int i = 0; i < rangeEvents.length(); i++) {
+            JSONObject event = rangeEvents.getJSONObject(i);
+
+            final String introduced = event.optString("introduced", null);
+            if (introduced == null) {
+                // "introduced" is required for every range. But events are not guaranteed to be sorted,
+                // it's merely a recommendation by the OSV specification.
+                //
+                // If events are not sorted, we have no way to tell what the correct order should be.
+                // We make a tradeoff by assuming that ranges are sorted, and potentially skip ranges
+                // that aren't.
+                continue;
+            }
+
+            final OsvAffectedPackage affectedPackage = createAffectedPackage(vulnerability);
+            affectedPackage.setLowerVersionRange(introduced);
+
+            if (i + 1 < rangeEvents.length()) {
+                event = rangeEvents.getJSONObject(i + 1);
+                final String fixed = event.optString("fixed", null);
+                final String lastAffected = event.optString("last_affected", null);
+                final String limit = event.optString("limit", null);
+
+                if (fixed != null) {
+                    affectedPackage.setUpperVersionRangeExcluding(fixed);
+                    i++;
+                } else if (lastAffected != null) {
+                    affectedPackage.setUpperVersionRangeIncluding(lastAffected);
+                    i++;
+                } else if (limit != null) {
+                    affectedPackage.setUpperVersionRangeExcluding(limit);
+                    i++;
+                }
+            }
+
+            // Special treatment for GitHub: https://github.com/github/advisory-database/issues/470
+            final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
+            if (databaseSpecific != null
+                    && affectedPackage.getUpperVersionRangeIncluding() == null
+                    && affectedPackage.getUpperVersionRangeExcluding() == null) {
+                final String lastAffectedRange = databaseSpecific.optString("last_known_affected_version_range", null);
+                if (lastAffectedRange != null) {
+                    if (lastAffectedRange.startsWith("<=")) {
+                        affectedPackage.setUpperVersionRangeIncluding(lastAffectedRange.replaceFirst("<=", "").trim());
+                    } else if (lastAffectedRange.startsWith("<")) {
+                        affectedPackage.setUpperVersionRangeExcluding(lastAffectedRange.replaceAll("<", "").trim());
+                    }
+                }
+            }
+
+            affectedPackages.add(affectedPackage);
+        }
+
+        return affectedPackages;
     }
 
-    private OsvVulnerability createOSVVulnerability(JSONObject vulnerability) {
+    private OsvAffectedPackage createAffectedPackage(JSONObject vulnerability) {
 
-        OsvVulnerability osvVulnerability = new OsvVulnerability();
+        OsvAffectedPackage osvAffectedPackage = new OsvAffectedPackage();
         final JSONObject affectedPackageJson = vulnerability.optJSONObject("package");
         final JSONObject ecosystemSpecific = vulnerability.optJSONObject("ecosystem_specific");
         final JSONObject databaseSpecific = vulnerability.optJSONObject("database_specific");
         Severity ecosystemSeverity = parseEcosystemSeverity(ecosystemSpecific, databaseSpecific);
-        osvVulnerability.setPackageName(affectedPackageJson.optString("name", null));
-        osvVulnerability.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
-        osvVulnerability.setPurl(affectedPackageJson.optString("purl", null));
-        osvVulnerability.setSeverity(ecosystemSeverity);
-        return osvVulnerability;
+        osvAffectedPackage.setPackageName(affectedPackageJson.optString("name", null));
+        osvAffectedPackage.setPackageEcosystem(affectedPackageJson.optString("ecosystem", null));
+        osvAffectedPackage.setPurl(affectedPackageJson.optString("purl", null));
+        osvAffectedPackage.setSeverity(ecosystemSeverity);
+        return osvAffectedPackage;
     }
 
     private Severity parseEcosystemSeverity(JSONObject ecosystemSpecific, JSONObject databaseSpecific) {

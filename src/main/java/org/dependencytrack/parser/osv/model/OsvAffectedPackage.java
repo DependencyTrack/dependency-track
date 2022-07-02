@@ -2,7 +2,7 @@ package org.dependencytrack.parser.osv.model;
 
 import org.dependencytrack.model.Severity;
 
-public class OsvVulnerability {
+public class OsvAffectedPackage {
     private String packageName;
 
     private String packageEcosystem;

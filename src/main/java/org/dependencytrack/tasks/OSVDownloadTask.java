@@ -4,6 +4,7 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
+import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.http.StatusLine;
@@ -228,35 +229,39 @@ public class OSVDownloadTask implements LoggableSubscriber {
     }
 
     public VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final OSVVulnerability vuln) {
-
-        String versionStartIncluding = vuln.getLowerVersionRange();
-        String versionEndExcluding = vuln.getUpperVersionRangeExcluding();
-        String versionEndIncluding = vuln.getUpperVersionRangeIncluding();
-
-        try {
-            PackageURL purl = new PackageURL(vuln.getPurl());
-            VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
-                    versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
-            if (vs != null) {
-                return vs;
-            }
-            if (vuln.getPurl() == null) return null;
-            vs = new VulnerableSoftware();
-            vs.setPurlType(purl.getType());
-            vs.setPurlNamespace(purl.getNamespace());
-            vs.setPurlName(purl.getName());
-            vs.setVulnerable(true);
-            vs.setPurl(vuln.getPurl());
-            vs.setVersion(vuln.getVersion());
-            vs.setVersionStartIncluding(versionStartIncluding);
-            vs.setVersionEndExcluding(versionEndExcluding);
-            vs.setVersionEndIncluding(versionEndIncluding);
-            return vs;
-
-        } catch (Exception e) {
-            LOGGER.error("Error while mapping vulnerable software " + vuln.getPurl(), e);
+        if (vuln.getPurl() == null) {
+            LOGGER.debug("No PURL provided for affected package " + vuln.getPackageName() + " - skipping");
             return null;
         }
+
+        final PackageURL purl;
+        try {
+            purl = new PackageURL(vuln.getPurl());
+        } catch (MalformedPackageURLException e) {
+            LOGGER.debug("Invalid PURL provided for affected package  " + vuln.getPackageName() + " - skipping", e);
+            return null;
+        }
+
+        final String versionStartIncluding = vuln.getLowerVersionRange();
+        final String versionEndExcluding = vuln.getUpperVersionRangeExcluding();
+        final String versionEndIncluding = vuln.getUpperVersionRangeIncluding();
+
+        VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
+                versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
+        if (vs != null) {
+            return vs;
+        }
+
+        vs = new VulnerableSoftware();
+        vs.setPurlType(purl.getType());
+        vs.setPurlNamespace(purl.getNamespace());
+        vs.setPurlName(purl.getName());
+        vs.setVulnerable(true);
+        vs.setVersion(vuln.getVersion());
+        vs.setVersionStartIncluding(versionStartIncluding);
+        vs.setVersionEndExcluding(versionEndExcluding);
+        vs.setVersionEndIncluding(versionEndIncluding);
+        return vs;
     }
 
     public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OSVAdvisory advisory) {

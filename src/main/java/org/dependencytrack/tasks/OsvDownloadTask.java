@@ -268,12 +268,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         Vulnerability existing = null;
         if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {
-            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
+            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
         } else if (advisory.getAliases() != null) {
             for(String alias : advisory.getAliases()) {
                 String sourceOfAlias = extractSource(alias).toString();
                 if(isVulnerabilitySourceClashingWithGithubOrNvd(sourceOfAlias)) {
-                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias, true);
+                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias);
                     if (existing != null) break;
                 }
             }

@@ -1026,7 +1026,7 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getNotificationPublisher(name);
     }
 
-    NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
         return getNotificationQueryManager().getDefaultNotificationPublisher(clazz);
     }
 
@@ -1036,7 +1036,7 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher);
     }
 
-    NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
+    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
         return getNotificationQueryManager().updateNotificationPublisher(transientPublisher);
     }
 

@@ -129,7 +129,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * @param clazz The Class of the NotificationPublisher
      * @return a NotificationPublisher
      */
-    NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
         return getDefaultNotificationPublisher(clazz.getCanonicalName());
     }
 
@@ -140,6 +140,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     private NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass && defaultPublisher == true");
+        query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         return singleResult(query.execute(clazz));
     }
 
@@ -155,12 +156,13 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         final NotificationPublisher publisher = new NotificationPublisher();
         publisher.setName(name);
         publisher.setDescription(description);
-        publisher.setPublisherClass(publisherClass.getCanonicalName());
+        publisher.setPublisherClass(publisherClass.getName());
         publisher.setTemplate(templateContent);
         publisher.setTemplateMimeType(templateMimeType);
         publisher.setDefaultPublisher(defaultPublisher);
         pm.makePersistent(publisher);
         pm.currentTransaction().commit();
+        pm.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
         return getObjectById(NotificationPublisher.class, publisher.getId());
     }
 
@@ -168,7 +170,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      * Updates a NotificationPublisher.
      * @return a NotificationPublisher object
      */
-    NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
+    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
         NotificationPublisher publisher = null;
         if (transientPublisher.getId() > 0) {
             publisher = getObjectById(NotificationPublisher.class, transientPublisher.getId());

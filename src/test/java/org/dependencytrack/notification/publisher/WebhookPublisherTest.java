@@ -30,14 +30,14 @@ import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
-import javax.json.Json;
 import javax.json.JsonObject;
+import java.io.IOException;
 
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class WebhookPublisherTest extends PersistenceCapableTest {
+public class WebhookPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
 
     private static ClientAndServer mockServer;
 
@@ -52,7 +52,7 @@ public class WebhookPublisherTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testPublish() {
+    public void testPublish() throws IOException {
         new MockServerClient("localhost", 1080)
                 .when(
                         request()
@@ -64,7 +64,7 @@ public class WebhookPublisherTest extends PersistenceCapableTest {
                                 .withStatusCode(200)
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 );
-        JsonObject config = Json.createObjectBuilder().add("destination", "http://localhost:1080/mychannel").build();
+        JsonObject config = getConfig(DefaultNotificationPublishers.WEBHOOK, "http://localhost:1080/mychannel");
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());

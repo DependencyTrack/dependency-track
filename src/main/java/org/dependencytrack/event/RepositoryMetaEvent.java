@@ -20,18 +20,56 @@ package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
+
+import java.util.Optional;
+import java.util.UUID;
 
 public class RepositoryMetaEvent implements Event {
 
-    private Component component;
+    public enum Type {
+        PORTFOLIO,
+        PROJECT,
+        COMPONENT
+    }
 
-    public RepositoryMetaEvent() { }
+    private final Type type;
+    private final UUID target;
+
+    public RepositoryMetaEvent() {
+        this(Type.PORTFOLIO, null);
+    }
+
+    /**
+     * @since 4.6.0
+     */
+    public RepositoryMetaEvent(final Project project) {
+        this(Type.PROJECT, project.getUuid());
+    }
 
     public RepositoryMetaEvent(final Component component) {
-        this.component = component;
+        this(Type.COMPONENT, component.getUuid());
     }
 
-    public Component getComponent() {
-        return component;
+    private RepositoryMetaEvent(final Type type, final UUID target) {
+        this.type = type;
+        this.target = target;
     }
+
+    /**
+     * @return The {@link Type} of the target
+     * @since 4.6.0
+     */
+    public Type getType() {
+        return type;
+    }
+
+    /**
+     * @return The {@link UUID} of the target
+     * @since 4.6.0
+     */
+    public Optional<UUID> getTarget() {
+        return Optional.ofNullable(target);
+    }
+
 }

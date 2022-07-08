@@ -19,21 +19,47 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Component;
-import org.junit.Assert;
+import org.dependencytrack.model.Project;
 import org.junit.Test;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RepositoryMetaEventTest {
 
     @Test
     public void testDefaultConstructor() {
-        RepositoryMetaEvent event = new RepositoryMetaEvent();
-        Assert.assertNull(event.getComponent());
+        final var event = new RepositoryMetaEvent();
+        assertThat(event.getType()).isEqualTo(RepositoryMetaEvent.Type.PORTFOLIO);
+        assertThat(event.getTarget()).isNotPresent();
+    }
+
+    @Test
+    public void testProjectConstructor() {
+        final var project = new Project();
+        var event = new RepositoryMetaEvent(project);
+        assertThat(event.getType()).isEqualTo(RepositoryMetaEvent.Type.PROJECT);
+        assertThat(event.getTarget()).isNotPresent();
+
+        final var uuid = UUID.randomUUID();
+        project.setUuid(uuid);
+        event = new RepositoryMetaEvent(project);
+        assertThat(event.getType()).isEqualTo(RepositoryMetaEvent.Type.PROJECT);
+        assertThat(event.getTarget()).contains(uuid);
     }
 
     @Test
     public void testComponentConstructor() {
-        Component component = new Component();
-        RepositoryMetaEvent event = new RepositoryMetaEvent(component);
-        Assert.assertEquals(component, event.getComponent());
+        final var component = new Component();
+        var event = new RepositoryMetaEvent(component);
+        assertThat(event.getType()).isEqualTo(RepositoryMetaEvent.Type.COMPONENT);
+        assertThat(event.getTarget()).isNotPresent();
+
+        final var uuid = UUID.randomUUID();
+        component.setUuid(uuid);
+        event = new RepositoryMetaEvent(component);
+        assertThat(event.getType()).isEqualTo(RepositoryMetaEvent.Type.COMPONENT);
+        assertThat(event.getTarget()).contains(uuid);
     }
 }

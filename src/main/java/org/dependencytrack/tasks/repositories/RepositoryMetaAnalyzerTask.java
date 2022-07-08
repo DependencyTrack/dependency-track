@@ -45,12 +45,21 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
         if (e instanceof RepositoryMetaEvent) {
             LOGGER.debug("Analyzing component repository metadata");
             final RepositoryMetaEvent event = (RepositoryMetaEvent)e;
-            if (event.getComponent() != null) {
+            if (event.getType() == RepositoryMetaEvent.Type.COMPONENT && event.getTarget().isPresent()) {
                 try (QueryManager qm = new QueryManager()) {
-                    // Refreshing the object by querying for it again is preventative
-                    analyze(qm, qm.getObjectById(Component.class, event.getComponent().getId()));
+                    analyze(qm, qm.getObjectByUuid(Component.class, event.getTarget().get()));
                 }
-            } else {
+            } else if (event.getType() == RepositoryMetaEvent.Type.PROJECT && event.getTarget().isPresent()) {
+                try (final var qm = new QueryManager()) {
+                    final var project = qm.getObjectByUuid(Project.class, event.getTarget().get());
+                    final List<Component> components = qm.getAllComponents(project);
+                    LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                    for (final Component component : components) {
+                        analyze(qm, component);
+                    }
+                    LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                }
+            } else if (event.getType() == RepositoryMetaEvent.Type.PORTFOLIO) {
                 try (final QueryManager qm = new QueryManager()) {
                     final List<Project> projects = qm.getAllProjects(true);
                     for (final Project project: projects) {

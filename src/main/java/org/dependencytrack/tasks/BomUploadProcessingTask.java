@@ -147,6 +147,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(detachedFlattenedComponent).project(detachedProject);
                 vae.setChainIdentifier(event.getChainIdentifier());
                 Event.dispatch(vae);
+                Event.dispatch(new RepositoryMetaEvent(detachedProject));
                 LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
@@ -172,7 +173,6 @@ public class BomUploadProcessingTask implements Subscriber {
         final long oid = component.getId();
         // Refreshing the object by querying for it again is preventative
         flattenedComponents.add(qm.getObjectById(Component.class, oid));
-        Event.dispatch(new RepositoryMetaEvent(component));
         if (component.getChildren() != null) {
             for (final Component child : component.getChildren()) {
                 processComponent(qm, bom, child, flattenedComponents);

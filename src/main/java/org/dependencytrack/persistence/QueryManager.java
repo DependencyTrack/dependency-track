@@ -1040,6 +1040,10 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().updateNotificationPublisher(transientPublisher);
     }
 
+    public void deleteNotificationPublisher(NotificationPublisher notificationPublisher) {
+        getNotificationQueryManager().deleteNotificationPublisher(notificationPublisher);
+    }
+
     public void removeProjectFromNotificationRules(final Project project) {
         getNotificationQueryManager().removeProjectFromNotificationRules(project);
     }

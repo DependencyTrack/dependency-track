@@ -24,4 +24,8 @@ public class PublisherException extends RuntimeException {
         super(message);
     }
 
+    public  PublisherException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

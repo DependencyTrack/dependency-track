@@ -56,7 +56,7 @@ public interface Publisher {
             String literalTemplate = config.getString(CONFIG_TEMPLATE_KEY);
             return getTemplateEngine().getLiteralTemplate(literalTemplate);
         } catch (NullPointerException | ClassCastException templateException) {
-            throw new PublisherException(templateException.getMessage());
+            throw new PublisherException(templateException.getMessage(), templateException);
         }
     }
 
@@ -64,7 +64,7 @@ public interface Publisher {
         try {
             return config.getString(CONFIG_TEMPLATE_MIME_TYPE_KEY);
         } catch (NullPointerException | ClassCastException templateException) {
-            throw new PublisherException(templateException.getMessage());
+            throw new PublisherException(templateException.getMessage(), templateException);
         }
     }
 

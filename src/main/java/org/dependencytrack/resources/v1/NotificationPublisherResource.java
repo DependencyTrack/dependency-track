@@ -19,14 +19,12 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
-import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.*;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
@@ -34,14 +32,11 @@ import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.validation.Validator;
@@ -51,8 +46,6 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * JAX-RS resources for processing notification publishers.
@@ -93,7 +86,9 @@ public class NotificationPublisherResource extends AlpineResource {
             code = 201
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized")
+            @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 409, message = "Conflict with an existing publisher's name")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createNotificationPublisher(NotificationPublisher jsonNotificationPublisher) {
@@ -143,8 +138,10 @@ public class NotificationPublisherResource extends AlpineResource {
             response = NotificationRule.class
     )
     @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 404, message = "The notification publisher could not be found")
+            @ApiResponse(code = 404, message = "The notification publisher could not be found"),
+            @ApiResponse(code = 409, message = "Conflict with an existing publisher's name")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response updateNotificationPublisher(NotificationPublisher jsonNotificationPublisher) {
@@ -212,13 +209,7 @@ public class NotificationPublisherResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final NotificationPublisher notificationPublisher = qm.getObjectByUuid(NotificationPublisher.class, notificationPublisherUuid);
             if (notificationPublisher != null) {
-                final PersistenceManager pm = qm.getPersistenceManager();
-                final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
-                String filter = ("publisher.uuid == :uuid");
-                query.setFilter(filter);
-                final List<NotificationRule> rulesToDelete =  (List<NotificationRule>) query.execute(UUID.fromString(notificationPublisherUuid));
-                rulesToDelete.forEach(rule -> qm.delete(rule));
-                qm.delete(notificationPublisher);
+                qm.deleteNotificationPublisher(notificationPublisher);
                 return Response.status(Response.Status.NO_CONTENT).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
@@ -248,6 +239,7 @@ public class NotificationPublisherResource extends AlpineResource {
             NotificationUtil.loadDefaultNotificationPublishers(qm);
             return Response.ok().build();
         } catch (IOException ioException) {
+            LOGGER.error(ioException.getMessage(), ioException);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while restoring default notification publisher templates.").build();
         }
     }
@@ -283,6 +275,7 @@ public class NotificationPublisherResource extends AlpineResource {
             emailPublisher.inform(notification, config);
             return Response.ok().build();
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+            LOGGER.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending test mail notification.").build();
         }
     }

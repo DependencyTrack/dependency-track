@@ -36,7 +36,7 @@ Each scope contains a set of notification groups that can be used to subscribe t
 | PORTFOLIO | POLICY_VIOLATION | Notifications generated whenever a policy violation is identified                                                                 |
 
 ## Configuring Publishers
-A notification publisher is a Dependency-Track concept allowing users to describe the structure of a notification (i.e. MIME type, template) and how to send to a notification (i.e. publisher class).
+A notification publisher is a Dependency-Track concept allowing users to describe the structure of a notification (i.e. MIME type, template) and how to send a notification (i.e. publisher class).
 The following notification publishers are included by default :
 
 | Publisher  | Description                                         |
@@ -337,6 +337,9 @@ Switch on enable default template override flag and provide a filesystem base di
 
 ![notification publisher general configuration](/images/screenshots/notifications-publisher-override-template.png)
 
+> The default template override flag is switched off and templates base directory is set at initial startup to ${user.home} by default.
+> The default template override flag can be overriden at initial startup using -Ddtrack.template.default.override.enabled=true
+
 To override all default templates, you must have the following [Pebble Templates](https://pebbletemplates.io/) template files inside the configured base directory.
 
 ```bash
@@ -349,7 +352,12 @@ To override all default templates, you must have the following [Pebble Templates
 <base directory>/templates/notification/publisher/cswebex.peb
 ```
 
-A restart is needed for the modification to be taken into account. 
+**A restart is needed for the modification to be taken into account.**
+
+> When deploying Dependency Track in a container environment, you must mount a volume or a configmap to supply custom Pebbles template.
+> Please refer to [deploy-docker](../../getting-started/deploy-docker/) for details.
+
+> **You must set appropriate rights to the provided Pebble templates base directory in order to prevent untrusted third party to supply a fraudulent template which can lead to a code execution vulnerability.**
 
 You can, at any time, restore the default templates bundled with Dependency-Track as shown below. Please note that restoring the default templates will automatically set the templates override flag to **false**.
 
@@ -360,11 +368,11 @@ Creating publishers can be performed from the administrative page which requires
 
 ![create notification publisher](/images/screenshots/notifications-create-publisher.png)
 
-Once the publisher is created, you can modify or delete it.
+Once the publisher is created, you can modify, clone or delete it.
 
 ![modify notification publisher](/images/screenshots/notifications-modify-publisher.png)
 
-Deleting a publisher will delete all related notifications.
+> Deleting a publisher will delete all related notifications.
 
 ## Configuring Notifications
 Creating notifications can be performed from the administrative page which requires the SYSTEM_CONFIGURATION permission.

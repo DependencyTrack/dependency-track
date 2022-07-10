@@ -66,7 +66,7 @@ public enum ConfigPropertyConstants {
     KENNA_CONNECTOR_ID("integrations", "kenna.connector.id", null, PropertyType.STRING, "The Kenna Security connector identifier to upload to"),
     ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio"),
     NOTIFICATION_TEMPLATE_BASE_DIR("notification", "template.baseDir", System.getProperty("user.home"), PropertyType.STRING, "The base directory to use when searching for notification templates"),
-    NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED("notification", "template.default.override.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable override of default notification templates");
+    NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED("notification", "template.default.override.enabled", System.getProperty("dtrack.template.default.override.enabled", "false"), PropertyType.BOOLEAN, "Flag to enable/disable override of default notification templates");
 
     private String groupName;
     private String propertyName;

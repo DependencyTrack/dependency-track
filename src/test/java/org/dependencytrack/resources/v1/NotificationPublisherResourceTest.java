@@ -324,6 +324,18 @@ public class NotificationPublisherResourceTest extends ResourceTest {
     }
 
     @Test
+    public void deleteDefaultNotificationPublisherTest() {
+        NotificationPublisher notificationPublisher = qm.getDefaultNotificationPublisher((Class) SendMailPublisher.class);
+        Response response = target(V1_NOTIFICATION_PUBLISHER + "/" + notificationPublisher.getUuid()).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(400, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Deleting a default notification publisher is forbidden.", body);
+    }
+
+    @Test
     public void testSmtpPublisherConfigTest() {
         Form form = new Form();
         form.param("destination", "test@example.com");

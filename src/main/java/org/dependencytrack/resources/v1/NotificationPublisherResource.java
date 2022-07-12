@@ -200,6 +200,7 @@ public class NotificationPublisherResource extends AlpineResource {
             code = 204
     )
     @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Deleting a default notification publisher is forbidden"),
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the notification publisher could not be found")
     })
@@ -209,8 +210,12 @@ public class NotificationPublisherResource extends AlpineResource {
         try (QueryManager qm = new QueryManager()) {
             final NotificationPublisher notificationPublisher = qm.getObjectByUuid(NotificationPublisher.class, notificationPublisherUuid);
             if (notificationPublisher != null) {
-                qm.deleteNotificationPublisher(notificationPublisher);
-                return Response.status(Response.Status.NO_CONTENT).build();
+                if(notificationPublisher.isDefaultPublisher()) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Deleting a default notification publisher is forbidden.").build();
+                } else {
+                    qm.deleteNotificationPublisher(notificationPublisher);
+                    return Response.status(Response.Status.NO_CONTENT).build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
             }

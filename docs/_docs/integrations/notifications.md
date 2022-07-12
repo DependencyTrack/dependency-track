@@ -337,8 +337,8 @@ Switch on enable default template override flag and provide a filesystem base di
 
 ![notification publisher general configuration](/images/screenshots/notifications-publisher-override-template.png)
 
-> The default template override flag is switched off and templates base directory is set at initial startup to ${user.home} by default.
-> The default template override flag can be overriden at initial startup using -Ddtrack.template.default.override.enabled=true
+> The default template override flag is switched off by default and can set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_ENABLED`. 
+> The default templates base directory is set to ${user.home} by default and can be set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY`.
 
 To override all default templates, you must have the following [Pebble Templates](https://pebbletemplates.io/) template files inside the configured base directory.
 

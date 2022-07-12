@@ -146,8 +146,9 @@ services:
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
     # 
-    # Optional system property to enable default notification publisher templates override
-    # - JAVA_OPTIONS="-Ddtrack.template.default.override.enabled=true"
+    # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
+    # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
+    # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
     deploy:
       resources:
         limits:

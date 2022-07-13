@@ -33,7 +33,7 @@ public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
     @Test
     public void hasMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, PolicyCondition.Operator.IS, "CWE-123");
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, PolicyCondition.Operator.CONTAINS_ANY, "CWE-123");
         Project project = new Project();
         project.setName("My Project");
         Component component = new Component();
@@ -60,7 +60,7 @@ public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
     @Test
     public void noMatch() {
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, PolicyCondition.Operator.IS, "CWE-123");
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, PolicyCondition.Operator.CONTAINS_ALL, "CWE-123, CWE-567");
         Project project = new Project();
         project.setName("My Project");
         Component component = new Component();
@@ -70,7 +70,7 @@ public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
         Vulnerability vulnerability = new Vulnerability();
         vulnerability.setVulnId("12345");
         vulnerability.setSource(Vulnerability.Source.INTERNAL);
-        vulnerability.addCwe(789);
+        vulnerability.addCwe(123);
         qm.persist(project);
         qm.persist(component);
         qm.persist(vulnerability);
@@ -84,12 +84,12 @@ public class CwePolicyEvaluatorTest extends PersistenceCapableTest {
     @Test
     public void testMatchesMethod() {
         List<Integer> cwes = List.of(123, 456, 789);
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.IS, cwes, "CWE-456"));
-        Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.IS, cwes, "CWE-654"));
         Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "CWE-123, CWE-999"));
+        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "CWE-123"));
         Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, "CWE-123, CWE-456"));
         Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, "CWE-123, CWE-456, CWE-999"));
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.IS, cwes, null));
-        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.IS, cwes, "*"));
+        Assert.assertTrue(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ANY, cwes, "*"));
+        Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, " , "));
+        Assert.assertFalse(cwePolicyEvaluator.matches(PolicyCondition.Operator.CONTAINS_ALL, cwes, " "));
     }
 }

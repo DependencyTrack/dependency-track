@@ -65,23 +65,21 @@ public class CwePolicyEvaluator extends AbstractPolicyEvaluator {
 
     public boolean matches(final PolicyCondition.Operator operator, final List<Integer> vulnerabilityCwes, final String conditionValue) {
 
-        if (conditionValue == null || vulnerabilityCwes == null || "*".equals(conditionValue.trim())) {
+        if (conditionValue == null || vulnerabilityCwes == null) {
+            return false;
+        }
+        if("*".equals(conditionValue.trim())){
             return true;
         }
-        if (PolicyCondition.Operator.IS == operator) {
-            final Integer cweId = CweResolver.getInstance().parseCweString(conditionValue);
-            if (cweId != null) {
-                return vulnerabilityCwes.contains(cweId);
-            }
-        } else {
-            List<Integer> cweIdsToMatch = new ArrayList<>();
-            List<String> conditionCwes = Arrays.asList(conditionValue.split(","));
-            conditionCwes.replaceAll(String::trim);
-            conditionCwes.stream().forEach(cwe -> {
-                Integer id = CweResolver.getInstance().parseCweString(cwe);
-                if(id != null)
-                    cweIdsToMatch.add(id);
-            });
+        List<Integer> cweIdsToMatch = new ArrayList<>();
+        List<String> conditionCwes = Arrays.asList(conditionValue.split(","));
+        conditionCwes.replaceAll(String::trim);
+        conditionCwes.stream().forEach(cwe -> {
+            Integer id = CweResolver.getInstance().parseCweString(cwe);
+            if(id != null)
+                cweIdsToMatch.add(id);
+        });
+        if (!cweIdsToMatch.isEmpty()) {
             if (PolicyCondition.Operator.CONTAINS_ANY == operator) {
                 return CollectionUtils.containsAny(vulnerabilityCwes, cweIdsToMatch);
             } else if (PolicyCondition.Operator.CONTAINS_ALL == operator) {

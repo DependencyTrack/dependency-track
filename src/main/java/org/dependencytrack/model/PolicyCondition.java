@@ -57,7 +57,9 @@ public class PolicyCondition implements Serializable {
         NUMERIC_EQUAL,
         NUMERIC_NOT_EQUAL,
         NUMERIC_GREATER_THAN_OR_EQUAL,
-        NUMERIC_LESSER_THAN_OR_EQUAL
+        NUMERIC_LESSER_THAN_OR_EQUAL,
+        CONTAINS_ALL,
+        CONTAINS_ANY
     }
 
     public enum Subject {
@@ -73,7 +75,8 @@ public class PolicyCondition implements Serializable {
         SEVERITY,
         SWID_TAGID,
         VERSION,
-        COMPONENT_HASH
+        COMPONENT_HASH,
+        CWE
     }
 
     @PrimaryKey

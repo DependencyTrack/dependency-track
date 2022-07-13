@@ -38,7 +38,7 @@ public class ComponentHashPolicyEvaluatorTest extends PersistenceCapableTest {
         PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.COMPONENT_HASH, PolicyCondition.Operator.IS, hashJson);
         Component component = new Component();
         component.setName("Test Component");
-        component.setSha512("test_hash");
+        component.setSha3_512("test_hash");
         List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
         Assert.assertEquals(1, violations.size());
         PolicyConditionViolation violation = violations.get(0);

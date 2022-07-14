@@ -134,6 +134,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     @SuppressWarnings("unchecked")
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
+            final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
             for (us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln : (List<us.springett.vulndbdatamirror.parser.model.Vulnerability>) results.getResults()) {
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.getId()));
                 if (vulnerability == null) {
@@ -141,11 +142,11 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 } else {
                     vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 }
-                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
-                qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
-                addVulnerabilityToCache(component, vulnerability);
+                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, vulnerableComponent);
+                qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
+                addVulnerabilityToCache(vulnerableComponent, vulnerability);
             }
-            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe(), component.getCacheResult());
+            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, vulnerableComponent.getCpe(), component.getCacheResult());
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }

@@ -72,9 +72,7 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
 
     private boolean matches(Hash hash, Component component) {
 
-        if (hash == null)
-            return true;
-        else if (hash.getAlgorithm() != null && hash.getValue() != null) {
+        if (hash != null && hash.getAlgorithm() != null && hash.getValue() != null) {
             String value = StringUtils.trimToNull(hash.getValue());
             if (Hash.Algorithm.MD5.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                 return value.equalsIgnoreCase(component.getMd5());

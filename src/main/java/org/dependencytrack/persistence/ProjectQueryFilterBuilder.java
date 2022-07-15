@@ -73,7 +73,7 @@ class ProjectQueryFilterBuilder {
     }
 
     String buildFilter() {
-        return "(" + String.join(" && ", this.filterCriteria) + ")";
+        return String.join(" && ", this.filterCriteria);
     }
 
     Map<String, Object> getParams() {

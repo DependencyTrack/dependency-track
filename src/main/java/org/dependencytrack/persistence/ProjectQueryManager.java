@@ -97,8 +97,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 }
                 params.put("name", filterString);
                 params.put("tag", tag);
-                preprocessACLs(query, queryFilter, params, false);
-                result = execute(query, params);
             } else {
                 if (excludeInactive) {
                     queryFilter = "(name.toLowerCase().matches(:name) && (active == true || active == null))";
@@ -106,16 +104,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     queryFilter = "(name.toLowerCase().matches(:name))";
                 }
                 params.put("name", filterString);
-                preprocessACLs(query, queryFilter, params, false);
-                result = execute(query, params);
             }
         } else {
             if (excludeInactive) {
                 queryFilter = " (active == true || active == null) ";
             }
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
         }
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.

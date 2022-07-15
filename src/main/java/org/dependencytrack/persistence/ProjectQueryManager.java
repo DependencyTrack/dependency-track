@@ -167,7 +167,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Returns a list of projects by it's name.
+     * Returns a list of projects by their name.
      * @param name the name of the Projects (required)
      * @return a List of Project objects
      */
@@ -189,7 +189,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Returns a project by it's name and version.
+     * Returns a project by its name and version.
      * @param name the name of the Project (required)
      * @param version the version of the Project (or null)
      * @return a Project object, or null if not found

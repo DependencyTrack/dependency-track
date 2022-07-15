@@ -75,6 +75,7 @@ public class PolicyCondition implements Serializable {
         SEVERITY,
         SWID_TAGID,
         VERSION,
+        COMPONENT_HASH,
         CWE
     }
 

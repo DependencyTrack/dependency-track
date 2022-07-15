@@ -56,19 +56,18 @@ class ProjectQueryFilterBuilder {
         return this;
     }
 
-    ProjectQueryFilterBuilder withFuzzyName(String name, Tag tag) {
+    ProjectQueryFilterBuilder withFuzzyName(String name) {
         params.put("name", name);
 
-        final String filter;
-        if (tag != null) {
-            params.put("tag", tag);
-            filter = "(name.toLowerCase().matches(:name) || tags.contains(:tag))";
+        filterCriteria.add("(name.toLowerCase().matches(:name))");
+        return this;
+    }
 
-        } else {
-            filter = "(name.toLowerCase().matches(:name))";
-        }
+    ProjectQueryFilterBuilder withFuzzyNameOrExactTag(String name, Tag tag) {
+        params.put("name", name);
+        params.put("tag", tag);
 
-        filterCriteria.add(filter);
+        filterCriteria.add("(name.toLowerCase().matches(:name) || tags.contains(:tag))");
         return this;
     }
 

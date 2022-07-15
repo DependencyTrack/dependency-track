@@ -92,7 +92,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             final Tag tag = getTagByName(filter.trim());
 
-            filterBuilder = filterBuilder.withFuzzyName(filterString, tag);
+            if (tag != null) {
+                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
+
+            } else {
+                filterBuilder = filterBuilder.withFuzzyName(filterString);
+            }
         }
 
         final String queryFilter = filterBuilder.buildFilter();
@@ -226,9 +231,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             query.setOrdering("name asc");
         }
 
-        final var filterBuilder = new ProjectQueryFilterBuilder()
+        var filterBuilder = new ProjectQueryFilterBuilder()
                 .excludeInactive(excludeInactive)
                 .withTag(tag);
+
+        if (filter != null) {
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            filterBuilder = filterBuilder.withFuzzyName(filterString);
+        }
 
         final String queryFilter = filterBuilder.buildFilter();
         final Map<String, Object> params = filterBuilder.getParams();

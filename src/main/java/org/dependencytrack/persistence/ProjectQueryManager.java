@@ -85,36 +85,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             query.setOrdering("name asc, version desc");
         }
 
-        String queryFilter = null;
-        final Map<String, Object> params = new HashMap<>();
+        var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive);
 
         if (filter != null) {
             final String filterString = ".*" + filter.toLowerCase() + ".*";
-            params.put("name", filterString);
             final Tag tag = getTagByName(filter.trim());
 
-            if (tag != null) {
-                params.put("tag", tag);
-
-                if (excludeInactive) {
-                    queryFilter = "((name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null))";
-                } else {
-                    queryFilter = "(name.toLowerCase().matches(:name) || tags.contains(:tag))";
-                }
-
-            } else {
-                if (excludeInactive) {
-                    queryFilter = "(name.toLowerCase().matches(:name) && (active == true || active == null))";
-                } else {
-                    queryFilter = "(name.toLowerCase().matches(:name))";
-                }
-
-            }
-        } else {
-            if (excludeInactive) {
-                queryFilter = " (active == true || active == null) ";
-            }
+            filterBuilder = filterBuilder.withFuzzyName(filterString, tag);
         }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
         preprocessACLs(query, queryFilter, params, false);
         result = execute(query, params);
         if (includeMetrics) {
@@ -867,6 +850,22 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         ProjectQueryFilterBuilder withClassifier(Classifier classifier) {
             params.put("classifier", classifier);
             filterCriteria.add("(classifier == :classifier)");
+            return this;
+        }
+
+        ProjectQueryFilterBuilder withFuzzyName(String name, Tag tag) {
+            params.put("name", name);
+
+            final String filter;
+            if (tag != null) {
+                params.put("tag", tag);
+                filter = "(name.toLowerCase().matches(:name) || tags.contains(:tag))";
+
+            } else {
+                filter  = "(name.toLowerCase().matches(:name))";
+            }
+
+            filterCriteria.add(filter);
             return this;
         }
 

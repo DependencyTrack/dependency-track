@@ -84,26 +84,31 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
         }
+
         String queryFilter = null;
         final Map<String, Object> params = new HashMap<>();
+
         if (filter != null) {
             final String filterString = ".*" + filter.toLowerCase() + ".*";
+            params.put("name", filterString);
             final Tag tag = getTagByName(filter.trim());
+
             if (tag != null) {
+                params.put("tag", tag);
+
                 if (excludeInactive) {
                     queryFilter = "((name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null))";
                 } else {
                     queryFilter = "(name.toLowerCase().matches(:name) || tags.contains(:tag))";
                 }
-                params.put("name", filterString);
-                params.put("tag", tag);
+
             } else {
                 if (excludeInactive) {
                     queryFilter = "(name.toLowerCase().matches(:name) && (active == true || active == null))";
                 } else {
                     queryFilter = "(name.toLowerCase().matches(:name))";
                 }
-                params.put("name", filterString);
+
             }
         } else {
             if (excludeInactive) {

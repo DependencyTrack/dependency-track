@@ -27,10 +27,14 @@ import javax.json.JsonObject;
 public class CsWebexPublisher extends AbstractWebhookPublisher implements Publisher {
 
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
-    private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/cswebex.peb");
     
     public void inform(final Notification notification, final JsonObject config) {
-        publish(DefaultNotificationPublishers.CS_WEBEX.getPublisherName(), TEMPLATE, notification, config);
+        publish(DefaultNotificationPublishers.CS_WEBEX.getPublisherName(), getTemplate(config), notification, config);
     }
-    
+
+    @Override
+    public PebbleEngine getTemplateEngine() {
+        return ENGINE;
+    }
+
 }

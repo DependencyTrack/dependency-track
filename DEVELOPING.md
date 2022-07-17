@@ -20,7 +20,7 @@ There are a few things you'll need on your journey:
 
 * JDK 11+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven (comes bundled with IntelliJ and Eclipse)
-* A Java IDE of your preference
+* A Java IDE of your preference (we recommend IntelliJ, but any other IDE is fine as well)
 * Docker (optional)
 
 > We provide common [run configurations](https://www.jetbrains.com/help/idea/run-debug-configuration.html) for IntelliJ 
@@ -28,7 +28,7 @@ There are a few things you'll need on your journey:
 
 ## Core Technologies
 
-Knowing about the core technologies used for the API server may help you with understanding its codebase.
+Knowing about the core technologies used by the API server may help you with understanding its codebase.
 
 | Technology                                                                                      | Purpose                   |
 |:------------------------------------------------------------------------------------------------|:--------------------------|
@@ -53,11 +53,12 @@ Build an executable JAR that contains both API server and frontend (aka "bundled
 mvn clean package -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
 ```
 
-> When using the `bundle-ui` profile, Maven will download a `DependencyTrack/frontend` release and include it in the JAR.
-> The frontend version is specified via the `frontend.version` property in [`pom.xml`](./pom.xml).
+> When using the `bundle-ui` profile, Maven will download a [`DependencyTrack/frontend`](https://github.com/DependencyTrack/frontend) 
+> release and include it in the JAR. The frontend version is specified via the `frontend.version` property in [`pom.xml`](./pom.xml).
 
 The resulting files are placed in `./target` as `dependency-track-apiserver.jar` or `dependency-track-bundled.jar` respectively.
-Both JARs ship with an embedded Jetty server, there's no need to deploy them in an application server like Tomcat or WildFly.
+Both JARs ship with an [embedded Jetty server](https://github.com/stevespringett/Alpine/tree/master/alpine-executable-war), 
+there's no need to deploy them in an application server like Tomcat or WildFly.
 
 ## Running
 
@@ -66,6 +67,8 @@ To run a previously built executable JAR, just invoke it with `java -jar`, e.g.:
 ```shell
 java -jar ./target/dependency-track-apiserver.jar
 ```
+
+The API server will be available at `http://127.0.0.1:8080`.
 
 Additional configuration (e.g. database connection details) can be provided as usual via `application.properties`
 or environment variables. Refer to the [configuration documentation](https://docs.dependencytrack.org/getting-started/configuration/).
@@ -97,7 +100,7 @@ npm ci
 npm run serve
 ```
 
-Per default, the Vue development server would listen on port `8080`. If that port is taken, it will choose a higher,
+Per default, the Vue development server will listen on port `8080`. If that port is taken, it will choose a higher,
 unused port (typically `8081`). Due to this behavior, it is important to always start the API server first, unless
 you want to fiddle with default configurations of both API server and frontend.
 
@@ -108,7 +111,7 @@ Now visit `http://127.0.0.1:8081` in your browser and use Dependency-Track as us
 To run all tests:
 
 ```shell
-mvn clean verify
+mvn clean verify -P enhance
 ```
 
 Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
@@ -147,7 +150,7 @@ To build the docs, run:
 ```
 
 This installs all required dependencies (among them Jekyll) to `docs/vendor/bundle`, generates the documentation
-website and stores it in `docs/_site`. You can view the site by opening `docs/_site/index.html` in a browser.
+website and stores it in `docs/_site`.
 
 For local development, you may want to run this instead: 
 ```shell
@@ -155,3 +158,11 @@ For local development, you may want to run this instead:
 ```
 
 This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you make changes.
+
+> To be able to build the docs with Jekyll, you'll need [Ruby](https://www.ruby-lang.org/en/),
+> [RubyGems](https://rubygems.org/pages/download) and [Bundler](https://bundler.io/) installed.
+> If you can't be bothered to install all of this, you can use the 
+> [Jekyll container image](https://hub.docker.com/r/jekyll/jekyll) instead, e.g.:
+> ```
+> docker run --rm -it --name jekyll -p "127.0.0.1:4000:4000" -v "$(pwd)/docs:/srv/jekyll:Z" jekyll/jekyll:3.8 jekyll serve
+> ```

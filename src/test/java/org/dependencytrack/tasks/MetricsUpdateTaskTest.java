@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.event.framework.EventService;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.event.CallbackEvent;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
@@ -34,6 +36,8 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
@@ -45,6 +49,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MetricsUpdateTaskTest extends PersistenceCapableTest {
+
+    @BeforeClass
+    public static void setUpClass() {
+        EventService.getInstance().subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
+        EventService.getInstance().subscribe(CallbackEvent.class, CallbackTask.class);
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        EventService.getInstance().unsubscribe(MetricsUpdateTask.class);
+        EventService.getInstance().unsubscribe(CallbackTask.class);
+    }
 
     @Test
     public void testUpdatePortfolioMetricsEmpty() {

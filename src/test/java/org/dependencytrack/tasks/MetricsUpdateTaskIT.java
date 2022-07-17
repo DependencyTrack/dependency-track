@@ -18,11 +18,13 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.event.framework.EventService;
 import alpine.persistence.JdoProperties;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.apache.commons.lang3.SystemUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.dependencytrack.event.CallbackEvent;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
@@ -38,6 +40,7 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -79,6 +82,18 @@ import static org.junit.Assume.assumeFalse;
         MetricsUpdateTaskIT.PostgreSqlIT.class,
 })
 public class MetricsUpdateTaskIT {
+
+    @BeforeClass
+    public static void setUpClass() {
+        EventService.getInstance().subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
+        EventService.getInstance().subscribe(CallbackEvent.class, CallbackTask.class);
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        EventService.getInstance().unsubscribe(MetricsUpdateTask.class);
+        EventService.getInstance().unsubscribe(CallbackTask.class);
+    }
 
     public static class MsSqlServerIT extends AbstractMetricsUpdateTaskIT {
 

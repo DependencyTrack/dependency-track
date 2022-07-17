@@ -19,12 +19,12 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
-import alpine.common.util.SystemUtil;
+import alpine.common.util.ThreadUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.dependencytrack.common.LimitingExecutor;
+import org.dependencytrack.event.CallbackEvent;
 import org.dependencytrack.event.MetricsUpdateEvent;
 import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.AnalysisState;
@@ -49,25 +49,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.toIntExact;
 
 /**
  * Subscriber task that performs calculations of various metrics.
- * <p>
- * The functionality offered by this task has been optimized to have a
- * minimal footprint in order to only have a small impact on overall system performance.
  * <p>
  * For read-only database operations, raw SQL queries are preferred,
  * due to the high overhead of DataNucleus' object lifecycles and caches.
@@ -109,116 +101,100 @@ public class MetricsUpdateTask implements Subscriber {
      * Performs high-level metric updates on the portfolio.
      * <p>
      * Portfolio metrics are the aggregate of all project metrics.
+     * <p>
+     * A forced refresh of all project metrics is performed by dispatching a {@link MetricsUpdateEvent}
+     * for each project in the portfolio. This is done in batches of size equal to a third of the worker pool
+     * thread count, as a means of applying back-pressure and not overloading the event bus.
      */
     private void updatePortfolioMetrics() throws Exception {
         LOGGER.info("Executing portfolio metrics update");
         final var counters = new Counters();
 
-        final List<Long> activeProjectIds;
-        try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
-            LOGGER.debug("Fetching active projects");
-            activeProjectIds = getActiveProjects(pm);
-            LOGGER.debug("Portfolio metrics update will include " + activeProjectIds.size() + " projects");
-        }
+        final long batchSize = ThreadUtil.determineNumberOfWorkerThreads() / 3;
 
-        if (activeProjectIds.size() > 0) {
-            // In order to speed up the process of updating metrics for all projects,
-            // we parallelize the work using a fixed-size thread pool.
-            // The pool size is intentionally left conservative for now, as we want to
-            // limit the impact on other functions of DT. We may increase this in the future,
-            // or allow it to be configured by users.
+        try (final var qm = new QueryManager()) {
+            final PersistenceManager pm = qm.getPersistenceManager();
 
-            int threadPoolSize = SystemUtil.getCpuCores();
-            if (threadPoolSize > activeProjectIds.size()) {
-                threadPoolSize = activeProjectIds.size();
-            }
-            LOGGER.debug("Using thread pool size of " + threadPoolSize);
+            LOGGER.debug("Fetching first " + batchSize + " projects");
+            List<Long> projectIds = getActiveProjects(pm, batchSize, 0);
 
-            final ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
-            final var limitingExecutor = new LimitingExecutor(executorService, threadPoolSize);
-            final var projectCounterFutures = new HashMap<Long, CompletableFuture<Counters>>();
-            try {
-                for (final long projectId : activeProjectIds) {
-                    LOGGER.debug("Submitting metrics update task for project ID " + projectId);
-                    projectCounterFutures.put(projectId, CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return updateProjectMetrics(projectId);
-                        } catch (NoSuchElementException e) {
-                            LOGGER.warn("Couldn't update project metrics because the project was not found. " +
-                                    "This typically happens when the project was deleted after the metrics update task started.", e);
-                        } catch (Exception e) {
-                            LOGGER.error("An unexpected error occurred while updating metrics for project with ID " + projectId, e);
+            while (!projectIds.isEmpty()) {
+                final long firstId = projectIds.get(0);
+                final long lastId = projectIds.get(projectIds.size() - 1);
+                final int batchCount = projectIds.size();
+
+                final var latch = new CountDownLatch(batchCount);
+
+                for (final long projectId : projectIds) {
+                    final var project = new Project();
+                    project.setId(projectId);
+
+                    final var callbackEvent = new CallbackEvent(latch::countDown);
+                    Event.dispatch(new MetricsUpdateEvent(project)
+                            .onSuccess(callbackEvent)
+                            .onFailure(callbackEvent));
+                }
+
+                LOGGER.debug("Waiting for metrics updates for projects " + firstId + "-" + lastId + " to complete");
+                if (!latch.await(1, TimeUnit.HOURS)) {
+                    LOGGER.warn("Updating metrics for projects " + firstId + "-" + lastId +
+                            "took longer than expected - Proceeding with potentially stale data");
+                }
+                LOGGER.debug("Completed metrics updates for projects " + firstId + "-" + lastId);
+
+                for (final long projectId : projectIds) {
+                    LOGGER.debug("Processing latest metrics for project " + projectId);
+                    try (final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class)) {
+                        query.setFilter("project.id == :projectId");
+                        query.setOrdering("lastOccurrence desc");
+                        query.setParameters(projectId);
+
+                        final ProjectMetrics metrics = query.executeUnique();
+                        if (metrics == null) {
+                            LOGGER.debug("No metrics found for project " + projectId + " - skipping");
+                            continue;
                         }
-                        return null;
-                    }, limitingExecutor));
+
+                        counters.critical += metrics.getCritical();
+                        counters.high += metrics.getHigh();
+                        counters.medium += metrics.getMedium();
+                        counters.low += metrics.getLow();
+                        counters.unassigned += metrics.getUnassigned();
+                        counters.vulnerabilities += metrics.getVulnerabilities();
+
+                        counters.findingsTotal += metrics.getFindingsTotal();
+                        counters.findingsAudited += metrics.getFindingsAudited();
+                        counters.findingsUnaudited += metrics.getFindingsUnaudited();
+                        counters.suppressions += metrics.getSuppressed();
+                        counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+                        counters.projects++;
+                        if (metrics.getVulnerabilities() > 0) {
+                            counters.vulnerableProjects++;
+                        }
+                        counters.components += metrics.getComponents();
+                        counters.vulnerableComponents += metrics.getVulnerableComponents();
+
+                        counters.policyViolationsFail += metrics.getPolicyViolationsFail();
+                        counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
+                        counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
+                        counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
+                        counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
+                        counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();
+                        counters.policyViolationsSecurityTotal += metrics.getPolicyViolationsSecurityTotal();
+                        counters.policyViolationsSecurityAudited += metrics.getPolicyViolationsSecurityAudited();
+                        counters.policyViolationsSecurityUnaudited += metrics.getPolicyViolationsSecurityUnaudited();
+                        counters.policyViolationsLicenseTotal += metrics.getPolicyViolationsLicenseTotal();
+                        counters.policyViolationsLicenseAudited += metrics.getPolicyViolationsLicenseAudited();
+                        counters.policyViolationsLicenseUnaudited += metrics.getPolicyViolationsLicenseUnaudited();
+                        counters.policyViolationsOperationalTotal += metrics.getPolicyViolationsOperationalTotal();
+                        counters.policyViolationsOperationalAudited += metrics.getPolicyViolationsOperationalAudited();
+                        counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
+                    }
                 }
 
-                LOGGER.debug("Waiting for all project metrics updates to complete");
-                CompletableFuture.allOf(projectCounterFutures.values().toArray(new CompletableFuture[0])).join();
-                LOGGER.debug("All project metrics updates completed");
-            } catch (CompletionException e) {
-                // This exception is thrown when any of the CompletableFutures failed
-                LOGGER.debug("At least one project metrics update task failed", e);
-            } finally {
-                LOGGER.debug("Shutting down executor service");
-                executorService.shutdown();
-                if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
-                    LOGGER.warn("Executor service shutdown timed out, running tasks have been interrupted");
-                }
-            }
-
-            LOGGER.debug("Processing project metrics update results");
-            for (final Map.Entry<Long, CompletableFuture<Counters>> countersEntry : projectCounterFutures.entrySet()) {
-                final Counters projectCounters;
-                try {
-                    projectCounters = countersEntry.getValue().get();
-                } catch (Exception e) {
-                    // Because all exceptions during metrics updates are handled in the CompletableFuture
-                    // directly, exceptions at this point will be about the future being interrupted or canceled,
-                    // which under normal circumstances won't happen.
-                    LOGGER.error("An unexpected error occurred while collecting metrics for project with ID " + countersEntry.getKey(), e);
-                    continue;
-                }
-
-                if (projectCounters == null) {
-                    continue;
-                }
-
-                counters.critical += projectCounters.critical;
-                counters.high += projectCounters.high;
-                counters.medium += projectCounters.medium;
-                counters.low += projectCounters.low;
-                counters.unassigned += projectCounters.unassigned;
-                counters.vulnerabilities += projectCounters.vulnerabilities;
-
-                counters.findingsTotal += projectCounters.findingsTotal;
-                counters.findingsAudited += projectCounters.findingsAudited;
-                counters.findingsUnaudited += projectCounters.findingsUnaudited;
-                counters.suppressions += projectCounters.suppressions;
-                counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                counters.projects++;
-                if (projectCounters.vulnerabilities > 0) {
-                    counters.vulnerableProjects++;
-                }
-                counters.components += projectCounters.components;
-                counters.vulnerableComponents += projectCounters.vulnerableComponents;
-
-                counters.policyViolationsFail += projectCounters.policyViolationsFail;
-                counters.policyViolationsWarn += projectCounters.policyViolationsWarn;
-                counters.policyViolationsInfo += projectCounters.policyViolationsInfo;
-                counters.policyViolationsTotal += projectCounters.policyViolationsTotal;
-                counters.policyViolationsAudited += projectCounters.policyViolationsAudited;
-                counters.policyViolationsUnaudited += projectCounters.policyViolationsUnaudited;
-                counters.policyViolationsSecurityTotal += projectCounters.policyViolationsSecurityTotal;
-                counters.policyViolationsSecurityAudited += projectCounters.policyViolationsSecurityAudited;
-                counters.policyViolationsSecurityUnaudited += projectCounters.policyViolationsSecurityUnaudited;
-                counters.policyViolationsLicenseTotal += projectCounters.policyViolationsLicenseTotal;
-                counters.policyViolationsLicenseAudited += projectCounters.policyViolationsLicenseAudited;
-                counters.policyViolationsLicenseUnaudited += projectCounters.policyViolationsLicenseUnaudited;
-                counters.policyViolationsOperationalTotal += projectCounters.policyViolationsOperationalTotal;
-                counters.policyViolationsOperationalAudited += projectCounters.policyViolationsOperationalAudited;
-                counters.policyViolationsOperationalUnaudited += projectCounters.policyViolationsOperationalUnaudited;
+                LOGGER.debug("Fetching next " + batchSize + " projects");
+                projectIds = getActiveProjects(pm, batchSize, projectIds.get(projectIds.size() - 1));
             }
         }
 
@@ -704,9 +680,26 @@ public class MetricsUpdateTask implements Subscriber {
                 DurationFormatUtils.formatDuration(new Date().getTime() - measuredAt.getTime(), "mm:ss:SS"));
     }
 
-    private List<Long> getActiveProjects(final PersistenceManager pm) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"ID\" FROM \"PROJECT\" WHERE \"ACTIVE\" IS NULL OR \"ACTIVE\" = ?")) {
-            query.setParameters(true);
+    /**
+     * Fetch IDs of active projects in pages of {@code limit}.
+     * <p>
+     * In order to not load multiple thousands of objects at once, paging is used.
+     * The first call should provide a {@code lastId} of {@code 0}, subsequent calls
+     * are expected to provide the highest ID of the previously fetched page.
+     *
+     * @param pm     The {@link  PersistenceManager} to use
+     * @param limit  Maximum number of IDs to fetch
+     * @param lastId Highest ID of the previously fetched page
+     * @return Up to {@code limit} project IDs
+     * @throws Exception If the query could not be closed
+     */
+    private List<Long> getActiveProjects(final PersistenceManager pm, final long limit, final long lastId) throws Exception {
+        try (final Query<?> query = pm.newQuery(Project.class)) {
+            query.setFilter("id > :lastId");
+            query.setOrdering("id asc");
+            query.setParameters(lastId);
+            query.setResult("id");
+            query.range(0, limit);
             return List.copyOf(query.executeResultList(Long.class));
         }
     }
@@ -821,16 +814,11 @@ public class MetricsUpdateTask implements Subscriber {
      * @throws Exception If the query could not be closed
      */
     private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
-        // Use JDOQL instead of SQL in order to avoid incompatibilities with regard
-        // to LIMIT / FETCH FIRST X ROWS ONLY clauses. SQL Server does not support LIMIT,
-        // MySQL does not support FETCH FIRST X ROWS ONLY. And DataNucleus makes it really
-        // hard to identify which DB we're running on.
-        try (final Query<?> query = pm.newQuery(Query.JDOQL, "" +
-                "SELECT id, created, published " +
-                "FROM org.dependencytrack.model.Vulnerability " +
-                "WHERE id > :lastId " +
-                "ORDER BY id ASC")) {
+        try (final Query<?> query = pm.newQuery(org.dependencytrack.model.Vulnerability.class)) {
+            query.setFilter("id > :lastId");
+            query.setOrdering("id ASC");
             query.setParameters(lastId);
+            query.setResult("id, created, published");
             query.range(0, 500);
             return List.copyOf(query.executeResultList(VulnerabilityDateProjection.class));
         }

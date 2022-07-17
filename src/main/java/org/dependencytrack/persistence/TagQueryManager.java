@@ -8,11 +8,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 
 import javax.jdo.PersistenceManager;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.HashSet;
+import java.util.*;
 
 public class TagQueryManager extends QueryManager implements IQueryManager {
 
@@ -44,9 +40,9 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
 
         List<Tag> tagsToShow;
 
-        if(projects != null && projects.size() != 0){
-            HashSet<Tag> filteredTags = new HashSet<>();
-            for(Project project : projects) {
+        if (projects != null && !projects.isEmpty()) {
+            Set<Tag> filteredTags = new HashSet<>();
+            for (Project project : projects) {
                 filteredTags.addAll(project.getTags());
             }
             tagsToShow = new ArrayList<>(filteredTags);

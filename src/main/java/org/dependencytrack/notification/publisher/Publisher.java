@@ -22,15 +22,12 @@ import alpine.common.logging.Logger;
 import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
+import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.vo.AnalysisDecisionChange;
-import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
-import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
-import org.dependencytrack.notification.vo.NewVulnerableDependency;
-import org.dependencytrack.notification.vo.PolicyViolationIdentified;
-import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
+import org.dependencytrack.notification.vo.*;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -44,7 +41,32 @@ import java.util.Map;
 
 public interface Publisher {
 
+    String CONFIG_TEMPLATE_KEY = "template";
+
+    String CONFIG_TEMPLATE_MIME_TYPE_KEY = "mimeType";
+
+    String CONFIG_DESTINATION = "destination";
+
     void inform(Notification notification, JsonObject config);
+
+    PebbleEngine getTemplateEngine();
+
+    default PebbleTemplate getTemplate(JsonObject config) {
+        try {
+            String literalTemplate = config.getString(CONFIG_TEMPLATE_KEY);
+            return getTemplateEngine().getLiteralTemplate(literalTemplate);
+        } catch (NullPointerException | ClassCastException templateException) {
+            throw new PublisherException(templateException.getMessage(), templateException);
+        }
+    }
+
+    default String getTemplateMimeType(JsonObject config) {
+        try {
+            return config.getString(CONFIG_TEMPLATE_MIME_TYPE_KEY);
+        } catch (NullPointerException | ClassCastException templateException) {
+            throw new PublisherException(templateException.getMessage(), templateException);
+        }
+    }
 
     default String prepareTemplate(final Notification notification, final PebbleTemplate template) {
 

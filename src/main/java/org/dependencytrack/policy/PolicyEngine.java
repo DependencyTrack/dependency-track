@@ -55,6 +55,8 @@ public class PolicyEngine {
         evaluators.add(new CpePolicyEvaluator());
         evaluators.add(new SwidTagIdPolicyEvaluator());
         evaluators.add(new VersionPolicyEvaluator());
+        evaluators.add(new ComponentHashPolicyEvaluator());
+        evaluators.add(new CwePolicyEvaluator());
     }
 
     public List<PolicyViolation> evaluate(final List<Component> components) {
@@ -122,12 +124,14 @@ public class PolicyEngine {
 
     private PolicyViolation.Type determineViolationType(final PolicyCondition.Subject subject) {
         switch(subject) {
+            case CWE:
             case SEVERITY:
                 return PolicyViolation.Type.SECURITY;
             case COORDINATES:
             case PACKAGE_URL:
             case CPE:
             case SWID_TAGID:
+            case COMPONENT_HASH:
             case VERSION:
                 return PolicyViolation.Type.OPERATIONAL;
             case LICENSE:

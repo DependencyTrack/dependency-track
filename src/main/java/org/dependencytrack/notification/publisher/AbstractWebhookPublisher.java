@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
 
@@ -43,13 +42,13 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             logger.warn("A destination or template was not found. Skipping notification");
             return;
         }
-
+        final String mimeType = getTemplateMimeType(config);
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> response = ui.post(destination)
-                .header("content-type", "application/json")
-                .header("accept", "application/json")
+        final HttpResponse response = ui.post(destination)
+                .header("content-type", mimeType)
+                .header("accept", mimeType)
                 .body(content)
-                .asJson();
+                .asEmpty();
 
         if (response.getStatus() < 200 || response.getStatus() > 299) {
             logger.error("An error was encountered publishing notification to " + publisherName);

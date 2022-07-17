@@ -20,17 +20,16 @@ package org.dependencytrack.notification;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import com.mitchellbosecke.pebble.PebbleEngine;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.*;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
+import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -150,6 +149,32 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testValidMatchingRuleAndPublisherInform()  {
+        NotificationPublisher publisher = createMockPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        rule.setPublisherConfig("{\"destination\":\"testDestination\"}");
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should not be limited to any projects - so set projects to null
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
+        JsonObject providedConfig = MockPublisher.getConfig();
+        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
+        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
+        Assert.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
+    }
+
+    @Test
     public void testValidNonMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
@@ -242,5 +267,46 @@ public class NotificationRouterTest extends PersistenceCapableTest {
                 null, DefaultNotificationPublishers.SLACK.getTemplateMimeType(),
                 DefaultNotificationPublishers.SLACK.isDefaultPublisher()
         );
+    }
+
+    private NotificationPublisher createMockPublisher() {
+        return qm.createNotificationPublisher(
+                MockPublisher.MOCK_PUBLISHER_NAME,
+                MockPublisher.MOCK_PUBLISHER_DESCRIPTION,
+                (Class) NotificationRouterTest.MockPublisher.class,
+                MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE,
+                true
+        );
+    }
+
+    public static class MockPublisher implements Publisher {
+
+        public static final String MOCK_PUBLISHER_NAME = "mockPublisher";
+
+        public static final String MOCK_PUBLISHER_DESCRIPTION = "Mock publisher";
+
+        public static final String MOCK_PUBLISHER_TEMPLATE_CONTENT = "templateContent";
+
+        public static final String MOCK_PUBLISHER_TEMPLATE_MIME_TYPE = "application/json";
+
+        public static JsonObject config;
+
+        public MockPublisher() {
+            config = null;
+        }
+
+        @Override
+        public void inform(Notification notification, JsonObject config) {
+            MockPublisher.config = config;
+        }
+
+        public static JsonObject getConfig() {
+            return config;
+        }
+
+        @Override
+        public PebbleEngine getTemplateEngine() {
+            return new PebbleEngine.Builder().newLineTrimming(false).build();
+        }
     }
 }

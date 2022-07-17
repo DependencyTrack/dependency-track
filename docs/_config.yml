@@ -36,7 +36,7 @@ mermaid:
   src: 'scripts/mermaid.min.js'
 
 exclude:
-  - vendor
+  - vendor/
   - Gemfile
   - Gemfile.lock
   - README.md

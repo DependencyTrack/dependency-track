@@ -111,7 +111,6 @@ public class FuzzyVulnerableSoftwareSearchManager {
                 if (fuzzyList.isEmpty() && nameToFuzz.length() > 2 && attemptLuceneFuzzing && !DO_NOT_FUZZ.contains(nameToFuzz)) {
                     us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
                     // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
-                    // I would be nice if we could
                     String fuzzyTerm = getLuceneCpeRegexp(justThePart.toCpe23FS());
                     LOGGER.warn(null, "Performing lucene ~ fuzz matching on '{}'", nameToFuzz);
                     //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch

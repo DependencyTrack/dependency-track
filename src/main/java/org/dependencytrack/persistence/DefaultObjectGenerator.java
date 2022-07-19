@@ -36,6 +36,7 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
@@ -88,6 +89,10 @@ public class DefaultObjectGenerator implements ServletContextListener {
         if (!IndexManager.exists(IndexManager.IndexType.VULNERABILITY)) {
             LOGGER.info("Dispatching event to reindex vulnerabilities");
             Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Vulnerability.class));
+        }
+        if (!IndexManager.exists(IndexManager.IndexType.VULNERABLESOFTWARE)) {
+            LOGGER.info("Dispatching event to reindex vulnerablesoftware");
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, VulnerableSoftware.class));
         }
 
         loadDefaultPermissions();

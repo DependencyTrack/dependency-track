@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.scanners;
 
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
@@ -202,11 +203,14 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         if (vs.getUpdate() == null && targetUpdate == null) {
             return true;
         }
+        // Moving this above the null OR check to reflect method comments (ANY should mean ANY)
+        // This is necessary for fuzz matching when a PURL which assumes null
+        // is matched to a CPE which defaults to ANY
+        if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate) || LogicalValue.ANY.getAbbreviation().equals(vs.getUpdate())) {
+            return true;
+        }
         if (vs.getUpdate() == null || targetUpdate == null) {
             return false;
-        }
-        if (LogicalValue.ANY.getAbbreviation().equals(targetUpdate)) {
-            return true;
         }
         return compareAttributes(vs.getUpdate(), targetUpdate);
     }

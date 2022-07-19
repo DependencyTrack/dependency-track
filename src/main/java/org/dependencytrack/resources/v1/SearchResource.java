@@ -25,7 +25,9 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
 import org.dependencytrack.search.SearchManager;
 import org.dependencytrack.search.SearchResult;
 
@@ -152,4 +154,27 @@ public class SearchResource extends AlpineResource {
         return Response.ok(searchResult).build();
     }
 
+    @Path("/vulnerablesoftware")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Processes and returns search results",
+            response = SearchResult.class,
+            notes = "Preferred search endpoint"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response vulnerableSoftwareSearch(@QueryParam("query") String query, @QueryParam("cpe") String cpe) {
+        if (StringUtils.isNotBlank(cpe)) {
+            final FuzzyVulnerableSoftwareSearchManager searchManager = new FuzzyVulnerableSoftwareSearchManager(false);
+            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
+            return Response.ok(searchResult).build();
+        } else {
+            final SearchManager searchManager = new SearchManager();
+            final SearchResult searchResult = searchManager.searchVulnerableSoftwareIndex(query, 1000);
+            return Response.ok(searchResult).build();
+        }
+    }
 }

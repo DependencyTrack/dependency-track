@@ -288,6 +288,14 @@ alpine.ldap.team.synchronization=false
 #alpine.cors.allow.credentials=true
 #alpine.cors.max.age=3600
 
+# Optional
+# Defines whether Prometheus metrics will be exposed.
+# If enabled, metrics will be available via the /metrics endpoint.
+# This endpoint is NOT subject to access control. If protection is desired,
+# it must be enforced in the reverse proxy using basic auth.
+# See also: https://prometheus.io/docs/guides/basic-auth/
+alpine.metrics.enabled=false
+
 # Required
 # Defines if OpenID Connect will be used for user authentication.
 # If enabled, alpine.oidc.* properties should be set accordingly.

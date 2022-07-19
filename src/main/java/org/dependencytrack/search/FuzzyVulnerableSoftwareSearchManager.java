@@ -9,6 +9,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
@@ -26,18 +27,18 @@ import us.springett.parsers.cpe.values.Part;
 import java.io.IOException;
 import java.util.*;
 
-public class FuzzyVulnerableSoftwareSearchMananger {
+public class FuzzyVulnerableSoftwareSearchManager {
 
-    private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchMananger.class);
-    private static final Set<String> DO_NOT_FUZZ = Collections.unmodifiableSet(Set.of("util", "utils", "url", "xml"));
+    private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchManager.class);
+    private static final Set<String> DO_NOT_FUZZ = Set.of("util", "utils", "url", "xml");
 
     private final boolean excludeComponentsWithPurl;
-    private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Collections.unmodifiableSet(Sets.newHashSet("golang"));
-    public FuzzyVulnerableSoftwareSearchMananger(boolean excludeComponentsWithPurl) {
+    private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Sets.newHashSet("golang");
+    public FuzzyVulnerableSoftwareSearchManager(boolean excludeComponentsWithPurl) {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
     }
 
-    private class SearchTerm {
+    private static class SearchTerm {
         private String product;
         private String vendor;
 
@@ -75,18 +76,14 @@ public class FuzzyVulnerableSoftwareSearchMananger {
             try {
                 boolean attemptLuceneFuzzing = true;
                 Part part = Part.ANY;
-                String vendor = "*";
                 String nameToFuzz = component.getName();
                 if (parsedCpe != null) {
                     part = parsedCpe.getPart();
-                    vendor = parsedCpe.getVendor();
                     searches.add(new SearchTerm(parsedCpe.getVendor(), parsedCpe.getProduct()));
                     nameToFuzz = parsedCpe.getProduct();
                 }
                 if (component.getPurl() != null) {
                     if (component.getPurl().getType().equals("golang")) {
-                        String namespace = Arrays.stream(component.getPurl().getNamespace().split("/")).reduce((first, second) -> second)
-                                .orElse(null);
                         searches.add(new SearchTerm(StringUtils.substringAfterLast(component.getPurl().getNamespace(), "/"), component.getPurl().getName()));
                     } else {
                         searches.add(new SearchTerm(component.getPurl().getNamespace(), component.getPurl().getName()));
@@ -111,9 +108,8 @@ public class FuzzyVulnerableSoftwareSearchMananger {
                 if (fuzzyList.isEmpty() && nameToFuzz.length() > 2 && attemptLuceneFuzzing && !DO_NOT_FUZZ.contains(nameToFuzz)) {
                     us.springett.parsers.cpe.Cpe justThePart = new us.springett.parsers.cpe.Cpe(part, "*", "*", "*", "*", "*", "*", "*", "*", "*", "*");
                     // wildcard all components after part to constrain fuzzing to components of same type e.g. application, operating-system
-                    // I would be nice if we could
                     String fuzzyTerm = getLuceneCpeRegexp(justThePart.toCpe23FS());
-                    LOGGER.warn(null, "Performing lucene ~ fuzz matching on '{}'", nameToFuzz);
+                    LOGGER.debug(null, "Performing lucene ~ fuzz matching on '{}'", nameToFuzz);
                     //The tilde makes it fuzzy. e.g. Will match libexpat1 to libexpat and product exact matches with vendor mismatch
                     fuzzyList = fuzzySearch(qm, "product:" + nameToFuzz + "~0.88 AND " + fuzzyTerm);
                 }
@@ -245,24 +241,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
         } else if (input.equals(".*")) {
             return input;
         }
-        char[] specialChars = {'+', '-', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\', '/', '.'};
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            final char c = input.charAt(i);
-            if (contains(specialChars, c)) {
-                sb.append("\\" + c);
-            } else {
-                sb.append(String.valueOf(c));
-            }
-        }
-        return sb.toString();
+        return QueryParser.escape(input);
     }
-    private static boolean contains(char[] chars, char queryChar) {
-        for (char c : chars) {
-            if (c == queryChar) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }

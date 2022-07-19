@@ -20,9 +20,9 @@ import static org.mockito.Mockito.*;
 
 import static org.junit.Assert.*;
 
-public class FuzzyVulnerableSoftwareSearchManangerTest {
+public class FuzzyVulnerableSoftwareSearchManagerTest {
 
-    private FuzzyVulnerableSoftwareSearchMananger toTest = new FuzzyVulnerableSoftwareSearchMananger(true);
+    private FuzzyVulnerableSoftwareSearchManager toTest = new FuzzyVulnerableSoftwareSearchManager(true);
     private QueryManager qm;
 
     @Before
@@ -56,15 +56,15 @@ public class FuzzyVulnerableSoftwareSearchManangerTest {
     public void getLuceneCpeRegexp() throws CpeValidationException, CpeEncodingException {
         us.springett.parsers.cpe.Cpe os = new us.springett.parsers.cpe.Cpe( Part.OPERATING_SYSTEM, "vendor", "product", "1\\.0", "2", "33","en", "inside", "Vista", "x86", "other");
 
-        assertEquals("cpe23:/cpe\\:2\\.3\\:a\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*/", FuzzyVulnerableSoftwareSearchMananger.getLuceneCpeRegexp("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*"));
-        assertEquals("cpe23:/cpe\\:2\\.3\\:o\\:vendor\\:product\\:1.0\\:2\\:33\\:en\\:inside\\:Vista\\:x86\\:other/", FuzzyVulnerableSoftwareSearchMananger.getLuceneCpeRegexp(os.toCpe23FS()));
-        assertEquals("cpe22:/cpe\\:\\/o\\:vendor\\:product\\:1.0\\:2\\:33\\:en/", FuzzyVulnerableSoftwareSearchMananger.getLuceneCpeRegexp(os.toCpe22Uri()));
+        assertEquals("cpe23:/cpe\\:2\\.3\\:a\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*\\:.*/", FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*"));
+        assertEquals("cpe23:/cpe\\:2\\.3\\:o\\:vendor\\:product\\:1.0\\:2\\:33\\:en\\:inside\\:Vista\\:x86\\:other/", FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(os.toCpe23FS()));
+        assertEquals("cpe22:/cpe\\:\\/o\\:vendor\\:product\\:1.0\\:2\\:33\\:en/", FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(os.toCpe22Uri()));
     }
 
     @Test
     @Ignore ("This demonstrates assumptions about CPE matching but does not exercise code")
     public void cpeMatching() {
-        String lucene = FuzzyVulnerableSoftwareSearchMananger.getLuceneCpeRegexp("cpe:2.3:a:*:file:*:*:*:*:*:*:*:*");
+        String lucene = FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp("cpe:2.3:a:*:file:*:*:*:*:*:*:*:*");
         String regex = lucene.substring(7, lucene.length()-1);
         Pattern pattern = Pattern.compile(regex);
         assertFalse(pattern.matcher(

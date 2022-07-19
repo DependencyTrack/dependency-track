@@ -148,6 +148,7 @@ public class MetricsUpdateTask implements Subscriber {
                         query.setFilter("project.id == :projectId");
                         query.setOrdering("lastOccurrence desc");
                         query.setParameters(projectId);
+                        query.setRange(0, 1);
 
                         final ProjectMetrics metrics = query.executeUnique();
                         if (metrics == null) {

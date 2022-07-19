@@ -3,7 +3,6 @@ package org.dependencytrack.search;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -26,14 +25,14 @@ import us.springett.parsers.cpe.values.Part;
 import java.io.IOException;
 import java.util.*;
 
-public class FuzzyVulnerableSoftwareSearchMananger {
+public class FuzzyVulnerableSoftwareSearchManager {
 
-    private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchMananger.class);
+    private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchManager.class);
     private static final Set<String> DO_NOT_FUZZ = Set.of("util", "utils", "url", "xml");
 
     private final boolean excludeComponentsWithPurl;
     private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Set.of("golang");
-    public FuzzyVulnerableSoftwareSearchMananger(boolean excludeComponentsWithPurl) {
+    public FuzzyVulnerableSoftwareSearchManager(boolean excludeComponentsWithPurl) {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
     }
 

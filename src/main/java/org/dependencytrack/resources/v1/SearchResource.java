@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchMananger;
+import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
 import org.dependencytrack.search.SearchManager;
 import org.dependencytrack.search.SearchResult;
 
@@ -168,8 +168,8 @@ public class SearchResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response vulnerableSoftwareSearch(@QueryParam("query") String query, @QueryParam("cpe") String cpe) {
         if (StringUtils.isNotBlank(cpe)) {
-            final FuzzyVulnerableSoftwareSearchMananger searchManager = new FuzzyVulnerableSoftwareSearchMananger(false);
-            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchMananger.getLuceneCpeRegexp(cpe));
+            final FuzzyVulnerableSoftwareSearchManager searchManager = new FuzzyVulnerableSoftwareSearchManager(false);
+            final SearchResult searchResult = searchManager.searchIndex(FuzzyVulnerableSoftwareSearchManager.getLuceneCpeRegexp(cpe));
             return Response.ok(searchResult).build();
         } else {
             final SearchManager searchManager = new SearchManager();

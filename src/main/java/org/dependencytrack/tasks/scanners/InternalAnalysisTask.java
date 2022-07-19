@@ -26,10 +26,9 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchMananger;
+import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
-import us.springett.parsers.cpe.values.LogicalValue;
 
 import java.util.Collections;
 import java.util.List;
@@ -137,7 +136,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         }
 
         if (fuzzyEnabled && vsList.isEmpty()) {
-            FuzzyVulnerableSoftwareSearchMananger fm = new FuzzyVulnerableSoftwareSearchMananger(excludeComponentsWithPurl);
+            FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
         super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component);

@@ -33,6 +33,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -426,6 +427,7 @@ public class MetricsUpdateTask implements Subscriber {
      * @return MetricCounters
      */
     MetricCounters updateComponentMetrics(final QueryManager qm, final long oid) {
+        final List<String> dedupedVulnIdentifiers = new ArrayList<>();
         final Component component = qm.getObjectById(Component.class, oid);
         LOGGER.debug("Executing metrics update for component: " + component.getUuid());
         final Date measuredAt = new Date();
@@ -433,7 +435,25 @@ public class MetricsUpdateTask implements Subscriber {
         final MetricCounters counters = new MetricCounters();
         // Retrieve the non-suppressed vulnerabilities for the component
         for (final Vulnerability vuln: qm.getAllVulnerabilities(component)) {
-            counters.updateSeverity(vuln.getSeverity());
+            final String dedeupedVulnIdentifier = vuln.getSource() + "|" + vuln.getVulnId();
+            if (!dedupedVulnIdentifiers.contains(dedeupedVulnIdentifier)) {
+                // Do not count duplicate vulnerabilities with different identifiers in the overall score.d
+                boolean found = false;
+                for (final VulnerabilityAlias alias: vuln.getAliases()) {
+                    if ((dedupedVulnIdentifiers.contains(dedeupedVulnIdentifier)
+                            || (alias.getInternalId() != null && dedupedVulnIdentifiers.contains(Vulnerability.Source.INTERNAL.name() + "|" + alias.getInternalId()))
+                            || (alias.getCveId() != null && dedupedVulnIdentifiers.contains(Vulnerability.Source.NVD.name() + "|" + alias.getCveId()))
+                            || (alias.getSonatypeId() != null && dedupedVulnIdentifiers.contains(Vulnerability.Source.OSSINDEX.name() + "|" + alias.getSonatypeId()))
+                            || (alias.getGhsaId() != null && dedupedVulnIdentifiers.contains(Vulnerability.Source.GITHUB.name() + "|" + alias.getGhsaId()))
+                            || (alias.getVulnDbId() != null && dedupedVulnIdentifiers.contains(Vulnerability.Source.VULNDB.name() + "|" + alias.getVulnDbId())))) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    counters.updateSeverity(vuln.getSeverity());
+                    dedupedVulnIdentifiers.add(dedeupedVulnIdentifier);
+                }
+            }
         }
         LOGGER.debug("Retrieving existing suppression count for component: " + component.getUuid());
         counters.suppressions = toIntExact(qm.getSuppressedCount(component));

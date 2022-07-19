@@ -8,6 +8,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
@@ -244,24 +245,7 @@ public class FuzzyVulnerableSoftwareSearchManager {
         } else if (input.equals(".*")) {
             return input;
         }
-        char[] specialChars = {'+', '-', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '\\', '/', '.'};
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            final char c = input.charAt(i);
-            if (contains(specialChars, c)) {
-                sb.append("\\" + c);
-            } else {
-                sb.append(String.valueOf(c));
-            }
-        }
-        return sb.toString();
+        return QueryParser.escape(input);
     }
-    private static boolean contains(char[] chars, char queryChar) {
-        for (char c : chars) {
-            if (c == queryChar) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }

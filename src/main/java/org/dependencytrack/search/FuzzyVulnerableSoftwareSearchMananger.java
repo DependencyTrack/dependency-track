@@ -29,7 +29,7 @@ import java.util.*;
 public class FuzzyVulnerableSoftwareSearchMananger {
 
     private static final Logger LOGGER = Logger.getLogger(FuzzyVulnerableSoftwareSearchMananger.class);
-    private static final Set<String> DO_NOT_FUZZ = Collections.unmodifiableSet(Set.of("util", "utils", "url", "xml"));
+    private static final Set<String> DO_NOT_FUZZ = Set.of("util", "utils", "url", "xml");
 
     private final boolean excludeComponentsWithPurl;
     private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Collections.unmodifiableSet(Sets.newHashSet("golang"));

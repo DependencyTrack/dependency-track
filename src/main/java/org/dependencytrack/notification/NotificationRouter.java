@@ -22,6 +22,9 @@ import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.Subscriber;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.dependencytrack.exception.PublisherException;
+import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.publisher.Publisher;
@@ -50,7 +53,7 @@ public class NotificationRouter implements Subscriber {
         for (final NotificationRule rule: resolveRules(notification)) {
 
             // Not all publishers need configuration (i.e. ConsolePublisher)
-            JsonObject config = null;
+            JsonObject config = Json.createObjectBuilder().build();
             if (rule.getPublisherConfig() != null) {
                 try (StringReader stringReader = new StringReader(rule.getPublisherConfig());
                      final JsonReader jsonReader = Json.createReader(stringReader)) {
@@ -60,21 +63,29 @@ public class NotificationRouter implements Subscriber {
                 }
             }
             try {
-                final Class<?> publisherClass = Class.forName(rule.getPublisher().getPublisherClass());
+                NotificationPublisher notificationPublisher = rule.getPublisher();
+                final Class<?> publisherClass = Class.forName(notificationPublisher.getPublisherClass());
                 if (Publisher.class.isAssignableFrom(publisherClass)) {
                     final Publisher publisher = (Publisher)publisherClass.getDeclaredConstructor().newInstance();
-                    publisher.inform(notification, config);
+                    JsonObject notificationPublisherConfig = Json.createObjectBuilder()
+                                                                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, notificationPublisher.getTemplateMimeType())
+                                                                 .add(Publisher.CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
+                                                                 .addAll(Json.createObjectBuilder(config))
+                                                                         .build();
+                    publisher.inform(notification, notificationPublisherConfig);
                 } else {
                     LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
                 }
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
                 LOGGER.error("An error occurred while instantiating a notification publisher", e);
+            } catch (PublisherException publisherException) {
+                LOGGER.error("An error occured during the publication of the notification", publisherException);
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private List<NotificationRule> resolveRules(final Notification notification) {
+    List<NotificationRule> resolveRules(final Notification notification) {
         // The notification rules to process for this specific notification
         final List<NotificationRule> rules = new ArrayList<>();
 
@@ -84,7 +95,7 @@ public class NotificationRouter implements Subscriber {
         try (QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
             final Query<NotificationRule> query = pm.newQuery(NotificationRule.class);
-
+            pm.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
             final StringBuilder sb = new StringBuilder();
 
             final NotificationLevel level = notification.getLevel();

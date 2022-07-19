@@ -75,10 +75,12 @@ public class ModelConverter {
      */
     public static List<Component> convertComponents(final QueryManager qm, final Bom bom, final Project project) {
         final List<Component> components = new ArrayList<>();
-        for (int i = 0; i < bom.getComponents().size(); i++) {
-            final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
-            if (cycloneDxComponent != null) {
-                components.add(convert(qm, cycloneDxComponent, project));
+        if (bom.getComponents() != null) {
+            for (int i = 0; i < bom.getComponents().size(); i++) {
+                final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
+                if (cycloneDxComponent != null) {
+                    components.add(convert(qm, cycloneDxComponent, project));
+                }
             }
         }
         return components;

@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import alpine.model.IConfigProperty.PropertyType;
+import org.apache.commons.lang3.SystemUtils;
 
 public enum ConfigPropertyConstants {
 
@@ -65,8 +66,9 @@ public enum ConfigPropertyConstants {
     KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
     KENNA_TOKEN("integrations", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security"),
     KENNA_CONNECTOR_ID("integrations", "kenna.connector.id", null, PropertyType.STRING, "The Kenna Security connector identifier to upload to"),
-    ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio");
-
+    ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio"),
+    NOTIFICATION_TEMPLATE_BASE_DIR("notification", "template.baseDir", SystemUtils.getEnvironmentVariable("DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY", System.getProperty("user.home")), PropertyType.STRING, "The base directory to use when searching for notification templates"),
+    NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED("notification", "template.default.override.enabled", SystemUtils.getEnvironmentVariable("DEFAULT_TEMPLATES_OVERRIDE_ENABLED", "false"), PropertyType.BOOLEAN, "Flag to enable/disable override of default notification templates");
 
     private String groupName;
     private String propertyName;

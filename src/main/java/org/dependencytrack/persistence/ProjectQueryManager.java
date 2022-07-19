@@ -84,38 +84,27 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("name asc, version desc");
         }
-        String queryFilter = null;
-        final Map<String, Object> params = new HashMap<>();
+
+        var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive);
+
         if (filter != null) {
             final String filterString = ".*" + filter.toLowerCase() + ".*";
             final Tag tag = getTagByName(filter.trim());
+
             if (tag != null) {
-                if (excludeInactive) {
-                    queryFilter = "((name.toLowerCase().matches(:name) || tags.contains(:tag)) && (active == true || active == null))";
-                } else {
-                    queryFilter = "(name.toLowerCase().matches(:name) || tags.contains(:tag))";
-                }
-                params.put("name", filterString);
-                params.put("tag", tag);
-                preprocessACLs(query, queryFilter, params, false);
-                result = execute(query, params);
+                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
+
             } else {
-                if (excludeInactive) {
-                    queryFilter = "(name.toLowerCase().matches(:name) && (active == true || active == null))";
-                } else {
-                    queryFilter = "(name.toLowerCase().matches(:name))";
-                }
-                params.put("name", filterString);
-                preprocessACLs(query, queryFilter, params, false);
-                result = execute(query, params);
+                filterBuilder = filterBuilder.withFuzzyName(filterString);
             }
-        } else {
-            if (excludeInactive) {
-                queryFilter = " (active == true || active == null) ";
-            }
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
         }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -166,7 +155,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Returns a list of projects by it's name.
+     * Returns a list of projects by their name.
      * @param name the name of the Projects (required)
      * @return a List of Project objects
      */
@@ -175,30 +164,34 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("version desc");
         }
-        final String queryFilter;
-        if (excludeInactive) {
-            queryFilter = "(name == :name && (active == true || active == null))";
-        } else {
-            queryFilter = "(name == :name)";
-        }
-        final Map<String, Object> params = new HashMap<>();
-        params.put("name", name);
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withName(name);
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
         preprocessACLs(query, queryFilter, params, false);
         return execute(query, params);
     }
 
     /**
-     * Returns a project by it's name and version.
+     * Returns a project by its name and version.
      * @param name the name of the Project (required)
      * @param version the version of the Project (or null)
      * @return a Project object, or null if not found
      */
     public Project getProject(final String name, final String version) {
         final Query<Project> query = pm.newQuery(Project.class);
-        final String queryFilter = "(name == :name && version == :version)";
-        final Map<String, Object> params = new HashMap<>();
-        params.put("name", name);
-        params.put("version", version);
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .withName(name)
+                .withVersion(version);
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
         preprocessACLs(query, queryFilter, params, false);
         query.setFilter(queryFilter);
         return singleResult(query.executeWithMap(params));
@@ -214,14 +207,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (orderBy == null) {
             query.setOrdering("name asc, version desc, id asc");
         }
-        final String queryFilter;
-        if (excludeInactive) {
-            queryFilter = "(active == true || active == null) && (accessTeams.contains(:team))";
-        } else {
-            queryFilter = "(accessTeams.contains(:team))";
-        }
-        final Map<String, Object> params = new HashMap<>();
-        params.put("team", team);
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withTeam(team);
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
         preprocessACLs(query, queryFilter, params, bypass);
         return execute(query, params);
     }
@@ -234,17 +227,22 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
         final PaginatedResult result;
         final Query<Project> query = pm.newQuery(Project.class);
-        final String queryFilter;
-        if (excludeInactive) {
-            queryFilter = "(tags.contains(:tag)) && (active == true || active == null)";
-        } else {
-            queryFilter = "(tags.contains(:tag))";
-        }
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
-        final Map<String, Object> params = new HashMap<>();
-        params.put("tag", tag);
+
+        var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withTag(tag);
+
+        if (filter != null) {
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            filterBuilder = filterBuilder.withFuzzyName(filterString);
+        }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
         preprocessACLs(query, queryFilter, params, false);
         result = execute(query, params);
         if (includeMetrics) {
@@ -265,17 +263,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive) {
         final PaginatedResult result;
         final Query<Project> query = pm.newQuery(Project.class);
-        final String queryFilter;
-        if (excludeInactive) {
-            queryFilter = "(classifier == :classifier) && (active == true || active == null)";
-        } else {
-            queryFilter = "(classifier == :classifier)";
-        }
         if (orderBy == null) {
             query.setOrdering("name asc");
         }
-        final Map<String, Object> params = new HashMap<>();
-        params.put("classifier", classifier);
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withClassifier(classifier);
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
         preprocessACLs(query, queryFilter, params, false);
         result = execute(query, params);
         if (includeMetrics) {
@@ -817,4 +815,5 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public boolean hasAccessManagementPermission(final ApiKey apiKey) {
         return hasPermission(apiKey, Permissions.ACCESS_MANAGEMENT.name());
     }
+
 }

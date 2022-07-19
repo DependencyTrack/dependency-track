@@ -85,7 +85,7 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
-        <lib.cyclonedx-java.version>7.1.5</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>7.1.6</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
@@ -233,7 +233,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.2.8</version>
+            <version>6.3.0</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>

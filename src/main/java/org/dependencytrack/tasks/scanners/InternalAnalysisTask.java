@@ -115,6 +115,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             LOGGER.debug("Neither CPE nor PURL of component " + component.getUuid() + " provide a version - skipping analysis");
             return;
         }
+        // In some cases, componentVersion may be null, such as when a Package URL does not have a version specified
+        if (componentVersion == null) {
+            return;
+        }
         // https://github.com/DependencyTrack/dependency-track/issues/1574
         // Some ecosystems use the "v" version prefix (e.g. v1.2.3) for their components.
         // However, both the NVD and GHSA store versions without that prefix.

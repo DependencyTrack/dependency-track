@@ -1,6 +1,9 @@
 docs/_site/
 docs/.sass-cache/
 docs/.jekyll-metadata
+docs/.bundle/
+docs/vendor/
+docs/Gemfile.lock
 
 # vscode
 .settings/

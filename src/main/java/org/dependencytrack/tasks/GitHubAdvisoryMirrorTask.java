@@ -33,12 +33,14 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -173,9 +175,19 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
                 final List<VulnerableSoftware> vsList = new ArrayList<>();
                 for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
-                    VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln);
+                    final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
                         vsList.add(vs);
+                    }
+                    for (Pair<String,String> identifier: advisory.getIdentifiers()) {
+                        if (identifier != null && identifier.getLeft() != null
+                                && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
+                            LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
+                            final VulnerabilityAlias alias = new VulnerabilityAlias();
+                            alias.setGhsaId(advisory.getGhsaId());
+                            alias.setCveId(identifier.getRight());
+                            qm.synchronizeVulnerabilityAlias(alias);
+                        }
                     }
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
@@ -245,7 +257,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * @param vuln the GitHub Vulnerability to map
      * @return a Dependency-Track VulnerableSoftware object
      */
-    private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final GitHubVulnerability vuln) {
+    private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final GitHubVulnerability vuln, final GitHubSecurityAdvisory advisory) {
         try {
             final PackageURL purl = generatePurlFromGitHubVulnerability(vuln);
             if (purl == null) return null;
@@ -289,13 +301,13 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             vs.setVersionEndExcluding(versionEndExcluding);
             return vs;
         } catch (MalformedPackageURLException e) {
-            LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName());
+            LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName() + " for: " + advisory.getGhsaId());
         }
         return null;
     }
 
     private String mapGitHubEcosystemToPurlType(final String ecosystem) {
-        switch (ecosystem) {
+        switch (ecosystem.toUpperCase()) {
             case "MAVEN":  return PackageURL.StandardTypes.MAVEN;
             case "RUST":  return PackageURL.StandardTypes.CARGO;
             case "PIP":  return PackageURL.StandardTypes.PYPI;

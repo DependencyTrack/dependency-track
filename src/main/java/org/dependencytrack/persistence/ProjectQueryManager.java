@@ -245,11 +245,14 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         preprocessACLs(query, queryFilter, params, false);
         result = execute(query, params);
-        if (includeMetrics) {
-            // Populate each Project object in the paginated result with transitive related
-            // data to minimize the number of round trips a client needs to make, process, and render.
-            for (Project project : result.getList(Project.class)) {
+        for (Project project : result.getList(Project.class)) {
+            if (includeMetrics) {
+                // Populate each Project object in the paginated result with transitive related
+                // data to minimize the number of round trips a client needs to make, process, and render.
                 project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+            if (project.getParent() != null) {
+                project.setParentUuid(project.getParent().getUuid());
             }
         }
         return result;

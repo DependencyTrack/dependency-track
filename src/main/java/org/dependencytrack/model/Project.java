@@ -240,6 +240,7 @@ public class Project implements Serializable {
     @JsonIgnore
     private List<Team> accessTeams;
 
+    private transient UUID parentUuid;
     private transient ProjectMetrics metrics;
 
     public long getId() {
@@ -421,6 +422,14 @@ public class Project implements Serializable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public UUID getParentUuid() {
+        return parentUuid;
+    }
+
+    public void setParentUuid(UUID parentUuid) {
+        this.parentUuid = parentUuid;
     }
 
     public ProjectMetrics getMetrics() {

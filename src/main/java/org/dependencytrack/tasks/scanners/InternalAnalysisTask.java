@@ -120,6 +120,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             LOGGER.debug("Neither CPE nor PURL of component " + component.getUuid() + " provide a version - skipping analysis");
             return;
         }
+        // In some cases, componentVersion may be null, such as when a Package URL does not have a version specified
+        if (componentVersion == null) {
+            return;
+        }
         if (componentVersion.length() > 1 && componentVersion.startsWith("v")) {
             componentVersion = componentVersion.substring(1);
         }

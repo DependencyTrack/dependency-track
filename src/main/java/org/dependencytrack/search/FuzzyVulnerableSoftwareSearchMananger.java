@@ -32,7 +32,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
     private static final Set<String> DO_NOT_FUZZ = Set.of("util", "utils", "url", "xml");
 
     private final boolean excludeComponentsWithPurl;
-    private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Collections.unmodifiableSet(Sets.newHashSet("golang"));
+    private final Set<String> SKIP_LUCENE_FUZZING_FOR_TYPE = Set.of("golang");
     public FuzzyVulnerableSoftwareSearchMananger(boolean excludeComponentsWithPurl) {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
     }

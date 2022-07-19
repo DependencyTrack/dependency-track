@@ -75,18 +75,14 @@ public class FuzzyVulnerableSoftwareSearchManager {
             try {
                 boolean attemptLuceneFuzzing = true;
                 Part part = Part.ANY;
-                String vendor = "*";
                 String nameToFuzz = component.getName();
                 if (parsedCpe != null) {
                     part = parsedCpe.getPart();
-                    vendor = parsedCpe.getVendor();
                     searches.add(new SearchTerm(parsedCpe.getVendor(), parsedCpe.getProduct()));
                     nameToFuzz = parsedCpe.getProduct();
                 }
                 if (component.getPurl() != null) {
                     if (component.getPurl().getType().equals("golang")) {
-                        String namespace = Arrays.stream(component.getPurl().getNamespace().split("/")).reduce((first, second) -> second)
-                                .orElse(null);
                         searches.add(new SearchTerm(StringUtils.substringAfterLast(component.getPurl().getNamespace(), "/"), component.getPurl().getName()));
                     } else {
                         searches.add(new SearchTerm(component.getPurl().getNamespace(), component.getPurl().getName()));

@@ -37,7 +37,7 @@ public class FuzzyVulnerableSoftwareSearchMananger {
         this.excludeComponentsWithPurl = excludeComponentsWithPurl;
     }
 
-    private class SearchTerm {
+    private static class SearchTerm {
         private String product;
         private String vendor;
 

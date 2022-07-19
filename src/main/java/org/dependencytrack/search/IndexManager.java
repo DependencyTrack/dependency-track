@@ -64,7 +64,6 @@ public abstract class IndexManager implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(IndexManager.class);
     private IndexWriter iwriter;
-    private MultiFieldQueryParser qparser;
     private DirectoryReader searchReader;
     private final IndexType indexType;
 
@@ -185,10 +184,8 @@ public abstract class IndexManager implements AutoCloseable {
     protected QueryParser getQueryParser() {
         // DO NOT close (either manually or try-with-resource) the Analyzer
         final Analyzer analyzer = new StandardAnalyzer();
-        if (qparser == null) {
-            qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
-            qparser.setAllowLeadingWildcard(true);
-        }
+        MultiFieldQueryParser qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
+        qparser.setAllowLeadingWildcard(true);
         return qparser;
     }
 

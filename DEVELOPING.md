@@ -18,7 +18,7 @@ This document primarily covers the API server. Please refer to the frontend repo
 
 There are a few things you'll need on your journey:
 
-* JDK 11+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
+* JDK 17+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
 * Maven (comes bundled with IntelliJ and Eclipse)
 * A Java IDE of your preference (we recommend IntelliJ, but any other IDE is fine as well)
 * Docker (optional)

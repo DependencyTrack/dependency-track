@@ -123,7 +123,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
         Assert.assertNotNull(advisory);
-        Vulnerability vuln = qm.getVulnerabilityByVulnId("GOOGLE", "OSV-2021-60", true);
+        Vulnerability vuln = qm.getVulnerabilityByVulnId("OSV", "OSV-2021-60", true);
         Assert.assertNotNull(vuln);
         Assert.assertEquals(Severity.MEDIUM, vuln.getSeverity());
         Assert.assertEquals(1, vuln.getVulnerableSoftware().size());
@@ -153,7 +153,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         sourceTestId = "anyOther-2022-tyhg";
         source = task.extractSource(sourceTestId);
         Assert.assertNotNull(source);
-        Assert.assertEquals(Vulnerability.Source.GOOGLE, source);
+        Assert.assertEquals(Vulnerability.Source.OSV, source);
     }
 
     @Test
@@ -217,7 +217,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         OsvAdvisory advisory = parser.parse(jsonObject);
         task.updateDatasource(advisory);
 
-        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GOOGLE", "OSV-2021-1820", true);
+        Vulnerability vulnerability = qm.getVulnerabilityByVulnId("OSV", "OSV-2021-1820", true);
         Assert.assertNotNull(vulnerability);
         Assert.assertEquals(22, vulnerability.getVulnerableSoftware().size());
         Assert.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());

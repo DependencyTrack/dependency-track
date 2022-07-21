@@ -224,7 +224,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         switch (sourceId) {
             case "GHSA": return Vulnerability.Source.GITHUB;
             case "CVE": return Vulnerability.Source.NVD;
-            default: return Vulnerability.Source.GOOGLE;
+            default: return Vulnerability.Source.OSV;
         }
     }
 

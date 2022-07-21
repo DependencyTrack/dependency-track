@@ -145,6 +145,13 @@ services:
     # - ALPINE_CORS_EXPOSE_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
     # - ALPINE_CORS_ALLOW_CREDENTIALS=true
     # - ALPINE_CORS_MAX_AGE=3600
+    #
+    # Optional metrics properties
+    # - ALPINE_METRICS_ENABLED=true
+    # 
+    # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
+    # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
+    # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
     deploy:
       resources:
         limits:
@@ -156,6 +163,8 @@ services:
     ports:
       - '8081:8080'
     volumes:
+    # Optional volume mount to override default notification publisher templates
+    # - "/host/path/to/template/base/dir:/data/templates" 
       - 'dependency-track:/data'
     restart: unless-stopped
 

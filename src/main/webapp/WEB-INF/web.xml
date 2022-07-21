@@ -27,6 +27,9 @@
         <listener-class>org.dependencytrack.RequirementsVerifier</listener-class>
     </listener>
     <listener>
+        <listener-class>alpine.server.metrics.MetricsInitializer</listener-class>
+    </listener>
+    <listener>
         <listener-class>alpine.server.persistence.PersistenceInitializer</listener-class>
     </listener>
     <listener>
@@ -50,7 +53,7 @@
         <filter-class>alpine.server.filters.WhitelistUrlFilter</filter-class>
         <init-param>
             <param-name>allowUrls</param-name>
-            <param-value>/index.html,/css,/fonts,/img,/js,/static,/favicon.ico,/api,/mirror,/.well-known</param-value>
+            <param-value>/index.html,/css,/fonts,/img,/js,/static,/favicon.ico,/api,/metrics,/mirror,/.well-known</param-value>
         </init-param>
         <init-param>
             <param-name>forwardTo</param-name>
@@ -58,7 +61,7 @@
         </init-param>
         <init-param>
             <param-name>forwardExcludes</param-name>
-            <param-value>/api,/mirror</param-value>
+            <param-value>/api,/metrics,/mirror</param-value>
         </init-param>
     </filter>
     <filter-mapping>
@@ -120,6 +123,16 @@
     <servlet-mapping>
         <servlet-name>DependencyTrack</servlet-name>
         <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Metrics</servlet-name>
+        <servlet-class>alpine.server.servlets.MetricsServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Metrics</servlet-name>
+        <url-pattern>/metrics</url-pattern>
     </servlet-mapping>
 
     <servlet>

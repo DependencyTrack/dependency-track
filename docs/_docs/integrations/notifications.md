@@ -9,18 +9,6 @@ Dependency-Track includes a robust and configurable notification framework capab
 to the presence of newly discovered vulnerabilities, previously known vulnerable components that are added to
 projects, as well as providing notifications on various system and error conditions.
 
-The following notification publishers are included:
-
-| Publisher  | Description                                         |
-|------------|-----------------------------------------------------|
-| Slack      | Publishes notifications to Slack channels           |
-| Teams      | Publishes notifications to Microsoft Teams channels |
-| Mattermost | Publishes notifications to Mattermost channels      |
-| WebEx      | Publishes notifications to Cisco WebEx channels     |
-| Webhook    | Publishes notifications to a configurable endpoint  |
-| Email      | Sends notifications to an email address             |
-| Console    | Displays notifications on the system console        |
-
 
 Dependency-Track notifications come in two flavors:
 
@@ -47,43 +35,43 @@ Each scope contains a set of notification groups that can be used to subscribe t
 | PORTFOLIO | BOM_PROCESSED | Notifications generated after a supported BOM is ingested, identified, and successfully processed                                 |
 | PORTFOLIO | POLICY_VIOLATION | Notifications generated whenever a policy violation is identified                                                                 |
 
+## Configuring Publishers
+A notification publisher is a Dependency-Track concept allowing users to describe the structure of a notification (i.e. MIME type, template) and how to send a notification (i.e. publisher class).
+The following notification publishers are included by default :
 
-## Configuring Notifications
-Creating notifications can be performed from the administrative page which requires the SYSTEM_CONFIGURATION permission.
-Notifications are configured in two easy steps. First create a new alert by specifying the name, scope, notification level,
-and publisher to use.
+| Publisher  | Description                                         |
+|------------|-----------------------------------------------------|
+| Slack      | Publishes notifications to Slack channels           |
+| Teams      | Publishes notifications to Microsoft Teams channels |
+| Mattermost | Publishes notifications to Mattermost channels      |
+| WebEx      | Publishes notifications to Cisco WebEx channels     |
+| Webhook    | Publishes notifications to a configurable endpoint  |
+| Email      | Sends notifications to an email address             |
+| Console    | Displays notifications on the system console        |
 
-![create notification](/images/screenshots/notifications-create.png)
+### Templating
 
-Once the alert is created it can be configured. Start with selecting from the list of available notification groups
-to notify on. Then specify the destination. The destination may be a comma speparated list of email addresses (when the Email publisher is used),
-or a URL. In the case of Slack, Mattermost and Microsoft Teams, this will be the incoming webhook URL generated from each respective
-platform. In the case of the Outbound Webhook publisher, this will be a URL to which to publish the notification.
+Dependency-Track uses [Pebble Templates](https://pebbletemplates.io/) to generate notifications.
+The template context is enhanced with the following variables :
 
-![configure notification](/images/screenshots/notifications-configure.png)
-
-By default, portfolio notifications are published regardless of which project is affected. This behavior can be altered
-by optionally limiting the projects. Expand the 'Limit To' button to reveal and configure the list of projects.
-
-## Outbound Webhooks
-With outbound webhooks, notifications and all of their relevant details can be delivered via HTTP to an endpoint
-configured through Dependency-Track's notification settings.
-
-Notifications are sent via HTTP(S) POST and contain a JSON payload. The payload has the following fields:
-
-| Field | Description |
-| ------|-------------|
-| level | One of INFORMATIONAL, WARNING, or ERROR |
-| scope | The high-level type of notification. One of SYSTEM or PORTFOLIO |
-| group | The specific type of notification |
-| timestamp | The timestamp the notification was generated |
-| title | The title of the notification |
-| content | A short description of the notification |
-| subject | An optional object containing specifics of the notification |
-
+| Variable               | Type                  | Description                                                                                                                |
+|------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------|
+| timestampEpochSecond   | long                  | The notification timestamp                                                                                                 |
+| timestamp              | string                | The notification local date time in ISO 8601 format (i.e. uuuu-MM-dd'T'HH:mm:ss.SSSSSSSSS)                                |
+| notification.level     | enum                  | One of INFORMATIONAL, WARNING, or ERROR                                                                                    |
+| notification.scope     | string                | The high-level type of notification. One of SYSTEM or PORTFOLIO                                                            |
+| notification.group     | string                | The specific type of notification                                                                                          |
+| notification.title     | string                | The notification title                                                                                                     |
+| notification.content   | string                | The notification content                                                                                                   |
+| notification.timestamp | LocalDateTime         | The notification local date time                                                                                           |
+| notification.subject   | Object                | An optional object containing specifics of the notification                                                                |
+| baseUrl                | string                | Dependency Track base url                                                                                                  |
+| subject                | Specific              | An optional object containing specifics of the notification. It is casted whereas notification.subject is a generic Object |
+| subjectJson            | javax.json.JsonObject | An optional JSON representation of the subject                                                                            |
 
 > The format of the subject object will vary depending on the scope and group of notification. Not all fields in the
 > subject will be present at all times. Some fields are optional since the underlying fields in the datamodel are optional.
+> The section below will describe the portfolio notifications in JSON format.
 
 #### NEW_VULNERABILITY
 This type of notification will always contain:
@@ -337,3 +325,74 @@ This type of notification will always contain:
   }
 }
 ```
+
+### Override of default templates
+Default publishers are installed in the database at startup using templates retrieved in Dependency-Track classpath. Those publishers are **read-only** by default.
+Dependency-Track can be configured from the administrative page to allow an override of the default templates. This requires SYSTEM_CONFIGURATION permission.
+The default publishers will still be **read-only** except for their templates. You will not be able to delete or add new default publishers.
+
+![notification publisher general configuration](/images/screenshots/notifications-publisher-configure.png)
+
+Switch on enable default template override flag and provide a filesystem base directory to search for custom templates.
+
+![notification publisher general configuration](/images/screenshots/notifications-publisher-override-template.png)
+
+> The default template override flag is switched off by default and can set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_ENABLED`. 
+> The default templates base directory is set to ${user.home} by default and can be set at initial startup with environment variable `DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY`.
+
+To override all default templates, you must have the following [Pebble Templates](https://pebbletemplates.io/) template files inside the configured base directory.
+
+```bash
+<base directory>/templates/notification/publisher/slack.peb
+<base directory>/templates/notification/publisher/msteams.peb
+<base directory>/templates/notification/publisher/mattermost.peb
+<base directory>/templates/notification/publisher/email.peb
+<base directory>/templates/notification/publisher/console.peb
+<base directory>/templates/notification/publisher/webhook.peb
+<base directory>/templates/notification/publisher/cswebex.peb
+```
+
+**A restart is needed for the modification to be taken into account.**
+
+> When deploying Dependency Track in a container environment, you must mount a volume or a configmap to supply custom Pebbles template.
+> Please refer to [deploy-docker](../../getting-started/deploy-docker/) for details.
+
+> **You must set appropriate rights to the provided Pebble templates base directory in order to prevent untrusted third party to supply a fraudulent template which can lead to a code execution vulnerability.**
+
+You can, at any time, restore the default templates bundled with Dependency-Track as shown below. Please note that restoring the default templates will automatically set the templates override flag to **false**.
+
+![notification publisher general configuration](/images/screenshots/notifications-publisher-restore-default-template.png)
+
+### Creation of publisher
+Creating publishers can be performed from the administrative page which requires SYSTEM_CONFIGURATION permission.
+
+![create notification publisher](/images/screenshots/notifications-create-publisher.png)
+
+Once the publisher is created, you can modify, clone or delete it.
+
+![modify notification publisher](/images/screenshots/notifications-modify-publisher.png)
+
+> Deleting a publisher will delete all related notifications.
+
+## Configuring Notifications
+Creating notifications can be performed from the administrative page which requires the SYSTEM_CONFIGURATION permission.
+Notifications are configured in two easy steps. First create a new alert by specifying the name, scope, notification level,
+and publisher to use.
+
+![create notification](/images/screenshots/notifications-create.png)
+
+Once the alert is created it can be configured. Start with selecting from the list of available notification groups
+to notify on. Then specify the destination. The destination may be a comma speparated list of email addresses (when the Email publisher is used),
+or a URL. In the case of Slack, Mattermost and Microsoft Teams, this will be the incoming webhook URL generated from each respective
+platform. In the case of the Outbound Webhook publisher, this will be a URL to which to publish the notification.
+
+![configure notification](/images/screenshots/notifications-configure.png)
+
+By default, portfolio notifications are published regardless of which project is affected. This behavior can be altered
+by optionally limiting the projects. Expand the 'Limit To' button to reveal and configure the list of projects.
+
+## Outbound Webhooks
+With outbound webhooks, notifications and all of their relevant details can be delivered via HTTP to an endpoint
+configured through Dependency-Track's notification settings.
+
+Notifications are sent via HTTP(S) POST and contain a JSON payload. The payload has the format described above in the templating section.

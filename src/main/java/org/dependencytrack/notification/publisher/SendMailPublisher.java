@@ -25,10 +25,16 @@ import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.mail.SendMail;
 import com.mitchellbosecke.pebble.PebbleEngine;
+import com.mitchellbosecke.pebble.loader.ClasspathLoader;
+import com.mitchellbosecke.pebble.loader.DelegatingLoader;
+import com.mitchellbosecke.pebble.loader.FileLoader;
+import com.mitchellbosecke.pebble.loader.Loader;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
@@ -36,7 +42,6 @@ public class SendMailPublisher implements Publisher {
 
     private static final Logger LOGGER = Logger.getLogger(SendMailPublisher.class);
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().newLineTrimming(false).build();
-    private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/email.peb");
 
     public void inform(final Notification notification, final JsonObject config) {
         if (config == null) {
@@ -44,12 +49,13 @@ public class SendMailPublisher implements Publisher {
             return;
         }
         final String[] destinations = parseDestination(config);
-        final String content = prepareTemplate(notification, TEMPLATE);
+        PebbleTemplate template = getTemplate(config);
+        String mimeType = getTemplateMimeType(config);
+        final String content = prepareTemplate(notification, template);
         if (destinations == null || content == null) {
             LOGGER.warn("A destination or template was not found. Skipping notification");
             return;
         }
-
         try (QueryManager qm = new QueryManager()) {
             final ConfigProperty smtpEnabled = qm.getConfigProperty(EMAIL_SMTP_ENABLED.getGroupName(), EMAIL_SMTP_ENABLED.getPropertyName());
             final ConfigProperty smtpFrom = qm.getConfigProperty(EMAIL_SMTP_FROM_ADDR.getGroupName(), EMAIL_SMTP_FROM_ADDR.getPropertyName());
@@ -61,6 +67,7 @@ public class SendMailPublisher implements Publisher {
             final ConfigProperty smtpTrustCert = qm.getConfigProperty(EMAIL_SMTP_TRUSTCERT.getGroupName(), EMAIL_SMTP_TRUSTCERT.getPropertyName());
 
             if (!BooleanUtil.valueOf(smtpEnabled.getPropertyValue())) {
+                LOGGER.warn("SMTP is not enabled");
                 return; // smtp is not enabled
             }
             final boolean smtpAuth = (smtpUser.getPropertyValue() != null && smtpPass.getPropertyValue() != null);
@@ -70,6 +77,7 @@ public class SendMailPublisher implements Publisher {
                     .to(destinations)
                     .subject("[Dependency-Track] " + notification.getTitle())
                     .body(content)
+                    .bodyMimeType(mimeType)
                     .host(smtpHostname.getPropertyValue())
                     .port(Integer.valueOf(smtpPort.getPropertyValue()))
                     .username(smtpUser.getPropertyValue())
@@ -83,12 +91,17 @@ public class SendMailPublisher implements Publisher {
         }
   }
 
-
-  static String[] parseDestination(final JsonObject config) {
-    String destinationString = config.getString("destination");
-    if ((destinationString == null) || destinationString.isEmpty()) {
-      return null;
+    @Override
+    public PebbleEngine getTemplateEngine() {
+        return ENGINE;
     }
-    return destinationString.split(",");
-  }
+
+    static String[] parseDestination(final JsonObject config) {
+        String destinationString = config.getString("destination");
+        if ((destinationString == null) || destinationString.isEmpty()) {
+          return null;
+        }
+        return destinationString.split(",");
+    }
+
 }

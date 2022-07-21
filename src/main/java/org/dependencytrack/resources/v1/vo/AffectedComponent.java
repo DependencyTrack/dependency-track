@@ -20,6 +20,9 @@ package org.dependencytrack.resources.v1.vo;
 
 import alpine.common.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.VulnerableSoftware;
@@ -27,6 +30,8 @@ import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
+
+import java.util.TreeMap;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -34,12 +39,12 @@ public class AffectedComponent {
 
     private static final Logger LOGGER = Logger.getLogger(AffectedComponent.class);
 
-    private enum IdentityType {
+    enum IdentityType {
         CPE,
         PURL
     }
 
-    private enum VersionType {
+    enum VersionType {
         EXACT,
         RANGE
     }
@@ -54,7 +59,8 @@ public class AffectedComponent {
     private String versionStartIncluding;
     private UUID uuid;
 
-    public AffectedComponent() {}
+    public AffectedComponent() {
+    }
 
     public AffectedComponent(final VulnerableSoftware vs) {
         if (vs.getCpe23() != null) {
@@ -66,8 +72,29 @@ public class AffectedComponent {
         } else if (vs.getPurl() != null) {
             identityType = IdentityType.PURL;
             identity = vs.getPurl();
+        } else if (vs.getPurlType() != null
+                && vs.getPurlNamespace() != null
+                && vs.getPurlName() != null) {
+            TreeMap<String, String> qualifiers = null;
+            if (vs.getPurlQualifiers() != null) {
+                try {
+                    qualifiers = new ObjectMapper().readValue(vs.getPurlQualifiers(), new TypeReference<>() {
+                    });
+                } catch (JsonProcessingException e) {
+                    LOGGER.warn("Error deserializing PURL qualifiers: " + vs.getPurlQualifiers() + " (skipping)");
+                }
+            }
+
+            try {
+                final var purl = new PackageURL(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(),
+                        vs.getPurlVersion(), qualifiers, vs.getPurlSubpath());
+                identityType = IdentityType.PURL;
+                identity = purl.canonicalize();
+            } catch (MalformedPackageURLException e) {
+                LOGGER.warn("Error assembling PURL", e);
+            }
         }
-        if (version != null) {
+        if (vs.getVersion() != null) {
             versionType = VersionType.EXACT;
             version = vs.getVersion();
         } else {
@@ -181,11 +208,17 @@ public class AffectedComponent {
                 vs.setPurlType(purl.getType());
                 vs.setPurlNamespace(purl.getNamespace());
                 vs.setPurlName(purl.getName());
+                vs.setPurlVersion(purl.getVersion());
                 vs.setVersion(purl.getVersion());
-                //vs.setPurlQualifiers(purl.getQualifiers()); // TODO stringify this
+                if (purl.getQualifiers() != null) {
+                    vs.setPurlQualifiers(new ObjectMapper().writeValueAsString(purl.getQualifiers()));
+                }
                 vs.setPurlSubpath(purl.getSubpath());
             } catch (MalformedPackageURLException e) {
                 LOGGER.warn("Error parsing PURL: " + this.identity + " (skipping)", e);
+                return null;
+            } catch (JsonProcessingException e) {
+                LOGGER.warn("Error serializing PURL qualifiers: " + this.identity + " (skipping)", e);
                 return null;
             }
         }

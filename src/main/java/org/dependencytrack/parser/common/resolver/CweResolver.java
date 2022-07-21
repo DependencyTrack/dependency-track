@@ -110,7 +110,7 @@ public class CweResolver {
      * @param cweString the string to parse
      * @return a Cwe object
      */
-    private Integer parseCweString(final String cweString) {
+    public Integer parseCweString(final String cweString) {
         if (StringUtils.isNotBlank(cweString)) {
             final String string = cweString.trim();
             String lookupString = "";

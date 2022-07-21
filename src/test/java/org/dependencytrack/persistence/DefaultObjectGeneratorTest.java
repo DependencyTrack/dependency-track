@@ -19,6 +19,9 @@
 package org.dependencytrack.persistence;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,8 +35,8 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         testLoadDefaultPersonas();
         testLoadDefaultLicenses();
         testLoadDefaultRepositories();
-        testLoadDefaultNotificicationPublishers();
         testLoadDefaultConfigProperties();
+        testLoadDefaultNotificationPublishers();
     }
 
     @Test
@@ -51,7 +54,7 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultPermissions");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(12, qm.getPermissions().size());
+        Assert.assertEquals(Permissions.values().length, qm.getPermissions().size());
     }
 
     @Test
@@ -78,15 +81,15 @@ public class DefaultObjectGeneratorTest extends PersistenceCapableTest {
         Method method = generator.getClass().getDeclaredMethod("loadDefaultConfigProperties");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(44, qm.getConfigProperties().size());
+        Assert.assertEquals(ConfigPropertyConstants.values().length, qm.getConfigProperties().size());
     }
 
     @Test
-    public void testLoadDefaultNotificicationPublishers() throws Exception {
+    public void testLoadDefaultNotificationPublishers() throws Exception {
         DefaultObjectGenerator generator = new DefaultObjectGenerator();
-        Method method = generator.getClass().getDeclaredMethod("loadDefaultNotificicationPublishers");
+        Method method = generator.getClass().getDeclaredMethod("loadDefaultNotificationPublishers");
         method.setAccessible(true);
         method.invoke(generator);
-        Assert.assertEquals(7, qm.getAllNotificationPublishers().size());
+        Assert.assertEquals(DefaultNotificationPublishers.values().length, qm.getAllNotificationPublishers().size());
     }
 }

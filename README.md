@@ -171,7 +171,6 @@ deprecated and will be discontinued in a future release.
 The Traditional variant combines the API Server and the Frontend user interface and must be deployed to a Servlet
 container. This variant is not supported, deprecated, and will be discontinued in a future release.
 
-
 ## Deploying on Kubernetes with Helm
 You can install on Kubernetes using the [community-maintained chart](https://github.com/evryfs/helm-charts/tree/master/charts/dependency-track) like this:
 
@@ -189,31 +188,9 @@ helm install evryfs-oss/dependency-track --name dependency-track --namespace dep
 
 by default, it will install PostgreSQL and use persistent volume claims for the data-directory used for vulnerability feeds.
 
+## Contributing
 
-## Compiling From Sources (optional)
-To create the API Server executable WAR that is ready to launch:
-
-```shell
-mvn clean package -P enhance -P embedded-jetty
-```
-
-To create the API Server executable WAR that is ready to be deployed in a Docker container:
-
-```shell
-mvn clean package -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
-```
-
-To create the Bundled (API Server + Frontend) executable WAR that is ready to be deployed in a Docker container:
-
-```shell
-mvn clean package -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
-```
-
-## To run for local dev
-### Command Line
-Using the maven jetty plugin, you can just run `mvn -P enhance jetty:run` and `mvn jetty:stop`.
-
-The plugin will periodically scan your project for changes and automatically redeploy the application.
+Interested in contributing to Dependency-Track? Please check [`CONTRIBUTING.md`](./CONTRIBUTING.md) to see how you can help!
 
 ## Resources
 
@@ -227,7 +204,6 @@ The plugin will periodically scan your project for changes and automatically red
 * YouTube: <https://dependencytrack.org/youtube>
 * Slack: <https://dependencytrack.org/slack> (Invite:  <https://dependencytrack.org/slack/invite>)
 * Discussion (Groups.io): <https://dependencytrack.org/discussion>
-
 
 ## Copyright & License
 Dependency-Track is Copyright (c) Steve Springett. All Rights Reserved.

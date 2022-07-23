@@ -88,6 +88,7 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
     public License getLicense(String licenseId) {
         final Query<License> query = pm.newQuery(License.class, "licenseId == :licenseId");
         query.getFetchPlan().addGroup(License.FetchGroup.ALL.name());
+        query.setRange(0, 1);
         return singleResult(query.execute(licenseId));
     }
 

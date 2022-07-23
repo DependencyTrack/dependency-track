@@ -161,6 +161,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      */
     public Analysis getAnalysis(Component component, Vulnerability vulnerability) {
         final Query<Analysis> query = pm.newQuery(Analysis.class, "component == :component && vulnerability == :vulnerability");
+        query.setRange(0, 1);
         return singleResult(query.execute(component, vulnerability));
     }
 

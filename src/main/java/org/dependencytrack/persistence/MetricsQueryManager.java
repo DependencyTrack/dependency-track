@@ -69,6 +69,7 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
     public PortfolioMetrics getMostRecentPortfolioMetrics() {
         final Query<PortfolioMetrics> query = pm.newQuery(PortfolioMetrics.class);
         query.setOrdering("lastOccurrence desc");
+        query.setRange(0, 1);
         return singleResult(query.execute());
     }
 
@@ -101,6 +102,7 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
     public ProjectMetrics getMostRecentProjectMetrics(Project project) {
         final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class, "project == :project");
         query.setOrdering("lastOccurrence desc");
+        query.setRange(0, 1);
         return singleResult(query.execute(project));
     }
 
@@ -134,6 +136,7 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
     public DependencyMetrics getMostRecentDependencyMetrics(Component component) {
         final Query<DependencyMetrics> query = pm.newQuery(DependencyMetrics.class, "component == :component");
         query.setOrdering("lastOccurrence desc");
+        query.setRange(0, 1);
         return singleResult(query.execute(component));
     }
 

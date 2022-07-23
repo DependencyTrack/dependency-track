@@ -194,6 +194,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         preprocessACLs(query, queryFilter, params, false);
         query.setFilter(queryFilter);
+        query.setRange(0, 1);
         return singleResult(query.executeWithMap(params));
     }
 
@@ -332,6 +333,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public Tag getTagByName(final String name) {
         final String trimmedTag = StringUtils.trimToNull(name);
         final Query<Tag> query = pm.newQuery(Tag.class, "name == :name");
+        query.setRange(0, 1);
         return singleResult(query.execute(trimmedTag));
     }
 
@@ -641,6 +643,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     public ProjectProperty getProjectProperty(final Project project, final String groupName, final String propertyName) {
         final Query<ProjectProperty> query = this.pm.newQuery(ProjectProperty.class, "project == :project && groupName == :groupName && propertyName == :propertyName");
+        query.setRange(0, 1);
         return singleResult(query.execute(project, groupName, propertyName));
     }
 

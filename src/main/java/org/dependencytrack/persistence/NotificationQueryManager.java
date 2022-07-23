@@ -122,6 +122,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     public NotificationPublisher getNotificationPublisher(final String name) {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "name == :name");
+        query.setRange(0, 1);
         return singleResult(query.execute(name));
     }
 
@@ -142,6 +143,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     private NotificationPublisher getDefaultNotificationPublisher(final String clazz) {
         final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "publisherClass == :publisherClass && defaultPublisher == true");
         query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
+        query.setRange(0, 1);
         return singleResult(query.execute(clazz));
     }
 

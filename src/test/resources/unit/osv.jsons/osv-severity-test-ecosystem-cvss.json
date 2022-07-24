@@ -1,0 +1,97 @@
+{
+  "id": "RUSTSEC-2022-0025",
+  "summary": "Resource leakage when decoding certificates and keys",
+  "details": "The `OPENSSL_LH_flush()` function, which empties a hash table, contains\na bug that breaks reuse of the memory occupied by the removed hash\ntable entries.\n\nThis function is used when decoding certificates or keys. If a long lived\nprocess periodically decodes certificates or keys its memory usage will\nexpand without bounds and the process might be terminated by the operating\nsystem causing a denial of service. Also traversing the empty hash table\nentries will take increasingly more time.\n\nTypically such long lived processes might be TLS clients or TLS servers\nconfigured to accept client certificate authentication.",
+  "aliases": [
+    "CVE-2022-1473"
+  ],
+  "modified": "2022-06-20T12:19:49Z",
+  "published": "2022-05-03T12:00:00Z",
+  "references": [
+    {
+      "type": "PACKAGE",
+      "url": "https://crates.io/crates/openssl-src"
+    },
+    {
+      "type": "ADVISORY",
+      "url": "https://rustsec.org/advisories/RUSTSEC-2022-0025.html"
+    },
+    {
+      "type": "WEB",
+      "url": "https://www.openssl.org/news/secadv/20220503.txt"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "openssl-src",
+        "ecosystem": "crates.io",
+        "purl": "pkg:cargo/openssl-src"
+      },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "300.0.0"
+            },
+            {
+              "fixed": "300.0.6"
+            }
+          ]
+        }
+      ],
+      "ecosystem_specific": {
+        "affects": {
+          "functions": [],
+          "arch": [],
+          "os": []
+        }
+      },
+      "database_specific": {
+        "cvss": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+        "source": "https://github.com/rustsec/advisory-db/blob/osv/crates/RUSTSEC-2022-0025.json",
+        "informational": null,
+        "categories": [
+          "denial-of-service"
+        ]
+      }
+    },
+    {
+      "package": {
+        "name": "openssl-src",
+        "ecosystem": "crates.io",
+        "purl": "pkg:cargo/openssl-src"
+      },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "300.0.0"
+            },
+            {
+              "fixed": "300.0.6"
+            }
+          ]
+        }
+      ],
+      "ecosystem_specific": {
+        "affects": {
+          "functions": [],
+          "arch": [],
+          "os": []
+        }
+      },
+      "database_specific": {
+        "cvss": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H",
+        "source": "https://github.com/rustsec/advisory-db/blob/osv/crates/RUSTSEC-2022-0025.json",
+        "informational": null,
+        "categories": [
+          "denial-of-service"
+        ]
+      }
+    }
+  ],
+  "schema_version": "1.2.0"
+}

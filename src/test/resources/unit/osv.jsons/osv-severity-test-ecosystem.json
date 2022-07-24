@@ -1,0 +1,72 @@
+{
+  "id": "OSV-2021-60",
+  "summary": "Heap-buffer-overflow in H5O__sdspace_decode",
+  "details": "OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29517\n\n```\nCrash type: Heap-buffer-overflow READ 1\nCrash state:\nH5O__sdspace_decode\nH5O_sdspace_shared_decode\nH5O_attr_decode\n```\n",
+  "modified": "2022-04-13T03:04:43.038723Z",
+  "published": "2021-01-13T00:00:18.784221Z",
+  "references": [
+    {
+      "type": "REPORT",
+      "url": "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29517"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "matio",
+        "ecosystem": "OSS-Fuzz",
+        "purl": "pkg:generic/matio"
+      },
+      "ranges": [
+        {
+          "type": "GIT",
+          "repo": "git://git.code.sf.net/p/matio/matio",
+          "events": [
+            {
+              "introduced": "1ce8f2d1845ecdde19a35605cabdbb884776d52d"
+            },
+            {
+              "fixed": "2f19958fade08de870257f099d88ecc813ab623f"
+            }
+          ]
+        }
+      ],
+      "ecosystem_specific": {
+        "severity": "MEDIUM"
+      },
+      "database_specific": {
+        "source": "https://github.com/google/oss-fuzz-vulns/blob/main/vulns/matio/OSV-2021-60.yaml"
+      },
+      "versions": []
+    },
+    {
+      "package": {
+        "name": "matio",
+        "ecosystem": "OSS-Fuzz",
+        "purl": "pkg:generic/matio"
+      },
+      "ranges": [
+        {
+          "type": "GIT",
+          "repo": "git://git.code.sf.net/p/matio/matio",
+          "events": [
+            {
+              "introduced": "1ce8f2d1845ecdde19a35605cabdbb884776d52d"
+            },
+            {
+              "fixed": "2f19958fade08de870257f099d88ecc813ab623f"
+            }
+          ]
+        }
+      ],
+      "ecosystem_specific": {
+        "severity": "LOW"
+      },
+      "database_specific": {
+        "source": "https://github.com/google/oss-fuzz-vulns/blob/main/vulns/matio/OSV-2021-60.yaml"
+      },
+      "versions": []
+    }
+  ],
+  "schema_version": "1.2.0"
+}

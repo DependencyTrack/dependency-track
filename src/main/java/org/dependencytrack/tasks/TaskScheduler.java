@@ -27,6 +27,7 @@ import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
+import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.event.InternalComponentIdentificationEvent;
 import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.MetricsUpdateEvent;
@@ -60,6 +61,9 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 10 second (10000) delay
         scheduleEvent(new GitHubAdvisoryMirrorEvent(), 10000, 86400000);
+
+        // Creates a new event that executes every 24 hours (86400000) after an initial 10 second (10000) delay
+        scheduleEvent(new OsvMirrorEvent(), 10000, 86400000);
 
         // Creates a new event that executes every 24 hours (86400000) after an initial 1 minute (60000) delay
         scheduleEvent(new NistMirrorEvent(), 60000, 86400000);

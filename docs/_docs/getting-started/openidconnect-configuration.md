@@ -9,7 +9,7 @@ order: 9
 
 In the context of OAuth2 / OIDC, Dependency-Track's frontend acts as *client* while the API server acts as *resource server* (see [OAuth2 roles](https://tools.ietf.org/html/rfc6749#section-1.1)).
 Due to this, the frontend requires additional configuration, which is currently only supported when deploying it separately from the API server.
-Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. "Classic" Dependency-Track deployments using solely the [WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-war.md %}) or [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
+Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. "Classic" Dependency-Track deployments using solely the [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
 
 If configured properly, users will be able to sign in by clicking the *OpenID* button on the login page:
 

@@ -140,15 +140,13 @@ docker run -d -m 8192m -p 8080:8080 --name dependency-track -v dependency-track:
 
 ## Distributions
 
-Dependency-Track has four distribution variants. They are:
+Dependency-Track has three distribution variants. They are:
 
-| Package | Package Format | Recommended | Supported | Docker | Download |
-| :---------- | :---------- | :---------: | :---------: | :---------: | :---------: |
-| API Server | Executable WAR | ✅ | ✅ | ✅ | ✅ | 
-| Frontend | Single Page Application | ✅ | ✅ | ✅ | ✅ |
-| Bundled | Executable WAR | ❌ | ☑️ | ✅ | ✅ |
-| Traditional WAR | WAR | ❌ | ❌ | ❌ | ✅ |
-
+| Package    | Package Format          | Recommended | Supported | Docker | Download |
+|:-----------|:------------------------|:-----------:|:---------:|:------:|:--------:|
+| API Server | Executable WAR          |      ✅      |     ✅     |   ✅    |    ✅     | 
+| Frontend   | Single Page Application |      ✅      |     ✅     |   ✅    |    ✅     |
+| Bundled    | Executable WAR          |      ❌      |    ☑️     |   ✅    |    ✅     |
 
 #### API Server
 

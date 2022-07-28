@@ -2,7 +2,7 @@
 title: Repositories
 category: Datasources
 chapter: 4
-order: 6
+order: 7
 ---
 
 Dependency-Track relies on integration with repositories to help identify metadata that may be useful

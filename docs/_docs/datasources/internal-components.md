@@ -2,7 +2,7 @@
 title: Internal Components
 category: Datasources
 chapter: 4
-order: 7
+order: 8
 ---
 
 Organizations have the ability to specify a namespace and/or name which represents internally

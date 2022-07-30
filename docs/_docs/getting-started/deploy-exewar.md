@@ -11,7 +11,7 @@ configured, executable WARs fast-track this process by bundling a Servlet contai
 execute the bundled application.
 
 The Dependency-Track executable WAR is delivered ready-to-run. To use the executable WAR, the only requirement 
-is to have Java 8u162 (or higher) installed.
+is to have Java 11 (or higher) installed.
 
 > **Deprecation Notice**
 >
@@ -26,11 +26,11 @@ Refer to [distributions](../distributions/) for details.
 
 ### Requirements
 
-| Minimum | Recommended |
-|:---------|:--------|
-| Java 8 u162 (or higher) | Java 8 u162 or higher |
-| 4GB RAM | 16GB RAM |
-| 2 CPU cores | 4 CPU cores |
+| Minimum             | Recommended         |
+|:--------------------|:--------------------|
+| Java 11 (or higher) | Java 11 (or higher) |
+| 4GB RAM             | 16GB RAM            |
+| 2 CPU cores         | 4 CPU cores         |
 
 If minimum requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 8 
 already installed, this method of execution may provide the fastest deployment path.

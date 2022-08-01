@@ -1,11 +1,14 @@
 source 'https://rubygems.org'
 
-gem 'jekyll', '3.7.4'
+ruby '~> 2.6'
+
+gem 'jekyll', '~> 3.8'
+gem 'kramdown-parser-gfm', '1.1.0'
 
 group :jekyll_plugins do
-  gem 'jekyll-feed', '0.9.3'
-  gem 'jekyll-seo-tag', '2.4.0'
-  gem 'jekyll-sitemap', '1.2.0'
-  gem 'jekyll-redirect-from'
-  gem 'jekyll-mermaid', '~> 1.0'
+  gem 'jekyll-feed', '0.16.0'
+  gem 'jekyll-seo-tag', '2.8.0'
+  gem 'jekyll-sitemap', '1.4.0'
+  gem 'jekyll-redirect-from', '0.16.0'
+  gem 'jekyll-mermaid', '1.0.0'
 end

@@ -7,12 +7,14 @@ on:
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
+      - 'docs/**'
   pull_request:
     branches:
       - 'master'          # Default branch
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only;

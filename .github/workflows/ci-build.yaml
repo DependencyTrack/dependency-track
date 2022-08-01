@@ -5,9 +5,15 @@ on:
     branches:
       - 'master'          # Default branch
       - '[0-9]+.[0-9]+.x' # Release branches
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
     branches:
       - 'master'          # Default branch
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 jobs:

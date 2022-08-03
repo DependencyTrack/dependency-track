@@ -605,6 +605,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         deleteBoms(project);
         deleteVexs(project);
         removeProjectFromNotificationRules(project);
+        removeProjectFromPolicies(project);
         delete(project.getProperties());
         delete(getAllBoms(project));
         delete(project.getChildren());

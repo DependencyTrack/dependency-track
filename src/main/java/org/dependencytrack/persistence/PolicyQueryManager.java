@@ -512,6 +512,20 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Removes all associations with a given {@link Project} from all {@link Policy}s.
+     * @param project The {@link Project} to remove from policies
+     */
+    public void removeProjectFromPolicies(final Project project) {
+        final Query<Policy> query = pm.newQuery(Policy.class, "projects.contains(:project)");
+        query.setParameters(project);
+
+        for (final Policy policy: query.executeList()) {
+            policy.getProjects().remove(project);
+            persist(policy);
+        }
+    }
+
+    /**
      * Returns the number of audited policy violations of a given type for a component.
      * @param component The {@link Component} to retrieve audit counts for
      * @param type The {@link PolicyViolation.Type} to retrieve audit counts for

@@ -513,6 +513,10 @@ public class QueryManager extends AlpineQueryManager {
         return getPolicyQueryManager().createPolicy(name, operator, violationState);
     }
 
+    public void removeProjectFromPolicies(final Project project) {
+        getPolicyQueryManager().removeProjectFromPolicies(project);
+    }
+
     public PolicyCondition createPolicyCondition(final Policy policy, final PolicyCondition.Subject subject,
                                                  final PolicyCondition.Operator operator, final String value) {
         return getPolicyQueryManager().createPolicyCondition(policy, subject, operator, value);

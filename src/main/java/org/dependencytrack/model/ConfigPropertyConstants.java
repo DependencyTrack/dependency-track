@@ -71,17 +71,17 @@ public enum ConfigPropertyConstants {
     ACCESS_MANAGEMENT_ACL_ENABLED("access-management", "acl.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable access control to projects in the portfolio"),
     NOTIFICATION_TEMPLATE_BASE_DIR("notification", "template.baseDir", SystemUtils.getEnvironmentVariable("DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY", System.getProperty("user.home")), PropertyType.STRING, "The base directory to use when searching for notification templates"),
     NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED("notification", "template.default.override.enabled", SystemUtils.getEnvironmentVariable("DEFAULT_TEMPLATES_OVERRIDE_ENABLED", "false"), PropertyType.BOOLEAN, "Flag to enable/disable override of default notification templates"),
-    TASK_SCHEDULER_LDAP_SYNC_PERIOD("task-scheduler", "ldap.sync.period","21600000", PropertyType.NUMBER, "Sync period (in milliseconds) for LDAP"),
-    TASK_SCHEDULER_GHSA_MIRROR_PERIOD("task-scheduler", "ghsa.mirror.period","86400000", PropertyType.NUMBER, "Mirror period (in milliseconds) for Github Security Advisories"),
-    TASK_SCHEDULER_OSV_MIRROR_PERIOD("task-scheduler", "osv.mirror.period","86400000", PropertyType.NUMBER, "Mirror period (in milliseconds) for OSV database"),
-    TASK_SCHEDULER_NIST_MIRROR_PERIOD("task-scheduler", "nist.mirror.period","86400000", PropertyType.NUMBER, "Mirror period (in milliseconds) for NVD database"),
-    TASK_SCHEDULER_VULNDB_MIRROR_PERIOD("task-scheduler", "vulndb.mirror.period","86400000", PropertyType.NUMBER, "Mirror period (in milliseconds) for VulnDB database"),
-    TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_PERIOD("task-scheduler", "portfolio.metrics.update.period","3600000", PropertyType.NUMBER, "Update period (in milliseconds) for portfolio metrics"),
-    TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_PERIOD("task-scheduler", "vulnerability.metrics.update.period","3600000", PropertyType.NUMBER, "Update period (in milliseconds) for vulnerability metrics"),
-    TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_PERIOD("task-scheduler", "portfolio.vulnerability.analysis.period","86400000", PropertyType.NUMBER, "Launch period (in milliseconds) for portfolio vulnerability analysis"),
-    TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_PERIOD("task-scheduler", "repository.metadata.fetch.period","86400000", PropertyType.NUMBER, "Metadada fetch period (in milliseconds) for package repositories"),
-    TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_PERIOD("task-scheduler", "internal.components.identification.period","21600000", PropertyType.NUMBER, "Internal component identification period (in milliseconds)"),
-    TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_PERIOD("task-scheduler", "component.analysis.cache.clear.period","259200000", PropertyType.NUMBER, "Cleanup period (in milliseconds) for component analysis cache");
+    TASK_SCHEDULER_LDAP_SYNC_CADENCE("task-scheduler", "ldap.sync.cadence","6", PropertyType.INTEGER, "Sync cadence (in hours) for LDAP"),
+    TASK_SCHEDULER_GHSA_MIRROR_CADENCE("task-scheduler", "ghsa.mirror.cadence","24", PropertyType.INTEGER, "Mirror cadence (in hours) for Github Security Advisories"),
+    TASK_SCHEDULER_OSV_MIRROR_CADENCE("task-scheduler", "osv.mirror.cadence","24", PropertyType.INTEGER, "Mirror cadence (in hours) for OSV database"),
+    TASK_SCHEDULER_NIST_MIRROR_CADENCE("task-scheduler", "nist.mirror.cadence","24", PropertyType.INTEGER, "Mirror cadence (in hours) for NVD database"),
+    TASK_SCHEDULER_VULNDB_MIRROR_CADENCE("task-scheduler", "vulndb.mirror.cadence","24", PropertyType.INTEGER, "Mirror cadence (in hours) for VulnDB database"),
+    TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE("task-scheduler", "portfolio.metrics.update.cadence","1", PropertyType.INTEGER, "Update cadence (in hours) for portfolio metrics"),
+    TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE("task-scheduler", "vulnerability.metrics.update.cadence","1", PropertyType.INTEGER, "Update cadence (in hours) for vulnerability metrics"),
+    TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE("task-scheduler", "portfolio.vulnerability.analysis.cadence","24", PropertyType.INTEGER, "Launch cadence (in hours) for portfolio vulnerability analysis"),
+    TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_CADENCE("task-scheduler", "repository.metadata.fetch.cadence","24", PropertyType.INTEGER, "Metadada fetch cadence (in hours) for package repositories"),
+    TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE("task-scheduler", "internal.components.identification.cadence","6", PropertyType.INTEGER, "Internal component identification cadence (in hours)"),
+    TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE("task-scheduler", "component.analysis.cache.clear.cadence","72", PropertyType.INTEGER, "Cleanup cadence (in hours) for component analysis cache");
 
     private String groupName;
     private String propertyName;

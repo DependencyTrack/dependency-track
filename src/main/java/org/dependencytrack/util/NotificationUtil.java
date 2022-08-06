@@ -139,6 +139,9 @@ public final class NotificationUtil {
                     case NOT_SET:
                         title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET;
                         break;
+                    case RESOLVED:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED;
+                        break;
                 }
             } else if (suppressionChange) {
                 if (analysis.isSuppressed()) {

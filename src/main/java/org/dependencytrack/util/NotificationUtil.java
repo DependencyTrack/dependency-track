@@ -48,8 +48,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -66,10 +68,12 @@ public final class NotificationUtil {
             // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
             // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
             // it warrants a Notification be dispatched.
-            final Set<Project> affectedProjects = new HashSet<>();
+            final Map<Long,Project> affectedProjects = new HashMap<>();
             final List<Component> components = qm.matchIdentity(new ComponentIdentity(component));
             for (final Component c : components) {
-                affectedProjects.add(qm.detach(Project.class, c.getProject().getId()));
+                if(!affectedProjects.containsKey(c.getProject().getId())) {
+                    affectedProjects.put(c.getProject().getId(), qm.detach(Project.class, c.getProject().getId()));
+                }
             }
 
             final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());
@@ -81,7 +85,7 @@ public final class NotificationUtil {
                     .title(NotificationConstants.Title.NEW_VULNERABILITY)
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
-                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, affectedProjects))
+                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values())))
             );
         }
     }

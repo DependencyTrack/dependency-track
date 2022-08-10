@@ -175,6 +175,45 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testValidMatchingProjectLimitingRuleAndPublisherInform()  {
+        NotificationPublisher publisher = createMockPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        rule.setPublisherConfig("{\"destination\":\"testDestination\"}");
+        // Creates a project which will later be matched on
+        List<Project> projects = new ArrayList<>();
+        Project firstProject = qm.createProject("Test Project 1", null, "1.0", null, null, null, true, false);
+        projects.add(firstProject);
+        rule.setProjects(projects);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
+        Project secondProject = qm.createProject("Test Project 2", null, "1.0", null, null, null, true, false);
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(firstProject);
+        affectedProjects.add(secondProject);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        router.inform(notification);
+        JsonObject providedConfig = MockPublisher.getConfig();
+        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
+        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
+        Assert.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
+        Notification providedNotification = MockPublisher.getNotification();
+        NewVulnerabilityIdentified providedSubject = (NewVulnerabilityIdentified) providedNotification.getSubject();
+        Assert.assertEquals(1, providedSubject.getAffectedProjects().size());
+        Assert.assertEquals(firstProject.getName(), providedSubject.getAffectedProjects().toArray(new Project[1])[0].getName());
+    }
+
+    @Test
     public void testValidNonMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
@@ -291,6 +330,8 @@ public class NotificationRouterTest extends PersistenceCapableTest {
 
         public static JsonObject config;
 
+        public static Notification notification;
+
         public MockPublisher() {
             config = null;
         }
@@ -298,10 +339,15 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         @Override
         public void inform(Notification notification, JsonObject config) {
             MockPublisher.config = config;
+            MockPublisher.notification = notification;
         }
 
         public static JsonObject getConfig() {
             return config;
+        }
+
+        public static Notification getNotification() {
+            return notification;
         }
 
         @Override

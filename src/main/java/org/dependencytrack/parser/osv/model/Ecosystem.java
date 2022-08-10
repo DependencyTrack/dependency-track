@@ -17,7 +17,9 @@ public enum Ecosystem {
     UVI("UVI"),
     RUST("crates.io"),
     NPM("npm"),
-    DWF("DWF");
+    DWF("DWF"),
+    DEBIAN("Debian"),
+    GITHUB_ACTIONS("GitHub Actions");
 
     private final String value;
 

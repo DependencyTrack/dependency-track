@@ -19,16 +19,6 @@ public enum Ecosystem {
     NPM("npm"),
     DWF("DWF"),
     DEBIAN("Debian"),
-    DEBIAN_11("Debian:11"),
-    DEBIAN_10("Debian:10"),
-    DEBIAN_9("Debian:9"),
-    DEBIAN_8("Debian:8"),
-    DEBIAN_7("Debian:7"),
-    DEBIAN_6("Debian:6.0"),
-    DEBIAN_5("Debian:5.0"),
-    DEBIAN_4("Debian:4.0"),
-    DEBIAN_3_1("Debian:3.1"),
-    DEBIAN_3_0("Debian:3.0"),
     GITHUB_ACTIONS("GitHub Actions");
 
     private final String value;

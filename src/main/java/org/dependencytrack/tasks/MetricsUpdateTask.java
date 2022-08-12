@@ -75,26 +75,23 @@ public class MetricsUpdateTask implements Subscriber {
      */
     @Override
     public void inform(final Event e) {
-        if (!(e instanceof MetricsUpdateEvent)) {
-            return;
-        }
-
-        LOGGER.debug("Starting metrics update task");
-        final var event = (MetricsUpdateEvent) e;
-        try {
-            if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
-                updatePortfolioMetrics();
-            } else if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
-                updateProjectMetrics(((Project) event.getTarget()).getId());
-            } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
-                updateComponentMetrics(((Component) event.getTarget()).getId());
-            } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
-                updateVulnerabilityMetrics();
+        if (e instanceof final MetricsUpdateEvent event) {
+            LOGGER.debug("Starting metrics update task");
+            try {
+                if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
+                    updatePortfolioMetrics();
+                } else if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
+                    updateProjectMetrics(((Project) event.getTarget()).getId());
+                } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
+                    updateComponentMetrics(((Component) event.getTarget()).getId());
+                } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
+                    updateVulnerabilityMetrics();
+                }
+            } catch (Exception ex) {
+                LOGGER.error("An unknown error occurred while updating metrics", ex);
             }
-        } catch (Exception ex) {
-            LOGGER.error("An unknown error occurred while updating metrics", ex);
+            LOGGER.debug("Metrics update complete");
         }
-        LOGGER.debug("Metrics update complete");
     }
 
     /**
@@ -482,23 +479,17 @@ public class MetricsUpdateTask implements Subscriber {
                 // Replicate the behavior of Vulnerability#getSeverity
                 final Severity severity;
                 if (vulnerability.severity != null) {
-                    severity = vulnerability.severity;
+                    severity = Severity.valueOf(vulnerability.severity);
                 } else {
                     severity = VulnerabilityUtil.getSeverity(vulnerability.cvssV2BaseScore, vulnerability.cvssV3BaseScore);
                 }
 
-                if (Severity.CRITICAL == severity) {
-                    counters.critical++;
-                } else if (Severity.HIGH == severity) {
-                    counters.high++;
-                } else if (Severity.MEDIUM == severity) {
-                    counters.medium++;
-                } else if (Severity.LOW == severity) {
-                    counters.low++;
-                } else if (Severity.INFO == severity) {
-                    counters.low++;
-                } else if (Severity.UNASSIGNED == severity) {
-                    counters.unassigned++;
+                switch (severity) {
+                    case CRITICAL -> counters.critical++;
+                    case HIGH -> counters.high++;
+                    case MEDIUM -> counters.medium++;
+                    case LOW, INFO -> counters.low++;
+                    case UNASSIGNED -> counters.unassigned++;
                 }
             }
             counters.findingsTotal = toIntExact(counters.vulnerabilities);
@@ -510,20 +501,16 @@ public class MetricsUpdateTask implements Subscriber {
             for (final PolicyViolationProjection violation : getPolicyViolations(pm, componentId)) {
                 counters.policyViolationsTotal++;
 
-                if (PolicyViolation.Type.LICENSE == violation.type) {
-                    counters.policyViolationsLicenseTotal++;
-                } else if (PolicyViolation.Type.OPERATIONAL == violation.type) {
-                    counters.policyViolationsOperationalTotal++;
-                } else if (PolicyViolation.Type.SECURITY == violation.type) {
-                    counters.policyViolationsSecurityTotal++;
+                switch (PolicyViolation.Type.valueOf(violation.type)) {
+                    case LICENSE -> counters.policyViolationsLicenseTotal++;
+                    case OPERATIONAL -> counters.policyViolationsOperationalTotal++;
+                    case SECURITY -> counters.policyViolationsSecurityTotal++;
                 }
 
-                if (Policy.ViolationState.FAIL == violation.violationState) {
-                    counters.policyViolationsFail++;
-                } else if (Policy.ViolationState.WARN == violation.violationState) {
-                    counters.policyViolationsWarn++;
-                } else if (Policy.ViolationState.INFO == violation.violationState) {
-                    counters.policyViolationsInfo++;
+                switch (Policy.ViolationState.valueOf(violation.violationState)) {
+                    case FAIL -> counters.policyViolationsFail++;
+                    case WARN -> counters.policyViolationsWarn++;
+                    case INFO -> counters.policyViolationsInfo++;
                 }
             }
             if (counters.policyViolationsLicenseTotal > 0) {
@@ -706,54 +693,62 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     private Optional<UUID> getProjectUuid(final PersistenceManager pm, final long projectId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"UUID\" FROM \"PROJECT\" WHERE \"ID\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT "UUID" FROM "PROJECT" WHERE "ID" = ?
+                """)) {
             query.setParameters(projectId);
             return Optional.ofNullable(query.executeResultUnique(String.class)).map(UUID::fromString);
         }
     }
 
     private List<Long> getComponents(final PersistenceManager pm, final long projectId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"ID\" FROM \"COMPONENT\" WHERE \"PROJECT_ID\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ?
+                """)) {
             query.setParameters(projectId);
             return List.copyOf(query.executeResultList(Long.class));
         }
     }
 
     private Optional<UUID> getComponentUuid(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "SELECT \"UUID\" FROM \"COMPONENT\" WHERE \"ID\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT "UUID" FROM "COMPONENT" WHERE "ID" = ?
+                """)) {
             query.setParameters(componentId);
             return Optional.ofNullable(query.executeResultUnique(String.class)).map(UUID::fromString);
         }
     }
 
     private List<VulnerabilityProjection> getVulnerabilities(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
-                "SELECT " +
-                "  \"VULNERABILITY\".\"SEVERITY\", " +
-                "  \"VULNERABILITY\".\"CVSSV2BASESCORE\", " +
-                "  \"VULNERABILITY\".\"CVSSV3BASESCORE\" " +
-                "FROM \"COMPONENTS_VULNERABILITIES\" " +
-                "  INNER JOIN \"COMPONENT\" ON \"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
-                "  INNER JOIN \"VULNERABILITY\" ON \"VULNERABILITY\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" " +
-                "  LEFT JOIN \"ANALYSIS\" " +
-                "    ON \"ANALYSIS\".\"COMPONENT_ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" " +
-                "    AND \"ANALYSIS\".\"VULNERABILITY_ID\" = \"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" " +
-                "WHERE \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\" = ? " +
-                "  AND (\"ANALYSIS\".\"SUPPRESSED\" IS NULL OR \"ANALYSIS\".\"SUPPRESSED\" = ?) " +
-                "ORDER BY \"VULNERABILITY\".\"ID\"")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT
+                    "VULNERABILITY"."SEVERITY",
+                    "VULNERABILITY"."CVSSV2BASESCORE",
+                    "VULNERABILITY"."CVSSV3BASESCORE"
+                FROM "COMPONENTS_VULNERABILITIES"
+                    INNER JOIN "COMPONENT" ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+                    INNER JOIN "VULNERABILITY" ON "VULNERABILITY"."ID" = "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID"
+                    LEFT JOIN "ANALYSIS"
+                        ON "ANALYSIS"."COMPONENT_ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+                        AND "ANALYSIS"."VULNERABILITY_ID" = "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID"
+                WHERE "COMPONENTS_VULNERABILITIES"."COMPONENT_ID" = ?
+                    AND ("ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = ?)
+                ORDER BY "VULNERABILITY"."ID"
+                """)) {
             query.setParameters(componentId, false);
             return List.copyOf(query.executeResultList(VulnerabilityProjection.class));
         }
     }
 
     private long getTotalAuditedFindings(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
-                "SELECT COUNT(*) FROM \"ANALYSIS\" " +
-                "WHERE \"COMPONENT_ID\" = ? " +
-                "  AND \"SUPPRESSED\" = ? " +
-                "  AND \"STATE\" IS NOT NULL " +
-                "  AND \"STATE\" != ? " +
-                "  AND \"STATE\" != ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT COUNT(*) FROM "ANALYSIS"
+                WHERE "COMPONENT_ID" = ?
+                    AND "SUPPRESSED" = ?
+                    AND "STATE" IS NOT NULL
+                    AND "STATE" != ?
+                    AND "STATE" != ?
+                """)) {
             query.setParameters(componentId, false,
                     AnalysisState.NOT_SET.name(),
                     AnalysisState.IN_TRIAGE.name());
@@ -762,40 +757,43 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     private long getTotalSuppressedFindings(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
-                "SELECT COUNT(*) FROM \"ANALYSIS\" " +
-                "WHERE \"COMPONENT_ID\" = ? " +
-                "  AND \"SUPPRESSED\" = ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT COUNT(*) FROM "ANALYSIS"
+                WHERE "COMPONENT_ID" = ?
+                    AND "SUPPRESSED" = ?
+                """)) {
             query.setParameters(componentId, true);
             return query.executeResultUnique(Long.class);
         }
     }
 
     private List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
-                "SELECT \"POLICYVIOLATION\".\"TYPE\", \"POLICY\".\"VIOLATIONSTATE\" " +
-                "FROM \"POLICYVIOLATION\" " +
-                "  INNER JOIN \"POLICYCONDITION\" ON \"POLICYCONDITION\".\"ID\" = \"POLICYVIOLATION\".\"POLICYCONDITION_ID\" " +
-                "  INNER JOIN \"POLICY\" ON \"POLICY\".\"ID\" = \"POLICYCONDITION\".\"POLICY_ID\" " +
-                "  LEFT JOIN \"VIOLATIONANALYSIS\" " +
-                "    ON \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = \"POLICYVIOLATION\".\"COMPONENT_ID\" " +
-                "    AND \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" = \"POLICYVIOLATION\".\"ID\" " +
-                "WHERE \"POLICYVIOLATION\".\"COMPONENT_ID\" = ? " +
-                "  AND (\"VIOLATIONANALYSIS\".\"SUPPRESSED\" IS NULL OR \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = ?)")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT "POLICYVIOLATION"."TYPE", "POLICY"."VIOLATIONSTATE"
+                FROM "POLICYVIOLATION"
+                    INNER JOIN "POLICYCONDITION" ON "POLICYCONDITION"."ID" = "POLICYVIOLATION"."POLICYCONDITION_ID"
+                    INNER JOIN "POLICY" ON "POLICY"."ID" = "POLICYCONDITION"."POLICY_ID"
+                    LEFT JOIN "VIOLATIONANALYSIS"
+                        ON "VIOLATIONANALYSIS"."COMPONENT_ID" = "POLICYVIOLATION"."COMPONENT_ID"
+                        AND "VIOLATIONANALYSIS"."POLICYVIOLATION_ID" = "POLICYVIOLATION"."ID"
+                WHERE "POLICYVIOLATION"."COMPONENT_ID" = ?
+                    AND ("VIOLATIONANALYSIS"."SUPPRESSED" IS NULL OR "VIOLATIONANALYSIS"."SUPPRESSED" = ?)
+                """)) {
             query.setParameters(componentId, false);
             return List.copyOf(query.executeResultList(PolicyViolationProjection.class));
         }
     }
 
     private long getTotalAuditedPolicyViolations(final PersistenceManager pm, final long componentId, final PolicyViolation.Type violationType) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, "" +
-                "SELECT COUNT(*) FROM \"VIOLATIONANALYSIS\" " +
-                "  INNER JOIN \"POLICYVIOLATION\" ON \"POLICYVIOLATION\".\"ID\" = \"VIOLATIONANALYSIS\".\"POLICYVIOLATION_ID\" " +
-                "WHERE \"VIOLATIONANALYSIS\".\"COMPONENT_ID\" = ? " +
-                "  AND \"POLICYVIOLATION\".\"TYPE\" = ? " +
-                "  AND \"VIOLATIONANALYSIS\".\"SUPPRESSED\" = ? " +
-                "  AND \"VIOLATIONANALYSIS\".\"STATE\" IS NOT NULL " +
-                "  AND \"VIOLATIONANALYSIS\".\"STATE\" != ?")) {
+        try (final Query<?> query = pm.newQuery(Query.SQL, """
+                SELECT COUNT(*) FROM "VIOLATIONANALYSIS"
+                    INNER JOIN "POLICYVIOLATION" ON "POLICYVIOLATION"."ID" = "VIOLATIONANALYSIS"."POLICYVIOLATION_ID"
+                WHERE "VIOLATIONANALYSIS"."COMPONENT_ID" = ?
+                    AND "POLICYVIOLATION"."TYPE" = ?
+                    AND "VIOLATIONANALYSIS"."SUPPRESSED" = ?
+                    AND "VIOLATIONANALYSIS"."STATE" IS NOT NULL
+                    AND "VIOLATIONANALYSIS"."STATE" != ?
+                """)) {
             query.setParameters(componentId, violationType.name(),
                     false, ViolationAnalysisState.NOT_SET.name());
             return query.executeResultUnique(Long.class);
@@ -828,89 +826,28 @@ public class MetricsUpdateTask implements Subscriber {
     /**
      * Projection of a policy violation that holds the information
      * needed to calculate component metrics.
-     * <p>
-     * Class and setters must be public in order for DataNucleus to be
-     * able to set the fields.
      *
      * @since 4.6.0
      */
-    public static final class PolicyViolationProjection {
-        private PolicyViolation.Type type;
-        private Policy.ViolationState violationState;
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setType(final String type) {
-            this.type = PolicyViolation.Type.valueOf(type);
-        }
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setViolationState(final String violationState) {
-            if (violationState != null) {
-                this.violationState = Policy.ViolationState.valueOf(violationState);
-            }
-        }
+    public record PolicyViolationProjection(String type, String violationState) {
     }
 
     /**
      * Projection of a vulnerability that contains the information
      * needed to calculate component metrics.
-     * <p>
-     * Class and setters must be public in order for DataNucleus to be
-     * able to set the fields.
      *
      * @since 4.6.0
      */
-    public static final class VulnerabilityProjection {
-        private Severity severity;
-        private BigDecimal cvssV2BaseScore;
-        private BigDecimal cvssV3BaseScore;
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setSeverity(final String severity) {
-            if (severity != null) {
-                this.severity = Severity.valueOf(severity);
-            }
-        }
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setCvssV2BaseScore(final BigDecimal cvssV2BaseScore) {
-            this.cvssV2BaseScore = cvssV2BaseScore;
-        }
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setCvssV3BaseScore(final BigDecimal cvssV3BaseScore) {
-            this.cvssV3BaseScore = cvssV3BaseScore;
-        }
+    public record VulnerabilityProjection(String severity, BigDecimal cvssV2BaseScore, BigDecimal cvssV3BaseScore) {
     }
 
     /**
      * Projection of a vulnerability that holds the information
      * needed to calculate vulnerabilities metrics.
-     * <p>
-     * Class and setters must be public in order for DataNucleus to be
-     * able to set the fields.
      *
      * @since 4.6.0
      */
-    public static final class VulnerabilityDateProjection {
-        private long id;
-        private Date created;
-        private Date published;
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setId(final long id) {
-            this.id = id;
-        }
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setCreated(final Date created) {
-            this.created = created;
-        }
-
-        @SuppressWarnings("unused") // Called by DataNucleus
-        public void setPublished(final Date published) {
-            this.published = published;
-        }
+    public record VulnerabilityDateProjection(long id, Date created, Date published) {
     }
 
     private static final class Counters {

@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-java@v3.4.1
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
           cache: 'maven'
 
       - name: Execute unit tests

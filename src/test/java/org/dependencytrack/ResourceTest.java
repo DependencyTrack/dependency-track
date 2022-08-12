@@ -27,6 +27,8 @@ import alpine.server.auth.PasswordService;
 import alpine.server.persistence.PersistenceManagerFactory;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.persistence.QueryManager;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
@@ -113,6 +115,14 @@ public abstract class ResourceTest extends JerseyTest {
     @Override
     protected TestContainerFactory getTestContainerFactory() {
         return new GrizzlyWebTestContainerFactory();
+    }
+
+    @Override
+    protected void configureClient(final ClientConfig config) {
+        // Prevent InaccessibleObjectException with JDK >= 16 when performing PATCH requests
+        // using the default HttpUrlConnection connector provider.
+        // See https://github.com/eclipse-ee4j/jersey/issues/4825
+        config.connectorProvider(new GrizzlyConnectorProvider());
     }
 
     public void initializeWithPermissions(Permissions... permissions) {

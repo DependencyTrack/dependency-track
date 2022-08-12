@@ -24,11 +24,11 @@ import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.io.FileUtils;
-import org.datanucleus.util.Base64;
 import org.dependencytrack.common.UnirestFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.UUID;
 
 public class ApiClient {
@@ -65,7 +65,7 @@ public class ApiClient {
                 .header("X-API-Key", apiKey)
                 .body(new JSONObject()
                         .put("project", uuid.toString())
-                        .put("bom", Base64.encode(FileUtils.readFileToByteArray(bom)))
+                        .put("bom", Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(bom)))
                 )
                 .asJson();
         return (response.getStatus() == 200);
@@ -78,7 +78,7 @@ public class ApiClient {
                 .header("X-API-Key", apiKey)
                 .body(new JSONObject()
                         .put("project", uuid.toString())
-                        .put("scan", Base64.encode(FileUtils.readFileToByteArray(scan)))
+                        .put("scan", Base64.getEncoder().encodeToString(FileUtils.readFileToByteArray(scan)))
                 )
                 .asJson();
         return (response.getStatus() == 200);

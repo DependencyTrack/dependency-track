@@ -20,6 +20,8 @@ ENV TZ=Etc/UTC \
     # The web context defaults to the root. To override, supply an alternative context which starts with a / but does not end with one
     # Example: /dtrack
     CONTEXT="/" \
+    # default port to listens on. To override set LISTEN_PORT environment variable
+    LISTEN_PORT="8080" \
     # Injects the build-time ARG "WAR_FILENAME" as an environment variable that can be used in the CMD.
     WAR_FILENAME=${WAR_FILENAME} \
     # Set JAVA_HOME for the copied over JRE
@@ -59,7 +61,7 @@ USER ${UID}
 WORKDIR ${APP_DIR}
 
 # Launch Dependency-Track
-CMD java ${JAVA_OPTIONS} -DdependencyTrack.logging.level=${LOGGING_LEVEL} -jar ${WAR_FILENAME} -context ${CONTEXT}
+CMD java ${JAVA_OPTIONS} -DdependencyTrack.logging.level=${LOGGING_LEVEL} -jar ${WAR_FILENAME} -context ${CONTEXT} -port ${LISTEN_PORT}
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080

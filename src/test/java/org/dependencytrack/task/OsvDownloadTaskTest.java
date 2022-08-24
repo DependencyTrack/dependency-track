@@ -223,6 +223,14 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());
     }
 
+    @Test
+    public void testGetEcosystems() {
+
+        List<String> ecosystems = task.getEcosystems();
+        Assert.assertNotNull(ecosystems);
+        Assert.assertTrue(ecosystems.contains("Maven"));
+    }
+
     private void prepareJsonObject(String filePath) throws IOException {
         // parse OSV json file to Advisory object
         String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));

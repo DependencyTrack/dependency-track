@@ -17,6 +17,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
@@ -131,6 +132,22 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 vsList.addAll(existingVuln.getVulnerableSoftware());
             } else {
                 synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            }
+
+            if (advisory.getAliases() != null) {
+                for (int i=0; i<advisory.getAliases().size(); i++) {
+                    final String alias = advisory.getAliases().get(i);
+                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+                    vulnerabilityAlias.setOsvId(advisory.getId());
+                    if(alias.startsWith("CVE")) {
+                        vulnerabilityAlias.setCveId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    } else if (alias.startsWith("GHSA")) {
+                        vulnerabilityAlias.setGhsaId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    }
+                    //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
+                }
             }
 
             for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {

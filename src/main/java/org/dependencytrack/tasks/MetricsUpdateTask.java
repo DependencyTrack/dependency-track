@@ -19,7 +19,7 @@
 package org.dependencytrack.tasks;
 
 import alpine.common.logging.Logger;
-import alpine.common.util.ThreadUtil;
+import alpine.common.util.SystemUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.server.persistence.PersistenceManagerFactory;
@@ -37,6 +37,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.VulnerabilityUtil;
@@ -50,9 +51,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -81,9 +79,9 @@ public class MetricsUpdateTask implements Subscriber {
                 if (MetricsUpdateEvent.Type.PORTFOLIO == event.getType()) {
                     updatePortfolioMetrics();
                 } else if (MetricsUpdateEvent.Type.PROJECT == event.getType()) {
-                    updateProjectMetrics(((Project) event.getTarget()).getId());
+                    updateProjectMetrics((Project) event.getTarget());
                 } else if (MetricsUpdateEvent.Type.COMPONENT == event.getType()) {
-                    updateComponentMetrics(((Component) event.getTarget()).getId());
+                    updateComponentMetrics((Component) event.getTarget());
                 } else if (MetricsUpdateEvent.Type.VULNERABILITY == event.getType()) {
                     updateVulnerabilityMetrics();
                 }
@@ -100,56 +98,71 @@ public class MetricsUpdateTask implements Subscriber {
      * Portfolio metrics are the aggregate of all project metrics.
      * <p>
      * A forced refresh of all project metrics is performed by dispatching a {@link MetricsUpdateEvent}
-     * for each project in the portfolio. This is done in batches of size equal to a third of the worker pool
-     * thread count, as a means of applying back-pressure and not overloading the event bus.
+     * for each project in the portfolio. This is done in batches of size equal to the number of CPU cores,
+     * as a means of applying back-pressure and not clogging the event bus.
      */
     private void updatePortfolioMetrics() throws Exception {
         LOGGER.info("Executing portfolio metrics update");
         final var counters = new Counters();
 
-        final long batchSize = ThreadUtil.determineNumberOfWorkerThreads() / 3;
+        // The amount of projects to calculate metrics for concurrently.
+        // This should be low enough to not clog the event bus, and high
+        // enough to provide a benefit of faster metrics updates.
+        //
+        // There's also point of diminishing returns when it comes to concurrency.
+        // The database can only handle SO MUCH. At some point, more work in parallel
+        // will just cause each unit of work to take more time.
+        // CPU core count seems to be a nice middle ground for most systems.
+        final long batchSize = SystemUtil.getCpuCores();
 
         try (final var qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
 
-            LOGGER.debug("Fetching first " + batchSize + " projects");
-            List<Long> projectIds = getActiveProjects(pm, batchSize, 0);
+            LOGGER.trace("Fetching first " + batchSize + " projects");
+            List<Project> activeProjects = getActiveProjects(pm, batchSize, 0);
 
-            while (!projectIds.isEmpty()) {
-                final long firstId = projectIds.get(0);
-                final long lastId = projectIds.get(projectIds.size() - 1);
-                final int batchCount = projectIds.size();
+            while (!activeProjects.isEmpty()) {
+                final long firstId = activeProjects.get(0).getId();
+                final long lastId = activeProjects.get(activeProjects.size() - 1).getId();
+                final int batchCount = activeProjects.size();
 
-                final var latch = new CountDownLatch(batchCount);
+                final var countDownLatch = new CountDownLatch(batchCount);
 
-                for (final long projectId : projectIds) {
-                    final var project = new Project();
-                    project.setId(projectId);
+                for (final Project project : activeProjects) {
+                    final var eventProject = new Project();
+                    eventProject.setId(project.getId());
+                    eventProject.setUuid(project.getUuid());
 
-                    final var callbackEvent = new CallbackEvent(latch::countDown);
-                    Event.dispatch(new MetricsUpdateEvent(project)
+                    LOGGER.debug("Dispatching metrics update event for project " + project.getUuid());
+                    final var callbackEvent = new CallbackEvent(countDownLatch::countDown);
+                    Event.dispatch(new MetricsUpdateEvent(eventProject)
                             .onSuccess(callbackEvent)
                             .onFailure(callbackEvent));
                 }
 
                 LOGGER.debug("Waiting for metrics updates for projects " + firstId + "-" + lastId + " to complete");
-                if (!latch.await(1, TimeUnit.HOURS)) {
+                if (!countDownLatch.await(30, TimeUnit.MINUTES)) {
+                    // Depending on the system load, it may take a while for the queued events
+                    // to be processed. Depending on how large the projects are, it may take a
+                    // while for the processing of the respective event to complete.
+                    // It is unlikely though that either of these situations causes a block for
+                    // over 30 minutes.
                     LOGGER.warn("Updating metrics for projects " + firstId + "-" + lastId +
-                            "took longer than expected - Proceeding with potentially stale data");
+                            " took longer than expected (30m); Proceeding with potentially stale data");
                 }
                 LOGGER.debug("Completed metrics updates for projects " + firstId + "-" + lastId);
 
-                for (final long projectId : projectIds) {
-                    LOGGER.debug("Processing latest metrics for project " + projectId);
+                for (final Project project : activeProjects) {
+                    LOGGER.debug("Processing latest metrics for project " + project.getUuid());
                     try (final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class)) {
                         query.setFilter("project.id == :projectId");
                         query.setOrdering("lastOccurrence desc");
-                        query.setParameters(projectId);
+                        query.setParameters(project.getId());
                         query.setRange(0, 1);
 
                         final ProjectMetrics metrics = query.executeUnique();
                         if (metrics == null) {
-                            LOGGER.debug("No metrics found for project " + projectId + " - skipping");
+                            LOGGER.debug("No metrics found for project " + project.getUuid() + " - skipping");
                             continue;
                         }
 
@@ -191,8 +204,8 @@ public class MetricsUpdateTask implements Subscriber {
                     }
                 }
 
-                LOGGER.debug("Fetching next " + batchSize + " projects");
-                projectIds = getActiveProjects(pm, batchSize, projectIds.get(projectIds.size() - 1));
+                LOGGER.trace("Fetching next " + batchSize + " projects");
+                activeProjects = getActiveProjects(pm, batchSize, lastId);
             }
         }
 
@@ -288,81 +301,74 @@ public class MetricsUpdateTask implements Subscriber {
      * <p>
      * Project metrics are the aggregate of all components within a project.
      *
-     * @param projectId ID of the project to update metrics for
-     * @return A {@link Counters} instance resembling the calculated metrics
+     * @param project {@link Project} of the project to update metrics for
      */
-    private Counters updateProjectMetrics(final long projectId) throws Exception {
+    private void updateProjectMetrics(final Project project) throws Exception {
         final var counters = new Counters();
 
-        final UUID projectUuid;
-        final List<Long> componentIds;
-        try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
-            LOGGER.debug("Fetching UUID for project with ID " + projectId);
-            projectUuid = getProjectUuid(pm, projectId)
-                    .orElseThrow(() -> new NoSuchElementException("Project with ID " + projectId + " does not exist"));
-            LOGGER.info("Executing metrics update for project " + projectUuid);
+        try (final QueryManager qm = new QueryManager()) {
+            final PersistenceManager pm = qm.getPersistenceManager();
 
-            LOGGER.debug("Fetching components for project " + projectUuid);
-            componentIds = getComponents(pm, projectId);
-            LOGGER.debug("Metrics update for project " + projectUuid + " will include " + componentIds.size() + " components");
-        }
+            LOGGER.trace("Fetching first components page for project " + project.getUuid());
+            List<Component> components = getComponents(pm, project, 0);
 
-        for (final long componentId : componentIds) {
-            final Counters componentCounters;
-            try {
-                componentCounters = updateComponentMetrics(componentId);
-            } catch (NoSuchElementException e) {
-                LOGGER.warn("Couldn't update component metrics because the component was not found." +
-                        "This typically happens when the component or the project is was associated with " +
-                        "was deleted after the metrics update task started.", e);
-                continue;
-            } catch (Exception e) {
-                LOGGER.error("An unexpected error occurred while updating component metrics", e);
-                continue;
+            while (!components.isEmpty()) {
+                for (final Component component : components) {
+                    final Counters componentCounters;
+                    try {
+                        componentCounters = updateComponentMetrics(component);
+                    } catch (Exception e) {
+                        LOGGER.error("An unexpected error occurred while updating metrics of component " + component.getUuid(), e);
+                        continue;
+                    }
+
+                    counters.critical += componentCounters.critical;
+                    counters.high += componentCounters.high;
+                    counters.medium += componentCounters.medium;
+                    counters.low += componentCounters.low;
+                    counters.unassigned += componentCounters.unassigned;
+                    counters.vulnerabilities += componentCounters.vulnerabilities;
+
+                    counters.findingsTotal += componentCounters.findingsTotal;
+                    counters.findingsAudited += componentCounters.findingsAudited;
+                    counters.findingsUnaudited += componentCounters.findingsUnaudited;
+                    counters.suppressions += componentCounters.suppressions;
+                    counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+                    counters.components++;
+                    if (componentCounters.vulnerabilities > 0) {
+                        counters.vulnerableComponents += 1;
+                    }
+
+                    counters.policyViolationsFail += componentCounters.policyViolationsFail;
+                    counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
+                    counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
+                    counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
+                    counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
+                    counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;
+                    counters.policyViolationsSecurityTotal += componentCounters.policyViolationsSecurityTotal;
+                    counters.policyViolationsSecurityAudited += componentCounters.policyViolationsSecurityAudited;
+                    counters.policyViolationsSecurityUnaudited += componentCounters.policyViolationsSecurityUnaudited;
+                    counters.policyViolationsLicenseTotal += componentCounters.policyViolationsLicenseTotal;
+                    counters.policyViolationsLicenseAudited += componentCounters.policyViolationsLicenseAudited;
+                    counters.policyViolationsLicenseUnaudited += componentCounters.policyViolationsLicenseUnaudited;
+                    counters.policyViolationsOperationalTotal += componentCounters.policyViolationsOperationalTotal;
+                    counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
+                    counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
+                }
+
+                LOGGER.trace("Fetching next components page for project " + project.getUuid());
+                components = getComponents(pm, project, components.get(components.size() - 1).getId());
             }
-
-            counters.critical += componentCounters.critical;
-            counters.high += componentCounters.high;
-            counters.medium += componentCounters.medium;
-            counters.low += componentCounters.low;
-            counters.unassigned += componentCounters.unassigned;
-            counters.vulnerabilities += componentCounters.vulnerabilities;
-
-            counters.findingsTotal += componentCounters.findingsTotal;
-            counters.findingsAudited += componentCounters.findingsAudited;
-            counters.findingsUnaudited += componentCounters.findingsUnaudited;
-            counters.suppressions += componentCounters.suppressions;
-            counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-            counters.components++;
-            if (componentCounters.vulnerabilities > 0) {
-                counters.vulnerableComponents += 1;
-            }
-
-            counters.policyViolationsFail += componentCounters.policyViolationsFail;
-            counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
-            counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
-            counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
-            counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
-            counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;
-            counters.policyViolationsSecurityTotal += componentCounters.policyViolationsSecurityTotal;
-            counters.policyViolationsSecurityAudited += componentCounters.policyViolationsSecurityAudited;
-            counters.policyViolationsSecurityUnaudited += componentCounters.policyViolationsSecurityUnaudited;
-            counters.policyViolationsLicenseTotal += componentCounters.policyViolationsLicenseTotal;
-            counters.policyViolationsLicenseAudited += componentCounters.policyViolationsLicenseAudited;
-            counters.policyViolationsLicenseUnaudited += componentCounters.policyViolationsLicenseUnaudited;
-            counters.policyViolationsOperationalTotal += componentCounters.policyViolationsOperationalTotal;
-            counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
-            counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
         }
 
         try (final var qm = new QueryManager()) {
-            final Project project = qm.getObjectById(Project.class, projectId);
+            final Project actualProject = qm.getObjectById(Project.class, project.getId());
 
             Transaction trx = qm.getPersistenceManager().currentTransaction();
             try {
                 trx.begin();
-                final ProjectMetrics latestMetrics = qm.getMostRecentProjectMetrics(project);
+                final ProjectMetrics latestMetrics = qm.getMostRecentProjectMetrics(actualProject);
                 if (latestMetrics != null
                         && latestMetrics.getCritical() == counters.critical
                         && latestMetrics.getHigh() == counters.high
@@ -392,12 +398,12 @@ public class MetricsUpdateTask implements Subscriber {
                         && latestMetrics.getPolicyViolationsOperationalUnaudited() == counters.policyViolationsOperationalUnaudited
                         && latestMetrics.getComponents() == counters.components
                         && latestMetrics.getVulnerableComponents() == counters.vulnerableComponents) {
-                    LOGGER.debug("Metrics of project " + projectUuid + " did not change");
+                    LOGGER.debug("Metrics of project " + project.getUuid() + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
-                    LOGGER.debug("Metrics of project " + projectUuid + " changed");
+                    LOGGER.debug("Metrics of project " + project.getUuid() + " changed");
                     final var metrics = new ProjectMetrics();
-                    metrics.setProject(project);
+                    metrics.setProject(actualProject);
                     metrics.setCritical(counters.critical);
                     metrics.setHigh(counters.high);
                     metrics.setMedium(counters.medium);
@@ -437,13 +443,13 @@ public class MetricsUpdateTask implements Subscriber {
                 }
             }
 
-            if (project.getLastInheritedRiskScore() == null ||
-                    project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
-                LOGGER.debug("Updating inherited risk score of project " + projectUuid);
+            if (actualProject.getLastInheritedRiskScore() == null ||
+                    actualProject.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
+                LOGGER.debug("Updating inherited risk score of project " + project.getUuid());
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
-                    project.setLastInheritedRiskScore(counters.inheritedRiskScore);
+                    actualProject.setLastInheritedRiskScore(counters.inheritedRiskScore);
                     trx.commit();
                 } finally {
                     if (trx.isActive()) {
@@ -453,27 +459,21 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.info("Completed metrics update for project " + projectUuid + " in " +
+        LOGGER.info("Completed metrics update for project " + project.getUuid() + " in " +
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
-        return counters;
     }
 
     /**
      * Perform metric updates on a specific component.
      *
-     * @param componentId ID of the component to update metrics for
+     * @param component ID of the component to update metrics for
      * @return A {@link Counters} instance resembling the calculated metrics
      */
-    private Counters updateComponentMetrics(final long componentId) throws Exception {
+    private Counters updateComponentMetrics(final Component component) throws Exception {
         final var counters = new Counters();
-        final UUID componentUuid;
 
         try (final PersistenceManager pm = PersistenceManagerFactory.createPersistenceManager()) {
-            componentUuid = getComponentUuid(pm, componentId)
-                    .orElseThrow(() -> new NoSuchElementException("Component with ID " + componentId + " does not exist"));
-            LOGGER.debug("Executing metrics update for component " + componentUuid);
-
-            for (final VulnerabilityProjection vulnerability : getVulnerabilities(pm, componentId)) {
+            for (final VulnerabilityProjection vulnerability : getVulnerabilities(pm, component)) {
                 counters.vulnerabilities++;
 
                 // Replicate the behavior of Vulnerability#getSeverity
@@ -493,12 +493,12 @@ public class MetricsUpdateTask implements Subscriber {
                 }
             }
             counters.findingsTotal = toIntExact(counters.vulnerabilities);
-            counters.findingsAudited = toIntExact(getTotalAuditedFindings(pm, componentId));
+            counters.findingsAudited = toIntExact(getTotalAuditedFindings(pm, component));
             counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
-            counters.suppressions = toIntExact(getTotalSuppressedFindings(pm, componentId));
+            counters.suppressions = toIntExact(getTotalSuppressedFindings(pm, component));
             counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
 
-            for (final PolicyViolationProjection violation : getPolicyViolations(pm, componentId)) {
+            for (final PolicyViolationProjection violation : getPolicyViolations(pm, component)) {
                 counters.policyViolationsTotal++;
 
                 switch (PolicyViolation.Type.valueOf(violation.type)) {
@@ -514,15 +514,15 @@ public class MetricsUpdateTask implements Subscriber {
                 }
             }
             if (counters.policyViolationsLicenseTotal > 0) {
-                counters.policyViolationsLicenseAudited = toIntExact(getTotalAuditedPolicyViolations(pm, componentId, PolicyViolation.Type.LICENSE));
+                counters.policyViolationsLicenseAudited = toIntExact(getTotalAuditedPolicyViolations(pm, component, PolicyViolation.Type.LICENSE));
                 counters.policyViolationsLicenseUnaudited = counters.policyViolationsLicenseTotal - counters.policyViolationsLicenseAudited;
             }
             if (counters.policyViolationsOperationalTotal > 0) {
-                counters.policyViolationsOperationalAudited = toIntExact(getTotalAuditedPolicyViolations(pm, componentId, PolicyViolation.Type.OPERATIONAL));
+                counters.policyViolationsOperationalAudited = toIntExact(getTotalAuditedPolicyViolations(pm, component, PolicyViolation.Type.OPERATIONAL));
                 counters.policyViolationsOperationalUnaudited = counters.policyViolationsOperationalTotal - counters.policyViolationsOperationalAudited;
             }
             if (counters.policyViolationsSecurityTotal > 0) {
-                counters.policyViolationsSecurityAudited = toIntExact(getTotalAuditedPolicyViolations(pm, componentId, PolicyViolation.Type.SECURITY));
+                counters.policyViolationsSecurityAudited = toIntExact(getTotalAuditedPolicyViolations(pm, component, PolicyViolation.Type.SECURITY));
                 counters.policyViolationsSecurityUnaudited = counters.policyViolationsSecurityTotal - counters.policyViolationsSecurityAudited;
             }
             counters.policyViolationsAudited = counters.policyViolationsLicenseAudited +
@@ -532,12 +532,12 @@ public class MetricsUpdateTask implements Subscriber {
         }
 
         try (final var qm = new QueryManager()) {
-            final Component component = qm.getObjectById(Component.class, componentId);
+            final Component actualComponent = qm.getObjectById(Component.class, component.getId());
 
             Transaction trx = qm.getPersistenceManager().currentTransaction();
             try {
                 trx.begin();
-                final DependencyMetrics latestMetrics = qm.getMostRecentDependencyMetrics(component);
+                final DependencyMetrics latestMetrics = qm.getMostRecentDependencyMetrics(actualComponent);
                 if (latestMetrics != null
                         && latestMetrics.getCritical() == counters.critical
                         && latestMetrics.getHigh() == counters.high
@@ -565,13 +565,13 @@ public class MetricsUpdateTask implements Subscriber {
                         && latestMetrics.getPolicyViolationsOperationalTotal() == counters.policyViolationsOperationalTotal
                         && latestMetrics.getPolicyViolationsOperationalAudited() == counters.policyViolationsOperationalAudited
                         && latestMetrics.getPolicyViolationsOperationalUnaudited() == counters.policyViolationsOperationalUnaudited) {
-                    LOGGER.debug("Metrics of component " + componentUuid + " did not change");
+                    LOGGER.debug("Metrics of component " + component.getUuid() + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
-                    LOGGER.debug("Metrics of component " + componentUuid + " changed");
+                    LOGGER.debug("Metrics of component " + component.getUuid() + " changed");
                     final var metrics = new DependencyMetrics();
-                    metrics.setComponent(component);
-                    metrics.setProject(component.getProject());
+                    metrics.setComponent(actualComponent);
+                    metrics.setProject(actualComponent.getProject());
                     metrics.setCritical(counters.critical);
                     metrics.setHigh(counters.high);
                     metrics.setMedium(counters.medium);
@@ -609,13 +609,13 @@ public class MetricsUpdateTask implements Subscriber {
                 }
             }
 
-            if (component.getLastInheritedRiskScore() == null ||
-                    component.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
-                LOGGER.debug("Updating inherited risk score of component " + componentUuid);
+            if (actualComponent.getLastInheritedRiskScore() == null ||
+                    actualComponent.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
+                LOGGER.debug("Updating inherited risk score of component " + component.getUuid());
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
-                    component.setLastInheritedRiskScore(counters.inheritedRiskScore);
+                    actualComponent.setLastInheritedRiskScore(counters.inheritedRiskScore);
                     trx.commit();
                 } finally {
                     if (trx.isActive()) {
@@ -625,7 +625,7 @@ public class MetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.debug("Completed metrics update for component " + componentUuid + " in " +
+        LOGGER.debug("Completed metrics update for component " + component.getUuid() + " in " +
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
         return counters;
     }
@@ -669,57 +669,52 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     /**
-     * Fetch IDs of active projects in pages of {@code limit}.
+     * Fetch {@link Project}s of active projects in pages of {@code limit}.
      * <p>
-     * In order to not load multiple thousands of objects at once, paging is used.
-     * The first call should provide a {@code lastId} of {@code 0}, subsequent calls
-     * are expected to provide the highest ID of the previously fetched page.
+     * Note: JDOQL instead of raw SQL is used, because LIMIT X / FETCH FIRST X ROWS ONLY clauses
+     * are implemented differently across RDBMS. DataNucleus will choose the correct clause for us.
      *
      * @param pm     The {@link  PersistenceManager} to use
      * @param limit  Maximum number of IDs to fetch
      * @param lastId Highest ID of the previously fetched page
-     * @return Up to {@code limit} project IDs
+     * @return Up to {@code limit} {@link Project}s
      * @throws Exception If the query could not be closed
      */
-    private List<Long> getActiveProjects(final PersistenceManager pm, final long limit, final long lastId) throws Exception {
+    private List<Project> getActiveProjects(final PersistenceManager pm, final long limit, final long lastId) throws Exception {
         try (final Query<?> query = pm.newQuery(Project.class)) {
             query.setFilter("id > :lastId");
             query.setOrdering("id asc");
             query.setParameters(lastId);
-            query.setResult("id");
+            query.setResult("id, uuid");
             query.range(0, limit);
-            return List.copyOf(query.executeResultList(Long.class));
+            return List.copyOf(query.executeResultList(Project.class));
         }
     }
 
-    private Optional<UUID> getProjectUuid(final PersistenceManager pm, final long projectId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, """
-                SELECT "UUID" FROM "PROJECT" WHERE "ID" = ?
-                """)) {
-            query.setParameters(projectId);
-            return Optional.ofNullable(query.executeResultUnique(String.class)).map(UUID::fromString);
+    /**
+     * Fetch {@link Component}s of a given {@link Project}s in pages of {@code 500}.
+     * <p>
+     * Note: JDOQL instead of raw SQL is used, because LIMIT X / FETCH FIRST X ROWS ONLY clauses
+     * are implemented differently across RDBMS. DataNucleus will choose the correct clause for us.
+     *
+     * @param pm      The {@link  PersistenceManager} to use
+     * @param project The {@link Project} to fetch {@link Component}s for
+     * @param lastId  Highest ID of the previously fetched page
+     * @return Up to {@code 500} {@link Component}s
+     * @throws Exception If the query could not be closed
+     */
+    private List<Component> getComponents(final PersistenceManager pm, final Project project, final long lastId) throws Exception {
+        try (final Query<?> query = pm.newQuery(Component.class)) {
+            query.setFilter("project.id == :projectId && id > :lastId");
+            query.setOrdering("id asc");
+            query.setParameters(project.getId(), lastId);
+            query.setResult("id, uuid");
+            query.range(0, 500);
+            return List.copyOf(query.executeResultList(Component.class));
         }
     }
 
-    private List<Long> getComponents(final PersistenceManager pm, final long projectId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, """
-                SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ?
-                """)) {
-            query.setParameters(projectId);
-            return List.copyOf(query.executeResultList(Long.class));
-        }
-    }
-
-    private Optional<UUID> getComponentUuid(final PersistenceManager pm, final long componentId) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, """
-                SELECT "UUID" FROM "COMPONENT" WHERE "ID" = ?
-                """)) {
-            query.setParameters(componentId);
-            return Optional.ofNullable(query.executeResultUnique(String.class)).map(UUID::fromString);
-        }
-    }
-
-    private List<VulnerabilityProjection> getVulnerabilities(final PersistenceManager pm, final long componentId) throws Exception {
+    private List<VulnerabilityProjection> getVulnerabilities(final PersistenceManager pm, final Component component) throws Exception {
         try (final Query<?> query = pm.newQuery(Query.SQL, """
                 SELECT
                     "VULNERABILITY"."SEVERITY",
@@ -735,12 +730,12 @@ public class MetricsUpdateTask implements Subscriber {
                     AND ("ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = ?)
                 ORDER BY "VULNERABILITY"."ID"
                 """)) {
-            query.setParameters(componentId, false);
+            query.setParameters(component.getId(), false);
             return List.copyOf(query.executeResultList(VulnerabilityProjection.class));
         }
     }
 
-    private long getTotalAuditedFindings(final PersistenceManager pm, final long componentId) throws Exception {
+    private long getTotalAuditedFindings(final PersistenceManager pm, final Component component) throws Exception {
         try (final Query<?> query = pm.newQuery(Query.SQL, """
                 SELECT COUNT(*) FROM "ANALYSIS"
                 WHERE "COMPONENT_ID" = ?
@@ -749,25 +744,25 @@ public class MetricsUpdateTask implements Subscriber {
                     AND "STATE" != ?
                     AND "STATE" != ?
                 """)) {
-            query.setParameters(componentId, false,
+            query.setParameters(component.getId(), false,
                     AnalysisState.NOT_SET.name(),
                     AnalysisState.IN_TRIAGE.name());
             return query.executeResultUnique(Long.class);
         }
     }
 
-    private long getTotalSuppressedFindings(final PersistenceManager pm, final long componentId) throws Exception {
+    private long getTotalSuppressedFindings(final PersistenceManager pm, final Component component) throws Exception {
         try (final Query<?> query = pm.newQuery(Query.SQL, """
                 SELECT COUNT(*) FROM "ANALYSIS"
                 WHERE "COMPONENT_ID" = ?
                     AND "SUPPRESSED" = ?
                 """)) {
-            query.setParameters(componentId, true);
+            query.setParameters(component.getId(), true);
             return query.executeResultUnique(Long.class);
         }
     }
 
-    private List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final long componentId) throws Exception {
+    private List<PolicyViolationProjection> getPolicyViolations(final PersistenceManager pm, final Component component) throws Exception {
         try (final Query<?> query = pm.newQuery(Query.SQL, """
                 SELECT "POLICYVIOLATION"."TYPE", "POLICY"."VIOLATIONSTATE"
                 FROM "POLICYVIOLATION"
@@ -779,12 +774,12 @@ public class MetricsUpdateTask implements Subscriber {
                 WHERE "POLICYVIOLATION"."COMPONENT_ID" = ?
                     AND ("VIOLATIONANALYSIS"."SUPPRESSED" IS NULL OR "VIOLATIONANALYSIS"."SUPPRESSED" = ?)
                 """)) {
-            query.setParameters(componentId, false);
+            query.setParameters(component.getId(), false);
             return List.copyOf(query.executeResultList(PolicyViolationProjection.class));
         }
     }
 
-    private long getTotalAuditedPolicyViolations(final PersistenceManager pm, final long componentId, final PolicyViolation.Type violationType) throws Exception {
+    private long getTotalAuditedPolicyViolations(final PersistenceManager pm, final Component component, final PolicyViolation.Type violationType) throws Exception {
         try (final Query<?> query = pm.newQuery(Query.SQL, """
                 SELECT COUNT(*) FROM "VIOLATIONANALYSIS"
                     INNER JOIN "POLICYVIOLATION" ON "POLICYVIOLATION"."ID" = "VIOLATIONANALYSIS"."POLICYVIOLATION_ID"
@@ -794,7 +789,7 @@ public class MetricsUpdateTask implements Subscriber {
                     AND "VIOLATIONANALYSIS"."STATE" IS NOT NULL
                     AND "VIOLATIONANALYSIS"."STATE" != ?
                 """)) {
-            query.setParameters(componentId, violationType.name(),
+            query.setParameters(component.getId(), violationType.name(),
                     false, ViolationAnalysisState.NOT_SET.name());
             return query.executeResultUnique(Long.class);
         }
@@ -803,9 +798,8 @@ public class MetricsUpdateTask implements Subscriber {
     /**
      * Fetch {@link VulnerabilityDateProjection}s in pages of {@code 500}.
      * <p>
-     * In order to not load multiple thousands of objects at once, paging is used.
-     * The first call should provide a {@code lastId} of {@code 0}, subsequent calls
-     * are expected to provide the highest ID of the previously fetched page.
+     * Note: JDOQL instead of raw SQL is used, because LIMIT X / FETCH FIRST X ROWS ONLY clauses
+     * are implemented differently across RDBMS. DataNucleus will choose the correct clause for us.
      *
      * @param pm     The {@link  PersistenceManager} to use
      * @param lastId Highest ID of the previously fetched page
@@ -813,7 +807,7 @@ public class MetricsUpdateTask implements Subscriber {
      * @throws Exception If the query could not be closed
      */
     private List<VulnerabilityDateProjection> getVulnerabilityDates(final PersistenceManager pm, final long lastId) throws Exception {
-        try (final Query<?> query = pm.newQuery(org.dependencytrack.model.Vulnerability.class)) {
+        try (final Query<?> query = pm.newQuery(Vulnerability.class)) {
             query.setFilter("id > :lastId");
             query.setOrdering("id ASC");
             query.setParameters(lastId);
@@ -824,7 +818,7 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     /**
-     * Projection of a policy violation that holds the information
+     * Projection of a {@link PolicyViolation} that holds the information
      * needed to calculate component metrics.
      *
      * @since 4.6.0
@@ -833,7 +827,7 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     /**
-     * Projection of a vulnerability that contains the information
+     * Projection of a {@link Vulnerability} that contains the information
      * needed to calculate component metrics.
      *
      * @since 4.6.0
@@ -842,7 +836,7 @@ public class MetricsUpdateTask implements Subscriber {
     }
 
     /**
-     * Projection of a vulnerability that holds the information
+     * Projection of a {@link Vulnerability} that holds the information
      * needed to calculate vulnerabilities metrics.
      *
      * @since 4.6.0

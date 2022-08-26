@@ -27,6 +27,9 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
 /**
+ * A {@link Subscriber} task that evaluates whether components qualify for
+ * a {@link org.dependencytrack.notification.NotificationGroup#NEW_VULNERABLE_DEPENDENCY} notification.
+ *
  * @since 4.6.0
  */
 public class NewVulnerableDependencyAnalysisTask implements Subscriber {
@@ -35,10 +38,8 @@ public class NewVulnerableDependencyAnalysisTask implements Subscriber {
 
     @Override
     public void inform(final Event e) {
-        if (e instanceof NewVulnerableDependencyAnalysisEvent) {
-            final var event = (NewVulnerableDependencyAnalysisEvent) e;
-
-            for (Component component : event.getComponents()) {
+        if (e instanceof final NewVulnerableDependencyAnalysisEvent event) {
+            for (Component component : event.components()) {
                 try (final var qm = new QueryManager()) {
                     component = qm.getObjectById(Component.class, component.getId());
                     LOGGER.debug("Analyzing notification criteria for component " + component.getUuid());

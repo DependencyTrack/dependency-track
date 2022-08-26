@@ -25,18 +25,20 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * Defines an {@link Event} triggered when one or more new components have been added to a project.
+ * <p>
+ * The main purpose of this event is the delayed evaluation of notification criteria
+ * for the {@link org.dependencytrack.notification.NotificationGroup#NEW_VULNERABLE_DEPENDENCY} group.@
+ *
  * @since 4.6.0
  */
-public class NewVulnerableDependencyAnalysisEvent implements Event {
+public record NewVulnerableDependencyAnalysisEvent(List<Component> components) implements Event {
 
-    private final List<Component> components;
-
+    /**
+     * @param components A {@link List} of {@link Component}s that are considered to be new
+     */
     public NewVulnerableDependencyAnalysisEvent(final List<Component> components) {
-        this.components = Objects.requireNonNull(components, "components must not be null");
-    }
-
-    public List<Component> getComponents() {
-        return components;
+        this.components = Objects.requireNonNull(components);
     }
 
 }

@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.tasks;
+package org.dependencytrack.tasks.metrics;
 
 import alpine.event.framework.EventService;
 import alpine.persistence.JdoProperties;
@@ -25,7 +25,9 @@ import org.apache.commons.lang3.SystemUtils;
 import org.datanucleus.PropertyNames;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.dependencytrack.event.CallbackEvent;
-import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
+import org.dependencytrack.event.ProjectMetricsUpdateEvent;
+import org.dependencytrack.event.VulnerabilityMetricsUpdateEvent;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
@@ -38,6 +40,7 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.tasks.CallbackTask;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -66,32 +69,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
 /**
- * Integration test suite to verify that {@link MetricsUpdateTask}
+ * Integration test suite to verify that foo
  * works with all external databases we support. Necessary because we
  * make use of native SQL queries.
  * <p>
  * The tests are not supposed to be super thorough, that's what
- * {@link MetricsUpdateTaskTest} is for.
+ * bar is for.
  *
  * @since 4.6.0
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-        MetricsUpdateTaskIT.MsSqlServerIT.class,
-        MetricsUpdateTaskIT.MySqlIT.class,
-        MetricsUpdateTaskIT.PostgreSqlIT.class,
+        MetricsUpdateTasksIT.MsSqlServerIT.class,
+        MetricsUpdateTasksIT.MySqlIT.class,
+        MetricsUpdateTasksIT.PostgreSqlIT.class,
 })
-public class MetricsUpdateTaskIT {
+public class MetricsUpdateTasksIT {
 
     @BeforeClass
     public static void setUpClass() {
-        EventService.getInstance().subscribe(MetricsUpdateEvent.class, MetricsUpdateTask.class);
+        EventService.getInstance().subscribe(ProjectMetricsUpdateEvent.class, ProjectMetricsUpdateTask.class);
         EventService.getInstance().subscribe(CallbackEvent.class, CallbackTask.class);
     }
 
     @AfterClass
     public static void tearDownClass() {
-        EventService.getInstance().unsubscribe(MetricsUpdateTask.class);
+        EventService.getInstance().unsubscribe(ProjectMetricsUpdateTask.class);
         EventService.getInstance().unsubscribe(CallbackTask.class);
     }
 
@@ -215,7 +218,7 @@ public class MetricsUpdateTaskIT {
                 qm.makeViolationAnalysis(component, policyViolation, ViolationAnalysisState.APPROVED, false);
             }
 
-            new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+            new PortfolioMetricsUpdateTask().inform(new PortfolioMetricsUpdateEvent());
 
             try (final var qm = new QueryManager()) {
                 final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
@@ -269,7 +272,7 @@ public class MetricsUpdateTaskIT {
                 }
             }
 
-            new MetricsUpdateTask().inform(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY));
+            new VulnerabilityMetricsUpdateTask().inform(new VulnerabilityMetricsUpdateEvent());
 
             try (final var qm = new QueryManager()) {
                 final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();

@@ -39,7 +39,9 @@ jobs:
           cache: 'maven'
 
       - name: Execute unit tests
-        run: mvn -P enhance clean verify
+        run: |-
+          mvn clean
+          mvn test -P enhance
 
       - name: Publish test coverage
         if: ${{ github.ref == 'refs/heads/master' && contains(github.repository, 'DependencyTrack/') }}

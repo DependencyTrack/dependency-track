@@ -1,4 +1,0 @@
-# Applies the necessary sql_mode customizations required by Dependency-Track
-# See https://docs.dependencytrack.org/getting-started/database-support/
-[mysqld]
-sql_mode="ANSI_QUOTES,STRICT_TRANS_TABLES,ONLY_FULL_GROUP_BY,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"

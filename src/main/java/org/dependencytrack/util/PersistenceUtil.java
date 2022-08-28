@@ -22,6 +22,8 @@ import javax.jdo.JDOHelper;
 import javax.jdo.spi.PersistenceCapable;
 
 /**
+ * Utility class for various persistence-related operations.
+ *
  * @since 4.6.0
  */
 public final class PersistenceUtil {

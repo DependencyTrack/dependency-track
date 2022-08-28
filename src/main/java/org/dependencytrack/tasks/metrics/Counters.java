@@ -27,6 +27,10 @@ import org.dependencytrack.model.ProjectMetrics;
 import java.util.Date;
 
 /**
+ * A utility class holding various counter variables.
+ * <p>
+ * It is used during metrics calculations to keep track of metric values.
+ *
  * @since 4.6.0
  */
 final class Counters {
@@ -40,6 +44,7 @@ final class Counters {
             policyViolationsSecurityTotal, policyViolationsSecurityAudited, policyViolationsSecurityUnaudited,
             policyViolationsLicenseTotal, policyViolationsLicenseAudited, policyViolationsLicenseUnaudited,
             policyViolationsOperationalTotal, policyViolationsOperationalAudited, policyViolationsOperationalUnaudited;
+
     final Date measuredAt;
 
     Counters() {

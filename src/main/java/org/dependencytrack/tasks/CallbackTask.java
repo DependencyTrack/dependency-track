@@ -13,8 +13,7 @@ public class CallbackTask implements Subscriber {
 
     @Override
     public void inform(final Event e) {
-        if (e instanceof CallbackEvent) {
-            final var event = (CallbackEvent) e;
+        if (e instanceof final CallbackEvent event) {
             event.getCallback().run();
         }
     }

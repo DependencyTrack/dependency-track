@@ -19,9 +19,12 @@
 package org.dependencytrack.event;
 
 import alpine.event.framework.AbstractChainableEvent;
+import alpine.event.framework.Event;
 import org.dependencytrack.model.Project;
 
 /**
+ * Defines an {@link Event} used to trigger {@link Project} metrics updates.
+ *
  * @since 4.6.0
  */
 public class ProjectMetricsUpdateEvent extends AbstractChainableEvent {

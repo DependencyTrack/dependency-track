@@ -48,6 +48,8 @@ import java.util.UUID;
 import static java.lang.Math.toIntExact;
 
 /**
+ * A {@link Subscriber} task that updates {@link Component} metrics.
+ *
  * @since 4.6.0
  */
 public class ComponentMetricsUpdateTask implements Subscriber {

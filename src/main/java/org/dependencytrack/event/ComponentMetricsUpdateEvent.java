@@ -22,6 +22,8 @@ import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
 
 /**
+ * Defines an {@link Event} used to trigger {@link Component} metrics updates.
+ *
  * @since 4.6.0
  */
 public record ComponentMetricsUpdateEvent(Component component) implements Event {

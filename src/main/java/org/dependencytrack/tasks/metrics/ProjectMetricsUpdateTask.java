@@ -22,6 +22,8 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 /**
+ * A {@link Subscriber} task that updates {@link Project} metrics.
+ *
  * @since 4.6.0
  */
 public class ProjectMetricsUpdateTask implements Subscriber {

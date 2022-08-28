@@ -18,11 +18,14 @@
  */
 package org.dependencytrack.event;
 
+import alpine.event.framework.Event;
 import alpine.event.framework.SingletonCapableEvent;
 
 import java.util.UUID;
 
 /**
+ * Defines an {@link Event} used to trigger portfolio metrics updates.
+ *
  * @since 4.6.0
  */
 public class PortfolioMetricsUpdateEvent extends SingletonCapableEvent {

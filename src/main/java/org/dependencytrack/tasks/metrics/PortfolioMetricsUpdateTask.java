@@ -42,6 +42,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * A {@link Subscriber} task that updates portfolio metrics.
+ *
  * @since 4.6.0
  */
 public class PortfolioMetricsUpdateTask implements Subscriber {

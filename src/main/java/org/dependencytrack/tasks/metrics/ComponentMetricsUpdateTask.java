@@ -30,18 +30,16 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyViolation;
-import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.PersistenceUtil;
-import org.dependencytrack.util.VulnerabilityUtil;
 
 import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -86,18 +84,10 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                 throw new NoSuchElementException("Component " + componentUuid + " does not exist");
             }
 
-            for (final VulnerabilityProjection vulnerability : getVulnerabilities(pm, component)) {
+            for (final Vulnerability vulnerability : getVulnerabilities(pm, component)) {
                 counters.vulnerabilities++;
 
-                // Replicate the behavior of Vulnerability#getSeverity
-                final Severity severity;
-                if (vulnerability.severity != null) {
-                    severity = Severity.valueOf(vulnerability.severity);
-                } else {
-                    severity = VulnerabilityUtil.getSeverity(vulnerability.cvssV2BaseScore, vulnerability.cvssV3BaseScore);
-                }
-
-                switch (severity) {
+                switch (vulnerability.getSeverity()) {
                     case CRITICAL -> counters.critical++;
                     case HIGH -> counters.high++;
                     case MEDIUM -> counters.medium++;
@@ -195,24 +185,22 @@ public class ComponentMetricsUpdateTask implements Subscriber {
         }
     }
 
-    private static List<VulnerabilityProjection> getVulnerabilities(final PersistenceManager pm, final Component component) throws Exception {
-        try (final Query<?> query = pm.newQuery(Query.SQL, """
-                SELECT
-                    "VULNERABILITY"."SEVERITY",
-                    "VULNERABILITY"."CVSSV2BASESCORE",
-                    "VULNERABILITY"."CVSSV3BASESCORE"
-                FROM "COMPONENTS_VULNERABILITIES"
-                    INNER JOIN "COMPONENT" ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
-                    INNER JOIN "VULNERABILITY" ON "VULNERABILITY"."ID" = "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID"
-                    LEFT JOIN "ANALYSIS"
-                        ON "ANALYSIS"."COMPONENT_ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
-                        AND "ANALYSIS"."VULNERABILITY_ID" = "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID"
-                WHERE "COMPONENTS_VULNERABILITIES"."COMPONENT_ID" = ?
-                    AND ("ANALYSIS"."SUPPRESSED" IS NULL OR "ANALYSIS"."SUPPRESSED" = ?)
-                ORDER BY "VULNERABILITY"."ID"
+    @SuppressWarnings("unchecked")
+    private static List<Vulnerability> getVulnerabilities(final PersistenceManager pm, final Component component) throws Exception {
+        // Using the JDO single-string syntax here because we need to pass the parameter
+        // of the outer query (the component) to the sub-query. For some reason that does
+        // not work with the declarative JDO API.
+        try (final Query<?> query = pm.newQuery(Query.JDOQL, """
+                SELECT FROM org.dependencytrack.model.Vulnerability
+                WHERE this.components.contains(:component)
+                    && (SELECT FROM org.dependencytrack.model.Analysis a
+                        WHERE a.component == :component
+                            && a.vulnerability == this
+                            && a.suppressed == true).isEmpty()
                 """)) {
-            query.setParameters(component.getId(), false);
-            return List.copyOf(query.executeResultList(VulnerabilityProjection.class));
+            query.setParameters(component);
+            query.getFetchPlan().setGroup(Vulnerability.FetchGroup.COMPONENT_METRICS.name());
+            return List.copyOf((List<Vulnerability>) query.executeList());
         }
     }
 
@@ -264,9 +252,6 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
     public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState) {
 
-    }
-
-    public record VulnerabilityProjection(String severity, BigDecimal cvssV2BaseScore, BigDecimal cvssV3BaseScore) {
     }
 
 }

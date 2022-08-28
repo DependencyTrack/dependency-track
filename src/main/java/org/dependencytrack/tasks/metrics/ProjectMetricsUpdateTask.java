@@ -10,12 +10,16 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.PersistenceUtil;
 
+import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 /**
  * @since 4.6.0
@@ -30,35 +34,38 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             try {
                 updateMetrics(event.getProject());
             } catch (Exception ex) {
-                LOGGER.error("An unexpected error occurred while updating project metrics");
+                LOGGER.error("An unexpected error occurred while updating project metrics", ex);
             }
         }
     }
 
     private void updateMetrics(Project project) throws Exception {
-        LOGGER.info("Executing metrics update for project " + project.getUuid());
+        PersistenceUtil.requireDetached(project);
+
+        // Take the UUID from the detached project at the very beginning
+        // to avoid DataNucleus from reaching out to the datastore every
+        // time the .getUuid() getter is called on the attached project.
+        final UUID projectUuid = project.getUuid();
+
+        LOGGER.info("Executing metrics update for project " + projectUuid);
         final var counters = new Counters();
 
         try (final QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
 
-            project = pm.getObjectById(Project.class, project.getId());
+            project = getProject(pm, project);
             if (project == null) {
-                LOGGER.warn("dfasdfgsdfgsdf");
-                return;
+                throw new NoSuchElementException("Project " + projectUuid + " does not exist");
             }
 
-            LOGGER.trace("Fetching first components page for project " + project.getUuid());
+            LOGGER.trace("Fetching first components page for project " + projectUuid);
             List<Component> components = seekComponents(pm, project, 0);
-            if (components.isEmpty()) {
-                LOGGER.warn("No components found for project " + project.getUuid());
-            }
 
             while (!components.isEmpty()) {
                 for (final Component component : components) {
                     final Counters componentCounters;
                     try {
-                        componentCounters = ComponentMetricsUpdateTask.updateMetrics(component);
+                        componentCounters = ComponentMetricsUpdateTask.updateMetrics(detachComponent(pm, component));
                     } catch (Exception ex) {
                         LOGGER.error("An unexpected error occurred while updating metrics of component " + component.getUuid(), ex);
                         continue;
@@ -99,7 +106,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
                 }
 
-                LOGGER.trace("Fetching next components page for project " + project.getUuid());
+                LOGGER.trace("Fetching next components page for project " + projectUuid);
                 final long lastId = components.get(components.size() - 1).getId();
                 components = seekComponents(pm, project, lastId);
             }
@@ -109,10 +116,10 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 trx.begin();
                 final ProjectMetrics latestMetrics = qm.getMostRecentProjectMetrics(project);
                 if (!counters.hasChanged(latestMetrics)) {
-                    LOGGER.debug("Metrics of project " + project.getUuid() + " did not change");
+                    LOGGER.debug("Metrics of project " + projectUuid + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
-                    LOGGER.debug("Metrics of project " + project.getUuid() + " changed");
+                    LOGGER.debug("Metrics of project " + projectUuid + " changed");
                     final ProjectMetrics metrics = counters.createProjectMetrics(project);
                     pm.makePersistent(metrics);
                 }
@@ -125,7 +132,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
 
             if (project.getLastInheritedRiskScore() == null ||
                     project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
-                LOGGER.debug("Updating inherited risk score of project " + project.getUuid());
+                LOGGER.debug("Updating inherited risk score of project " + projectUuid);
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
@@ -137,9 +144,18 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     }
                 }
             }
+        }
 
-            LOGGER.info("Completed metrics update for project " + project.getUuid() + " in " +
-                    DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
+        LOGGER.info("Completed metrics update for project " + projectUuid + " in " +
+                DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
+    }
+
+    private Project getProject(final PersistenceManager pm, final Project project) {
+        try {
+            pm.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
+            return pm.getObjectById(Project.class, project.getId());
+        } finally {
+            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
         }
     }
 
@@ -149,7 +165,17 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             query.setParameters(project, lastId);
             query.setOrdering("id asc");
             query.setRange(0, 500);
+            query.getFetchPlan().setGroup(Component.FetchGroup.METRICS.name());
             return List.copyOf(query.executeList());
+        }
+    }
+
+    private Component detachComponent(final PersistenceManager pm, final Component component) {
+        try {
+            pm.getFetchPlan().setGroup(Component.FetchGroup.METRICS.name());
+            return pm.detachCopy(component);
+        } finally {
+            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
         }
     }
 

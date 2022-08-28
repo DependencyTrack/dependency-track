@@ -32,6 +32,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
 
+import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
@@ -54,7 +55,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
             try {
                 updateMetrics();
             } catch (Exception ex) {
-                LOGGER.error("An unexpected error occurred while updating portfolio metrics");
+                LOGGER.error("An unexpected error occurred while updating portfolio metrics", ex);
             }
         }
     }
@@ -67,7 +68,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
             final PersistenceManager pm = qm.getPersistenceManager();
 
             LOGGER.trace("Fetching first " + BATCH_SIZE + " projects");
-            List<Project> activeProjects = seekActiveProjects(pm, BATCH_SIZE, 0);
+            List<Project> activeProjects = seekActiveProjects(pm, 0);
 
             while (!activeProjects.isEmpty()) {
                 final long firstId = activeProjects.get(0).getId();
@@ -79,7 +80,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 for (final Project project : activeProjects) {
                     LOGGER.debug("Dispatching metrics update event for project " + project.getUuid());
                     final var callbackEvent = new CallbackEvent(countDownLatch::countDown);
-                    Event.dispatch(new ProjectMetricsUpdateEvent(pm.detachCopy(project))
+                    Event.dispatch(new ProjectMetricsUpdateEvent(detachProject(pm, project))
                             .onSuccess(callbackEvent)
                             .onFailure(callbackEvent));
                 }
@@ -98,58 +99,51 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
                 for (final Project project : activeProjects) {
                     LOGGER.debug("Processing latest metrics for project " + project.getUuid());
-                    try (final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class)) {
-                        query.setFilter("project.id == :projectId");
-                        query.setOrdering("lastOccurrence desc");
-                        query.setParameters(project.getId());
-                        query.setRange(0, 1);
-
-                        final ProjectMetrics metrics = query.executeUnique();
-                        if (metrics == null) {
-                            LOGGER.debug("No metrics found for project " + project.getUuid() + " - skipping");
-                            continue;
-                        }
-
-                        counters.critical += metrics.getCritical();
-                        counters.high += metrics.getHigh();
-                        counters.medium += metrics.getMedium();
-                        counters.low += metrics.getLow();
-                        counters.unassigned += metrics.getUnassigned();
-                        counters.vulnerabilities += metrics.getVulnerabilities();
-
-                        counters.findingsTotal += metrics.getFindingsTotal();
-                        counters.findingsAudited += metrics.getFindingsAudited();
-                        counters.findingsUnaudited += metrics.getFindingsUnaudited();
-                        counters.suppressions += metrics.getSuppressed();
-                        counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                        counters.projects++;
-                        if (metrics.getVulnerabilities() > 0) {
-                            counters.vulnerableProjects++;
-                        }
-                        counters.components += metrics.getComponents();
-                        counters.vulnerableComponents += metrics.getVulnerableComponents();
-
-                        counters.policyViolationsFail += metrics.getPolicyViolationsFail();
-                        counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
-                        counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
-                        counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
-                        counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
-                        counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();
-                        counters.policyViolationsSecurityTotal += metrics.getPolicyViolationsSecurityTotal();
-                        counters.policyViolationsSecurityAudited += metrics.getPolicyViolationsSecurityAudited();
-                        counters.policyViolationsSecurityUnaudited += metrics.getPolicyViolationsSecurityUnaudited();
-                        counters.policyViolationsLicenseTotal += metrics.getPolicyViolationsLicenseTotal();
-                        counters.policyViolationsLicenseAudited += metrics.getPolicyViolationsLicenseAudited();
-                        counters.policyViolationsLicenseUnaudited += metrics.getPolicyViolationsLicenseUnaudited();
-                        counters.policyViolationsOperationalTotal += metrics.getPolicyViolationsOperationalTotal();
-                        counters.policyViolationsOperationalAudited += metrics.getPolicyViolationsOperationalAudited();
-                        counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
+                    final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
+                    if (metrics == null) {
+                        LOGGER.debug("No metrics found for project " + project.getUuid() + " - skipping");
+                        continue;
                     }
+
+                    counters.critical += metrics.getCritical();
+                    counters.high += metrics.getHigh();
+                    counters.medium += metrics.getMedium();
+                    counters.low += metrics.getLow();
+                    counters.unassigned += metrics.getUnassigned();
+                    counters.vulnerabilities += metrics.getVulnerabilities();
+
+                    counters.findingsTotal += metrics.getFindingsTotal();
+                    counters.findingsAudited += metrics.getFindingsAudited();
+                    counters.findingsUnaudited += metrics.getFindingsUnaudited();
+                    counters.suppressions += metrics.getSuppressed();
+                    counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+                    counters.projects++;
+                    if (metrics.getVulnerabilities() > 0) {
+                        counters.vulnerableProjects++;
+                    }
+                    counters.components += metrics.getComponents();
+                    counters.vulnerableComponents += metrics.getVulnerableComponents();
+
+                    counters.policyViolationsFail += metrics.getPolicyViolationsFail();
+                    counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
+                    counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
+                    counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
+                    counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
+                    counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();
+                    counters.policyViolationsSecurityTotal += metrics.getPolicyViolationsSecurityTotal();
+                    counters.policyViolationsSecurityAudited += metrics.getPolicyViolationsSecurityAudited();
+                    counters.policyViolationsSecurityUnaudited += metrics.getPolicyViolationsSecurityUnaudited();
+                    counters.policyViolationsLicenseTotal += metrics.getPolicyViolationsLicenseTotal();
+                    counters.policyViolationsLicenseAudited += metrics.getPolicyViolationsLicenseAudited();
+                    counters.policyViolationsLicenseUnaudited += metrics.getPolicyViolationsLicenseUnaudited();
+                    counters.policyViolationsOperationalTotal += metrics.getPolicyViolationsOperationalTotal();
+                    counters.policyViolationsOperationalAudited += metrics.getPolicyViolationsOperationalAudited();
+                    counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
                 }
 
                 LOGGER.trace("Fetching next " + BATCH_SIZE + " projects");
-                activeProjects = seekActiveProjects(pm, BATCH_SIZE, lastId);
+                activeProjects = seekActiveProjects(pm, lastId);
             }
 
             final Transaction trx = pm.currentTransaction();
@@ -170,19 +164,29 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     trx.rollback();
                 }
             }
-
-            LOGGER.info("Completed portfolio metrics update in " +
-                    DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
         }
+
+        LOGGER.info("Completed portfolio metrics update in " +
+                DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 
-    private List<Project> seekActiveProjects(final PersistenceManager pm, final long limit, final long lastId) throws Exception {
+    private List<Project> seekActiveProjects(final PersistenceManager pm, final long lastId) throws Exception {
         try (final Query<Project> query = pm.newQuery(Project.class)) {
             query.setFilter("(active == null || active == true) && id > :lastId");
             query.setOrdering("id asc");
             query.setParameters(lastId);
-            query.range(0, limit);
+            query.range(0, BATCH_SIZE);
+            query.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
             return List.copyOf(query.executeList());
+        }
+    }
+
+    private Project detachProject(final PersistenceManager pm, final Project project) {
+        try {
+            pm.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
+            return pm.detachCopy(project);
+        } finally {
+            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
         }
     }
 

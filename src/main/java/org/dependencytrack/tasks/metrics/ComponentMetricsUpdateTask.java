@@ -59,7 +59,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
             try {
                 updateMetrics(event.uuid());
             } catch (Exception ex) {
-                LOGGER.error("An unexpected error occurred while updating component metrics", ex);
+                LOGGER.error("An unexpected error occurred while updating metrics of component " + event.uuid(), ex);
             }
         }
     }

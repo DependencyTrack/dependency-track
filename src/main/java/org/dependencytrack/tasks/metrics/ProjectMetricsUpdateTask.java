@@ -51,7 +51,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             try {
                 updateMetrics(event.getUuid());
             } catch (Exception ex) {
-                LOGGER.error("An unexpected error occurred while updating project metrics", ex);
+                LOGGER.error("An unexpected error occurred while updating metrics for project " + event.getUuid(), ex);
             }
         }
     }

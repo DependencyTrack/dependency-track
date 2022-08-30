@@ -22,6 +22,8 @@ import alpine.event.framework.AbstractChainableEvent;
 import alpine.event.framework.Event;
 import org.dependencytrack.model.Project;
 
+import java.util.UUID;
+
 /**
  * Defines an {@link Event} used to trigger {@link Project} metrics updates.
  *
@@ -29,14 +31,17 @@ import org.dependencytrack.model.Project;
  */
 public class ProjectMetricsUpdateEvent extends AbstractChainableEvent {
 
-    private final Project project;
+    private final UUID uuid;
 
-    public ProjectMetricsUpdateEvent(final Project project) {
-        this.project = project;
+    /**
+     * @param uuid {@link UUID} of the {@link Project} to update metrics for
+     */
+    public ProjectMetricsUpdateEvent(final UUID uuid) {
+        this.uuid = uuid;
     }
 
-    public Project getProject() {
-        return project;
+    public UUID getUuid() {
+        return uuid;
     }
-
+    
 }

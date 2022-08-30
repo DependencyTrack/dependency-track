@@ -32,10 +32,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
 
-import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -68,6 +66,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
         try (final var qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
+            pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
             LOGGER.trace("Fetching first " + BATCH_SIZE + " projects");
             List<Project> activeProjects = seekActiveProjects(pm, 0);
@@ -82,20 +81,20 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 for (final Project project : activeProjects) {
                     LOGGER.debug("Dispatching metrics update event for project " + project.getUuid());
                     final var callbackEvent = new CallbackEvent(countDownLatch::countDown);
-                    Event.dispatch(new ProjectMetricsUpdateEvent(detachProject(pm, project))
+                    Event.dispatch(new ProjectMetricsUpdateEvent(project.getUuid())
                             .onSuccess(callbackEvent)
                             .onFailure(callbackEvent));
                 }
 
                 LOGGER.debug("Waiting for metrics updates for projects " + firstId + "-" + lastId + " to complete");
-                if (!countDownLatch.await(1, TimeUnit.MINUTES)) {
+                if (!countDownLatch.await(15, TimeUnit.MINUTES)) {
                     // Depending on the system load, it may take a while for the queued events
                     // to be processed. Depending on how large the projects are, it may take a
                     // while for the processing of the respective event to complete.
                     // It is unlikely though that either of these situations causes a block for
-                    // over 30 minutes.
+                    // over 15 minutes.
                     LOGGER.warn("Updating metrics for projects " + firstId + "-" + lastId +
-                            " took longer than expected (30m); Proceeding with potentially stale data");
+                            " took longer than expected (15m); Proceeding with potentially stale data");
                 }
                 LOGGER.debug("Completed metrics updates for projects " + firstId + "-" + lastId);
 
@@ -148,9 +147,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 activeProjects = seekActiveProjects(pm, lastId);
             }
 
-            final Transaction trx = pm.currentTransaction();
-            try {
-                trx.begin();
+            qm.runInTransaction(() -> {
                 final PortfolioMetrics latestMetrics = qm.getMostRecentPortfolioMetrics();
                 if (!counters.hasChanged(latestMetrics)) {
                     LOGGER.debug("Metrics of portfolio component did not change");
@@ -160,12 +157,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     final PortfolioMetrics metrics = counters.createPortfolioMetrics();
                     pm.makePersistent(metrics);
                 }
-                trx.commit();
-            } finally {
-                if (trx.isActive()) {
-                    trx.rollback();
-                }
-            }
+            });
         }
 
         LOGGER.info("Completed portfolio metrics update in " +
@@ -180,15 +172,6 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
             query.range(0, BATCH_SIZE);
             query.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
             return List.copyOf(query.executeList());
-        }
-    }
-
-    private Project detachProject(final PersistenceManager pm, final Project project) {
-        try {
-            pm.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
-            return pm.detachCopy(project);
-        } finally {
-            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
         }
     }
 

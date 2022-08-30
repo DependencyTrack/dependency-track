@@ -262,7 +262,7 @@ public class MetricsResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    Event.dispatch(new ProjectMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+                    Event.dispatch(new ProjectMetricsUpdateEvent(project.getUuid()));
                     return Response.ok().build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
@@ -375,7 +375,7 @@ public class MetricsResource extends AlpineResource {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 if (qm.hasAccess(super.getPrincipal(), component.getProject())) {
-                    Event.dispatch(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+                    Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                     return Response.ok().build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();

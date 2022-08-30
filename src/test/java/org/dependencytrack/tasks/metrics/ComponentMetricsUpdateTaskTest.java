@@ -49,7 +49,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         component.setName("acme-lib");
         component = qm.createComponent(component, false);
 
-        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
 
         final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
         assertThat(metrics.getCritical()).isZero();
@@ -95,13 +95,13 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         component = qm.createComponent(component, false);
 
         // Record initial project metrics
-        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
         final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
         assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
 
         // Run the task a second time, without any metric being changed
         final var beforeSecondRun = new Date();
-        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
 
         // Ensure that the lastOccurrence timestamp was correctly updated
         qm.getPersistenceManager().refresh(metrics);
@@ -146,7 +146,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         qm.addVulnerability(vulnSuppressed, component, AnalyzerIdentity.NONE);
         qm.makeAnalysis(component, vulnSuppressed, AnalysisState.FALSE_POSITIVE, null, null, null, true);
 
-        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
 
         final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
         assertThat(metrics.getCritical()).isZero();
@@ -202,7 +202,7 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
         final PolicyViolation suppressedViolation = createPolicyViolation(component, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
         qm.makeViolationAnalysis(component, suppressedViolation, ViolationAnalysisState.REJECTED, true);
 
-        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
 
         final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
         assertThat(metrics.getCritical()).isZero();

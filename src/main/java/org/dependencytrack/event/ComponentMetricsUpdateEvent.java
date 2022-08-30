@@ -21,10 +21,13 @@ package org.dependencytrack.event;
 import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
 
+import java.util.UUID;
+
 /**
  * Defines an {@link Event} used to trigger {@link Component} metrics updates.
  *
+ * @param uuid {@link UUID} of the {@link Component} to update metrics for
  * @since 4.6.0
  */
-public record ComponentMetricsUpdateEvent(Component component) implements Event {
+public record ComponentMetricsUpdateEvent(UUID uuid) implements Event {
 }

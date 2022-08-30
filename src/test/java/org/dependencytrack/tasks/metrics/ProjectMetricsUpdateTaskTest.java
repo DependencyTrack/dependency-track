@@ -44,7 +44,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
 
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
 
         final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
         assertThat(metrics.getComponents()).isZero();
@@ -87,13 +87,13 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         project = qm.createProject(project, List.of(), false);
 
         // Record initial project metrics
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
         final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
         assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
 
         // Run the task a second time, without any metric being changed
         final var beforeSecondRun = new Date();
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
 
         // Ensure that the lastOccurrence timestamp was correctly updated
         qm.getPersistenceManager().refresh(metrics);
@@ -136,7 +136,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         qm.addVulnerability(vuln, componentSuppressed, AnalyzerIdentity.NONE);
         qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
 
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
 
         final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
         assertThat(metrics.getComponents()).isEqualTo(3);
@@ -204,7 +204,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
         final var violationSuppressed = createPolicyViolation(componentSuppressed, Policy.ViolationState.INFO, PolicyViolation.Type.SECURITY);
         qm.makeViolationAnalysis(componentSuppressed, violationSuppressed, ViolationAnalysisState.REJECTED, true);
 
-        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(project)));
+        new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
 
         final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
         assertThat(metrics.getComponents()).isEqualTo(3);

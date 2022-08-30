@@ -28,12 +28,9 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.PersistenceUtil;
 
-import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -52,40 +49,34 @@ public class ProjectMetricsUpdateTask implements Subscriber {
     public void inform(final Event e) {
         if (e instanceof final ProjectMetricsUpdateEvent event) {
             try {
-                updateMetrics(event.getProject());
+                updateMetrics(event.getUuid());
             } catch (Exception ex) {
                 LOGGER.error("An unexpected error occurred while updating project metrics", ex);
             }
         }
     }
 
-    private void updateMetrics(Project project) throws Exception {
-        PersistenceUtil.requireDetached(project);
-
-        // Take the UUID from the detached project at the very beginning
-        // to avoid DataNucleus from reaching out to the datastore every
-        // time the .getUuid() getter is called on the attached project.
-        final UUID projectUuid = project.getUuid();
-
-        LOGGER.info("Executing metrics update for project " + projectUuid);
+    private void updateMetrics(final UUID uuid) throws Exception {
+        LOGGER.info("Executing metrics update for project " + uuid);
         final var counters = new Counters();
 
         try (final QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
+            pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
-            project = getProject(pm, project);
+            final Project project = qm.getObjectByUuid(Project.class, uuid, List.of(Project.FetchGroup.METRICS.name()));
             if (project == null) {
-                throw new NoSuchElementException("Project " + projectUuid + " does not exist");
+                throw new NoSuchElementException("Project " + uuid + " does not exist");
             }
 
-            LOGGER.trace("Fetching first components page for project " + projectUuid);
+            LOGGER.trace("Fetching first components page for project " + uuid);
             List<Component> components = seekComponents(pm, project, 0);
 
             while (!components.isEmpty()) {
                 for (final Component component : components) {
                     final Counters componentCounters;
                     try {
-                        componentCounters = ComponentMetricsUpdateTask.updateMetrics(detachComponent(pm, component));
+                        componentCounters = ComponentMetricsUpdateTask.updateMetrics(component.getUuid());
                     } catch (Exception ex) {
                         LOGGER.error("An unexpected error occurred while updating metrics of component " + component.getUuid(), ex);
                         continue;
@@ -126,57 +117,32 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
                 }
 
-                LOGGER.trace("Fetching next components page for project " + projectUuid);
+                LOGGER.trace("Fetching next components page for project " + uuid);
                 final long lastId = components.get(components.size() - 1).getId();
                 components = seekComponents(pm, project, lastId);
             }
 
-            Transaction trx = pm.currentTransaction();
-            try {
-                trx.begin();
+            qm.runInTransaction(() -> {
                 final ProjectMetrics latestMetrics = qm.getMostRecentProjectMetrics(project);
                 if (!counters.hasChanged(latestMetrics)) {
-                    LOGGER.debug("Metrics of project " + projectUuid + " did not change");
+                    LOGGER.debug("Metrics of project " + uuid + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
-                    LOGGER.debug("Metrics of project " + projectUuid + " changed");
+                    LOGGER.debug("Metrics of project " + uuid + " changed");
                     final ProjectMetrics metrics = counters.createProjectMetrics(project);
                     pm.makePersistent(metrics);
                 }
-                trx.commit();
-            } finally {
-                if (trx.isActive()) {
-                    trx.rollback();
-                }
-            }
+            });
 
             if (project.getLastInheritedRiskScore() == null ||
                     project.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
-                LOGGER.debug("Updating inherited risk score of project " + projectUuid);
-                trx = qm.getPersistenceManager().currentTransaction();
-                try {
-                    trx.begin();
-                    project.setLastInheritedRiskScore(counters.inheritedRiskScore);
-                    trx.commit();
-                } finally {
-                    if (trx.isActive()) {
-                        trx.rollback();
-                    }
-                }
+                LOGGER.debug("Updating inherited risk score of project " + uuid);
+                qm.runInTransaction(() -> project.setLastInheritedRiskScore(counters.inheritedRiskScore));
             }
         }
 
-        LOGGER.info("Completed metrics update for project " + projectUuid + " in " +
+        LOGGER.info("Completed metrics update for project " + uuid + " in " +
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
-    }
-
-    private Project getProject(final PersistenceManager pm, final Project project) {
-        try {
-            pm.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
-            return pm.getObjectById(Project.class, project.getId());
-        } finally {
-            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
-        }
     }
 
     private List<Component> seekComponents(final PersistenceManager pm, final Project project, final long lastId) throws Exception {
@@ -187,15 +153,6 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             query.setRange(0, 500);
             query.getFetchPlan().setGroup(Component.FetchGroup.METRICS.name());
             return List.copyOf(query.executeList());
-        }
-    }
-
-    private Component detachComponent(final PersistenceManager pm, final Component component) {
-        try {
-            pm.getFetchPlan().setGroup(Component.FetchGroup.METRICS.name());
-            return pm.detachCopy(component);
-        } finally {
-            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
         }
     }
 

@@ -280,7 +280,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        Event.dispatch(new ComponentMetricsUpdateEvent(qm.getPersistenceManager().detachCopy(component)));
+                        Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                         updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
                 }

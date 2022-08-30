@@ -34,9 +34,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.PersistenceUtil;
 
-import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
@@ -60,30 +58,24 @@ public class ComponentMetricsUpdateTask implements Subscriber {
     public void inform(final Event e) {
         if (e instanceof final ComponentMetricsUpdateEvent event) {
             try {
-                updateMetrics(event.component());
+                updateMetrics(event.uuid());
             } catch (Exception ex) {
                 LOGGER.error("An unexpected error occurred while updating component metrics", ex);
             }
         }
     }
 
-    static Counters updateMetrics(Component component) throws Exception {
-        PersistenceUtil.requireDetached(component);
-
-        // Take the UUID from the detached component at the very beginning
-        // to avoid DataNucleus from reaching out to the datastore every
-        // time the .getUuid() getter is called on the attached component.
-        final UUID componentUuid = component.getUuid();
-
-        LOGGER.debug("Executing metrics update for component " + componentUuid);
+    static Counters updateMetrics(final UUID uuid) throws Exception {
+        LOGGER.debug("Executing metrics update for component " + uuid);
         final var counters = new Counters();
 
         try (final var qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
+            pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
-            component = getComponent(pm, component);
+            final Component component = qm.getObjectByUuid(Component.class, uuid, List.of(Component.FetchGroup.METRICS.name()));
             if (component == null) {
-                throw new NoSuchElementException("Component " + componentUuid + " does not exist");
+                throw new NoSuchElementException("Component " + uuid + " does not exist");
             }
 
             for (final Vulnerability vulnerability : getVulnerabilities(pm, component)) {
@@ -143,10 +135,10 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                 trx.begin();
                 final DependencyMetrics latestMetrics = qm.getMostRecentDependencyMetrics(component);
                 if (!counters.hasChanged(latestMetrics)) {
-                    LOGGER.debug("Metrics of component " + componentUuid + " did not change");
+                    LOGGER.debug("Metrics of component " + uuid + " did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
-                    LOGGER.debug("Metrics of component " + componentUuid + " changed");
+                    LOGGER.debug("Metrics of component " + uuid + " changed");
                     final DependencyMetrics metrics = counters.createComponentMetrics(component);
                     pm.makePersistent(metrics);
                 }
@@ -159,7 +151,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
             if (component.getLastInheritedRiskScore() == null ||
                     component.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
-                LOGGER.debug("Updating inherited risk score of component " + componentUuid);
+                LOGGER.debug("Updating inherited risk score of component " + uuid);
                 trx = qm.getPersistenceManager().currentTransaction();
                 try {
                     trx.begin();
@@ -173,18 +165,9 @@ public class ComponentMetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.debug("Completed metrics update for component " + componentUuid + " in " +
+        LOGGER.debug("Completed metrics update for component " + uuid + " in " +
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
         return counters;
-    }
-
-    private static Component getComponent(final PersistenceManager pm, final Component component) {
-        try {
-            pm.getFetchPlan().setGroup(Component.FetchGroup.METRICS.name());
-            return pm.getObjectById(Component.class, component.getId());
-        } finally {
-            pm.getFetchPlan().setGroup(FetchGroup.DEFAULT);
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -253,7 +236,6 @@ public class ComponentMetricsUpdateTask implements Subscriber {
     }
 
     public record PolicyViolationProjection(Enum<?> type, Enum<?> violationState) {
-
     }
 
 }

@@ -37,7 +37,6 @@ import org.dependencytrack.persistence.QueryManager;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -130,9 +129,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsSecurityAudited;
             counters.policyViolationsUnaudited = counters.policyViolationsTotal - counters.policyViolationsAudited;
 
-            Transaction trx = pm.currentTransaction();
-            try {
-                trx.begin();
+            qm.runInTransaction(() -> {
                 final DependencyMetrics latestMetrics = qm.getMostRecentDependencyMetrics(component);
                 if (!counters.hasChanged(latestMetrics)) {
                     LOGGER.debug("Metrics of component " + uuid + " did not change");
@@ -142,26 +139,12 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                     final DependencyMetrics metrics = counters.createComponentMetrics(component);
                     pm.makePersistent(metrics);
                 }
-                trx.commit();
-            } finally {
-                if (trx.isActive()) {
-                    trx.rollback();
-                }
-            }
+            });
 
             if (component.getLastInheritedRiskScore() == null ||
                     component.getLastInheritedRiskScore() != counters.inheritedRiskScore) {
                 LOGGER.debug("Updating inherited risk score of component " + uuid);
-                trx = qm.getPersistenceManager().currentTransaction();
-                try {
-                    trx.begin();
-                    component.setLastInheritedRiskScore(counters.inheritedRiskScore);
-                    trx.commit();
-                } finally {
-                    if (trx.isActive()) {
-                        trx.rollback();
-                    }
-                }
+                qm.runInTransaction(() -> component.setLastInheritedRiskScore(counters.inheritedRiskScore));
             }
         }
 

@@ -102,6 +102,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultRepositories();
         loadDefaultConfigProperties();
         loadDefaultNotificationPublishers();
+        loadDefaultOsvEcosystems();
 
         try {
             new CweImporter().processCweDefinitions();
@@ -286,6 +287,22 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 } catch (IOException e) {
                     LOGGER.error("An error occurred while synchronizing a default notification publisher", e);
                 }
+            }
+        }
+    }
+
+    /**
+     * Loads the default OSV ecosystems
+     */
+    private void loadDefaultOsvEcosystems() {
+        try (QueryManager qm = new QueryManager()) {
+            LOGGER.info("Synchronizing OSV ecosystems to datastore");
+            List<String> ecosystems = OsvDownloadTask.getEcosystems();
+            if(!ecosystems.isEmpty()) {
+                ecosystems.forEach(ecosystem -> {
+                    LOGGER.debug("Creating config property: " + OsvDownloadTask.OSV_CONFIG_GROUP + " / " + ecosystem);
+                    qm.createConfigProperty(OsvDownloadTask.OSV_CONFIG_GROUP, ecosystem, "true", IConfigProperty.PropertyType.BOOLEAN, ecosystem);
+                });
             }
         }
     }

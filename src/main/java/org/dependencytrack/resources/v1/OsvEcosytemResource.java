@@ -21,9 +21,12 @@ package org.dependencytrack.resources.v1;
 import alpine.common.logging.Logger;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.tasks.OsvDownloadTask;
 
 import javax.ws.rs.GET;
@@ -51,10 +54,7 @@ public class OsvEcosytemResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
     public Response getAllEcosystems() {
-        try (QueryManager qm = new QueryManager()) {
-            OsvDownloadTask osvDownloadTask = new OsvDownloadTask();
-            final List<String> ecosystems = osvDownloadTask.getEcosystems();
-            return Response.ok(ecosystems).build();
-        }
+        final List<String> ecosystems = OsvDownloadTask.getEcosystems();
+        return Response.ok(ecosystems).build();
     }
 }

@@ -16,18 +16,25 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.tasks.scanners;
+package org.dependencytrack.event;
+
+import org.dependencytrack.model.Component;
+
+import java.util.List;
 
 /**
- * Specifies identities of all supported analyzers.
- *
- * @since 4.0.0
+ * Defines an event used to start an analysis via Snyk REST API.
  */
-public enum AnalyzerIdentity {
-    INTERNAL_ANALYZER,
-    OSSINDEX_ANALYZER,
-    NPM_AUDIT_ANALYZER,
-    VULNDB_ANALYZER,
-    SNYK_ANALYZER,
-    NONE
+public class SnykAnalysisEvent extends VulnerabilityAnalysisEvent {
+
+    public SnykAnalysisEvent() { }
+
+    public SnykAnalysisEvent(final Component component) {
+        super(component);
+    }
+
+    public SnykAnalysisEvent(final List<Component> components) {
+        super(components);
+    }
+
 }

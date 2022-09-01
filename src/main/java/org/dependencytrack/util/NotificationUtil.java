@@ -45,7 +45,6 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -89,34 +88,24 @@ public final class NotificationUtil {
             );
         }
     }
-/*
-    public static void analyzeNotificationCriteria(final QueryManager qm, final Dependency newDependency) {
-        Dependency dependency = qm.getDependency(newDependency);
-        final List<Vulnerability> vulnerabilities = qm.detach(qm.getAllVulnerabilities(dependency));
-        dependency = qm.detach(Dependency.class, dependency.getId());
-        for (final Vulnerability vulnerability: vulnerabilities) {
-            final Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(NotificationGroup.NEW_VULNERABILITY)
-                    .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
-                    .level(NotificationLevel.INFORMATIONAL)
-                    .content(generateNotificationContent(vulnerability))
-                    .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
-            );
-        }
-        if (CollectionUtils.isNotEmpty(vulnerabilities)) {
+
+    public static void analyzeNotificationCriteria(final QueryManager qm, Component component) {
+        List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component, false);
+        if (vulnerabilities != null && !vulnerabilities.isEmpty()) {
+            component = qm.detach(Component.class, component.getId());
+            vulnerabilities = qm.detach(vulnerabilities);
+
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)
                     .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
                     .level(NotificationLevel.INFORMATIONAL)
-                    .content(generateNotificationContent(dependency, vulnerabilities))
-                    .subject(new NewVulnerableDependency(dependency, vulnerabilities))
+                    .content(generateNotificationContent(component, vulnerabilities))
+                    .subject(new NewVulnerableDependency(component, vulnerabilities))
             );
         }
     }
-*/
+
     public static void analyzeNotificationCriteria(final QueryManager qm, Analysis analysis,
                                                    final boolean analysisStateChange, final boolean suppressionChange) {
         if (analysisStateChange || suppressionChange) {

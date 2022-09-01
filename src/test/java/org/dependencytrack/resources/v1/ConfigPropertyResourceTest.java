@@ -23,6 +23,7 @@ import alpine.server.filters.AuthenticationFilter;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -132,6 +133,19 @@ public class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateBadTaskSchedulerCadenceConfigPropertyTest() {
+        ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.TASK_SCHEDULER_LDAP_SYNC_CADENCE.getGroupName(), "my.cadence", "24", IConfigProperty.PropertyType.INTEGER, "A cadence");
+        ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
+        request.setPropertyValue("-2");
+        Response response = target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("A Task scheduler cadence ("+request.getPropertyName()+") cannot be inferior to one hour.A value of -2 was provided.", body);
+    }
+
+    @Test
     public void updateConfigPropertyUrlTest() {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.url", "http://localhost", IConfigProperty.PropertyType.URL, "A url");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
@@ -190,13 +204,16 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         ConfigProperty prop1 = qm.createConfigProperty("my.group", "my.string1", "ABC", IConfigProperty.PropertyType.STRING, "A string");
         ConfigProperty prop2 = qm.createConfigProperty("my.group", "my.string2", "DEF", IConfigProperty.PropertyType.STRING, "A string");
         ConfigProperty prop3 = qm.createConfigProperty("my.group", "my.string3", "GHI", IConfigProperty.PropertyType.STRING, "A string");
+        ConfigProperty prop4 = qm.createConfigProperty(ConfigPropertyConstants.TASK_SCHEDULER_LDAP_SYNC_CADENCE.getGroupName(), "my.cadence", "1", IConfigProperty.PropertyType.INTEGER, "A cadence");
         prop1 = qm.detach(ConfigProperty.class, prop1.getId());
         prop2 = qm.detach(ConfigProperty.class, prop2.getId());
         prop3 = qm.detach(ConfigProperty.class, prop3.getId());
+        prop4 = qm.detach(ConfigProperty.class, prop4.getId());
         prop3.setPropertyValue("XYZ");
+        prop4.setPropertyValue("-2");
         Response response = target(V1_CONFIG_PROPERTY+"/aggregate").request()
                 .header(X_API_KEY, apiKey)
-                .post(Entity.entity(Arrays.asList(prop1, prop2, prop3), MediaType.APPLICATION_JSON));
+                .post(Entity.entity(Arrays.asList(prop1, prop2, prop3, prop4), MediaType.APPLICATION_JSON));
         Assert.assertEquals(200, response.getStatus(), 0);
         JsonArray json = parseJsonArray(response);
         JsonObject modifiedProp = json.getJsonObject(2);
@@ -206,5 +223,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         Assert.assertEquals("XYZ", modifiedProp.getString("propertyValue"));
         Assert.assertEquals("STRING", modifiedProp.getString("propertyType"));
         Assert.assertEquals("A string", modifiedProp.getString("description"));
+        String body = json.getString(3);
+        Assert.assertEquals("A Task scheduler cadence ("+prop4.getPropertyName()+") cannot be inferior to one hour.A value of -2 was provided.", body);
     }
 }

@@ -4,6 +4,7 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
@@ -51,13 +52,22 @@ public class OsvDownloadTask implements LoggableSubscriber {
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
 
     private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
+    public static final String OSV_CONFIG_GROUP = "osv-ecosystems";
     private final boolean isEnabled;
-    private HttpUriRequest request;
+    private final List<String> ecosystems;
+    private static HttpUriRequest request;
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
             this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+            this.ecosystems = new ArrayList<>();
+            List<ConfigProperty> ecosystemList = qm.getConfigProperties(OSV_CONFIG_GROUP);
+            if (ecosystemList != null) {
+                List<ConfigProperty> enabledList = ecosystemList.stream().filter(ecosystem ->
+                    ecosystem.getPropertyValue().equals("true")).toList();
+                enabledList.forEach(ecosystem -> this.ecosystems.add(ecosystem.getPropertyName()));
+            }
         }
     }
 
@@ -66,9 +76,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         if (e instanceof OsvMirrorEvent && this.isEnabled) {
 
-            List<String> ecosystems = getEcosystems();
-
-            if(ecosystems != null && !ecosystems.isEmpty()) {
+            if(this.ecosystems != null && !this.ecosystems.isEmpty()) {
                 for (String ecosystem : getEcosystems()) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
                     try {
@@ -301,8 +309,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 || Vulnerability.Source.NVD.toString().equals(source);
     }
 
-    public List<String> getEcosystems() {
-
+    public static List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
         String url = "https://osv-vulnerabilities.storage.googleapis.com/" + "ecosystems.txt";
         request = new HttpGet(url);

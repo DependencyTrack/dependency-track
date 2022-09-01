@@ -88,7 +88,7 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-      - '8081:8080'
+      - '8071:8080'
     volumes:
       - 'dependency-track:/data'
     restart: unless-stopped
@@ -103,7 +103,7 @@ services:
       #   * This URL must be reachable by the browsers of your users.
       #   * The frontend container itself does NOT communicate with the API server directly, it just serves static files.
       #   * When deploying to dedicated servers, please use the external IP or domain of the API server.
-      - API_BASE_URL=http://localhost:8081
+      - API_BASE_URL=http://localhost:8071
       # - "OIDC_ISSUER="
       # - "OIDC_CLIENT_ID="
       # - "OIDC_SCOPE="
@@ -112,6 +112,6 @@ services:
       # volumes:
       # - "/host/path/to/config.json:/app/static/config.json"
     ports:
-      - "8080:8080"
+      - "8070:8080"
     restart: unless-stopped
 

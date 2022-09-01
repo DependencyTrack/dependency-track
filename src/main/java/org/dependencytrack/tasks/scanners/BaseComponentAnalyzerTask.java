@@ -65,12 +65,14 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
     protected boolean isCacheCurrent(Vulnerability.Source source, String targetHost, String target) {
         try (QueryManager qm = new QueryManager()) {
             boolean isCacheCurrent = false;
+            ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
+            long cacheValidityPeriod = Long.valueOf(cacheClearPeriod.getPropertyValue());
             ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
             if (cac != null) {
                 final Date now = new Date();
                 if (now.getTime() > cac.getLastOccurrence().getTime()) {
                     final long delta = now.getTime() - cac.getLastOccurrence().getTime();
-                    isCacheCurrent = delta <= 86400000; // TODO: Default to 24 hours. Make this configurable in a future release
+                    isCacheCurrent = delta <= cacheValidityPeriod;
                 }
             }
             if (isCacheCurrent) {

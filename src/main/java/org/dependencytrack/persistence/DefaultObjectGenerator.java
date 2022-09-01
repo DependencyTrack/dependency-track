@@ -20,10 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
-import alpine.model.ConfigProperty;
-import alpine.model.ManagedUser;
-import alpine.model.Permission;
-import alpine.model.Team;
+import alpine.model.*;
 import alpine.server.auth.PasswordService;
 import org.apache.commons.io.FileUtils;
 import org.dependencytrack.RequirementsVerifier;
@@ -41,6 +38,7 @@ import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.search.IndexManager;
+import org.dependencytrack.tasks.OsvDownloadTask;
 import org.dependencytrack.util.NotificationUtil;
 
 import javax.servlet.ServletContextEvent;
@@ -102,6 +100,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
         loadDefaultRepositories();
         loadDefaultConfigProperties();
         loadDefaultNotificationPublishers();
+        loadDefaultOsvEcosystems();
 
         try {
             new CweImporter().processCweDefinitions();
@@ -270,6 +269,19 @@ public class DefaultObjectGenerator implements ServletContextListener {
                 if (qm.getConfigProperty(cpc.getGroupName(), cpc.getPropertyName()) == null) {
                     qm.createConfigProperty(cpc.getGroupName(), cpc.getPropertyName(), cpc.getDefaultPropertyValue(), cpc.getPropertyType(), cpc.getDescription());
                 }
+            }
+        }
+    }
+
+    private void loadDefaultOsvEcosystems() {
+        try (QueryManager qm = new QueryManager()) {
+            LOGGER.info("Synchronizing OSV ecosystems to datastore");
+            List<String> ecosystems = OsvDownloadTask.getEcosystems();
+            if(!ecosystems.isEmpty()) {
+                ecosystems.forEach(ecosystem -> {
+                    LOGGER.debug("Creating config property: " + OsvDownloadTask.OSV_CONFIG_GROUP + " / " + ecosystem);
+                    qm.createConfigProperty(OsvDownloadTask.OSV_CONFIG_GROUP, ecosystem, "true", IConfigProperty.PropertyType.BOOLEAN, ecosystem);
+                });
             }
         }
     }

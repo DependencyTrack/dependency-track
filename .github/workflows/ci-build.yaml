@@ -3,14 +3,14 @@ name: Build CI
 on:
   push:
     branches:
-      - 'osv-ecosystem-test'          # Default branch
+      - 'master'          # Default branch
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
   pull_request:
     branches:
-      - 'osv-ecosystem-test'          # Default branch
+      - 'master'          # Default branch
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -21,6 +21,7 @@ jobs:
     uses: ./.github/workflows/_meta-build.yaml
     with:
       app-version: "snapshot"
+      publish-container: ${{ github.ref == 'refs/heads/master' }}
     secrets:
       registry-0-usr: ${{ secrets.HUB_USERNAME }}
       registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}

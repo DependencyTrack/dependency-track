@@ -6,6 +6,11 @@ on:
         required: false
         default: "snapshot"
         description: "the version that should be set/used as tag for the container image"
+      publish-container:
+        type: boolean
+        required: false
+        default: false
+        description: "publish and scan the container image once its build"
     secrets:
       registry-0-usr:
         required: true
@@ -33,12 +38,16 @@ jobs:
           mvn clean -P clean-exclude-wars
           mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
           mvn clean -P clean-exclude-wars
+          mvn cyclonedx:makeBom
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3.0.0
+        uses: actions/upload-artifact@v3.1.0
         with:
           name: assembled-wars
-          path: target/*.jar
+          path: |-
+            target/*.jar
+            target/bom.json
+            target/bom.xml
 
   build-container:
     runs-on: ubuntu-latest
@@ -73,23 +82,31 @@ jobs:
 
       - name: Login to Docker.io
         uses: docker/login-action@v2.0.0
+        if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
           username: ${{ secrets.registry-0-usr }}
           password: ${{ secrets.registry-0-psw }}
 
+      - name: Set Container Tags
+        id: tags
+        run: |-
+          TAGS="docker.io/dependencytrack/${{ matrix.distribution }}:${{ inputs.app-version }}"
+          if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
+            TAGS="${TAGS},docker.io/dependencytrack/${{ matrix.distribution }}:latest"
+          fi
+          echo "::set-output name=tags::${TAGS}"
+
       - name: Build multi-arch Container Image
         uses: docker/build-push-action@v3.1.1
         with:
-          tags: |-
-            docker.io/sahibamittal/${{ matrix.distribution }}:${{ inputs.app-version }}
-            docker.io/sahibamittal/${{ matrix.distribution }}:latest
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
             APP_VERSION=${{ inputs.app-version }}
             COMMIT_SHA=${{ github.sha }}
             WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.ref == 'refs/heads/osv-ecosystem-test' }}
+          push: ${{ inputs.publish-container }}
           context: .
           file: src/main/docker/Dockerfile
 

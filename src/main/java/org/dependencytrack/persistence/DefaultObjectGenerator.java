@@ -295,7 +295,7 @@ public class DefaultObjectGenerator implements ServletContextListener {
             if(!ecosystems.isEmpty()) {
                 ecosystems.forEach(ecosystem -> {
                     LOGGER.debug("Creating config property: " + OsvDownloadTask.OSV_CONFIG_GROUP + " / " + ecosystem);
-                    qm.createConfigProperty(OsvDownloadTask.OSV_CONFIG_GROUP, ecosystem, "true", IConfigProperty.PropertyType.BOOLEAN, ecosystem);
+                    qm.createConfigProperty(OsvDownloadTask.OSV_CONFIG_GROUP, ecosystem, "false", IConfigProperty.PropertyType.BOOLEAN, ecosystem);
                 });
             }
         }

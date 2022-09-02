@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.common.logging.Logger;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -40,13 +39,11 @@ import java.util.List;
 @Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
 public class OsvEcosytemResource extends AlpineResource {
 
-    private static final Logger LOGGER = Logger.getLogger(OsvEcosytemResource.class);
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns a list of all ecosystems in OSV",
-            response = alpine.model.Permission.class,
+            response = String.class,
             responseContainer = "List"
     )
     @ApiResponses(value = {

@@ -4,7 +4,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
-import alpine.model.IConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
@@ -45,7 +44,8 @@ import java.util.zip.ZipInputStream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
-import static org.dependencytrack.util.VulnerabilityUtil.*;
+import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
+import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -62,9 +62,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
             this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
             this.ecosystems = new ArrayList<>();
-            List<ConfigProperty> ecosystemList = qm.getConfigProperties(OSV_CONFIG_GROUP);
-            if (ecosystemList != null) {
-                List<ConfigProperty> enabledList = ecosystemList.stream().filter(ecosystem ->
+            List<ConfigProperty> ecosystemConfig = qm.getConfigProperties(OSV_CONFIG_GROUP);
+            if (ecosystemConfig != null) {
+                List<ConfigProperty> enabledList = ecosystemConfig.stream().filter(ecosystem ->
                         ecosystem.getPropertyValue().equals("true")).toList();
                 enabledList.forEach(ecosystem -> this.ecosystems.add(ecosystem.getPropertyName()));
             }

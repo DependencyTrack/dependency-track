@@ -47,4 +47,70 @@ public class InternalAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(vulnerabilities.getList(Vulnerability.class).get(0).getVulnId()).isEqualTo("GHSA-wjm3-fq3r-5x46");
     }
 
+    @Test
+    public void testVersionNA(){
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Apache httpd");
+        component.setVersion("2.4.53");
+        component.setCpe("cpe:2.3:a:apache:http_server:2.4.53:*:*:*:*:*:*:*");
+        component = qm.createComponent(component, false);
+
+        var vs1 = new VulnerableSoftware();
+        vs1.setCpe23("cpe:2.3:a:apache:http_server:-:*:*:*:*:*:*:*");
+        vs1.setPart("a");
+        vs1.setVendor("apache");
+        vs1.setProduct("http_server");
+        vs1.setVersion("-");
+        vs1.setVulnerable(true);
+        var vs = qm.persist(vs1);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("CVE-2007-6420");
+        vulnerability.setSource(Vulnerability.Source.NVD);
+        vulnerability.setVulnerableSoftware(List.of(vs));
+        qm.createVulnerability(vulnerability, false);
+
+        var vs2 = new VulnerableSoftware();
+        vs2.setCpe23("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*");
+        vs2.setPart("a");
+        vs2.setVendor("apache");
+        vs2.setProduct("http_server");
+        vs2.setVersion("*");
+        vs2.setVulnerable(true);
+        vs = qm.persist(vs2);
+
+        var vulnerability202231813 = new Vulnerability();
+        vulnerability202231813.setVulnId("CVE-2022-31813");
+        vulnerability202231813.setSource(Vulnerability.Source.NVD);
+        vulnerability202231813.setVulnerableSoftware(List.of(vs2));
+        qm.createVulnerability(vulnerability202231813, false);
+
+        var vs3 = new VulnerableSoftware();
+        vs3.setCpe23("cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*");
+        vs3.setPart("a");
+        vs3.setVendor("apache");
+        vs3.setProduct("http_server");
+        vs3.setVersionStartIncluding("2.4.0");
+        vs3.setVersionEndIncluding("2.4.53");
+        vs3.setVulnerable(true);
+        vs = qm.persist(vs2);
+
+        var vulnerability202226377 = new Vulnerability();
+        vulnerability202226377.setVulnId("CVE-2022-266377");
+        vulnerability202226377.setSource(Vulnerability.Source.NVD);
+        vulnerability202226377.setVulnerableSoftware(List.of(vs3));
+        qm.createVulnerability(vulnerability202226377, false);
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulnerabilities = qm.getVulnerabilities(component);
+        assertThat(vulnerabilities.getTotal()).isEqualTo(2);
+        assertThat(vulnerabilities.getList(Vulnerability.class).get(0).getVulnId()).isEqualTo("CVE-2022-31813");
+        assertThat(vulnerabilities.getList(Vulnerability.class).get(1).getVulnId()).isEqualTo("CVE-2022-266377");
+    }
+
 }

@@ -19,6 +19,7 @@
 package org.dependencytrack.tasks.metrics;
 
 import alpine.event.framework.EventService;
+import net.jcip.annotations.NotThreadSafe;
 import org.dependencytrack.event.CallbackEvent;
 import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
@@ -42,6 +43,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@NotThreadSafe
 public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
     @BeforeClass
@@ -57,7 +59,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdatePortfolioMetricsEmpty() {
+    public void testUpdateMetricsEmpty() {
         new PortfolioMetricsUpdateTask().inform(new PortfolioMetricsUpdateEvent());
 
         final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
@@ -94,7 +96,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdatePortfolioMetricsUnchanged() {
+    public void testUpdateMetricsUnchanged() {
         // Record initial portfolio metrics
         new PortfolioMetricsUpdateTask().inform(new PortfolioMetricsUpdateEvent());
         final PortfolioMetrics metrics = qm.getMostRecentPortfolioMetrics();
@@ -111,7 +113,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdatePortfolioMetricsVulnerabilities() {
+    public void testUpdateMetricsVulnerabilities() {
         var vuln = new Vulnerability();
         vuln.setVulnId("INTERNAL-001");
         vuln.setSource(Vulnerability.Source.INTERNAL);
@@ -195,7 +197,7 @@ public class PortfolioMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
     }
 
     @Test
-    public void testUpdatePortfolioMetricsPolicyViolations() {
+    public void testUpdateMetricsPolicyViolations() {
         // Create a project with an unaudited violation.
         var projectUnaudited = new Project();
         projectUnaudited.setName("acme-app-a");

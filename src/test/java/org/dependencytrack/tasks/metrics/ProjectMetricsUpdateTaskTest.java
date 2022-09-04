@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
     @Test
-    public void testUpdateProjectMetricsEmpty() {
+    public void testUpdateMetricsEmpty() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -81,7 +81,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testUpdateProjectMetricsUnchanged() {
+    public void testUpdateMetricsUnchanged() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -102,7 +102,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testUpdateProjectMetricsVulnerabilities() {
+    public void testUpdateMetricsVulnerabilities() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);
@@ -176,7 +176,7 @@ public class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest 
     }
 
     @Test
-    public void testUpdateProjectMetricsPolicyViolations() {
+    public void testUpdateMetricsPolicyViolations() {
         var project = new Project();
         project.setName("acme-app");
         project = qm.createProject(project, List.of(), false);

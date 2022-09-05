@@ -19,7 +19,8 @@ The following notification publishers are included:
 | Webhook | Publishes notifications to a configurable endpoint |
 | Email   | Sends notifications to an email address |
 | Console | Displays notifications on the system console |
-
+| Jira    | Creates notifications as tickets in a specified Jira queue |
+| Googlechat | Publishes notifications to a google chat webhook endpoint |
 
 Dependency-Track notifications come in two flavors:
 

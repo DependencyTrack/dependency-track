@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
+import alpine.model.IConfigProperty;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -136,5 +137,35 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             }
         }
         return Response.ok(returnList).build();
+    }
+
+    @POST
+    @Path("upsert")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Creates/updates a config property",
+            response = ConfigProperty.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response upsertsConfigProperty(ConfigProperty json) {
+        final Validator validator = super.getValidator();
+        failOnValidationError(
+                validator.validateProperty(json, "groupName"),
+                validator.validateProperty(json, "propertyName"),
+                validator.validateProperty(json, "propertyValue")
+        );
+        try (QueryManager qm = new QueryManager()) {
+            final ConfigProperty property = qm.getConfigProperty(json.getGroupName(), json.getPropertyName());
+            if (property == null) {
+                ConfigProperty configProperty = qm.createConfigProperty(json.getGroupName(), json.getPropertyName(), json.getPropertyValue(), IConfigProperty.PropertyType.BOOLEAN, json.getPropertyName());
+                return Response.ok(configProperty).build();
+            } else {
+                return updatePropertyValue(qm, json, property);
+            }
+        }
     }
 }

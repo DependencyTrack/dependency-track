@@ -50,12 +50,10 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-
     private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
     public static final String OSV_CONFIG_GROUP = "osv-ecosystems";
     private final boolean isEnabled;
     private final List<String> ecosystems;
-    private static HttpUriRequest request;
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
@@ -82,7 +80,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     try {
                         String url = OSV_BASE_URL + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
                                 + "/all.zip";
-                        request = new HttpGet(url);
+                        HttpUriRequest request = new HttpGet(url);
                         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                             final StatusLine status = response.getStatusLine();
                             if (status.getStatusCode() == 200) {
@@ -311,15 +309,17 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     public static List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
-        String url = "https://osv-vulnerabilities.storage.googleapis.com/" + "ecosystems.txt";
-        request = new HttpGet(url);
+        String url = OSV_BASE_URL + "ecosystems.txt";
+        HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();
             if (status.getStatusCode() == 200) {
                 try (InputStream in = response.getEntity().getContent();
                      Scanner scanner = new Scanner(in, StandardCharsets.UTF_8.name())) {
                     while (scanner.hasNextLine()) {
-                        ecosystems.add(scanner.nextLine().trim());
+                        if(!scanner.nextLine().isBlank()) {
+                            ecosystems.add(scanner.nextLine().trim());
+                        }
                     }
                 }
             } else {

@@ -35,7 +35,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Path("/v1/ecosystem")
+@Path("/v1/integration/osv/ecosystem")
 @Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
 public class OsvEcosytemResource extends AlpineResource {
 
@@ -49,7 +49,7 @@ public class OsvEcosytemResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized")
     })
-    @PermissionRequired(Permissions.Constants.ACCESS_MANAGEMENT)
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllEcosystems() {
         final List<String> ecosystems = OsvDownloadTask.getEcosystems();
         return Response.ok(ecosystems).build();

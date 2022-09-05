@@ -89,10 +89,10 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 LOGGER.debug("Waiting for metrics updates for projects " + firstId + "-" + lastId + " to complete");
                 if (!countDownLatch.await(15, TimeUnit.MINUTES)) {
                     // Depending on the system load, it may take a while for the queued events
-                    // to be processed. Depending on how large the projects are, it may take a
+                    // to be processed. And depending on how large the projects are, it may take a
                     // while for the processing of the respective event to complete.
                     // It is unlikely though that either of these situations causes a block for
-                    // over 15 minutes.
+                    // over 15 minutes. If that happens, the system is under-resourced.
                     LOGGER.warn("Updating metrics for projects " + firstId + "-" + lastId +
                             " took longer than expected (15m); Proceeding with potentially stale data");
                 }
@@ -102,6 +102,9 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     LOGGER.debug("Processing latest metrics for project " + project.getUuid());
                     final ProjectMetrics metrics = qm.getMostRecentProjectMetrics(project);
                     if (metrics == null) {
+                        // The project metrics calculation task failed, or the project has been
+                        // deleted after the event being dispatched. Either way, nothing we can
+                        // do anything about.
                         LOGGER.debug("No metrics found for project " + project.getUuid() + " - skipping");
                         continue;
                     }
@@ -170,7 +173,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
             query.setOrdering("id asc");
             query.setParameters(lastId);
             query.range(0, BATCH_SIZE);
-            query.getFetchPlan().setGroup(Project.FetchGroup.METRICS.name());
+            query.getFetchPlan().setGroup(Project.FetchGroup.METRICS_UPDATE.name());
             return List.copyOf(query.executeList());
         }
     }

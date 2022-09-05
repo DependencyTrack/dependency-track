@@ -72,7 +72,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
             final PersistenceManager pm = qm.getPersistenceManager();
             pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
-            final Component component = qm.getObjectByUuid(Component.class, uuid, List.of(Component.FetchGroup.METRICS.name()));
+            final Component component = qm.getObjectByUuid(Component.class, uuid, List.of(Component.FetchGroup.METRICS_UPDATE.name()));
             if (component == null) {
                 throw new NoSuchElementException("Component " + uuid + " does not exist");
             }
@@ -167,7 +167,7 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                             && a.suppressed == true).isEmpty()
                 """)) {
             query.setParameters(component);
-            query.getFetchPlan().setGroup(Vulnerability.FetchGroup.COMPONENT_METRICS.name());
+            query.getFetchPlan().setGroup(Vulnerability.FetchGroup.COMPONENT_METRICS_UPDATE.name());
             return List.copyOf((List<Vulnerability>) query.executeList());
         }
     }

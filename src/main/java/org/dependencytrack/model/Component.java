@@ -78,7 +78,7 @@ import java.util.UUID;
                 @Persistent(name = "internal"),
                 @Persistent(name = "uuid")
         }),
-        @FetchGroup(name = "METRICS", members = {
+        @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
@@ -95,7 +95,7 @@ public class Component implements Serializable {
     public enum FetchGroup {
         ALL,
         INTERNAL_IDENTIFICATION,
-        METRICS
+        METRICS_UPDATE
     }
 
     @PrimaryKey

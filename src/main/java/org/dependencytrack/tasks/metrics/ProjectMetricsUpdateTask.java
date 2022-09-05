@@ -64,7 +64,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             final PersistenceManager pm = qm.getPersistenceManager();
             pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
-            final Project project = qm.getObjectByUuid(Project.class, uuid, List.of(Project.FetchGroup.METRICS.name()));
+            final Project project = qm.getObjectByUuid(Project.class, uuid, List.of(Project.FetchGroup.METRICS_UPDATE.name()));
             if (project == null) {
                 throw new NoSuchElementException("Project " + uuid + " does not exist");
             }
@@ -77,6 +77,12 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     final Counters componentCounters;
                     try {
                         componentCounters = ComponentMetricsUpdateTask.updateMetrics(component.getUuid());
+                    } catch (NoSuchElementException ex) {
+                        // This will happen when a component or its associated project have been deleted after the
+                        // task started. Instead of splurging the log with to-be-expected errors, we just log it
+                        // with DEBUG, and ignore it otherwise.
+                        LOGGER.debug("Couldn't update metrics of component " + component.getUuid() + " because the component was not found", ex);
+                        continue;
                     } catch (Exception ex) {
                         LOGGER.error("An unexpected error occurred while updating metrics of component " + component.getUuid(), ex);
                         continue;
@@ -151,7 +157,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             query.setParameters(project, lastId);
             query.setOrdering("id asc");
             query.setRange(0, 500);
-            query.getFetchPlan().setGroup(Component.FetchGroup.METRICS.name());
+            query.getFetchPlan().setGroup(Component.FetchGroup.METRICS_UPDATE.name());
             return List.copyOf(query.executeList());
         }
     }

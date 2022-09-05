@@ -15,7 +15,7 @@
        "description": "{{ notification.content | escape(strategy="json") }} \n\n*Level:* {{ notification.level | escape(strategy="json") }} \n\n*Scope:* {{ notification.scope | escape(strategy="json") }} \n\n*Project:* {{ subject.project.toString | escape(strategy="json") }} \n{{ baseUrl }}/projects/{{ subject.project.uuid.toString | escape(strategy="json") }}",
        {% endif %}
        "issuetype": {
-          "name": "Task"
+          "name": "{{ jiraTicketType | escape(strategy="json") }}"
        }
    }
 }

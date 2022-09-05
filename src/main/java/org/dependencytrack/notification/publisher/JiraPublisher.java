@@ -39,7 +39,6 @@ import java.io.Writer;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
@@ -47,15 +46,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Base64;
 import javax.json.JsonObject;
-import javax.net.ssl.HttpsURLConnection;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
+import kong.unirest.UnirestInstance;
+import org.dependencytrack.common.UnirestFactory;
+import kong.unirest.HttpResponse;
+
 public class JiraPublisher extends AbstractWebhookPublisher implements Publisher {
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/jira.peb");
     private String jiraUsername;
     private String jiraPassword;
     private String jiraProjectKey;
+    private String jiraTicketType;
     final Logger logger = Logger.getLogger(this.getClass());
     public void inform(final Notification notification, final JsonObject config) {
         publish(DefaultNotificationPublishers.JIRA.getPublisherName(), TEMPLATE, notification, config);
@@ -102,6 +105,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
             }
             // Jira addition:
             context.put("jiraProjectKey", jiraProjectKey);
+            context.put("jiraTicketType", jiraTicketType); //TEST
 
             try (Writer writer = new StringWriter()) {
                 template.evaluate(writer, context);
@@ -121,7 +125,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
             logger.warn("No configuration found. Skipping notification.");
             return;
         }
-        
+
         try (QueryManager qm = new QueryManager()) {
             jiraUsername = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName()).getPropertyValue();
             final String password = qm.getConfigProperty(JIRA_PASSWORD.getGroupName(), JIRA_PASSWORD.getPropertyName()).getPropertyValue();
@@ -130,47 +134,33 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
             URL url;
             String destination;
             url = new URL(configDestination);
-            destination = url.getProtocol()+"://"+url.getAuthority()+"/rest/api/2/issue";
+            destination = url.getProtocol()+"://" + url.getAuthority() + "/rest/api/2/issue";
             final String[] pathElements = url.getPath().split("/");
             if(pathElements.length == 0) {
                 logger.error("No Jira Project given");
                 return;
             }
             jiraProjectKey = pathElements[pathElements.length-1];
+            jiraTicketType = config.getString("jira_tickettype");
             final String content = prepareTemplate(notification, template);
             if (destination == null || content == null) {
                 logger.warn("A destination or template was not found. Skipping notification");
                 return;
             }
-            logger.info("Template: "+content);
-            final String userAgent = "ui-dependency-track";
-            URL jiraUrl;
-            jiraUrl = new URL(destination);
-            HttpsURLConnection con;
-            con = (HttpsURLConnection) jiraUrl.openConnection();
-            con.setRequestMethod("POST");
-            con.setRequestProperty("User-Agent", userAgent);
-            con.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((jiraUsername+":"+jiraPassword).getBytes()));
-            con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            con.setDoOutput(true);
-            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-            wr.write(content.getBytes(StandardCharsets.UTF_8));
-            wr.flush();
-            wr.close();
-            int responseCode = con.getResponseCode();
-            logger.info("jira issue creation response code: "+responseCode);
-            if(responseCode == HttpURLConnection.HTTP_CREATED) {
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-    
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-                in.close();
-                logger.info("jira issue creation response body: "+response.toString());
+
+            final UnirestInstance ui = UnirestFactory.getUnirestInstance();
+            final HttpResponse response = ui.post(destination)
+                .header("content-type", "application/json")
+                .header("authorization", "Basic " + Base64.getEncoder().encodeToString( (jiraUsername+":"+jiraPassword).getBytes() ) )
+                .header("accept", "application/json")
+                .body(content)
+                .asEmpty();
+
+            logger.debug("jira issue creation response code: " + response.getStatus());
+            if (response.isSuccess()) {
+                logger.debug("jira issue creation response body: " + response.getBody().toString());
             }
+
         }
         catch(Exception e) {
             logger.error("jira issue creation error: ", e);

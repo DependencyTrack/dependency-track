@@ -28,6 +28,7 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.jdo.PersistenceManager;
@@ -40,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
+import java.util.Set;
 
 public class NotificationRouter implements Subscriber {
 
@@ -61,43 +63,10 @@ public class NotificationRouter implements Subscriber {
             try {
                 final Class<?> publisherClass = Class.forName(rule.getPublisher().getPublisherClass());
                 if (Publisher.class.isAssignableFrom(publisherClass)) {
+                    final Notification updatedNotification = limitSubjectAffected(rule, notification);
                     final Publisher publisher = (Publisher)publisherClass.getDeclaredConstructor().newInstance();
+                    publisher.inform(updatedNotification, config);
 
-                    if (notification.getSubject() instanceof NewVulnerabilityIdentified && !rule.getProjects().isEmpty() ) {
-                        List<Project> limited_to = rule.getProjects();
-                        Notification modified = new Notification();
-                        modified.setScope(notification.getScope());
-                        modified.setGroup(notification.getGroup());
-                        modified.setLevel(notification.getLevel());
-                        modified.setTitle(notification.getTitle());
-                        modified.setContent(notification.getContent());
-
-                        HashSet<Project> list = new HashSet<Project>();
-                        NewVulnerabilityIdentified old_subj = (NewVulnerabilityIdentified) notification.getSubject();
-                        for (Project p : old_subj.getAffectedProjects()) {
-                            int found = 0;
-                            for (Project q : limited_to) {
-                                if (p.getUuid().equals(q.getUuid())) {
-                                    LOGGER.debug("project " + p.getUuid() + " is added to notification");
-                                    list.add(p);
-                                    found = 1;
-                                    break;
-                                }
-                            }
-                            if (found == 0) {
-                                LOGGER.debug("project " + p.getUuid() + " is skipped for notification");
-                            }
-                        }
-                        if (list.isEmpty()) {
-                            LOGGER.error("Could not apply notification rule " + rule.getId());
-                        } else {
-                            NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(old_subj.getVulnerability(), old_subj.getComponent(), list);
-                            modified.setSubject(subject);
-                            publisher.inform(modified, config);
-                        }
-                    } else {
-                        publisher.inform(notification, config);
-                    }
                 } else {
                     LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
                 }
@@ -196,6 +165,67 @@ public class NotificationRouter implements Subscriber {
                     applicableRules.add(rule);
                 }
             }
+        }
+    }
+
+    /**
+     * trim list of affected projects in a notification to those the currently executed 
+     * rule is limited to (if any)
+     * */
+    private final Notification limitSubjectAffected(NotificationRule rule, Notification n) {
+        if (rule.getProjects().isEmpty()) {
+            return n;
+        }
+        Set<Project> allAffected;
+        if (n.getSubject() instanceof NewVulnerabilityIdentified) {
+            allAffected = ((NewVulnerabilityIdentified)n.getSubject()).getAffectedProjects();
+        } else if (n.getSubject() instanceof AnalysisDecisionChange) {
+            allAffected = ((AnalysisDecisionChange)n.getSubject()).getAffectedProjects();
+        } else {
+            // not a supported subject type
+            return n;
+        }
+
+        HashSet<Project> resultAffected = new HashSet<Project>();
+        for (Project p : allAffected) {
+            boolean found = false;
+            for (Project q : rule.getProjects()) {
+                if (p.getUuid().equals(q.getUuid())) {
+                    LOGGER.debug("project " + p.getUuid() + " will be included in notification"); //TODO: change back to debug
+                    resultAffected.add(p);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                LOGGER.debug("project " + p.getUuid() + " is skipped for notification"); //TODO: change back to debug
+            }
+        }
+        if (resultAffected.isEmpty()) {
+            // avoid empty project list in alerts
+            LOGGER.error("Could not apply notification rule " + rule.getId());
+            return n;
+        } else {
+             Notification notification = new Notification();
+             notification.setScope(n.getScope());
+             notification.setGroup(n.getGroup());
+             notification.setLevel(n.getLevel());
+             notification.setTitle(n.getTitle());
+             notification.setTimestamp(n.getTimestamp());
+             notification.setContent(n.getContent());
+
+             if (n.getSubject() instanceof NewVulnerabilityIdentified) {
+                 NewVulnerabilityIdentified oldSubject = (NewVulnerabilityIdentified)n.getSubject();
+                 NewVulnerabilityIdentified newSubject = new NewVulnerabilityIdentified(oldSubject.getVulnerability(), oldSubject.getComponent(), resultAffected);
+                 notification.setSubject(newSubject);
+             } else {
+                // has to be analysis decision change
+                AnalysisDecisionChange oldSubject = (AnalysisDecisionChange)n.getSubject();
+                AnalysisDecisionChange newSubject = new AnalysisDecisionChange(oldSubject.getVulnerability(), oldSubject.getComponent(), resultAffected, oldSubject.getAnalysis());
+                notification.setSubject(newSubject);
+             }
+
+             return notification;
         }
     }
 

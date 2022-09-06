@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -51,20 +52,21 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
     private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
-    public static final String OSV_CONFIG_GROUP = "osv-ecosystems";
-    private final boolean isEnabled;
-    private final List<String> ecosystems;
+    private String ecosystemConfig;
+    private List<String> ecosystems;
+
+    public List<String> getEnabledEcosystems() {
+        return this.ecosystems;
+    }
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
-            this.ecosystems = new ArrayList<>();
-            List<ConfigProperty> ecosystemConfig = qm.getConfigProperties(OSV_CONFIG_GROUP);
-            if (ecosystemConfig != null) {
-                List<ConfigProperty> enabledList = ecosystemConfig.stream().filter(ecosystem ->
-                        ecosystem.getPropertyValue().equals("true")).toList();
-                enabledList.forEach(ecosystem -> this.ecosystems.add(ecosystem.getPropertyName()));
+            if (enabled != null) {
+                this.ecosystemConfig = enabled.getPropertyValue();
+                if (this.ecosystemConfig != null) {
+                    ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                }
             }
         }
     }
@@ -72,7 +74,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
     @Override
     public void inform(Event e) {
 
-        if (e instanceof OsvMirrorEvent && this.isEnabled) {
+        if (e instanceof OsvMirrorEvent) {
 
             if(this.ecosystems != null && !this.ecosystems.isEmpty()) {
                 for (String ecosystem : this.ecosystems) {
@@ -98,6 +100,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                         LOGGER.error("Exception while encoding URL for ecosystem " + ecosystem);
                     }
                 }
+            } else {
+                LOGGER.info("Google OSV mirroring is disabled. No ecosystem selected.");
             }
         }
     }

@@ -351,6 +351,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setCopyright(sourceComponent.getCopyright());
         component.setLicense(sourceComponent.getLicense());
         component.setResolvedLicense(sourceComponent.getResolvedLicense());
+        component.setAuthor(sourceComponent.getAuthor());
         // TODO Add support for parent component and children components
         component.setProject(destinationProject);
         return createComponent(component, commitIndex);
@@ -382,6 +383,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setCpe(transientComponent.getCpe());
         component.setPurl(transientComponent.getPurl());
         component.setInternal(transientComponent.isInternal());
+        component.setAuthor(transientComponent.getAuthor());
         final Component result = persist(component);
         Event.dispatch(new IndexEvent(IndexEvent.Action.UPDATE, pm.detachCopy(result)));
         commitSearchIndex(commitIndex, Component.class);
@@ -439,6 +441,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
         }
         final Query<Component> query = pm.newQuery(Component.class, "project == :project && ((purl != null && purl == :purl) || (purlCoordinates != null && purlCoordinates == :purlCoordinates) || (swidTagId != null && swidTagId == :swidTagId) || (cpe != null && cpe == :cpe) || (group == :group && name == :name && version == :version))");
+        query.setRange(0, 1);
         return singleResult(query.executeWithArray(project, purlString, purlCoordinates, cid.getSwidTagId(), cid.getCpe(), cid.getGroup(), cid.getName(), cid.getVersion()));
     }
 

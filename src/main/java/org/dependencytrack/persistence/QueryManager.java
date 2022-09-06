@@ -106,6 +106,8 @@ public class QueryManager extends AlpineQueryManager {
     private VulnerabilityQueryManager vulnerabilityQueryManager;
     private VulnerableSoftwareQueryManager vulnerableSoftwareQueryManager;
 
+    private TagQueryManager tagQueryManager;
+
     /**
      * Default constructor.
      */
@@ -148,6 +150,17 @@ public class QueryManager extends AlpineQueryManager {
             projectQueryManager = (request == null) ? new ProjectQueryManager(getPersistenceManager()) : new ProjectQueryManager(getPersistenceManager(), request);
         }
         return projectQueryManager;
+    }
+
+    /**
+     * Lazy instantiation of TagQueryManager.
+     * @return a TagQueryManager object
+     */
+    private TagQueryManager getTagQueryManager() {
+        if (tagQueryManager == null) {
+            tagQueryManager = (request == null) ? new TagQueryManager(getPersistenceManager()) : new TagQueryManager(getPersistenceManager(), request);
+        }
+        return tagQueryManager;
     }
 
     /**
@@ -382,8 +395,8 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().updateLastBomImport(p, date, bomFormat);
     }
 
-    public void recursivelyDelete(Project project) {
-        getProjectQueryManager().recursivelyDelete(project);
+    public void recursivelyDelete(final Project project, final boolean commitIndex) {
+        getProjectQueryManager().recursivelyDelete(project, commitIndex);
     }
 
     public ProjectProperty createProjectProperty(final Project project, final String groupName, final String propertyName,
@@ -498,6 +511,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public Policy createPolicy(String name, Policy.Operator operator, Policy.ViolationState violationState) {
         return getPolicyQueryManager().createPolicy(name, operator, violationState);
+    }
+
+    public void removeProjectFromPolicies(final Project project) {
+        getPolicyQueryManager().removeProjectFromPolicies(project);
     }
 
     public PolicyCondition createPolicyCondition(final Policy policy, final PolicyCondition.Subject subject,
@@ -981,8 +998,8 @@ public class QueryManager extends AlpineQueryManager {
         return getRepositoryQueryManager().createRepository(type, identifier, url, enabled, internal);
     }
 
-    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, boolean enabled) {
-        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, enabled);
+    public Repository updateRepository(UUID uuid, String identifier, String url, boolean internal, String username, String password, boolean enabled) {
+        return getRepositoryQueryManager().updateRepository(uuid, identifier, url, internal, username, password, enabled);
     }
 
     public RepositoryMetaComponent getRepositoryMetaComponent(RepositoryType repositoryType, String namespace, String name) {
@@ -1013,7 +1030,7 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getNotificationPublisher(name);
     }
 
-    NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
+    public NotificationPublisher getDefaultNotificationPublisher(final Class<Publisher> clazz) {
         return getNotificationQueryManager().getDefaultNotificationPublisher(clazz);
     }
 
@@ -1023,8 +1040,12 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().createNotificationPublisher(name, description, publisherClass, templateContent, templateMimeType, defaultPublisher);
     }
 
-    NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
+    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
         return getNotificationQueryManager().updateNotificationPublisher(transientPublisher);
+    }
+
+    public void deleteNotificationPublisher(NotificationPublisher notificationPublisher) {
+        getNotificationQueryManager().deleteNotificationPublisher(notificationPublisher);
     }
 
     public void removeProjectFromNotificationRules(final Project project) {
@@ -1088,4 +1109,9 @@ public class QueryManager extends AlpineQueryManager {
     public boolean hasAccessManagementPermission(final ApiKey apiKey) {
         return getProjectQueryManager().hasAccessManagementPermission(apiKey);
     }
+
+    public PaginatedResult getTags(String policyUuid) {
+        return getTagQueryManager().getTags(policyUuid);
+    }
+
 }

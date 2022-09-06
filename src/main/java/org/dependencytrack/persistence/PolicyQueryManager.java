@@ -93,6 +93,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      */
     public Policy getPolicy(final String name) {
         final Query<Policy> query = pm.newQuery(Policy.class, "name == :name");
+        query.setRange(0, 1);
         return singleResult(query.execute(name));
     }
 
@@ -174,6 +175,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      */
     public synchronized PolicyViolation addPolicyViolationIfNotExist(final PolicyViolation pv) {
         final Query<PolicyViolation> query = pm.newQuery(PolicyViolation.class, "type == :type && component == :component && policyCondition == :policyCondition");
+        query.setRange(0, 1);
         PolicyViolation result = singleResult(query.execute(pv.getType(), pv.getComponent(), pv.getPolicyCondition()));
         if (result == null) {
             result = persist(pv);
@@ -339,6 +341,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      */
     public ViolationAnalysis getViolationAnalysis(Component component, PolicyViolation policyViolation) {
         final Query<ViolationAnalysis> query = pm.newQuery(ViolationAnalysis.class, "component == :component && policyViolation == :policyViolation");
+        query.setRange(0, 1);
         return singleResult(query.execute(component, policyViolation));
     }
 
@@ -438,6 +441,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
      */
     public LicenseGroup getLicenseGroup(final String name) {
         final Query<LicenseGroup> query = pm.newQuery(LicenseGroup.class, "name == :name");
+        query.setRange(0, 1);
         return singleResult(query.execute(name));
     }
 
@@ -461,6 +465,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     public boolean doesLicenseGroupContainLicense(final LicenseGroup lg, final License license) {
         final License l = getObjectById(License.class, license.getId());
         final Query<LicenseGroup> query = pm.newQuery(LicenseGroup.class, "id == :id && licenses.contains(:license)");
+        query.setRange(0, 1);
         return singleResult(query.execute(lg.getId(), l)) != null;
     }
 
@@ -504,6 +509,20 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
         }
         delete(violations);
         delete(policyCondition);
+    }
+
+    /**
+     * Removes all associations with a given {@link Project} from all {@link Policy}s.
+     * @param project The {@link Project} to remove from policies
+     */
+    public void removeProjectFromPolicies(final Project project) {
+        final Query<Policy> query = pm.newQuery(Policy.class, "projects.contains(:project)");
+        query.setParameters(project);
+
+        for (final Policy policy: query.executeList()) {
+            policy.getProjects().remove(project);
+            persist(policy);
+        }
     }
 
     /**

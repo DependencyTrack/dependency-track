@@ -75,10 +75,12 @@ public class ModelConverter {
      */
     public static List<Component> convertComponents(final QueryManager qm, final Bom bom, final Project project) {
         final List<Component> components = new ArrayList<>();
-        for (int i = 0; i < bom.getComponents().size(); i++) {
-            final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
-            if (cycloneDxComponent != null) {
-                components.add(convert(qm, cycloneDxComponent, project));
+        if (bom.getComponents() != null) {
+            for (int i = 0; i < bom.getComponents().size(); i++) {
+                final org.cyclonedx.model.Component cycloneDxComponent = bom.getComponents().get(i);
+                if (cycloneDxComponent != null) {
+                    components.add(convert(qm, cycloneDxComponent, project));
+                }
             }
         }
         return components;
@@ -91,7 +93,7 @@ public class ModelConverter {
             component = new Component();
             component.setProject(project);
         }
-        //component.setAuthor(StringUtils.trimToNull(cycloneDxComponent.getAuthor())); // TODO
+        component.setAuthor(StringUtils.trimToNull(cycloneDxComponent.getAuthor()));
         component.setBomRef(StringUtils.trimToNull(cycloneDxComponent.getBomRef()));
         component.setPublisher(StringUtils.trimToNull(cycloneDxComponent.getPublisher()));
         component.setGroup(StringUtils.trimToNull(cycloneDxComponent.getGroup()));
@@ -197,6 +199,7 @@ public class ModelConverter {
         cycloneComponent.setDescription(StringUtils.trimToNull(component.getDescription()));
         cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
+        cycloneComponent.setAuthor(StringUtils.trimToNull(component.getAuthor()));
 
         if (component.getSwidTagId() != null) {
             final Swid swid = new Swid();

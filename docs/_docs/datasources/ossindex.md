@@ -2,7 +2,7 @@
 title: Sonatype OSS Index
 category: Datasources
 chapter: 4
-order: 3
+order: 4
 ---
 
 Sonatype OSS Index provides transparent and highly accurate results for components with valid Package URLs. 

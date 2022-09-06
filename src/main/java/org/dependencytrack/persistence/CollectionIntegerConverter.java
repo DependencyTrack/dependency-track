@@ -19,6 +19,8 @@
 package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
+
 import javax.jdo.AttributeConverter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +46,7 @@ public class CollectionIntegerConverter implements AttributeConverter<Collection
     }
 
     public Collection<Integer> convertToAttribute(final String columnValue) {
-        if (columnValue == null) {
+        if (columnValue == null || StringUtils.isBlank(columnValue)) {
             return null;
         }
         final Collection<Integer> collection = new ArrayList<>();

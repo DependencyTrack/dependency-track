@@ -75,6 +75,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      */
     public Cpe getCpeBy23(String cpe23) {
         final Query<Cpe> query = pm.newQuery(Cpe.class, "cpe23 == :cpe23");
+        query.setRange(0, 1);
         return singleResult(query.execute(cpe23));
     }
 
@@ -126,6 +127,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                                                            String versionStartExcluding, String versionStartIncluding) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class);
         query.setFilter("cpe23 == :cpe23 && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
+        query.setRange(0, 1);
         return singleResult(query.executeWithArray(cpe23, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
     }
 
@@ -165,6 +167,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                                                                    String versionEndExcluding, String versionEndIncluding,
                                                                    String versionStartExcluding, String versionStartIncluding) {
         final Query<VulnerableSoftware> query = pm.newQuery(VulnerableSoftware.class, "purlType == :purlType && purlNamespace == :purlNamespace && purlName == :purlName && versionEndExcluding == :versionEndExcluding && versionEndIncluding == :versionEndIncluding && versionStartExcluding == :versionStartExcluding && versionStartIncluding == :versionStartIncluding");
+        query.setRange(0, 1);
         return singleResult(query.executeWithArray(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding));
     }
 
@@ -245,6 +248,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
      */
     public Cwe getCweById(int cweId) {
         final Query<Cwe> query = pm.newQuery(Cwe.class, "cweId == :cweId");
+        query.setRange(0, 1);
         return singleResult(query.execute(cweId));
     }
 

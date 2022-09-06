@@ -33,7 +33,6 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -65,8 +64,7 @@ public abstract class IndexManager implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(IndexManager.class);
     private IndexWriter iwriter;
-    private IndexSearcher isearcher;
-    private MultiFieldQueryParser qparser;
+    private DirectoryReader searchReader;
     private final IndexType indexType;
 
     /**
@@ -160,17 +158,22 @@ public abstract class IndexManager implements AutoCloseable {
     }
 
     /**
-     * Returns an IndexSearcher by opening the index directory first, if necessary.
-     * @return an IndexSearcher
+     * Returns an {@link IndexSearcher} by opening the index directory first, if necessary.
+     *
+     * @return an {@link IndexSearcher}
      * @throws IOException when the index directory cannot be opened
      * @since 3.0.0
      */
-    protected IndexSearcher getIndexSearcher() throws IOException {
-        if (isearcher == null) {
-            final IndexReader reader = DirectoryReader.open(getDirectory());
-            isearcher = new IndexSearcher(reader);
+    protected synchronized IndexSearcher getIndexSearcher() throws IOException {
+        if (searchReader == null) {
+            searchReader = DirectoryReader.open(getDirectory());
+        } else {
+            final var changedReader = DirectoryReader.openIfChanged(searchReader);
+            if (changedReader != null) {
+                searchReader = changedReader;
+            }
         }
-        return isearcher;
+        return new IndexSearcher(searchReader);
     }
 
     /**
@@ -181,10 +184,8 @@ public abstract class IndexManager implements AutoCloseable {
     protected QueryParser getQueryParser() {
         // DO NOT close (either manually or try-with-resource) the Analyzer
         final Analyzer analyzer = new StandardAnalyzer();
-        if (qparser == null) {
-            qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
-            qparser.setAllowLeadingWildcard(true);
-        }
+        MultiFieldQueryParser qparser = new MultiFieldQueryParser(getSearchFields(), analyzer, IndexConstants.getBoostMap());
+        qparser.setAllowLeadingWildcard(true);
         return qparser;
     }
 

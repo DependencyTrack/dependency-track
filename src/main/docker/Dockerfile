@@ -1,6 +1,6 @@
-FROM eclipse-temurin:11.0.14.1_1-jre-focal@sha256:4d7b447eb9e7a4f8c17f2e3ce52d7b9b886c6f458a138ad83602c84e66c3b646 AS jre-build
+FROM eclipse-temurin:17.0.4_8-jre-focal@sha256:f2f91c0d1f23c6e75b6f66e8a9db62dd4b1c100598fed75e6742a8a0b20392e0 AS jre-build
 
-FROM debian:bullseye-20220418-slim@sha256:f75d8a3ac10acdaa9be6052ea5f28bcfa56015ff02298831994bd3e6d66f7e57
+FROM debian:bullseye-20220822-slim@sha256:68c1f6bae105595d2ebec1589d9d476ba2939fdb11eaba1daec4ea826635ce75
 
 # Arguments that can be passed at build time
 # Directory names must end with / to avoid errors when ADDing and COPYing
@@ -27,7 +27,10 @@ ENV TZ=Etc/UTC \
     PATH="/opt/java/openjdk/bin:${PATH}" \
     LANG=C.UTF-8 \
     # Ensure user home is always set to DATA_DIR, even for arbitrary UIDs (such as used by OpenShift)
-    HOME=${DATA_DIR}
+    HOME=${DATA_DIR} \
+    # Default notification publisher templates override environment variables
+    DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false \
+    DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=${DATA_DIR}
 
 # Create the directories where the WAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}

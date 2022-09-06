@@ -75,4 +75,15 @@ public class PolicyTest {
         Assert.assertEquals(1, policy.getProjects().size());
         Assert.assertEquals(project, policy.getProjects().get(0));
     }
+
+    @Test
+    public void testTags() {
+        List<Tag> tags = new ArrayList<>();
+        Tag tag = new Tag();
+        tags.add(tag);
+        Policy policy = new Policy();
+        policy.setTags(tags);
+        Assert.assertEquals(1, policy.getTags().size());
+        Assert.assertEquals(tag, policy.getTags().get(0));
+    }
 }

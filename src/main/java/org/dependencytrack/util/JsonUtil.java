@@ -21,6 +21,8 @@ package org.dependencytrack.util;
 import javax.json.JsonObjectBuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 
 public final class JsonUtil {
 
@@ -55,6 +57,17 @@ public final class JsonUtil {
             builder.add(key, value.name());
         }
         return builder;
+    }
+
+    public static ZonedDateTime jsonStringToTimestamp(final String s) {
+        if (s == null) {
+            return null;
+        }
+        try {
+            return ZonedDateTime.parse(s);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
 }

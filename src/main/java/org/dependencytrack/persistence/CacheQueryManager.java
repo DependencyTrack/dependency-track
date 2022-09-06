@@ -50,6 +50,7 @@ public class CacheQueryManager extends QueryManager implements IQueryManager {
         final Query<ComponentAnalysisCache> query = pm.newQuery(ComponentAnalysisCache.class,
                 "cacheType == :cacheType && targetHost == :targetHost && targetType == :targetType && target == :target");
         query.setOrdering("lastOccurrence desc");
+        query.setRange(0, 1);
         return singleResult(query.executeWithArray(cacheType, targetHost, targetType, target));
     }
 

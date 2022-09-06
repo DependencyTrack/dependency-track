@@ -24,11 +24,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
-
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
 public class GitHubSecurityAdvisoryParser {
 
@@ -102,7 +101,7 @@ public class GitHubSecurityAdvisoryParser {
         final JSONObject cvss = object.optJSONObject("cvss");
         if (cvss != null) {
             advisory.setCvssScore(cvss.optInt("score", 0));
-            advisory.setCvssVector(cvss.optString("vectorString", null));
+            advisory.setCvssVector(cvss.optString("score", null));
         }
 
         final JSONObject cwes = object.optJSONObject("cwes");
@@ -161,16 +160,5 @@ public class GitHubSecurityAdvisoryParser {
             vulnerability.setPackageName(packageObject.optString("name", null));
         }
         return vulnerability;
-    }
-
-    private ZonedDateTime jsonStringToTimestamp(final String s) {
-        if (s == null) {
-            return null;
-        }
-        try {
-            return ZonedDateTime.parse(s);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
     }
 }

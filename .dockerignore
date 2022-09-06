@@ -1,0 +1,9 @@
+.github/
+.idea/
+.run/
+docs/
+scripts/
+src/
+target/
+!target/*.jar
+/*.md

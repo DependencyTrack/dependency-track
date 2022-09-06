@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.ConfigProperty;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
@@ -35,16 +36,19 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
 import org.dependencytrack.search.IndexManager;
+import org.dependencytrack.util.NotificationUtil;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,14 +90,18 @@ public class DefaultObjectGenerator implements ServletContextListener {
             LOGGER.info("Dispatching event to reindex vulnerabilities");
             Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Vulnerability.class));
         }
+        if (!IndexManager.exists(IndexManager.IndexType.VULNERABLESOFTWARE)) {
+            LOGGER.info("Dispatching event to reindex vulnerablesoftware");
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, VulnerableSoftware.class));
+        }
 
         loadDefaultPermissions();
         loadDefaultPersonas();
         loadDefaultLicenses();
         loadDefaultLicenseGroups();
         loadDefaultRepositories();
-        loadDefaultNotificicationPublishers();
         loadDefaultConfigProperties();
+        loadDefaultNotificationPublishers();
 
         try {
             new CweImporter().processCweDefinitions();
@@ -269,29 +277,12 @@ public class DefaultObjectGenerator implements ServletContextListener {
     /**
      * Loads the default notification publishers
      */
-    private void loadDefaultNotificicationPublishers() {
+    private void loadDefaultNotificationPublishers() {
         try (QueryManager qm = new QueryManager()) {
             LOGGER.info("Synchronizing notification publishers to datastore");
             for (final DefaultNotificationPublishers publisher : DefaultNotificationPublishers.values()) {
                 try {
-                    final File file = new File(URLDecoder.decode(this.getClass().getResource(publisher.getPublisherTemplateFile()).getFile(), UTF_8.name()));
-                    final String templateContent = FileUtils.readFileToString(file, UTF_8);
-                    final NotificationPublisher existingPublisher = qm.getDefaultNotificationPublisher(publisher.getPublisherClass());
-                    if (existingPublisher == null) {
-                        qm.createNotificationPublisher(
-                                publisher.getPublisherName(), publisher.getPublisherDescription(),
-                                publisher.getPublisherClass(), templateContent, publisher.getTemplateMimeType(),
-                                publisher.isDefaultPublisher()
-                        );
-                    } else {
-                        existingPublisher.setName(publisher.getPublisherName());
-                        existingPublisher.setDescription(publisher.getPublisherDescription());
-                        existingPublisher.setPublisherClass(publisher.getPublisherClass().getCanonicalName());
-                        existingPublisher.setTemplate(templateContent);
-                        existingPublisher.setTemplateMimeType(publisher.getTemplateMimeType());
-                        existingPublisher.setDefaultPublisher(publisher.isDefaultPublisher());
-                        qm.updateNotificationPublisher(existingPublisher);
-                    }
+                    NotificationUtil.loadDefaultNotificationPublishers(qm);
                 } catch (IOException e) {
                     LOGGER.error("An error occurred while synchronizing a default notification publisher", e);
                 }

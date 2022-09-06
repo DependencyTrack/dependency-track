@@ -46,5 +46,6 @@ public class NotificationConstantsTest {
         Assert.assertEquals("Analysis Decision: Marking Finding as NOT SET", NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET);
         Assert.assertEquals("Analysis Decision: Finding Suppressed", NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED);
         Assert.assertEquals("Analysis Decision: Finding UnSuppressed", NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED);
+        Assert.assertEquals("Analysis Decision: Finding Resolved", NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED);
     }
 }

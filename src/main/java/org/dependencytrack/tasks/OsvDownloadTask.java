@@ -321,8 +321,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 try (InputStream in = response.getEntity().getContent();
                      Scanner scanner = new Scanner(in, StandardCharsets.UTF_8.name())) {
                     while (scanner.hasNextLine()) {
-                        if(!scanner.nextLine().isBlank()) {
-                            ecosystems.add(scanner.nextLine().trim());
+                        final String line = scanner.nextLine();
+                        if(!line.isBlank()) {
+                            ecosystems.add(line.trim());
                         }
                     }
                 }

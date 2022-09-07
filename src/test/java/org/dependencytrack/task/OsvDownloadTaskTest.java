@@ -15,6 +15,7 @@
  */
 package org.dependencytrack.task;
 
+import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,7 @@ import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
 import org.dependencytrack.tasks.OsvDownloadTask;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,10 +39,24 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
     private final OsvAdvisoryParser parser = new OsvAdvisoryParser();
-    private final OsvDownloadTask task = new OsvDownloadTask();
+    private OsvDownloadTask task;
+
+    @Before
+    public void setUp() {
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
+                "Maven;DWF",
+                IConfigProperty.PropertyType.STRING,
+                "List of ecosystems");
+        task = new OsvDownloadTask();
+        Assert.assertNotNull(task.getEnabledEcosystems());
+        Assert.assertEquals(2, task.getEnabledEcosystems().size());
+    }
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
@@ -221,6 +237,14 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertNotNull(vulnerability);
         Assert.assertEquals(22, vulnerability.getVulnerableSoftware().size());
         Assert.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());
+    }
+
+    @Test
+    public void testGetEcosystems() {
+
+        List<String> ecosystems = task.getEcosystems();
+        Assert.assertNotNull(ecosystems);
+        Assert.assertTrue(ecosystems.contains("Maven"));
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

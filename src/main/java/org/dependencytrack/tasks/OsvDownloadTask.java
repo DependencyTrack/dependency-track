@@ -20,7 +20,6 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
-import org.dependencytrack.parser.osv.model.Ecosystem;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
@@ -39,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -50,46 +51,57 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-
     private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
-    private final boolean isEnabled;
-    private HttpUriRequest request;
+    private String ecosystemConfig;
+    private List<String> ecosystems;
+
+    public List<String> getEnabledEcosystems() {
+        return this.ecosystems;
+    }
 
     public OsvDownloadTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+            if (enabled != null) {
+                this.ecosystemConfig = enabled.getPropertyValue();
+                if (this.ecosystemConfig != null) {
+                    ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                }
+            }
         }
     }
 
     @Override
     public void inform(Event e) {
 
-        if (e instanceof OsvMirrorEvent && this.isEnabled) {
+        if (e instanceof OsvMirrorEvent) {
 
-            for (Ecosystem ecosystem : Ecosystem.values()) {
-                LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem.getValue());
-                try {
-                    String url = "https://osv-vulnerabilities.storage.googleapis.com/"
-                            + URLEncoder.encode(ecosystem.getValue(), StandardCharsets.UTF_8.toString()).replace("+", "%20")
-                            + "/all.zip";
-                    request = new HttpGet(url);
-                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                        final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == 200) {
-                            try (InputStream in = response.getEntity().getContent();
-                                 ZipInputStream zipInput = new ZipInputStream(in)) {
-                                unzipFolder(zipInput);
+            if(this.ecosystems != null && !this.ecosystems.isEmpty()) {
+                for (String ecosystem : this.ecosystems) {
+                    LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
+                    try {
+                        String url = OSV_BASE_URL + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
+                                + "/all.zip";
+                        HttpUriRequest request = new HttpGet(url);
+                        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                            final StatusLine status = response.getStatusLine();
+                            if (status.getStatusCode() == 200) {
+                                try (InputStream in = response.getEntity().getContent();
+                                     ZipInputStream zipInput = new ZipInputStream(in)) {
+                                    unzipFolder(zipInput);
+                                }
+                            } else {
+                                LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
                             }
-                        } else {
-                            LOGGER.error("Download failed " + status.getStatusCode() + ": " + status.getReasonPhrase() + url);
+                        } catch (Exception ex) {
+                            LOGGER.error("Exception while executing Http client request", ex);
                         }
-                    } catch (Exception ex) {
-                        LOGGER.error("Exception while executing Http client request", ex);
+                    } catch (UnsupportedEncodingException ex) {
+                        LOGGER.error("Exception while encoding URL for ecosystem " + ecosystem);
                     }
-                } catch (UnsupportedEncodingException ex) {
-                    LOGGER.error("Exception while encoding URL for ecosystem " + ecosystem.getValue());
                 }
+            } else {
+                LOGGER.info("Google OSV mirroring is disabled. No ecosystem selected.");
             }
         }
     }
@@ -269,5 +281,30 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);
         return vs;
+    }
+    
+    public static List<String> getEcosystems() {
+        ArrayList<String> ecosystems = new ArrayList<>();
+        String url = OSV_BASE_URL + "ecosystems.txt";
+        HttpUriRequest request = new HttpGet(url);
+        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            final StatusLine status = response.getStatusLine();
+            if (status.getStatusCode() == 200) {
+                try (InputStream in = response.getEntity().getContent();
+                     Scanner scanner = new Scanner(in, StandardCharsets.UTF_8.name())) {
+                    while (scanner.hasNextLine()) {
+                        final String line = scanner.nextLine();
+                        if(!line.isBlank()) {
+                            ecosystems.add(line.trim());
+                        }
+                    }
+                }
+            } else {
+                LOGGER.error("Ecosystem download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+            }
+        } catch (Exception ex) {
+            LOGGER.error("Exception while executing Http request for ecosystems", ex);
+        }
+        return ecosystems;
     }
 }

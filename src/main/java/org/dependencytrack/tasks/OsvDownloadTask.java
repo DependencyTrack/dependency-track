@@ -270,27 +270,4 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionEndIncluding(versionEndIncluding);
         return vs;
     }
-
-    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OsvAdvisory advisory) {
-
-        Vulnerability existing = null;
-        if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {
-            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
-        } else if (advisory.getAliases() != null) {
-            for(String alias : advisory.getAliases()) {
-                String sourceOfAlias = extractSource(alias).toString();
-                if(isVulnerabilitySourceClashingWithGithubOrNvd(sourceOfAlias)) {
-                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias);
-                    if (existing != null) break;
-                }
-            }
-        }
-        return existing;
-    }
-
-    private boolean isVulnerabilitySourceClashingWithGithubOrNvd(String source) {
-
-        return Vulnerability.Source.GITHUB.toString().equals(source)
-                || Vulnerability.Source.NVD.toString().equals(source);
-    }
 }

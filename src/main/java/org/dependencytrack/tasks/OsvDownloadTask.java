@@ -307,4 +307,29 @@ public class OsvDownloadTask implements LoggableSubscriber {
         }
         return ecosystems;
     }
+
+    public static List<String> getEcosystems() {
+        ArrayList<String> ecosystems = new ArrayList<>();
+        String url = OSV_BASE_URL + "ecosystems.txt";
+        HttpUriRequest request = new HttpGet(url);
+        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            final StatusLine status = response.getStatusLine();
+            if (status.getStatusCode() == 200) {
+                try (InputStream in = response.getEntity().getContent();
+                     Scanner scanner = new Scanner(in, StandardCharsets.UTF_8.name())) {
+                    while (scanner.hasNextLine()) {
+                        final String line = scanner.nextLine();
+                        if(!line.isBlank()) {
+                            ecosystems.add(line.trim());
+                        }
+                    }
+                }
+            } else {
+                LOGGER.error("Ecosystem download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+            }
+        } catch (Exception ex) {
+            LOGGER.error("Exception while executing Http request for ecosystems", ex);
+        }
+        return ecosystems;
+    }
 }

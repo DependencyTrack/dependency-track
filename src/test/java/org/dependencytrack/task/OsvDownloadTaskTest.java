@@ -105,7 +105,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
         Assert.assertEquals(4, vulnerableSoftware.size());
 
-        // incoming vulnerability from osv when vulnerability already exists from github
+        // incoming vulnerability when vulnerability with same ID already exists
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
         advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
@@ -196,33 +196,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertNotNull(advisory);
         severity = task.calculateOSVSeverity(advisory);
         Assert.assertEquals(Severity.UNASSIGNED, severity);
-    }
-
-    @Test
-    public void testFindExistingClashingVulnerability() throws IOException {
-
-        // insert a vulnerability in database
-        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
-        OsvAdvisory advisory = parser.parse(jsonObject);
-        task.updateDatasource(advisory);
-
-        // tests for incoming vulnerabilities if it or its alias already exists
-        prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
-        advisory = parser.parse(jsonObject);
-        Vulnerability vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
-        Vulnerability existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
-        Assert.assertNotNull(existingVuln);
-
-        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json");
-        advisory = parser.parse(jsonObject);
-        vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
-        existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
-        Assert.assertNull(existingVuln);
-
-        advisory.addAlias("GHSA-77rv-6vfw-x4gc");
-        vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
-        existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
-        Assert.assertNotNull(existingVuln);
     }
 
     @Test

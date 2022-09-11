@@ -147,49 +147,49 @@ public class Component implements Serializable {
     @Persistent
     @Index(name = "COMPONENT_MD5_IDX")
     @Column(name = "MD5", jdbcType = "VARCHAR", length = 32)
-    @Pattern(regexp = RegexSequence.Definition.HASH_MD5, message = "The MD5 hash must be a valid 32 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{32}$", message = "The MD5 hash must be a valid 32 character HEX number")
     private String md5;
 
     @Persistent
     @Index(name = "COMPONENT_SHA1_IDX")
     @Column(name = "SHA1", jdbcType = "VARCHAR", length = 40)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA1, message = "The SHA1 hash must be a valid 40 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{40}$", message = "The SHA1 hash must be a valid 40 character HEX number")
     private String sha1;
 
     @Persistent
     @Index(name = "COMPONENT_SHA256_IDX")
     @Column(name = "SHA_256", jdbcType = "VARCHAR", length = 64)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The SHA-256 hash must be a valid 64 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{64}$", message = "The SHA-256 hash must be a valid 64 character HEX number")
     private String sha256;
 
     @Persistent
     @Index(name = "COMPONENT_SHA384_IDX")
     @Column(name = "SHA_384", jdbcType = "VARCHAR", length = 96)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The SHA-384 hash must be a valid 96 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{96}$", message = "The SHA-384 hash must be a valid 96 character HEX number")
     private String sha384;
 
     @Persistent
     @Index(name = "COMPONENT_SHA512_IDX")
     @Column(name = "SHA_512", jdbcType = "VARCHAR", length = 128)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA-512 hash must be a valid 128 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{128}$", message = "The SHA-512 hash must be a valid 128 character HEX number")
     private String sha512;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_256_IDX")
     @Column(name = "SHA3_256", jdbcType = "VARCHAR", length = 64)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The SHA3-256 hash must be a valid 64 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{64}$", message = "The SHA3-256 hash must be a valid 64 character HEX number")
     private String sha3_256;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_384_IDX")
     @Column(name = "SHA3_384", jdbcType = "VARCHAR", length = 96)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The SHA3-384 hash must be a valid 96 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{96}$", message = "The SHA3-384 hash must be a valid 96 character HEX number")
     private String sha3_384;
 
     @Persistent
     @Index(name = "COMPONENT_SHA3_512_IDX")
     @Column(name = "SHA3_512", jdbcType = "VARCHAR", length = 128)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The SHA3-512 hash must be a valid 128 character HEX number")
+    @Pattern(regexp = "^[0-9a-fA-F]{128}$", message = "The SHA3-512 hash must be a valid 128 character HEX number")
     private String sha3_512;
 
     @Persistent
@@ -410,7 +410,7 @@ public class Component implements Serializable {
     }
 
     public void setMd5(String md5) {
-        this.md5 = md5;
+        this.md5 = md5 == null ? null : md5.toLowerCase();
     }
 
     public String getSha1() {
@@ -418,7 +418,7 @@ public class Component implements Serializable {
     }
 
     public void setSha1(String sha1) {
-        this.sha1 = sha1;
+        this.sha1 = sha1 == null ? null : sha1.toLowerCase();
     }
 
     public String getSha256() {
@@ -426,7 +426,7 @@ public class Component implements Serializable {
     }
 
     public void setSha256(String sha256) {
-        this.sha256 = sha256;
+        this.sha256 = sha256 == null ? null : sha256.toLowerCase();
     }
 
     public String getSha384() {
@@ -434,7 +434,7 @@ public class Component implements Serializable {
     }
 
     public void setSha384(String sha384) {
-        this.sha384 = sha384;
+        this.sha384 = sha384 == null ? null : sha384.toLowerCase();
     }
 
     public String getSha512() {
@@ -442,7 +442,7 @@ public class Component implements Serializable {
     }
 
     public void setSha512(String sha512) {
-        this.sha512 = sha512;
+        this.sha512 = sha512 == null ? null : sha512.toLowerCase();
     }
 
     public String getSha3_256() {
@@ -450,7 +450,7 @@ public class Component implements Serializable {
     }
 
     public void setSha3_256(String sha3_256) {
-        this.sha3_256 = sha3_256;
+        this.sha3_256 = sha3_256 == null ? null : sha3_256.toLowerCase();
     }
 
     public String getSha3_384() {
@@ -458,7 +458,7 @@ public class Component implements Serializable {
     }
 
     public void setSha3_384(String sha3_384) {
-        this.sha3_384 = sha3_384;
+        this.sha3_384 = sha3_384 == null ? null : sha3_384.toLowerCase();
     }
 
     public String getSha3_512() {
@@ -466,7 +466,7 @@ public class Component implements Serializable {
     }
 
     public void setSha3_512(String sha3_512) {
-        this.sha3_512 = sha3_512;
+        this.sha3_512 = sha3_512 == null ? null : sha3_512.toLowerCase();
     }
 
     public String getBlake2b_256() {

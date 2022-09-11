@@ -113,4 +113,38 @@ public class InternalAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(vulnerabilities.getList(Vulnerability.class).get(1).getVulnId()).isEqualTo("CVE-2022-266377");
     }
 
+    @Test
+    public void testVersionFirmwareNA(){
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Intel 2000e firmware");
+        component.setVersion("-");
+        component.setCpe("cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*");
+        component = qm.createComponent(component, false);
+
+        var vs1 = new VulnerableSoftware();
+        vs1.setCpe23("cpe:2.3:o:intel:2000e_firmware:-:*:*:*:*:*:*:*");
+        vs1.setPart("o");
+        vs1.setVendor("intel");
+        vs1.setProduct("2000e_firmware");
+        vs1.setVersion("-");
+        vs1.setVulnerable(true);
+        var vs = qm.persist(vs1);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("CVE-2019-0174");
+        vulnerability.setSource(Vulnerability.Source.NVD);
+        vulnerability.setVulnerableSoftware(List.of(vs));
+        qm.createVulnerability(vulnerability, false);
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulnerabilities = qm.getVulnerabilities(component);
+        assertThat(vulnerabilities.getTotal()).isEqualTo(1);
+        assertThat(vulnerabilities.getList(Vulnerability.class).get(0).getVulnId()).isEqualTo("CVE-2019-0174");
+    }
+
 }

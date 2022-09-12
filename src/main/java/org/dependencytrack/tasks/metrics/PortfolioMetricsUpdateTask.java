@@ -69,7 +69,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
             pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
             LOGGER.trace("Fetching first " + BATCH_SIZE + " projects");
-            List<Project> activeProjects = seekActiveProjects(pm, 0);
+            List<Project> activeProjects = fetchNextActiveProjectsPage(pm, null);
 
             while (!activeProjects.isEmpty()) {
                 final long firstId = activeProjects.get(0).getId();
@@ -147,7 +147,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 }
 
                 LOGGER.trace("Fetching next " + BATCH_SIZE + " projects");
-                activeProjects = seekActiveProjects(pm, lastId);
+                activeProjects = fetchNextActiveProjectsPage(pm, lastId);
             }
 
             qm.runInTransaction(() -> {
@@ -167,11 +167,15 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 
-    private List<Project> seekActiveProjects(final PersistenceManager pm, final long lastId) throws Exception {
+    private List<Project> fetchNextActiveProjectsPage(final PersistenceManager pm, final Long lastId) throws Exception {
         try (final Query<Project> query = pm.newQuery(Project.class)) {
-            query.setFilter("(active == null || active == true) && id > :lastId");
-            query.setOrdering("id asc");
-            query.setParameters(lastId);
+            if (lastId == null) {
+                query.setFilter("(active == null || active == true)");
+            } else {
+                query.setFilter("(active == null || active == true) && id < :lastId");
+                query.setParameters(lastId);
+            }
+            query.setOrdering("id DESC");
             query.range(0, BATCH_SIZE);
             query.getFetchPlan().setGroup(Project.FetchGroup.METRICS_UPDATE.name());
             return List.copyOf(query.executeList());

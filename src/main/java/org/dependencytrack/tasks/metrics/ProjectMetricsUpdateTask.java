@@ -70,7 +70,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             }
 
             LOGGER.trace("Fetching first components page for project " + uuid);
-            List<Component> components = seekComponents(pm, project, 0);
+            List<Component> components = fetchNextComponentsPage(pm, project, null);
 
             while (!components.isEmpty()) {
                 for (final Component component : components) {
@@ -125,7 +125,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
 
                 LOGGER.trace("Fetching next components page for project " + uuid);
                 final long lastId = components.get(components.size() - 1).getId();
-                components = seekComponents(pm, project, lastId);
+                components = fetchNextComponentsPage(pm, project, lastId);
             }
 
             qm.runInTransaction(() -> {
@@ -151,11 +151,16 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 
-    private List<Component> seekComponents(final PersistenceManager pm, final Project project, final long lastId) throws Exception {
+    private List<Component> fetchNextComponentsPage(final PersistenceManager pm, final Project project, final Long lastId) throws Exception {
         try (final Query<Component> query = pm.newQuery(Component.class)) {
-            query.setFilter("project == :project && id > :lastId");
-            query.setParameters(project, lastId);
-            query.setOrdering("id asc");
+            if (lastId == null) {
+                query.setFilter("project == :project");
+                query.setParameters(project);
+            } else {
+                query.setFilter("project == :project && id < :lastId");
+                query.setParameters(project, lastId);
+            }
+            query.setOrdering("id DESC");
             query.setRange(0, 500);
             query.getFetchPlan().setGroup(Component.FetchGroup.METRICS_UPDATE.name());
             return List.copyOf(query.executeList());

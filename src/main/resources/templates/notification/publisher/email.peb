@@ -8,6 +8,11 @@ Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
+Affected Projects:
+{% for affectedProject in notification.subject.affectedProjects %}
+Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
+Project URL:       {{ baseUrl }}/project/?uuid={{ affectedProject.uuid }}
+{% endfor %}
 {% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
 Project:           {{ subject.dependency.project.toString }}
 Project URL:       {{ baseUrl }}/project/?uuid={{ subject.dependency.project.uuid }}
@@ -34,8 +39,11 @@ Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
-Project:           {{ subject.project.toString }}
-Project URL:       {{ baseUrl }}/project/?uuid={{ subject.project.uuid }}
+Affected Projects:
+{% for affectedProject in notification.subject.affectedProjects %}
+Project:            [{{ affectedProject.name }} : {{ affectedProject.version }}]
+Project URL:        {{ baseUrl }}/project/?uuid={{ affectedProject.uuid }}
+    {% endfor %}
 {% elseif notification.group == "BOM_CONSUMED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

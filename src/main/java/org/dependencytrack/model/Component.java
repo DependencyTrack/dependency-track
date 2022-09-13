@@ -70,6 +70,13 @@ import java.util.UUID;
                 @Persistent(name = "parent"),
                 @Persistent(name = "children"),
                 @Persistent(name = "vulnerabilities"),
+        }),
+        @FetchGroup(name = "INTERNAL_IDENTIFICATION", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "group"),
+                @Persistent(name = "name"),
+                @Persistent(name = "internal"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -81,7 +88,8 @@ public class Component implements Serializable {
      * Defines JDO fetch groups for this class.
      */
     public enum FetchGroup {
-        ALL
+        ALL,
+        INTERNAL_IDENTIFICATION
     }
 
     @PrimaryKey

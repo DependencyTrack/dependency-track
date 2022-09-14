@@ -21,6 +21,10 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
+import alpine.model.Team;
+import alpine.model.ManagedUser;
+import alpine.model.LdapUser;
+import alpine.model.OidcUser;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.mail.SendMail;
@@ -49,6 +53,19 @@ public class SendMailPublisher implements Publisher {
             return;
         }
         final String[] destinations = parseDestination(config);
+        sendNotification(notification, config, destinations);
+    }
+
+    public void inform(final Notification notification, final JsonObject config, List<Team> teams) {
+        if (config == null) {
+            LOGGER.warn("No configuration found. Skipping notification.");
+            return;
+        }
+        final String[] destinations = parseDestination(config, teams);
+        sendNotification(notification, config, destinations);
+    }
+
+    private void sendNotification(Notification notification, JsonObject config, String[] destinations) {
         PebbleTemplate template = getTemplate(config);
         String mimeType = getTemplateMimeType(config);
         final String content = prepareTemplate(notification, template);
@@ -104,4 +121,41 @@ public class SendMailPublisher implements Publisher {
         return destinationString.split(",");
     }
 
+    static String[] parseDestination(final JsonObject config, final List<Team> teams) {
+        String destinationString = config.getString("destination");
+        for (Team team: teams) {
+            if (team.getManagedUsers() != null) {
+                for (ManagedUser user : team.getManagedUsers()) {
+                    destinationString = getDestinationString(destinationString, user.getEmail());
+                }
+            }
+            if (team.getLdapUsers() != null) {
+                for (LdapUser user : team.getLdapUsers()) {
+                    destinationString = getDestinationString(destinationString, user.getEmail());
+                }
+            }
+            if (team.getOidcUsers() != null) {
+                for (OidcUser user : team.getOidcUsers()) {
+                    destinationString = getDestinationString(destinationString, user.getEmail());
+                }
+            }
+        }
+        if (destinationString.isEmpty()) {
+            return null;
+        }
+        return destinationString.split(",");
+    }
+
+    private static String getDestinationString(String destinationString, String email) {
+        if (email != null && !email.isEmpty()) {
+            if (!destinationString.contains(email)) {
+                if (destinationString.trim().length() == 0) {
+                    return destinationString + email;
+                } else {
+                    return destinationString + "," + email;
+                }
+            }
+        }
+        return destinationString;
+    }
 }

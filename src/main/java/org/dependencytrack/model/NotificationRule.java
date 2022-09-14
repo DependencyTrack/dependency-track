@@ -19,6 +19,7 @@
 package org.dependencytrack.model;
 
 import alpine.common.validation.RegexSequence;
+import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -99,6 +100,12 @@ public class NotificationRule implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC, version ASC"))
     private List<Project> projects;
 
+    @Persistent(table = "NOTIFICATIONRULE_TEAMS", defaultFetchGroup = "true")
+    @Join(column = "NOTIFICATIONRULE_ID")
+    @Element(column = "TEAM_ID")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
+    private List<Team> teams;
+
     @Persistent
     @Column(name = "NOTIFY_ON", length = 1024)
     private String notifyOn;
@@ -173,6 +180,14 @@ public class NotificationRule implements Serializable {
 
     public void setProjects(List<Project> projects) {
         this.projects = projects;
+    }
+
+    public List<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(List<Team> teams) {
+        this.teams = teams;
     }
 
     public String getMessage() {

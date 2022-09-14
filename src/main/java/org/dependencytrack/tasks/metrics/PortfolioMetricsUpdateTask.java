@@ -66,9 +66,8 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
 
         try (final var qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
-            pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
-            LOGGER.trace("Fetching first " + BATCH_SIZE + " projects");
+            LOGGER.debug("Fetching first " + BATCH_SIZE + " projects");
             List<Project> activeProjects = fetchNextActiveProjectsPage(pm, null);
 
             while (!activeProjects.isEmpty()) {
@@ -146,17 +145,17 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
                 }
 
-                LOGGER.trace("Fetching next " + BATCH_SIZE + " projects");
+                LOGGER.debug("Fetching next " + BATCH_SIZE + " projects");
                 activeProjects = fetchNextActiveProjectsPage(pm, lastId);
             }
 
             qm.runInTransaction(() -> {
                 final PortfolioMetrics latestMetrics = qm.getMostRecentPortfolioMetrics();
                 if (!counters.hasChanged(latestMetrics)) {
-                    LOGGER.debug("Metrics of portfolio component did not change");
+                    LOGGER.debug("Portfolio metrics did not change");
                     latestMetrics.setLastOccurrence(counters.measuredAt);
                 } else {
-                    LOGGER.debug("Metrics of portfolio changed");
+                    LOGGER.debug("Portfolio metrics changed");
                     final PortfolioMetrics metrics = counters.createPortfolioMetrics();
                     pm.makePersistent(metrics);
                 }

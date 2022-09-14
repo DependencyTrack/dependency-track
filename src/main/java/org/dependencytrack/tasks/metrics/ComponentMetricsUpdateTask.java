@@ -70,7 +70,6 @@ public class ComponentMetricsUpdateTask implements Subscriber {
 
         try (final var qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
-            pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
             final Component component = qm.getObjectByUuid(Component.class, uuid, List.of(Component.FetchGroup.METRICS_UPDATE.name()));
             if (component == null) {

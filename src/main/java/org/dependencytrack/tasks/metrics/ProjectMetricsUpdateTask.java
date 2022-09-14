@@ -62,14 +62,13 @@ public class ProjectMetricsUpdateTask implements Subscriber {
 
         try (final QueryManager qm = new QueryManager()) {
             final PersistenceManager pm = qm.getPersistenceManager();
-            pm.setMultithreaded(false); // Skip unnecessary synchronization overhead
 
             final Project project = qm.getObjectByUuid(Project.class, uuid, List.of(Project.FetchGroup.METRICS_UPDATE.name()));
             if (project == null) {
                 throw new NoSuchElementException("Project " + uuid + " does not exist");
             }
 
-            LOGGER.trace("Fetching first components page for project " + uuid);
+            LOGGER.debug("Fetching first components page for project " + uuid);
             List<Component> components = fetchNextComponentsPage(pm, project, null);
 
             while (!components.isEmpty()) {
@@ -123,7 +122,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                     counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
                 }
 
-                LOGGER.trace("Fetching next components page for project " + uuid);
+                LOGGER.debug("Fetching next components page for project " + uuid);
                 final long lastId = components.get(components.size() - 1).getId();
                 components = fetchNextComponentsPage(pm, project, lastId);
             }

@@ -96,7 +96,7 @@ public class ComposerMetaAnalyzerTest {
         );
     }
 
-    private static File getResourceFile(String namespace, String name) {
+    private static File getResourceFile(String namespace, String name) throws Exception{
         return new File(
                 Thread.currentThread().getContextClassLoader()
                         .getResource(String.format(
@@ -104,7 +104,7 @@ public class ComposerMetaAnalyzerTest {
                                 namespace,
                                 name
                         ))
-                        .getFile()
+                        .toURI()
         );
     }
 

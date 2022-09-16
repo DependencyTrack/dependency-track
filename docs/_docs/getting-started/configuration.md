@@ -396,7 +396,7 @@ This file resides in `<BASE_URL>/static/config.json`.
     "API_BASE_URL": "",
     // Optional
     // Defines the issuer URL to be used for OpenID Connect.
-    // See alpine.oidc.issuer property of the backend.
+    // See alpine.oidc.issuer property of the API server.
     "OIDC_ISSUER": "",
     // Optional
     // Defines the client ID for OpenID Connect.

@@ -27,7 +27,7 @@ Multiple identity providers have been tested, the following are some example con
 Note that some providers may not support specific features like team synchronization, or require further configuration to make them work.
 If you find that the provider of your choice does not work with Dependency-Track, please [file an issue](https://github.com/DependencyTrack/dependency-track/issues).
 
-For a complete overview of available configuration options for both backend and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}).
+For a complete overview of available configuration options for both API server and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}).
 
 #### Auth0
 
@@ -149,7 +149,7 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
 }
 ```
 
-5. Configure OIDC for both backend and frontend of Dependency-Track, as demonstrated below for a docker-compose deployment:
+5. Configure OIDC for both API server and frontend of Dependency-Track, as demonstrated below for a docker-compose deployment:
 
     ```yaml
     version: "3"

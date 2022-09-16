@@ -187,10 +187,14 @@ public class NistMirrorTask implements LoggableSubscriber {
         try {
             final URL url = new URL(urlString);
             String filename = url.getFile();
+            String absoluteFile = outputDir + filename;
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
+            LOGGER.info("Check if exist " + absoluteFile);
             if (file.exists()) {
+                LOGGER.info("Check modifydate");
                 if (System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
+                    LOGGER.info("Modifydate evaluated");
                     if (ResourceType.CVE_YEAR_DATA == resourceType) {
                         LOGGER.info("Retrieval of " + filename + " not necessary. Will use modified feed for updates.");
                         return;
@@ -216,13 +220,18 @@ public class NistMirrorTask implements LoggableSubscriber {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
                         File temp = File.createTempFile(filename, null);
+                        LOGGER.info("Create new File...");
                         file = new File(outputDir, filename);
+                        LOGGER.info("Write to temporary file...");
                         FileUtils.copyInputStreamToFile(in, temp);
+                        LOGGER.info("Move...");
                         Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        LOGGER.info("SetModifiedDate...");
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             file.setLastModified(0);
                         }
+                        LOGGER.info("Unzip...");
                         if (file.getName().endsWith(".gz")) {
                             uncompress(file, resourceType);
                         }

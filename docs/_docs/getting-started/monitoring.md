@@ -2,7 +2,7 @@
 title: Monitoring
 category: Getting Started
 chapter: 1
-order: 11
+order: 12
 ---
 
 The API server can be configured to expose system metrics via the Prometheus [text-based exposition format].

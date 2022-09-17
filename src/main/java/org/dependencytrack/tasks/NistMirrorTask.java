@@ -43,6 +43,9 @@ import org.dependencytrack.persistence.QueryManager;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -187,14 +190,18 @@ public class NistMirrorTask implements LoggableSubscriber {
         try {
             final URL url = new URL(urlString);
             String filename = url.getFile();
-            String absoluteFile = outputDir + filename;
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
-            LOGGER.info("Check if exist " + absoluteFile);
             if (file.exists()) {
-                LOGGER.info("Check modifydate");
-                if (System.currentTimeMillis() < ((86400000 * 5) + file.lastModified())) {
-                    LOGGER.info("Modifydate evaluated");
+                long modificationTime = 0;
+                File timestampFile = new File(outputDir, filename + ".ts");
+                if(timestampFile.exists()) {
+                    BufferedReader tsBufReader = new BufferedReader(new FileReader(timestampFile));
+                    String text = tsBufReader.readLine();
+                    modificationTime = Integer.parseInt(text);
+                }
+
+                if (System.currentTimeMillis() < ((86400000 * 5) + modificationTime)) {
                     if (ResourceType.CVE_YEAR_DATA == resourceType) {
                         LOGGER.info("Retrieval of " + filename + " not necessary. Will use modified feed for updates.");
                         return;
@@ -220,18 +227,16 @@ public class NistMirrorTask implements LoggableSubscriber {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
                         File temp = File.createTempFile(filename, null);
-                        LOGGER.info("Create new File...");
                         file = new File(outputDir, filename);
-                        LOGGER.info("Write to temporary file...");
                         FileUtils.copyInputStreamToFile(in, temp);
-                        LOGGER.info("Move...");
                         Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        LOGGER.info("SetModifiedDate...");
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
-                            file.setLastModified(0);
+                            File timestampFile = new File(outputDir, filename + ".ts");
+                            FileWriter writer = new FileWriter(timestampFile);
+                            writer.write(Integer.toString(0));
+                            writer.close();
                         }
-                        LOGGER.info("Unzip...");
                         if (file.getName().endsWith(".gz")) {
                             uncompress(file, resourceType);
                         }
@@ -295,7 +300,12 @@ public class NistMirrorTask implements LoggableSubscriber {
             if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                 final NvdParser parser = new NvdParser();
                 parser.parse(uncompressedFile);
-                file.setLastModified(start);
+
+                File timestampFile = new File( file.getAbsolutePath() + ".ts");
+                FileWriter writer = new FileWriter(timestampFile);
+                writer.write(Long.toString(start));
+                writer.close();
+
             }
             final long end = System.currentTimeMillis();
             metricParseTime += end - start;

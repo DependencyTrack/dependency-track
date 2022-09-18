@@ -75,5 +75,67 @@ alpine.database.url=jdbc:mysql://localhost:3306/dtrack?autoReconnect=true&useSSL
 MySQL may erroneously report index key length violations ("Specified key was too long"), when in fact the multi-byte
 key length is lower than the actual value. **Do not use MySQL if don't know how to work around errors like this**!
 
+### Migrating to H2 v2
+
+With Dependency-Track 4.6.0, the embedded H2 database has been upgraded to version 2.
+As stated in the official [Migration to 2.0](https://www.h2database.com/html/migration-to-v2.html) guide,
+databases created by H2 v1 are incompatible with H2 v2. As a consequence, Dependency-Track 4.6.0 will not work with H2
+databases created by earlier Dependency-Track versions.
+
+For this reason, upgrading an existing Dependency-Track 4.5.x installation to 4.6.x requires a manual migration
+of the H2 database beforehand. The migration procedure is outlined below.
+
+1. Stop the Dependency-Track API server
+2. Download the H2 v1.4.200 JAR and dump the existing database using the `Script` tool:
+```shell
+wget https://repo1.maven.org/maven2/com/h2database/h2/1.4.200/h2-1.4.200.jar
+java -cp h2-1.4.200.jar org.h2.tools.Script \
+  -url "jdbc:h2:file:~/.dependency-track/db" \
+  -user sa -password ""
+```
+  * This will dump the database to a `backup.sql` file in the current working directory
+3. Create a backup of the entire data directory, so you can easily roll back if something goes south during the next steps:
+```shell
+tar -czf dtrack-backup.tar.gz ~/.dependency-track
+```
+4. Delete the old H2 database and download H2 2.1.214:
+```shell
+rm -rf ~/.dependency-track/db.*
+wget https://repo1.maven.org/maven2/com/h2database/h2/2.1.214/h2-2.1.214.jar
+```
+5. Launch the H2 shell using the H2 2.1.214 JAR and create a new database:
+```shell
+java -cp h2-2.1.214.jar org.h2.tools.Shell
+Welcome to H2 Shell 2.1.214 (2022-06-13)
+Exit with Ctrl+C
+[Enter]   jdbc:h2:~/test
+URL       jdbc:h2:~/.dependency-track/db
+[Enter]   org.h2.Driver
+Driver
+[Enter]
+User      sa
+Password
+Type the same password again to confirm database creation.
+Password
+Connected
+sql> quit
+```
+6. If you haven't modified any database settings for your Dependency-Track instance, use the following values when prompted by the H2 shell:
+  * URL: `jdbc:h2:~/.dependency-track/db`
+  * Driver: `org.h2.Driver` (or just press Enter)
+  * User: `sa`
+  * Password: (Empty, just press Enter)
+  * Once the shell confirms the successful creation with `Connected`, exit the shell using the `quit` command
+7. Import `backup.sql` into the new database you just created using the `RunScript` tool:
+```shell
+java -cp h2-2.1.214.jar org.h2.tools.RunScript \
+  -url jdbc:h2:~/.dependency-track/db \
+  -user sa -password "" \
+  -script backup.sql \
+  -options quirks_mode variable_binary
+```
+8. That's it! It's now safe to start Dependency-Track 4.6.0
+
+
 [Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
 [SQL mode]: https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html

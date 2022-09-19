@@ -233,6 +233,12 @@ public class NistMirrorTask implements LoggableSubscriber {
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             File timestampFile = new File(outputDir, filename + ".ts");
+                            // creates the file
+                            if (file.exists())
+                            {
+                                file.createNewFile();
+                            }
+                            LOGGER.info("Write timestamp file...");
                             FileWriter writer = new FileWriter(timestampFile);
                             writer.write(Integer.toString(0));
                             writer.close();

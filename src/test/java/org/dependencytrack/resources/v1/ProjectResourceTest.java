@@ -467,5 +467,88 @@ public class ProjectResourceTest extends ResourceTest {
         Assert.assertEquals("tag4", jsonTags.get(0).asJsonObject().getString("name"));
     }
 
+    @Test
+    public void getRootProjectsTest() {
+        Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
+        qm.createProject("GHI", null, "1.0", null, child, null, true, false);
+        Response response = target(V1_PROJECT + "/root")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+        Assert.assertThrows(IndexOutOfBoundsException.class, () -> json.getJsonObject(1));
+    }
+
+    @Test
+    public void getChildrenProjectsTest() {
+        Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
+        qm.createProject("GHI", null, "1.0", null, parent, null, true, false);
+        qm.createProject("JKL", null, "1.0", null, child, null, true, false);
+        Response response = target(V1_PROJECT + "/" + parent.getUuid().toString() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("DEF", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("GHI", json.getJsonObject(1).getString("name"));
+    }
+
+    @Test
+    public void getProjectsWithParentsTest() {
+        Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
+        Project grandChild = qm.createProject("GHI", null, "1.0", null, child, null, true, false);
+        qm.createProject("JKL", null, "1.0", null, grandChild, null, true, false);
+        Response response = target(V1_PROJECT + "/parents")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(4), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("JKL", json.getJsonObject(3).getString("name"));
+        Assert.assertEquals("GHI", json.getJsonObject(3).getJsonObject("parent").getString("name"));
+        Assert.assertEquals("DEF", json.getJsonObject(3).getJsonObject("parent").getJsonObject("parent").getString("name"));
+        Assert.assertEquals("ABC", json.getJsonObject(3).getJsonObject("parent").getJsonObject("parent").getJsonObject("parent").getString("name"));
+    }
+
+    @Test
+    public void updateChildAsParent() {
+        Project grandParent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, true, false);
+        Project child = qm.createProject("GHI", null, "1.0", null, parent, null, true, false);
+        Project grandChild = qm.createProject("JKL", null, "1.0", null, child, null, true, false);
+
+        Project tmpProject = new Project();
+        tmpProject.setName(parent.getName());
+        tmpProject.setVersion(parent.getVersion());
+        tmpProject.setUuid(parent.getUuid());
+
+        tmpProject.setParent(parent.getParent());
+        qm.updateProject(tmpProject, true);
+        Assert.assertEquals(grandParent, tmpProject.getParent());
+        Assert.assertEquals(grandParent, parent.getParent());
+
+        tmpProject.setParent(child);
+        qm.updateProject(tmpProject, true);
+        Assert.assertEquals(child, tmpProject.getParent());
+        Assert.assertEquals(grandParent, parent.getParent());
+
+        tmpProject.setParent(grandChild);
+        qm.updateProject(tmpProject, true);
+        Assert.assertEquals(grandChild, tmpProject.getParent());
+        Assert.assertEquals(grandParent, parent.getParent());
+    }
+
     //todo: add clone tests
 }

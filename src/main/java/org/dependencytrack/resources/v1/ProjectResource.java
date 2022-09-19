@@ -42,6 +42,7 @@ import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 
 import java.security.Principal;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -110,6 +111,7 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
+            qm.getPersistenceManager().getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
@@ -462,6 +464,70 @@ public class ProjectResource extends AlpineResource {
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }
+        }
+    }
+
+    @GET
+    @Path("/root")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all projects without a parent",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getRootProjects(@ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+                                @QueryParam("excludeInactive") boolean excludeInactive) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final PaginatedResult result = qm.getRootProjects(true, excludeInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @GET
+    @Path("/{uuid}/children")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all children for a project",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getChildrenProjects(@ApiParam(value = "The UUID of the project to delete", required = true)
+                                            @PathParam("uuid") String uuid,
+                                        @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+                                        @QueryParam("excludeInactive") boolean excludeInactive) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final PaginatedResult result = qm.getChildrenProjects(UUID.fromString(uuid),true, excludeInactive);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+        }
+    }
+
+    @GET
+    @Path("/parents")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all projects with their parent projects fully fetched",
+            response = Project.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getProjectsWithParents() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final PaginatedResult result = qm.getProjectsWithParents(false);
+            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 }

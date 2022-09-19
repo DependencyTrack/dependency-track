@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 class ProjectQueryFilterBuilder {
 
@@ -68,6 +69,18 @@ class ProjectQueryFilterBuilder {
         params.put("tag", tag);
 
         filterCriteria.add("(name.toLowerCase().matches(:name) || tags.contains(:tag))");
+        return this;
+    }
+
+    ProjectQueryFilterBuilder excludeChildren(){
+        filterCriteria.add("parent == null");
+        return this;
+    }
+
+    ProjectQueryFilterBuilder withParent(UUID uuid){
+        params.put("uuid", uuid);
+
+        filterCriteria.add("parent.uuid == :uuid");
         return this;
     }
 

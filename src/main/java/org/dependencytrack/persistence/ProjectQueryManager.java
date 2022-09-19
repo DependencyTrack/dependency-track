@@ -469,6 +469,18 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setSwidTagId(transientProject.getSwidTagId());
         project.setActive(transientProject.isActive());
 
+
+        if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
+            Project parent = getObjectByUuid(Project.class, transientProject.getParent().getUuid());
+            if (isChild(parent, transientProject.getUuid())){
+                LOGGER.warn("The new parent project cannot be a child of the current project. " + project.getParent() + " remains the parent of " + project);
+            } else {
+                project.setParent(parent);
+            }
+        }else {
+            project.setParent(null);
+        }
+
         final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
         bind(project, resolvedTags);
 
@@ -820,4 +832,130 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return hasPermission(apiKey, Permissions.ACCESS_MANAGEMENT.name());
     }
 
+    public PaginatedResult getRootProjects(final boolean includeMetrics, final boolean excludeInactive) {
+        final PaginatedResult result;
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc, version desc");
+        }
+
+        var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .excludeChildren();
+
+        if (filter != null) {
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            final Tag tag = getTagByName(filter.trim());
+
+            if (tag != null) {
+                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
+
+            } else {
+                filterBuilder = filterBuilder.withFuzzyName(filterString);
+            }
+        }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        result = execute(query, params);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
+    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
+        final PaginatedResult result;
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc, version desc");
+        }
+
+        var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withParent(uuid);
+
+        if (filter != null) {
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            final Tag tag = getTagByName(filter.trim());
+
+            if (tag != null) {
+                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
+
+            } else {
+                filterBuilder = filterBuilder.withFuzzyName(filterString);
+            }
+        }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        result = execute(query, params);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
+    public PaginatedResult getProjectsWithParents(final boolean includeMetrics) {
+        final PaginatedResult result;
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc, version desc");
+        }
+
+        var filterBuilder = new ProjectQueryFilterBuilder();
+
+        if (filter != null) {
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            final Tag tag = getTagByName(filter.trim());
+
+            if (tag != null) {
+                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
+
+            } else {
+                filterBuilder = filterBuilder.withFuzzyName(filterString);
+            }
+        }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        result = execute(query, params);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
+    private static boolean isChild(Project project, UUID uuid) {
+        boolean isChild = false;
+        if (project.getParent() != null){
+            if (project.getParent().getUuid().equals(uuid)){
+                return true;
+            } else {
+                isChild = isChild(project.getParent(), uuid);
+            }
+        }
+        return isChild;
+    }
 }

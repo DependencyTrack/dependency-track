@@ -43,6 +43,7 @@ import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -81,7 +82,7 @@ public final class NotificationUtil {
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABILITY)
-                    .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                    .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
                     .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values())))
@@ -98,7 +99,7 @@ public final class NotificationUtil {
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)
-                    .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
+                    .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(component, vulnerabilities))
                     .subject(new NewVulnerableDependency(component, vulnerabilities))
@@ -148,7 +149,7 @@ public final class NotificationUtil {
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
-                    .title(title)
+                    .title(generateNotificationTitle(title, analysis.getComponent().getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(analysis))
                     .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
@@ -187,7 +188,7 @@ public final class NotificationUtil {
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
-                    .title(title)
+                    .title(generateNotificationTitle(title, violationAnalysis.getComponent().getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(violationAnalysis))
                     .subject(new ViolationAnalysisDecisionChange(violationAnalysis.getPolicyViolation(),
@@ -206,7 +207,7 @@ public final class NotificationUtil {
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.POLICY_VIOLATION)
-                .title(NotificationConstants.Title.POLICY_VIOLATION)
+                .title(generateNotificationTitle(NotificationConstants.Title.POLICY_VIOLATION,policyViolation.getComponent().getProject()))
                 .level(NotificationLevel.INFORMATIONAL)
                 .content(generateNotificationContent(pv))
                 .subject(new PolicyViolationIdentified(pv, pv.getComponent(), pv.getProject()))
@@ -495,5 +496,12 @@ public final class NotificationUtil {
 
     private static String generateNotificationContent(final ViolationAnalysis violationAnalysis) {
         return "An violation analysis decision was made to a policy violation affecting a project";
+    }
+
+    public static String generateNotificationTitle(String messageType, Project project) {
+        if (project != null) {
+            return messageType + " on Project: [" + project.toString() + "]";
+        }
+        return messageType;
     }
 }

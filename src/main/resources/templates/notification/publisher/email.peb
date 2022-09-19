@@ -8,7 +8,18 @@ Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
-{% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
+Project:           {{ subject.component.project.name }}
+Version:           {{ subject.component.project.version }}
+Description:       {{ subject.component.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
+{% if  notification.subject.affectedProjects|length > 1%}
+--------------------------------------------------------------------------------
+
+Other affected projects:
+{% for affectedProject in notification.subject.affectedProjects %}{% if not (affectedProject.uuid == subject.component.project.uuid) %}
+Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
+Project URL:       {{ baseUrl }}/project/?uuid={{ affectedProject.uuid }}
+{% endif %}{% endfor %}{% endif %}{% elseif notification.group == "NEW_VULNERABLE_DEPENDENCY" %}
 Project:           {{ subject.dependency.project.toString }}
 Project URL:       {{ baseUrl }}/project/?uuid={{ subject.dependency.project.uuid }}
 Component:         {{ subject.dependency.component.toString }}
@@ -34,9 +45,18 @@ Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
-Project:           {{ subject.project.toString }}
-Project URL:       {{ baseUrl }}/project/?uuid={{ subject.project.uuid }}
-{% elseif notification.group == "BOM_CONSUMED" %}
+Project:           {{ subject.component.project.name }}
+Version:           {{ subject.component.project.version }}
+Description:       {{ subject.component.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
+{% if  notification.subject.affectedProjects|length > 1%}
+--------------------------------------------------------------------------------
+
+Other affected projects:
+{% for affectedProject in notification.subject.affectedProjects %}{% if not (affectedProject.uuid == subject.component.project.uuid) %}
+Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
+Project URL:       {{ baseUrl }}/project/?uuid={{ affectedProject.uuid }}
+{% endif %}{% endfor %}{% endif %}{% elseif notification.group == "BOM_CONSUMED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}
 Description:       {{ subject.project.description }}

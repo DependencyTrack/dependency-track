@@ -192,6 +192,8 @@ public class NistMirrorTask implements LoggableSubscriber {
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
+            String absoluteFile = outputDir + filename;
+            LOGGER.info("Check if exist " + absoluteFile);
             if (file.exists()) {
                 long modificationTime = 0;
                 File timestampFile = new File(outputDir, filename + ".ts");
@@ -229,9 +231,11 @@ public class NistMirrorTask implements LoggableSubscriber {
                         File temp = File.createTempFile(filename, null);
                         file = new File(outputDir, filename);
                         FileUtils.copyInputStreamToFile(in, temp);
+                        LOGGER.info("Move...");
                         Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
+                            LOGGER.info("SetModifiedDate...");
                             File timestampFile = new File(outputDir, filename + ".ts");
                             // creates the file
                             if (!file.exists())

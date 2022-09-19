@@ -234,7 +234,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             File timestampFile = new File(outputDir, filename + ".ts");
                             // creates the file
-                            if (file.exists())
+                            if (!file.exists())
                             {
                                 file.createNewFile();
                             }

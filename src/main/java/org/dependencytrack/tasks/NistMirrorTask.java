@@ -229,10 +229,9 @@ public class NistMirrorTask implements LoggableSubscriber {
                     LOGGER.info("Downloading...");
                     try (InputStream in = response.getEntity().getContent()) {
                         File temp = File.createTempFile(filename, null);
-                        //file = new File(outputDir, filename);
                         FileUtils.copyInputStreamToFile(in, temp);
-                        LOGGER.info("Move " + temp.toPath() + " to " +  file.toPath());
-                        Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        LOGGER.info("Copy " + temp.toPath() + " to " +  file.toPath());
+                        Files.copy(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
                             LOGGER.info("SetModifiedDate...");

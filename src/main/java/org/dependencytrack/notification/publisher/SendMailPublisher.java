@@ -37,8 +37,13 @@ import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
@@ -122,40 +127,18 @@ public class SendMailPublisher implements Publisher {
     }
 
     static String[] parseDestination(final JsonObject config, final List<Team> teams) {
-        String destinationString = config.getString("destination");
-        for (Team team: teams) {
-            if (team.getManagedUsers() != null) {
-                for (ManagedUser user : team.getManagedUsers()) {
-                    destinationString = getDestinationString(destinationString, user.getEmail());
-                }
-            }
-            if (team.getLdapUsers() != null) {
-                for (LdapUser user : team.getLdapUsers()) {
-                    destinationString = getDestinationString(destinationString, user.getEmail());
-                }
-            }
-            if (team.getOidcUsers() != null) {
-                for (OidcUser user : team.getOidcUsers()) {
-                    destinationString = getDestinationString(destinationString, user.getEmail());
-                }
-            }
-        }
-        if (destinationString.isEmpty()) {
-            return null;
-        }
-        return destinationString.split(",");
-    }
-
-    private static String getDestinationString(String destinationString, String email) {
-        if (email != null && !email.isEmpty()) {
-            if (!destinationString.contains(email)) {
-                if (destinationString.trim().length() == 0) {
-                    return destinationString + email;
-                } else {
-                    return destinationString + "," + email;
-                }
-            }
-        }
-        return destinationString;
+        String[] destination = teams.stream().flatMap(
+                team -> Stream.of(
+                                Arrays.stream(config.getString("destination").split(",")).filter(Predicate.not(String::isEmpty)),
+                                Optional.ofNullable(team.getManagedUsers()).orElseGet(Collections::emptyList).stream().map(ManagedUser::getEmail).filter(Objects::nonNull),
+                                Optional.ofNullable(team.getLdapUsers()).orElseGet(Collections::emptyList).stream().map(LdapUser::getEmail).filter(Objects::nonNull),
+                                Optional.ofNullable(team.getOidcUsers()).orElseGet(Collections::emptyList).stream().map(OidcUser::getEmail).filter(Objects::nonNull)
+                        )
+                        .reduce(Stream::concat)
+                        .orElseGet(Stream::empty)
+                )
+                .distinct()
+                .toArray(String[]::new);
+        return destination.length == 0 ? null : destination;
     }
 }

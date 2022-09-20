@@ -223,11 +223,20 @@ public class SendMailPublisherTest {
   public void testEmptyTeamAsDestination(){
     JsonObject config = configWithDestination("");
     List<Team> teams = new ArrayList<>();
+    Team team = new Team();
+    teams.add(team);
     Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
   }
 
   @Test
-  public void testEmptyUsersAsDestination(){
+  public void testEmptyTeamsAsDestination(){
+    JsonObject config = configWithDestination("");
+    List<Team> teams = new ArrayList<>();
+    Assert.assertArrayEquals(null, SendMailPublisher.parseDestination(config, teams));
+  }
+
+  @Test
+  public void testEmptyUserEmailsAsDestination(){
     JsonObject config = configWithDestination("");
     ManagedUser managedUser = new ManagedUser();
     managedUser.setUsername("ManagedUserTest");
@@ -279,6 +288,78 @@ public class SendMailPublisherTest {
     team.setManagedUsers(managedUsers);
     team.setLdapUsers(ldapUsers);
     team.setOidcUsers(oidcUsers);
+    teams.add(team);
+
+    Assert.assertArrayEquals(new String[] {"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+  }
+
+  @Test
+  public void testEmptyManagedUsersAsDestination(){
+    JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
+
+    LdapUser ldapUser = new LdapUser();
+    ldapUser.setUsername("ldapUserTest");
+    ldapUser.setEmail("ldapUser@Test.com");
+    List<LdapUser> ldapUsers = new ArrayList<>();
+    ldapUsers.add(ldapUser);
+
+    OidcUser oidcUser = new OidcUser();
+    oidcUser.setUsername("oidcUserTest");
+    oidcUser.setEmail("oidcUser@Test.com");
+    List<OidcUser> oidcUsers = new ArrayList<>();
+    oidcUsers.add(oidcUser);
+
+    List<Team> teams = new ArrayList<>();
+    Team team = new Team();
+    team.setLdapUsers(ldapUsers);
+    team.setOidcUsers(oidcUsers);
+    teams.add(team);
+
+    Assert.assertArrayEquals(new String[] {"john@doe.com", "steve@jobs.org", "ldapUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+  }
+
+  @Test
+  public void testEmptyLdapUsersAsDestination(){
+    JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
+    ManagedUser managedUser = new ManagedUser();
+    managedUser.setUsername("ManagedUserTest");
+    managedUser.setEmail("managedUser@Test.com");
+    List<ManagedUser> managedUsers = new ArrayList<>();
+    managedUsers.add(managedUser);
+
+    OidcUser oidcUser = new OidcUser();
+    oidcUser.setUsername("oidcUserTest");
+    oidcUser.setEmail("oidcUser@Test.com");
+    List<OidcUser> oidcUsers = new ArrayList<>();
+    oidcUsers.add(oidcUser);
+
+    List<Team> teams = new ArrayList<>();
+    Team team = new Team();
+    team.setManagedUsers(managedUsers);
+    team.setOidcUsers(oidcUsers);
+    teams.add(team);
+
+    Assert.assertArrayEquals(new String[] {"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "oidcUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));
+  }
+  @Test
+  public void testEmptyOidcUsersAsDestination(){
+    JsonObject config = configWithDestination("john@doe.com,steve@jobs.org");
+    ManagedUser managedUser = new ManagedUser();
+    managedUser.setUsername("ManagedUserTest");
+    managedUser.setEmail("managedUser@Test.com");
+    List<ManagedUser> managedUsers = new ArrayList<>();
+    managedUsers.add(managedUser);
+
+    LdapUser ldapUser = new LdapUser();
+    ldapUser.setUsername("ldapUserTest");
+    ldapUser.setEmail("ldapUser@Test.com");
+    List<LdapUser> ldapUsers = new ArrayList<>();
+    ldapUsers.add(ldapUser);
+
+    List<Team> teams = new ArrayList<>();
+    Team team = new Team();
+    team.setManagedUsers(managedUsers);
+    team.setLdapUsers(ldapUsers);
     teams.add(team);
 
     Assert.assertArrayEquals(new String[] {"john@doe.com", "steve@jobs.org", "managedUser@Test.com", "ldapUser@Test.com"}, SendMailPublisher.parseDestination(config, teams));

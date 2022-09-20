@@ -76,15 +76,12 @@ public class NotificationRouter implements Subscriber {
                                                                  .add(Publisher.CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
                                                                  .addAll(Json.createObjectBuilder(config))
                                                                          .build();
-                    if (publisherClass == SendMailPublisher.class) {
-                        if (rule.getTeams().isEmpty() || rule.getTeams() == null){
-                            publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
-                        }else {
-                            ((SendMailPublisher)publisher).inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig, rule.getTeams());
-                        }
-                    }else {
-                      publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                    if (publisherClass != SendMailPublisher.class || rule.getTeams().isEmpty() || rule.getTeams() == null){
+                        publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                    } else {
+                        ((SendMailPublisher)publisher).inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig, rule.getTeams());
                     }
+
 
                 } else {
                     LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());

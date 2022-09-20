@@ -36,7 +36,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
-import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -280,7 +280,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        Event.dispatch(new MetricsUpdateEvent(component));
+                        Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                         updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
                 }

@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.*;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
@@ -51,9 +51,9 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-    private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
     private String ecosystemConfig;
     private List<String> ecosystems;
+    private static String osvBaseUrl;
 
     public List<String> getEnabledEcosystems() {
         return this.ecosystems;
@@ -66,6 +66,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 this.ecosystemConfig = enabled.getPropertyValue();
                 if (this.ecosystemConfig != null) {
                     ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                }
+                osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
+                if (!osvBaseUrl.endsWith("/")) {
+                    osvBaseUrl += "/";
                 }
             }
         }
@@ -80,7 +84,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 for (String ecosystem : this.ecosystems) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
                     try {
-                        String url = OSV_BASE_URL + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
+                        String url = osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
                                 + "/all.zip";
                         HttpUriRequest request = new HttpGet(url);
                         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
@@ -313,7 +317,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
     public static List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
-        String url = OSV_BASE_URL + "ecosystems.txt";
+        String url = osvBaseUrl + "ecosystems.txt";
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();

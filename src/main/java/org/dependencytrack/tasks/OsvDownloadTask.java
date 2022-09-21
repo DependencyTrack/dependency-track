@@ -43,7 +43,8 @@ import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;

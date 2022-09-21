@@ -10,7 +10,7 @@ on:
       - 'docs/**'
   pull_request:
     branches:
-      - 'master'          # Default branch
+      - '**master**'          # Default branch
     paths-ignore:
       - '**/*.md'
       - 'docs/**'

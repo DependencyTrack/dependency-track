@@ -54,7 +54,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
     private String ecosystemConfig;
     private List<String> ecosystems;
-    private static String osvBaseUrl;
+    private String osvBaseUrl;
 
     public List<String> getEnabledEcosystems() {
         return this.ecosystems;
@@ -68,9 +68,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 if (this.ecosystemConfig != null) {
                     ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
                 }
-                osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
-                if (!osvBaseUrl.endsWith("/")) {
-                    osvBaseUrl += "/";
+                this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
+                if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {
+                    this.osvBaseUrl += "/";
                 }
             }
         }
@@ -85,7 +85,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 for (String ecosystem : this.ecosystems) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
                     try {
-                        String url = osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
+                        String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
                                 + "/all.zip";
                         HttpUriRequest request = new HttpGet(url);
                         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
@@ -316,9 +316,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 || Vulnerability.Source.NVD.toString().equals(source);
     }
 
-    public static List<String> getEcosystems() {
+    public List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
-        String url = osvBaseUrl + "ecosystems.txt";
+        String url = this.osvBaseUrl + "ecosystems.txt";
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();

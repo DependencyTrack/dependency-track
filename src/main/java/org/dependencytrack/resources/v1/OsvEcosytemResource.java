@@ -51,7 +51,8 @@ public class OsvEcosytemResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllEcosystems() {
-        final List<String> ecosystems = OsvDownloadTask.getEcosystems();
+        OsvDownloadTask osvDownloadTask = new OsvDownloadTask();
+        final List<String> ecosystems = osvDownloadTask.getEcosystems();
         return Response.ok(ecosystems).build();
     }
 }

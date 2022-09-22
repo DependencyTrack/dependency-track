@@ -200,7 +200,7 @@ public class NistMirrorTask implements LoggableSubscriber {
                 if(timestampFile.exists()) {
                     BufferedReader tsBufReader = new BufferedReader(new FileReader(timestampFile));
                     String text = tsBufReader.readLine();
-                    modificationTime = Integer.parseInt(text);
+                    modificationTime = Long.parseInt(text);
                 }
 
                 if (System.currentTimeMillis() < ((86400000 * 5) + modificationTime)) {

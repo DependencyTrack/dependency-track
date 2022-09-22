@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.2" version="1">
     <components>
         <component type="application">
 			<author>Example Author</author>
@@ -16,6 +16,7 @@
             <licenses>
                 <license>
                     <id>Apache-2.0</id>
+                    <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
                 </license>
             </licenses>
             <copyright>Copyright Example Inc. All rights reserved.</copyright>

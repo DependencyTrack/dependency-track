@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
@@ -31,6 +32,9 @@ import org.junit.Test;
 
 import javax.json.JsonArray;
 import javax.ws.rs.core.Response;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 
 public class OsvEcosystemResourceTest extends ResourceTest {
 
@@ -46,6 +50,16 @@ public class OsvEcosystemResourceTest extends ResourceTest {
     @Before
     public void before() throws Exception {
         super.before();
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
+                "Maven;DWF",
+                IConfigProperty.PropertyType.STRING,
+                "List of ecosystems");
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(),
+                VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName(),
+                "https://osv-vulnerabilities.storage.googleapis.com/",
+                IConfigProperty.PropertyType.URL,
+                "OSV Base URL");
     }
 
     @Test

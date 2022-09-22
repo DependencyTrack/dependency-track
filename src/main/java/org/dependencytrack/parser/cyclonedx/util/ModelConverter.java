@@ -156,6 +156,7 @@ public class ModelConverter {
                         }
                     }
                     component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                    component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                 }
             }
         }

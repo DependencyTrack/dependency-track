@@ -279,6 +279,7 @@ public class ComponentResource extends AlpineResource {
                 component.setLicense(StringUtils.trimToNull(jsonComponent.getLicense()));
                 component.setResolvedLicense(null);
             }
+            component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
             component.setParent(parent);
             component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
@@ -310,6 +311,7 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "group"),
                 validator.validateProperty(jsonComponent, "description"),
                 validator.validateProperty(jsonComponent, "license"),
+                validator.validateProperty(jsonComponent, "licenseUrl"),
                 validator.validateProperty(jsonComponent, "filename"),
                 validator.validateProperty(jsonComponent, "classifier"),
                 validator.validateProperty(jsonComponent, "cpe"),
@@ -362,6 +364,7 @@ public class ComponentResource extends AlpineResource {
                     component.setLicense(StringUtils.trimToNull(jsonComponent.getLicense()));
                     component.setResolvedLicense(null);
                 }
+                component.setLicenseUrl(StringUtils.trimToNull(jsonComponent.getLicenseUrl()));
                 component.setNotes(StringUtils.trimToNull(jsonComponent.getNotes()));
 
                 component = qm.updateComponent(component, true);

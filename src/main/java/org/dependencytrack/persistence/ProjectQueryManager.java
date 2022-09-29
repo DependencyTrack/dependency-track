@@ -438,7 +438,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setDescription(description);
         project.setVersion(version);
         project.setPurl(purl);
-        project.setActive(active);
+
+        if (project.isActive() && hasActiveChild(project) && !active){
+            LOGGER.warn(project + " cannot be set to inactive, if active children are present. " + project + " remains active");
+        } else {
+            project.setActive(active);
+        }
 
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
@@ -467,8 +472,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setCpe(transientProject.getCpe());
         project.setPurl(transientProject.getPurl());
         project.setSwidTagId(transientProject.getSwidTagId());
-        project.setActive(transientProject.isActive());
 
+        if (project.isActive() && hasActiveChild(project) && (transientProject.isActive() == null || !transientProject.isActive()) ){
+            LOGGER.warn(project + " cannot be set to inactive, if active children are present. " + project + " remains active");
+        } else {
+            project.setActive(transientProject.isActive());
+        }
 
         if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
             Project parent = getObjectByUuid(Project.class, transientProject.getParent().getUuid());
@@ -959,5 +968,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             }
         }
         return isChild;
+    }
+
+    private static boolean hasActiveChild(Project project) {
+        boolean hasActiveChild = false;
+        if (project.getChildren() != null){
+            for (Project child: project.getChildren()) {
+                if (child.isActive() || hasActiveChild) {
+                    return true;
+                } else {
+                    hasActiveChild = hasActiveChild(child);
+                }
+            }
+        }
+        return hasActiveChild;
     }
 }

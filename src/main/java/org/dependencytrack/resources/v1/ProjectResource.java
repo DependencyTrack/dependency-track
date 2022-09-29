@@ -242,7 +242,12 @@ public class ProjectResource extends AlpineResource {
         }
         try (QueryManager qm = new QueryManager()) {
             if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                jsonProject.setParent(qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid()));
+                Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                if (parent.isActive()){
+                    jsonProject.setParent(parent);
+                } else {
+                    return Response.status(Response.Status.CONFLICT).entity("An inactive Parent cannot be selected as parent.").build();
+                }
             }
             Project project = qm.getProject(StringUtils.trimToNull(jsonProject.getName()), StringUtils.trimToNull(jsonProject.getVersion()));
             if (project == null) {

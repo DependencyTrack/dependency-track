@@ -472,7 +472,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
             Project parent = getObjectByUuid(Project.class, transientProject.getParent().getUuid());
-            if (isChild(parent, transientProject.getUuid())){
+            if (!parent.isActive()){
+                LOGGER.warn("The new parent project cannot be an inactive project. " + project.getParent() + " remains the parent of " + project);
+            } else if (isChild(parent, transientProject.getUuid())){
                 LOGGER.warn("The new parent project cannot be a child of the current project. " + project.getParent() + " remains the parent of " + project);
             } else {
                 project.setParent(parent);

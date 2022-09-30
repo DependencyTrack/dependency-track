@@ -1,0 +1,124 @@
+name: Defect Report
+description: File a defect report
+labels: [ "defect", "in triage" ]
+body:
+- type: markdown
+  attributes:
+    value: |
+      Thank you for helping us in making Dependency-Track better!
+      
+      **Please do not ask questions here!**
+      If you're not sure whether what you're experiencing is in fact a defect,
+      you can reach out to maintainers and the broader community via various channels.
+      Refer to our [contributing guidelines](https://github.com/nscuro/dependency-track/blob/github-templates/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
+- type: textarea
+  id: behavior-current
+  attributes:
+    label: Current Behavior
+    description: |-
+      Describe the current faulty behavior that you observed.
+      Consider providing screenshots, log output, and other supplementary data.
+      
+      *Files and images can be included via drag and drop into this text field.*
+  validations:
+    required: true
+- type: textarea
+  id: steps-to-reproduce
+  attributes:
+    label: Steps to Reproduce
+    description: |-
+      Describe the exact steps of how the defect can be reproduced.
+      Consider providing screenshots, BOM files, and other supplementary data.
+      
+      *Files and images can be included via drag and drop into this text field.
+      For BOM files, please redact any internal or otherwise confidential information.*
+    value: |-
+      1.
+  validations:
+    required: true
+- type: textarea
+  id: behavior-expected
+  attributes:
+    label: Expected Behavior
+    description: >-
+      Describe how you expect Dependency-Track to behave instead.
+  validations:
+    required: true
+- type: markdown
+  attributes:
+    value: |
+      ## Environment
+      Please provide some details about the environment in which you observed the reported defect.
+- type: dropdown
+  id: environment-dtrack-version
+  attributes:
+    label: Dependency-Track Version
+    description: >-
+      What version of Dependency-Track are you using?
+    options:
+    - < 4.5.x
+    - 4.5.0
+    - 4.5.1
+    - 4.6.0-SNAPSHOT
+  validations:
+    required: true
+- type: dropdown
+  id: environment-dtrack-distribution
+  attributes:
+    label: Dependency-Track Distribution
+    description: >-
+      Which [distribution](https://docs.dependencytrack.org/getting-started/distributions/) of Dependency-Track are you using?
+    options:
+    - Container Image
+    - Executable WAR
+    multiple: true
+  validations:
+    required: true
+- type: dropdown
+  id: environment-database-server
+  attributes:
+    label: Database Server
+    description: >-
+      What database server are you using?
+    options:
+    - PostgreSQL
+    - Microsoft SQL Server
+    - MySQL
+    - H2
+  validations:
+    required: true
+- type: input
+  id: environment-database-version
+  attributes:
+    label: Database Server Version
+    description: >-
+      What version of the database server are you using?
+      If you selected H2 in the field above, you can leave this empty.
+    placeholder: "13.5"
+  validations:
+    required: false
+- type: dropdown
+  id: environment-browser
+  attributes:
+    label: Browser
+    description: >-
+      What browser are you using?
+      If the defect is not UI-related, just select the N/A option.
+    options:
+    - Google Chrome
+    - Mozilla Firefox
+    - Apple Safari
+    - Microsoft Edge
+    - Other
+    - N/A
+  validations:
+    required: true
+- type: checkboxes
+  id: checklist
+  attributes:
+    label: Checklist
+    options:
+    - label: I have read and understand the [contributing guidelines](https://github.com/nscuro/dependency-track/blob/github-templates/CONTRIBUTING.md#filing-issues)
+      required: true
+    - label: I have checked the [existing issues](https://github.com/DependencyTrack/dependency-track/issues) for whether this defect was already reported
+      required: true

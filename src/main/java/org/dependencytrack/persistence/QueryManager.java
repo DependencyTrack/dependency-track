@@ -309,8 +309,8 @@ public class QueryManager extends AlpineQueryManager {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// BEGIN WRAPPER METHODS                                                                                      ////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(includeMetrics, excludeInactive);
+    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(includeMetrics, excludeInactive, onlyRoot);
     }
 
     public PaginatedResult getProjects(final boolean includeMetrics) {
@@ -329,41 +329,38 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getAllProjects(excludeInactive);
     }
 
-    public PaginatedResult getProjects(final String name, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(name, excludeInactive);
+    public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot);
     }
 
     public Project getProject(final String name, final String version) {
         return getProjectQueryManager().getProject(name, version);
     }
 
-    public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass) {
-        return getProjectQueryManager().getProjects(team, excludeInactive, bypass);
+    public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
+    }
+
+    public PaginatedResult getProjectsWithoutDescendantsOf(Project project){
+        return getProjectQueryManager().getProjectsWithoutDescendantsOf(project);
     }
 
     public boolean hasAccess(final Principal principal, final Project project) {
         return getProjectQueryManager().hasAccess(principal, project);
     }
 
-    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive);
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive, onlyRoot);
     }
 
-    public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive);
-    }
-
-    public PaginatedResult getRootProjects(final boolean includeMetrics, final boolean excludeInactive){
-        return getProjectQueryManager().getRootProjects(includeMetrics, excludeInactive);
+    public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive, onlyRoot);
     }
 
     public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
         return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
     }
 
-    public PaginatedResult getProjectsWithParents(final boolean includeMetrics){
-        return getProjectQueryManager().getProjectsWithParents(includeMetrics);
-    }
 
     public PaginatedResult getProjects(final Tag tag) {
         return getProjectQueryManager().getProjects(tag);

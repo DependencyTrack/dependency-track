@@ -75,11 +75,13 @@ public class AccessControlResource extends AlpineResource {
     public Response retrieveProjects (@ApiParam(value = "The UUID of the team to retrieve mappings for", required = true)
                                       @PathParam("uuid") String uuid,
                                       @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
-                                      @QueryParam("excludeInactive") boolean excludeInactive) {
+                                      @QueryParam("excludeInactive") boolean excludeInactive,
+                                      @ApiParam(value = "Optionally excludes children projects from being returned", required = false)
+                                      @QueryParam("onlyRoot") boolean onlyRoot) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                final PaginatedResult result = qm.getProjects(team, excludeInactive, true);
+                final PaginatedResult result = qm.getProjects(team, excludeInactive, true, onlyRoot);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();

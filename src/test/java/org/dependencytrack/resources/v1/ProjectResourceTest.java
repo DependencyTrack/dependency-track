@@ -472,7 +472,8 @@ public class ProjectResourceTest extends ResourceTest {
         Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
         qm.createProject("GHI", null, "1.0", null, child, null, true, false);
-        Response response = target(V1_PROJECT + "/root")
+        Response response = target(V1_PROJECT)
+                .queryParam("onlyRoot", true)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -503,51 +504,66 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getProjectsWithParentsTest() {
-        Project parent = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+    public void updateChildAsParentOfChild() {
+        Project parent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
-        Project grandChild = qm.createProject("GHI", null, "1.0", null, child, null, true, false);
-        qm.createProject("JKL", null, "1.0", null, grandChild, null, true, false);
-        Response response = target(V1_PROJECT + "/parents")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(4), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("JKL", json.getJsonObject(3).getString("name"));
-        Assert.assertEquals("GHI", json.getJsonObject(3).getJsonObject("parent").getString("name"));
-        Assert.assertEquals("DEF", json.getJsonObject(3).getJsonObject("parent").getJsonObject("parent").getString("name"));
-        Assert.assertEquals("ABC", json.getJsonObject(3).getJsonObject("parent").getJsonObject("parent").getJsonObject("parent").getString("name"));
-    }
-
-    @Test
-    public void updateChildAsParent() {
-        Project grandParent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
-        Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, true, false);
-        Project child = qm.createProject("GHI", null, "1.0", null, parent, null, true, false);
-        Project grandChild = qm.createProject("JKL", null, "1.0", null, child, null, true, false);
 
         Project tmpProject = new Project();
         tmpProject.setName(parent.getName());
         tmpProject.setVersion(parent.getVersion());
         tmpProject.setUuid(parent.getUuid());
-
-        tmpProject.setParent(parent.getParent());
-        qm.updateProject(tmpProject, true);
-        Assert.assertEquals(grandParent, tmpProject.getParent());
-        Assert.assertEquals(grandParent, parent.getParent());
+        tmpProject.setActive(true);
 
         tmpProject.setParent(child);
-        qm.updateProject(tmpProject, true);
-        Assert.assertEquals(child, tmpProject.getParent());
-        Assert.assertEquals(grandParent, parent.getParent());
+        Assert.assertThrows(IllegalArgumentException.class, () -> qm.updateProject(tmpProject, true));
+    }
 
-        tmpProject.setParent(grandChild);
-        qm.updateProject(tmpProject, true);
-        Assert.assertEquals(grandChild, tmpProject.getParent());
-        Assert.assertEquals(grandParent, parent.getParent());
+    @Test
+    public void updateParentToInactiveWithActiveChild() {
+        Project parent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
+
+        Project tmpProject = new Project();
+        tmpProject.setName(parent.getName());
+        tmpProject.setVersion(parent.getVersion());
+        tmpProject.setUuid(parent.getUuid());
+        tmpProject.setActive(false);
+
+        Assert.assertThrows(IllegalArgumentException.class, () -> qm.updateProject(tmpProject, true));
+    }
+
+    @Test
+    public void updateProjectParentToSelf() {
+        Project parent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+
+        Project tmpProject = new Project();
+        tmpProject.setName(parent.getName());
+        tmpProject.setVersion(parent.getVersion());
+        tmpProject.setUuid(parent.getUuid());
+        tmpProject.setActive(parent.isActive());
+        tmpProject.setParent(parent);
+
+        Assert.assertThrows(IllegalArgumentException.class, () -> qm.updateProject(tmpProject, true));
+    }
+
+    @Test
+    public void getProjectsWithoutDescendantsOfTest() {
+        Project grandParent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, true, false);
+        Project child = qm.createProject("GHI", null, "1.0", null, parent, null, true, false);
+        qm.createProject("JKL", null, "1.0", null, child, null, true, false);
+
+        Response response = target(V1_PROJECT + "/withoutDescendantsOf/" + parent.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+        Assert.assertEquals("DEF", json.getJsonObject(1).getString("name"));
     }
 
     //todo: add clone tests

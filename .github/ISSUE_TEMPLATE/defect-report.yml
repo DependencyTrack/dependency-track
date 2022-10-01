@@ -10,7 +10,7 @@ body:
       **Please do not ask questions here!**
       If you're not sure whether what you're experiencing is in fact a defect,
       you can reach out to maintainers and the broader community via various channels.
-      Refer to our [contributing guidelines](https://github.com/nscuro/dependency-track/blob/github-templates/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
+      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/github-templates/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
 - type: textarea
   id: behavior-current
   attributes:
@@ -118,7 +118,7 @@ body:
   attributes:
     label: Checklist
     options:
-    - label: I have read and understand the [contributing guidelines](https://github.com/nscuro/dependency-track/blob/github-templates/CONTRIBUTING.md#filing-issues)
+    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/github-templates/CONTRIBUTING.md#filing-issues)
       required: true
     - label: I have checked the [existing issues](https://github.com/DependencyTrack/dependency-track/issues) for whether this defect was already reported
       required: true

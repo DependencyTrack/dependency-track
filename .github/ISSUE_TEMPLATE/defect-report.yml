@@ -7,8 +7,9 @@ body:
     value: |
       Thank you for helping us in making Dependency-Track better!
       
-      Is the defect you'd like to report only UI-related? We have a dedicated repo for the frontend, please create an issue [there](https://github.com/DependencyTrack/frontend/issues/new/choose)!
-      Unsure? Just report it here, the maintainers will migrate the issue if necessary.
+      **Is the defect you'd like to report only UI-related?**
+      We have a dedicated repo for the frontend, please create an issue [there](https://github.com/DependencyTrack/frontend/issues/new/choose)!
+      Unsure? That's fine, just report it here! The maintainers will migrate the issue if necessary.
       
       **Please do not ask questions here!**
       If you're not sure whether what you're experiencing is in fact a defect,
@@ -21,6 +22,7 @@ body:
     description: |-
       Describe the current faulty behavior that you observed.
       Consider providing screenshots, log output, and other supplementary data.
+      
       *Files and images can be included via drag and drop into this text field.*
   validations:
     required: true
@@ -31,6 +33,7 @@ body:
     description: |-
       Describe the exact steps of how the defect can be reproduced.
       Consider providing screenshots, BOM files, and other supplementary data.
+      
       *Files and images can be included via drag and drop into this text field.
       For BOM files, please redact any internal or otherwise confidential information.*
     value: |-
@@ -98,6 +101,7 @@ body:
     label: Database Server Version
     description: |-
       What version of the database server are you using?
+      
       *If you selected H2 in the field above, you can leave this empty.*
     placeholder: "13.5"
   validations:
@@ -106,9 +110,10 @@ body:
   id: environment-browser
   attributes:
     label: Browser
-    description: >-
+    description: |-
       What browser are you using?
-      If the defect is not UI-related, just select the N/A option.
+      
+      *If the defect is not UI-related, just select the N/A option.*
     options:
     - Google Chrome
     - Mozilla Firefox

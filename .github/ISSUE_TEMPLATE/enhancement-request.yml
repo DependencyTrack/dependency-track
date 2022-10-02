@@ -7,8 +7,9 @@ body:
     value: |
       Thank you for helping us in making Dependency-Track better!
       
-      Is the enhancement you'd like to request only UI-related? We have a dedicated repo for the frontend, please create an issue [there](https://github.com/DependencyTrack/frontend/issues/new/choose)!
-      Unsure? Just report it here, the maintainers will migrate the issue if necessary.
+      **Is the enhancement you'd like to request only UI-related?**
+      We have a dedicated repo for the frontend, please create an issue [there](https://github.com/DependencyTrack/frontend/issues/new/choose)!
+      Unsure? That's fine, just report it here! The maintainers will migrate the issue if necessary.
       
       **Please do not ask questions here!**
       If you'd like to bounce ideas off or wonder whether what you want makes sense,
@@ -21,6 +22,7 @@ body:
     description: |-
       Describe the current behavior that you observed.
       Consider providing screenshots, log output, and other supplementary data.
+      
       *Files and images can be included via drag and drop into this text field.*
   validations:
     required: true

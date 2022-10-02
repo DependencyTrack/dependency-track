@@ -19,16 +19,26 @@
 package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
+import org.dependencytrack.model.Component;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
- * Defines an event triggered when internal components should be identified in the entire portfolio.
+ * Defines an {@link Event} triggered when one or more new components have been added to a project.
+ * <p>
+ * The main purpose of this event is the delayed evaluation of notification criteria
+ * for the {@link org.dependencytrack.notification.NotificationGroup#NEW_VULNERABLE_DEPENDENCY} group.@
  *
- * @author nscuro
- * @since 3.7.0
+ * @since 4.6.0
  */
-public class InternalComponentIdentificationEvent implements Event {
+public record NewVulnerableDependencyAnalysisEvent(List<Component> components) implements Event {
 
-    public InternalComponentIdentificationEvent() {
+    /**
+     * @param components A {@link List} of {@link Component}s that are considered to be new
+     */
+    public NewVulnerableDependencyAnalysisEvent(final List<Component> components) {
+        this.components = Objects.requireNonNull(components);
     }
 
 }

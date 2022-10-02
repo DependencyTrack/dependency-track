@@ -16,19 +16,24 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.event;
+package org.dependencytrack.tasks;
 
 import alpine.event.framework.Event;
+import alpine.event.framework.Subscriber;
+import org.dependencytrack.event.CallbackEvent;
 
 /**
- * Defines an event triggered when internal components should be identified in the entire portfolio.
+ * A {@link Subscriber} task that executes callbacks defined in {@link CallbackEvent}s.
  *
- * @author nscuro
- * @since 3.7.0
+ * @since 4.6.0
  */
-public class InternalComponentIdentificationEvent implements Event {
+public class CallbackTask implements Subscriber {
 
-    public InternalComponentIdentificationEvent() {
+    @Override
+    public void inform(final Event e) {
+        if (e instanceof final CallbackEvent event) {
+            event.getCallback().run();
+        }
     }
 
 }

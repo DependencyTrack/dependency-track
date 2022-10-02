@@ -18,17 +18,30 @@
  */
 package org.dependencytrack.event;
 
+import alpine.event.framework.AbstractChainableEvent;
 import alpine.event.framework.Event;
+import org.dependencytrack.model.Project;
+
+import java.util.UUID;
 
 /**
- * Defines an event triggered when internal components should be identified in the entire portfolio.
+ * Defines an {@link Event} used to trigger {@link Project} metrics updates.
  *
- * @author nscuro
- * @since 3.7.0
+ * @since 4.6.0
  */
-public class InternalComponentIdentificationEvent implements Event {
+public class ProjectMetricsUpdateEvent extends AbstractChainableEvent {
 
-    public InternalComponentIdentificationEvent() {
+    private final UUID uuid;
+
+    /**
+     * @param uuid {@link UUID} of the {@link Project} to update metrics for
+     */
+    public ProjectMetricsUpdateEvent(final UUID uuid) {
+        this.uuid = uuid;
     }
 
+    public UUID getUuid() {
+        return uuid;
+    }
+    
 }

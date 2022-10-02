@@ -20,15 +20,23 @@ package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
 
-/**
- * Defines an event triggered when internal components should be identified in the entire portfolio.
- *
- * @author nscuro
- * @since 3.7.0
- */
-public class InternalComponentIdentificationEvent implements Event {
+import java.util.Objects;
 
-    public InternalComponentIdentificationEvent() {
+/**
+ * Defines an {@link Event} that can be used to execute arbitrary callbacks.
+ *
+ * @since 4.6.0
+ */
+public class CallbackEvent implements Event {
+
+    private final Runnable callback;
+
+    public CallbackEvent(final Runnable callback) {
+        this.callback = Objects.requireNonNull(callback, "Callback must not be null");
+    }
+
+    public Runnable getCallback() {
+        return callback;
     }
 
 }

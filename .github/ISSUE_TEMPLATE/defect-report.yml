@@ -7,10 +7,13 @@ body:
     value: |
       Thank you for helping us in making Dependency-Track better!
       
+      Is the defect you'd like to report only UI-related? We have a dedicated repo for the frontend, please create an issue [there](https://github.com/DependencyTrack/frontend/issues/new/choose)!
+      Unsure? Just report it here, the maintainers will migrate the issue if necessary.
+      
       **Please do not ask questions here!**
       If you're not sure whether what you're experiencing is in fact a defect,
       you can reach out to maintainers and the broader community via various channels.
-      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/github-templates/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
+      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
 - type: textarea
   id: behavior-current
   attributes:
@@ -18,7 +21,6 @@ body:
     description: |-
       Describe the current faulty behavior that you observed.
       Consider providing screenshots, log output, and other supplementary data.
-      
       *Files and images can be included via drag and drop into this text field.*
   validations:
     required: true
@@ -29,7 +31,6 @@ body:
     description: |-
       Describe the exact steps of how the defect can be reproduced.
       Consider providing screenshots, BOM files, and other supplementary data.
-      
       *Files and images can be included via drag and drop into this text field.
       For BOM files, please redact any internal or otherwise confidential information.*
     value: |-
@@ -48,7 +49,7 @@ body:
   attributes:
     value: |
       ## Environment
-      Please provide some details about the environment in which you observed the reported defect.
+      Please provide some details about the environment in which you observed the defect.
 - type: dropdown
   id: environment-dtrack-version
   attributes:
@@ -56,9 +57,13 @@ body:
     description: >-
       What version of Dependency-Track are you using?
     options:
-    - < 4.5.x
+    - 3.8.x
+    - 4.0.x
+    - 4.1.x
+    - 4.2.x
+    - 4.3.x
+    - 4.4.x
     - 4.5.0
-    - 4.5.1
     - 4.6.0-SNAPSHOT
   validations:
     required: true
@@ -91,9 +96,9 @@ body:
   id: environment-database-version
   attributes:
     label: Database Server Version
-    description: >-
+    description: |-
       What version of the database server are you using?
-      If you selected H2 in the field above, you can leave this empty.
+      *If you selected H2 in the field above, you can leave this empty.*
     placeholder: "13.5"
   validations:
     required: false
@@ -118,7 +123,7 @@ body:
   attributes:
     label: Checklist
     options:
-    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/github-templates/CONTRIBUTING.md#filing-issues)
+    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#filing-issues)
       required: true
     - label: I have checked the [existing issues](https://github.com/DependencyTrack/dependency-track/issues) for whether this defect was already reported
       required: true

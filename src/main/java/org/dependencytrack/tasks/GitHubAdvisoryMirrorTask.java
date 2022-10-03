@@ -59,6 +59,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
@@ -317,7 +318,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             } else if (PackageURL.StandardTypes.MAVEN.equals(purlType) && vuln.getPackageName().contains(":")) {
                 final String[] parts = vuln.getPackageName().split(":");
                 return PackageURLBuilder.aPackageURL().withType(purlType).withNamespace(parts[0]).withName(parts[1]).build();
-            } else if (PackageURL.StandardTypes.GOLANG.equals(purlType) && vuln.getPackageName().contains("/")) {
+            } else if (Set.of(PackageURL.StandardTypes.COMPOSER, PackageURL.StandardTypes.GOLANG).contains(purlType) && vuln.getPackageName().contains("/")) {
                 final String[] parts = vuln.getPackageName().split("/");
                 final String namespace = String.join("/", Arrays.copyOfRange(parts, 0, parts.length - 1));
                 return PackageURLBuilder.aPackageURL().withType(purlType).withNamespace(namespace).withName(parts[parts.length - 1]).build();

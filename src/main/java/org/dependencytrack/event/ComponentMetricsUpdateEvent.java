@@ -19,16 +19,15 @@
 package org.dependencytrack.event;
 
 import alpine.event.framework.Event;
+import org.dependencytrack.model.Component;
+
+import java.util.UUID;
 
 /**
- * Defines an event triggered when internal components should be identified in the entire portfolio.
+ * Defines an {@link Event} used to trigger {@link Component} metrics updates.
  *
- * @author nscuro
- * @since 3.7.0
+ * @param uuid {@link UUID} of the {@link Component} to update metrics for
+ * @since 4.6.0
  */
-public class InternalComponentIdentificationEvent implements Event {
-
-    public InternalComponentIdentificationEvent() {
-    }
-
+public record ComponentMetricsUpdateEvent(UUID uuid) implements Event {
 }

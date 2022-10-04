@@ -24,22 +24,39 @@ import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.tasks.AlpineTaskScheduler;
+import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
+import org.dependencytrack.event.DefectDojoUploadEventAbstract;
+import org.dependencytrack.event.FortifySscUploadEventAbstract;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
+import org.dependencytrack.event.InternalComponentIdentificationEvent;
+import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.event.NistMirrorEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
-import org.dependencytrack.event.VulnDbSyncEvent;
-import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
 import org.dependencytrack.event.PortfolioVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.InternalComponentIdentificationEvent;
-import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
-import org.dependencytrack.event.FortifySscUploadEventAbstract;
-import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
-import org.dependencytrack.event.DefectDojoUploadEventAbstract;
+import org.dependencytrack.event.VulnDbSyncEvent;
+import org.dependencytrack.event.VulnerabilityMetricsUpdateEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_SYNC_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_SYNC_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_SYNC_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_GHSA_MIRROR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_LDAP_SYNC_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_NIST_MIRROR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_OSV_MIRROR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_VULNDB_MIRROR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE;
 
 /**
  * A Singleton implementation of {@link AlpineTaskScheduler} that configures scheduled and repeatable tasks.
@@ -73,10 +90,10 @@ public final class TaskScheduler extends AlpineTaskScheduler {
             scheduleEvent(new VulnDbSyncEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNDB_MIRROR_CADENCE));
 
             // Creates a new event that executes every 1 hour (3600000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE));
+            scheduleEvent(new PortfolioMetricsUpdateEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE));
 
             // Creates a new event that executes every 1 hour (3600000) by default after an initial 10 second (10000) delay
-            scheduleEvent(new MetricsUpdateEvent(MetricsUpdateEvent.Type.VULNERABILITY), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE));
+            scheduleEvent(new VulnerabilityMetricsUpdateEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE));
 
             // Creates a new event that executes every 24 hours (86400000) by default after an initial 6 hour (21600000) delay
             scheduleEvent(new PortfolioVulnerabilityAnalysisEvent(), 21600000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE));

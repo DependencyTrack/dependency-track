@@ -255,7 +255,7 @@ public class ProjectResource extends AlpineResource {
                 try {
                     project = qm.createProject(jsonProject, jsonProject.getTags(), true);
                 } catch (IllegalArgumentException e){
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage());
                     return Response.status(Response.Status.CONFLICT).entity("An inactive Parent cannot be selected as parent").build();
                 }
                 Principal principal = getPrincipal();
@@ -312,7 +312,7 @@ public class ProjectResource extends AlpineResource {
                     try {
                         project = qm.updateProject(jsonProject, true);
                     } catch (IllegalArgumentException e){
-                        e.printStackTrace();
+                        LOGGER.error(e.getMessage());
                         return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
                     }
                     LOGGER.info("Project " + project.toString() + " updated by " + super.getPrincipal().getName());
@@ -386,7 +386,7 @@ public class ProjectResource extends AlpineResource {
                     try {
                         project = qm.updateProject(project, true);
                     } catch (IllegalArgumentException e){
-                        e.printStackTrace();
+                        LOGGER.error(e.getMessage());
                         return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
                     }
                     return Response.ok(project).build();

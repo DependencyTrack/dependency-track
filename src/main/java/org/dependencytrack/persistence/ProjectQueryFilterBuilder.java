@@ -72,10 +72,8 @@ class ProjectQueryFilterBuilder {
         return this;
     }
 
-    ProjectQueryFilterBuilder excludeProjectsThatAreChildren(boolean onlyRoot){
-        if (onlyRoot){
-            filterCriteria.add("parent == null");
-        }
+    ProjectQueryFilterBuilder excludeProjectsThatAreChildren(){
+        filterCriteria.add("parent == null");
         return this;
     }
 

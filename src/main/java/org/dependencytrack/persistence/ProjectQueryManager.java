@@ -86,10 +86,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
 
         var filterBuilder = new ProjectQueryFilterBuilder()
-                .excludeInactive(excludeInactive)
-                .excludeProjectsThatAreChildren(onlyRoot);
+                .excludeInactive(excludeInactive);
 
         if (onlyRoot){
+            filterBuilder.excludeProjectsThatAreChildren();
             pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -172,10 +172,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         final var filterBuilder = new ProjectQueryFilterBuilder()
                 .excludeInactive(excludeInactive)
-                .withName(name)
-                .excludeProjectsThatAreChildren(onlyRoot);
+                .withName(name);
 
         if (onlyRoot){
+            filterBuilder.excludeProjectsThatAreChildren();
             pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -221,10 +221,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         final var filterBuilder = new ProjectQueryFilterBuilder()
                 .excludeInactive(excludeInactive)
-                .withTeam(team)
-                .excludeProjectsThatAreChildren(onlyRoot);
+                .withTeam(team);
 
         if (onlyRoot){
+            filterBuilder.excludeProjectsThatAreChildren();
             pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -249,10 +249,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         var filterBuilder = new ProjectQueryFilterBuilder()
                 .excludeInactive(excludeInactive)
-                .withTag(tag)
-                .excludeProjectsThatAreChildren(onlyRoot);
+                .withTag(tag);
 
         if (onlyRoot){
+            filterBuilder.excludeProjectsThatAreChildren();
             pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -290,10 +290,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         final var filterBuilder = new ProjectQueryFilterBuilder()
                 .excludeInactive(excludeInactive)
-                .withClassifier(classifier)
-                .excludeProjectsThatAreChildren(onlyRoot);
+                .withClassifier(classifier);
 
         if (onlyRoot){
+            filterBuilder.excludeProjectsThatAreChildren();
             pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -416,9 +416,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (parent != null ) {
             if (!Boolean.TRUE.equals(parent.isActive())){
                 throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
-            }else {
-                project.setParent(parent);
             }
+            project.setParent(parent);
         }
         project.setPurl(purl);
         project.setActive(active);
@@ -473,6 +472,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         } else {
             project.setActive(active);
         }
+        project.setActive(active);
 
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);
@@ -507,6 +507,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         } else {
             project.setActive(transientProject.isActive());
         }
+        project.setActive(transientProject.isActive());
 
         if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
             if (project.getUuid().equals(transientProject.getParent().getUuid())){
@@ -520,6 +521,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             } else {
                 project.setParent(parent);
             }
+            project.setParent(parent);
         }else {
             project.setParent(null);
         }

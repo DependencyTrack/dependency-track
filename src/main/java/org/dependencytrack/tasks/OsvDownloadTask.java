@@ -17,6 +17,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
@@ -44,6 +45,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
@@ -51,9 +53,9 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-    private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
     private String ecosystemConfig;
     private List<String> ecosystems;
+    private String osvBaseUrl;
 
     public List<String> getEnabledEcosystems() {
         return this.ecosystems;
@@ -66,6 +68,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 this.ecosystemConfig = enabled.getPropertyValue();
                 if (this.ecosystemConfig != null) {
                     ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                }
+                this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
+                if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {
+                    this.osvBaseUrl += "/";
                 }
             }
         }
@@ -80,7 +86,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 for (String ecosystem : this.ecosystems) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
                     try {
-                        String url = OSV_BASE_URL + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
+                        String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
                                 + "/all.zip";
                         HttpUriRequest request = new HttpGet(url);
                         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
@@ -138,6 +144,22 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
             Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);;
             final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
+
+            if (advisory.getAliases() != null) {
+                for (int i=0; i<advisory.getAliases().size(); i++) {
+                    final String alias = advisory.getAliases().get(i);
+                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+                    vulnerabilityAlias.setOsvId(advisory.getId());
+                    if(alias.startsWith("CVE")) {
+                        vulnerabilityAlias.setCveId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    } else if (alias.startsWith("GHSA")) {
+                        vulnerabilityAlias.setGhsaId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    }
+                    //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
+                }
+            }
 
             for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
                 VulnerableSoftware vs = mapAffectedPackageToVulnerableSoftware(qm, osvAffectedPackage);
@@ -283,9 +305,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
         return vs;
     }
 
-    public static List<String> getEcosystems() {
+    public List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
-        String url = OSV_BASE_URL + "ecosystems.txt";
+        String url = this.osvBaseUrl + "ecosystems.txt";
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();

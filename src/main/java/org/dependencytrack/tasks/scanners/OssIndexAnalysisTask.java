@@ -36,12 +36,13 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
-import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
@@ -275,12 +276,24 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 if (vulnerability == null) {
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
                                 }
+                                // In some cases, OSS Index may publish a vulnerability before the NVD does. In this case,
+                                // a sonatype id will be assigned to the vulnerability. However, it is possible that at
+                                // a later time, the vulnerability will be published to the NVD. Therefore, add an alias.
+                                // The "startsWith CVE" is unforntuantly necessary as of 11 June 2022, OSS Index has
+                                // multiple vulnerabilities with sonatype identifiers in the cve field.
+                                if (reportedVuln.getCve() != null && reportedVuln.getCve().startsWith("CVE-")) {
+                                    LOGGER.debug("Updating vulnerability alias for " + reportedVuln.getId());
+                                    final VulnerabilityAlias alias = new VulnerabilityAlias();
+                                    alias.setSonatypeId(reportedVuln.getId());
+                                    alias.setCveId(reportedVuln.getCve());
+                                    qm.synchronizeVulnerabilityAlias(alias);
+                                }
                                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        Event.dispatch(new MetricsUpdateEvent(component));
+                        Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                         updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
                 }

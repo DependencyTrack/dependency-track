@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
@@ -53,6 +54,11 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
                 "Maven;DWF",
                 IConfigProperty.PropertyType.STRING,
                 "List of ecosystems");
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(),
+                VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName(),
+                "https://osv-vulnerabilities.storage.googleapis.com/",
+                IConfigProperty.PropertyType.URL,
+                "OSV Base URL");
         task = new OsvDownloadTask();
         Assert.assertNotNull(task.getEnabledEcosystems());
         Assert.assertEquals(2, task.getEnabledEcosystems().size());

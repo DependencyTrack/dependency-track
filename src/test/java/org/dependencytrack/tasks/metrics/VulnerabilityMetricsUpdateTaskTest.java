@@ -1,0 +1,84 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
+package org.dependencytrack.tasks.metrics;
+
+import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.event.VulnerabilityMetricsUpdateEvent;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityMetrics;
+import org.dependencytrack.persistence.QueryManager;
+import org.junit.Test;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class VulnerabilityMetricsUpdateTaskTest extends PersistenceCapableTest {
+
+    @Test
+    public void testUpdateMetricsEmpty() {
+        new VulnerabilityMetricsUpdateTask().inform(new VulnerabilityMetricsUpdateEvent());
+
+        try (final var qm = new QueryManager()) {
+            final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+            assertThat(metrics).hasSize(0);
+        }
+    }
+
+    @Test
+    public void testUpdateMetrics() {
+        try (final var qm = new QueryManager()) {
+            // Test that paging works by creating more vulnerabilities
+            // than fit on a single page (of size 500).
+            for (int i = 0; i < 750; i++) {
+                final var vuln = new Vulnerability();
+                vuln.setVulnId("INTERNAL-" + i);
+                vuln.setSource(Vulnerability.Source.INTERNAL);
+                vuln.setSeverity(Severity.HIGH);
+                vuln.setCreated(Date.from(LocalDateTime.of(2020, 10, 1, 6, 6, 6).toInstant(ZoneOffset.UTC)));
+                qm.createVulnerability(vuln, false);
+            }
+        }
+
+        new VulnerabilityMetricsUpdateTask().inform(new VulnerabilityMetricsUpdateEvent());
+
+        try (final var qm = new QueryManager()) {
+            final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
+
+            assertThat(metrics).hasSize(2);
+            assertThat(metrics).satisfiesExactlyInAnyOrder(
+                    vm -> {
+                        assertThat(vm.getYear()).isEqualTo(2020);
+                        assertThat(vm.getMonth()).isNull();
+                        assertThat(vm.getCount()).isEqualTo(750);
+                    },
+                    vm -> {
+                        assertThat(vm.getYear()).isEqualTo(2020);
+                        assertThat(vm.getMonth()).isEqualTo(10);
+                        assertThat(vm.getCount()).isEqualTo(750);
+                    }
+            );
+        }
+    }
+
+}

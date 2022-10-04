@@ -10,7 +10,7 @@ on:
       - 'docs/**'
   pull_request:
     branches:
-      - '**master**'          # Default branch
+      - 'master'          # Default branch
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/_meta-build.yaml
     with:
       app-version: "snapshot"
-      publish-container: false
+      publish-container: ${{ github.ref == 'refs/heads/master' }}
     secrets:
       registry-0-usr: ${{ secrets.HUB_USERNAME }}
       registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}

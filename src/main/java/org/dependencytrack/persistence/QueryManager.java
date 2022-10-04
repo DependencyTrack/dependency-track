@@ -67,6 +67,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
@@ -888,6 +889,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Project> getProjects(Vulnerability vulnerability) {
         return getVulnerabilityQueryManager().getProjects(vulnerability);
+    }
+
+    public VulnerabilityAlias synchronizeVulnerabilityAlias(VulnerabilityAlias alias) {
+        return getVulnerabilityQueryManager().synchronizeVulnerabilityAlias(alias);
+    }
+
+    public List<VulnerabilityAlias> getVulnerabilityAliases(Vulnerability vulnerability) {
+        return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnerability);
     }
 
     List<Analysis> getAnalyses(Project project) {

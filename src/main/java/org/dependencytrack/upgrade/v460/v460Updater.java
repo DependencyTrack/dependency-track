@@ -24,6 +24,10 @@ import alpine.server.upgrade.AbstractUpgradeItem;
 import alpine.server.util.DbUtil;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Arrays;
 
 public class v460Updater extends AbstractUpgradeItem {
 
@@ -58,6 +62,31 @@ public class v460Updater extends AbstractUpgradeItem {
             DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" CHANGE \"DETAILS_V46\" \"DETAILS\" MEDIUMTEXT");
         } else {
             DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" RENAME COLUMN \"DETAILS_V46\" TO \"DETAILS\"");
+        }
+
+        LOGGER.info("Updating Package URLs of PHP Packages for GHSA Vulnerabilities");
+        try (final Statement stmt = connection.createStatement()) {
+            final ResultSet rs = stmt.executeQuery("""
+                    SELECT "ID", "PURL_NAME"
+                    FROM "VULNERABLESOFTWARE"
+                    WHERE "PURL_TYPE" = 'composer'
+                        AND "PURL_NAMESPACE" IS NULL
+                        AND "PURL_NAME" LIKE '%/%'
+                    """);
+            while (rs.next()) {
+                final String purlName = rs.getString(2);
+                final String[] purlParts = purlName.split("/");
+
+                final String namespace = String.join("/", Arrays.copyOfRange(purlParts, 0, purlParts.length - 1));
+
+                final PreparedStatement ps = connection.prepareStatement("""
+                        UPDATE "VULNERABLESOFTWARE" SET "PURL_NAMESPACE" = ?, "PURL_NAME" = ? WHERE "ID" = ?
+                        """);
+                ps.setString(1, namespace);
+                ps.setString(2, purlParts[purlParts.length - 1]);
+                ps.setLong(3, rs.getLong(1));
+                ps.executeUpdate();
+            }
         }
     }
 }

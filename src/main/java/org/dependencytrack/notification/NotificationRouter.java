@@ -219,20 +219,17 @@ public class NotificationRouter implements Subscriber {
         }
     }
 
-    private boolean checkIfChildrenAreAffected(Project parent, UUID uuid){
+    private boolean checkIfChildrenAreAffected(Project parent, UUID uuid) {
         boolean isChild = false;
-        if (parent.getChildren() == null || parent.getChildren().isEmpty()){
+        if (parent.getChildren() == null || parent.getChildren().isEmpty()) {
             return false;
-        } else {
-            for (Project child : parent.getChildren()){
-                if ((child.getUuid().equals(uuid) && child.isActive()) || isChild){
-                    return true;
-                } else {
-                    isChild = checkIfChildrenAreAffected(child, uuid);
-                }
+        }
+        for (Project child : parent.getChildren()) {
+            if ((child.getUuid().equals(uuid) && child.isActive()) || isChild) {
+                return true;
             }
+            isChild = checkIfChildrenAreAffected(child, uuid);
         }
         return isChild;
     }
-
 }

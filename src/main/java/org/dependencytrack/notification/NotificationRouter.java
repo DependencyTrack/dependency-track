@@ -161,7 +161,7 @@ public class NotificationRouter implements Subscriber {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0
                             && subject.getComponent() != null && subject.getComponent().getProject() != null) {
                             for (final Project project : rule.getProjects()) {
-                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || checkChildren(project, subject.getComponent().getProject().getUuid())) {
+                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || checkIfChildrenAreAffected(project, subject.getComponent().getProject().getUuid())) {
                                     rules.add(rule);
                                 }
                             }
@@ -208,7 +208,7 @@ public class NotificationRouter implements Subscriber {
             if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                 if (rule.getProjects() != null && rule.getProjects().size() > 0) {
                     for (final Project project : rule.getProjects()) {
-                        if (project.getUuid().equals(limitToProject.getUuid()) || checkChildren(project, limitToProject.getUuid())) {
+                        if (project.getUuid().equals(limitToProject.getUuid()) || checkIfChildrenAreAffected(project, limitToProject.getUuid())) {
                             applicableRules.add(rule);
                         }
                     }
@@ -219,7 +219,7 @@ public class NotificationRouter implements Subscriber {
         }
     }
 
-    private boolean checkChildren(Project parent, UUID uuid){
+    private boolean checkIfChildrenAreAffected(Project parent, UUID uuid){
         boolean isChild = false;
         if (parent.getChildren() == null || parent.getChildren().isEmpty()){
             return false;
@@ -228,7 +228,7 @@ public class NotificationRouter implements Subscriber {
                 if ((child.getUuid().equals(uuid) && child.isActive()) || isChild){
                     return true;
                 } else {
-                    isChild = checkChildren(child, uuid);
+                    isChild = checkIfChildrenAreAffected(child, uuid);
                 }
             }
         }

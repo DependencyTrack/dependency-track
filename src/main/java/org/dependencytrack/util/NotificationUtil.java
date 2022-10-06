@@ -63,7 +63,7 @@ public final class NotificationUtil {
      */
     private NotificationUtil() { }
 
-    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component) {
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, String analysisLevel) {
         if (!qm.contains(vulnerability, component)) {
             // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
             // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
@@ -85,7 +85,7 @@ public final class NotificationUtil {
                     .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
-                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values())))
+                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), analysisLevel))
             );
         }
     }

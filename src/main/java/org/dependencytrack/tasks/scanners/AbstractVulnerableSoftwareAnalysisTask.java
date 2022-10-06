@@ -52,12 +52,13 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * @param component the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final String targetVersion, final String targetUpdate, final Component component) {
+                                       final String targetVersion, final String targetUpdate, final Component component,
+                                       final String analysisLevel) {
         for (final VulnerableSoftware vs: vsList) {
             if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
-                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, analysisLevel);
                         qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                     }
                 }

@@ -84,7 +84,8 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
-    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component, AnalyzerIdentity analyzerIdentity) {
+    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component,
+                                          AnalyzerIdentity analyzerIdentity, String analysisLevel) {
         try (QueryManager qm = new QueryManager()) {
             final ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
             if (cac != null) {
@@ -97,7 +98,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                             final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
                             if (c == null) continue;
                             if (vulnerability != null) {
-                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, analysisLevel);
                                 qm.addVulnerability(vulnerability, c, analyzerIdentity);
                             }
                         }

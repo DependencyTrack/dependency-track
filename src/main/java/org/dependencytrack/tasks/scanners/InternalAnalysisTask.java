@@ -47,6 +47,8 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         return AnalyzerIdentity.INTERNAL_ANALYZER;
     }
 
+    private String analysisLevel;
+
     /**
      * {@inheritDoc}
      */
@@ -56,6 +58,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 return;
             }
             final InternalAnalysisEvent event = (InternalAnalysisEvent)e;
+            analysisLevel = event.getAnalysisLevel();
             LOGGER.info("Starting internal analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
@@ -143,7 +146,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
-        super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component);
+        super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component, analysisLevel);
     }
 
 }

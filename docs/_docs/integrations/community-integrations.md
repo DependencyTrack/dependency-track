@@ -19,6 +19,7 @@ to make custom tools and integrations. Many tools that integrate with Dependency
 | [Dependency-Track Client (Python)](https://github.com/alvinchchen/dependency-track-python) | |
 | [Dependency-Track Client (Ruby)](https://github.com/mrtc0/dependency-tracker-client) | |
 | [Dependency-Track Reporting Tool](https://github.com/MO-Movia/Dependency-Track-Report-Tool) | [Modus Operandi](https://www.modusoperandi.com/) |
+| [dtapac](https://github.com/nscuro/dtapac) | |
 | [dtrack-audit](https://github.com/ozonru/dtrack-audit) | [OZON.ru](https://www.ozon.ru/) |
 | [dependency-track-maven-plugin](https://github.com/pmckeown/dependency-track-maven-plugin) | |
 | [dtrack-auditor](https://github.com/thinksabin/DTrackAuditor) | |

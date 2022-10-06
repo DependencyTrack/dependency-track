@@ -79,6 +79,8 @@ services:
     #
     # Optional metrics properties
     # - ALPINE_METRICS_ENABLED=true
+    # - ALPINE_METRICS_AUTH_USERNAME=
+    # - ALPINE_METRICS_AUTH_PASSWORD=
     deploy:
       resources:
         limits:

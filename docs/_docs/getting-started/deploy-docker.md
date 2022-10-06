@@ -148,6 +148,8 @@ services:
     #
     # Optional metrics properties
     # - ALPINE_METRICS_ENABLED=true
+    # - ALPINE_METRICS_AUTH_USERNAME=
+    # - ALPINE_METRICS_AUTH_PASSWORD=
     # 
     # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
     # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false

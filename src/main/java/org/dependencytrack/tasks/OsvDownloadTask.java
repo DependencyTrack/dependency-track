@@ -141,16 +141,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
             final List<VulnerableSoftware> vsList = new ArrayList<>();
-            Vulnerability synchronizedVulnerability;
-            Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
-            Vulnerability existingVuln = findExistingClashingVulnerability(qm, vulnerability, advisory);
-
-            if (existingVuln != null) {
-                synchronizedVulnerability = existingVuln;
-                vsList.addAll(existingVuln.getVulnerableSoftware());
-            } else {
-                synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            }
+            final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
+            Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);;
+            final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
 
             if (advisory.getAliases() != null) {
                 for (int i=0; i<advisory.getAliases().size(); i++) {
@@ -178,10 +171,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     }
                 }
             }
+            qm.persist(vsList);
+            if (existing != null) {
+                vsList.addAll(existing.getVulnerableSoftware());
+            }
             synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
             qm.persist(synchronizedVulnerability);
-            LOGGER.debug("Updating vulnerable software for OSV advisory: " + advisory.getId());
-            qm.persist(vsList);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
@@ -308,29 +303,6 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);
         return vs;
-    }
-
-    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OsvAdvisory advisory) {
-
-        Vulnerability existing = null;
-        if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {
-            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
-        } else if (advisory.getAliases() != null) {
-            for(String alias : advisory.getAliases()) {
-                String sourceOfAlias = extractSource(alias).toString();
-                if(isVulnerabilitySourceClashingWithGithubOrNvd(sourceOfAlias)) {
-                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias);
-                    if (existing != null) break;
-                }
-            }
-        }
-        return existing;
-    }
-
-    private boolean isVulnerabilitySourceClashingWithGithubOrNvd(String source) {
-
-        return Vulnerability.Source.GITHUB.toString().equals(source)
-                || Vulnerability.Source.NVD.toString().equals(source);
     }
 
     public List<String> getEcosystems() {

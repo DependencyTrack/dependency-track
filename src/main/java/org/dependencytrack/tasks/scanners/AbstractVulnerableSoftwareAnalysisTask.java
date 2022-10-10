@@ -18,7 +18,10 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;

@@ -28,6 +28,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Test;
 
@@ -234,6 +235,98 @@ public class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTes
 
         qm.getPersistenceManager().refresh(component);
         assertThat(component.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    public void testUpdateMetricsWithDuplicateAliases() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, List.of(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component = qm.createComponent(component, false);
+
+        // Create four distinct vulnerabilities:
+        //   A: INTERNAL -> INTERNAL-001
+        //   B: GITHUB   -> GHSA-002
+        //   C: OSSINDEX -> SONATYPE-003
+        //   D: VULNDB   -> VULNDB-004
+        var vulnA = new Vulnerability();
+        vulnA.setVulnId("INTERNAL-001");
+        vulnA.setSource(Vulnerability.Source.INTERNAL);
+        vulnA.setSeverity(Severity.HIGH);
+        vulnA = qm.createVulnerability(vulnA, false);
+        qm.addVulnerability(vulnA, component, AnalyzerIdentity.NONE);
+
+        var vulnB = new Vulnerability();
+        vulnB.setVulnId("GHSA-002");
+        vulnB.setSource(Vulnerability.Source.GITHUB);
+        vulnB.setSeverity(Severity.MEDIUM);
+        vulnB = qm.createVulnerability(vulnB, false);
+        qm.addVulnerability(vulnB, component, AnalyzerIdentity.NONE);
+
+        var vulnC = new Vulnerability();
+        vulnC.setVulnId("SONATYPE-003");
+        vulnC.setSource(Vulnerability.Source.OSSINDEX);
+        vulnC.setSeverity(Severity.MEDIUM);
+        vulnC = qm.createVulnerability(vulnC, false);
+        qm.addVulnerability(vulnC, component, AnalyzerIdentity.NONE);
+
+        var vulnD = new Vulnerability();
+        vulnD.setVulnId("VULNDB-004");
+        vulnD.setSource(Vulnerability.Source.VULNDB);
+        vulnD.setSeverity(Severity.LOW);
+        vulnD = qm.createVulnerability(vulnD, false);
+        qm.addVulnerability(vulnD, component, AnalyzerIdentity.NONE);
+
+        // Make A and alias of C
+        final var aliasAtoC = new VulnerabilityAlias();
+        aliasAtoC.setInternalId(vulnA.getVulnId());
+        aliasAtoC.setSonatypeId(vulnC.getVulnId());
+        qm.persist(aliasAtoC);
+
+        // Make A also an alias of D
+        final var aliasAtoD = new VulnerabilityAlias();
+        aliasAtoD.setInternalId(vulnA.getVulnId());
+        aliasAtoD.setVulnDbId(vulnD.getVulnId());
+        qm.persist(aliasAtoD);
+
+        // Kick off metrics calculation.
+        // Expectation is that both C and D will not be considered because they alias A.
+        new ComponentMetricsUpdateTask().inform(new ComponentMetricsUpdateEvent(component.getUuid()));
+
+        final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
+        assertThat(metrics.getCritical()).isZero();
+        assertThat(metrics.getHigh()).isEqualTo(1); // INTERNAL-001
+        assertThat(metrics.getMedium()).isEqualTo(1); // GHSA-002
+        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getVulnerabilities()).isEqualTo(2);
+        assertThat(metrics.getSuppressed()).isEqualTo(0);
+        assertThat(metrics.getFindingsTotal()).isEqualTo(2);
+        assertThat(metrics.getFindingsAudited()).isEqualTo(0);
+        assertThat(metrics.getFindingsUnaudited()).isEqualTo(2);
+        assertThat(metrics.getInheritedRiskScore()).isEqualTo(8.0);
+        assertThat(metrics.getPolicyViolationsFail()).isZero();
+        assertThat(metrics.getPolicyViolationsWarn()).isZero();
+        assertThat(metrics.getPolicyViolationsInfo()).isZero();
+        assertThat(metrics.getPolicyViolationsTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsSecurityUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsLicenseUnaudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalTotal()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalAudited()).isZero();
+        assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
+
+        qm.getPersistenceManager().refresh(component);
+        assertThat(component.getLastInheritedRiskScore()).isEqualTo(8.0);
     }
 
 }

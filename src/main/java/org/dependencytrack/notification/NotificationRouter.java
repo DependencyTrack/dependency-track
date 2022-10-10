@@ -101,7 +101,7 @@ public class NotificationRouter implements Subscriber {
             if(initialNotification.getSubject() instanceof NewVulnerabilityIdentified) {
                 NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) initialNotification.getSubject();
                 Set<Project> restrictedProjects = subject.getAffectedProjects().stream().filter(project -> ruleProjectsUuids.contains(project.getUuid().toString())).collect(Collectors.toSet());
-                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects);
+                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects, null);
                 restrictedNotification.setSubject(restrictedSubject);
             } else if(initialNotification.getSubject() instanceof AnalysisDecisionChange) {
                 AnalysisDecisionChange subject = (AnalysisDecisionChange) initialNotification.getSubject();

@@ -63,7 +63,7 @@ public final class NotificationUtil {
      */
     private NotificationUtil() { }
 
-    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, String analysisLevel) {
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         if (!qm.contains(vulnerability, component)) {
             // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
             // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
@@ -85,7 +85,7 @@ public final class NotificationUtil {
                     .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
-                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), analysisLevel))
+                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
             );
         }
     }
@@ -303,6 +303,9 @@ public final class NotificationUtil {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
+        }
+        if (vo.getVulnerabilityAnalysisLevel() != null) {
+            builder.add("vulnerabilityAnalysisLevel", vo.getVulnerabilityAnalysisLevel().toString());
         }
         if (vo.getVulnerability() != null) {
             builder.add("vulnerability", toJson(vo.getVulnerability()));

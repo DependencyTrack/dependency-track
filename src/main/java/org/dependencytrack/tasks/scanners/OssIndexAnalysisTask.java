@@ -38,11 +38,7 @@ import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.*;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
@@ -72,7 +68,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     private String apiUsername;
     private String apiToken;
 
-    private String analysisLevel;
+    private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     public AnalyzerIdentity getAnalyzerIdentity() {
         return AnalyzerIdentity.OSSINDEX_ANALYZER;
@@ -110,7 +106,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             }
             final OssIndexAnalysisEvent event = (OssIndexAnalysisEvent)e;
             LOGGER.info("Starting Sonatype OSS Index analysis task");
-            analysisLevel = event.getAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
             }
@@ -146,7 +142,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @param component component the Component to analyze from cache
      */
     public void applyAnalysisFromCache(final Component component) {
-        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity(), analysisLevel);
+        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
     }
 
     /**
@@ -164,7 +160,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                         //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
                         coordinates.add(minimizePurl(component.getPurl()));
                     } else {
-                        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity(), analysisLevel);
+                        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
                     }
                 }
             }
@@ -257,7 +253,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(
                                         Vulnerability.Source.NVD, reportedVuln.getCve());
                                 if (vulnerability != null) {
-                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, analysisLevel);
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                     addVulnerabilityToCache(component, vulnerability);
                                 } else {
@@ -267,7 +263,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     through traditional feeds. Regardless, the vuln needs to be added to the database.
                                      */
                                     vulnerability = qm.createVulnerability(generateVulnerability(qm, reportedVuln), false);
-                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, analysisLevel);
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                     qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                     addVulnerabilityToCache(component, vulnerability);
                                 }
@@ -291,7 +287,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     alias.setCveId(reportedVuln.getCve());
                                     qm.synchronizeVulnerabilityAlias(alias);
                                 }
-                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, analysisLevel);
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());
                                 addVulnerabilityToCache(component, vulnerability);
                             }

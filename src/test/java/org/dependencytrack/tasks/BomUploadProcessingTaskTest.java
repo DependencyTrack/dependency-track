@@ -28,7 +28,14 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.AfterClass;
@@ -147,12 +154,12 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 n ->  {
                     assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name());
                     NewVulnerabilityIdentified nvi = (NewVulnerabilityIdentified) n.getSubject();
-                    assertThat(nvi.getAnalysisLevel().equalsIgnoreCase(AnalysisLevel.BOM_UPLOAD_ANALYSIS.toString()));
+                    assertThat(nvi.getVulnerabilityAnalysisLevel().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
                 },
                 n ->  {
                     assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name());
                     NewVulnerabilityIdentified nvi = (NewVulnerabilityIdentified) n.getSubject();
-                    assertThat(nvi.getAnalysisLevel().equalsIgnoreCase(AnalysisLevel.BOM_UPLOAD_ANALYSIS.toString()));
+                    assertThat(nvi.getVulnerabilityAnalysisLevel().toString().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
                 },
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name())
         );

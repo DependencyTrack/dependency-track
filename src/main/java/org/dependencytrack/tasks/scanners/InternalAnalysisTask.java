@@ -24,6 +24,7 @@ import alpine.event.framework.Subscriber;
 import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
@@ -47,7 +48,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         return AnalyzerIdentity.INTERNAL_ANALYZER;
     }
 
-    private String analysisLevel;
+    private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     /**
      * {@inheritDoc}
@@ -58,7 +59,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 return;
             }
             final InternalAnalysisEvent event = (InternalAnalysisEvent)e;
-            analysisLevel = event.getAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting internal analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
@@ -146,7 +147,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
-        super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component, analysisLevel);
+        super.analyzeVersionRange(qm, vsList, componentVersion, componentUpdate, component, vulnerabilityAnalysisLevel);
     }
 
 }

@@ -28,7 +28,9 @@ Debian ecosystem package is superset of all individual versions, it is suggested
 
 **NOTE**: Disabling the OSV would remove current ecosystem selection, but already mirrored vulnerabilities would be retained.
 
-![](../../images/osv-ecosystem.png)
+![](../../images/osv-configuration.png)
+
+This integration will enable vulnerability DB of selective ecosystems in DT (as shown). It can be also used in an offline mode (without having internet access to the DT API server).
 
 Current defined ecosystems are below. Updated list can be found at [https://osv-vulnerabilities.storage.googleapis.com/ecosystems.txt](https://osv-vulnerabilities.storage.googleapis.com/ecosystems.txt).
 

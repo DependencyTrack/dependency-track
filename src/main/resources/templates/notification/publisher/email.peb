@@ -31,12 +31,6 @@ Vulnerability ID:  {{ vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ vulnerability.source }}&vulnId={{ vulnerability.vulnId }}
 Severity:          {{ vulnerability.severity }}
 Source:            {{ vulnerability.source }}
-{% if vulnerability.aliases is not empty %}
-Aliases:
-{% for alias in vulnerability.aliases %}
-  - {{ alias.vulnId }} ({{ alias.source }})
-{% endfor %}
-{% endif %}
 Description:
 {{ vulnerability.description }}
 
@@ -49,12 +43,6 @@ Vulnerability ID:  {{ subject.vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
 Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
-{% if vulnerability.aliases is not empty %}
-Aliases:
-{% for alias in vulnerability.aliases %}
-  - {{ alias.vulnId }} ({{ alias.source }})
-{% endfor %}
-{% endif %}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 Project:           {{ subject.component.project.name }}

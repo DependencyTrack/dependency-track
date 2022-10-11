@@ -146,17 +146,28 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
 
             if (advisory.getAliases() != null) {
-                for (int i=0; i<advisory.getAliases().size(); i++) {
+                for (int i = 0; i < advisory.getAliases().size(); i++) {
                     final String alias = advisory.getAliases().get(i);
                     final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
-                    vulnerabilityAlias.setOsvId(advisory.getId());
-                    if(alias.startsWith("CVE")) {
+
+                    // OSV will use IDs of other vulnerability databases for its
+                    // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
+                    // that we don't falsely report GHSA IDs as stemming from OSV.
+                    final Vulnerability.Source advisorySource = extractSource(advisory.getId());
+                    switch (advisorySource) {
+                        case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
+                        case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
+                        default -> vulnerabilityAlias.setOsvId(advisory.getId());
+                    }
+
+                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != advisorySource) {
                         vulnerabilityAlias.setCveId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                    } else if (alias.startsWith("GHSA")) {
+                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != advisorySource) {
                         vulnerabilityAlias.setGhsaId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                     }
+
                     //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
                 }
             }

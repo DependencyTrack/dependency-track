@@ -105,6 +105,7 @@ services:
       #   * This URL must be reachable by the browsers of your users.
       #   * The frontend container itself does NOT communicate with the API server directly, it just serves static files.
       #   * When deploying to dedicated servers, please use the external IP or domain of the API server.
+      #   * Use docker-compose up -d to recreate any containers that have changes and leave all unchanged services untouched.
       - API_BASE_URL=http://localhost:8081
       # - "OIDC_ISSUER="
       # - "OIDC_CLIENT_ID="

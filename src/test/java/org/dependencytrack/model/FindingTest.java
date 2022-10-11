@@ -19,12 +19,17 @@
 package org.dependencytrack.model;
 
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.persistence.CweImporter;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FindingTest extends PersistenceCapableTest {
 
@@ -34,6 +39,12 @@ public class FindingTest extends PersistenceCapableTest {
             "component-version", "component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
             "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, "7.2", "8.4",
             "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
+
+
+    @Before
+    public void setUp() throws Exception {
+        new CweImporter().processCweDefinitions();
+    }
 
     @Test
     public void testComponent() {
@@ -70,4 +81,27 @@ public class FindingTest extends PersistenceCapableTest {
     public void testMatrix() {
         Assert.assertEquals(projectUuid + ":component-uuid" + ":vuln-uuid", finding.getMatrix());
     }
+
+    @Test
+    public void testGetCwes() {
+        assertThat(Finding.getCwes("787,79,,89,"))
+                .hasSize(3)
+                .satisfiesExactly(
+                        cwe -> assertThat(cwe.getCweId()).isEqualTo(787),
+                        cwe -> assertThat(cwe.getCweId()).isEqualTo(79),
+                        cwe -> assertThat(cwe.getCweId()).isEqualTo(89)
+                );
+    }
+
+    @Test
+    public void testGetCwesWhenInputIsEmpty() {
+        assertThat(Finding.getCwes("")).isNull();
+        assertThat(Finding.getCwes(",")).isNull();
+    }
+
+    @Test
+    public void testGetCwesWhenInputIsNull() {
+        assertThat(Finding.getCwes(null)).isNull();
+    }
+
 }

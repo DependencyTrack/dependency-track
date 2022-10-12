@@ -360,20 +360,6 @@ public class NotificationRuleResourceTest extends ResourceTest {
     }
 
     @Test
-    public void addTeamToRuleInvalidScopeTest(){
-        Team team = qm.createTeam("Team Example", false);
-        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
-                .header(X_API_KEY, apiKey)
-                .post(Entity.json(""));
-        Assert.assertEquals(406, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
-        Assert.assertEquals("Team subscriptions are only possible on notification rules with PORTFOLIO scope.", body);
-    }
-
-    @Test
     public void addTeamToRuleInvalidTeamTest() {
         NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
         NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -444,20 +430,6 @@ public class NotificationRuleResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The notification rule could not be found.", body);
-    }
-
-    @Test
-    public void removeTeamFromRuleInvalidScopeTest() {
-        Team team = qm.createTeam("Team Example", false);
-        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
-        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.SYSTEM, NotificationLevel.INFORMATIONAL, publisher);
-        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
-                .header(X_API_KEY, apiKey)
-                .delete();
-        Assert.assertEquals(406, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        String body = getPlainTextBody(response);
-        Assert.assertEquals("Team subscriptions are only possible on notification rules with PORTFOLIO scope.", body);
     }
 
     @Test

@@ -282,9 +282,6 @@ public class NotificationRuleResource extends AlpineResource {
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
             }
-            if (rule.getScope() != NotificationScope.PORTFOLIO) {
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with PORTFOLIO scope.").build();
-            }
             if (!rule.getPublisher().getName().equals(DefaultNotificationPublishers.EMAIL.getPublisherName())) {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();
             }
@@ -325,9 +322,6 @@ public class NotificationRuleResource extends AlpineResource {
             final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
-            }
-            if (rule.getScope() != NotificationScope.PORTFOLIO) {
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with PORTFOLIO scope.").build();
             }
             if (!rule.getPublisher().getName().equals(DefaultNotificationPublishers.EMAIL.getPublisherName())) {
                 return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();

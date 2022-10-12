@@ -18,6 +18,10 @@
  */
 package org.dependencytrack.model;
 
+import alpine.model.LdapUser;
+import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
+import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -30,42 +34,42 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class NotificationRuleTest { 
+public class NotificationRuleTest {
 
     @Test
     public void testId() {
         NotificationRule rule = new NotificationRule();
         rule.setId(111L);
         Assert.assertEquals(111L, rule.getId());
-    } 
+    }
 
     @Test
     public void testName() {
         NotificationRule rule = new NotificationRule();
         rule.setName("Test Name");
         Assert.assertEquals("Test Name", rule.getName());
-    } 
+    }
 
     @Test
     public void testEnabled() {
         NotificationRule rule = new NotificationRule();
         rule.setEnabled(true);
         Assert.assertTrue(rule.isEnabled());
-    } 
+    }
 
     @Test
     public void testScope() {
         NotificationRule rule = new NotificationRule();
         rule.setScope(NotificationScope.PORTFOLIO);
         Assert.assertEquals(NotificationScope.PORTFOLIO, rule.getScope());
-    } 
+    }
 
     @Test
     public void testNotificationLevel() {
         NotificationRule rule = new NotificationRule();
         rule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
         Assert.assertEquals(NotificationLevel.INFORMATIONAL, rule.getNotificationLevel());
-    } 
+    }
 
     @Test
     public void testProjects() {
@@ -76,14 +80,14 @@ public class NotificationRuleTest {
         rule.setProjects(projects);
         Assert.assertEquals(1, rule.getProjects().size());
         Assert.assertEquals(project, rule.getProjects().get(0));
-    } 
+    }
 
     @Test
     public void testMessage() {
         NotificationRule rule = new NotificationRule();
         rule.setMessage("Test Message");
         Assert.assertEquals("Test Message", rule.getMessage());
-    } 
+    }
 
     @Test
     public void testNotifyOn() {
@@ -93,7 +97,7 @@ public class NotificationRuleTest {
         NotificationRule rule = new NotificationRule();
         rule.setNotifyOn(groups);
         Assert.assertEquals(2, rule.getNotifyOn().size());
-    } 
+    }
 
     @Test
     public void testPublisher() {
@@ -101,14 +105,14 @@ public class NotificationRuleTest {
         NotificationRule rule = new NotificationRule();
         rule.setPublisher(publisher);
         Assert.assertEquals(publisher, rule.getPublisher());
-    } 
+    }
 
     @Test
     public void testPublisherConfig() {
         NotificationRule rule = new NotificationRule();
         rule.setPublisherConfig("{ \"config\": \"configured\" }");
         Assert.assertEquals("{ \"config\": \"configured\" }", rule.getPublisherConfig());
-    } 
+    }
 
     @Test
     public void testUuid() {
@@ -116,5 +120,64 @@ public class NotificationRuleTest {
         NotificationRule rule = new NotificationRule();
         rule.setUuid(uuid);
         Assert.assertEquals(uuid.toString(), rule.getUuid().toString());
-    } 
+    }
+
+    @Test
+    public void testTeams(){
+        List<Team> teams = new ArrayList<>();
+        Team team = new Team();
+        teams.add(team);
+        NotificationRule rule = new NotificationRule();
+        rule.setTeams(teams);
+        Assert.assertEquals(1, rule.getTeams().size());
+        Assert.assertEquals(team, rule.getTeams().get(0));
+    }
+
+    @Test
+    public void testManagedUsers(){
+        List<Team> teams = new ArrayList<>();
+        Team team = new Team();
+        List<ManagedUser> managedUsers = new ArrayList<>();
+        ManagedUser managedUser = new ManagedUser();
+        managedUsers.add(managedUser);
+        team.setManagedUsers(managedUsers);
+        teams.add(team);
+        NotificationRule rule = new NotificationRule();
+        rule.setTeams(teams);
+        Assert.assertEquals(1, rule.getTeams().size());
+        Assert.assertEquals(team, rule.getTeams().get(0));
+        Assert.assertEquals(managedUser, rule.getTeams().get(0).getManagedUsers().get(0));
+    }
+
+    @Test
+    public void testLdapUsers(){
+        List<Team> teams = new ArrayList<>();
+        Team team = new Team();
+        List<LdapUser> ldapUsers = new ArrayList<>();
+        LdapUser ldapUser = new LdapUser();
+        ldapUsers.add(ldapUser);
+        team.setLdapUsers(ldapUsers);
+        teams.add(team);
+        NotificationRule rule = new NotificationRule();
+        rule.setTeams(teams);
+        Assert.assertEquals(1, rule.getTeams().size());
+        Assert.assertEquals(team, rule.getTeams().get(0));
+        Assert.assertEquals(ldapUser, rule.getTeams().get(0).getLdapUsers().get(0));
+    }
+
+    @Test
+    public void testOidcUsers(){
+        List<Team> teams = new ArrayList<>();
+        Team team = new Team();
+        List<OidcUser> oidcUsers = new ArrayList<>();
+        OidcUser oidcUser = new OidcUser();
+        oidcUsers.add(oidcUser);
+        team.setOidcUsers(oidcUsers);
+        teams.add(team);
+        NotificationRule rule = new NotificationRule();
+        rule.setTeams(teams);
+        Assert.assertEquals(1, rule.getTeams().size());
+        Assert.assertEquals(team, rule.getTeams().get(0));
+        Assert.assertEquals(oidcUser, rule.getTeams().get(0).getOidcUsers().get(0));
+    }
 }

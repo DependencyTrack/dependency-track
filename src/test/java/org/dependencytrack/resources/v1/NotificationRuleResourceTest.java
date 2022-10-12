@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.notification.NotificationLevel;
@@ -326,5 +327,147 @@ public class NotificationRuleResourceTest extends ResourceTest {
                 .delete();
         Assert.assertEquals(304, response.getStatus(), 0);
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void addTeamToRuleTest(){
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Example Rule", json.getString("name"));
+        Assert.assertEquals(1, json.getJsonArray("teams").size());
+        Assert.assertEquals("Team Example", json.getJsonArray("teams").getJsonObject(0).getString("name"));
+        Assert.assertEquals(team.getUuid().toString(), json.getJsonArray("teams").getJsonObject(0).getString("uuid"));
+    }
+
+    @Test
+    public void addTeamToRuleInvalidRuleTest(){
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        Response response = target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The notification rule could not be found.", body);
+    }
+
+    @Test
+    public void addTeamToRuleInvalidTeamTest() {
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The team could not be found.", body);
+    }
+
+
+    @Test
+    public void addTeamToRuleDuplicateTeamTest() {
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        List<Team> teams = new ArrayList<>();
+        teams.add(team);
+        rule.setTeams(teams);
+        qm.persist(rule);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+        Assert.assertEquals(304, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void addTeamToRuleInvalidPublisherTest(){
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+        Assert.assertEquals(406, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Team subscriptions are only possible on notification rules with EMAIL publisher.", body);
+    }
+
+    @Test
+    public void removeTeamFromRuleTest() {
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        List<Team> teams = new ArrayList<>();
+        teams.add(team);
+        rule.setTeams(teams);
+        qm.persist(rule);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void removeTeamFromRuleInvalidRuleTest() {
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        Response response = target(V1_NOTIFICATION_RULE + "/" + UUID.randomUUID().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The notification rule could not be found.", body);
+    }
+
+    @Test
+    public void removeTeamFromRuleInvalidTeamTest() {
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + UUID.randomUUID().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(404, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("The team could not be found.", body);
+    }
+
+    @Test
+    public void removeTeamFromRuleDuplicateTeamTest() {
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.EMAIL.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(304, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void removeTeamToRuleInvalidPublisherTest(){
+        Team team = qm.createTeam("Team Example", false);
+        NotificationPublisher publisher = qm.getNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherName());
+        NotificationRule rule = qm.createNotificationRule("Example Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Response response = target(V1_NOTIFICATION_RULE + "/" + rule.getUuid().toString() + "/team/" + team.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(406, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Team subscriptions are only possible on notification rules with EMAIL publisher.", body);
     }
 }

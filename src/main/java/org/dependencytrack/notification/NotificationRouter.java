@@ -27,6 +27,7 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
@@ -75,7 +76,13 @@ public class NotificationRouter implements Subscriber {
                                                                  .add(Publisher.CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
                                                                  .addAll(Json.createObjectBuilder(config))
                                                                          .build();
-                    publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                    if (publisherClass != SendMailPublisher.class || rule.getTeams().isEmpty() || rule.getTeams() == null){
+                        publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                    } else {
+                        ((SendMailPublisher)publisher).inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig, rule.getTeams());
+                    }
+
+
                 } else {
                     LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
                 }
@@ -145,7 +152,7 @@ public class NotificationRouter implements Subscriber {
             sb.append("enabled == true && scope == :scope"); //todo: improve this - this only works for testing
             query.setFilter(sb.toString());
             final List<NotificationRule> result = (List<NotificationRule>)query.execute(NotificationScope.valueOf(notification.getScope()));
-
+            pm.detachCopyAll(result);
 
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
                     && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerabilityIdentified) {

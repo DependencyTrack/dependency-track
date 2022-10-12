@@ -155,7 +155,7 @@ services:
     # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
     # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
     #
-    # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8
+    # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
 
     deploy:

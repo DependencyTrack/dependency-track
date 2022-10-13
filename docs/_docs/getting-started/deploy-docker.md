@@ -150,10 +150,14 @@ services:
     # - ALPINE_METRICS_ENABLED=true
     # - ALPINE_METRICS_AUTH_USERNAME=
     # - ALPINE_METRICS_AUTH_PASSWORD=
-    # 
+    #
     # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
     # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
     # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
+    #
+    # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
+    # - EXTRA_JAVA_OPTIONS=
+
     deploy:
       resources:
         limits:
@@ -166,7 +170,7 @@ services:
       - '8081:8080'
     volumes:
     # Optional volume mount to override default notification publisher templates
-    # - "/host/path/to/template/base/dir:/data/templates" 
+    # - "/host/path/to/template/base/dir:/data/templates"
       - 'dependency-track:/data'
     restart: unless-stopped
 

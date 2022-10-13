@@ -34,6 +34,8 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -41,6 +43,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Collection;
 
 /**
  * JAX-RS resources for processing policy violations.
@@ -68,7 +71,9 @@ public class PolicyViolationResource extends AlpineResource {
                                   @QueryParam("suppressed") boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getPolicyViolations(suppressed);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            return Response.ok(detachViolations(qm, result.getList(PolicyViolation.class)))
+                    .header(TOTAL_COUNT_HEADER, result.getTotal())
+                    .build();
         }
     }
 
@@ -95,7 +100,9 @@ public class PolicyViolationResource extends AlpineResource {
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final PaginatedResult result = qm.getPolicyViolations(project, suppressed);
-                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                    return Response.ok(detachViolations(qm, result.getList(PolicyViolation.class)))
+                            .header(TOTAL_COUNT_HEADER, result.getTotal())
+                            .build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }
@@ -128,7 +135,9 @@ public class PolicyViolationResource extends AlpineResource {
             if (component != null) {
                 if (qm.hasAccess(super.getPrincipal(), component.getProject())) {
                     final PaginatedResult result = qm.getPolicyViolations(component, suppressed);
-                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                    return Response.ok(detachViolations(qm, result.getList(PolicyViolation.class)))
+                            .header(TOTAL_COUNT_HEADER, result.getTotal())
+                            .build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();
                 }
@@ -137,4 +146,23 @@ public class PolicyViolationResource extends AlpineResource {
             }
         }
     }
+
+    /**
+     * Detach a given {@link Collection} of {@link PolicyViolation} suitable for use in API responses.
+     * <p>
+     * This ensures that responses include not only the violations themselves, but also the associated
+     * {@link org.dependencytrack.model.Policy}, which is required to tell the policy name and violation state.
+     *
+     * @param qm         The {@link QueryManager} to use
+     * @param violations The {@link PolicyViolation}s to detach
+     * @return A detached {@link Collection} of {@link PolicyViolation}s
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2043">GitHub issue</a>
+     */
+    private Collection<PolicyViolation> detachViolations(final QueryManager qm, final Collection<PolicyViolation> violations) {
+        final PersistenceManager pm = qm.getPersistenceManager();
+        pm.getFetchPlan().setMaxFetchDepth(2); // Ensure policy is included
+        pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
+        return qm.getPersistenceManager().detachCopyAll(violations);
+    }
+
 }

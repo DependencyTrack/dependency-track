@@ -46,6 +46,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+//import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -223,67 +224,6 @@ public class NotificationRouter implements Subscriber {
                     applicableRules.add(rule);
                 }
             }
-        }
-    }
-
-    /**
-     * trim list of affected projects in a notification to those the currently executed 
-     * rule is limited to (if any)
-     * */
-    private final Notification limitSubjectAffected(NotificationRule rule, Notification n) {
-        if (rule.getProjects().isEmpty()) {
-            return n;
-        }
-        Set<Project> allAffected;
-        if (n.getSubject() instanceof NewVulnerabilityIdentified) {
-            allAffected = ((NewVulnerabilityIdentified)n.getSubject()).getAffectedProjects();
-        } else if (n.getSubject() instanceof AnalysisDecisionChange) {
-            allAffected = ((AnalysisDecisionChange)n.getSubject()).getAffectedProjects();
-        } else {
-            // not a supported subject type
-            return n;
-        }
-
-        HashSet<Project> resultAffected = new HashSet<Project>();
-        for (Project p : allAffected) {
-            boolean found = false;
-            for (Project q : rule.getProjects()) {
-                if (p.getUuid().equals(q.getUuid())) {
-                    LOGGER.debug("project " + p.getUuid() + " will be included in notification"); //TODO: change back to debug
-                    resultAffected.add(p);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                LOGGER.debug("project " + p.getUuid() + " is skipped for notification"); //TODO: change back to debug
-            }
-        }
-        if (resultAffected.isEmpty()) {
-            // avoid empty project list in alerts
-            LOGGER.error("Could not apply notification rule " + rule.getId());
-            return n;
-        } else {
-             Notification notification = new Notification();
-             notification.setScope(n.getScope());
-             notification.setGroup(n.getGroup());
-             notification.setLevel(n.getLevel());
-             notification.setTitle(n.getTitle());
-             notification.setTimestamp(n.getTimestamp());
-             notification.setContent(n.getContent());
-
-             if (n.getSubject() instanceof NewVulnerabilityIdentified) {
-                 NewVulnerabilityIdentified oldSubject = (NewVulnerabilityIdentified)n.getSubject();
-                 NewVulnerabilityIdentified newSubject = new NewVulnerabilityIdentified(oldSubject.getVulnerability(), oldSubject.getComponent(), resultAffected);
-                 notification.setSubject(newSubject);
-             } else {
-                // has to be analysis decision change
-                AnalysisDecisionChange oldSubject = (AnalysisDecisionChange)n.getSubject();
-                AnalysisDecisionChange newSubject = new AnalysisDecisionChange(oldSubject.getVulnerability(), oldSubject.getComponent(), resultAffected, oldSubject.getAnalysis());
-                notification.setSubject(newSubject);
-             }
-
-             return notification;
         }
     }
 

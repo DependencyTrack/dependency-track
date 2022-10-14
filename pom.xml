@@ -31,7 +31,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.7.0-SNAPSHOT</version>
+    <version>4.7.0-ELASTIC-PANGOLIN-TESTING</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -430,7 +430,7 @@
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>3.1.0</version>
                         <executions>
-                            <execution>
+                            <!--execution>
                                 <id>frontend-download</id>
                                 <phase>prepare-package</phase>
                                 <configuration>
@@ -441,7 +441,7 @@
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
-                            </execution>
+                            </execution-->
                             <execution>
                                 <id>frontend-extract</id>
                                 <phase>prepare-package</phase>

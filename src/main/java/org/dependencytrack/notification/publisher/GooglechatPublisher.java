@@ -28,20 +28,23 @@ import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import javax.json.JsonObject;
 
 public class GooglechatPublisher extends AbstractWebhookPublisher implements Publisher {
+
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/googlechat.peb");
+
     final Logger logger = Logger.getLogger(this.getClass());
+
     public void inform(final Notification notification, final JsonObject config) {
         try {
-            //TEST
-            final String content = prepareTemplate(notification, TEMPLATE);
-            logger.info("GoogleChat-Template: " + content);
-            //TEST-END
             publish(DefaultNotificationPublishers.GOOGLECHAT.getPublisherName(), TEMPLATE, notification, config);
         } catch (Exception e) {
             logger.error("Googlechat notification could not be created");
             return;
         }
-        logger.info("Googlechat notification creation done");
+    }
+
+    @Override
+    public PebbleEngine getTemplateEngine() {
+        return ENGINE;
     }
 }

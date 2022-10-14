@@ -53,6 +53,7 @@ import org.dependencytrack.common.UnirestFactory;
 import kong.unirest.HttpResponse;
 
 public class JiraPublisher extends AbstractWebhookPublisher implements Publisher {
+
     private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
     private static final PebbleTemplate TEMPLATE = ENGINE.getTemplate("templates/notification/publisher/jira.peb");
     private String jiraUsername;
@@ -60,6 +61,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
     private String jiraProjectKey;
     private String jiraTicketType;
     final Logger logger = Logger.getLogger(this.getClass());
+
     public void inform(final Notification notification, final JsonObject config) {
         publish(DefaultNotificationPublishers.JIRA.getPublisherName(), TEMPLATE, notification, config);
     }
@@ -109,7 +111,9 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
 
             try (Writer writer = new StringWriter()) {
                 template.evaluate(writer, context);
-                return writer.toString();
+                //TEST-ELASTIC-PANGOLIN
+		Logger.getLogger(this.getClass()).info("JIRA-TEMPLATE: " + writer.toString());
+		return writer.toString();
             } catch (IOException e) {
                 Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);
                 return null;
@@ -141,7 +145,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
                 return;
             }
             jiraProjectKey = pathElements[pathElements.length-1];
-            jiraTicketType = config.getString("jira_tickettype");
+            jiraTicketType = config.getString("jiratickettype");
             final String content = prepareTemplate(notification, template);
             if (destination == null || content == null) {
                 logger.warn("A destination or template was not found. Skipping notification");
@@ -165,5 +169,10 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
         catch(Exception e) {
             logger.error("jira issue creation error: ", e);
         }
+    }
+
+    @Override
+    public PebbleEngine getTemplateEngine() {
+        return ENGINE;
     }
 }

@@ -192,8 +192,6 @@ public class NistMirrorTask implements LoggableSubscriber {
             String filename = url.getFile();
             filename = filename.substring(filename.lastIndexOf('/') + 1);
             file = new File(outputDir, filename).getAbsoluteFile();
-            String absoluteFile = outputDir + filename;
-            LOGGER.info("Check if exist " + absoluteFile);
             if (file.exists()) {
                 long modificationTime = 0;
                 File timestampFile = new File(outputDir, filename + ".ts");
@@ -230,21 +228,12 @@ public class NistMirrorTask implements LoggableSubscriber {
                     try (InputStream in = response.getEntity().getContent()) {
                         File temp = File.createTempFile(filename, null);
                         FileUtils.copyInputStreamToFile(in, temp);
-                        LOGGER.info("Copy " + temp.toPath() + " to " +  file.toPath());
                         Files.copy(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        Files.delete(temp.toPath());
                         if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                             // Sets the last modified date to 0. Upon a successful parse, it will be set back to its original date.
-                            LOGGER.info("SetModifiedDate...");
                             File timestampFile = new File(outputDir, filename + ".ts");
-                            // creates the file
-                            if (!file.exists())
-                            {
-                                file.createNewFile();
-                            }
-                            LOGGER.info("Write timestamp file...");
-                            FileWriter writer = new FileWriter(timestampFile);
-                            writer.write(Integer.toString(0));
-                            writer.close();
+                            writeTimeStampFile(timestampFile, 0);
                         }
                         if (file.getName().endsWith(".gz")) {
                             uncompress(file, resourceType);
@@ -309,12 +298,9 @@ public class NistMirrorTask implements LoggableSubscriber {
             if (ResourceType.CVE_YEAR_DATA == resourceType || ResourceType.CVE_MODIFIED_DATA == resourceType) {
                 final NvdParser parser = new NvdParser();
                 parser.parse(uncompressedFile);
-
+                // Update modification time
                 File timestampFile = new File( file.getAbsolutePath() + ".ts");
-                FileWriter writer = new FileWriter(timestampFile);
-                writer.write(Long.toString(start));
-                writer.close();
-
+                writeTimeStampFile(timestampFile, start);
             }
             final long end = System.currentTimeMillis();
             metricParseTime += end - start;
@@ -338,6 +324,26 @@ public class NistMirrorTask implements LoggableSubscriber {
             } catch (IOException e) {
                 LOGGER.warn("Error closing stream", e);
             }
+        }
+    }
+
+    /**
+     * Writes the modification time to a timestamp file
+     * @param file the file
+     * @param modificationTime the time of the last update
+     */
+    private void writeTimeStampFile(final File file, Long modificationTime)
+    {
+        FileWriter writer = null;
+        try {
+            writer= new FileWriter(file);
+            writer.write(Long.toString(modificationTime));
+        }
+        catch (IOException ex) {
+            LOGGER.error("An error occurred writing time stamp file", ex);
+        }
+        finally {
+            close(writer);
         }
     }
 }

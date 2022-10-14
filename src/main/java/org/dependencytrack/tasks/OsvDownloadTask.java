@@ -17,6 +17,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
@@ -140,15 +141,35 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
             final List<VulnerableSoftware> vsList = new ArrayList<>();
-            Vulnerability synchronizedVulnerability;
-            Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
-            Vulnerability existingVuln = findExistingClashingVulnerability(qm, vulnerability, advisory);
+            final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
+            Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);;
+            final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
 
-            if (existingVuln != null) {
-                synchronizedVulnerability = existingVuln;
-                vsList.addAll(existingVuln.getVulnerableSoftware());
-            } else {
-                synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            if (advisory.getAliases() != null) {
+                for (int i = 0; i < advisory.getAliases().size(); i++) {
+                    final String alias = advisory.getAliases().get(i);
+                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+
+                    // OSV will use IDs of other vulnerability databases for its
+                    // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
+                    // that we don't falsely report GHSA IDs as stemming from OSV.
+                    final Vulnerability.Source advisorySource = extractSource(advisory.getId());
+                    switch (advisorySource) {
+                        case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
+                        case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
+                        default -> vulnerabilityAlias.setOsvId(advisory.getId());
+                    }
+
+                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != advisorySource) {
+                        vulnerabilityAlias.setCveId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != advisorySource) {
+                        vulnerabilityAlias.setGhsaId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    }
+
+                    //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
+                }
             }
 
             for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
@@ -161,10 +182,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     }
                 }
             }
+            qm.persist(vsList);
+            if (existing != null) {
+                vsList.addAll(existing.getVulnerableSoftware());
+            }
             synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
             qm.persist(synchronizedVulnerability);
-            LOGGER.debug("Updating vulnerable software for OSV advisory: " + advisory.getId());
-            qm.persist(vsList);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
@@ -291,29 +314,6 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);
         return vs;
-    }
-
-    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OsvAdvisory advisory) {
-
-        Vulnerability existing = null;
-        if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {
-            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
-        } else if (advisory.getAliases() != null) {
-            for(String alias : advisory.getAliases()) {
-                String sourceOfAlias = extractSource(alias).toString();
-                if(isVulnerabilitySourceClashingWithGithubOrNvd(sourceOfAlias)) {
-                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias);
-                    if (existing != null) break;
-                }
-            }
-        }
-        return existing;
-    }
-
-    private boolean isVulnerabilitySourceClashingWithGithubOrNvd(String source) {
-
-        return Vulnerability.Source.GITHUB.toString().equals(source)
-                || Vulnerability.Source.NVD.toString().equals(source);
     }
 
     public List<String> getEcosystems() {

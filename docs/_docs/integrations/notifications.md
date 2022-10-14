@@ -104,6 +104,12 @@ This type of notification will always contain:
         "uuid": "941a93f5-e06b-4304-84de-4d788eeb4969",
         "vulnId": "CVE-2012-5784",
         "source": "NVD",
+        "aliases": [
+          {
+            "vulnId": "GHSA-55w9-c3g2-4rrh",
+            "source": "GITHUB"
+          }
+        ],
         "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
         "cvssv2": 5.8,
         "severity": "MEDIUM",
@@ -168,6 +174,12 @@ This type of notification will always contain:
           "uuid": "941a93f5-e06b-4304-84de-4d788eeb4969",
           "vulnId": "CVE-2012-5784",
           "source": "NVD",
+          "aliases": [
+            {
+              "vulnId": "GHSA-55w9-c3g2-4rrh",
+              "source": "GITHUB"
+            }
+          ],
           "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
           "cvssv2": 5.8,
           "severity": "MEDIUM",
@@ -186,6 +198,7 @@ This type of notification will always contain:
           "uuid": "ca318ca7-616f-4af0-9c6b-15b8e208c586",
           "vulnId": "CVE-2014-3596",
           "source": "NVD",
+          "aliases": [],
           "description": "The getCN function in Apache Axis 1.4 and earlier does not properly verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via a certificate with a subject that specifies a common name in a field that is not the CN field.  NOTE: this issue exists because of an incomplete fix for CVE-2012-5784.\n\n<a href=\"http://cwe.mitre.org/data/definitions/297.html\" target=\"_blank\">CWE-297: Improper Validation of Certificate with Host Mismatch</a>",
           "cvssv2": 5.8,
           "severity": "MEDIUM"
@@ -230,6 +243,12 @@ Audit change notifications are fired whenever the analysis state changes or when
         "uuid": "941a93f5-e06b-4304-84de-4d788eeb4969",
         "vulnId": "CVE-2012-5784",
         "source": "NVD",
+        "aliases": [
+          {
+            "vulnId": "GHSA-55w9-c3g2-4rrh",
+            "source": "GITHUB"
+          }
+        ],
         "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
         "cvssv2": 5.8,
         "severity": "MEDIUM"

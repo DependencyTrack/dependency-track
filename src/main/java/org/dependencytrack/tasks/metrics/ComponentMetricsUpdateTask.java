@@ -33,13 +33,16 @@ import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.lang.Math.toIntExact;
@@ -76,7 +79,22 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                 throw new NoSuchElementException("Component " + uuid + " does not exist");
             }
 
+            final Set<String> aliasesSeen = new HashSet<>();
             for (final Vulnerability vulnerability : getVulnerabilities(pm, component)) {
+                // Quick pre-flight check whether we already encountered an alias of this particular vulnerability
+                final String alias = vulnerability.getSource() + "|" + vulnerability.getVulnId();
+                if (aliasesSeen.contains(alias)) {
+                    LOGGER.debug("An alias of " + alias + " has already been processed; Skipping");
+                    continue;
+                }
+
+                // Fetch all aliases for this vulnerability and consider all of them as "seen"
+                qm.getVulnerabilityAliases(vulnerability).stream()
+                        .map(VulnerabilityAlias::getAllBySource)
+                        .flatMap(vulnIdsBySource -> vulnIdsBySource.entrySet().stream())
+                        .map(vulnIdBySource -> vulnIdBySource.getKey() + "|" + vulnIdBySource.getValue())
+                        .forEach(aliasesSeen::add);
+
                 counters.vulnerabilities++;
 
                 switch (vulnerability.getSeverity()) {

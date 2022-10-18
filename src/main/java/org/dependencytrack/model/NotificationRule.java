@@ -85,6 +85,10 @@ public class NotificationRule implements Serializable {
     @Column(name = "ENABLED")
     private boolean enabled;
 
+    @Persistent
+    @Column(name = "NOTIFY_CHILDREN", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private boolean notifyChildren;
+
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "SCOPE", jdbcType = "VARCHAR", allowsNull = "false")
     @NotNull
@@ -155,6 +159,14 @@ public class NotificationRule implements Serializable {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isNotifyChildren() {
+        return notifyChildren;
+    }
+
+    public void setNotifyChildren(boolean notifyChildren) {
+        this.notifyChildren = notifyChildren;
     }
 
     @NotNull

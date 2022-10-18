@@ -28,6 +28,7 @@ import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
@@ -47,6 +48,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private static final Logger LOGGER = Logger.getLogger(VulnDbAnalysisTask.class);
     private static final String TARGET_HOST = "https://vulndb.cyberriskanalytics.com/";
     private static final int PAGE_SIZE = 100;
+    private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
     private String apiConsumerKey;
     private String apiConsumerSecret;
 
@@ -88,6 +90,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 }
             }
             final VulnDbAnalysisEvent event = (VulnDbAnalysisEvent)e;
+            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting VulnDB analysis task");
             if (event.getComponents().size() > 0) {
                 analyze(event.getComponents());
@@ -142,7 +145,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 } else {
                     vulnerability = qm.synchronizeVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 }
-                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, vulnerableComponent);
+                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, vulnerableComponent, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(vulnerableComponent, vulnerability);
             }

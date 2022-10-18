@@ -17,6 +17,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
@@ -44,6 +45,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
@@ -51,9 +53,9 @@ import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 public class OsvDownloadTask implements LoggableSubscriber {
 
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-    private static final String OSV_BASE_URL = "https://osv-vulnerabilities.storage.googleapis.com/";
     private String ecosystemConfig;
     private List<String> ecosystems;
+    private String osvBaseUrl;
 
     public List<String> getEnabledEcosystems() {
         return this.ecosystems;
@@ -66,6 +68,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 this.ecosystemConfig = enabled.getPropertyValue();
                 if (this.ecosystemConfig != null) {
                     ecosystems = Arrays.stream(this.ecosystemConfig.split(";")).map(String::trim).toList();
+                }
+                this.osvBaseUrl = qm.getConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(), VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName()).getPropertyValue();
+                if (this.osvBaseUrl != null && !this.osvBaseUrl.endsWith("/")) {
+                    this.osvBaseUrl += "/";
                 }
             }
         }
@@ -80,7 +86,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 for (String ecosystem : this.ecosystems) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
                     try {
-                        String url = OSV_BASE_URL + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
+                        String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
                                 + "/all.zip";
                         HttpUriRequest request = new HttpGet(url);
                         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
@@ -135,15 +141,35 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
             final List<VulnerableSoftware> vsList = new ArrayList<>();
-            Vulnerability synchronizedVulnerability;
-            Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
-            Vulnerability existingVuln = findExistingClashingVulnerability(qm, vulnerability, advisory);
+            final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
+            Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);;
+            final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
 
-            if (existingVuln != null) {
-                synchronizedVulnerability = existingVuln;
-                vsList.addAll(existingVuln.getVulnerableSoftware());
-            } else {
-                synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            if (advisory.getAliases() != null) {
+                for (int i = 0; i < advisory.getAliases().size(); i++) {
+                    final String alias = advisory.getAliases().get(i);
+                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+
+                    // OSV will use IDs of other vulnerability databases for its
+                    // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
+                    // that we don't falsely report GHSA IDs as stemming from OSV.
+                    final Vulnerability.Source advisorySource = extractSource(advisory.getId());
+                    switch (advisorySource) {
+                        case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
+                        case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
+                        default -> vulnerabilityAlias.setOsvId(advisory.getId());
+                    }
+
+                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != advisorySource) {
+                        vulnerabilityAlias.setCveId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != advisorySource) {
+                        vulnerabilityAlias.setGhsaId(alias);
+                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    }
+
+                    //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
+                }
             }
 
             for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
@@ -156,10 +182,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     }
                 }
             }
+            qm.persist(vsList);
+            if (existing != null) {
+                vsList.addAll(existing.getVulnerableSoftware());
+            }
             synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
             qm.persist(synchronizedVulnerability);
-            LOGGER.debug("Updating vulnerable software for OSV advisory: " + advisory.getId());
-            qm.persist(vsList);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
     }
@@ -288,32 +316,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
         return vs;
     }
 
-    public Vulnerability findExistingClashingVulnerability(QueryManager qm, Vulnerability vulnerability, OsvAdvisory advisory) {
-
-        Vulnerability existing = null;
-        if (isVulnerabilitySourceClashingWithGithubOrNvd(vulnerability.getSource())) {
-            existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
-        } else if (advisory.getAliases() != null) {
-            for(String alias : advisory.getAliases()) {
-                String sourceOfAlias = extractSource(alias).toString();
-                if(isVulnerabilitySourceClashingWithGithubOrNvd(sourceOfAlias)) {
-                    existing = qm.getVulnerabilityByVulnId(sourceOfAlias, alias);
-                    if (existing != null) break;
-                }
-            }
-        }
-        return existing;
-    }
-
-    private boolean isVulnerabilitySourceClashingWithGithubOrNvd(String source) {
-
-        return Vulnerability.Source.GITHUB.toString().equals(source)
-                || Vulnerability.Source.NVD.toString().equals(source);
-    }
-
-    public static List<String> getEcosystems() {
+    public List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
-        String url = OSV_BASE_URL + "ecosystems.txt";
+        String url = this.osvBaseUrl + "ecosystems.txt";
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();

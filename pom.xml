@@ -24,14 +24,14 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>2.0.1-SNAPSHOT</version>
+        <version>2.1.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -81,7 +81,7 @@
 
     <properties>
         <!-- Dependency Versions -->
-        <frontend.version>4.5.0</frontend.version>
+        <frontend.version>4.6.0</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
@@ -89,19 +89,19 @@
         <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
-        <lib.pebble.version>3.1.5</lib.pebble.version>
+        <lib.pebble.version>3.1.6</lib.pebble.version>
         <lib.unirest.version>3.13.11</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.1.jre11</lib.jdbc-driver.mssql.version>
-        <lib.jdbc-driver.mysql.version>8.0.30</lib.jdbc-driver.mysql.version>
+        <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
+        <lib.jdbc-driver.mysql.version>8.0.29</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.5.0</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
-
     </properties>
 
     <repositories>
@@ -172,7 +172,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20220320</version>
+            <version>20220924</version>
         </dependency>
         <!-- Package URL -->
         <dependency>
@@ -358,7 +358,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>10.0.11</version>
+                <version>10.0.12</version>
                 <configuration>
                     <webApp>
                         <contextPath>/</contextPath>

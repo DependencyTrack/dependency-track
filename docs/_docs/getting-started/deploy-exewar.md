@@ -11,7 +11,7 @@ configured, executable WARs fast-track this process by bundling a Servlet contai
 execute the bundled application.
 
 The Dependency-Track executable WAR is delivered ready-to-run. To use the executable WAR, the only requirement 
-is to have Java 8u162 (or higher) installed.
+is to have Java 17 (or higher) installed.
 
 > **Deprecation Notice**
 >
@@ -26,13 +26,13 @@ Refer to [distributions](../distributions/) for details.
 
 ### Requirements
 
-| Minimum | Recommended |
-|:---------|:--------|
-| Java 8 u162 (or higher) | Java 8 u162 or higher |
-| 4GB RAM | 16GB RAM |
-| 2 CPU cores | 4 CPU cores |
+| Minimum             | Recommended         |
+|:--------------------|:--------------------|
+| Java 17 (or higher) | Java 17 (or higher) |
+| 4GB RAM             | 16GB RAM            |
+| 2 CPU cores         | 4 CPU cores         |
 
-If minimum requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 8 
+If minimum requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 17 
 already installed, this method of execution may provide the fastest deployment path.
 
 ### Startup
@@ -46,11 +46,11 @@ java -Xmx8G -jar dependency-track-bundled.war
 
 The following command-line arguments can be passed to a compiled executable WAR when executing it:
 
-| Argument | Default | Description |
-|:---------|:--------|:------------|
+| Argument | Default | Description                          |
+|:---------|:--------|:-------------------------------------|
 | -context | /       | The application context to deploy to |
-| -host    | 0.0.0.0 | The IP address to bind to |
-| -port    | 8080    | The TCP port to listens on |
+| -host    | 0.0.0.0 | The IP address to bind to            |
+| -port    | 8080    | The TCP port to listens on           |
 
 
 **Note:** Setting the context is only supported on the API Server variant. The Frontend requires deployment to the root ('/') context.

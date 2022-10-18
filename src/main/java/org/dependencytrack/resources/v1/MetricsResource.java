@@ -29,7 +29,9 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.time.DateUtils;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.MetricsUpdateEvent;
+import org.dependencytrack.event.ComponentMetricsUpdateEvent;
+import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
+import org.dependencytrack.event.ProjectMetricsUpdateEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
@@ -157,7 +159,7 @@ public class MetricsResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response RefreshPortfolioMetrics() {
-        Event.dispatch(new MetricsUpdateEvent(MetricsUpdateEvent.Type.PORTFOLIO));
+        Event.dispatch(new PortfolioMetricsUpdateEvent());
         return Response.ok().build();
     }
 
@@ -260,7 +262,7 @@ public class MetricsResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    Event.dispatch(new MetricsUpdateEvent(project));
+                    Event.dispatch(new ProjectMetricsUpdateEvent(project.getUuid()));
                     return Response.ok().build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
@@ -373,7 +375,7 @@ public class MetricsResource extends AlpineResource {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 if (qm.hasAccess(super.getPrincipal(), component.getProject())) {
-                    Event.dispatch(new MetricsUpdateEvent(component));
+                    Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                     return Response.ok().build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();

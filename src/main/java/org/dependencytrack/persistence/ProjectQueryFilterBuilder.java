@@ -78,9 +78,9 @@ class ProjectQueryFilterBuilder {
     }
 
     ProjectQueryFilterBuilder withParent(UUID uuid){
-        params.put("uuid", uuid);
+        params.put("parentUuid", uuid);
 
-        filterCriteria.add("parent.uuid == :uuid");
+        filterCriteria.add("parent.uuid == :parentUuid");
         return this;
     }
 

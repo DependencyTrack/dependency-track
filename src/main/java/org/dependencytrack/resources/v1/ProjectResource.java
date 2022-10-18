@@ -112,8 +112,7 @@ public class ProjectResource extends AlpineResource {
             @ApiParam(value = "The UUID of the project to retrieve", required = true)
             @PathParam("uuid") String uuid) {
         try (QueryManager qm = new QueryManager()) {
-            qm.getPersistenceManager().getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     return Response.ok(project).build();
@@ -255,7 +254,7 @@ public class ProjectResource extends AlpineResource {
                 try {
                     project = qm.createProject(jsonProject, jsonProject.getTags(), true);
                 } catch (IllegalArgumentException e){
-                    LOGGER.error(e.getMessage());
+                    LOGGER.debug(e.getMessage());
                     return Response.status(Response.Status.CONFLICT).entity("An inactive Parent cannot be selected as parent").build();
                 }
                 Principal principal = getPrincipal();
@@ -312,7 +311,7 @@ public class ProjectResource extends AlpineResource {
                     try {
                         project = qm.updateProject(jsonProject, true);
                     } catch (IllegalArgumentException e){
-                        LOGGER.error(e.getMessage());
+                        LOGGER.debug(e.getMessage());
                         return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
                     }
                     LOGGER.info("Project " + project.toString() + " updated by " + super.getPrincipal().getName());
@@ -386,7 +385,7 @@ public class ProjectResource extends AlpineResource {
                     try {
                         project = qm.updateProject(project, true);
                     } catch (IllegalArgumentException e){
-                        LOGGER.error(e.getMessage());
+                        LOGGER.debug(e.getMessage());
                         return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
                     }
                     return Response.ok(project).build();
@@ -532,6 +531,7 @@ public class ProjectResource extends AlpineResource {
             responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of projects")
     )
     @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -540,8 +540,12 @@ public class ProjectResource extends AlpineResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final PaginatedResult result = qm.getProjectsWithoutDescendantsOf(project);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                    final PaginatedResult result = qm.getProjectsWithoutDescendantsOf(project);
+                    return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+                } else{
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
             }

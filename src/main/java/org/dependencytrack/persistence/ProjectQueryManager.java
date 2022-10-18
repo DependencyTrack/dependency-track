@@ -90,7 +90,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeProjectsThatAreChildren();
-            pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
         if (filter != null) {
@@ -176,7 +176,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeProjectsThatAreChildren();
-            pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
         final String queryFilter = filterBuilder.buildFilter();
@@ -225,7 +225,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeProjectsThatAreChildren();
-            pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
         final String queryFilter = filterBuilder.buildFilter();
@@ -253,7 +253,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeProjectsThatAreChildren();
-            pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
         if (filter != null) {
@@ -294,7 +294,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (onlyRoot){
             filterBuilder.excludeProjectsThatAreChildren();
-            pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+            query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
         final String queryFilter = filterBuilder.buildFilter();
@@ -905,7 +905,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, false);
-        pm.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related

@@ -86,6 +86,11 @@ import java.util.UUID;
                 @Persistent(name = "properties"),
                 @Persistent(name = "tags"),
                 @Persistent(name = "accessTeams")
+        }),
+        @FetchGroup(name = "METRICS_UPDATE", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -97,7 +102,8 @@ public class Project implements Serializable {
      * Defines JDO fetch groups for this class.
      */
     public enum FetchGroup {
-        ALL
+        ALL,
+        METRICS_UPDATE
     }
 
     @PrimaryKey

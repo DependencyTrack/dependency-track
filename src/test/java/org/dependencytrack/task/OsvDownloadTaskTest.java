@@ -15,6 +15,7 @@
  */
 package org.dependencytrack.task;
 
+import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,7 @@ import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
 import org.dependencytrack.tasks.OsvDownloadTask;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,10 +39,30 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
     private final OsvAdvisoryParser parser = new OsvAdvisoryParser();
-    private final OsvDownloadTask task = new OsvDownloadTask();
+    private OsvDownloadTask task;
+
+    @Before
+    public void setUp() {
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED.getPropertyName(),
+                "Maven;DWF",
+                IConfigProperty.PropertyType.STRING,
+                "List of ecosystems");
+        qm.createConfigProperty(VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getGroupName(),
+                VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL.getPropertyName(),
+                "https://osv-vulnerabilities.storage.googleapis.com/",
+                IConfigProperty.PropertyType.URL,
+                "OSV Base URL");
+        task = new OsvDownloadTask();
+        Assert.assertNotNull(task.getEnabledEcosystems());
+        Assert.assertEquals(2, task.getEnabledEcosystems().size());
+    }
 
     @Test
     public void testParseOSVJsonToAdvisoryAndSave() throws Exception {
@@ -89,7 +111,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
         Assert.assertEquals(4, vulnerableSoftware.size());
 
-        // incoming vulnerability from osv when vulnerability already exists from github
+        // incoming vulnerability when vulnerability with same ID already exists
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
         advisory = parser.parse(jsonObject);
         Assert.assertNotNull(advisory);
@@ -183,33 +205,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testFindExistingClashingVulnerability() throws IOException {
-
-        // insert a vulnerability in database
-        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-77rv-6vfw-x4gc.json");
-        OsvAdvisory advisory = parser.parse(jsonObject);
-        task.updateDatasource(advisory);
-
-        // tests for incoming vulnerabilities if it or its alias already exists
-        prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");
-        advisory = parser.parse(jsonObject);
-        Vulnerability vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
-        Vulnerability existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
-        Assert.assertNotNull(existingVuln);
-
-        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-vulnerability-no-range.json");
-        advisory = parser.parse(jsonObject);
-        vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
-        existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
-        Assert.assertNull(existingVuln);
-
-        advisory.addAlias("GHSA-77rv-6vfw-x4gc");
-        vulnerabilityIncoming = task.mapAdvisoryToVulnerability(qm, advisory);
-        existingVuln = task.findExistingClashingVulnerability(qm, vulnerabilityIncoming, advisory);
-        Assert.assertNotNull(existingVuln);
-    }
-
-    @Test
     public void testCommitHashRangesAndVersions() throws IOException {
 
         // insert a vulnerability in database
@@ -221,6 +216,14 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         Assert.assertNotNull(vulnerability);
         Assert.assertEquals(22, vulnerability.getVulnerableSoftware().size());
         Assert.assertEquals(Severity.MEDIUM, vulnerability.getSeverity());
+    }
+
+    @Test
+    public void testGetEcosystems() {
+
+        List<String> ecosystems = task.getEcosystems();
+        Assert.assertNotNull(ecosystems);
+        Assert.assertTrue(ecosystems.contains("Maven"));
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

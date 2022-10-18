@@ -67,6 +67,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
@@ -74,6 +75,8 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+import javax.jdo.Transaction;
 import javax.json.JsonObject;
 import java.security.Principal;
 import java.util.Date;
@@ -897,6 +900,14 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getProjects(vulnerability);
     }
 
+    public VulnerabilityAlias synchronizeVulnerabilityAlias(VulnerabilityAlias alias) {
+        return getVulnerabilityQueryManager().synchronizeVulnerabilityAlias(alias);
+    }
+
+    public List<VulnerabilityAlias> getVulnerabilityAliases(Vulnerability vulnerability) {
+        return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnerability);
+    }
+
     List<Analysis> getAnalyses(Project project) {
         return getFindingsQueryManager().getAnalyses(project);
     }
@@ -1061,6 +1072,10 @@ public class QueryManager extends AlpineQueryManager {
         getNotificationQueryManager().removeProjectFromNotificationRules(project);
     }
 
+    public void removeTeamFromNotificationRules(final Team team) {
+        getNotificationQueryManager().removeTeamFromNotificationRules(team);
+    }
+
     /**
      * Determines if a config property is enabled or not.
      * @param configPropertyConstants the property to query
@@ -1121,6 +1136,53 @@ public class QueryManager extends AlpineQueryManager {
 
     public PaginatedResult getTags(String policyUuid) {
         return getTagQueryManager().getTags(policyUuid);
+    }
+
+    /**
+     * Fetch an object from the datastore by its {@link UUID}, using the provided fetch groups.
+     * <p>
+     * {@code fetchGroups} will override any other fetch groups set on the {@link PersistenceManager},
+     * even the default one. If inclusion of the default fetch group is desired, it must be
+     * included in {@code fetchGroups} explicitly.
+     * <p>
+     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
+     *
+     * @param clazz Class of the object to fetch
+     * @param uuid {@link UUID} of the object to fetch
+     * @param fetchGroups Fetch groups to use for this operation
+     * @return The object if found, otherwise {@code null}
+     * @param <T> Type of the object
+     * @throws Exception When closing the query failed
+     * @since 4.6.0
+     */
+    public <T> T getObjectByUuid(final Class<T> clazz, final UUID uuid, final List<String> fetchGroups) throws Exception {
+        try (final Query<T> query = pm.newQuery(clazz)) {
+            query.setFilter("uuid == :uuid");
+            query.setParameters(uuid);
+            query.getFetchPlan().setGroups(fetchGroups);
+            return query.executeUnique();
+        }
+    }
+
+    /**
+     * Convenience method to execute a given {@link Runnable} within the context of a {@link Transaction}.
+     * <p>
+     * Eventually, this may be moved to {@link alpine.persistence.AbstractAlpineQueryManager}.
+     *
+     * @param runnable The {@link Runnable} to execute
+     * @since 4.6.0
+     */
+    public void runInTransaction(final Runnable runnable) {
+        final Transaction trx = pm.currentTransaction();
+        try {
+            trx.begin();
+            runnable.run();
+            trx.commit();
+        } finally {
+            if (trx.isActive()) {
+                trx.rollback();
+            }
+        }
     }
 
 }

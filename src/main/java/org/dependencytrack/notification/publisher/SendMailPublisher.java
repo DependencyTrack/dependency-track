@@ -21,6 +21,10 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
+import alpine.model.Team;
+import alpine.model.ManagedUser;
+import alpine.model.LdapUser;
+import alpine.model.OidcUser;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.mail.SendMail;
@@ -33,8 +37,13 @@ import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
 
@@ -49,6 +58,19 @@ public class SendMailPublisher implements Publisher {
             return;
         }
         final String[] destinations = parseDestination(config);
+        sendNotification(notification, config, destinations);
+    }
+
+    public void inform(final Notification notification, final JsonObject config, List<Team> teams) {
+        if (config == null) {
+            LOGGER.warn("No configuration found. Skipping notification.");
+            return;
+        }
+        final String[] destinations = parseDestination(config, teams);
+        sendNotification(notification, config, destinations);
+    }
+
+    private void sendNotification(Notification notification, JsonObject config, String[] destinations) {
         PebbleTemplate template = getTemplate(config);
         String mimeType = getTemplateMimeType(config);
         final String content = prepareTemplate(notification, template);
@@ -104,4 +126,19 @@ public class SendMailPublisher implements Publisher {
         return destinationString.split(",");
     }
 
+    static String[] parseDestination(final JsonObject config, final List<Team> teams) {
+        String[] destination = teams.stream().flatMap(
+                team -> Stream.of(
+                                Arrays.stream(config.getString("destination").split(",")).filter(Predicate.not(String::isEmpty)),
+                                Optional.ofNullable(team.getManagedUsers()).orElseGet(Collections::emptyList).stream().map(ManagedUser::getEmail).filter(Objects::nonNull),
+                                Optional.ofNullable(team.getLdapUsers()).orElseGet(Collections::emptyList).stream().map(LdapUser::getEmail).filter(Objects::nonNull),
+                                Optional.ofNullable(team.getOidcUsers()).orElseGet(Collections::emptyList).stream().map(OidcUser::getEmail).filter(Objects::nonNull)
+                        )
+                        .reduce(Stream::concat)
+                        .orElseGet(Stream::empty)
+                )
+                .distinct()
+                .toArray(String[]::new);
+        return destination.length == 0 ? null : destination;
+    }
 }

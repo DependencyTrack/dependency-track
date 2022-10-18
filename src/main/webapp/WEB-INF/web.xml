@@ -39,10 +39,10 @@
         <listener-class>alpine.server.persistence.PersistenceManagerFactory</listener-class>
     </listener>
     <listener>
-        <listener-class>org.dependencytrack.event.EventSubsystemInitializer</listener-class>
+        <listener-class>org.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
     </listener>
     <listener>
-        <listener-class>org.dependencytrack.persistence.DefaultObjectGenerator</listener-class>
+        <listener-class>org.dependencytrack.event.EventSubsystemInitializer</listener-class>
     </listener>
     <listener>
         <listener-class>org.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>

@@ -22,7 +22,21 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.ViolationAnalysis;
+import org.dependencytrack.model.ViolationAnalysisState;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -45,7 +59,6 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -63,7 +76,7 @@ public final class NotificationUtil {
      */
     private NotificationUtil() { }
 
-    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component) {
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         if (!qm.contains(vulnerability, component)) {
             // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
             // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
@@ -77,46 +90,42 @@ public final class NotificationUtil {
             }
 
             final Vulnerability detachedVuln =  qm.detach(Vulnerability.class, vulnerability.getId());
+            detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(vulnerability))); // Aliases are lost during detach above
             final Component detachedComponent = qm.detach(Component.class, component.getId());
 
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABILITY)
-                    .title(NotificationConstants.Title.NEW_VULNERABILITY)
+                    .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
-                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values())))
+                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
             );
         }
     }
-/*
-    public static void analyzeNotificationCriteria(final QueryManager qm, final Dependency newDependency) {
-        Dependency dependency = qm.getDependency(newDependency);
-        final List<Vulnerability> vulnerabilities = qm.detach(qm.getAllVulnerabilities(dependency));
-        dependency = qm.detach(Dependency.class, dependency.getId());
-        for (final Vulnerability vulnerability: vulnerabilities) {
-            final Set<Project> affectedProjects = new HashSet<>(Collections.singletonList(dependency.getProject()));
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(NotificationGroup.NEW_VULNERABILITY)
-                    .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
-                    .level(NotificationLevel.INFORMATIONAL)
-                    .content(generateNotificationContent(vulnerability))
-                    .subject(new NewVulnerabilityIdentified(vulnerability, dependency.getComponent(), affectedProjects))
-            );
-        }
-        if (CollectionUtils.isNotEmpty(vulnerabilities)) {
+
+    public static void analyzeNotificationCriteria(final QueryManager qm, Component component) {
+        List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component, false);
+        if (vulnerabilities != null && !vulnerabilities.isEmpty()) {
+            component = qm.detach(Component.class, component.getId());
+            vulnerabilities = qm.detach(vulnerabilities);
+            for (final Vulnerability vulnerability : vulnerabilities) {
+                // Because aliases is a transient field, it's lost when detaching the vulnerability.
+                // Repopulating here as a workaround, ultimately we need a better way to handle them.
+                vulnerability.setAliases(qm.detach(qm.getVulnerabilityAliases(vulnerability)));
+            }
+
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABLE_DEPENDENCY)
-                    .title(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY)
+                    .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABLE_DEPENDENCY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
-                    .content(generateNotificationContent(dependency, vulnerabilities))
-                    .subject(new NewVulnerableDependency(dependency, vulnerabilities))
+                    .content(generateNotificationContent(component, vulnerabilities))
+                    .subject(new NewVulnerableDependency(component, vulnerabilities))
             );
         }
     }
-*/
+
     public static void analyzeNotificationCriteria(final QueryManager qm, Analysis analysis,
                                                    final boolean analysisStateChange, final boolean suppressionChange) {
         if (analysisStateChange || suppressionChange) {
@@ -156,10 +165,14 @@ public final class NotificationUtil {
             }
 
             analysis = qm.detach(Analysis.class, analysis.getId());
+
+            // Aliases are lost during the detach above
+            analysis.getVulnerability().setAliases(qm.detach(qm.getVulnerabilityAliases(analysis.getVulnerability())));
+
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
-                    .title(title)
+                    .title(generateNotificationTitle(title, analysis.getComponent().getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(analysis))
                     .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
@@ -198,7 +211,7 @@ public final class NotificationUtil {
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
-                    .title(title)
+                    .title(generateNotificationTitle(title, violationAnalysis.getComponent().getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(violationAnalysis))
                     .subject(new ViolationAnalysisDecisionChange(violationAnalysis.getPolicyViolation(),
@@ -217,7 +230,7 @@ public final class NotificationUtil {
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.PORTFOLIO)
                 .group(NotificationGroup.POLICY_VIOLATION)
-                .title(NotificationConstants.Title.POLICY_VIOLATION)
+                .title(generateNotificationTitle(NotificationConstants.Title.POLICY_VIOLATION,policyViolation.getComponent().getProject()))
                 .level(NotificationLevel.INFORMATIONAL)
                 .content(generateNotificationContent(pv))
                 .subject(new PolicyViolationIdentified(pv, pv.getComponent(), pv.getProject()))
@@ -268,6 +281,16 @@ public final class NotificationUtil {
         vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
         JsonUtil.add(vulnerabilityBuilder, "vulnId", vulnerability.getVulnId());
         JsonUtil.add(vulnerabilityBuilder, "source", vulnerability.getSource());
+        final JsonArrayBuilder aliasesBuilder = Json.createArrayBuilder();
+        if (vulnerability.getAliases() != null) {
+            for (final Map.Entry<Vulnerability.Source, String> vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
+                aliasesBuilder.add(Json.createObjectBuilder()
+                        .add("source", vulnIdBySource.getKey().name())
+                        .add("vulnId", vulnIdBySource.getValue())
+                        .build());
+            }
+        }
+        vulnerabilityBuilder.add("aliases", aliasesBuilder.build());
         JsonUtil.add(vulnerabilityBuilder, "title", vulnerability.getTitle());
         JsonUtil.add(vulnerabilityBuilder, "subtitle", vulnerability.getSubTitle());
         JsonUtil.add(vulnerabilityBuilder, "description", vulnerability.getDescription());
@@ -313,6 +336,9 @@ public final class NotificationUtil {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
+        }
+        if (vo.getVulnerabilityAnalysisLevel() != null) {
+            builder.add("vulnerabilityAnalysisLevel", vo.getVulnerabilityAnalysisLevel().toString());
         }
         if (vo.getVulnerability() != null) {
             builder.add("vulnerability", toJson(vo.getVulnerability()));
@@ -506,5 +532,12 @@ public final class NotificationUtil {
 
     private static String generateNotificationContent(final ViolationAnalysis violationAnalysis) {
         return "An violation analysis decision was made to a policy violation affecting a project";
+    }
+
+    public static String generateNotificationTitle(String messageType, Project project) {
+        if (project != null) {
+            return messageType + " on Project: [" + project.toString() + "]";
+        }
+        return messageType;
     }
 }

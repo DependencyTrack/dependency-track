@@ -5,7 +5,7 @@ chapter: 1
 order: 5
 ---
 
-### Backend
+### API server
 
 The central configuration file `application.properties` resides in the classpath of the WAR by default. 
 This configuration file controls many performance tuning parameters but is most useful for defining
@@ -291,10 +291,17 @@ alpine.ldap.team.synchronization=false
 # Optional
 # Defines whether Prometheus metrics will be exposed.
 # If enabled, metrics will be available via the /metrics endpoint.
-# This endpoint is NOT subject to access control. If protection is desired,
-# it must be enforced in the reverse proxy using basic auth.
-# See also: https://prometheus.io/docs/guides/basic-auth/
 alpine.metrics.enabled=false
+
+# Optional
+# Defines the username required to access metrics.
+# Has no effect when alpine.metrics.auth.password is not set.
+alpine.metrics.auth.username=
+
+# Optional
+# Defines the password required to access metrics.
+# Has no effect when alpine.metrics.auth.username is not set.
+alpine.metrics.auth.password=
 
 # Required
 # Defines if OpenID Connect will be used for user authentication.
@@ -389,7 +396,7 @@ This file resides in `<BASE_URL>/static/config.json`.
     "API_BASE_URL": "",
     // Optional
     // Defines the issuer URL to be used for OpenID Connect.
-    // See alpine.oidc.issuer property of the backend.
+    // See alpine.oidc.issuer property of the API server.
     "OIDC_ISSUER": "",
     // Optional
     // Defines the client ID for OpenID Connect.

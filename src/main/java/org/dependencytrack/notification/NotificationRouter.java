@@ -168,7 +168,7 @@ public class NotificationRouter implements Subscriber {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0
                             && subject.getComponent() != null && subject.getComponent().getProject() != null) {
                             for (final Project project : rule.getProjects()) {
-                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid())) {
+                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren() && checkIfChildrenAreAffected(project, subject.getComponent().getProject().getUuid())))) {
                                     rules.add(rule);
                                 }
                             }
@@ -215,7 +215,7 @@ public class NotificationRouter implements Subscriber {
             if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                 if (rule.getProjects() != null && rule.getProjects().size() > 0) {
                     for (final Project project : rule.getProjects()) {
-                        if (project.getUuid().equals(limitToProject.getUuid())) {
+                        if (project.getUuid().equals(limitToProject.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren()) && checkIfChildrenAreAffected(project, limitToProject.getUuid()))) {
                             applicableRules.add(rule);
                         }
                     }
@@ -226,4 +226,17 @@ public class NotificationRouter implements Subscriber {
         }
     }
 
+    private boolean checkIfChildrenAreAffected(Project parent, UUID uuid) {
+        boolean isChild = false;
+        if (parent.getChildren() == null || parent.getChildren().isEmpty()) {
+            return false;
+        }
+        for (Project child : parent.getChildren()) {
+            if ((child.getUuid().equals(uuid) && child.isActive()) || isChild) {
+                return true;
+            }
+            isChild = checkIfChildrenAreAffected(child, uuid);
+        }
+        return isChild;
+    }
 }

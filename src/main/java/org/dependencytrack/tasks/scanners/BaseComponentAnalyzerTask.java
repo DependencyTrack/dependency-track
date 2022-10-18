@@ -27,6 +27,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -84,7 +85,8 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
-    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component, AnalyzerIdentity analyzerIdentity) {
+    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component,
+                                          AnalyzerIdentity analyzerIdentity, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         try (QueryManager qm = new QueryManager()) {
             final ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
             if (cac != null) {
@@ -97,7 +99,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                             final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
                             if (c == null) continue;
                             if (vulnerability != null) {
-                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                 qm.addVulnerability(vulnerability, c, analyzerIdentity);
                             }
                         }

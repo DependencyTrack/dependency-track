@@ -89,6 +89,11 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final JsonObject jsonObject = jsonArray.getJsonObject(0);
         assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
         assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+
     }
 
     @Test
@@ -137,6 +142,10 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final JsonObject jsonObject = jsonArray.getJsonObject(0);
         assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
         assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
     }
 
     @Test
@@ -200,6 +209,10 @@ public class PolicyViolationResourceTest extends ResourceTest {
         final JsonObject jsonObject = jsonArray.getJsonObject(0);
         assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
         assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
     }
 
     @Test

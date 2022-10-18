@@ -81,7 +81,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should not be limited to any projects - so set projects to null
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -110,7 +110,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(project);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -140,7 +140,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Set<Project> affectedProjects = new HashSet<>();
         Project affectedProject = qm.createProject("Affected Project", null, "1.0", null, null, null, true, false);
         affectedProjects.add(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -163,7 +163,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should not be limited to any projects - so set projects to null
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -198,7 +198,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(firstProject);
         affectedProjects.add(secondProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), affectedProjects, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -227,7 +227,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         // Notification should not be limited to any projects - so set projects to null
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), new Component(), null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();

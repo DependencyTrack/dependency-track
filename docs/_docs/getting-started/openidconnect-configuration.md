@@ -2,14 +2,14 @@
 title: OpenID Connect Configuration
 category: Getting Started
 chapter: 1
-order: 9
+order: 10
 ---
 
 > OpenID Connect is supported in Dependency-Track 4.0.0 and above
 
 In the context of OAuth2 / OIDC, Dependency-Track's frontend acts as *client* while the API server acts as *resource server* (see [OAuth2 roles](https://tools.ietf.org/html/rfc6749#section-1.1)).
 Due to this, the frontend requires additional configuration, which is currently only supported when deploying it separately from the API server.
-Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. "Classic" Dependency-Track deployments using solely the [WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-war.md %}) or [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
+Refer to the [Configuration]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}) and [Docker deployment]({{ site.baseurl }}{% link _docs/getting-started/deploy-docker.md %}) pages for instructions. "Classic" Dependency-Track deployments using solely the [executable WAR]({{ site.baseurl }}{% link _docs/getting-started/deploy-exewar.md %}) are not supported!
 
 If configured properly, users will be able to sign in by clicking the *OpenID* button on the login page:
 
@@ -27,7 +27,7 @@ Multiple identity providers have been tested, the following are some example con
 Note that some providers may not support specific features like team synchronization, or require further configuration to make them work.
 If you find that the provider of your choice does not work with Dependency-Track, please [file an issue](https://github.com/DependencyTrack/dependency-track/issues).
 
-For a complete overview of available configuration options for both backend and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}).
+For a complete overview of available configuration options for both API server and frontend, please refer to the [Configuration page]({{ site.baseurl }}{% link _docs/getting-started/configuration.md %}).
 
 #### Auth0
 
@@ -149,7 +149,7 @@ $ curl https://auth.example.com/auth/realms/example/protocol/openid-connect/user
 }
 ```
 
-5. Configure OIDC for both backend and frontend of Dependency-Track, as demonstrated below for a docker-compose deployment:
+5. Configure OIDC for both API server and frontend of Dependency-Track, as demonstrated below for a docker-compose deployment:
 
     ```yaml
     version: "3"

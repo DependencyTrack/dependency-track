@@ -162,18 +162,22 @@ public class Finding implements Serializable {
         }
     }
 
-    private List<Cwe> getCwes(final Object value) {
-        if (value instanceof String) {
-            final String cweIds = (String)value;
+    static List<Cwe> getCwes(final Object value) {
+        if (value instanceof final String cweIds) {
             if (StringUtils.isBlank(cweIds)) {
                 return null;
             }
             final List<Cwe> cwes = new ArrayList<>();
             for (final String s : cweIds.split(",")) {
-                final Cwe cwe = CweResolver.getInstance().lookup(Integer.valueOf(s));
-                if (cwe != null) {
-                    cwes.add(cwe);
+                if (StringUtils.isNumeric(s)) {
+                    final Cwe cwe = CweResolver.getInstance().lookup(Integer.valueOf(s));
+                    if (cwe != null) {
+                        cwes.add(cwe);
+                    }
                 }
+            }
+            if (cwes.isEmpty()) {
+                return null;
             }
             return cwes;
         } else {

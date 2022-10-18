@@ -1063,6 +1063,10 @@ public class QueryManager extends AlpineQueryManager {
         getNotificationQueryManager().removeProjectFromNotificationRules(project);
     }
 
+    public void removeTeamFromNotificationRules(final Team team) {
+        getNotificationQueryManager().removeTeamFromNotificationRules(team);
+    }
+
     /**
      * Determines if a config property is enabled or not.
      * @param configPropertyConstants the property to query

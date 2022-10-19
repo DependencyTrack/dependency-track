@@ -65,7 +65,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -130,9 +129,7 @@ public final class NotificationUtil {
                                                    final boolean analysisStateChange, final boolean suppressionChange) {
         if (analysisStateChange || suppressionChange) {
             final NotificationGroup notificationGroup;
-            final Set<Project> affectedProjects = new HashSet<>();
             notificationGroup = NotificationGroup.PROJECT_AUDIT_CHANGE;
-            affectedProjects.add(analysis.getProject());
 
             String title = null;
             if (analysisStateChange) {
@@ -176,7 +173,7 @@ public final class NotificationUtil {
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(analysis))
                     .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
-                            analysis.getComponent(), affectedProjects, analysis))
+                            analysis.getComponent(), analysis.getProject(), analysis))
             );
         }
     }
@@ -382,12 +379,9 @@ public final class NotificationUtil {
         if (vo.getAnalysis() != null) {
             builder.add("analysis", toJson(vo.getAnalysis()));
         }
-        if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
-            final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
-            for (final Project project: vo.getAffectedProjects()) {
-                projectsBuilder.add(toJson(project));
-            }
-            builder.add("affectedProjects", projectsBuilder.build());
+        if (vo.getProject() != null) {
+            // Provide the affected project in the form of an array for backwards-compatibility
+            builder.add("affectedProjects", Json.createArrayBuilder().add(toJson(vo.getProject())));
         }
         return builder.build();
     }

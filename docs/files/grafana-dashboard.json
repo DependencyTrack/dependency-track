@@ -1675,6 +1675,10 @@
     "list": [
       {
         "current": {},
+        "datasource": {
+           "type": "prometheus",
+           "uid": "${DS_PROMETHEUS}"
+        },
         "definition": "label_values(jvm_info, instance)",
         "hide": 0,
         "includeAll": false,

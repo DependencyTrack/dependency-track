@@ -226,4 +226,41 @@ public class ConfigPropertyResourceTest extends ResourceTest {
         String body = json.getString(3);
         Assert.assertEquals("A Task scheduler cadence ("+prop4.getPropertyName()+") cannot be inferior to one hour.A value of -2 was provided.", body);
     }
+
+    @Test
+    public void upsertConfigPropertyUpdateTest() {
+        ConfigProperty property = qm.createConfigProperty("my.group", "updateBoolean", "false", IConfigProperty.PropertyType.BOOLEAN, "A boolean");
+        ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
+        request.setPropertyValue("true");
+        Response response = target(V1_CONFIG_PROPERTY+"/upsert").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("my.group", json.getString("groupName"));
+        Assert.assertEquals("updateBoolean", json.getString("propertyName"));
+        Assert.assertEquals("true", json.getString("propertyValue"));
+        Assert.assertEquals("BOOLEAN", json.getString("propertyType"));
+        Assert.assertEquals("A boolean", json.getString("description"));
+    }
+
+    @Test
+    public void upsertConfigPropertyCreateTest() {
+        ConfigProperty configProperty = new ConfigProperty();
+        configProperty.setGroupName("my.group");
+        configProperty.setPropertyName("createBoolean");
+        configProperty.setPropertyValue("false");
+        Response response = target(V1_CONFIG_PROPERTY+"/upsert").request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(configProperty, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("my.group", json.getString("groupName"));
+        Assert.assertEquals("createBoolean", json.getString("propertyName"));
+        Assert.assertEquals("false", json.getString("propertyValue"));
+        Assert.assertEquals("BOOLEAN", json.getString("propertyType"));
+        Assert.assertEquals("createBoolean", json.getString("description"));
+    }
 }

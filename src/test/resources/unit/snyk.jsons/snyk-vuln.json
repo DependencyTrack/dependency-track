@@ -1,101 +1,147 @@
 {
-  "vulnId":"SNYK-JAVA-ORGYAML-2806360",
-  "source":"SNYK","title":"Denial of Service (DoS)",
-  "description":"## Overview\n[org.yaml:snakeyaml](https://code.google.com/p/snakeyaml/source/browse/) is a YAML 1.1 parser and emitter for Java.\n\nAffected versions of this package are vulnerable to Denial of Service (DoS) due to missing nested depth limitation for collections.\n\n## Details\n\nDenial of Service (DoS) describes a family of attacks, all aimed at making a system inaccessible to its intended and legitimate users.\n\nUnlike other vulnerabilities, DoS attacks usually do not aim at breaching security. Rather, they are focused on making websites and services unavailable to genuine users resulting in downtime.\n\nOne popular Denial of Service vulnerability is DDoS (a Distributed Denial of Service), an attack that attempts to clog network pipes to the system by generating a large volume of traffic from many machines.\n\nWhen it comes to open source libraries, DoS vulnerabilities allow attackers to trigger such a crash or crippling of the service by using a flaw either in the application code or from the use of open source libraries.\n\nTwo common types of DoS vulnerabilities:\n\n* High CPU/Memory Consumption- An attacker sending crafted requests that could cause the system to take a disproportionate amount of time to process. For example, [commons-fileupload:commons-fileupload](SNYK-JAVA-COMMONSFILEUPLOAD-30082).\n\n* Crash - An attacker sending crafted requests that could cause the system to crash. For Example,  [npm `ws` package](https://snyk.io/vuln/npm:ws:20171108)\n\n## Remediation\nUpgrade `org.yaml:snakeyaml` to version 1.31 or higher.\n## References\n- [Bitbucket Commit](https://bitbucket.org/snakeyaml/snakeyaml/commits/fc300780da21f4bb92c148bc90257201220cf174)\n- [BitBucket Issues](https://bitbucket.org/snakeyaml/snakeyaml/issues/525)\n- [GitHub Commit](https://github.com/snakeyaml/snakeyaml/commit/fc300780da21f4bb92c148bc90257201220cf174)\n","references":"* [https://bitbucket.org/snakeyaml/snakeyaml/commits/fc300780da21f4bb92c148bc90257201220cf174](https://bitbucket.org/snakeyaml/snakeyaml/commits/fc300780da21f4bb92c148bc90257201220cf174)\n* [https://bitbucket.org/snakeyaml/snakeyaml/issues/525](https://bitbucket.org/snakeyaml/snakeyaml/issues/525)\n* [https://github.com/snakeyaml/snakeyaml/commit/fc300780da21f4bb92c148bc90257201220cf174](https://github.com/snakeyaml/snakeyaml/commit/fc300780da21f4bb92c148bc90257201220cf174)\n","created":"2022-05-01T15:16:35Z","updated":"2022-09-18T13:49:26Z",
-  "cwes":
-  [
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
     {
-      "cweId":400,
-      "name":"Uncontrolled Resource Consumption"
-    }
-  ],
-  "cvssV3BaseScore":7.5,
-  "cvssV3Vector":"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-  "severity":"HIGH",
-  "components":
-  [
-    {
-      "group":"org.yaml",
-      "name":"snakeyaml",
-      "version":"1.30",
-      "classifier":"LIBRARY",
-      "md5":"ba063b8ef3a8bfd591a1b56451166b14",
-      "sha1":"8fde7fe2586328ac3c68db92045e1c8759125000",
-      "sha256":"f43a4e40a946b8cdfd0321bc1c9a839bc3f119c57e4ca84fb87c367f51c8b2b3",
-      "sha512":"b00f52326cae804d0dbb48c0ed7f3a98cdebbce9b145f685c616e4049b65183a18e98ca29b7b0275971f9ece52138d0015bb9771902532084cb2cc07a264cfc6",
-      "sha3_256":"4a3c20ddae5c74b381476c491716e01f847e76e28fe82dc46819e9ef122c70fa",
-      "sha3_512":"d1e848c74efd4dd2ba5d4878c0f9df6144926b1d413f44ba2881614cc557a18479eb74c8f1c3392375cc166c94acf2adb7f211f902a7e5acfd7b2966bec70f26",
-      "purl":"pkg:maven/org.yaml/snakeyaml@1.30?type=jar",
-      "purlCoordinates":"pkg:maven/org.yaml/snakeyaml@1.30",
-      "description":"YAML 1.1 parser and emitter for Java",
-      "resolvedLicense":
-      {
-        "uuid":"6f2ec449-2e9b-493e-8547-43e258f27399",
-        "name":"Apache License 2.0",
-        "licenseId":"Apache-2.0",
-        "isOsiApproved":true,
-        "isFsfLibre":true,
-        "isDeprecatedLicenseId":false
-      },
-      "externalReferences":
-      [
-        {
-          "type":"issue-tracker",
-          "url":"https://bitbucket.org/snakeyaml/snakeyaml/issues"
-        },
-        {
-          "type":"vcs",
-          "url":"https://bitbucket.org/snakeyaml/snakeyaml/src"
+      "id": "SNYK-JS-MOMENT-2944238",
+      "type": "issue",
+      "attributes": {
+        "key": "SNYK-JS-MOMENT-2944238",
+        "title": "Regular Expression Denial of Service (ReDoS)",
+        "type": "package_vulnerability",
+        "created_at": "2022-07-07T06:05:46.236101Z",
+        "updated_at": "2022-07-07T07:33:16.298631Z",
+        "description": "## Overview\n[moment](https://www.npmjs.com/package/moment) is a lightweight JavaScript date library for parsing, validating, manipulating, and formatting dates.\n\nAffected versions of this package are vulnerable to Regular Expression Denial of Service (ReDoS) via the `preprocessRFC2822()` function in `from-string.js`, when processing a very long crafted string (over 10k characters).\r\n\r\n\r\n\r\n## PoC:\r\n```js\r\nmoment(\"(\".repeat(500000))\r\n```\n\n## Details\n\nDenial of Service (DoS) describes a family of attacks, all aimed at making a system inaccessible to its original and legitimate users. There are many types of DoS attacks, ranging from trying to clog the network pipes to the system by generating a large volume of traffic from many machines (a Distributed Denial of Service - DDoS - attack) to sending crafted requests that cause a system to crash or take a disproportional amount of time to process.\n\nThe Regular expression Denial of Service (ReDoS) is a type of Denial of Service attack. Regular expressions are incredibly powerful, but they aren't very intuitive and can ultimately end up making it easy for attackers to take your site down.\n\nLet’s take the following regular expression as an example:\n```js\nregex = /A(B|C+)+D/\n```\n\nThis regular expression accomplishes the following:\n- `A` The string must start with the letter 'A'\n- `(B|C+)+` The string must then follow the letter A with either the letter 'B' or some number of occurrences of the letter 'C' (the `+` matches one or more times). The `+` at the end of this section states that we can look for one or more matches of this section.\n- `D` Finally, we ensure this section of the string ends with a 'D'\n\nThe expression would match inputs such as `ABBD`, `ABCCCCD`, `ABCBCCCD` and `ACCCCCD`\n\nIt most cases, it doesn't take very long for a regex engine to find a match:\n\n```bash\n$ time node -e '/A(B|C+)+D/.test(\"ACCCCCCCCCCCCCCCCCCCCCCCCCCCCD\")'\n0.04s user 0.01s system 95% cpu 0.052 total\n\n$ time node -e '/A(B|C+)+D/.test(\"ACCCCCCCCCCCCCCCCCCCCCCCCCCCCX\")'\n1.79s user 0.02s system 99% cpu 1.812 total\n```\n\nThe entire process of testing it against a 30 characters long string takes around ~52ms. But when given an invalid string, it takes nearly two seconds to complete the test, over ten times as long as it took to test a valid string. The dramatic difference is due to the way regular expressions get evaluated.\n\nMost Regex engines will work very similarly (with minor differences). The engine will match the first possible way to accept the current character and proceed to the next one. If it then fails to match the next one, it will backtrack and see if there was another way to digest the previous character. If it goes too far down the rabbit hole only to find out the string doesn’t match in the end, and if many characters have multiple valid regex paths, the number of backtracking steps can become very large, resulting in what is known as _catastrophic backtracking_.\n\nLet's look at how our expression runs into this problem, using a shorter string: \"ACCCX\". While it seems fairly straightforward, there are still four different ways that the engine could match those three C's:\n1. CCC\n2. CC+C\n3. C+CC\n4. C+C+C.\n\nThe engine has to try each of those combinations to see if any of them potentially match against the expression. When you combine that with the other steps the engine must take, we can use [RegEx 101 debugger](https://regex101.com/debugger) to see the engine has to take a total of 38 steps before it can determine the string doesn't match.\n\nFrom there, the number of steps the engine must use to validate a string just continues to grow.\n\n| String | Number of C's | Number of steps |\n| -------|-------------:| -----:|\n| ACCCX | 3 | 38\n| ACCCCX | 4 | 71\n| ACCCCCX | 5 | 136\n| ACCCCCCCCCCCCCCX | 14 | 65,553\n\n\nBy the time the string includes 14 C's, the engine has to take over 65,000 steps just to see if the string is valid. These extreme situations can cause them to work very slowly (exponentially related to input size, as shown above), allowing an attacker to exploit this and can cause the service to excessively consume CPU, resulting in a Denial of Service.\n\n## Remediation\nUpgrade `moment` to version 2.29.4 or higher.\n## References\n- [GitHub Commit](https://github.com/moment/moment/commit/9a3b5894f3d5d602948ac8a02e4ee528a49ca3a3)\n- [GitHub Issue](https://github.com/moment/moment/issues/6012)\n- [GitHub PR](https://github.com/moment/moment/pull/6015)\n",
+        "problems": [
+          {
+            "id": "CWE-1333",
+            "source": "CWE"
+          },
+          {
+            "id": "GHSA-wc69-rhjr-hc9g",
+            "source": "GHSA"
+          },
+          {
+            "id": "CVE-2022-31129",
+            "source": "CVE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 2.29.4 to fix this vulnerability",
+                "details": {
+                  "upgrade_package": "2.29.4"
+                }
+              }
+            ],
+            "representation": [
+              ">=2.18.0 <2.29.4"
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "CVE-2022-31129",
+            "level": "high",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H/E:P"
+          }
+        ],
+        "severity": "high",
+        "slots": {
+          "disclosure_time": "2022-07-06T18:38:49Z",
+          "exploit": "Proof of Concept",
+          "publication_time": "2022-07-07T07:32:53Z",
+          "references": [
+            {
+              "title": "GitHub Commit",
+              "url": "https://github.com/moment/moment/commit/9a3b5894f3d5d602948ac8a02e4ee528a49ca3a3"
+            },
+            {
+              "title": "GitHub Issue",
+              "url": "https://github.com/moment/moment/issues/6012"
+            },
+            {
+              "title": "GitHub PR",
+              "url": "https://github.com/moment/moment/pull/6015"
+            }
+          ]
         }
-      ],
-      "project":
-      {
-        "name":"ap",
-        "classifier":"APPLICATION",
-        "directDependencies":"[{\"name\":\"alpine-common\",\"purl\":\"pkg:maven/us.sprie-cngett/alpinommon@2.0.1-SNAPSHOT?type=jar\",\"uuid\":\"45a934e2-67ee-491b-9634-77c70f27e01d\",\"version\":\"2.0.1-SNAPSHOT\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/alpine-common@2.0.1-SNAPSHOT\",\"objectType\":\"COMPONENT\"},{\"name\":\"alpine-model\",\"purl\":\"pkg:maven/us.springett/alpine-model@2.0.1-SNAPSHOT?type=jar\",\"uuid\":\"286be612-2c11-492a-b7f2-0d87f4201e25\",\"version\":\"2.0.1-SNAPSHOT\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/alpine-model@2.0.1-SNAPSHOT\",\"objectType\":\"COMPONENT\"},{\"name\":\"alpine-infra\",\"purl\":\"pkg:maven/us.springett/alpine-infra@2.0.1-SNAPSHOT?type=jar\",\"uuid\":\"7204561c-5d37-4c08-9f61-234d0e5b09c0\",\"version\":\"2.0.1-SNAPSHOT\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/alpine-infra@2.0.1-SNAPSHOT\",\"objectType\":\"COMPONENT\"},{\"name\":\"alpine-server\",\"purl\":\"pkg:maven/us.springett/alpine-server@2.0.1-SNAPSHOT?type=jar\",\"uuid\":\"54992a9f-af0b-4631-a792-c4bc278eaab2\",\"version\":\"2.0.1-SNAPSHOT\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/alpine-server@2.0.1-SNAPSHOT\",\"objectType\":\"COMPONENT\"},{\"name\":\"cvss-calculator\",\"purl\":\"pkg:maven/us.springett/cvss-calculator@1.4.1?type=jar\",\"uuid\":\"b789f683-2b83-40ad-8739-2ebb1500ba77\",\"version\":\"1.4.1\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/cvss-calculator@1.4.1\",\"objectType\":\"COMPONENT\"},{\"name\":\"cpe-parser\",\"purl\":\"pkg:maven/us.springett/cpe-parser@2.0.2?type=jar\",\"uuid\":\"43187f3a-bf02-4646-899e-414370f1811b\",\"version\":\"2.0.2\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/cpe-parser@2.0.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"cyclonedx-core-java\",\"purl\":\"pkg:maven/org.cyclonedx/cyclonedx-core-java@7.2.0?type=jar\",\"uuid\":\"c8474668-bc1b-4cb9-b934-323e247d50f0\",\"version\":\"7.2.0\",\"group\":\"org.cyclonedx\",\"purlCoordinates\":\"pkg:maven/org.cyclonedx/cyclonedx-core-java@7.2.0\",\"objectType\":\"COMPONENT\"},{\"name\":\"jaxb-runtime\",\"purl\":\"pkg:maven/org.glassfish.jaxb/jaxb-runtime@2.3.6?type=jar\",\"uuid\":\"cbfdea0e-4879-42ab-a1b7-7ab6bcb0eefe\",\"version\":\"2.3.6\",\"group\":\"org.glassfish.jaxb\",\"purlCoordinates\":\"pkg:maven/org.glassfish.jaxb/jaxb-runtime@2.3.6\",\"objectType\":\"COMPONENT\"},{\"name\":\"javax.activation-api\",\"purl\":\"pkg:maven/javax.activation/javax.activation-api@1.2.0?type=jar\",\"uuid\":\"e87a8394-1309-4906-b18f-b0bf68b57c8f\",\"version\":\"1.2.0\",\"group\":\"javax.activation\",\"purlCoordinates\":\"pkg:maven/javax.activation/javax.activation-api@1.2.0\",\"objectType\":\"COMPONENT\"},{\"name\":\"json\",\"purl\":\"pkg:maven/org.json/json@20220320?type=jar\",\"uuid\":\"cfdcc1f1-5769-4e89-92cf-e13a5c2f0268\",\"version\":\"20220320\",\"group\":\"org.json\",\"purlCoordinates\":\"pkg:maven/org.json/json@20220320\",\"objectType\":\"COMPONENT\"},{\"name\":\"packageurl-java\",\"purl\":\"pkg:maven/com.github.package-url/packageurl-java@1.4.1?type=jar\",\"uuid\":\"802916ef-4de2-4f98-a9a6-fca8a973484c\",\"version\":\"1.4.1\",\"group\":\"com.github.package-url\",\"purlCoordinates\":\"pkg:maven/com.github.package-url/packageurl-java@1.4.1\",\"objectType\":\"COMPONENT\"},{\"name\":\"lucene-core\",\"purl\":\"pkg:maven/org.apache.lucene/lucene-core@8.11.2?type=jar\",\"uuid\":\"7c5ab6b6-4e9c-410d-a68b-c342b3dc4d15\",\"version\":\"8.11.2\",\"group\":\"org.apache.lucene\",\"purlCoordinates\":\"pkg:maven/org.apache.lucene/lucene-core@8.11.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"lucene-analyzers-common\",\"purl\":\"pkg:maven/org.apache.lucene/lucene-analyzers-common@8.11.2?type=jar\",\"uuid\":\"db010160-7245-4ddf-b9c3-7e12c16c78d2\",\"version\":\"8.11.2\",\"group\":\"org.apache.lucene\",\"purlCoordinates\":\"pkg:maven/org.apache.lucene/lucene-analyzers-common@8.11.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"lucene-queryparser\",\"purl\":\"pkg:maven/org.apache.lucene/lucene-queryparser@8.11.2?type=jar\",\"uuid\":\"045e7c41-b258-437e-9c54-395e6ffb0a7a\",\"version\":\"8.11.2\",\"group\":\"org.apache.lucene\",\"purlCoordinates\":\"pkg:maven/org.apache.lucene/lucene-queryparser@8.11.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"lucene-queries\",\"purl\":\"pkg:maven/org.apache.lucene/lucene-queries@8.11.2?type=jar\",\"uuid\":\"c4aaf06f-0fe9-443f-906c-9368c08a0a5c\",\"version\":\"8.11.2\",\"group\":\"org.apache.lucene\",\"purlCoordinates\":\"pkg:maven/org.apache.lucene/lucene-queries@8.11.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"lucene-sandbox\",\"purl\":\"pkg:maven/org.apache.lucene/lucene-sandbox@8.11.2?type=jar\",\"uuid\":\"bbfa5def-096d-4f2b-bf22-d1fb06482450\",\"version\":\"8.11.2\",\"group\":\"org.apache.lucene\",\"purlCoordinates\":\"pkg:maven/org.apache.lucene/lucene-sandbox@8.11.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"pebble\",\"purl\":\"pkg:maven/io.pebbletemplates/pebble@3.1.5?type=jar\",\"uuid\":\"3fff26aa-9265-46e8-874b-5fed593a7118\",\"version\":\"3.1.5\",\"group\":\"io.pebbletemplates\",\"purlCoordinates\":\"pkg:maven/io.pebbletemplates/pebble@3.1.5\",\"objectType\":\"COMPONENT\"},{\"name\":\"vulndb-data-mirror\",\"purl\":\"pkg:maven/us.springett/vulndb-data-mirror@1.0.1?type=jar\",\"uuid\":\"60eb493d-57d4-46fc-a14b-b91604ace145\",\"version\":\"1.0.1\",\"group\":\"us.springett\",\"purlCoordinates\":\"pkg:maven/us.springett/vulndb-data-mirror@1.0.1\",\"objectType\":\"COMPONENT\"},{\"name\":\"unirest-java\",\"purl\":\"pkg:maven/com.konghq/unirest-java@3.13.11?type=jar\",\"uuid\":\"da279f7e-d235-480a-a32e-96e2bfc4d73f\",\"version\":\"3.13.11\",\"group\":\"com.konghq\",\"purlCoordinates\":\"pkg:maven/com.konghq/unirest-java@3.13.11\",\"objectType\":\"COMPONENT\"},{\"name\":\"woodstox-core\",\"purl\":\"pkg:maven/com.fasterxml.woodstox/woodstox-core@6.3.1?type=jar\",\"uuid\":\"7c20c221-ade2-499c-ac7b-eb5424d4cf6f\",\"version\":\"6.3.1\",\"group\":\"com.fasterxml.woodstox\",\"purlCoordinates\":\"pkg:maven/com.fasterxml.woodstox/woodstox-core@6.3.1\",\"objectType\":\"COMPONENT\"},{\"name\":\"maven-artifact\",\"purl\":\"pkg:maven/org.apache.maven/maven-artifact@3.8.6?type=jar\",\"uuid\":\"a1ab87ed-504b-4354-bdf3-b6a252646ef2\",\"version\":\"3.8.6\",\"group\":\"org.apache.maven\",\"purlCoordinates\":\"pkg:maven/org.apache.maven/maven-artifact@3.8.6\",\"objectType\":\"COMPONENT\"},{\"name\":\"mssql-jdbc\",\"purl\":\"pkg:maven/com.microsoft.sqlserver/mssql-jdbc@11.2.0.jre11?type=jar\",\"uuid\":\"3a1891d4-a8c0-44cd-90d3-ab005e12619e\",\"version\":\"11.2.0.jre11\",\"group\":\"com.microsoft.sqlserver\",\"purlCoordinates\":\"pkg:maven/com.microsoft.sqlserver/mssql-jdbc@11.2.0.jre11\",\"objectType\":\"COMPONENT\"},{\"name\":\"mysql-connector-java\",\"purl\":\"pkg:maven/mysql/mysql-connector-java@8.0.30?type=jar\",\"uuid\":\"f1b150da-0131-4388-bf9b-8d22137a21ec\",\"version\":\"8.0.30\",\"group\":\"mysql\",\"purlCoordinates\":\"pkg:maven/mysql/mysql-connector-java@8.0.30\",\"objectType\":\"COMPONENT\"},{\"name\":\"postgresql\",\"purl\":\"pkg:maven/org.postgresql/postgresql@42.5.0?type=jar\",\"uuid\":\"657da8f6-f9da-46a2-87a1-7fd7dc9abab7\",\"version\":\"42.5.0\",\"group\":\"org.postgresql\",\"purlCoordinates\":\"pkg:maven/org.postgresql/postgresql@42.5.0\",\"objectType\":\"COMPONENT\"},{\"name\":\"xercesImpl\",\"purl\":\"pkg:maven/xerces/xercesImpl@2.12.2?type=jar\",\"uuid\":\"b35351dc-2330-4d47-853d-f3a9ced046f2\",\"version\":\"2.12.2\",\"group\":\"xerces\",\"purlCoordinates\":\"pkg:maven/xerces/xercesImpl@2.12.2\",\"objectType\":\"COMPONENT\"},{\"name\":\"commons-compress\",\"purl\":\"pkg:maven/org.apache.commons/commons-compress@1.21?type=jar\",\"uuid\":\"164dbe88-8156-4ff5-a9ba-46c3bf6ae0a1\",\"version\":\"1.21\",\"group\":\"org.apache.commons\",\"purlCoordinates\":\"pkg:maven/org.apache.commons/commons-compress@1.21\",\"objectType\":\"COMPONENT\"}]",
-        "uuid":"16aaafbc-3fb3-4d70-ba71-b7e217084051",
-        "lastBomImport":1666287520435,
-        "lastBomImportFormat":"CycloneDX 1.4",
-        "lastInheritedRiskScore":105.0,
-        "active":true
-      },
-      "lastInheritedRiskScore":31.0,
-      "uuid":"36aad39f-f06b-4922-9801-180bd775987b",
-      "usedBy":0,
-      "isInternal":false
-    }
-  ],
-  "uuid":"316d8680-7c61-4285-b88d-afa97fb7bd08",
-  "affectedProjectCount":0,
-  "affectedComponents":[
-    {
-      "identityType":"PURL",
-      "identity":"pkg:maven/org.yaml/snakeyaml",
-      "versionType":"RANGE",
-      "versionEndExcluding":"1.31",
-      "versionStartIncluding":"0",
-      "uuid":"d2b653b7-7a4c-4c49-b81a-fdd4334fb139"
-    }
-  ],
-  "aliases":[
-    {
-      "cveId":"CVE-2022-25857",
-      "ghsaId":"GHSA-3mc7-4q67-w48m",
-      "osvId":"GHSA-3mc7-4q67-w48m",
-      "snykId":"SNYK-JAVA-ORGYAML-2806360",
-      "uuid":"25fef707-5f72-4c8f-8993-c6fead91a6d0"
+      }
     },
     {
-      "cveId":"CVE-2022-38749",
-      "ghsaId":"GHSA-c4r9-r8fh-9vj2",
-      "osvId":"GHSA-c4r9-r8fh-9vj2",
-      "snykId":"SNYK-JAVA-ORGYAML-2806360",
-      "uuid":"22dd1c30-6cdf-4f5e-9c02-0b533286cf4d"
+      "id": "SNYK-JS-MOMENT-2440688",
+      "type": "issue",
+      "attributes": {
+        "key": "SNYK-JS-MOMENT-2440688",
+        "title": "Directory Traversal",
+        "type": "package_vulnerability",
+        "created_at": "2022-04-05T08:46:07.677588Z",
+        "updated_at": "2022-04-05T12:30:50.880408Z",
+        "description": "## Overview\n[moment](https://www.npmjs.com/package/moment) is a lightweight JavaScript date library for parsing, validating, manipulating, and formatting dates.\n\nAffected versions of this package are vulnerable to Directory Traversal when a user provides a locale string which is directly used to switch moment locale.\n\n## Details\n\nA Directory Traversal attack (also known as path traversal) aims to access files and directories that are stored outside the intended folder. By manipulating files with \"dot-dot-slash (../)\" sequences and its variations, or by using absolute file paths, it may be possible to access arbitrary files and directories stored on file system, including application source code, configuration, and other critical system files.\n\nDirectory Traversal vulnerabilities can be generally divided into two types:\n\n- **Information Disclosure**: Allows the attacker to gain information about the folder structure or read the contents of sensitive files on the system.\n\n`st` is a module for serving static files on web pages, and contains a [vulnerability of this type](https://snyk.io/vuln/npm:st:20140206). In our example, we will serve files from the `public` route.\n\nIf an attacker requests the following URL from our server, it will in turn leak the sensitive private key of the root user.\n\n```\ncurl http://localhost:8080/public/%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/root/.ssh/id_rsa\n```\n**Note** `%2e` is the URL encoded version of `.` (dot).\n\n- **Writing arbitrary files**: Allows the attacker to create or replace existing files. This type of vulnerability is also known as `Zip-Slip`. \n\nOne way to achieve this is by using a malicious `zip` archive that holds path traversal filenames. When each filename in the zip archive gets concatenated to the target extraction folder, without validation, the final path ends up outside of the target folder. If an executable or a configuration file is overwritten with a file containing malicious code, the problem can turn into an arbitrary code execution issue quite easily.\n\nThe following is an example of a `zip` archive with one benign file and one malicious file. Extracting the malicious file will result in traversing out of the target folder, ending up in `/root/.ssh/` overwriting the `authorized_keys` file:\n\n```\n2018-04-15 22:04:29 .....           19           19  good.txt\n2018-04-15 22:04:42 .....           20           20  ../../../../../../root/.ssh/authorized_keys\n```\n\n## Remediation\nUpgrade `moment` to version 2.29.2 or higher.\n## References\n- [GitHub Commit](https://github.com/moment/moment/commit/4211bfc8f15746be4019bba557e29a7ba83d54c5)\n",
+        "problems": [
+          {
+            "id": "CWE-22",
+            "source": "CWE"
+          },
+          {
+            "id": "GHSA-8hfj-j24r-96c4",
+            "source": "GHSA"
+          },
+          {
+            "id": "CVE-2022-24785",
+            "source": "CVE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 2.29.2 to fix this vulnerability",
+                "details": {
+                  "upgrade_package": "2.29.2"
+                }
+              }
+            ],
+            "representation": [
+              "[0,]"
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "CVE-2022-24785",
+            "level": "high",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          }
+        ],
+        "severity": "high",
+        "slots": {
+          "disclosure_time": "2022-04-05T08:39:23Z",
+          "exploit": "Not Defined",
+          "publication_time": "2022-04-05T12:30:50.878091Z",
+          "references": [
+            {
+              "title": "GitHub Commit",
+              "url": "https://github.com/moment/moment/commit/4211bfc8f15746be4019bba557e29a7ba83d54c5"
+            }
+          ]
+        }
+      }
     }
   ],
-  "cwe":
-  {
-    "cweId":400,
-    "name":"Uncontrolled Resource Consumption"
+  "meta": {
+    "package": {
+      "name": "moment",
+      "type": "npm",
+      "url": "pkg:npm/moment@2.24.0",
+      "version": "2.24.0"
+    }
   }
 }

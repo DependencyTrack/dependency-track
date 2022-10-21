@@ -242,12 +242,15 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
                     }
                 }
-                updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
+                if (component.getPurl() != null && apiBaseUrl != null) {
+                    updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
+                }
             } else if (responseCode == 404) {
                 Vulnerability vulnerability = new Vulnerability();
                 addVulnerabilityToCache(component, vulnerability);
-                updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
-
+                if (component.getPurl() != null && apiBaseUrl != null) {
+                    updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
+                }
             }
         }
     }

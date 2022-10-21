@@ -148,25 +148,6 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testParsePurlToSnykUrlParam() {
-        Component component = new Component();
-        component.setPurl("pkg:npm/moment@2.24.0");
-        String purl = task.parsePurlToSnykUrlParam(component.getPurl());
-        Assert.assertNotNull(purl);
-        Assert.assertEquals("pkg%3Anpm%2fmoment%402.24.0", purl);
-
-        component.setPurl("pkg:npm/moment");
-        purl = task.parsePurlToSnykUrlParam(component.getPurl());
-        Assert.assertNotNull(purl);
-        Assert.assertEquals("pkg%3Anpm%2fmoment%40null", purl);
-
-        component.setPurl("pkg:npm/bootstrap-table@1.20.0");
-        purl = task.parsePurlToSnykUrlParam(component.getPurl());
-        Assert.assertNotNull(purl);
-        Assert.assertEquals("pkg%3Anpm%2fbootstrap-table%401.20.0", purl);
-    }
-
-    @Test
     public void testSelectCvssObjectBasedOnSource() throws IOException {
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/severities.json")));
         jsonObject = new JSONObject(jsonString);

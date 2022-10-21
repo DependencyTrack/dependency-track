@@ -25,7 +25,6 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import com.github.packageurl.PackageURL;
 import kong.unirest.UnirestInstance;
 import kong.unirest.GetRequest;
 import kong.unirest.JsonNode;
@@ -152,16 +151,6 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                 && component.getPurl().getType() != null
                 && component.getPurl().getName() != null
                 && component.getPurl().getVersion() != null;
-    }
-
-    public String parsePurlToSnykUrlParam(PackageURL purl) {
-
-        String url = purl.getScheme() + "%3A" + purl.getType() + "%2f";
-        if (purl.getNamespace() != null) {
-            url = url + purl.getNamespace() + "%2f";
-        }
-        url = url + purl.getName() + "%40" + purl.getVersion();
-        return url;
     }
 
     /**

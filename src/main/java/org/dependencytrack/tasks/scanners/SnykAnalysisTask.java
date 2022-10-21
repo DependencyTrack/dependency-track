@@ -18,18 +18,26 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import alpine.common.logging.Logger;
 import alpine.Config;
-import kong.unirest.*;
-import org.dependencytrack.common.ConfigKey;
+import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
 import alpine.event.framework.Event;
+import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import kong.unirest.GetRequest;
+import kong.unirest.HttpStatus;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
+import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.SnykAnalysisEvent;
@@ -49,30 +57,43 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BASE_URL;
 
 /**
  * Subscriber task that performs an analysis of component using Snyk vulnerability REST API.
+ *
+ * @since 4.7.0
  */
 public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
-    private String apiBaseUrl;
-    private static String apiEndPoint = "/issues?";
-
-    //number of threads to be used for snyk analyzer are configurable. Default is 10. Can be set based on user requirements.
-    private static final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_BATCH_SIZE));
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
     private static final RetryConfig RETRY_CONFIG = RetryConfig.custom()
             .retryExceptions(IllegalStateException.class)
             .waitDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_WAIT_BETWEEN_RETRIES)))
             .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_MAX_RETRIES))
             .build();
+    private static final ExecutorService EXECUTOR;
+
+    static {
+        // The number of threads to be used for Snyk analyzer are configurable.
+        // Default is 10. Can be set based on user requirements.
+        final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_BATCH_SIZE);
+        final var threadFactory = new BasicThreadFactory.Builder()
+                .namingPattern(SnykAnalysisTask.class.getSimpleName() + "-%d")
+                .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
+                .build();
+        EXECUTOR = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
+        Metrics.registerExecutorService(EXECUTOR, SnykAnalysisTask.class.getSimpleName());
+    }
+
+    private String apiBaseUrl;
+    private String apiEndPoint = "/issues?";
     private String apiToken;
-    private static int duration = 0;
+    private int duration = 0;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -84,7 +105,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
      */
     public void inform(final Event e) {
         Instant start = Instant.now();
-        if (e instanceof SnykAnalysisEvent) {
+        if (e instanceof final SnykAnalysisEvent event) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_SNYK_ENABLED)) {
                 return;
             }
@@ -129,7 +150,6 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                     return;
                 }
             }
-            final SnykAnalysisEvent event = (SnykAnalysisEvent) e;
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting Snyk vulnerability analysis task");
             if (!event.getComponents().isEmpty()) {
@@ -205,7 +225,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                     }
                 };
                 Instant startThread = Instant.now();
-                executor.execute(analysisUtil);
+                EXECUTOR.execute(analysisUtil);
 
                 Instant endThread = Instant.now();
                 duration += Duration.between(startThread, endThread).toMillis();

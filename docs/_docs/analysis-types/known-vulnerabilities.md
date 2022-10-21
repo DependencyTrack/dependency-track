@@ -22,6 +22,9 @@ The internal analyzer relies on a dictionary of vulnerable software. This dictio
 NVD, GitHub Advisories, or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid 
 CPEs, including application, operating system, and hardware components, and all components with Package URLs.
 
+**NOTE**: Currently, vulnerable software describing affected package is treated as 'append-only' meaning there might be some entries no longer reported by the vulnerability source.
+Fix is under progress and can be tracked via issue [#1815](https://github.com/DependencyTrack/dependency-track/issues/1815).
+
 ### OSS Index Analyzer
 
 OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components. The service 

@@ -2,7 +2,7 @@
 title: Datasource Routing
 category: Datasources
 chapter: 4
-order: 6
+order: 7
 ---
 
 Components often belong to one or more ecosystems. These ecosystems typically have one or more sources of 

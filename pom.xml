@@ -251,6 +251,16 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${lib.jdbc-driver.mysql.version}</version>
+            <exclusions>
+                <!--
+                    Protobuf is only required for MySQL X DevAPI, which we do not use.
+                    https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-installing-maven.html
+                -->
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

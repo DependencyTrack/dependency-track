@@ -41,7 +41,7 @@ jobs:
           mvn cyclonedx:makeBom
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: assembled-wars
           path: |-

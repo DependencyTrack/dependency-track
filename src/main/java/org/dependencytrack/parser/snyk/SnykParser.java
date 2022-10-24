@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.Collections;
 import java.util.Arrays;
+
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
 public class SnykParser {
@@ -56,14 +57,21 @@ public class SnykParser {
 
                 for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
                     JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
-                    if (representation != null) {
+                    if((representation.length() == 1 && representation.get(0).equals("*"))){
+                        LOGGER.info("Range not defined properly. Skipping this element.");
+                    }
+                    else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
                 }
             }
-            qm.persist(vsList);
+            if (!vsList.isEmpty()) {
+                qm.persist(vsList);
+            }
             synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            synchronizedVulnerability.setVulnerableSoftware(vsList);
+            if (!vsList.isEmpty()) {
+                synchronizedVulnerability.setVulnerableSoftware(vsList);
+            }
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;
@@ -186,7 +194,6 @@ public class SnykParser {
             LOGGER.debug("Invalid PURL  " + purl + " - skipping", ex);
             return Collections.emptyList();
         }
-
         for (int i = 0; i < ranges.length(); i++) {
 
             String range = ranges.optString(i);
@@ -194,6 +201,7 @@ public class SnykParser {
             String versionStartExcluding = null;
             String versionEndIncluding = null;
             String versionEndExcluding = null;
+
             final String[] parts;
 
             if (range.contains(",")) {
@@ -213,11 +221,10 @@ public class SnykParser {
                 } else if (part.startsWith("=")) {
                     versionStartIncluding = part.replace("=", "").trim();
                     versionEndIncluding = part.replace("=", "").trim();
-                } else {
-                    LOGGER.warn("Unable to determine version range " + part);
+                } else { //since we are not able to parse specific range, we do not want to end up with false positives and therefore this part will be skipped from being saved to db.
+                    LOGGER.debug("Check this. " + purl+"\n Cannot parse this part. Skipping...");
                 }
             }
-
             VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(),
                     versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
             if (vs == null) {

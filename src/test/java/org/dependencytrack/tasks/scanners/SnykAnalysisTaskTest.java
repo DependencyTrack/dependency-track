@@ -77,7 +77,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
         jsonObject = new JSONObject(jsonString);
-        JSONArray ranges = jsonObject.optJSONArray("ranges");
+        JSONArray ranges = jsonObject.optJSONArray("ranges1");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
         List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
         Assert.assertNotNull(vulnerableSoftwares);
@@ -94,7 +94,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         Assert.assertEquals("2.13.2.1", vs.getVersionEndExcluding());
 
         vs = vulnerableSoftwares.get(2);
-        Assert.assertEquals(null, vs.getVersionStartIncluding());
+        Assert.assertNull(vs.getVersionStartIncluding());
         Assert.assertEquals("1.20.2", vs.getVersionEndExcluding());
     }
 

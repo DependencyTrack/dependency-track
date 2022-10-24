@@ -22,10 +22,12 @@ import java.util.List;
 import java.util.Date;
 import java.util.Collections;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
 public class SnykParser {
+
     private static final Logger LOGGER = Logger.getLogger(SnykParser.class);
 
     public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count) {
@@ -57,10 +59,9 @@ public class SnykParser {
 
                 for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
                     JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
-                    if((representation.length() == 1 && representation.get(0).equals("*"))){
-                        LOGGER.info("Range not defined properly. Skipping this element.");
-                    }
-                    else {
+                    if ((representation.length() == 1 && representation.get(0).equals("*"))) {
+                        LOGGER.warn("Range not defined properly. Skipping this purl: " + purl);
+                    } else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
                 }
@@ -212,34 +213,57 @@ public class SnykParser {
             for (String part : parts) {
                 if (part.startsWith(">=") || part.startsWith("[")) {
                     versionStartIncluding = part.replace(">=", "").replace("[", "").trim();
+                    if (versionStartIncluding.length() == 0 || versionStartIncluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else if (part.startsWith(">") || part.startsWith("(")) {
                     versionStartExcluding = part.replace(">", "").replace("(", "").trim();
+                    if (versionStartExcluding.length() == 0 || versionStartExcluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else if (part.startsWith("<=") || part.endsWith("]")) {
                     versionEndIncluding = part.replace("<=", "").replace("]", "").trim();
                 } else if (part.startsWith("<") || part.endsWith(")")) {
                     versionEndExcluding = part.replace("<", "").replace(")", "").trim();
+                    if (versionEndExcluding.length() == 0 || versionEndExcluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else if (part.startsWith("=")) {
                     versionStartIncluding = part.replace("=", "").trim();
                     versionEndIncluding = part.replace("=", "").trim();
+                    if (versionStartIncluding.length() == 0 || versionStartIncluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
+                    if (versionEndIncluding.length() == 0 || versionEndIncluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else { //since we are not able to parse specific range, we do not want to end up with false positives and therefore this part will be skipped from being saved to db.
-                    LOGGER.debug("Check this. " + purl+"\n Cannot parse this part. Skipping...");
+                    LOGGER.debug("Check this. " + purl + "\n Cannot parse this part. Skipping...");
                 }
             }
-            VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(),
-                    versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
-            if (vs == null) {
-                vs = new VulnerableSoftware();
-                vs.setVulnerable(true);
-                vs.setPurlType(packageURL.getType());
-                vs.setPurlNamespace(packageURL.getNamespace());
-                vs.setPurlName(packageURL.getName());
-                vs.setVersion(packageURL.getVersion());
-                vs.setVersionStartIncluding(versionStartIncluding);
-                vs.setVersionStartExcluding(versionStartExcluding);
-                vs.setVersionEndIncluding(versionEndIncluding);
-                vs.setVersionEndExcluding(versionEndExcluding);
+            //check for a numeric definite version range
+            if ((versionStartIncluding != null && versionEndIncluding != null) ||
+                    (versionStartIncluding != null && versionEndExcluding != null) ||
+                    (versionStartExcluding != null && versionEndIncluding != null) ||
+                    (versionStartExcluding != null && versionEndExcluding != null)) {
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(),
+                        versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                if (vs == null) {
+                    vs = new VulnerableSoftware();
+                    vs.setVulnerable(true);
+                    vs.setPurlType(packageURL.getType());
+                    vs.setPurlNamespace(packageURL.getNamespace());
+                    vs.setPurlName(packageURL.getName());
+                    vs.setVersion(packageURL.getVersion());
+                    vs.setVersionStartIncluding(versionStartIncluding);
+                    vs.setVersionStartExcluding(versionStartExcluding);
+                    vs.setVersionEndIncluding(versionEndIncluding);
+                    vs.setVersionEndExcluding(versionEndExcluding);
+                }
+                vulnerableSoftwares.add(vs);
+            } else {
+                LOGGER.warn("In else condition. Range not definite");
             }
-            vulnerableSoftwares.add(vs);
         }
         return vulnerableSoftwares;
     }

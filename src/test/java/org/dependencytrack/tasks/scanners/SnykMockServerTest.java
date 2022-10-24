@@ -8,6 +8,7 @@ import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.SnykAnalysisEvent;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.AfterClass;
@@ -19,8 +20,6 @@ import org.mockserver.integration.ClientAndServer;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.*;
@@ -88,18 +87,22 @@ public class SnykMockServerTest extends PersistenceCapableTest {
                 "http://localhost:1080",
                 IConfigProperty.PropertyType.STRING,
                 "url");
+        Project project = new Project();
+        project.setId(123);
+        project.setName("xyz");
         Component component = new Component();
+        component.setName("test");
+        component.setProject(project);
+        component.setId(0);
         component.setPurl(new PackageURL("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0"));
         component.setPurlCoordinates("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0");
-        List<Component> list = new ArrayList<>();
-        list.add(component);
+        component = qm.createComponent(component, false);
         SnykAnalysisTask task = new SnykAnalysisTask();
         SnykAnalysisEvent event = new SnykAnalysisEvent(component);
         task.inform(event);
-        //task.apiBaseUrl = "http://localhost:1080";
-        //task.analyze(list);
 
 
+        Component finalComponent = component;
         final Consumer<Vulnerability> assertVulnerability = (vulnerability) -> {
             Assert.assertNotNull(vulnerability);
             Assert.assertFalse(StringUtils.isEmpty(vulnerability.getTitle()));
@@ -110,10 +113,12 @@ public class SnykMockServerTest extends PersistenceCapableTest {
             Assert.assertNotNull(vulnerability.getAliases());
             Assert.assertEquals(1, vulnerability.getAliases().size());
             Assert.assertEquals("A", vulnerability.getAliases().get(0).getCveId());
+            Assert.assertTrue(qm.contains(vulnerability, finalComponent));
         };
 
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("SNYK", "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754", true);
         assertVulnerability.accept(vulnerability);
+        //Assert.assertNotNull();
 
     }
     private String readResourceFileToString(String fileName) throws Exception {

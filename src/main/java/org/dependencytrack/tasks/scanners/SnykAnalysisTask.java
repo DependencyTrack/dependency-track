@@ -68,8 +68,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
     private static final RetryConfig RETRY_CONFIG = RetryConfig.custom()
             .retryExceptions(IllegalStateException.class)
-            .waitDuration(Duration.ofSeconds(2))
-            .maxAttempts(3)
+            .waitDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_WAIT_BETWEEN_RETRIES)))
+            .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_MAX_RETRIES))
             .build();
     private String apiToken;
     private static int duration = 0;
@@ -179,6 +179,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                                     final HttpResponse<JsonNode> response = request.asJson();
                                     if (HttpStatus.TOO_MANY_REQUESTS == response.getStatus()
                                             || HttpStatus.SERVICE_UNAVAILABLE == response.getStatus()) {
+                                        LOGGER.warn("Received status "+response.getStatus()+".");
                                         throw new IllegalStateException();
                                     }
                                     return response;
@@ -196,8 +197,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                                 handleRequestException(LOGGER, e);
                             }
                         } else {
-                            LOGGER.info("Cache is current, apply snyk analysis from cache");
-                            LOGGER.info("Cache is current, apply snyk analysis from cache");
+                            LOGGER.debug("Cache is current, apply snyk analysis from cache");
                             applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
                         }
                     } finally {

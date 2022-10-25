@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Date;
 import java.util.Collections;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
@@ -60,7 +59,7 @@ public class SnykParser {
                 for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
                     JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
                     if ((representation.length() == 1 && representation.get(0).equals("*"))) {
-                        LOGGER.warn("Range not defined properly. Skipping this purl: " + purl);
+                        LOGGER.warn("Range only contains *. Skipping this purl: " + purl);
                     } else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
@@ -153,9 +152,7 @@ public class SnykParser {
     public JSONObject selectCvssObjectBasedOnSource(JSONArray cvssArray) {
 
         String cvssSourceHigh = getSnykCvssConfig(ConfigPropertyConstants.SCANNER_SNYK_CVSS_SOURCE);
-        String cvssSourceLow = cvssSourceHigh.equalsIgnoreCase(SnykCvssSource.NVD.toString()) ?
-                SnykCvssSource.SNYK.toString() :
-                SnykCvssSource.NVD.toString();
+        String cvssSourceLow = cvssSourceHigh.equalsIgnoreCase(SnykCvssSource.NVD.toString()) ? SnykCvssSource.SNYK.toString() : SnykCvssSource.NVD.toString();
         JSONObject cvss = cvssArray.optJSONObject(0);
         if (cvssArray.length() > 1) {
             for (int i = 0; i < cvssArray.length(); i++) {
@@ -242,12 +239,8 @@ public class SnykParser {
                 }
             }
             //check for a numeric definite version range
-            if ((versionStartIncluding != null && versionEndIncluding != null) ||
-                    (versionStartIncluding != null && versionEndExcluding != null) ||
-                    (versionStartExcluding != null && versionEndIncluding != null) ||
-                    (versionStartExcluding != null && versionEndExcluding != null)) {
-                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(),
-                        versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+            if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
                 if (vs == null) {
                     vs = new VulnerableSoftware();
                     vs.setVulnerable(true);
@@ -262,7 +255,7 @@ public class SnykParser {
                 }
                 vulnerableSoftwares.add(vs);
             } else {
-                LOGGER.warn("In else condition. Range not definite");
+                LOGGER.warn("Range not definite. The purl is : " + purl);
             }
         }
         return vulnerableSoftwares;
@@ -271,9 +264,7 @@ public class SnykParser {
     public String getSnykCvssConfig(ConfigPropertyConstants scannerSnykCvssSource) {
 
         try (QueryManager qm = new QueryManager()) {
-            final ConfigProperty property = qm.getConfigProperty(
-                    scannerSnykCvssSource.getGroupName(), scannerSnykCvssSource.getPropertyName()
-            );
+            final ConfigProperty property = qm.getConfigProperty(scannerSnykCvssSource.getGroupName(), scannerSnykCvssSource.getPropertyName());
             if (property != null && ConfigProperty.PropertyType.STRING == property.getPropertyType()) {
                 return property.getPropertyValue();
             }

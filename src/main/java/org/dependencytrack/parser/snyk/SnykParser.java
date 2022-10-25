@@ -59,7 +59,7 @@ public class SnykParser {
                 for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
                     JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
                     if ((representation.length() == 1 && representation.get(0).equals("*"))) {
-                        LOGGER.warn("Range only contains *. Skipping this purl: " + purl);
+                        LOGGER.warn("Range only contains *. Will not compute vulnerable software for this range. Purl is: "+purl);
                     } else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
@@ -67,11 +67,9 @@ public class SnykParser {
             }
             if (!vsList.isEmpty()) {
                 qm.persist(vsList);
-            }
-            synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            if (!vsList.isEmpty()) {
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
             }
+            synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;
@@ -235,7 +233,7 @@ public class SnykParser {
                         versionStartIncluding = null;
                     }
                 } else { //since we are not able to parse specific range, we do not want to end up with false positives and therefore this part will be skipped from being saved to db.
-                    LOGGER.debug("Check this. " + purl + "\n Cannot parse this part. Skipping...");
+                    LOGGER.warn("Range not definite. Not saving this vulnerable software information. The purl was: "+purl);
                 }
             }
             //check for a numeric definite version range
@@ -255,7 +253,7 @@ public class SnykParser {
                 }
                 vulnerableSoftwares.add(vs);
             } else {
-                LOGGER.warn("Range not definite. The purl is : " + purl);
+                LOGGER.warn("Range not definite. Not saving this vulnerable software information. The purl was: "+purl);
             }
         }
         return vulnerableSoftwares;

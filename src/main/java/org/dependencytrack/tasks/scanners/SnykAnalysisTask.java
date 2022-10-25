@@ -26,6 +26,8 @@ import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.MaxRetriesExceededException;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpStatus;
 import kong.unirest.HttpResponse;
@@ -71,10 +73,13 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BAS
 public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
-    private static final RetryConfig RETRY_CONFIG = RetryConfig.custom()
+
+    static IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
+            .ofExponentialBackoff(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_WAIT_BETWEEN_RETRIES)), Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MULTIPLY_FACTOR));
+        private static final RetryConfig RETRY_CONFIG = RetryConfig.custom().intervalFunction(intervalWithCustomExponentialBackoff)
             .retryExceptions(IllegalStateException.class)
-            .waitDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_WAIT_BETWEEN_RETRIES)))
             .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_MAX_RETRIES))
+            .failAfterMaxAttempts(true)
             .build();
     private static final ExecutorService EXECUTOR;
 
@@ -199,7 +204,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                                     final HttpResponse<JsonNode> response = request.asJson();
                                     if (HttpStatus.TOO_MANY_REQUESTS == response.getStatus()
                                             || HttpStatus.SERVICE_UNAVAILABLE == response.getStatus()) {
-                                        LOGGER.warn("Received status "+response.getStatus()+".");
+                                        LOGGER.warn("Received status " + response.getStatus() + ".");
                                         throw new IllegalStateException();
                                     }
                                     return response;
@@ -215,6 +220,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                                 }
                             } catch (UnirestException e) {
                                 handleRequestException(LOGGER, e);
+                            } catch (MaxRetriesExceededException ex) {
+                                LOGGER.error("Max retries exceeded with the retry config for snyk Analyzer. "+ex.getMessage());
                             }
                         } else {
                             LOGGER.debug("Cache is current, apply snyk analysis from cache");

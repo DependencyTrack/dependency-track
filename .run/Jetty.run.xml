@@ -2,26 +2,7 @@
   <configuration default="false" name="Jetty" type="MavenRunConfiguration" factoryName="Maven">
     <MavenSettings>
       <option name="myGeneralSettings" />
-      <option name="myRunnerSettings">
-        <MavenRunnerSettings>
-          <option name="delegateBuildToMaven" value="false" />
-          <option name="environmentProperties">
-            <map>
-              <entry key="SNYK_MAX_RETRIES" value="4" />
-              <entry key="SNYK_THREAD_BATCH_SIZE" value="10" />
-              <entry key="SNYK_WAIT_BETWEEN_RETRIES" value="6" />
-            </map>
-          </option>
-          <option name="jreName" value="#USE_PROJECT_JDK" />
-          <option name="mavenProperties">
-            <map />
-          </option>
-          <option name="passParentEnv" value="true" />
-          <option name="runMavenInBackground" value="true" />
-          <option name="skipTests" value="false" />
-          <option name="vmOptions" value="" />
-        </MavenRunnerSettings>
-      </option>
+      <option name="myRunnerSettings" />
       <option name="myRunnerParameters">
         <MavenRunnerParameters>
           <option name="profiles">

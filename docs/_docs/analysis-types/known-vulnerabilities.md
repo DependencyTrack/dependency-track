@@ -13,7 +13,7 @@ vulnerabilities. The platform employs several methods of vulnerability identific
 | Internal  | Identifies vulnerable components from an internal directory of vulnerable software                     |
 | OSS Index | OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components |
 | VulnDB    | VulnDB is a commercial service which identifies vulnerabilities in third-party components              |
-| Snyk      | Snyk is an open source service which identifies vulnerabilities in third-party components                                                       |
+| Snyk      | Snyk is a commercial service which identifies vulnerabilities in third-party components                |
 
 
 Each of the analyzers above can be enabled or disabled independently from one another.

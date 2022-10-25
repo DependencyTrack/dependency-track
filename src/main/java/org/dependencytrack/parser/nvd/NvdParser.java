@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.Date;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -296,6 +297,8 @@ public final class NvdParser {
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionStartIncluding(versionStartIncluding);
+            vs.setReportedBy(Vulnerability.Source.NVD.toString());
+            vs.setUpdated(java.util.Date.from(Instant.now()));
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;
         } catch (CpeParsingException | CpeEncodingException e) {

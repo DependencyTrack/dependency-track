@@ -55,6 +55,7 @@ import org.dependencytrack.persistence.QueryManager;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -300,6 +301,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionEndExcluding(versionEndExcluding);
+            vs.setReportedBy(Vulnerability.Source.GITHUB.toString());
+            vs.setUpdated(Date.from(Instant.now()));
             return vs;
         } catch (MalformedPackageURLException e) {
             LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName() + " for: " + advisory.getGhsaId());

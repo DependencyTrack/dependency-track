@@ -46,7 +46,9 @@ import us.springett.vulndbdatamirror.parser.model.Version;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -186,6 +188,8 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             vs.setVersionEndIncluding(null);
             vs.setVersionStartExcluding(null);
             vs.setVersionStartIncluding(null);
+            vs.setReportedBy(Vulnerability.Source.VULNDB.toString());
+            vs.setUpdated(Date.from(Instant.now()));
             vs = qm.persist(vs);
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;

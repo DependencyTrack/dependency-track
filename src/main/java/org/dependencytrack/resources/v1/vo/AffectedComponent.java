@@ -31,6 +31,7 @@ import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import java.sql.Date;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -58,6 +59,8 @@ public class AffectedComponent {
     private String versionStartExcluding;
     private String versionStartIncluding;
     private UUID uuid;
+    private String reportedBy;
+    private String updated;
 
     public AffectedComponent() {
     }
@@ -103,6 +106,12 @@ public class AffectedComponent {
             versionEndIncluding = vs.getVersionEndIncluding();
             versionStartExcluding = vs.getVersionStartExcluding();
             versionStartIncluding = vs.getVersionStartIncluding();
+        }
+        if (vs.getReportedBy() != null) {
+            reportedBy = vs.getReportedBy();
+        }
+        if (vs.getUpdated() != null) {
+            updated = vs.getUpdated().toString();
         }
         uuid = vs.getUuid();
     }
@@ -179,6 +188,22 @@ public class AffectedComponent {
         this.uuid = uuid;
     }
 
+    public String getReportedBy() {
+        return reportedBy;
+    }
+
+    public void setReportedBy(String reportedBy) {
+        this.reportedBy = reportedBy;
+    }
+
+    public String getUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(String updated) {
+        this.updated = updated;
+    }
+
     public VulnerableSoftware toVulnerableSoftware() {
         final VulnerableSoftware vs = new VulnerableSoftware();
         if (IdentityType.CPE == this.identityType && this.identity != null) {
@@ -227,6 +252,8 @@ public class AffectedComponent {
             vs.setVersionStartExcluding(this.versionStartExcluding);
             vs.setVersionEndIncluding(this.versionEndIncluding);
             vs.setVersionEndExcluding(this.versionEndExcluding);
+            vs.setReportedBy(this.reportedBy);
+            vs.setUpdated(Date.valueOf(this.updated));
         }
         return vs;
     }

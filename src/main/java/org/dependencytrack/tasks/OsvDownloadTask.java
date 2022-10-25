@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -313,6 +314,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionStartIncluding(versionStartIncluding);
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);
+        vs.setReportedBy(Vulnerability.Source.OSV.toString());
+        vs.setUpdated(Date.from(Instant.now()));
         return vs;
     }
 

@@ -18,9 +18,14 @@
  */
 package org.dependencytrack.model;
 
+import alpine.common.validation.RegexSequence;
+import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.dependencytrack.resources.v1.serializers.Iso8601DateSerializer;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -33,8 +38,12 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,6 +98,20 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Persistent
     @Column(name = "PURL_SUBPATH", jdbcType = "VARCHAR")
     private String purlSubpath;
+
+    @Persistent
+    @Column(name = "REPORTED_BY", allowsNull = "false")
+    @NotBlank
+    @Size(min = 1, max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The source of reporting may only contain printable characters")
+    private String reportedBy;
+
+    @Persistent
+    @Column(name = "UPDATED")
+    @Index(name = "VULNERABLESOFTWARE_UPDATED_IDX")
+    @JsonSerialize(using = Iso8601DateSerializer.class)
+    private Date updated;
 
     @Persistent
     @Column(name = "CPE22", jdbcType = "VARCHAR")
@@ -402,5 +425,21 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public String getReportedBy() {
+        return reportedBy;
+    }
+
+    public void setReportedBy(String reportedBy) {
+        this.reportedBy = reportedBy;
+    }
+
+    public Date getUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(Date updated) {
+        this.updated = updated;
     }
 }

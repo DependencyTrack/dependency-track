@@ -17,6 +17,7 @@ import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -231,6 +232,8 @@ public class SnykParser {
                 vs.setVersionStartExcluding(versionStartExcluding);
                 vs.setVersionEndIncluding(versionEndIncluding);
                 vs.setVersionEndExcluding(versionEndExcluding);
+                vs.setReportedBy(Vulnerability.Source.SNYK.toString());
+                vs.setUpdated(Date.from(Instant.now()));
             }
             vulnerableSoftwares.add(vs);
         }

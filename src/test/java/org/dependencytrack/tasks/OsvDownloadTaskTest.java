@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dependencytrack.task;
+package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;

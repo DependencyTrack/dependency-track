@@ -27,6 +27,7 @@ import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import kong.unirest.GetRequest;
+import kong.unirest.HttpStatus;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
@@ -47,6 +48,8 @@ import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.snyk.SnykParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -68,6 +71,11 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BAS
 public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
+    private static final RetryConfig RETRY_CONFIG = RetryConfig.custom()
+            .retryExceptions(IllegalStateException.class)
+            .waitDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_WAIT_BETWEEN_RETRIES)))
+            .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_MAX_RETRIES))
+            .build();
     private static final ExecutorService EXECUTOR;
 
     static {
@@ -187,7 +195,15 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                             try {
                                 final GetRequest request = ui.get(snykUrl)
                                         .header(HttpHeaders.AUTHORIZATION, this.apiToken);
-                                final HttpResponse<JsonNode> jsonResponse = request.asJson();
+                                final HttpResponse<JsonNode> jsonResponse = Retry.of("getSnykResponse", RETRY_CONFIG).executeSupplier(() -> {
+                                    final HttpResponse<JsonNode> response = request.asJson();
+                                    if (HttpStatus.TOO_MANY_REQUESTS == response.getStatus()
+                                            || HttpStatus.SERVICE_UNAVAILABLE == response.getStatus()) {
+                                        LOGGER.warn("Received status "+response.getStatus()+".");
+                                        throw new IllegalStateException();
+                                    }
+                                    return response;
+                                });
                                 if (jsonResponse.getStatus() == 200 || jsonResponse.getStatus() == 404) {
                                     if (jsonResponse.getStatus() == 200) {
                                         handle(component, jsonResponse.getBody().getObject(), jsonResponse.getStatus());

@@ -26,9 +26,11 @@ Provide the token (**without** 'token' prefixed) in the configuration as shown b
 
 **Snyk base URL** is set by default, can be changed per requirement.
 
-**Snyk API version** is set by default to latest version. It is updated every 6 months and might get expired causing API communication failure in which case it will be updated in next upcoming DT release.
-User can change it manually here. Please refer [API](https://apidocs.snyk.io/?version=2022-10-06#overview) to submit the correct version.
-**Number of threads for Snyk Analyzer to use** Snyk analyzer is implemented with multithreading model to complete the analysis faster. The number of threads that would be used is configurable. By default, it is set to 10. The value can be overridden by exporting this environment variable: `SNYK_THREAD_BATCH_SIZE`. The value can be set based on the configuration of the machine. 
+**Snyk API version** is set by default to latest version. It is updated every 6 months and might get expired causing API communication failure in which case it will be updated in next upcoming DT release.<br/>
+User can change it manually here. Please refer [API](https://apidocs.snyk.io/?version=2022-10-06#overview) to submit the correct version.<br/>
+**Number of threads for Snyk Analyzer to use** Snyk analyzer is implemented with multithreading model to complete the analysis faster. The number of threads that would be used is configurable. By default, it is set to 10. The value can be overridden by exporting this environment variable: `SNYK_THREAD_BATCH_SIZE`. The value can be set based on the configuration of the machine. <br/>
+**Maximum number of retries** To avoid/ reduce the number of rate limiting issues with the Snyk Api, the Snyk Analyzer currently performs a retry on its own in the case it sees a 429 or 500 from the Snyk api server. The default number of retries is 3 and is configurable. The environment variable to export is : `SNYK_MAX_RETRIES`.<br/>
+**Wait time between retries** To avoid/ reduce the number of rate limiting issues with the Snyk Api, the Snyk Analyzer currently waits between the retries in the cases when it sees a 429 or 500 from the Snyk api server. The default wait time is 2 seconds and is configurable. The environment variable to export is : `SNYK_WAIT_BETWEEN_RETRIES`.<br/>
 
 ![](../../images/snyk-configuration.png)
 

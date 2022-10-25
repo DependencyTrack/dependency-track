@@ -22,9 +22,11 @@ import java.util.List;
 import java.util.Date;
 import java.util.Collections;
 import java.util.Arrays;
+
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
 public class SnykParser {
+
     private static final Logger LOGGER = Logger.getLogger(SnykParser.class);
 
     public Vulnerability parse(JSONArray data, QueryManager qm, String purl, int count) {
@@ -56,14 +58,20 @@ public class SnykParser {
 
                 for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
                     JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
-                    if (representation != null) {
+                    if ((representation.length() == 1 && representation.get(0).equals("*"))) {
+                        LOGGER.warn("Range only contains *. Skipping this purl: " + purl);
+                    } else {
                         vsList = parseVersionRanges(qm, purl, representation);
                     }
                 }
             }
-            qm.persist(vsList);
+            if (!vsList.isEmpty()) {
+                qm.persist(vsList);
+            }
             synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            synchronizedVulnerability.setVulnerableSoftware(vsList);
+            if (!vsList.isEmpty()) {
+                synchronizedVulnerability.setVulnerableSoftware(vsList);
+            }
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;
@@ -144,9 +152,7 @@ public class SnykParser {
     public JSONObject selectCvssObjectBasedOnSource(JSONArray cvssArray) {
 
         String cvssSourceHigh = getSnykCvssConfig(ConfigPropertyConstants.SCANNER_SNYK_CVSS_SOURCE);
-        String cvssSourceLow = cvssSourceHigh.equalsIgnoreCase(SnykCvssSource.NVD.toString()) ?
-                SnykCvssSource.SNYK.toString() :
-                SnykCvssSource.NVD.toString();
+        String cvssSourceLow = cvssSourceHigh.equalsIgnoreCase(SnykCvssSource.NVD.toString()) ? SnykCvssSource.SNYK.toString() : SnykCvssSource.NVD.toString();
         JSONObject cvss = cvssArray.optJSONObject(0);
         if (cvssArray.length() > 1) {
             for (int i = 0; i < cvssArray.length(); i++) {
@@ -186,7 +192,6 @@ public class SnykParser {
             LOGGER.debug("Invalid PURL  " + purl + " - skipping", ex);
             return Collections.emptyList();
         }
-
         for (int i = 0; i < ranges.length(); i++) {
 
             String range = ranges.optString(i);
@@ -194,6 +199,7 @@ public class SnykParser {
             String versionStartExcluding = null;
             String versionEndIncluding = null;
             String versionEndExcluding = null;
+
             final String[] parts;
 
             if (range.contains(",")) {
@@ -204,35 +210,53 @@ public class SnykParser {
             for (String part : parts) {
                 if (part.startsWith(">=") || part.startsWith("[")) {
                     versionStartIncluding = part.replace(">=", "").replace("[", "").trim();
+                    if (versionStartIncluding.length() == 0 || versionStartIncluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else if (part.startsWith(">") || part.startsWith("(")) {
                     versionStartExcluding = part.replace(">", "").replace("(", "").trim();
+                    if (versionStartExcluding.length() == 0 || versionStartExcluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else if (part.startsWith("<=") || part.endsWith("]")) {
                     versionEndIncluding = part.replace("<=", "").replace("]", "").trim();
                 } else if (part.startsWith("<") || part.endsWith(")")) {
                     versionEndExcluding = part.replace("<", "").replace(")", "").trim();
+                    if (versionEndExcluding.length() == 0 || versionEndExcluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
                 } else if (part.startsWith("=")) {
                     versionStartIncluding = part.replace("=", "").trim();
                     versionEndIncluding = part.replace("=", "").trim();
-                } else {
-                    LOGGER.warn("Unable to determine version range " + part);
+                    if (versionStartIncluding.length() == 0 || versionStartIncluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
+                    if (versionEndIncluding.length() == 0 || versionEndIncluding.contains("*")) {
+                        versionStartIncluding = null;
+                    }
+                } else { //since we are not able to parse specific range, we do not want to end up with false positives and therefore this part will be skipped from being saved to db.
+                    LOGGER.debug("Check this. " + purl + "\n Cannot parse this part. Skipping...");
                 }
             }
-
-            VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(),
-                    versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
-            if (vs == null) {
-                vs = new VulnerableSoftware();
-                vs.setVulnerable(true);
-                vs.setPurlType(packageURL.getType());
-                vs.setPurlNamespace(packageURL.getNamespace());
-                vs.setPurlName(packageURL.getName());
-                vs.setVersion(packageURL.getVersion());
-                vs.setVersionStartIncluding(versionStartIncluding);
-                vs.setVersionStartExcluding(versionStartExcluding);
-                vs.setVersionEndIncluding(versionEndIncluding);
-                vs.setVersionEndExcluding(versionEndExcluding);
+            //check for a numeric definite version range
+            if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                if (vs == null) {
+                    vs = new VulnerableSoftware();
+                    vs.setVulnerable(true);
+                    vs.setPurlType(packageURL.getType());
+                    vs.setPurlNamespace(packageURL.getNamespace());
+                    vs.setPurlName(packageURL.getName());
+                    vs.setVersion(packageURL.getVersion());
+                    vs.setVersionStartIncluding(versionStartIncluding);
+                    vs.setVersionStartExcluding(versionStartExcluding);
+                    vs.setVersionEndIncluding(versionEndIncluding);
+                    vs.setVersionEndExcluding(versionEndExcluding);
+                }
+                vulnerableSoftwares.add(vs);
+            } else {
+                LOGGER.warn("Range not definite. The purl is : " + purl);
             }
-            vulnerableSoftwares.add(vs);
         }
         return vulnerableSoftwares;
     }
@@ -240,9 +264,7 @@ public class SnykParser {
     public String getSnykCvssConfig(ConfigPropertyConstants scannerSnykCvssSource) {
 
         try (QueryManager qm = new QueryManager()) {
-            final ConfigProperty property = qm.getConfigProperty(
-                    scannerSnykCvssSource.getGroupName(), scannerSnykCvssSource.getPropertyName()
-            );
+            final ConfigProperty property = qm.getConfigProperty(scannerSnykCvssSource.getGroupName(), scannerSnykCvssSource.getPropertyName());
             if (property != null && ConfigProperty.PropertyType.STRING == property.getPropertyType()) {
                 return property.getPropertyValue();
             }

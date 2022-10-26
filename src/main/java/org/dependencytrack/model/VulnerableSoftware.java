@@ -100,9 +100,7 @@ public class VulnerableSoftware implements ICpe, Serializable {
     private String purlSubpath;
 
     @Persistent
-    @Column(name = "REPORTED_BY", allowsNull = "false")
-    @NotBlank
-    @Size(min = 1, max = 255)
+    @Column(name = "REPORTED_BY")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The source of reporting may only contain printable characters")
     private String reportedBy;

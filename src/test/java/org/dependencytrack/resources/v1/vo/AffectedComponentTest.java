@@ -152,6 +152,13 @@ public class AffectedComponentTest {
             assertThat(affectedComponent.getVersionEndExcluding()).isEqualTo("qux");
         }
 
+        @Test
+        public void shouldMapReportedBy() {
+            final var vs = new VulnerableSoftware();
+            vs.setReportedBy("SNYK");
+            final var affectedComponent = new AffectedComponent(vs);
+            assertThat(affectedComponent.getReportedBy()).isEqualTo("SNYK");
+        }
     }
 
     public static class ToVulnerableSoftwareTest {
@@ -291,7 +298,6 @@ public class AffectedComponentTest {
             assertThat(vs.getVersionEndIncluding()).isEqualTo("baz");
             assertThat(vs.getVersionEndExcluding()).isEqualTo("qux");
         }
-
     }
 
 }

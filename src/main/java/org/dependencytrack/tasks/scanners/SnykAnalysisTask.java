@@ -26,10 +26,10 @@ import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import io.github.resilience4j.core.IntervalFunction;
-import io.github.resilience4j.retry.MaxRetriesExceededException;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import kong.unirest.GetRequest;
-import kong.unirest.HttpStatus;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestException;
@@ -50,8 +50,6 @@ import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.snyk.SnykParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -74,13 +72,13 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
 
-    static IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
-            .ofExponentialBackoff(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_WAIT_BETWEEN_RETRIES)), Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MULTIPLY_FACTOR));
-        private static final RetryConfig RETRY_CONFIG = RetryConfig.custom().intervalFunction(intervalWithCustomExponentialBackoff)
-            .retryExceptions(IllegalStateException.class)
-            .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_MAX_RETRIES))
-            .failAfterMaxAttempts(true)
+    private static final RateLimiterConfig config = RateLimiterConfig.custom()
+            .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_FOR_PERIOD))
+            .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_TIMEOUT_DURATION)))
+            .limitRefreshPeriod(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_REFRESH_PERIOD)))
             .build();
+    RateLimiterRegistry registry = RateLimiterRegistry.of(config);
+    RateLimiter limiter = registry.rateLimiter("SnykAnalysis");
     private static final ExecutorService EXECUTOR;
 
     static {
@@ -98,7 +96,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
     private String apiBaseUrl;
     private String apiEndPoint = "/issues?";
     private String apiToken;
-    private int duration = 0;
+    private Long duration = 0L;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -148,8 +146,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                 try {
                     apiToken = "token " + DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                     apiEndPoint += "version=" + apiVersionProperty.getPropertyValue().trim();
-                    String ORG_ID = orgIdProperty.getPropertyValue();
-                    apiBaseUrl = baseUrl + "/rest/orgs/" + ORG_ID + "/packages/";
+                    String orgId = orgIdProperty.getPropertyValue();
+                    apiBaseUrl = baseUrl + "/rest/orgs/" + orgId + "/packages/";
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the Snyk API Token. Skipping", ex);
                     return;
@@ -162,8 +160,9 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
             }
             Instant end = Instant.now();
             LOGGER.info("Snyk vulnerability analysis complete");
-            Duration timeElapsed = Duration.between(start, end);
-            LOGGER.info("Time taken to complete snyk vulnerability analysis task: " + timeElapsed.toMillis() + duration + " milliseconds");
+            long timeElapsed = Duration.between(start, end).toMillis();
+            timeElapsed+=duration;
+            LOGGER.info("Time taken to complete snyk vulnerability analysis task: " + timeElapsed + " milliseconds");
         }
     }
 
@@ -200,15 +199,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                             try {
                                 final GetRequest request = ui.get(snykUrl)
                                         .header(HttpHeaders.AUTHORIZATION, this.apiToken);
-                                final HttpResponse<JsonNode> jsonResponse = Retry.of("getSnykResponse", RETRY_CONFIG).executeSupplier(() -> {
-                                    final HttpResponse<JsonNode> response = request.asJson();
-                                    if (HttpStatus.TOO_MANY_REQUESTS == response.getStatus()
-                                            || HttpStatus.SERVICE_UNAVAILABLE == response.getStatus()) {
-                                        LOGGER.warn("Received status " + response.getStatus() + ".");
-                                        throw new IllegalStateException();
-                                    }
-                                    return response;
-                                });
+                                final HttpResponse<JsonNode> jsonResponse = request.asJson();
                                 if (jsonResponse.getStatus() == 200 || jsonResponse.getStatus() == 404) {
                                     if (jsonResponse.getStatus() == 200) {
                                         handle(component, jsonResponse.getBody().getObject(), jsonResponse.getStatus());
@@ -220,8 +211,6 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                                 }
                             } catch (UnirestException e) {
                                 handleRequestException(LOGGER, e);
-                            } catch (MaxRetriesExceededException ex) {
-                                LOGGER.error("Max retries exceeded with the retry config for snyk Analyzer. "+ex.getMessage());
                             }
                         } else {
                             LOGGER.debug("Cache is current, apply snyk analysis from cache");
@@ -231,9 +220,9 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                         countDownLatch.countDown();
                     }
                 };
+                analysisUtil = RateLimiter.decorateRunnable(limiter, analysisUtil);
                 Instant startThread = Instant.now();
                 EXECUTOR.execute(analysisUtil);
-
                 Instant endThread = Instant.now();
                 duration += Duration.between(startThread, endThread).toMillis();
             }

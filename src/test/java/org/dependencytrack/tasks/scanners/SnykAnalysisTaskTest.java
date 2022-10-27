@@ -77,27 +77,40 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
         String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
         jsonObject = new JSONObject(jsonString);
-        JSONArray ranges = jsonObject.optJSONArray("ranges");
+        JSONArray ranges = jsonObject.optJSONArray("range0");
         String purl = "pkg:npm/bootstrap-table@1.20.0";
         List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
         Assert.assertNotNull(vulnerableSoftwares);
-        Assert.assertEquals(3, vulnerableSoftwares.size());
+        Assert.assertEquals(1, vulnerableSoftwares.size());
 
         VulnerableSoftware vs = vulnerableSoftwares.get(0);
-        Assert.assertEquals("npm", vs.getPurlType());
-        Assert.assertEquals("bootstrap-table", vs.getPurlName());
-        Assert.assertEquals("", vs.getVersionStartIncluding());
-        Assert.assertEquals("2.12.6.1", vs.getVersionEndExcluding());
-
-        vs = vulnerableSoftwares.get(1);
         Assert.assertEquals("2.13.0", vs.getVersionStartIncluding());
         Assert.assertEquals("2.13.2.1", vs.getVersionEndExcluding());
-
-        vs = vulnerableSoftwares.get(2);
-        Assert.assertEquals(null, vs.getVersionStartIncluding());
-        Assert.assertEquals("1.20.2", vs.getVersionEndExcluding());
     }
 
+    @Test
+    public void testParseVersionRangesStar() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range2");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
+        Assert.assertNotNull(vulnerableSoftwares);
+        Assert.assertEquals(0, vulnerableSoftwares.size());
+    }
+
+    @Test
+    public void testParseVersionIndefiniteRanges() throws IOException {
+
+        String jsonString = new String(Files.readAllBytes(Paths.get("src/test/resources/unit/snyk.jsons/ranges.json")));
+        jsonObject = new JSONObject(jsonString);
+        JSONArray ranges = jsonObject.optJSONArray("range1");
+        String purl = "pkg:npm/bootstrap-table@1.20.0";
+        List<VulnerableSoftware> vulnerableSoftwares = parser.parseVersionRanges(qm, purl, ranges);
+        Assert.assertNotNull(vulnerableSoftwares);
+        Assert.assertEquals(0, vulnerableSoftwares.size());
+    }
     @Test
     public void testParseSeveritiesNvd() throws IOException {
 

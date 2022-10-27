@@ -34,15 +34,12 @@ public class AnalysisDecisionChangeTest {
     public void testVo() {
         Vulnerability vuln = new Vulnerability();
         Component component = new Component();
-        Set<Project> affectedProjects = new HashSet<>();
         Project project = new Project();
-        affectedProjects.add(project);
         Analysis analysis = new Analysis();
-        AnalysisDecisionChange vo = new AnalysisDecisionChange(vuln, component, affectedProjects, analysis);
+        AnalysisDecisionChange vo = new AnalysisDecisionChange(vuln, component, project, analysis);
         Assert.assertEquals(vuln, vo.getVulnerability());
         Assert.assertEquals(component, vo.getComponent());
-        Assert.assertEquals(1, vo.getAffectedProjects().size());
-        Assert.assertEquals(project, vo.getAffectedProjects().iterator().next());
+        Assert.assertEquals(project, vo.getProject());
         Assert.assertEquals(analysis, vo.getAnalysis());
     }
 }

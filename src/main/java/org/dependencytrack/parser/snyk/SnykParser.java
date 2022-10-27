@@ -254,10 +254,11 @@ public class SnykParser {
                     vs.setVersionEndExcluding(versionEndExcluding);
                     qm.persist(new AffectedVersionAttribution(Vulnerability.Source.SNYK, vs));
                 } else {
-                  AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.SNYK);
-                  if (affectedVersionAttribution == null) {
-                      qm.persist(new AffectedVersionAttribution(Vulnerability.Source.SNYK, vs));
-                  }
+                    AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.SNYK);
+                    if (affectedVersionAttribution == null) {
+                        qm.persist(new AffectedVersionAttribution(Vulnerability.Source.SNYK, vs));
+                    }
+                }
                 vulnerableSoftwares.add(vs);
             } else {
                 LOGGER.debug("Range not definite. Not saving this vulnerable software information. The purl was: "+purl);

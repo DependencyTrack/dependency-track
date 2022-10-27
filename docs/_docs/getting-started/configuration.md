@@ -350,12 +350,29 @@ alpine.oidc.team.synchronization=false
 # will most likely need to be configured.
 alpine.oidc.teams.claim=groups
 
-# Required
+# Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
 # The thread pool will only be used when Snyk integration is enabled.
 # A high number may result in a quicker excession of API rate limits, 
 # while a number that is too low may result in vulnerability analyses taking too long.
 snyk.thread.batch.size=10
+
+# Optional
+# Defines the maximum number of requests that the Snyk analyzer would make in a given period. 
+# The default value is 1500
+snyk.limit.for.period=1500
+
+# Optional
+# Defines the maximum number of seconds the thread will wait before timing out.This value is in seconds.
+# Currently the Snyk Analyzer is multithreaded and each thread waits for the permission from the rate limiter.
+# The default value is 60
+snyk.thread.timeout.duration=60
+
+# Optional
+# Defines the time after which the number of permissions are refreshed to the set value by the rate limiter.
+# The rate limiter would refresh the number of permissions available after every "limit refresh period".
+# This value is in seconds. The default value is 60
+snyk.limit.refresh.period=60
 ```
 
 #### Proxy Configuration

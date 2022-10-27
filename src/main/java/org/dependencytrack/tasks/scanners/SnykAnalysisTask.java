@@ -26,6 +26,9 @@ import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -68,6 +71,14 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BAS
 public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
+
+    private static final RateLimiterConfig config = RateLimiterConfig.custom()
+            .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_FOR_PERIOD))
+            .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_TIMEOUT_DURATION)))
+            .limitRefreshPeriod(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_REFRESH_PERIOD)))
+            .build();
+    RateLimiterRegistry registry = RateLimiterRegistry.of(config);
+    RateLimiter limiter = registry.rateLimiter("SnykAnalysis");
     private static final ExecutorService EXECUTOR;
 
     static {
@@ -85,7 +96,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
     private String apiBaseUrl;
     private String apiEndPoint = "/issues?";
     private String apiToken;
-    private int duration = 0;
+    private Long duration = 0L;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -135,8 +146,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                 try {
                     apiToken = "token " + DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                     apiEndPoint += "version=" + apiVersionProperty.getPropertyValue().trim();
-                    String ORG_ID = orgIdProperty.getPropertyValue();
-                    apiBaseUrl = baseUrl + "/rest/orgs/" + ORG_ID + "/packages/";
+                    String orgId = orgIdProperty.getPropertyValue();
+                    apiBaseUrl = baseUrl + "/rest/orgs/" + orgId + "/packages/";
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the Snyk API Token. Skipping", ex);
                     return;
@@ -149,8 +160,9 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
             }
             Instant end = Instant.now();
             LOGGER.info("Snyk vulnerability analysis complete");
-            Duration timeElapsed = Duration.between(start, end);
-            LOGGER.info("Time taken to complete snyk vulnerability analysis task: " + timeElapsed.toMillis() + duration + " milliseconds");
+            long timeElapsed = Duration.between(start, end).toMillis();
+            timeElapsed += duration;
+            LOGGER.info("Time taken to complete snyk vulnerability analysis task: " + timeElapsed + " milliseconds");
         }
     }
 
@@ -174,46 +186,41 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        int trackComponent = 0;
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
         CountDownLatch countDownLatch = new CountDownLatch(components.size());
         for (final Component component : components) {
-            if (trackComponent < components.size()) {
-                trackComponent += 1;
-                Runnable analysisUtil = () -> {
+            Runnable analysisUtil = () -> {
+                try {
+                    final String snykUrl = apiBaseUrl + URLEncoder.encode(component.getPurlCoordinates().toString(), StandardCharsets.UTF_8) + apiEndPoint;
                     try {
-                        final String snykUrl = apiBaseUrl + URLEncoder.encode(component.getPurlCoordinates().toString(), StandardCharsets.UTF_8) + apiEndPoint;
-                        if (!isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString())) {
-                            try {
-                                final GetRequest request = ui.get(snykUrl)
-                                        .header(HttpHeaders.AUTHORIZATION, this.apiToken);
-                                final HttpResponse<JsonNode> jsonResponse = request.asJson();
-                                if (jsonResponse.getStatus() == 200 || jsonResponse.getStatus() == 404) {
-                                    if (jsonResponse.getStatus() == 200) {
-                                        handle(component, jsonResponse.getBody().getObject(), jsonResponse.getStatus());
-                                    } else if (jsonResponse.getStatus() == 404) {
-                                        handle(component, null, jsonResponse.getStatus());
-                                    }
-                                } else {
-                                    handleUnexpectedHttpResponse(LOGGER, apiBaseUrl, jsonResponse.getStatus(), jsonResponse.getStatusText());
-                                }
-                            } catch (UnirestException e) {
-                                handleRequestException(LOGGER, e);
+                        final GetRequest request = ui.get(snykUrl)
+                                .header(HttpHeaders.AUTHORIZATION, this.apiToken);
+                        final HttpResponse<JsonNode> jsonResponse = request.asJson();
+                        if (jsonResponse.getStatus() == 200 || jsonResponse.getStatus() == 404) {
+                            if (jsonResponse.getStatus() == 200) {
+                                handle(component, jsonResponse.getBody().getObject(), jsonResponse.getStatus());
+                            } else if (jsonResponse.getStatus() == 404) {
+                                handle(component, null, jsonResponse.getStatus());
                             }
                         } else {
-                            LOGGER.debug("Cache is current, apply snyk analysis from cache");
-                            applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
+                            handleUnexpectedHttpResponse(LOGGER, apiBaseUrl, jsonResponse.getStatus(), jsonResponse.getStatusText());
                         }
-                    } finally {
-                        countDownLatch.countDown();
+                    } catch (UnirestException e) {
+                        handleRequestException(LOGGER, e);
                     }
-                };
-                Instant startThread = Instant.now();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            };
+            analysisUtil = RateLimiter.decorateRunnable(limiter, analysisUtil);
+            Instant startThread = Instant.now();
+            if (!isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString())) {
                 EXECUTOR.execute(analysisUtil);
-
-                Instant endThread = Instant.now();
-                duration += Duration.between(startThread, endThread).toMillis();
+            } else {
+                applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
             }
+            Instant endThread = Instant.now();
+            duration += Duration.between(startThread, endThread).toMillis();
         }
         try {
             if (!countDownLatch.await(60, TimeUnit.MINUTES)) {
@@ -222,7 +229,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                 // while for the processing of the respective event to complete.
                 // It is unlikely though that either of these situations causes a block for
                 // over 60 minutes. If that happens, the system is under-resourced.
-                LOGGER.warn("The Analysis for project :" + components.get(0).getProject().getName() + "took longer than expected");
+                LOGGER.debug("The Analysis for project :" + components.get(0).getProject().getName() + "took longer than expected");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

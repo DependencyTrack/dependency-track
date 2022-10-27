@@ -26,10 +26,13 @@ Provide the token (**without** 'token' prefixed) in the configuration as shown b
 
 **Snyk base URL** is set by default, can be changed per requirement.
 
-**Snyk API version** is set by default to latest version. It is updated every 6 months and might get expired causing API communication failure in which case it will be updated in next upcoming DT release.
-User can change it manually here. Please refer [API](https://apidocs.snyk.io/?version=2022-10-06#overview) to submit the correct version.
-**Number of threads for Snyk Analyzer to use** Snyk analyzer is implemented with multithreading model to complete the analysis faster. The number of threads that would be used is configurable. By default, it is set to 10. The value can be overridden by exporting this environment variable: `SNYK_THREAD_BATCH_SIZE`. The value can be set based on the configuration of the machine. 
-
+**Snyk API version** is set by default to latest version. It is updated every 6 months and might get expired causing API communication failure in which case it will be updated in next upcoming DT release.<br/>
+User can change it manually here. Please refer [API](https://apidocs.snyk.io/?version=2022-10-06#overview) to submit the correct version.<br/>
+**Number of threads for Snyk Analyzer to use** Snyk analyzer is implemented with multithreading model to complete the analysis faster. The number of threads that would be used is configurable. By default, it is set to 10. The value can be overridden by exporting this environment variable: `SNYK_THREAD_BATCH_SIZE`. The value can be set based on the configuration of the machine. <br/>
+To avoid running into rate limiting issues from the Snyk purl api server, the Snyk Analyzer currently makes use of client side rate limiting functionality. There are three configurable values for this: <br/>
+**Maximum number of requests allowed in a period of time** The maximum number of requests that the analyzer would make in a given period. This value is configurable by exporting the environment variable: `SNYK_LIMIT_FOR_PERIOD`. The default value for this is 1500<br/>
+**Timeout duration for a waiting thread** Currently the Snyk Analyzer is multithreaded. And each thread waits for the permission from the rate limiter. This is the maximum number of seconds the thread will wait before timing out. This property can be configured by exporting the environment variable: `SNYK_THREAD_TIMEOUT_DURATION`. The default value is 60 seconds.<br/>
+**Limit refresh period** The rate limiter would refresh the number of permissions available after every "limit refresh period". This value is in seconds and is configured with the environment variable: `SNYK_LIMIT_REFRESH_PERIOD`. The default value for this property is 60 seconds.<br/>
 ![](../../images/snyk-configuration.png)
 
 ### Understanding Snyk's CVSS analysis

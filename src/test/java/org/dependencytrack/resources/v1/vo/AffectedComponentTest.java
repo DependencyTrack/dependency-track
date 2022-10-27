@@ -2,11 +2,17 @@ package org.dependencytrack.resources.v1.vo;
 
 
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.model.AffectedVersionAttribution;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+
+import java.sql.Date;
+import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -153,11 +159,15 @@ public class AffectedComponentTest {
         }
 
         @Test
-        public void shouldMapReportedBy() {
+        public void shouldMapAffectedPackageAttribution() {
             final var vs = new VulnerableSoftware();
-            vs.setReportedBy("SNYK");
+            AffectedVersionAttribution ava = new AffectedVersionAttribution();
+            ava.setVulnerableSoftware(vs);
+            ava.setSource(Vulnerability.Source.SNYK);
+            ava.setAttributedOn(Date.from(Instant.now()));
+            vs.setAffectedVersionAttributions(List.of(ava));
             final var affectedComponent = new AffectedComponent(vs);
-            assertThat(affectedComponent.getReportedBy()).isEqualTo("SNYK");
+            assertThat(affectedComponent.getAffectedVersionAttributions().get(0).getSource()).isEqualTo(Vulnerability.Source.SNYK);
         }
     }
 

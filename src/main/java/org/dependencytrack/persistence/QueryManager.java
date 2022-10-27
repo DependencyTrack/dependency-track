@@ -70,6 +70,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -690,6 +691,18 @@ public class QueryManager extends AlpineQueryManager {
 
     void deleteFindingAttributions(Project project) {
         getVulnerabilityQueryManager().deleteFindingAttributions(project);
+    }
+
+    public List<AffectedVersionAttribution> getAffectedVersionAttribution(VulnerableSoftware vulnerableSoftware) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerableSoftware);
+    }
+
+    public AffectedVersionAttribution getAffectedVersionAttribution(VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerableSoftware, source);
+    }
+
+    void deleteAffectedVersionAttributions(VulnerableSoftware vulnerableSoftware) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerableSoftware);
     }
 
     public boolean contains(Vulnerability vulnerability, Component component) {

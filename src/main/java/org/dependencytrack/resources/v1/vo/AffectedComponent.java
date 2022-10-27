@@ -25,13 +25,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
-import java.sql.Date;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -59,8 +60,7 @@ public class AffectedComponent {
     private String versionStartExcluding;
     private String versionStartIncluding;
     private UUID uuid;
-    private String reportedBy;
-    private String updated;
+    private List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public AffectedComponent() {
     }
@@ -107,11 +107,8 @@ public class AffectedComponent {
             versionStartExcluding = vs.getVersionStartExcluding();
             versionStartIncluding = vs.getVersionStartIncluding();
         }
-        if (vs.getReportedBy() != null) {
-            reportedBy = vs.getReportedBy();
-        }
-        if (vs.getUpdated() != null) {
-            updated = vs.getUpdated().toString();
+        if (vs.getAffectedVersionAttributions() != null) {
+            affectedVersionAttributions = vs.getAffectedVersionAttributions();
         }
         uuid = vs.getUuid();
     }
@@ -188,20 +185,12 @@ public class AffectedComponent {
         this.uuid = uuid;
     }
 
-    public String getReportedBy() {
-        return reportedBy;
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
+        return affectedVersionAttributions;
     }
 
-    public void setReportedBy(String reportedBy) {
-        this.reportedBy = reportedBy;
-    }
-
-    public String getUpdated() {
-        return updated;
-    }
-
-    public void setUpdated(String updated) {
-        this.updated = updated;
+    public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
+        this.affectedVersionAttributions = affectedVersionAttributions;
     }
 
     public VulnerableSoftware toVulnerableSoftware() {
@@ -252,8 +241,7 @@ public class AffectedComponent {
             vs.setVersionStartExcluding(this.versionStartExcluding);
             vs.setVersionEndIncluding(this.versionEndIncluding);
             vs.setVersionEndExcluding(this.versionEndExcluding);
-            vs.setReportedBy(this.reportedBy);
-            vs.setUpdated(Date.valueOf(this.updated));
+            vs.setAffectedVersionAttributions(this.affectedVersionAttributions);
         }
         return vs;
     }

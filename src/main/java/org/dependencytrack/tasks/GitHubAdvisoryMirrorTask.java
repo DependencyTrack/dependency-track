@@ -42,6 +42,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -290,6 +291,10 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
                     versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
             if (vs != null) {
+                AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.GITHUB);
+                if (affectedVersionAttribution == null) {
+                    qm.persist(new AffectedVersionAttribution(Vulnerability.Source.GITHUB, vs));
+                }
                 return vs;
             }
             vs = new VulnerableSoftware();
@@ -301,8 +306,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionEndExcluding(versionEndExcluding);
-            vs.setReportedBy(Vulnerability.Source.GITHUB.toString());
-            vs.setUpdated(Date.from(Instant.now()));
+            qm.persist(new AffectedVersionAttribution(Vulnerability.Source.GITHUB, vs));
             return vs;
         } catch (MalformedPackageURLException e) {
             LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName() + " for: " + advisory.getGhsaId());

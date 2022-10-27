@@ -26,6 +26,7 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
@@ -177,6 +178,10 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                                                                  final Vulnerability vulnerability) {
         VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe.toCpe23FS(), null, null, null, null);
         if (vs != null) {
+            AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.VULNDB);
+            if (affectedVersionAttribution == null) {
+                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.VULNDB, vs));
+            }
             return vs;
         }
         try {
@@ -188,8 +193,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             vs.setVersionEndIncluding(null);
             vs.setVersionStartExcluding(null);
             vs.setVersionStartIncluding(null);
-            vs.setReportedBy(Vulnerability.Source.VULNDB.toString());
-            vs.setUpdated(Date.from(Instant.now()));
+            qm.persist(new AffectedVersionAttribution(Vulnerability.Source.VULNDB, vs));
             vs = qm.persist(vs);
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;

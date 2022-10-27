@@ -3,7 +3,9 @@ package org.dependencytrack.tasks.scanners;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
@@ -15,8 +17,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,7 +28,7 @@ public class VulnerableSoftwareVersionTest extends PersistenceCapableTest {
     private OsvDownloadTask taskOsv = new OsvDownloadTask();
 
     @Test
-    public void testReportedByAndLastUpdateForVulnerableSoftwareVersion() throws Exception {
+    public void testAffectedPackageAttribution() throws Exception {
 
         // Snyk analysis of purl npm/moment
         new CweImporter().processCweDefinitions(); // Necessary for resolving CWEs
@@ -45,8 +45,8 @@ public class VulnerableSoftwareVersionTest extends PersistenceCapableTest {
         Assert.assertEquals(1, vulnerableSoftware.size());
         Assert.assertEquals("2", vulnerableSoftware.get(0).getVersionStartIncluding());
         Assert.assertEquals("5", vulnerableSoftware.get(0).getVersionEndExcluding());
-        Assert.assertEquals("SNYK", vulnerableSoftware.get(0).getReportedBy());
-        Assert.assertEquals(Date.from(Instant.now()).toString(), vulnerableSoftware.get(0).getUpdated().toString());
+        Assert.assertNotNull(vulnerableSoftware.get(0).getAffectedVersionAttributions());
+        Assert.assertEquals(Vulnerability.Source.SNYK, vulnerableSoftware.get(0).getAffectedVersionAttributions().get(0).getSource());
 
         // OSV analysis of purl npm/moment
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-purl-moment.json");
@@ -55,11 +55,15 @@ public class VulnerableSoftwareVersionTest extends PersistenceCapableTest {
 
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:npm/moment"));
         Assert.assertEquals(2, vulnerableSoftware.size());
-        Assert.assertEquals("SNYK", vulnerableSoftware.get(0).getReportedBy());
-        Assert.assertEquals("OSV", vulnerableSoftware.get(1).getReportedBy());
+
+        List<AffectedVersionAttribution> avas = vulnerableSoftware.get(0).getAffectedVersionAttributions();
+        Assert.assertEquals(2, avas.size());
+        Assert.assertEquals(Vulnerability.Source.SNYK, avas.get(0).getSource());
+        Assert.assertEquals(Vulnerability.Source.OSV, avas.get(1).getSource());
+
+        Assert.assertEquals(Vulnerability.Source.OSV, vulnerableSoftware.get(0).getAffectedVersionAttributions().get(1).getSource());
         Assert.assertEquals("7", vulnerableSoftware.get(1).getVersionStartIncluding());
         Assert.assertEquals("9", vulnerableSoftware.get(1).getVersionEndExcluding());
-        Assert.assertEquals(Date.from(Instant.now()).toString(), vulnerableSoftware.get(1).getUpdated().toString());
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

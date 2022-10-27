@@ -19,6 +19,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
@@ -302,6 +303,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
         VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
                 versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
         if (vs != null) {
+            AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.OSV);
+            if (affectedVersionAttribution == null) {
+                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.OSV, vs));
+            }
             return vs;
         }
 
@@ -314,8 +319,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionStartIncluding(versionStartIncluding);
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);
-        vs.setReportedBy(Vulnerability.Source.OSV.toString());
-        vs.setUpdated(Date.from(Instant.now()));
+        qm.persist(new AffectedVersionAttribution(Vulnerability.Source.OSV, vs));
         return vs;
     }
 

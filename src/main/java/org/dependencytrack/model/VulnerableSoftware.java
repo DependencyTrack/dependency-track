@@ -100,18 +100,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
     private String purlSubpath;
 
     @Persistent
-    @Column(name = "REPORTED_BY")
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The source of reporting may only contain printable characters")
-    private String reportedBy;
-
-    @Persistent
-    @Column(name = "UPDATED")
-    @Index(name = "VULNERABLESOFTWARE_UPDATED_IDX")
-    @JsonSerialize(using = Iso8601DateSerializer.class)
-    private Date updated;
-
-    @Persistent
     @Column(name = "CPE22", jdbcType = "VARCHAR")
     private String cpe22;
 
@@ -193,6 +181,10 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Unique(name = "VULNERABLESOFTWARE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     private UUID uuid;
+
+    @Persistent(mappedBy = "vulnerableSoftware", defaultFetchGroup = "true")
+    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
+    private List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public long getId() {
         return id;
@@ -425,19 +417,10 @@ public class VulnerableSoftware implements ICpe, Serializable {
         this.uuid = uuid;
     }
 
-    public String getReportedBy() {
-        return reportedBy;
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
+        return affectedVersionAttributions;
     }
-
-    public void setReportedBy(String reportedBy) {
-        this.reportedBy = reportedBy;
-    }
-
-    public Date getUpdated() {
-        return updated;
-    }
-
-    public void setUpdated(Date updated) {
-        this.updated = updated;
+    public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
+        this.affectedVersionAttributions = affectedVersionAttributions;
     }
 }

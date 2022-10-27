@@ -26,6 +26,7 @@ import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.Cvss;
@@ -288,6 +289,10 @@ public final class NvdParser {
         VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri, versionEndExcluding,
                 versionEndIncluding, versionStartExcluding, versionStartIncluding);
         if (vs != null) {
+            AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.NVD);
+            if (affectedVersionAttribution == null) {
+                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.NVD, vs));
+            }
             return vs;
         }
         try {
@@ -297,8 +302,7 @@ public final class NvdParser {
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionStartIncluding(versionStartIncluding);
-            vs.setReportedBy(Vulnerability.Source.NVD.toString());
-            vs.setUpdated(java.util.Date.from(Instant.now()));
+            qm.persist(new AffectedVersionAttribution(Vulnerability.Source.NVD, vs));
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;
         } catch (CpeParsingException | CpeEncodingException e) {

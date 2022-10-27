@@ -22,6 +22,12 @@
           "type": "ECOSYSTEM",
           "events": [
             {
+              "introduced": "2"
+            },
+            {
+              "fixed": "5"
+            },
+            {
               "introduced": "7"
             },
             {

@@ -13,11 +13,11 @@ import org.dependencytrack.model.SnykCvssSource;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -232,8 +232,12 @@ public class SnykParser {
                 vs.setVersionStartExcluding(versionStartExcluding);
                 vs.setVersionEndIncluding(versionEndIncluding);
                 vs.setVersionEndExcluding(versionEndExcluding);
-                vs.setReportedBy(Vulnerability.Source.SNYK.toString());
-                vs.setUpdated(Date.from(Instant.now()));
+                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.SNYK, vs));
+            } else {
+                AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.SNYK);
+                if (affectedVersionAttribution == null) {
+                    qm.persist(new AffectedVersionAttribution(Vulnerability.Source.SNYK, vs));
+                }
             }
             vulnerableSoftwares.add(vs);
         }

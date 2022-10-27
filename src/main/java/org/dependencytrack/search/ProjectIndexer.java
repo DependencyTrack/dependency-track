@@ -127,7 +127,7 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
         LOGGER.info("Starting reindex task. This may take some time.");
         super.reindex();
         try (final QueryManager qm = new QueryManager()) {
-            final PaginatedResult result = qm.getProjects(false, true);
+            final PaginatedResult result = qm.getProjects(false, true, false);
             long count = 0;
             boolean shouldContinue = true;
             while (count < result.getTotal() && shouldContinue) {

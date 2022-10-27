@@ -23,6 +23,7 @@ import alpine.model.Team;
 import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -195,6 +196,7 @@ public class Project implements Serializable {
 
     @Persistent
     @Column(name = "PARENT_PROJECT_ID")
+    @JsonIncludeProperties(value = {"name", "version", "uuid"})
     private Project parent;
 
     @Persistent(mappedBy = "parent")

@@ -155,6 +155,11 @@ services:
     # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
     # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
     #
+    # Optional configuration for the Snyk analyzer
+    # - SNYK_THREAD_BATCH_SIZE=10
+    # - SNYK_LIMIT_FOR_PERIOD=1500
+    # - SNYK_THREAD_TIMEOUT_DURATION=60
+    # - SNYK_LIMIT_REFRESH_PERIOD=60
     # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
 

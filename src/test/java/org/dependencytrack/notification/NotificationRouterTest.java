@@ -22,10 +22,22 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Bom;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Vex;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.notification.vo.AnalysisDecisionChange;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
+import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -297,6 +309,328 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(notification)).isEmpty();
     }
+
+    @Test
+    public void testNewVulnerabilityIdentifiedLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new NewVulnerabilityIdentified(null, componentB, Set.of(), null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new NewVulnerabilityIdentified(null, componentA, Set.of(), null));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testNewVulnerableDependencyLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABLE_DEPENDENCY));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new NewVulnerableDependency(componentB, null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new NewVulnerableDependency(componentA, null));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testBomConsumedOrProcessedLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.BOM_CONSUMED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.BOM_CONSUMED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new BomConsumedOrProcessed(projectB, "", Bom.Format.CYCLONEDX, ""));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new BomConsumedOrProcessed(projectA, "", Bom.Format.CYCLONEDX, ""));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testVexConsumedOrProcessedLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.VEX_CONSUMED));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.VEX_CONSUMED.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new VexConsumedOrProcessed(projectB, "", Vex.Format.CYCLONEDX, ""));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new VexConsumedOrProcessed(projectA, "", Vex.Format.CYCLONEDX, ""));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testPolicyViolationIdentifiedLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.POLICY_VIOLATION.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new PolicyViolationIdentified(null, componentB, projectB));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new PolicyViolationIdentified(null, componentA, projectA));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testAnalysisDecisionChangeLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.PROJECT_AUDIT_CHANGE));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new AnalysisDecisionChange(null, null, projectB, null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new AnalysisDecisionChange(null, null, projectA, null));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testViolationAnalysisDecisionChangeLimitedToProject() {
+        final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setName("Component A");
+        componentA = qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setName("Component B");
+        componentB = qm.createComponent(componentB, false);
+
+        final NotificationPublisher publisher = createSlackPublisher();
+
+        final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.PROJECT_AUDIT_CHANGE));
+        rule.setProjects(List.of(projectA));
+
+        final var notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        notification.setSubject(new ViolationAnalysisDecisionChange(null, componentB, null));
+
+        final var router = new NotificationRouter();
+        assertThat(router.resolveRules(notification)).isEmpty();
+
+        notification.setSubject(new ViolationAnalysisDecisionChange(null, componentA, null));
+        assertThat(router.resolveRules(notification))
+                .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
+    }
+
+    @Test
+    public void testAffectedChild() {
+        NotificationPublisher publisher = createSlackPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Matching Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        // Creates a project which will later be matched on
+        List<Project> projects = new ArrayList<>();
+        Project grandParent = qm.createProject("Test Project Grandparent", null, "1.0", null, null, null, true, false);
+        Project parent = qm.createProject("Test Project Parent", null, "1.0", null, grandParent, null, true, false);
+        Project child = qm.createProject("Test Project Child", null, "1.0", null, parent, null, true, false);
+        Project grandChild = qm.createProject("Test Project Grandchild", null, "1.0", null, child, null, true, false);
+        projects.add(grandParent);
+        rule.setProjects(projects);
+        // Creates a new component
+        Component component = new Component();
+        component.setProject(grandChild);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(grandChild);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), component, affectedProjects, null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        List<NotificationRule> rules = router.resolveRules(notification);
+        Assert.assertTrue(rule.isNotifyChildren());
+        Assert.assertEquals(1, rules.size());
+    }
+
+    @Test
+    public void testAffectedChildNotifyChildrenDisabled() {
+        NotificationPublisher publisher = createSlackPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Matching Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyChildren(false);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        // Creates a project which will later be matched on
+        List<Project> projects = new ArrayList<>();
+        Project grandParent = qm.createProject("Test Project Grandparent", null, "1.0", null, null, null, true, false);
+        Project parent = qm.createProject("Test Project Parent", null, "1.0", null, grandParent, null, true, false);
+        Project child = qm.createProject("Test Project Child", null, "1.0", null, parent, null, true, false);
+        Project grandChild = qm.createProject("Test Project Grandchild", null, "1.0", null, child, null, true, false);
+        projects.add(grandParent);
+        rule.setProjects(projects);
+        // Creates a new component
+        Component component = new Component();
+        component.setProject(grandChild);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(grandChild);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), component, affectedProjects, null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        List<NotificationRule> rules = router.resolveRules(notification);
+        Assert.assertFalse(rule.isNotifyChildren());
+        Assert.assertEquals(0, rules.size());
+    }
+
+    @Test
+    public void testAffectedInactiveChild() {
+        NotificationPublisher publisher = createSlackPublisher();
+        // Creates a new rule and defines when the rule should be triggered (notifyOn)
+        NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        Set<NotificationGroup> notifyOn = new HashSet<>();
+        notifyOn.add(NotificationGroup.NEW_VULNERABILITY);
+        rule.setNotifyOn(notifyOn);
+        // Creates a project which will later be matched on
+        List<Project> projects = new ArrayList<>();
+        Project grandParent = qm.createProject("Test Project Grandparent", null, "1.0", null, null, null, true, false);
+        Project parent = qm.createProject("Test Project Parent", null, "1.0", null, grandParent, null, true, false);
+        Project child = qm.createProject("Test Project Child", null, "1.0", null, parent, null, true, false);
+        Project grandChild = qm.createProject("Test Project Grandchild", null, "1.0", null, child, null, false, false);
+        projects.add(grandParent);
+        rule.setProjects(projects);
+        // Creates a new component
+        Component component = new Component();
+        component.setProject(grandChild);
+        // Creates a new notification
+        Notification notification = new Notification();
+        notification.setScope(NotificationScope.PORTFOLIO.name());
+        notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
+        notification.setLevel(NotificationLevel.INFORMATIONAL);
+        // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
+        Set<Project> affectedProjects = new HashSet<>();
+        affectedProjects.add(grandChild);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), component, affectedProjects, null);
+        notification.setSubject(subject);
+        // Ok, let's test this
+        NotificationRouter router = new NotificationRouter();
+        List<NotificationRule> rules = router.resolveRules(notification);
+        Assert.assertTrue(rule.isNotifyChildren());
+        Assert.assertEquals(0, rules.size());
+    }
+
+
 
     private NotificationPublisher createSlackPublisher() {
         return qm.createNotificationPublisher(

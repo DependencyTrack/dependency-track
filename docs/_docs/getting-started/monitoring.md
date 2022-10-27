@@ -41,7 +41,8 @@ alpine_notifications_published_total{group="<NOTIFICATION_GROUP>",level="<NOTIFI
 Events and notifications are processed by [executors]. The executor *Alpine-EventService* corresponds to what is 
 typically referred to as *worker pool*, and is responsible for executing the majority of events in Dependency-Track.
 *Alpine-SingleThreadedEventService* is a dedicated executor for events that can't safely be executed in parallel.
-The following executor metrics are available:
+The *SnykAnalysisTask* executor is used to perform API requests to [Snyk] (if enabled) in parallel, in order to work 
+around the missing batch functionality in Snyk's REST API. The following executor metrics are available:
 
 ```yaml
 # HELP executor_pool_max_threads The maximum allowed number of threads in the pool
@@ -49,36 +50,43 @@ The following executor metrics are available:
 executor_pool_max_threads{name="Alpine-NotificationService",} 4.0
 executor_pool_max_threads{name="Alpine-SingleThreadedEventService",} 1.0
 executor_pool_max_threads{name="Alpine-EventService",} 40.0
+executor_pool_max_threads{name="SnykAnalysisTask",} 10.0
 # HELP executor_pool_core_threads The core number of threads for the pool
 # TYPE executor_pool_core_threads gauge
 executor_pool_core_threads{name="Alpine-NotificationService",} 4.0
 executor_pool_core_threads{name="Alpine-SingleThreadedEventService",} 1.0
 executor_pool_core_threads{name="Alpine-EventService",} 40.0
+executor_pool_core_threads{name="SnykAnalysisTask",} 10.0
 # HELP executor_pool_size_threads The current number of threads in the pool
 # TYPE executor_pool_size_threads gauge
 executor_pool_size_threads{name="Alpine-NotificationService",} 0.0
 executor_pool_size_threads{name="Alpine-SingleThreadedEventService",} 1.0
 executor_pool_size_threads{name="Alpine-EventService",} 7.0
+executor_pool_size_threads{name="SnykAnalysisTask",} 10.0
 # HELP executor_active_threads The approximate number of threads that are actively executing tasks
 # TYPE executor_active_threads gauge
 executor_active_threads{name="Alpine-NotificationService",} 0.0
 executor_active_threads{name="Alpine-SingleThreadedEventService",} 1.0
 executor_active_threads{name="Alpine-EventService",} 2.0
+executor_active_threads{name="SnykAnalysisTask",} 0.0
 # HELP executor_completed_tasks_total The approximate total number of tasks that have completed execution
 # TYPE executor_completed_tasks_total counter
 executor_completed_tasks_total{name="Alpine-NotificationService",} 0.0
 executor_completed_tasks_total{name="Alpine-SingleThreadedEventService",} 0.0
 executor_completed_tasks_total{name="Alpine-EventService",} 5.0
+executor_completed_tasks_total{name="SnykAnalysisTask",} 132.0
 # HELP executor_queued_tasks The approximate number of tasks that are queued for execution
 # TYPE executor_queued_tasks gauge
 executor_queued_tasks{name="Alpine-NotificationService",} 0.0
 executor_queued_tasks{name="Alpine-SingleThreadedEventService",} 160269.0
 executor_queued_tasks{name="Alpine-EventService",} 0.0
+executor_queued_tasks{name="SnykAnalysisTask",} 0.0
 # HELP executor_queue_remaining_tasks The number of additional elements that this queue can ideally accept without blocking
 # TYPE executor_queue_remaining_tasks gauge
 executor_queue_remaining_tasks{name="Alpine-NotificationService",} 2.147483647E9
 executor_queue_remaining_tasks{name="Alpine-SingleThreadedEventService",} 2.147323378E9
 executor_queue_remaining_tasks{name="Alpine-EventService",} 2.147483647E9
+executor_queue_remaining_tasks{name="SnykAnalysisTask",} 2.147483647E9
 ```
 
 Executor metrics are a good way to monitor how busy an API server instance is, and how good of a job it's
@@ -109,5 +117,6 @@ An [example dashboard] is provided as a quickstart. Refer to the [Grafana docume
 [Grafana]: https://grafana.com/
 [Grafana documentation]: https://grafana.com/docs/grafana/latest/dashboards/export-import/#import-dashboard
 [Prometheus]: https://prometheus.io/
+[Snyk]: {{ site.baseurl }}{% link _docs/datasources/snyk.md %}
 [text-based exposition format]: https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format
 [thread states]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Thread.State.html

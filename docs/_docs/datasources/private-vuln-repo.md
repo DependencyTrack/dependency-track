@@ -2,7 +2,7 @@
 title: Private Vulnerability Repository
 category: Datasources
 chapter: 4
-order: 9
+order: 10
 redirect_from:
   - /usage/private-vuln-repo/
 ---

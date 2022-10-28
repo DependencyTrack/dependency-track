@@ -42,6 +42,7 @@ public class AffectedVersionAttribution implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "VULNERABLE_SOFTWARE", allowsNull = "false")
     @NotNull
+    @JsonIgnore
     private VulnerableSoftware vulnerableSoftware;
 
     @Persistent(customValueStrategy = "uuid")

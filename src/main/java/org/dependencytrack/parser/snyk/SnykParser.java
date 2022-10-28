@@ -66,11 +66,11 @@ public class SnykParser {
                     }
                 }
             }
+            synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
             if (!vsList.isEmpty()) {
                 qm.persist(vsList);
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
             }
-            synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;

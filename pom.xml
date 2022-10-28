@@ -92,6 +92,7 @@
         <lib.pebble.version>3.1.6</lib.pebble.version>
         <lib.unirest.version>3.13.11</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
+        <lib.resilience4j.version>1.7.1</lib.resilience4j.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.1.jre11</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -279,6 +280,18 @@
             <artifactId>commons-compress</artifactId>
             <version>1.21</version>
         </dependency>
+        <!-- Resilience4J -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-retry</artifactId>
+            <version>${lib.resilience4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-ratelimiter</artifactId>
+            <version>${lib.resilience4j.version}</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>junit</groupId>
@@ -322,12 +335,6 @@
             <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-ratelimiter</artifactId>
-            <version>1.7.1</version>
-        </dependency>
-
     </dependencies>
 
     <build>

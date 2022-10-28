@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks.scanners;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.util.Pageable;
 import alpine.event.framework.Event;
@@ -26,6 +27,10 @@ import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -34,6 +39,7 @@ import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHeaders;
+import org.dependencytrack.common.ConfigKey;
 import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
@@ -58,6 +64,8 @@ import us.springett.cvss.Score;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Subscriber task that performs an analysis of component using Sonatype OSS Index REST API.
@@ -69,14 +77,33 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
 
     private static final String API_BASE_URL = "https://ossindex.sonatype.org/api/v3/component-report";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
-    private static final int PAGE_SIZE = 100;
     private String apiUsername;
     private String apiToken;
 
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
+    private Retry ossIndexRetryer;
+
     public AnalyzerIdentity getAnalyzerIdentity() {
         return AnalyzerIdentity.OSSINDEX_ANALYZER;
+    }
+
+    public OssIndexAnalysisTask() {
+        IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
+                .ofExponentialBackoff(
+                        IntervalFunction.DEFAULT_INITIAL_INTERVAL,
+                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MULTIPLIER),
+                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MAX_DURATION)
+                );
+
+        RetryConfig config = RetryConfig.custom()
+                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
+                .intervalFunction(intervalWithCustomExponentialBackoff)
+                .build();
+
+        RetryRegistry registry = RetryRegistry.of(config);
+
+        ossIndexRetryer = registry.retry("ossIndexRetryer");
     }
 
     /**
@@ -155,25 +182,22 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        final Pageable<Component> paginatedComponents = new Pageable<>(PAGE_SIZE, components);
+        Map<Boolean, List<Component>> componentsPartitionByCacheValidity = components.stream()
+                .filter(component -> !component.isInternal() && isCapable(component))
+                .collect(Collectors.partitioningBy(component -> isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString())));
+        List<Component> componentWithValidAnalysisFromCache = componentsPartitionByCacheValidity.get(true);
+        componentWithValidAnalysisFromCache.forEach(component -> applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
+        List<Component> componentWithInvalidAnalysisFromCache = componentsPartitionByCacheValidity.get(false);
+        final Pageable<Component> paginatedComponents = new Pageable<>(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_REQUEST_MAX_PURL), componentWithInvalidAnalysisFromCache);
         while (!paginatedComponents.isPaginationComplete()) {
             final List<String> coordinates = new ArrayList<>();
             final List<Component> paginatedList = paginatedComponents.getPaginatedList();
-            for (final Component component: paginatedList) {
-                if (!component.isInternal() && isCapable(component)) {
-                    if (!isCacheCurrent(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString())) {
-                        //coordinates.add(component.getPurl().canonicalize()); // todo: put this back when minimizePurl() is removed
-                        coordinates.add(minimizePurl(component.getPurl()));
-                    } else {
-                        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
-                    }
-                }
-            }
+            paginatedList.forEach(component -> coordinates.add(minimizePurl(component.getPurl())));
             if (!CollectionUtils.isEmpty(coordinates)) {
                 final JSONObject json = new JSONObject();
                 json.put("coordinates", coordinates);
                 try {
-                    final List<ComponentReport> report = submit(json);
+                    final List<ComponentReport> report = ossIndexRetryer.executeSupplier(() -> submit(json));
                     processResults(report, paginatedList);
                 } catch (UnirestException e) {
                     handleRequestException(LOGGER, e);

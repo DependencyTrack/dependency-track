@@ -26,7 +26,6 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
-import org.dependencytrack.tasks.OsvDownloadTask;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -180,11 +180,11 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     // check if it already exists or not
                     VulnerableSoftware existingVulnSoftware = qm.getVulnerableSoftwareByPurl(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(), vs.getVersionEndExcluding(), vs.getVersionEndIncluding(), vs.getVersionStartExcluding(), vs.getVersionStartIncluding());
                     if(existingVulnSoftware == null) {
-                        vsList.add(vs);
+                        qm.persist(vs);
                     }
+                    vsList.add(vs);
                 }
             }
-            qm.persist(vsList);
             if (existing != null) {
                 vsList.addAll(existing.getVulnerableSoftware());
             }

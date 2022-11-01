@@ -18,6 +18,7 @@ import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -257,6 +258,8 @@ public class SnykParser {
                     AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.SNYK);
                     if (affectedVersionAttribution == null) {
                         qm.persist(new AffectedVersionAttribution(Vulnerability.Source.SNYK, vs));
+                    } else {
+                        qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
                     }
                 }
                 vulnerableSoftwares.add(vs);

@@ -294,6 +294,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.GITHUB);
                 if (affectedVersionAttribution == null) {
                     qm.persist(new AffectedVersionAttribution(Vulnerability.Source.GITHUB, vs));
+                } else {
+                    qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
                 }
                 return vs;
             }

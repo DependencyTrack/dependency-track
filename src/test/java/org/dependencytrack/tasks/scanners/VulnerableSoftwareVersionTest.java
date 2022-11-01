@@ -45,8 +45,9 @@ public class VulnerableSoftwareVersionTest extends PersistenceCapableTest {
         Assert.assertEquals(1, vulnerableSoftware.size());
         Assert.assertEquals("2", vulnerableSoftware.get(0).getVersionStartIncluding());
         Assert.assertEquals("5", vulnerableSoftware.get(0).getVersionEndExcluding());
-        Assert.assertNotNull(vulnerableSoftware.get(0).getAffectedVersionAttributions());
-        Assert.assertEquals(Vulnerability.Source.SNYK, vulnerableSoftware.get(0).getAffectedVersionAttributions().get(0).getSource());
+        AffectedVersionAttribution afa = qm.getAffectedVersionAttribution(vulnerableSoftware.get(0), Vulnerability.Source.SNYK);
+        Assert.assertNotNull(afa);
+        Assert.assertEquals(Vulnerability.Source.SNYK, afa.getSource());
 
         // OSV analysis of purl npm/moment
         prepareJsonObject("src/test/resources/unit/osv.jsons/osv-purl-moment.json");
@@ -56,12 +57,12 @@ public class VulnerableSoftwareVersionTest extends PersistenceCapableTest {
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:npm/moment"));
         Assert.assertEquals(2, vulnerableSoftware.size());
 
-        List<AffectedVersionAttribution> avas = vulnerableSoftware.get(0).getAffectedVersionAttributions();
-        Assert.assertEquals(2, avas.size());
-        Assert.assertEquals(Vulnerability.Source.SNYK, avas.get(0).getSource());
-        Assert.assertEquals(Vulnerability.Source.OSV, avas.get(1).getSource());
+        List<AffectedVersionAttribution> afas = qm.getAffectedVersionAttribution(vulnerableSoftware.get(0));
+        Assert.assertNotNull(afas);
+        Assert.assertEquals(2, afas.size());
+        Assert.assertEquals(Vulnerability.Source.SNYK, afas.get(0).getSource());
+        Assert.assertEquals(Vulnerability.Source.OSV, afas.get(1).getSource());
 
-        Assert.assertEquals(Vulnerability.Source.OSV, vulnerableSoftware.get(0).getAffectedVersionAttributions().get(1).getSource());
         Assert.assertEquals("7", vulnerableSoftware.get(1).getVersionStartIncluding());
         Assert.assertEquals("9", vulnerableSoftware.get(1).getVersionEndExcluding());
     }

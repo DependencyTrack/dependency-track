@@ -182,9 +182,7 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     private UUID uuid;
 
-    @Persistent(mappedBy = "vulnerableSoftware", defaultFetchGroup = "true")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
-    private List<AffectedVersionAttribution> affectedVersionAttributions;
+    private transient List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public long getId() {
         return id;

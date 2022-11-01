@@ -181,6 +181,8 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.VULNDB);
             if (affectedVersionAttribution == null) {
                 qm.persist(new AffectedVersionAttribution(Vulnerability.Source.VULNDB, vs));
+            } else {
+                qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
             }
             return vs;
         }

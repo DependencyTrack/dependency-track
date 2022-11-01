@@ -306,6 +306,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
             AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.OSV);
             if (affectedVersionAttribution == null) {
                 qm.persist(new AffectedVersionAttribution(Vulnerability.Source.OSV, vs));
+            } else {
+                qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
             }
             return vs;
         }

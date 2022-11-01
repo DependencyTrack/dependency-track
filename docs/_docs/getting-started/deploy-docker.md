@@ -160,6 +160,12 @@ services:
     # - SNYK_LIMIT_FOR_PERIOD=1500
     # - SNYK_THREAD_TIMEOUT_DURATION=60
     # - SNYK_LIMIT_REFRESH_PERIOD=60
+    #
+    # Optional configuration for the OSS Index analyzer
+    # - OSSINDEX_REQUEST_MAX_PURL=128
+    # - OSSINDEX_RETRY_BACKOFF_MAX_ATTEMPTS=50
+    # - OSSINDEX_RETRY_BACKOFF_MULTIPLIER=2
+    # - OSSINDEX_RETRY_BACKOFF_MAX_DURATION=600000
     # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
 

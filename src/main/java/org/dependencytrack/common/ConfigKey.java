@@ -10,9 +10,9 @@ public enum ConfigKey implements Config.Key {
     SNYK_THREAD_TIMEOUT_DURATION("snyk.thread.timeout.duration", 60),
     SNYK_LIMIT_REFRESH_PERIOD("snyk.limit.refresh.period", 60),
     OSSINDEX_REQUEST_MAX_PURL("ossindex.request.max.purl", 128),
-    OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS("ossindex.retryer.backoff.max.attempts", 10),
-    OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MULTIPLIER("ossindex.retryer.backoff.multiplier", 2),
-    OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MAX_DURATION("ossindex.retryer.backoff.max.duration", Duration.ofMinutes(30).toMillis());
+    OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS("ossindex.retry.backoff.max.attempts", 10),
+    OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER("ossindex.retry.backoff.multiplier", 2),
+    OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION("ossindex.retry.backoff.max.duration", Duration.ofMinutes(10).toMillis());
 
     private final String propertyName;
     private final Object defaultValue;

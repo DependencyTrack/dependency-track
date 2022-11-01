@@ -20,6 +20,7 @@ package org.dependencytrack.tasks.scanners;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
+import alpine.common.metrics.Metrics;
 import alpine.common.util.Pageable;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
@@ -28,6 +29,7 @@ import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
@@ -82,30 +84,34 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
 
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
-    private Retry ossIndexRetryer;
+    private static Retry ossIndexRetryer;
 
-    public AnalyzerIdentity getAnalyzerIdentity() {
-        return AnalyzerIdentity.OSSINDEX_ANALYZER;
-    }
-
-    public OssIndexAnalysisTask() {
+    static {
         IntervalFunction intervalWithCustomExponentialBackoff = IntervalFunction
                 .ofExponentialBackoff(
                         IntervalFunction.DEFAULT_INITIAL_INTERVAL,
-                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MULTIPLIER),
-                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MAX_DURATION)
+                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
+                        Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION)
                 );
 
         RetryConfig config = RetryConfig.custom()
-                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRYER_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
+                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS))
                 .intervalFunction(intervalWithCustomExponentialBackoff)
                 .build();
 
         RetryRegistry registry = RetryRegistry.of(config);
 
         ossIndexRetryer = registry.retry("ossIndexRetryer");
+
+        TaggedRetryMetrics
+                .ofRetryRegistry(registry)
+                .bindTo(Metrics.getRegistry());
     }
 
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return AnalyzerIdentity.OSSINDEX_ANALYZER;
+    }
+    
     /**
      * {@inheritDoc}
      */

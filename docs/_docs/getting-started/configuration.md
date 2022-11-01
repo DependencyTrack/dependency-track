@@ -373,6 +373,26 @@ snyk.thread.timeout.duration=60
 # The rate limiter would refresh the number of permissions available after every "limit refresh period".
 # This value is in seconds. The default value is 60
 snyk.limit.refresh.period=60
+
+# Optional
+#Defines the maximum number of purl sent in a single request to OSS Index.
+# The default value is 128.
+ossindex.request.max.purl=128
+
+# Optional
+#Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding OSSIndex calls.
+# The default value is 50.
+ossindex.retry.backoff.max.attempts=50
+
+# Optional
+#Defines the multiplier used by Resilience4J for exponential backoff retry regarding OSSIndex calls.
+# The default value is 2.
+ossindex.retry.backoff.multiplier=2
+
+# Optional
+#Defines the maximum duration used by Resilience4J for exponential backoff retry regarding OSSIndex calls. This value is in milliseconds
+# The default value is 10 minutes.
+ossindex.retry.backoff.max.duration=600000
 ```
 
 #### Proxy Configuration

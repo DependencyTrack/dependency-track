@@ -149,6 +149,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
                     final String alias = advisory.getAliases().get(i);
                     final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+                    vulnerabilityAlias.setAliasReportedBy(Vulnerability.Source.OSV);
 
                     // OSV will use IDs of other vulnerability databases for its
                     // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure

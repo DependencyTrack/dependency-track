@@ -187,6 +187,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                             final VulnerabilityAlias alias = new VulnerabilityAlias();
                             alias.setGhsaId(advisory.getGhsaId());
                             alias.setCveId(identifier.getRight());
+                            alias.setAliasReportedBy(Vulnerability.Source.GITHUB);
                             qm.synchronizeVulnerabilityAlias(alias);
                         }
                     }

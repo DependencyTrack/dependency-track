@@ -61,6 +61,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
             Assert.assertEquals(2, vulnerability.getAliases().size());
             Assert.assertEquals("CVE-2022-31129", vulnerability.getAliases().get(1).getCveId());
             Assert.assertEquals("GHSA-wc69-rhjr-hc9g", vulnerability.getAliases().get(0).getGhsaId());
+            Assert.assertEquals(Vulnerability.Source.SNYK, vulnerability.getAliases().get(0).getAliasReportedBy());
         };
 
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("SNYK", "SNYK-JS-MOMENT-2944238", true);

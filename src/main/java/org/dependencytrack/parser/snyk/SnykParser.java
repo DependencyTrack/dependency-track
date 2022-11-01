@@ -93,6 +93,7 @@ public class SnykParser {
                 final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
                 vulnerabilityAlias.setSnykId(vulnerability.getVulnId());
                 vulnerabilityAlias.setCveId(id);
+                vulnerabilityAlias.setAliasReportedBy(Vulnerability.Source.SNYK);
                 qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                 vulnerabilityAliasList.add(vulnerabilityAlias);
             }
@@ -101,6 +102,7 @@ public class SnykParser {
                 final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
                 vulnerabilityAlias.setSnykId(vulnerability.getVulnId());
                 vulnerabilityAlias.setGhsaId(id);
+                vulnerabilityAlias.setAliasReportedBy(Vulnerability.Source.SNYK);
                 qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                 vulnerabilityAliasList.add(vulnerabilityAlias);
             }

@@ -41,6 +41,7 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
@@ -124,7 +125,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
     @Override
     public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = Logger.getLogger(this.getClass());
-        logger.info("Preparing to publish JIRA notification");
+        logger.debug("Preparing to publish JIRA notification");
         if (config == null) {
             logger.warn("No configuration found. Skipping notification.");
             return;
@@ -153,16 +154,16 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
             }
 
             final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-            final HttpResponse response = ui.post(destination)
+            final HttpResponse<String> response = ui.post(destination)
                 .header("content-type", "application/json")
-                .header("authorization", "Basic " + Base64.getEncoder().encodeToString( (jiraUsername+":"+jiraPassword).getBytes() ) )
+                .header("authorization", "Basic " + Base64.getEncoder().encodeToString( (jiraUsername+":"+jiraPassword).getBytes(Charset.defaultCharset()) ) )
                 .header("accept", "application/json")
                 .body(content)
                 .asEmpty();
 
-            logger.debug("jira issue creation response code: " + response.getStatus());
+            logger.debug("jira issue creation response: " + response.getStatusText());
             if (response.isSuccess()) {
-                logger.debug("jira issue creation response body: " + response.getBody().toString());
+                logger.debug("jira issue creation response body: " + response.getBody());
             }
 
         }

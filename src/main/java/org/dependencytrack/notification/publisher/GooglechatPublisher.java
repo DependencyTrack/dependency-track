@@ -38,7 +38,7 @@ public class GooglechatPublisher extends AbstractWebhookPublisher implements Pub
         try {
             publish(DefaultNotificationPublishers.GOOGLECHAT.getPublisherName(), TEMPLATE, notification, config);
         } catch (Exception e) {
-            logger.error("Googlechat notification could not be created");
+            logger.error("Googlechat notification could not be created", e);
             return;
         }
     }

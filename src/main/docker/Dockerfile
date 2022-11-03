@@ -10,7 +10,7 @@ ARG APP_DIR=/opt/owasp/dependency-track/
 ARG DATA_DIR=/data/
 ARG UID=1000
 ARG GID=1000
-ARG WAR_FILENAME=dependency-track-bundled.jar
+ARG WAR_FILENAME=dependency-track-apiserver.jar
 
 ENV TZ=Etc/UTC \
     # Dependency-Track's default logging level

@@ -98,13 +98,15 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                                 final XPathFactory xpathFactory = XPathFactory.newInstance();
                                 final XPath xpath = xpathFactory.newXPath();
 
+                                final XPathExpression releaseExpression = xpath.compile("/metadata/versioning/release");
                                 final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
+                                final String release = (String) releaseExpression.evaluate(document, XPathConstants.STRING);
                                 final String latest = (String) latestExpression.evaluate(document, XPathConstants.STRING);
 
                                 final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
                                 final String lastUpdated = (String) lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
 
-                                meta.setLatestVersion(latest);
+                                meta.setLatestVersion(release != null ? release: latest);
                                 if (lastUpdated != null) {
                                     meta.setPublishedTimestamp(DateUtil.parseDate(lastUpdated));
                                 }

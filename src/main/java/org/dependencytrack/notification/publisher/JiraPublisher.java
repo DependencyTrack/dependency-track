@@ -108,12 +108,10 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
             }
             // Jira addition:
             context.put("jiraProjectKey", jiraProjectKey);
-            context.put("jiraTicketType", jiraTicketType); //TEST
+            context.put("jiraTicketType", jiraTicketType);
 
             try (Writer writer = new StringWriter()) {
                 template.evaluate(writer, context);
-                //TEST-ELASTIC-PANGOLIN
-		Logger.getLogger(this.getClass()).info("JIRA-TEMPLATE: " + writer.toString());
 		return writer.toString();
             } catch (IOException e) {
                 Logger.getLogger(this.getClass()).error("An error was encountered evaluating template", e);

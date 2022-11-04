@@ -26,7 +26,6 @@ import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 import us.springett.cvss.Cvss;
@@ -43,7 +42,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.sql.Date;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -165,9 +163,10 @@ public final class NvdParser {
                     // Update the vulnerability
                     LOGGER.debug("Synchronizing: " + vulnerability.getVulnId());
                     final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+                    final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId()));
 
                     // CPE
-                    final List<VulnerableSoftware> vulnerableSoftwares = new ArrayList<>();
+                    List<VulnerableSoftware> vsList = new ArrayList<>();
                     final JsonObject configurations = cveItem.getJsonObject("configurations");
                     final JsonArray nodes = configurations.getJsonArray("nodes");
                     for (int j = 0; j < nodes.size(); j++) {
@@ -180,18 +179,20 @@ public final class NvdParser {
                             if (children.size() > 0) {
                                 for (int l = 0; l < children.size(); l++) {
                                     final JsonObject child = children.getJsonObject(l);
-                                    vulnerableSoftwareInNode.addAll(parseCpes(qm, child, synchronizeVulnerability));
+                                    vulnerableSoftwareInNode.addAll(parseCpes(qm, child));
                                 }
                             } else {
-                                vulnerableSoftwareInNode.addAll(parseCpes(qm, node, synchronizeVulnerability));
+                                vulnerableSoftwareInNode.addAll(parseCpes(qm, node));
                             }
                         } else {
-                            vulnerableSoftwareInNode.addAll(parseCpes(qm, node, synchronizeVulnerability));
+                            vulnerableSoftwareInNode.addAll(parseCpes(qm, node));
                         }
-                        vulnerableSoftwares.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
-                        qm.persist(vulnerableSoftwares);
+                        vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
+                        qm.persist(vsList);
+                        qm.updateAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.NVD);
                     }
-                    synchronizeVulnerability.setVulnerableSoftware(vulnerableSoftwares);
+                    vsList = qm.reconcileVulnerableSoftware(synchronizeVulnerability, vsListOld, vsList, Vulnerability.Source.NVD);
+                    synchronizeVulnerability.setVulnerableSoftware(vsList);
                     qm.persist(synchronizeVulnerability);
                 }
             });
@@ -262,14 +263,14 @@ public final class NvdParser {
         }
     }
 
-    private List<VulnerableSoftware> parseCpes(final QueryManager qm, final JsonObject node, final Vulnerability vulnerability) {
+    private List<VulnerableSoftware> parseCpes(final QueryManager qm, final JsonObject node) {
         final List<VulnerableSoftware> vsList = new ArrayList<>();
         if (node.containsKey("cpe_match")) {
             final JsonArray cpeMatches = node.getJsonArray("cpe_match");
             for (int k = 0; k < cpeMatches.size(); k++) {
                 final JsonObject cpeMatch = cpeMatches.getJsonObject(k);
                 if (cpeMatch.getBoolean("vulnerable", true)) { // only parse the CPEs marked as vulnerable
-                    final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpeMatch, vulnerability);
+                    final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpeMatch);
                     if (vs != null) {
                         vsList.add(vs);
                     }
@@ -279,8 +280,7 @@ public final class NvdParser {
         return vsList;
     }
 
-    private VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch,
-                                                                       final Vulnerability vulnerability) {
+    private VulnerableSoftware generateVulnerableSoftware(final QueryManager qm, final JsonObject cpeMatch) {
         final String cpe23Uri = cpeMatch.getString("cpe23Uri");
         final String versionEndExcluding = cpeMatch.getString("versionEndExcluding", null);
         final String versionEndIncluding = cpeMatch.getString("versionEndIncluding", null);
@@ -289,10 +289,6 @@ public final class NvdParser {
         VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe23Uri, versionEndExcluding,
                 versionEndIncluding, versionStartExcluding, versionStartIncluding);
         if (vs != null) {
-            AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.NVD);
-            if (affectedVersionAttribution == null) {
-                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.NVD, vs));
-            }
             return vs;
         }
         try {
@@ -302,7 +298,6 @@ public final class NvdParser {
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionStartIncluding(versionStartIncluding);
-            qm.persist(new AffectedVersionAttribution(Vulnerability.Source.NVD, vs));
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;
         } catch (CpeParsingException | CpeEncodingException e) {

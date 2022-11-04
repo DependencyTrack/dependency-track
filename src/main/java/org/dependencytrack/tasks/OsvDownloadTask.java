@@ -12,20 +12,18 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
-import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
-
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -36,21 +34,20 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
-import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
+import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -142,10 +139,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
         try (QueryManager qm = new QueryManager()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
-            final List<VulnerableSoftware> vsList = new ArrayList<>();
             final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
-            Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);;
-            final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
+            final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
+            final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
 
             if (advisory.getAliases() != null) {
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
@@ -174,21 +170,17 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 }
             }
 
+            List<VulnerableSoftware> vsList = new ArrayList<>();
             for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
                 VulnerableSoftware vs = mapAffectedPackageToVulnerableSoftware(qm, osvAffectedPackage);
                 if (vs != null) {
-                    // check if it already exists or not
-                    VulnerableSoftware existingVulnSoftware = qm.getVulnerableSoftwareByPurl(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(), vs.getVersionEndExcluding(), vs.getVersionEndIncluding(), vs.getVersionStartExcluding(), vs.getVersionStartIncluding());
-                    if(existingVulnSoftware == null) {
-                        qm.persist(vs);
-                    }
                     vsList.add(vs);
                 }
             }
-            if (existing != null) {
-                vsList.addAll(existing.getVulnerableSoftware());
-            }
-            synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
+            qm.persist(vsList);
+            qm.updateAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.OSV);
+            vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.OSV);
+            synchronizedVulnerability.setVulnerableSoftware(vsList);
             qm.persist(synchronizedVulnerability);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
@@ -276,9 +268,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         final String sourceId = vulnId.split("-")[0];
         switch (sourceId) {
-            case "GHSA": return Vulnerability.Source.GITHUB;
-            case "CVE": return Vulnerability.Source.NVD;
-            default: return Vulnerability.Source.OSV;
+            case "GHSA":
+                return Vulnerability.Source.GITHUB;
+            case "CVE":
+                return Vulnerability.Source.NVD;
+            default:
+                return Vulnerability.Source.OSV;
         }
     }
 
@@ -303,12 +298,6 @@ public class OsvDownloadTask implements LoggableSubscriber {
         VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
                 versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
         if (vs != null) {
-            AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.OSV);
-            if (affectedVersionAttribution == null) {
-                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.OSV, vs));
-            } else {
-                qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
-            }
             return vs;
         }
 
@@ -321,7 +310,6 @@ public class OsvDownloadTask implements LoggableSubscriber {
         vs.setVersionStartIncluding(versionStartIncluding);
         vs.setVersionEndExcluding(versionEndExcluding);
         vs.setVersionEndIncluding(versionEndIncluding);
-        qm.persist(new AffectedVersionAttribution(Vulnerability.Source.OSV, vs));
         return vs;
     }
 

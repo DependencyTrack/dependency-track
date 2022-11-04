@@ -42,7 +42,6 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -56,7 +55,6 @@ import org.dependencytrack.persistence.QueryManager;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -170,13 +168,15 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
      * @param advisories the results to synchronize
      */
-    private void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
+    void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.info("Updating datasource with GitHub advisories");
         try (QueryManager qm = new QueryManager()) {
             for (final GitHubSecurityAdvisory advisory: advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
-                final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
-                final List<VulnerableSoftware> vsList = new ArrayList<>();
+                final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
+                final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
+                final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
+                List<VulnerableSoftware> vsList = new ArrayList<>();
                 for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
                     final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
@@ -195,6 +195,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
                 qm.persist(vsList);
+                vsList.forEach(vs -> qm.updateAttribution(synchronizedVulnerability, vs, Vulnerability.Source.GITHUB));
+                vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.GITHUB);
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
                 qm.persist(synchronizedVulnerability);
             }
@@ -291,12 +293,6 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
                     versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
             if (vs != null) {
-                AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.GITHUB);
-                if (affectedVersionAttribution == null) {
-                    qm.persist(new AffectedVersionAttribution(Vulnerability.Source.GITHUB, vs));
-                } else {
-                    qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
-                }
                 return vs;
             }
             vs = new VulnerableSoftware();
@@ -308,7 +304,6 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             vs.setVersionStartExcluding(versionStartExcluding);
             vs.setVersionEndIncluding(versionEndIncluding);
             vs.setVersionEndExcluding(versionEndExcluding);
-            qm.persist(new AffectedVersionAttribution(Vulnerability.Source.GITHUB, vs));
             return vs;
         } catch (MalformedPackageURLException e) {
             LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName() + " for: " + advisory.getGhsaId());

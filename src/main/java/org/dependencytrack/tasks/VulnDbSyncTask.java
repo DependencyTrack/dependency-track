@@ -26,7 +26,6 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;
-import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
@@ -47,9 +46,7 @@ import us.springett.vulndbdatamirror.parser.model.Version;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -129,7 +126,10 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                     final us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln = (us.springett.vulndbdatamirror.parser.model.Vulnerability)o;
                     final org.dependencytrack.model.Vulnerability vulnerability = ModelConverter.convert(qm, vulnDbVuln);
                     final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-                    final List<VulnerableSoftware> vsList = parseCpes(qm, synchronizeVulnerability, vulnDbVuln);
+                    final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId()));
+                    List<VulnerableSoftware> vsList = parseCpes(qm, synchronizeVulnerability, vulnDbVuln);
+                    qm.updateAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.VULNDB);
+                    vsList = qm.reconcileVulnerableSoftware(synchronizeVulnerability, vsListOld, vsList, Vulnerability.Source.VULNDB);
                     synchronizeVulnerability.setVulnerableSoftware(vsList);
                     qm.persist(synchronizeVulnerability);
                 }
@@ -178,12 +178,6 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                                                                  final Vulnerability vulnerability) {
         VulnerableSoftware vs = qm.getVulnerableSoftwareByCpe23(cpe.toCpe23FS(), null, null, null, null);
         if (vs != null) {
-            AffectedVersionAttribution affectedVersionAttribution = qm.getAffectedVersionAttribution(vs, Vulnerability.Source.VULNDB);
-            if (affectedVersionAttribution == null) {
-                qm.persist(new AffectedVersionAttribution(Vulnerability.Source.VULNDB, vs));
-            } else {
-                qm.runInTransaction(() -> affectedVersionAttribution.setAttributedOn(Date.from(Instant.now())));
-            }
             return vs;
         }
         try {
@@ -195,7 +189,6 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             vs.setVersionEndIncluding(null);
             vs.setVersionStartExcluding(null);
             vs.setVersionStartIncluding(null);
-            qm.persist(new AffectedVersionAttribution(Vulnerability.Source.VULNDB, vs));
             vs = qm.persist(vs);
             //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;

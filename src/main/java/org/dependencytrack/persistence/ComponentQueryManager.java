@@ -167,29 +167,18 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (hash == null) {
             return null;
         }
-        final Query<Component> query;
-        final Map<String, Object> params = new HashMap<>();
-        final String queryFilter;
-        if (hash.length() == 32) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(md5 == :hash)";
-        } else if (hash.length() == 40) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha1 == :hash)";
-        } else if (hash.length() == 64) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
-        } else if (hash.length() == 96) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
-        } else if (hash.length() == 128) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
-        } else {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(blake3 == :hash)";
-        }
-        params.put("hash", hash);
+
+        final String queryFilter = switch (hash.length()) {
+            case 32 -> "(md5 == :hash)";
+            case 40 -> "(sha1 == :hash)";
+            case 64 -> "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
+            case 96 -> "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
+            case 128 -> "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
+            default -> "(blake3 == :hash)";
+        };
+
+        final Query<Component> query = pm.newQuery(Component.class);;
+        final Map<String, Object> params = Map.of("hash", hash);
         preprocessACLs(query, queryFilter, params, false);
         return execute(query, params);
     }

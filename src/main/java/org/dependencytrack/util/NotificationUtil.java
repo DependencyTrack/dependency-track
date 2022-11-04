@@ -37,6 +37,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.NotificationAlias;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -67,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.dependencytrack.model.VulnerabilityAlias.sourcesToString;
 
 public final class NotificationUtil {
 
@@ -280,10 +282,11 @@ public final class NotificationUtil {
         JsonUtil.add(vulnerabilityBuilder, "source", vulnerability.getSource());
         final JsonArrayBuilder aliasesBuilder = Json.createArrayBuilder();
         if (vulnerability.getAliases() != null) {
-            for (final Map.Entry<Vulnerability.Source, String> vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
+            for (final NotificationAlias vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
                 aliasesBuilder.add(Json.createObjectBuilder()
-                        .add("source", vulnIdBySource.getKey().name())
-                        .add("vulnId", vulnIdBySource.getValue())
+                        .add("source", vulnIdBySource.getSource().toString())
+                        .add("vulnId", vulnIdBySource.getVulnId())
+                        .add("reportedBy", sourcesToString(vulnIdBySource.getReportedBy()))
                         .build());
             }
         }

@@ -202,76 +202,51 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (identity == null) {
             return null;
         }
-        final Query<Component> query;
+
         final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
-            final Map<String, Object> map = new HashMap<>();
-            String queryFilter = "";
-            if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += "(";
+
+            var params = new HashMap<String, Object>();
+            var queryFilterElements = new ArrayList<String>();
+
             if (identity.getGroup() != null) {
-                queryFilter += " group.toLowerCase().matches(:group) ";
-                final String filterString = ".*" + identity.getGroup().toLowerCase() + ".*";
-                map.put("group", filterString);
+                queryFilterElements.add(" group.toLowerCase().matches(:group) ");
+                params.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
             }
             if (identity.getName() != null) {
-                if (identity.getGroup() != null) {
-                    queryFilter += " && ";
-                }
-                queryFilter += " name.toLowerCase().matches(:name) ";
-                final String filterString = ".*" + identity.getName().toLowerCase() + ".*";
-                map.put("name", filterString);
+                queryFilterElements.add(" name.toLowerCase().matches(:name) ");
+                params.put("name", ".*" + identity.getName().toLowerCase() + ".*");
             }
             if (identity.getVersion() != null) {
-                if (identity.getGroup() != null || identity.getName() != null) {
-                    queryFilter += " && ";
-                }
-                queryFilter += " version.toLowerCase().matches(:version) ";
-                final String filterString = ".*" + identity.getVersion().toLowerCase() + ".*";
-                map.put("version", filterString);
+                queryFilterElements.add(" version.toLowerCase().matches(:version) ");
+                params.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
             }
-            if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += ")";
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            preprocessACLs(query, queryFilter, map, false);
-            result = execute(query, map);
+
+            var queryFilter = "(" + String.join(" && ", queryFilterElements) + ")";
+            result = loadComponents(queryFilter, params);
+
         } else if (identity.getPurl() != null) {
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            final Map<String, Object> params = new HashMap<>();
-            final String queryFilter = "(purl.toLowerCase().matches(:purl))";
-            final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            params.put("purl", filterString);
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
+            var queryFilter = "(purl.toLowerCase().matches(:purl))";
+            var filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
+            var params = Map.<String, Object>of("purl", filterString);
+            result = loadComponents(queryFilter, params);
+
         } else if (identity.getCpe() != null) {
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            final Map<String, Object> params = new HashMap<>();
-            final String queryFilter = "(cpe.toLowerCase().matches(:cpe))";
-            final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            params.put("cpe", filterString);
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
+            var queryFilter = "(cpe.toLowerCase().matches(:cpe))";
+            var filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
+            var params = Map.<String, Object>of("cpe", filterString);
+            result = loadComponents(queryFilter, params);
+
         } else if (identity.getSwidTagId() != null) {
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            final Map<String, Object> params = new HashMap<>();
-            final String queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
-            final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            params.put("swidTagId", filterString);
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
+            var queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
+            var filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
+            var params = Map.<String, Object>of("swidTagId", filterString);
+            result = loadComponents(queryFilter, params);
+
         } else {
             result = new PaginatedResult();
         }
+
         if (includeMetrics) {
             // Populate each Component object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -297,6 +272,15 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             component.getProject().getUuid();
         }
         return result;
+    }
+
+    private PaginatedResult loadComponents(String queryFilter, Map<String, Object> params) {
+        var query = pm.newQuery(Component.class);
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
+        preprocessACLs(query, queryFilter, params, false);
+        return execute(query, params);
     }
 
     /**

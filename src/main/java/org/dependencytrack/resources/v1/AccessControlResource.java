@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
@@ -30,6 +31,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.AclMappingRequest;
@@ -58,6 +60,25 @@ import java.util.List;
 public class AccessControlResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(AccessControlResource.class);
+
+    @GET
+    @Path("/enabled")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(
+            value = "Returns True if Access Control is Enabled",
+            response = Boolean.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response isEnabled () {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final ConfigProperty aclEnabledProperty = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                                                                           ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+            return Response.ok(Boolean.valueOf(aclEnabledProperty.getPropertyValue())).build();
+        }
+    }
 
     @GET
     @Path("/team/{uuid}")

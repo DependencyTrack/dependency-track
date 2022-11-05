@@ -27,6 +27,8 @@ import alpine.model.UserPrincipal;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.IndexEvent;
@@ -49,6 +51,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -536,7 +539,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
-                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory) {
+                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory,
+                         boolean includeACL) {
         final Project source = getObjectByUuid(Project.class, from, Project.FetchGroup.ALL.name());
         if (source == null) {
             return null;
@@ -624,6 +628,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                         }
                     }
                 }
+            }
+        }
+
+        if (includeACL) {
+            //It's possible that the DT instance is being prepared for ACL enabling,
+            //So client can request to includeACL even if ACL is not (yet) enabled
+            List<Team> accessTeams = source.getAccessTeams();
+            if (CollectionUtils.isEmpty(accessTeams)) {
+                project.setAccessTeams(new LinkedList<>(accessTeams));
             }
         }
 

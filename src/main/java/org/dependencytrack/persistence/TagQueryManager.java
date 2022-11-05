@@ -44,7 +44,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         List<Project> projects = policy.getProjects();
 
         final Stream<Tag> tags;
-        if (projects != null) {
+        if (projects != null && !projects.isEmpty()) {
             tags = projects.stream()
                     .map(Project::getTags)
                     .flatMap(List::stream)

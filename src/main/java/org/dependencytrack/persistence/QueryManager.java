@@ -721,6 +721,8 @@ public class QueryManager extends AlpineQueryManager {
             final var vsPersistent = getObjectById(VulnerableSoftware.class, vs.getId());
             if (vsPersistent == null) {
                 continue; // Doesn't exist anymore
+            } else if (vsList.contains(vsPersistent)) {
+                continue; // We already have this one covered
             }
 
             final List<AffectedVersionAttribution> attributions = getAttributions(vulnerability, vsPersistent);
@@ -728,16 +730,14 @@ public class QueryManager extends AlpineQueryManager {
                     .anyMatch(attr -> attr.getSource() == source);
             final boolean previouslyReportedByOthers = attributions.stream()
                     .anyMatch(attr -> attr.getSource() != source);
-            final boolean stillReportedBySource = vsList.contains(vsPersistent);
 
-            if ((previouslyReportedBySource && stillReportedBySource)
-                    || (!previouslyReportedBySource && !stillReportedBySource && previouslyReportedByOthers)) {
-                // Still reported or reported by another source, keep it.
-                vsList.add(vs);
+            if (previouslyReportedByOthers) {
+                // Reported by another source, keep it.
+                vsList.add(vsPersistent);
             }
-            if (previouslyReportedBySource && !stillReportedBySource) {
+            if (previouslyReportedBySource) {
                 // Not reported anymore, remove attribution.
-                deleteAttribution(vulnerability, vs, source);
+                deleteAttribution(vulnerability, vsPersistent, source);
             }
         }
 

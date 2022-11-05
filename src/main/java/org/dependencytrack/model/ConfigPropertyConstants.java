@@ -46,7 +46,7 @@ public enum ConfigPropertyConstants {
     SCANNER_VULNDB_ENABLED("scanner", "vulndb.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable VulnDB"),
     SCANNER_VULNDB_OAUTH1_CONSUMER_KEY("scanner", "vulndb.api.oauth1.consumerKey", null, PropertyType.STRING, "The OAuth 1.0a consumer key"),
     SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET("scanner", "vulndb.api.oath1.consumerSecret", null, PropertyType.ENCRYPTEDSTRING, "The OAuth 1.0a consumer secret"),
-    SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD("scanner", "analysis.cache.validity.period","864000", PropertyType.NUMBER, "Validity period for individual component analysis cache"),
+    SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD("scanner", "analysis.cache.validity.period","43200000", PropertyType.NUMBER, "Validity period for individual component analysis cache"),
     VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database"),
     VULNERABILITY_SOURCE_NVD_FEEDS_URL("vuln-source", "nvd.feeds.url", "https://nvd.nist.gov/feeds", PropertyType.URL, "A base URL pointing to the hostname and path of the NVD feeds"),
     VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED("vuln-source", "github.advisories.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable GitHub Advisories"),

@@ -5,6 +5,8 @@ import alpine.Config;
 import java.time.Duration;
 
 public enum ConfigKey implements Config.Key {
+    DEFAULT_PROJECT_DISABLE("default.project.disable", false),
+    DEFAULT_PROJECT_TAGS("default.project.tags", null),
     SNYK_THREAD_BATCH_SIZE("snyk.thread.batch.size", 10),
     SNYK_LIMIT_FOR_PERIOD("snyk.limit.for.period", 1500),
     SNYK_THREAD_TIMEOUT_DURATION("snyk.thread.timeout.duration", 60),

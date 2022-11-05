@@ -47,6 +47,10 @@
     <listener>
         <listener-class>org.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>
     </listener>
+    <listener>
+        <!-- Separated from DefaultObjectGenerator because it needs the event subsystem to be initialized -->
+        <listener-class>org.dependencytrack.persistence.defaults.DefaultProjectImporter</listener-class>
+    </listener>
 
     <filter>
         <filter-name>WhitelistUrlFilter</filter-name>

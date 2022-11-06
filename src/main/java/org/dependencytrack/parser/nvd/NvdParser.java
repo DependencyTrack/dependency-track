@@ -188,9 +188,9 @@ public final class NvdParser {
                             vulnerableSoftwareInNode.addAll(parseCpes(qm, node));
                         }
                         vsList.addAll(reconcile(vulnerableSoftwareInNode, nodeOperator));
-                        qm.persist(vsList);
-                        qm.updateAffectedVersionAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.NVD);
                     }
+                    qm.persist(vsList);
+                    qm.updateAffectedVersionAttributions(synchronizeVulnerability, vsList, Vulnerability.Source.NVD);
                     vsList = qm.reconcileVulnerableSoftware(synchronizeVulnerability, vsListOld, vsList, Vulnerability.Source.NVD);
                     synchronizeVulnerability.setVulnerableSoftware(vsList);
                     qm.persist(synchronizeVulnerability);

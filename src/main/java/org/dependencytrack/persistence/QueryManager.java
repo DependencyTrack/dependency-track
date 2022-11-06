@@ -774,22 +774,8 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
-    /**
-     * Fetch all {@link VulnerableSoftware} instances associated with a given {@link Vulnerability}.
-     *
-     * @param source The source of the vulnerability
-     * @param vulnId The ID of the vulnerability
-     * @return
-     */
     public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {
-        final Query<?> query = pm.newQuery(Query.JDOQL, """
-                SELECT FROM org.dependencytrack.model.VulnerableSoftware
-                WHERE vulnerabilities.contains(vuln)
-                    && vuln.source == :source && vuln.vulnId == :vulnId
-                VARIABLES org.dependencytrack.model.Vulnerability vuln
-                """);
-        query.setParameters(source, vulnId);
-        return (List<VulnerableSoftware>) query.executeList();
+        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByVulnId(source, vulnId);
     }
 
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {

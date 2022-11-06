@@ -29,7 +29,7 @@ public class CloneProjectEventTest {
     @Test
     public void testEvent() {
         UUID uuid = UUID.randomUUID();
-        CloneProjectRequest request = new CloneProjectRequest(uuid.toString(), "1.0", true, true, true, true, true, true);
+        CloneProjectRequest request = new CloneProjectRequest(uuid.toString(), "1.0", true, true, true, true, true, true, true);
         CloneProjectEvent event = new CloneProjectEvent(request);
         Assert.assertEquals(request, event.getRequest());
     }

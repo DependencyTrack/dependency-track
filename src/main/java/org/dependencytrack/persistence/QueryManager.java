@@ -398,9 +398,10 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
-                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory) {
+                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory,
+                         boolean includeACL) {
         return getProjectQueryManager().clone(from, newVersion, includeTags, includeProperties,
-                includeComponents, includeServices, includeAuditHistory);
+                includeComponents, includeServices, includeAuditHistory, includeACL);
     }
 
     public Project updateLastBomImport(Project p, Date date, String bomFormat) {

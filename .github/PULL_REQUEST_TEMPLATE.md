@@ -9,7 +9,7 @@
 
 <!-- REQUIRED
     Reference the issue addressed by this PR, e.g. `#1234`.
-    Use keywords to signal that this PR resolves the issue,
+    Use keywords like `closes` or `fixes` to signal that this PR resolves the issue,
     causing the issue to be closed automatically when the PR is merged:
         https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword
 -->

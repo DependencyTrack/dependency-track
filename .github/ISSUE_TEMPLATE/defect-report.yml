@@ -60,14 +60,11 @@ body:
     description: >-
       What version of Dependency-Track are you using?
     options:
-    - 3.8.x
-    - 4.0.x
-    - 4.1.x
-    - 4.2.x
-    - 4.3.x
-    - 4.4.x
-    - 4.5.0
-    - 4.6.0-SNAPSHOT
+    - 4.5.x
+    - 4.6.0
+    - 4.6.1
+    - 4.6.2
+    - 4.7.0-SNAPSHOT
   validations:
     required: true
 - type: dropdown
@@ -93,6 +90,7 @@ body:
     - Microsoft SQL Server
     - MySQL
     - H2
+    - N/A
   validations:
     required: true
 - type: input

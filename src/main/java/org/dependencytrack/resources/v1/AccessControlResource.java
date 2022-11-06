@@ -62,25 +62,6 @@ public class AccessControlResource extends AlpineResource {
     private static final Logger LOGGER = Logger.getLogger(AccessControlResource.class);
 
     @GET
-    @Path("/enabled")
-    @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(
-            value = "Returns True if Access Control is Enabled",
-            response = Boolean.class
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Unauthorized"),
-    })
-    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response isEnabled () {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final ConfigProperty aclEnabledProperty = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                                                                           ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
-            return Response.ok(Boolean.valueOf(aclEnabledProperty.getPropertyValue())).build();
-        }
-    }
-
-    @GET
     @Path("/team/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -283,7 +284,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
             return null;
         }
 
-        final String versionStartIncluding = affectedPackage.getLowerVersionRange();
+        // Other sources do not populate the versionStartIncluding with 0.
+        // Semantically, versionStartIncluding=null is equivalent to >=0.
+        // Omit zero values here for consistency's sake.
+        final String versionStartIncluding = Optional.ofNullable(affectedPackage.getLowerVersionRange())
+                .filter(version -> !"0".equals(version))
+                .orElse(null);
         final String versionEndExcluding = affectedPackage.getUpperVersionRangeExcluding();
         final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 

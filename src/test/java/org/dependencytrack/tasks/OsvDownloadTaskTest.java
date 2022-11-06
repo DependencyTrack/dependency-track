@@ -103,7 +103,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
         List<VulnerableSoftware> vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth"));
         Assert.assertEquals(4, vulnerableSoftware.size());
-        Assert.assertEquals("0", vulnerableSoftware.get(0).getVersionStartIncluding());
+        Assert.assertNull(vulnerableSoftware.get(0).getVersionStartIncluding());
         Assert.assertEquals("2.0.17", vulnerableSoftware.get(0).getVersionEndExcluding());
         Assert.assertEquals("2.1.0", vulnerableSoftware.get(1).getVersionStartIncluding());
         Assert.assertEquals("2.1.4", vulnerableSoftware.get(1).getVersionEndExcluding());
@@ -144,7 +144,6 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         vs2.setPurlType("maven");
         vs2.setPurlNamespace("com.fasterxml.jackson.core");
         vs2.setPurlName("jackson-databind");
-        vs2.setVersionStartIncluding("0");
         vs2.setVersionEndIncluding("2.12.6.0");
         vs2.setVulnerable(true);
         vs2 = qm.persist(vs2);
@@ -268,7 +267,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getPurlName()).isEqualTo("jackson-databind");
                     assertThat(vs.getPurlVersion()).isNull();
                     assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
+                    assertThat(vs.getVersionStartIncluding()).isNull();
                     assertThat(vs.getVersionStartExcluding()).isNull();
                     assertThat(vs.getVersionEndIncluding()).isEqualTo("2.12.6.0");
                     assertThat(vs.getVersionEndExcluding()).isNull();

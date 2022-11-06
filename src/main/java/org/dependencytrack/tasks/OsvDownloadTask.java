@@ -81,28 +81,24 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         if (e instanceof OsvMirrorEvent) {
 
-            if(this.ecosystems != null && !this.ecosystems.isEmpty()) {
+            if (this.ecosystems != null && !this.ecosystems.isEmpty()) {
                 for (String ecosystem : this.ecosystems) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
-                    try {
-                        String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
-                                + "/all.zip";
-                        HttpUriRequest request = new HttpGet(url);
-                        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                            final StatusLine status = response.getStatusLine();
-                            if (status.getStatusCode() == 200) {
-                                try (InputStream in = response.getEntity().getContent();
-                                     ZipInputStream zipInput = new ZipInputStream(in)) {
-                                    unzipFolder(zipInput);
-                                }
-                            } else {
-                                LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                    String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
+                            + "/all.zip";
+                    HttpUriRequest request = new HttpGet(url);
+                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                        final StatusLine status = response.getStatusLine();
+                        if (status.getStatusCode() == 200) {
+                            try (InputStream in = response.getEntity().getContent();
+                                 ZipInputStream zipInput = new ZipInputStream(in)) {
+                                unzipFolder(zipInput);
                             }
-                        } catch (Exception ex) {
-                            LOGGER.error("Exception while executing Http client request", ex);
+                        } else {
+                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
                         }
-                    } catch (UnsupportedEncodingException ex) {
-                        LOGGER.error("Exception while encoding URL for ecosystem " + ecosystem);
+                    } catch (Exception ex) {
+                        LOGGER.error("Exception while executing Http client request", ex);
                     }
                 }
             } else {
@@ -265,16 +261,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
     }
 
     public Vulnerability.Source extractSource(String vulnId) {
-
         final String sourceId = vulnId.split("-")[0];
-        switch (sourceId) {
-            case "GHSA":
-                return Vulnerability.Source.GITHUB;
-            case "CVE":
-                return Vulnerability.Source.NVD;
-            default:
-                return Vulnerability.Source.OSV;
-        }
+        return switch (sourceId) {
+            case "GHSA" -> Vulnerability.Source.GITHUB;
+            case "CVE" -> Vulnerability.Source.NVD;
+            default -> Vulnerability.Source.OSV;
+        };
     }
 
     public VulnerableSoftware mapAffectedPackageToVulnerableSoftware(final QueryManager qm, final OsvAffectedPackage affectedPackage) {
@@ -321,7 +313,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final StatusLine status = response.getStatusLine();
             if (status.getStatusCode() == 200) {
                 try (InputStream in = response.getEntity().getContent();
-                     Scanner scanner = new Scanner(in, StandardCharsets.UTF_8.name())) {
+                     Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
                     while (scanner.hasNextLine()) {
                         final String line = scanner.nextLine();
                         if(!line.isBlank()) {

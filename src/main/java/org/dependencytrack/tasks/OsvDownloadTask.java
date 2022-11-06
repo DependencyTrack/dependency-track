@@ -178,7 +178,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 }
             }
             qm.persist(vsList);
-            qm.updateAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.OSV);
+            qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.OSV);
             vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.OSV);
             synchronizedVulnerability.setVulnerableSoftware(vsList);
             qm.persist(synchronizedVulnerability);

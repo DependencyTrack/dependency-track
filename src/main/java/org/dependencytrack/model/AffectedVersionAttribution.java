@@ -51,8 +51,12 @@ public class AffectedVersionAttribution implements Serializable {
     private long id;
 
     @Persistent
-    @Column(name = "ATTRIBUTED_ON", allowsNull = "false")
-    private Date attributedOn;
+    @Column(name = "FIRST_SEEN", allowsNull = "false")
+    private Date firstSeen;
+
+    @Persistent
+    @Column(name = "LAST_SEEN", allowsNull = "false")
+    private Date lastSeen;
 
     @Persistent
     @Column(name = "SOURCE", allowsNull = "false")
@@ -80,7 +84,8 @@ public class AffectedVersionAttribution implements Serializable {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.vulnerability = Objects.requireNonNull(vulnerability, "vulnerability must not be null");
         this.vulnerableSoftware = Objects.requireNonNull(vulnerableSoftware, "vulnerableSoftware must not be null");
-        this.attributedOn = new Date();
+        this.firstSeen = new Date();
+        this.lastSeen = this.firstSeen;
     }
 
     public long getId() {
@@ -91,12 +96,20 @@ public class AffectedVersionAttribution implements Serializable {
         this.id = id;
     }
 
-    public Date getAttributedOn() {
-        return attributedOn;
+    public Date getFirstSeen() {
+        return firstSeen;
     }
 
-    public void setAttributedOn(final Date attributedOn) {
-        this.attributedOn = attributedOn;
+    public void setFirstSeen(final Date firstSeen) {
+        this.firstSeen = firstSeen;
+    }
+
+    public Date getLastSeen() {
+        return lastSeen;
+    }
+
+    public void setLastSeen(final Date lastSeen) {
+        this.lastSeen = lastSeen;
     }
 
     public Source getSource() {

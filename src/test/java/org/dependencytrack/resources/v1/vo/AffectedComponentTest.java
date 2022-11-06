@@ -164,7 +164,7 @@ public class AffectedComponentTest {
             AffectedVersionAttribution ava = new AffectedVersionAttribution();
             ava.setVulnerableSoftware(vs);
             ava.setSource(Vulnerability.Source.SNYK);
-            ava.setAttributedOn(Date.from(Instant.now()));
+            ava.setFirstSeen(Date.from(Instant.now()));
             vs.setAffectedVersionAttributions(List.of(ava));
             final var affectedComponent = new AffectedComponent(vs);
             assertThat(affectedComponent.getAffectedVersionAttributions().get(0).getSource()).isEqualTo(Vulnerability.Source.SNYK);

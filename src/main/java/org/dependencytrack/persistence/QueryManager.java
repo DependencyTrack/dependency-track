@@ -693,90 +693,41 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().deleteFindingAttributions(project);
     }
 
-    /**
-     * TODO: Description
-     * TODO: Move to {@link VulnerableSoftwareQueryManager}
-     *
-     * {@link AffectedVersionAttribution}s are utilized to ensure that only those {@link VulnerableSoftware}
-     * records are dropped that were previously reported by {@code source}.
-     * <p>
-     * {@link AffectedVersionAttribution}s are removed for a {@link VulnerableSoftware} record
-     * if it is part of {@code vsListOld}, but not {@code vsList}.
-     *
-     * @param vulnerability The vulnerability this is about
-     * @param vsListOld     Affected versions as previously reported
-     * @param vsList        Affected versions as currently reported
-     * @param source        The source who reported {@code vsList}
-     * @return The reconciled {@link List} of {@link VulnerableSoftware}s
-     */
     public List<VulnerableSoftware> reconcileVulnerableSoftware(final Vulnerability vulnerability,
                                                                 final List<VulnerableSoftware> vsListOld,
                                                                 final List<VulnerableSoftware> vsList,
                                                                 final Vulnerability.Source source) {
-        if (vsListOld == null || vsListOld.isEmpty()) {
-            return vsList;
-        }
-
-        for (final VulnerableSoftware vs : vsListOld) {
-            final var vsPersistent = getObjectById(VulnerableSoftware.class, vs.getId());
-            if (vsPersistent == null) {
-                continue; // Doesn't exist anymore
-            } else if (vsList.contains(vsPersistent)) {
-                continue; // We already have this one covered
-            }
-
-            final List<AffectedVersionAttribution> attributions = getAttributions(vulnerability, vsPersistent);
-            final boolean previouslyReportedBySource = attributions.stream()
-                    .anyMatch(attr -> attr.getSource() == source);
-            final boolean previouslyReportedByOthers = attributions.stream()
-                    .anyMatch(attr -> attr.getSource() != source);
-
-            if (previouslyReportedByOthers) {
-                // Reported by another source, keep it.
-                vsList.add(vsPersistent);
-            }
-            if (previouslyReportedBySource) {
-                // Not reported anymore, remove attribution.
-                deleteAttribution(vulnerability, vsPersistent, source);
-            }
-        }
-
-        return vsList;
+        return getVulnerabilityQueryManager().reconcileVulnerableSoftware(vulnerability, vsListOld, vsList, source);
     }
 
-    public List<AffectedVersionAttribution> getAttributions(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware) {
-        return getVulnerabilityQueryManager().getAttributions(vulnerability, vulnerableSoftware);
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
     }
 
-    public AffectedVersionAttribution getAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().getAttribution(vulnerability, vulnerableSoftware, source);
+    public AffectedVersionAttribution getAffectedVersionAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
-    public List<AffectedVersionAttribution> updateAttributions(final Vulnerability vulnerability,
-                                                               final List<VulnerableSoftware> vsList,
-                                                               final Vulnerability.Source source) {
-        return vsList.stream()
-                .map(vs -> updateAttribution(vulnerability, vs, source))
-                .toList();
+    public List<AffectedVersionAttribution> updateAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                                              final List<VulnerableSoftware> vsList,
+                                                                              final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
     }
 
-    public AffectedVersionAttribution updateAttribution(final Vulnerability vulnerability,
-                                                        final VulnerableSoftware vulnerableSoftware,
-                                                        final Vulnerability.Source source) {
-        AffectedVersionAttribution ava = getAttribution(vulnerability, vulnerableSoftware, source);
-        if (ava == null) {
-            return persist(new AffectedVersionAttribution(source, vulnerability, vulnerableSoftware));
-        } else {
-            ava.setAttributedOn(new Date());
-            return persist(ava);
-        }
+    public AffectedVersionAttribution updateAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                                       final VulnerableSoftware vulnerableSoftware,
+                                                                       final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
-    public void deleteAttribution(final Vulnerability vulnerability, final VulnerableSoftware vulnerableSoftware, final Vulnerability.Source source) {
-        final Query<AffectedVersionAttribution> query = pm.newQuery(AffectedVersionAttribution.class);
-        query.setFilter("vulnerability == :vulnerability && vulnerableSoftware == :vulnerableSoftware && source == :source");
-        query.setParameters(vulnerability, vulnerableSoftware, source);
-        query.deletePersistentAll();
+    public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void deleteAffectedVersionAttributions(final Vulnerability vulnerability) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability);
     }
 
     public boolean contains(Vulnerability vulnerability, Component component) {

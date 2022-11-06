@@ -195,7 +195,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
                 qm.persist(vsList);
-                vsList.forEach(vs -> qm.updateAttribution(synchronizedVulnerability, vs, Vulnerability.Source.GITHUB));
+                vsList.forEach(vs -> qm.updateAffectedVersionAttribution(synchronizedVulnerability, vs, Vulnerability.Source.GITHUB));
                 vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.GITHUB);
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
                 qm.persist(synchronizedVulnerability);

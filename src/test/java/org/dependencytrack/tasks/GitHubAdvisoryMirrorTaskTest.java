@@ -112,9 +112,9 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         existingVuln.setSource(Source.GITHUB);
         existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         existingVuln = qm.createVulnerability(existingVuln, false);
-        qm.updateAttribution(existingVuln, vs1, Source.OSV);
-        qm.updateAttribution(existingVuln, vs2, Source.OSV);
-        qm.updateAttribution(existingVuln, vs3, Source.GITHUB);
+        qm.updateAffectedVersionAttribution(existingVuln, vs1, Source.OSV);
+        qm.updateAffectedVersionAttribution(existingVuln, vs2, Source.OSV);
+        qm.updateAffectedVersionAttribution(existingVuln, vs3, Source.GITHUB);
 
         // Create a vulnerable version range that is equal to vs1.
         final var ghVuln1 = new GitHubVulnerability();
@@ -163,7 +163,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isEqualTo("2.13.2.0");
                     assertThat(vs.getVersionEndExcluding()).isNull();
 
-                    final List<AffectedVersionAttribution> attributions = qm.getAttributions(vuln, vs);
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vs);
                     assertThat(attributions).satisfiesExactlyInAnyOrder(
                             attr -> assertThat(attr.getSource()).isEqualTo(Source.OSV),
                             attr -> assertThat(attr.getSource()).isEqualTo(Source.GITHUB)
@@ -181,7 +181,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isEqualTo("2.12.6.0");
                     assertThat(vs.getVersionEndExcluding()).isNull();
 
-                    final List<AffectedVersionAttribution> attributions = qm.getAttributions(vuln, vs);
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vs);
                     assertThat(attributions).satisfiesExactlyInAnyOrder(
                             attr -> assertThat(attr.getSource()).isEqualTo(Source.GITHUB)
                     );
@@ -199,7 +199,7 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getVersionEndIncluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("2.12.6.1");
 
-                    final List<AffectedVersionAttribution> attributions = qm.getAttributions(vuln, vs);
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vs);
                     assertThat(attributions).satisfiesExactly(
                             attr -> assertThat(attr.getSource()).isEqualTo(Source.OSV)
                     );

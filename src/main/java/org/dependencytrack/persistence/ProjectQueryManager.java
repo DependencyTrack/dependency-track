@@ -632,8 +632,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
 
         if (includeACL) {
-            //It's possible that the DT instance is being prepared for ACL enabling,
-            //So client can request to includeACL even if ACL is not (yet) enabled
             List<Team> accessTeams = source.getAccessTeams();
             if (CollectionUtils.isEmpty(accessTeams)) {
                 project.setAccessTeams(new LinkedList<>(accessTeams));

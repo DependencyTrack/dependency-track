@@ -708,16 +708,16 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
-    public List<AffectedVersionAttribution> updateAffectedVersionAttributions(final Vulnerability vulnerability,
+    public void updateAffectedVersionAttributions(final Vulnerability vulnerability,
                                                                               final List<VulnerableSoftware> vsList,
                                                                               final Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
+        getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
     }
 
-    public AffectedVersionAttribution updateAffectedVersionAttribution(final Vulnerability vulnerability,
+    public void updateAffectedVersionAttribution(final Vulnerability vulnerability,
                                                                        final VulnerableSoftware vulnerableSoftware,
                                                                        final Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+        getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
     public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,

@@ -35,6 +35,16 @@ import java.util.UUID;
 
 /**
  * Model class for tracking the attribution of versions affected by a given {@link Vulnerability}.
+ * <p>
+ * The intention behind this attribution is being able to track and differentiate which source
+ * reported a given version range to be vulnerable to a given vulnerability.
+ * <p>
+ * Having this knowledge is especially important when multiple sources contribute intelligence data
+ * for the same vulnerability. For example, both GitHub Advisories and OSV may report version ranges
+ * for GHSA vulnerabilities.
+ * <p>
+ * Surfacing this information to users allows them to get a better understanding of why their
+ * component was found to be vulnerable, and which source is responsible for it.
  *
  * @since 4.7.0
  */

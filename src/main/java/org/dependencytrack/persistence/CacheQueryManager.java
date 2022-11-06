@@ -25,6 +25,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.json.JsonObject;
 import java.util.Date;
+import java.util.List;
 
 public class CacheQueryManager extends QueryManager implements IQueryManager {
 
@@ -52,6 +53,13 @@ public class CacheQueryManager extends QueryManager implements IQueryManager {
         query.setOrdering("lastOccurrence desc");
         query.setRange(0, 1);
         return singleResult(query.executeWithArray(cacheType, targetHost, targetType, target));
+    }
+
+    public List<ComponentAnalysisCache> getComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetType, String target) {
+        final Query<ComponentAnalysisCache> query = pm.newQuery(ComponentAnalysisCache.class,
+                "cacheType == :cacheType && targetType == :targetType && target == :target");
+        query.setOrdering("lastOccurrence desc");
+        return (List<ComponentAnalysisCache>) query.executeWithArray(cacheType, targetType, target);
     }
 
     public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {

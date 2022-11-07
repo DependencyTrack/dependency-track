@@ -182,6 +182,34 @@ public class AnalysisResourceTest extends ResourceTest {
     }
 
     @Test
+    public void noAnalysisExists() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("2.0");
+        component = qm.createComponent(component, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-002");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(List.of(component));
+        vulnerability = qm.createVulnerability(vulnerability, false);
+
+        final Response response = target(V1_ANALYSIS)
+                .queryParam("component", component.getUuid())
+                .queryParam("vulnerability", vulnerability.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT);
+        assertThat(getPlainTextBody(response)).isEmpty();
+    }
+
+    @Test
     public void retrieveAnalysisWithProjectNotFoundTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 

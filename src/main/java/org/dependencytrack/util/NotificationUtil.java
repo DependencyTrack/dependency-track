@@ -68,7 +68,6 @@ import java.util.List;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.dependencytrack.model.VulnerabilityAlias.sourcesToString;
 
 public final class NotificationUtil {
 
@@ -286,7 +285,7 @@ public final class NotificationUtil {
                 aliasesBuilder.add(Json.createObjectBuilder()
                         .add("source", vulnIdBySource.getSource().toString())
                         .add("vulnId", vulnIdBySource.getVulnId())
-                        .add("reportedBy", sourcesToString(vulnIdBySource.getReportedBy()))
+                        .add("reportedBy", Json.createArrayBuilder(vulnIdBySource.getReportedBy()))
                         .build());
             }
         }

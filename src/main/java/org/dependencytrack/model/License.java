@@ -66,6 +66,7 @@ import java.util.UUID;
                 @Persistent(name = "osiApproved"),
                 @Persistent(name = "fsfLibre"),
                 @Persistent(name = "deprecatedLicenseId"),
+                @Persistent(name = "customLicense"),
                 @Persistent(name = "seeAlso"),
                 @Persistent(name = "licenseGroups"),
                 @Persistent(name = "uuid"),
@@ -75,6 +76,7 @@ import java.util.UUID;
                 @Persistent(name = "licenseId"),
                 @Persistent(name = "osiApproved"),
                 @Persistent(name = "fsfLibre"),
+                @Persistent(name = "customLicense")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -155,6 +157,7 @@ public class License implements Serializable {
     @JsonAlias(value = "licenseExceptionId")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Size(min = 1, max = 255)
+    @NotBlank
     @Pattern(regexp = RegexSequence.Definition.STRING_IDENTIFIER, message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")
     private String licenseId;
 
@@ -181,6 +184,14 @@ public class License implements Serializable {
     @Column(name = "ISDEPRECATED")
     @JsonProperty(value = "isDeprecatedLicenseId")
     private boolean deprecatedLicenseId;
+
+    /**
+     * Identifies if the license is a custom license created by a user.
+     */
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "ISCUSTOMLICENSE", allowsNull = "true") // New column, must allow nulls on existing databases
+    @JsonProperty(value = "isCustomLicense")
+    private boolean customLicense;
 
     /**
      * The seeAlso field - may contain URLs to the original license info.
@@ -286,6 +297,15 @@ public class License implements Serializable {
 
     public void setDeprecatedLicenseId(boolean deprecatedLicenseId) {
         this.deprecatedLicenseId = deprecatedLicenseId;
+    }
+
+
+    public boolean isCustomLicense() {
+        return customLicense;
+    }
+
+    public void setCustomLicense(boolean customLicense) {
+        this.customLicense = customLicense;
     }
 
     public String[] getSeeAlso() {

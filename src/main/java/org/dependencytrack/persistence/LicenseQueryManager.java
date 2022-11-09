@@ -152,4 +152,67 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
         }
         return result;
     }
+
+    /**
+     * Creates a new license.
+     * @param licenseId the license ID of the license to create (i.e. LicenseRef-scancode-ms-enterprise-library-eula)
+     * @param name the name of the license to create
+     * @param text the content of the license
+     * @param header the standard license header typically added to the top of source code
+     * @param template the standard license template typically used for the creation of the license text
+     * @param isOsiApproved Identifies if the license is approved by the OSI
+     * @param isFsfLibre specifies if the license is FSF Libre
+     * @param isDeprecatedLicenseId specifies if the licenseId has been deprecated by SPDX
+     * @param isCustomLicense specifies if the license has been created by a user
+     * @param comment a comment about the license. Typically includes release date, etc
+     * @param seeAlso the seeAlso field - may contain URLs to the original license info
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the created license
+     */
+    public License createLicense (String licenseId, String name, String text, String header, String template, boolean isOsiApproved, boolean isFsfLibre, boolean isDeprecatedLicenseId, boolean isCustomLicense, String comment, String seeAlso, boolean commitIndex) {
+        License license = new License();
+
+        license.setLicenseId(licenseId);
+        license.setName(name);
+        license.setText(text);
+        license.setHeader(header);
+        license.setTemplate(template);
+        license.setOsiApproved(isOsiApproved);
+        license.setFsfLibre(isFsfLibre);
+        license.setDeprecatedLicenseId(isDeprecatedLicenseId);
+        license.setCustomLicense(isCustomLicense);
+        license.setComment(comment);
+        license.setSeeAlso(seeAlso);
+
+        final License result = persist(license);
+
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, License.class);
+
+        return result;
+    }
+
+    /**
+     * Creates a new custom license.
+     * @param license the license to create
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the created license
+     */
+    public License createCustomLicense(License license, boolean commitIndex) {
+        license.setCustomLicense(true);
+        final License result = persist(license);
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, License.class);
+        return result;
+    }
+
+    /**
+     * Deletes a license.
+     * @param license the license to delete
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     */
+    public void deleteLicense(final License license, final boolean commitIndex) {
+        commitSearchIndex(commitIndex, License.class);
+        delete(license);
+    }
 }

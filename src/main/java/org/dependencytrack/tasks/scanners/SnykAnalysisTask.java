@@ -26,6 +26,7 @@ import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import com.github.packageurl.PackageURL;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
@@ -68,7 +69,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BAS
  *
  * @since 4.7.0
  */
-public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
+public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements CacheableScanTask, Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
 
@@ -275,5 +276,15 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Subsc
                 }
             }
         }
+    }
+
+    @Override
+    public boolean shouldAnalyze(PackageURL packageUrl) {
+        return !isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, packageUrl.toString());
+    }
+
+    @Override
+    public void applyAnalysisFromCache(Component component) {
+        applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
     }
 }

@@ -100,7 +100,7 @@ body:
     description: |-
       What version of the database server are you using?
       
-      *If you selected H2 in the field above, you can leave this empty.*
+      *If you selected H2 or N/A in the field above, you can leave this empty.*
     placeholder: "13.5"
   validations:
     required: false

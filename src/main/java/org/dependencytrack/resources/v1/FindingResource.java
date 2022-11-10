@@ -156,7 +156,7 @@ public class FindingResource extends AlpineResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                  LOGGER.info("Analyzing Project " + project.getUuid());
+                  LOGGER.info("Analysis of project " + project.getUuid() + " requested by " + super.getPrincipal().getName());
 
                   final List<Component> detachedComponents = qm.detach(qm.getAllComponents(project));
                   final Project detachedProject = qm.detach(Project.class, project.getId());

@@ -39,16 +39,6 @@ File a single issue per defect. Do not list multiple defects in the same issue.
 
 The more information you can provide, the more likely we will be successful at reproducing the bug and finding a fix.
 
-Please include the following with each bug report:
-
-* The Dependency-Track version you are using (for both API server and frontend)
-* The Dependency-Track [distribution](https://github.com/DependencyTrack/dependency-track#distributions) you are using
-* The database you are using
-* Your operating system and version
-* What you expected, versus what happened
-* Reproducible steps (1 2 3...) that cause the defect including any required files
-* Any relevant screenshots and other outputs
-
 API server logs (including errors) are logged to the following locations per default:
 
 * `~/.dependency-track/dependency-track.log` (`/data/.dependency-track/dependency-track.log` within Docker containers)

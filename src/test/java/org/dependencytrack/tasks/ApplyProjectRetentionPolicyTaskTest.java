@@ -1,7 +1,7 @@
 package org.dependencytrack.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_RETENTION_POLICY;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_PROJECT_RETENTION_POLICY;
 
 import alpine.model.IConfigProperty.PropertyType;
 import java.util.Arrays;
@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.jdo.Query;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.ApplyRetentionPolicyEvent;
+import org.dependencytrack.event.ApplyProjectRetentionPolicyEvent;
 import org.dependencytrack.model.Bom.Format;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ApplyRetentionPolicyTaskTest extends PersistenceCapableTest {
+public class ApplyProjectRetentionPolicyTaskTest extends PersistenceCapableTest {
 
     private final static String PROJECT_A = "PROJECT_A";
     private final static String PROJECT_B = "PROJECT_B";
@@ -33,7 +33,7 @@ public class ApplyRetentionPolicyTaskTest extends PersistenceCapableTest {
     private final int initialProjectCCount;
     private final int expectedProjectCCount;
 
-    public ApplyRetentionPolicyTaskTest(String keepNRecent, int initialProjectACount, int expectedProjectACount,
+    public ApplyProjectRetentionPolicyTaskTest(String keepNRecent, int initialProjectACount, int expectedProjectACount,
             int initialProjectBCount, int expectedProjectBCount, int initialProjectCCount, int expectedProjectCCount) {
         this.keepNRecent = keepNRecent;
         this.initialProjectACount = initialProjectACount;
@@ -103,7 +103,7 @@ public class ApplyRetentionPolicyTaskTest extends PersistenceCapableTest {
         initializeProject(PROJECT_C, initialProjectCCount);
         initializeConfigProperty(keepNRecent);
         // Act
-        new ApplyRetentionPolicyTask().inform(new ApplyRetentionPolicyEvent());
+        new ApplyProjectRetentionPolicyTask().inform(new ApplyProjectRetentionPolicyEvent());
         // Assert
         assertProject(PROJECT_A, initialProjectACount, expectedProjectACount);
         assertProject(PROJECT_B, initialProjectBCount, expectedProjectBCount);
@@ -129,8 +129,8 @@ public class ApplyRetentionPolicyTaskTest extends PersistenceCapableTest {
 
     private void initializeConfigProperty(final String keepLastN) {
         qm.createConfigProperty(
-                GENERAL_RETENTION_POLICY.getGroupName(),
-                GENERAL_RETENTION_POLICY.getPropertyName(),
+                GENERAL_PROJECT_RETENTION_POLICY.getGroupName(),
+                GENERAL_PROJECT_RETENTION_POLICY.getPropertyName(),
                 keepLastN,
                 PropertyType.INTEGER,
                 null

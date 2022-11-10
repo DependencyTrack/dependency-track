@@ -25,7 +25,7 @@ public enum ConfigPropertyConstants {
 
     GENERAL_BASE_URL("general", "base.url", null, PropertyType.URL, "URL used to construct links back to Dependency-Track from external systems"),
     GENERAL_BADGE_ENABLED("general", "badge.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable SVG badge support from metrics"),
-    GENERAL_RETENTION_POLICY("general", "retention.policy.keep.recent", null, PropertyType.INTEGER, "Number of recent project versions to keep, all by default"),
+    GENERAL_PROJECT_RETENTION_POLICY("general", "project.retention.policy.keep.recent", null, PropertyType.INTEGER, "Number of recent project versions to keep, all by default"),
     EMAIL_SMTP_ENABLED("email", "smtp.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable SMTP"),
     EMAIL_SMTP_FROM_ADDR("email", "smtp.from.address", null, PropertyType.STRING, "The from email address to use to send output SMTP mail"),
     EMAIL_SMTP_SERVER_HOSTNAME("email", "smtp.server.hostname", null, PropertyType.STRING, "The hostname or IP address of the SMTP mail server"),
@@ -90,7 +90,7 @@ public enum ConfigPropertyConstants {
     TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_CADENCE("task-scheduler", "repository.metadata.fetch.cadence", "24", PropertyType.INTEGER, "Metadada fetch cadence (in hours) for package repositories"),
     TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE("task-scheduler", "internal.components.identification.cadence", "6", PropertyType.INTEGER, "Internal component identification cadence (in hours)"),
     TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE("task-scheduler", "component.analysis.cache.clear.cadence", "72", PropertyType.INTEGER, "Cleanup cadence (in hours) for component analysis cache"),
-    TASK_SCHEDULER_RETENTION_POLICY_CADENCE("task-scheduler", "retention.policy.cadence", "24", PropertyType.INTEGER, "Apply cadence (in hours) for retention policy execution");
+    TASK_SCHEDULER_PROJECT_RETENTION_POLICY_CADENCE("task-scheduler", "project.retention.policy.cadence", "24", PropertyType.INTEGER, "Apply cadence (in hours) for project retention policy execution");
 
     private String groupName;
     private String propertyName;

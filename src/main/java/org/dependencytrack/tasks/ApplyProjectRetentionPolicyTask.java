@@ -2,7 +2,7 @@ package org.dependencytrack.tasks;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
-import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_RETENTION_POLICY;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_PROJECT_RETENTION_POLICY;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
@@ -11,22 +11,22 @@ import com.google.common.primitives.Ints;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
-import org.dependencytrack.event.ApplyRetentionPolicyEvent;
+import org.dependencytrack.event.ApplyProjectRetentionPolicyEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 
 /**
- * Subscriber task that applies general retention policy.
+ * Subscriber task that applies general project retention policy.
  * <p> Keeps N most recently uploaded versions of the project.
  * <p> By default, keeps all versions.
  */
-public class ApplyRetentionPolicyTask implements Subscriber {
+public class ApplyProjectRetentionPolicyTask implements Subscriber {
 
-    private static final Logger LOGGER = Logger.getLogger(ApplyRetentionPolicyTask.class);
+    private static final Logger LOGGER = Logger.getLogger(ApplyProjectRetentionPolicyTask.class);
 
     @Override
     public void inform(final Event event) {
-        if (event instanceof ApplyRetentionPolicyEvent) {
+        if (event instanceof ApplyProjectRetentionPolicyEvent) {
             try (final QueryManager qm = new QueryManager()) {
                 final int keepNRecent = getKeepNRecentConfigProperty(qm);
                 if (keepNRecent <= 0) {
@@ -34,11 +34,11 @@ public class ApplyRetentionPolicyTask implements Subscriber {
                     return;
                 }
 
-                LOGGER.info("Applying general retention policy, keeping " + keepNRecent
+                LOGGER.info("Applying general project retention policy, keeping " + keepNRecent
                         + " most recently uploaded versions of the projects");
                 deleteStaleProjects(qm, keepNRecent);
             } catch (Exception e) {
-                LOGGER.error("An error occurred applying general retention policy", e);
+                LOGGER.error("An error occurred applying general project retention policy", e);
             }
         }
     }
@@ -65,7 +65,7 @@ public class ApplyRetentionPolicyTask implements Subscriber {
 
     private int getKeepNRecentConfigProperty(QueryManager qm) {
         final var keepNRecentConfigProperty = qm.getConfigProperty(
-                GENERAL_RETENTION_POLICY.getGroupName(), GENERAL_RETENTION_POLICY.getPropertyName()
+                GENERAL_PROJECT_RETENTION_POLICY.getGroupName(), GENERAL_PROJECT_RETENTION_POLICY.getPropertyName()
         );
         final int keepNRecent = Optional.ofNullable(keepNRecentConfigProperty.getPropertyValue())
                 .map(Ints::tryParse)

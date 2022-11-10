@@ -24,7 +24,7 @@ import alpine.event.framework.Event;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.tasks.AlpineTaskScheduler;
-import org.dependencytrack.event.ApplyRetentionPolicyEvent;
+import org.dependencytrack.event.ApplyProjectRetentionPolicyEvent;
 import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
 import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.event.FortifySscUploadEventAbstract;
@@ -56,7 +56,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_O
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_PORTFOLIO_METRICS_UPDATE_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_PORTFOLIO_VULNERABILITY_ANALYSIS_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_REPOSITORY_METADATA_FETCH_CADENCE;
-import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_RETENTION_POLICY_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_PROJECT_RETENTION_POLICY_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_VULNDB_MIRROR_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_VULNERABILITY_METRICS_UPDATE_CADENCE;
 
@@ -110,7 +110,7 @@ public final class TaskScheduler extends AlpineTaskScheduler {
             scheduleEvent(new ClearComponentAnalysisCacheEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE));
 
             // Creates a new event that executes every 24 hours (86400000) by default after an initial 1 minute (60000) delay
-            scheduleEvent(new ApplyRetentionPolicyEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_RETENTION_POLICY_CADENCE));
+            scheduleEvent(new ApplyProjectRetentionPolicyEvent(), 60000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_PROJECT_RETENTION_POLICY_CADENCE));
         }
 
         // Configurable tasks

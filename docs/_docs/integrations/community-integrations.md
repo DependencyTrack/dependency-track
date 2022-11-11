@@ -28,4 +28,5 @@ to make custom tools and integrations. Many tools that integrate with Dependency
 | [ThreadFix](https://threadfix.it/) | [Denim Group](https://www.denimgroup.com/) |
 |[Github action OWASP Dependency Track Check](https://github.com/marketplace/actions/owasp-dependency-track-check)| [Quobis](https://www.quobis.com/)|
 |[Dependency-Track Backstage plugin](https://github.com/TRIMM/plugin-dependencytrack)| [TRIMM](https://www.trimm.nl/)|
+| [dependency-track-exporter](https://github.com/jetstack/dependency-track-exporter) | [Jetstack](https://jetstack.io) |
 

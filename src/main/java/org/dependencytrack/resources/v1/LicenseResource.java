@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
+import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +28,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -124,6 +126,7 @@ public class LicenseResource extends AlpineResource {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 409, message = "A license with the specified ID already exists.")
     })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response createLicense(License jsonLicense) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -154,6 +157,7 @@ public class LicenseResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The license could not be found"),
             @ApiResponse(code = 409, message = "Only custom licenses can be deleted.")
     })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response deleteLicense(
             @ApiParam(value = "The SPDX License ID of the license to delete", required = true)
             @PathParam("licenseId") String licenseId) {

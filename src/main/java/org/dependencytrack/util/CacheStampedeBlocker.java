@@ -156,10 +156,13 @@ public class CacheStampedeBlocker<K, V> {
         ExpirableCompletableFuture<V> cachePopulationFuture = null;
 
         LOGGER.debug("Acquiring readLock for cache "+cacheName+" and key "+key);
-        rwLock.readLock().lock();
-        LOGGER.debug("ReadLock acquired for cache "+cacheName+" and key "+key);
-        cachePopulationFuture = cacheLoaders.get(key);
-        rwLock.readLock().unlock();
+        try {
+            rwLock.readLock().lock();
+            LOGGER.debug("ReadLock acquired for cache " + cacheName + " and key " + key);
+            cachePopulationFuture = cacheLoaders.get(key);
+        } finally {
+            rwLock.readLock().unlock();
+        }
 
         if (cachePopulationFuture == null || (System.currentTimeMillis() - cachePopulationFuture.getTimestamp()) > cacheLoaderEntryTTL) {
             LOGGER.debug("No ongoing population for cache "+cacheName+" and key "+key+" or entry has expired ! Trying to acquire writeLock");
@@ -170,7 +173,7 @@ public class CacheStampedeBlocker<K, V> {
                 cachePopulationFuture = cacheLoaders.get(key);
                 if(cachePopulationFuture == null) {
                     LOGGER.debug("Populating cache "+cacheName+" for key "+key+" and returning value");
-                    cachePopulationFuture = new ExpirableCompletableFuture(System.currentTimeMillis(), new CompletableFuture<V>());
+                    cachePopulationFuture = new ExpirableCompletableFuture<>(System.currentTimeMillis(), new CompletableFuture<>());
                     cacheLoaders.put(key, cachePopulationFuture);
                     rwLock.writeLock().unlock();
                     locked = false;
@@ -229,13 +232,13 @@ public class CacheStampedeBlocker<K, V> {
         LOGGER.debug("Cleanup of "+cacheName+"'s loader map finished");
     }
 
-    class ExpirableCompletableFuture<V> {
+    static class ExpirableCompletableFuture<V2> {
 
         private Long timestamp;
 
-        private CompletableFuture<V> future;
+        private CompletableFuture<V2> future;
 
-        public ExpirableCompletableFuture(Long timestamp, CompletableFuture<V> future) {
+        public ExpirableCompletableFuture(Long timestamp, CompletableFuture<V2> future) {
             this.timestamp = timestamp;
             this.future = future;
         }
@@ -248,11 +251,11 @@ public class CacheStampedeBlocker<K, V> {
             this.timestamp = timestamp;
         }
 
-        public CompletableFuture<V> getFuture() {
+        public CompletableFuture<V2> getFuture() {
             return future;
         }
 
-        public void setFuture(CompletableFuture<V> future) {
+        public void setFuture(CompletableFuture<V2> future) {
             this.future = future;
         }
     }

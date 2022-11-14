@@ -917,6 +917,66 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return result;
     }
 
+    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
+        final PaginatedResult result;
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+
+        final var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withParent(uuid)
+                .withClassifier(classifier);
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
+        result = execute(query, params);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
+    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
+        final PaginatedResult result;
+        final Query<Project> query = pm.newQuery(Project.class);
+        if (orderBy == null) {
+            query.setOrdering("name asc");
+        }
+
+        var filterBuilder = new ProjectQueryFilterBuilder()
+                .excludeInactive(excludeInactive)
+                .withParent(uuid)
+                .withTag(tag);
+
+        if (filter != null) {
+            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            filterBuilder = filterBuilder.withFuzzyName(filterString);
+        }
+
+        final String queryFilter = filterBuilder.buildFilter();
+        final Map<String, Object> params = filterBuilder.getParams();
+
+        preprocessACLs(query, queryFilter, params, false);
+        result = execute(query, params);
+        if (includeMetrics) {
+            // Populate each Project object in the paginated result with transitive related
+            // data to minimize the number of round trips a client needs to make, process, and render.
+            for (Project project : result.getList(Project.class)) {
+                project.setMetrics(getMostRecentProjectMetrics(project));
+            }
+        }
+        return result;
+    }
+
     public PaginatedResult getProjectsWithoutDescendantsOf(Project project){
         final PaginatedResult result;
         final Query<Project> query = pm.newQuery(Project.class);

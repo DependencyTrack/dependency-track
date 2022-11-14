@@ -24,6 +24,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -108,7 +109,6 @@ public class Project implements Serializable {
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
-    @JsonIgnore
     private long id;
 
     @Persistent
@@ -247,6 +247,11 @@ public class Project implements Serializable {
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
     @JsonIgnore
     private List<Team> accessTeams;
+
+    @JsonProperty("pid")
+    private Long getParentId() {
+        return (this.getParent() == null)? null : this.getParent().getId();
+    }
 
     private transient ProjectMetrics metrics;
 

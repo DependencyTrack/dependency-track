@@ -364,6 +364,13 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
     }
 
+    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+        return getProjectQueryManager().getChildrenProjects(tag, uuid, includeMetrics, excludeInactive);
+    }
+
+    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+        return getProjectQueryManager().getChildrenProjects(classifier, uuid, includeMetrics, excludeInactive);
+    }
 
     public PaginatedResult getProjects(final Tag tag) {
         return getProjectQueryManager().getProjects(tag);

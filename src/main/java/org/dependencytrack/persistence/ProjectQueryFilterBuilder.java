@@ -10,10 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Builder for filters meant to be used with {@link javax.jdo.Query#setFilter} and the query's
+ * parameters that can be passed to {@link alpine.persistence.AbstractAlpineQueryManager#execute}
+ * <br>
+ * Mutable and not threadsafe!
+ */
 class ProjectQueryFilterBuilder {
 
-    final private Map<String, Object> params;
-    final private List<String> filterCriteria;
+    private final Map<String, Object> params;
+    private final List<String> filterCriteria;
 
     ProjectQueryFilterBuilder() {
         this.params = new HashMap<>();
@@ -72,7 +78,7 @@ class ProjectQueryFilterBuilder {
         return this;
     }
 
-    ProjectQueryFilterBuilder excludeProjectsThatAreChildren(){
+    ProjectQueryFilterBuilder excludeChildProjects() {
         filterCriteria.add("parent == null");
         return this;
     }

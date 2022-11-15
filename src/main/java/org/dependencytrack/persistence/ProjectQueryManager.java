@@ -92,7 +92,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 .excludeInactive(excludeInactive);
 
         if (onlyRoot){
-            filterBuilder.excludeProjectsThatAreChildren();
+            filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -177,8 +177,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 .excludeInactive(excludeInactive)
                 .withName(name);
 
-        if (onlyRoot){
-            filterBuilder.excludeProjectsThatAreChildren();
+        if (onlyRoot) {
+            filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -227,7 +227,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 .withTeam(team);
 
         if (onlyRoot){
-            filterBuilder.excludeProjectsThatAreChildren();
+            filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -255,7 +255,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 .withTag(tag);
 
         if (onlyRoot){
-            filterBuilder.excludeProjectsThatAreChildren();
+            filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 
@@ -296,7 +296,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 .withClassifier(classifier);
 
         if (onlyRoot){
-            filterBuilder.excludeProjectsThatAreChildren();
+            filterBuilder.excludeChildProjects();
             query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         }
 

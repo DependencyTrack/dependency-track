@@ -100,12 +100,11 @@ public class OsvAdvisoryParserTest {
         final JSONArray vulnerabilities = jsonObject.optJSONArray("affected");
 
         // type last_affected
-        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(4));
+        List<OsvAffectedPackage> affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(5));
         Assert.assertNotNull(affectedPackages);
         Assert.assertEquals(1, affectedPackages.size());
         Assert.assertEquals("10", affectedPackages.get(0).getLowerVersionRange());
-        Assert.assertEquals(null, affectedPackages.get(0).getUpperVersionRangeExcluding());
-        Assert.assertEquals("11", affectedPackages.get(0).getUpperVersionRangeIncluding());
+        Assert.assertEquals("13", affectedPackages.get(0).getUpperVersionRangeExcluding());
 
         // type last_affected
         affectedPackages = parser.parseAffectedPackageRange(vulnerabilities.getJSONObject(6));

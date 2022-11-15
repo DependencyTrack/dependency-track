@@ -25,12 +25,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import java.util.List;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -58,6 +60,7 @@ public class AffectedComponent {
     private String versionStartExcluding;
     private String versionStartIncluding;
     private UUID uuid;
+    private List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public AffectedComponent() {
     }
@@ -103,6 +106,9 @@ public class AffectedComponent {
             versionEndIncluding = vs.getVersionEndIncluding();
             versionStartExcluding = vs.getVersionStartExcluding();
             versionStartIncluding = vs.getVersionStartIncluding();
+        }
+        if (vs.getAffectedVersionAttributions() != null) {
+            affectedVersionAttributions = vs.getAffectedVersionAttributions();
         }
         uuid = vs.getUuid();
     }
@@ -179,6 +185,14 @@ public class AffectedComponent {
         this.uuid = uuid;
     }
 
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
+        return affectedVersionAttributions;
+    }
+
+    public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
+        this.affectedVersionAttributions = affectedVersionAttributions;
+    }
+
     public VulnerableSoftware toVulnerableSoftware() {
         final VulnerableSoftware vs = new VulnerableSoftware();
         if (IdentityType.CPE == this.identityType && this.identity != null) {
@@ -227,6 +241,7 @@ public class AffectedComponent {
             vs.setVersionStartExcluding(this.versionStartExcluding);
             vs.setVersionEndIncluding(this.versionEndIncluding);
             vs.setVersionEndExcluding(this.versionEndExcluding);
+            vs.setAffectedVersionAttributions(this.affectedVersionAttributions);
         }
         return vs;
     }

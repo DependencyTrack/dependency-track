@@ -12,8 +12,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
-import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -24,7 +24,6 @@ import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
-
 import us.springett.cvss.Cvss;
 import us.springett.cvss.Score;
 
@@ -36,19 +35,20 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
-import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
-import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
+import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -82,28 +82,24 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
         if (e instanceof OsvMirrorEvent) {
 
-            if(this.ecosystems != null && !this.ecosystems.isEmpty()) {
+            if (this.ecosystems != null && !this.ecosystems.isEmpty()) {
                 for (String ecosystem : this.ecosystems) {
                     LOGGER.info("Updating datasource with Google OSV advisories for ecosystem " + ecosystem);
-                    try {
-                        String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8.toString()).replace("+", "%20")
-                                + "/all.zip";
-                        HttpUriRequest request = new HttpGet(url);
-                        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
-                            final StatusLine status = response.getStatusLine();
-                            if (status.getStatusCode() == 200) {
-                                try (InputStream in = response.getEntity().getContent();
-                                     ZipInputStream zipInput = new ZipInputStream(in)) {
-                                    unzipFolder(zipInput);
-                                }
-                            } else {
-                                LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
+                    String url = this.osvBaseUrl + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
+                            + "/all.zip";
+                    HttpUriRequest request = new HttpGet(url);
+                    try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                        final StatusLine status = response.getStatusLine();
+                        if (status.getStatusCode() == 200) {
+                            try (InputStream in = response.getEntity().getContent();
+                                 ZipInputStream zipInput = new ZipInputStream(in)) {
+                                unzipFolder(zipInput);
                             }
-                        } catch (Exception ex) {
-                            LOGGER.error("Exception while executing Http client request", ex);
+                        } else {
+                            LOGGER.error("Download failed : " + status.getStatusCode() + ": " + status.getReasonPhrase());
                         }
-                    } catch (UnsupportedEncodingException ex) {
-                        LOGGER.error("Exception while encoding URL for ecosystem " + ecosystem);
+                    } catch (Exception ex) {
+                        LOGGER.error("Exception while executing Http client request", ex);
                     }
                 }
             } else {
@@ -140,10 +136,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
         try (QueryManager qm = new QueryManager()) {
 
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
-            final List<VulnerableSoftware> vsList = new ArrayList<>();
             final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
-            Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);;
-            final Vulnerability existing = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), true);
+            final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
+            final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
 
             if (advisory.getAliases() != null) {
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
@@ -172,21 +167,17 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 }
             }
 
+            List<VulnerableSoftware> vsList = new ArrayList<>();
             for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
                 VulnerableSoftware vs = mapAffectedPackageToVulnerableSoftware(qm, osvAffectedPackage);
                 if (vs != null) {
-                    // check if it already exists or not
-                    VulnerableSoftware existingVulnSoftware = qm.getVulnerableSoftwareByPurl(vs.getPurlType(), vs.getPurlNamespace(), vs.getPurlName(), vs.getVersionEndExcluding(), vs.getVersionEndIncluding(), vs.getVersionStartExcluding(), vs.getVersionStartIncluding());
-                    if(existingVulnSoftware == null) {
-                        vsList.add(vs);
-                    }
+                    vsList.add(vs);
                 }
             }
             qm.persist(vsList);
-            if (existing != null) {
-                vsList.addAll(existing.getVulnerableSoftware());
-            }
-            synchronizedVulnerability.setVulnerableSoftware(new ArrayList<> (vsList));
+            qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.OSV);
+            vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.OSV);
+            synchronizedVulnerability.setVulnerableSoftware(vsList);
             qm.persist(synchronizedVulnerability);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
@@ -271,13 +262,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
     }
 
     public Vulnerability.Source extractSource(String vulnId) {
-
         final String sourceId = vulnId.split("-")[0];
-        switch (sourceId) {
-            case "GHSA": return Vulnerability.Source.GITHUB;
-            case "CVE": return Vulnerability.Source.NVD;
-            default: return Vulnerability.Source.OSV;
-        }
+        return switch (sourceId) {
+            case "GHSA" -> Vulnerability.Source.GITHUB;
+            case "CVE" -> Vulnerability.Source.NVD;
+            default -> Vulnerability.Source.OSV;
+        };
     }
 
     public VulnerableSoftware mapAffectedPackageToVulnerableSoftware(final QueryManager qm, final OsvAffectedPackage affectedPackage) {
@@ -294,7 +284,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
             return null;
         }
 
-        final String versionStartIncluding = affectedPackage.getLowerVersionRange();
+        // Other sources do not populate the versionStartIncluding with 0.
+        // Semantically, versionStartIncluding=null is equivalent to >=0.
+        // Omit zero values here for consistency's sake.
+        final String versionStartIncluding = Optional.ofNullable(affectedPackage.getLowerVersionRange())
+                .filter(version -> !"0".equals(version))
+                .orElse(null);
         final String versionEndExcluding = affectedPackage.getUpperVersionRangeExcluding();
         final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 
@@ -324,7 +319,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final StatusLine status = response.getStatusLine();
             if (status.getStatusCode() == 200) {
                 try (InputStream in = response.getEntity().getContent();
-                     Scanner scanner = new Scanner(in, StandardCharsets.UTF_8.name())) {
+                     Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
                     while (scanner.hasNextLine()) {
                         final String line = scanner.nextLine();
                         if(!line.isBlank()) {

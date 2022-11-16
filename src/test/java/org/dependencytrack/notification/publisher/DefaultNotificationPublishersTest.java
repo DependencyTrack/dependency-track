@@ -33,6 +33,7 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("EMAIL", DefaultNotificationPublishers.EMAIL.name());
         Assert.assertEquals("CONSOLE", DefaultNotificationPublishers.CONSOLE.name());
         Assert.assertEquals("WEBHOOK", DefaultNotificationPublishers.WEBHOOK.name());
+        Assert.assertEquals("JIRA", DefaultNotificationPublishers.JIRA.name());
     }
 
     @Test
@@ -93,5 +94,15 @@ public class DefaultNotificationPublishersTest {
         Assert.assertEquals("/templates/notification/publisher/webhook.peb", DefaultNotificationPublishers.WEBHOOK.getPublisherTemplateFile());
         Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.WEBHOOK.getTemplateMimeType());
         Assert.assertTrue(DefaultNotificationPublishers.WEBHOOK.isDefaultPublisher());
+    }
+
+    @Test
+    public void testJira() {
+        Assert.assertEquals("Jira", DefaultNotificationPublishers.JIRA.getPublisherName());
+        Assert.assertEquals("Creates a Jira issue in a configurable Jira instance and queue", DefaultNotificationPublishers.JIRA.getPublisherDescription());
+        Assert.assertEquals(JiraPublisher.class, DefaultNotificationPublishers.JIRA.getPublisherClass());
+        Assert.assertEquals("/templates/notification/publisher/jira.peb", DefaultNotificationPublishers.JIRA.getPublisherTemplateFile());
+        Assert.assertEquals(MediaType.APPLICATION_JSON, DefaultNotificationPublishers.JIRA.getTemplateMimeType());
+        Assert.assertTrue(DefaultNotificationPublishers.JIRA.isDefaultPublisher());
     }
 }

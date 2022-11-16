@@ -6,6 +6,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -70,6 +71,11 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         Assert.assertEquals(2, vulnerableSoftware.size());
         Assert.assertEquals("2.18.0", vulnerableSoftware.get(0).getVersionStartIncluding());
         Assert.assertEquals("2.29.4", vulnerableSoftware.get(0).getVersionEndExcluding());
+
+        List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsById("SNYK-JS-MOMENT-2944238");
+        Assert.assertNotNull(aliasAttributions);
+        Assert.assertEquals(2, aliasAttributions.size());
+        Assert.assertEquals(Vulnerability.Source.SNYK, aliasAttributions.get(0).getSource());
     }
 
     @Test

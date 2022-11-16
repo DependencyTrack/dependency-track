@@ -19,14 +19,12 @@ import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
-import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
@@ -115,6 +113,12 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         // The advisory reports both spring-security-oauth and spring-security-oauth2 as affected
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
         Assert.assertEquals(4, vulnerableSoftware.size());
+
+        List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsById("GHSA-77rv-6vfw-x4gc");
+        Assert.assertNotNull(aliasAttributions);
+        Assert.assertEquals(1, aliasAttributions.size());
+        Assert.assertEquals("CVE-2019-3778", aliasAttributions.get(0).getAlias());
+        Assert.assertEquals(Vulnerability.Source.OSV, aliasAttributions.get(0).getSource());
 
         // incoming vulnerability when vulnerability with same ID already exists
         prepareJsonObject("src/test/resources/unit/osv.jsons/new-GHSA-77rv-6vfw-x4gc.json");

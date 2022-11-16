@@ -162,7 +162,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                         vulnerabilityAlias.setGhsaId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                     }
-
+                    // Alias attribution
+                    qm.updateAliasAttribution(advisory.getId(), alias, Vulnerability.Source.OSV);
                     //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
                 }
             }

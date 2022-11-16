@@ -88,22 +88,25 @@ public class SnykParser {
                 if (cwe != null) {
                     vulnerability.addCwe(cwe);
                 }
-            }
-            // CVE alias
-            else if (source.equalsIgnoreCase("CVE")) {
-                final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
-                vulnerabilityAlias.setSnykId(vulnerability.getVulnId());
-                vulnerabilityAlias.setCveId(id);
-                qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                vulnerabilityAliasList.add(vulnerabilityAlias);
-            }
-            // Github alias
-            else if (source.equalsIgnoreCase("GHSA")) {
-                final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
-                vulnerabilityAlias.setSnykId(vulnerability.getVulnId());
-                vulnerabilityAlias.setGhsaId(id);
-                qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                vulnerabilityAliasList.add(vulnerabilityAlias);
+            } else {
+                // CVE alias
+                if (source.equalsIgnoreCase("CVE")) {
+                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+                    vulnerabilityAlias.setSnykId(vulnerability.getVulnId());
+                    vulnerabilityAlias.setCveId(id);
+                    qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    vulnerabilityAliasList.add(vulnerabilityAlias);
+                }
+                // Github alias
+                else if (source.equalsIgnoreCase("GHSA")) {
+                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+                    vulnerabilityAlias.setSnykId(vulnerability.getVulnId());
+                    vulnerabilityAlias.setGhsaId(id);
+                    qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                    vulnerabilityAliasList.add(vulnerabilityAlias);
+                }
+                // Alias attribution
+                qm.updateAliasAttribution(vulnerability.getVulnId(), id, Vulnerability.Source.SNYK);
             }
         }
         return vulnerabilityAliasList;

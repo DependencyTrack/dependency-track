@@ -23,6 +23,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
@@ -78,6 +79,12 @@ public class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
 
         final List<VulnerableSoftware> vsList = vuln.getVulnerableSoftware();
         assertThat(vsList).hasSize(2);
+
+        List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsById("GHSA-57j2-w4cx-62h2");
+        assertThat(aliasAttributions).isNotNull();
+        assertThat(aliasAttributions.size()).isEqualTo(1);
+        assertThat(aliasAttributions.get(0).getAlias()).isEqualTo("CVE-2020-36518");
+        assertThat(aliasAttributions.get(0).getSource()).isEqualTo(Source.GITHUB);
     }
 
     @Test

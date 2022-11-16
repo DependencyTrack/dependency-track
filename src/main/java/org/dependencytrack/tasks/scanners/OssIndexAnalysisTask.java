@@ -321,6 +321,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     alias.setSonatypeId(reportedVuln.getId());
                                     alias.setCveId(reportedVuln.getCve());
                                     qm.synchronizeVulnerabilityAlias(alias);
+                                    // Alias attribution
+                                    qm.updateAliasAttribution(reportedVuln.getId(), reportedVuln.getCve(), Vulnerability.Source.OSSINDEX);
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());

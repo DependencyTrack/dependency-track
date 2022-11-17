@@ -25,7 +25,6 @@ import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.exception.PublisherException;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.*;
@@ -38,7 +37,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public interface Publisher {

@@ -25,6 +25,7 @@ import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.exception.PublisherException;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.vo.*;
@@ -37,6 +38,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public interface Publisher {
@@ -94,15 +96,15 @@ public interface Publisher {
                 if (notification.getSubject() instanceof NewVulnerabilityIdentified) {
                     final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm, subject));
                 } else if (notification.getSubject() instanceof NewVulnerableDependency) {
                     final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm, subject));
                 } else if (notification.getSubject() instanceof AnalysisDecisionChange) {
                     final AnalysisDecisionChange subject = (AnalysisDecisionChange) notification.getSubject();
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm, subject));
                 } else if (notification.getSubject() instanceof BomConsumedOrProcessed) {
                     final BomConsumedOrProcessed subject = (BomConsumedOrProcessed) notification.getSubject();
                     context.put("subject", subject);

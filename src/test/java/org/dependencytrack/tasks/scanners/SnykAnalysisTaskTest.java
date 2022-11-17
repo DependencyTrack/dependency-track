@@ -249,6 +249,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         prepareJsonObject("src/test/resources/unit/snyk.jsons/snyk-vuln-without-ghsa-alias.json");
         task.handle(component, jsonObject, 200);
         aliasAttribution = qm.getAliasAttributionById("SNYK-JS-MOMENT-2944238", "GHSA-wc69-rhjr-hc9g", Vulnerability.Source.SNYK);
+        qm.getPersistenceManager().refresh(aliasAttribution);
         Assert.assertNotNull(aliasAttribution);
         Assert.assertFalse(aliasAttribution.isActive());
     }

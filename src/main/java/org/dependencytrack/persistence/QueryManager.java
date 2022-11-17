@@ -1237,6 +1237,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getAliasAttributionsByIdAndSource(vulnId, source);
     }
 
+    public List<AliasAttribution> getAliasAttributionsByIdAndAlias(final String vulnId, final String alias) {
+        return getVulnerabilityQueryManager().getAliasAttributionsByIdAndAlias(vulnId, alias);
+    }
+
     public List<AliasAttribution> getAliasAttributionsById(String vulnId) {
         return getVulnerabilityQueryManager().getAliasAttributionsById(vulnId);
     }

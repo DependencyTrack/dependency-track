@@ -22,6 +22,7 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -61,10 +62,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -273,17 +276,23 @@ public final class NotificationUtil {
         return componentBuilder.build();
     }
 
-    public static JsonObject toJson(final Vulnerability vulnerability) {
+    public static JsonObject toJson(final QueryManager qm, final Vulnerability vulnerability) {
         final JsonObjectBuilder vulnerabilityBuilder = Json.createObjectBuilder();
         vulnerabilityBuilder.add("uuid", vulnerability.getUuid().toString());
         JsonUtil.add(vulnerabilityBuilder, "vulnId", vulnerability.getVulnId());
         JsonUtil.add(vulnerabilityBuilder, "source", vulnerability.getSource());
         final JsonArrayBuilder aliasesBuilder = Json.createArrayBuilder();
+
         if (vulnerability.getAliases() != null) {
             for (final Map.Entry<Vulnerability.Source, String> vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
+                // active alias attributions
+                List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsByIdAndAlias(vulnerability.getVulnId(), vulnIdBySource.getValue());
+                String[] reportedBy = aliasAttributions.stream().filter(attribution -> attribution.isActive())
+                        .flatMap(at -> Stream.of(at.getSource())).toArray(String[]::new);
                 aliasesBuilder.add(Json.createObjectBuilder()
                         .add("source", vulnIdBySource.getKey().name())
                         .add("vulnId", vulnIdBySource.getValue())
+                        .add("reportedBy", Json.createArrayBuilder(Arrays.asList(reportedBy)))
                         .build());
             }
         }
@@ -329,7 +338,7 @@ public final class NotificationUtil {
         return analysisBuilder.build();
     }
 
-    public static JsonObject toJson(final NewVulnerabilityIdentified vo) {
+    public static JsonObject toJson(final QueryManager qm, final NewVulnerabilityIdentified vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
@@ -338,7 +347,7 @@ public final class NotificationUtil {
             builder.add("vulnerabilityAnalysisLevel", vo.getVulnerabilityAnalysisLevel().toString());
         }
         if (vo.getVulnerability() != null) {
-            builder.add("vulnerability", toJson(vo.getVulnerability()));
+            builder.add("vulnerability", toJson(qm, vo.getVulnerability()));
         }
         if (vo.getAffectedProjects() != null && vo.getAffectedProjects().size() > 0) {
             final JsonArrayBuilder projectsBuilder = Json.createArrayBuilder();
@@ -350,7 +359,7 @@ public final class NotificationUtil {
         return builder.build();
     }
 
-    public static JsonObject toJson(final NewVulnerableDependency vo) {
+    public static JsonObject toJson(final QueryManager qm, final NewVulnerableDependency vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent().getProject() != null) {
             builder.add("project", toJson(vo.getComponent().getProject()));
@@ -361,20 +370,20 @@ public final class NotificationUtil {
         if (vo.getVulnerabilities() != null && vo.getVulnerabilities().size() > 0) {
             final JsonArrayBuilder vulnsBuilder = Json.createArrayBuilder();
             for (final Vulnerability vulnerability : vo.getVulnerabilities()) {
-                vulnsBuilder.add(toJson(vulnerability));
+                vulnsBuilder.add(toJson(qm, vulnerability));
             }
             builder.add("vulnerabilities", vulnsBuilder.build());
         }
         return builder.build();
     }
 
-    public static JsonObject toJson(final AnalysisDecisionChange vo) {
+    public static JsonObject toJson(final QueryManager qm, final AnalysisDecisionChange vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
             builder.add("component", toJson(vo.getComponent()));
         }
         if (vo.getVulnerability() != null) {
-            builder.add("vulnerability", toJson(vo.getVulnerability()));
+            builder.add("vulnerability", toJson(qm, vo.getVulnerability()));
         }
         if (vo.getAnalysis() != null) {
             builder.add("analysis", toJson(vo.getAnalysis()));

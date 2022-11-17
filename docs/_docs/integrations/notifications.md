@@ -106,7 +106,8 @@ This type of notification will always contain:
         "aliases": [
           {
             "vulnId": "GHSA-55w9-c3g2-4rrh",
-            "source": "GITHUB"
+            "source": "GITHUB",
+            "reportedBy": ["GITHUB", "OSV"]
           }
         ],
         "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
@@ -176,7 +177,8 @@ This type of notification will always contain:
           "aliases": [
             {
               "vulnId": "GHSA-55w9-c3g2-4rrh",
-              "source": "GITHUB"
+              "source": "GITHUB",
+              "reportedBy": ["GITHUB", "SNYK"]
             }
           ],
           "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",
@@ -245,7 +247,8 @@ Audit change notifications are fired whenever the analysis state changes or when
         "aliases": [
           {
             "vulnId": "GHSA-55w9-c3g2-4rrh",
-            "source": "GITHUB"
+            "source": "GITHUB",
+            "reportedBy": ["GITHUB"]
           }
         ],
         "description": "Apache Axis 1.4 and earlier, as used in PayPal Payments Pro, PayPal Mass Pay, PayPal Transactional Information SOAP, the Java Message Service implementation in Apache ActiveMQ, and other products, does not verify that the server hostname matches a domain name in the subject's Common Name (CN) or subjectAltName field of the X.509 certificate, which allows man-in-the-middle attackers to spoof SSL servers via an arbitrary valid certificate.",

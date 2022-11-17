@@ -46,6 +46,7 @@ import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
@@ -68,6 +69,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.dependencytrack.util.VulnerabilityUtil.checkInactiveAttributions;
 
 /**
  * Subscriber task that performs an analysis of component using Sonatype OSS Index REST API.
@@ -323,6 +326,8 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     qm.synchronizeVulnerabilityAlias(alias);
                                     // Alias attribution
                                     qm.updateAliasAttribution(reportedVuln.getId(), reportedVuln.getCve(), Vulnerability.Source.OSSINDEX);
+                                    List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(reportedVuln.getId(), Vulnerability.Source.OSSINDEX);
+                                    checkInactiveAttributions(qm, existingAttributions, List.of(reportedVuln.getCve()));
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());

@@ -1,0 +1,38 @@
+{
+    "jsonapi": {
+        "version": "1.0"
+    },
+    "data": [
+        {
+            "id": "SNYK-JS-MOMENT-2944238",
+            "type": "issue",
+            "attributes": {
+                "key": "SNYK-JS-MOMENT-2944238",
+                "title": "Regular Expression Denial of Service (ReDoS)",
+                "type": "package_vulnerability",
+                "created_at": "2022-07-07T06:05:46.236101Z",
+                "updated_at": "2022-07-07T07:33:16.298631Z",
+                "description": "desc",
+                "problems": [
+                    {
+                        "id": "CWE-1333",
+                        "source": "CWE"
+                    },
+                    {
+                        "id": "CVE-2022-31129",
+                        "source": "CVE"
+                    }
+                ],
+                "severity": "high"
+            }
+        }
+    ],
+    "meta": {
+        "package": {
+            "name": "moment",
+            "type": "npm",
+            "url": "pkg:npm/moment@2.24.0",
+            "version": "2.24.0"
+        }
+    }
+}

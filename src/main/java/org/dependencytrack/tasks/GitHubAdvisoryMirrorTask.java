@@ -37,6 +37,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -65,6 +66,7 @@ import java.util.Set;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+import static org.dependencytrack.util.VulnerabilityUtil.checkInactiveAttributions;
 
 public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
@@ -178,6 +180,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
                 List<VulnerableSoftware> vsList = new ArrayList<>();
                 for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
+                    List<String> reportedAliases = new ArrayList<>();
                     final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
                         vsList.add(vs);
@@ -186,6 +189,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                         if (identifier != null && identifier.getLeft() != null
                                 && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
                             LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
+                            reportedAliases.add(identifier.getRight());
                             final VulnerabilityAlias alias = new VulnerabilityAlias();
                             alias.setGhsaId(advisory.getGhsaId());
                             alias.setCveId(identifier.getRight());
@@ -194,6 +198,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                             qm.updateAliasAttribution(advisory.getGhsaId(), identifier.getRight(), Vulnerability.Source.GITHUB);
                         }
                     }
+                    List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getGhsaId(), Vulnerability.Source.GITHUB);
+                    checkInactiveAttributions(qm, existingAttributions, reportedAliases);
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
                 qm.persist(vsList);

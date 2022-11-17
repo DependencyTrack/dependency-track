@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -31,7 +32,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -49,6 +49,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
+import static org.dependencytrack.util.VulnerabilityUtil.checkInactiveAttributions;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -141,8 +142,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
 
             if (advisory.getAliases() != null) {
+                List<String> reportedAliases = new ArrayList<>();
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
                     final String alias = advisory.getAliases().get(i);
+                    reportedAliases.add(alias);
                     final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
 
                     // OSV will use IDs of other vulnerability databases for its
@@ -166,6 +169,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     qm.updateAliasAttribution(advisory.getId(), alias, Vulnerability.Source.OSV);
                     //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
                 }
+                List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getId(), Vulnerability.Source.OSV);
+                checkInactiveAttributions(qm, existingAttributions, reportedAliases);
             }
 
             List<VulnerableSoftware> vsList = new ArrayList<>();

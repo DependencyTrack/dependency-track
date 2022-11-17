@@ -6,6 +6,7 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
+import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -24,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
+import static org.dependencytrack.util.VulnerabilityUtil.checkInactiveAttributions;
 
 public class SnykParser {
 
@@ -78,6 +80,7 @@ public class SnykParser {
 
     public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, JSONArray problems) {
         List<VulnerabilityAlias> vulnerabilityAliasList = new ArrayList<>();
+        List<String> reportedAliases = new ArrayList<>();
         for (int i = 0; i < problems.length(); i++) {
             final JSONObject problem = problems.optJSONObject(i);
             String source = problem.optString("source");
@@ -96,6 +99,7 @@ public class SnykParser {
                     vulnerabilityAlias.setCveId(id);
                     qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                     vulnerabilityAliasList.add(vulnerabilityAlias);
+                    reportedAliases.add(id);
                 }
                 // Github alias
                 else if (source.equalsIgnoreCase("GHSA")) {
@@ -104,11 +108,14 @@ public class SnykParser {
                     vulnerabilityAlias.setGhsaId(id);
                     qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                     vulnerabilityAliasList.add(vulnerabilityAlias);
+                    reportedAliases.add(id);
                 }
                 // Alias attribution
                 qm.updateAliasAttribution(vulnerability.getVulnId(), id, Vulnerability.Source.SNYK);
             }
         }
+        List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(vulnerability.getVulnId(), Vulnerability.Source.SNYK);
+        checkInactiveAttributions(qm, existingAttributions, reportedAliases);
         return vulnerabilityAliasList;
     }
 

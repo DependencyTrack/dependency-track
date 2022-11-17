@@ -9,7 +9,7 @@ import java.util.List;
 public class AliasAttributionTest extends PersistenceCapableTest {
 
     @Test
-    public void test() {
+    public void testAliasAttributionUpdate() {
 
         // Snyk reports SNYK-123 to alias CVE-123
         qm.updateAliasAttribution("SNYK-123", "CVE-123", Vulnerability.Source.SNYK);
@@ -36,5 +36,20 @@ public class AliasAttributionTest extends PersistenceCapableTest {
         aliasAttributions = qm.getAliasAttributionsById("GHSA-123");
         Assert.assertNotNull(aliasAttributions);
         Assert.assertEquals(3, aliasAttributions.size());
+    }
+
+    @Test
+    public void testAliasAttributionDelete() {
+
+        qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.GITHUB);
+        qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.OSV);
+        qm.updateAliasAttribution("GHSA-123", "CVE-456", Vulnerability.Source.OSV);
+
+        List<AliasAttribution> aliasAttributions = qm.getAllAliasAttributions();
+        Assert.assertEquals(3, aliasAttributions.size());
+
+        qm.deleteAliasAttribution(qm.getAliasAttributionById("GHSA-123", "CVE-123", Vulnerability.Source.OSV));
+        aliasAttributions = qm.getAllAliasAttributions();
+        Assert.assertEquals(2, aliasAttributions.size());
     }
 }

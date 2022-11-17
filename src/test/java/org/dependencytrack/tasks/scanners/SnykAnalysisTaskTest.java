@@ -229,6 +229,30 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         Assert.assertEquals("username", config);
     }
 
+    @Test
+    public void testCleanAliasAttribution() throws Exception {
+        new CweImporter().processCweDefinitions(); // Necessary for resolving CWEs
+
+        prepareJsonObject("src/test/resources/unit/snyk.jsons/snyk-vuln-with-ghsa-alias.json");
+        Component component = new Component();
+        component.setPurl("pkg:npm/moment@2.24.0");
+        component.setUuid(UUID.randomUUID());
+        component.setName("test-snyk");
+
+        task.handle(component, jsonObject, 200);
+
+        AliasAttribution aliasAttribution = qm.getAliasAttributionById("SNYK-JS-MOMENT-2944238", "GHSA-wc69-rhjr-hc9g", Vulnerability.Source.SNYK);
+        Assert.assertNotNull(aliasAttribution);
+        Assert.assertTrue(aliasAttribution.isActive());
+
+        // GHSA alias is no longer reported, should make it inactive.
+        prepareJsonObject("src/test/resources/unit/snyk.jsons/snyk-vuln-without-ghsa-alias.json");
+        task.handle(component, jsonObject, 200);
+        aliasAttribution = qm.getAliasAttributionById("SNYK-JS-MOMENT-2944238", "GHSA-wc69-rhjr-hc9g", Vulnerability.Source.SNYK);
+        Assert.assertNotNull(aliasAttribution);
+        Assert.assertFalse(aliasAttribution.isActive());
+    }
+
     private void prepareJsonObject(String filePath) throws IOException {
         // parse json file to Advisory object
         String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));

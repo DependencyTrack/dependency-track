@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -28,13 +30,16 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.ResponseHeader;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
+import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -42,6 +47,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -55,6 +61,8 @@ import java.util.stream.Collectors;
 @Path("/v1/finding")
 @Api(value = "finding", authorizations = @Authorization(value = "X-Api-Key"))
 public class FindingResource extends AlpineResource {
+
+    private static final Logger LOGGER = Logger.getLogger(FindingResource.class);
 
     @GET
     @Path("/project/{uuid}")
@@ -127,5 +135,43 @@ public class FindingResource extends AlpineResource {
             }
         }
     }
+
+    @POST
+    @Path("/project/{uuid}/analyze")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Triggers Vulnerability Analysis on a specific project",
+            response = Project.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
+            @ApiResponse(code = 404, message = "The project could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+    public Response analyzeProject(
+            @ApiParam(value = "The UUID of the project to analyze", required = true)
+            @PathParam("uuid") String uuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, uuid);
+            if (project != null) {
+                if (qm.hasAccess(super.getPrincipal(), project)) {
+                  LOGGER.info("Analysis of project " + project.getUuid() + " requested by " + super.getPrincipal().getName());
+
+                  final List<Component> detachedComponents = qm.detach(qm.getAllComponents(project));
+                  final Project detachedProject = qm.detach(Project.class, project.getId());
+                  final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(detachedComponents).project(detachedProject);
+                  Event.dispatch(vae);
+
+                  return Response.ok(Collections.singletonMap("token", vae.getChainIdentifier())).build();
+                } else {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+            }
+        }
+    }
+
 
 }

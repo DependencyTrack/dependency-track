@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.dependencytrack.task;
+package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
+import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
-import org.dependencytrack.tasks.OsvDownloadTask;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +39,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 
@@ -98,7 +103,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
 
         List<VulnerableSoftware> vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth"));
         Assert.assertEquals(4, vulnerableSoftware.size());
-        Assert.assertEquals("0", vulnerableSoftware.get(0).getVersionStartIncluding());
+        Assert.assertNull(vulnerableSoftware.get(0).getVersionStartIncluding());
         Assert.assertEquals("2.0.17", vulnerableSoftware.get(0).getVersionEndExcluding());
         Assert.assertEquals("2.1.0", vulnerableSoftware.get(1).getVersionStartIncluding());
         Assert.assertEquals("2.1.4", vulnerableSoftware.get(1).getVersionEndExcluding());
@@ -119,9 +124,178 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", true);
         Assert.assertNotNull(vulnerability);
         assertVulnerability.accept(vulnerability); // Ensure that the vulnerability was not modified
-        Assert.assertEquals(9, vulnerability.getVulnerableSoftware().size());
-        Assert.assertEquals("3.1.0", vulnerability.getVulnerableSoftware().get(8).getVersionStartIncluding());
-        Assert.assertEquals("3.3.0", vulnerability.getVulnerableSoftware().get(8).getVersionEndExcluding());
+        Assert.assertEquals(1, vulnerability.getVulnerableSoftware().size());
+        Assert.assertEquals("3.1.0", vulnerability.getVulnerableSoftware().get(0).getVersionStartIncluding());
+        Assert.assertEquals("3.3.0", vulnerability.getVulnerableSoftware().get(0).getVersionEndExcluding());
+    }
+
+    @Test
+    public void testUpdateDatasourceVulnerableVersionRanges() {
+        var vs1 = new VulnerableSoftware();
+        vs1.setPurlType("maven");
+        vs1.setPurlNamespace("com.fasterxml.jackson.core");
+        vs1.setPurlName("jackson-databind");
+        vs1.setVersionStartIncluding("2.13.0");
+        vs1.setVersionEndIncluding("2.13.2.0");
+        vs1.setVulnerable(true);
+        vs1 = qm.persist(vs1);
+
+        var vs2 = new VulnerableSoftware();
+        vs2.setPurlType("maven");
+        vs2.setPurlNamespace("com.fasterxml.jackson.core");
+        vs2.setPurlName("jackson-databind");
+        vs2.setVersionEndIncluding("2.12.6.0");
+        vs2.setVulnerable(true);
+        vs2 = qm.persist(vs2);
+
+        var vs3 = new VulnerableSoftware();
+        vs3.setPurlType("maven");
+        vs3.setPurlNamespace("com.fasterxml.jackson.core");
+        vs3.setPurlName("jackson-databind");
+        vs3.setVersionStartIncluding("1");
+        vs3.setVulnerable(true);
+        vs3 = qm.persist(vs3);
+
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("GHSA-57j2-w4cx-62h2");
+        existingVuln.setSource(Vulnerability.Source.GITHUB);
+        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
+        existingVuln = qm.createVulnerability(existingVuln, false);
+        qm.updateAffectedVersionAttribution(existingVuln, vs1, Vulnerability.Source.GITHUB);
+        qm.updateAffectedVersionAttribution(existingVuln, vs2, Vulnerability.Source.GITHUB);
+        qm.updateAffectedVersionAttribution(existingVuln, vs3, Vulnerability.Source.OSV);
+
+        // Simulate OSV reporting the same affected version ranges as vs1 and vs2.
+        // No vulnerable version range matching vs3, but one additional range is reported.
+        // Because vs3 was attributed to OSV, the association with the vulnerability
+        // should be removed in the mirroring process.
+        task.updateDatasource(parser.parse(new JSONObject("""
+                {
+                   "id": "GHSA-57j2-w4cx-62h2",
+                   "summary": "Deeply nested json in jackson-databind",
+                   "details": "jackson-databind is a data-binding package for the Jackson Data Processor. jackson-databind allows a Java stack overflow exception and denial of service via a large depth of nested objects.",
+                   "aliases": [
+                     "CVE-2020-36518"
+                   ],
+                   "modified": "2022-09-22T03:50:20.996451Z",
+                   "published": "2022-03-12T00:00:36Z",
+                   "affected": [
+                     {
+                       "package": {
+                         "name": "com.fasterxml.jackson.core:jackson-databind",
+                         "ecosystem": "Maven",
+                         "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind"
+                       },
+                       "ranges": [
+                         {
+                           "type": "ECOSYSTEM",
+                           "events": [
+                             {
+                               "introduced": "2.13.0"
+                             },
+                             {
+                               "fixed": "2.13.2.1"
+                             }
+                           ]
+                         }
+                       ],
+                       "database_specific": {
+                         "last_known_affected_version_range": "<= 2.13.2.0",
+                         "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/03/GHSA-57j2-w4cx-62h2/GHSA-57j2-w4cx-62h2.json"
+                       }
+                     },
+                     {
+                       "package": {
+                         "name": "com.fasterxml.jackson.core:jackson-databind",
+                         "ecosystem": "Maven",
+                         "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind"
+                       },
+                       "ranges": [
+                         {
+                           "type": "ECOSYSTEM",
+                           "events": [
+                             {
+                               "introduced": "0"
+                             }
+                           ]
+                         }
+                       ],
+                       "database_specific": {
+                         "last_known_affected_version_range": "<= 2.12.6.0",
+                         "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/03/GHSA-57j2-w4cx-62h2/GHSA-57j2-w4cx-62h2.json"
+                       }
+                     }
+                   ],
+                   "schema_version": "1.3.0",
+                   "severity": [
+                     {
+                       "type": "CVSS_V3",
+                       "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                     }
+                   ]
+                 }
+                """)));
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.GITHUB, "GHSA-57j2-w4cx-62h2");
+        assertThat(vuln).isNotNull();
+
+        final List<VulnerableSoftware> vsList = vuln.getVulnerableSoftware();
+        assertThat(vsList).satisfiesExactlyInAnyOrder(
+                // The version range that was reported by another source must be retained.
+                // There must be no attribution to OSV for this range.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("maven");
+                    assertThat(vs.getPurlNamespace()).isEqualTo("com.fasterxml.jackson.core");
+                    assertThat(vs.getPurlName()).isEqualTo("jackson-databind");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isEqualTo("2.13.0");
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndIncluding()).isEqualTo("2.13.2.0");
+                    assertThat(vs.getVersionEndExcluding()).isNull();
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vs);
+                    assertThat(attributions).satisfiesExactly(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.GITHUB)
+                    );
+                },
+                // The version range reported by both OSV and another source
+                // must have attributions for both sources.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("maven");
+                    assertThat(vs.getPurlNamespace()).isEqualTo("com.fasterxml.jackson.core");
+                    assertThat(vs.getPurlName()).isEqualTo("jackson-databind");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isNull();
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndIncluding()).isEqualTo("2.12.6.0");
+                    assertThat(vs.getVersionEndExcluding()).isNull();
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vs);
+                    assertThat(attributions).satisfiesExactlyInAnyOrder(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.GITHUB),
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.OSV)
+                    );
+                },
+                // The version range newly reported by OSV must be attributed to only OSV.
+                vs -> {
+                    assertThat(vs.getPurlType()).isEqualTo("maven");
+                    assertThat(vs.getPurlNamespace()).isEqualTo("com.fasterxml.jackson.core");
+                    assertThat(vs.getPurlName()).isEqualTo("jackson-databind");
+                    assertThat(vs.getPurlVersion()).isNull();
+                    assertThat(vs.getVersion()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isEqualTo("2.13.0");
+                    assertThat(vs.getVersionStartExcluding()).isNull();
+                    assertThat(vs.getVersionEndIncluding()).isNull();
+                    assertThat(vs.getVersionEndExcluding()).isEqualTo("2.13.2.1");
+
+                    final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vs);
+                    assertThat(attributions).satisfiesExactly(
+                            attr -> assertThat(attr.getSource()).isEqualTo(Vulnerability.Source.OSV)
+                    );
+                }
+        );
     }
 
     @Test

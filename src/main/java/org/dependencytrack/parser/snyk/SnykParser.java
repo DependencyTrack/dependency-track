@@ -6,22 +6,22 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.SnykCvssSource;
-import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.SnykCvssSource;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Date;
-import java.util.Collections;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 import static org.dependencytrack.util.JsonUtil.jsonStringToTimestamp;
 
@@ -65,11 +65,12 @@ public class SnykParser {
                     }
                 }
             }
-            if (!vsList.isEmpty()) {
-                qm.persist(vsList);
-                synchronizedVulnerability.setVulnerableSoftware(vsList);
-            }
+            final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
             synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            qm.persist(vsList);
+            qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.SNYK);
+            vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.SNYK);
+            synchronizedVulnerability.setVulnerableSoftware(vsList);
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;
@@ -236,6 +237,7 @@ public class SnykParser {
                     LOGGER.debug("Range not definite. Not saving this vulnerable software information. The purl was: "+purl);
                 }
             }
+            
             //check for a numeric definite version range
             if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
                 VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);

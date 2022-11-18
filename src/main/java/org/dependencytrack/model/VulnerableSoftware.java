@@ -18,9 +18,14 @@
  */
 package org.dependencytrack.model;
 
+import alpine.common.validation.RegexSequence;
+import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.dependencytrack.resources.v1.serializers.Iso8601DateSerializer;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -33,8 +38,12 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -172,6 +181,8 @@ public class VulnerableSoftware implements ICpe, Serializable {
     @Unique(name = "VULNERABLESOFTWARE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
     private UUID uuid;
+
+    private transient List<AffectedVersionAttribution> affectedVersionAttributions;
 
     public long getId() {
         return id;
@@ -402,5 +413,12 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions() {
+        return affectedVersionAttributions;
+    }
+    public void setAffectedVersionAttributions(List<AffectedVersionAttribution> affectedVersionAttributions) {
+        this.affectedVersionAttributions = affectedVersionAttributions;
     }
 }

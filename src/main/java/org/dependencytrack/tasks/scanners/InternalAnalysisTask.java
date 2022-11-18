@@ -84,6 +84,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
      */
     public void analyze(final List<Component> components) {
         try (QueryManager qm = new QueryManager()) {
+            LOGGER.info("Analyzing " + components.size() + " component(s)");
             for (final Component c : components) {
                 final Component component = qm.getObjectByUuid(Component.class, c.getUuid()); // Refresh component and attach to current pm.
                 if (component == null) continue;

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+- name: Slack Channel
+  url: https://dependencytrack.org/slack
+  about: Our Slack channel is the best way to get in touch!
+- name: GitHub Discussions
+  url: https://github.com/DependencyTrack/dependency-track/discussions
+  about: A good place to ask questions, share ideas and more!

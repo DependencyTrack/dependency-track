@@ -30,6 +30,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -510,6 +511,15 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().synchronizeLicense(license, commitIndex);
     }
 
+
+    public License createCustomLicense(License license, boolean commitIndex) {
+        return getLicenseQueryManager().createCustomLicense(license, commitIndex);
+    }
+
+    public void deleteLicense(final License license, final boolean commitIndex) {
+        getLicenseQueryManager().deleteLicense(license, commitIndex);
+    }
+
     public PaginatedResult getPolicies() {
         return getPolicyQueryManager().getPolicies();
     }
@@ -693,6 +703,43 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().deleteFindingAttributions(project);
     }
 
+    public List<VulnerableSoftware> reconcileVulnerableSoftware(final Vulnerability vulnerability,
+                                                                final List<VulnerableSoftware> vsListOld,
+                                                                final List<VulnerableSoftware> vsList,
+                                                                final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().reconcileVulnerableSoftware(vulnerability, vsListOld, vsList, source);
+    }
+
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
+    }
+
+    public AffectedVersionAttribution getAffectedVersionAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void updateAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                                              final List<VulnerableSoftware> vsList,
+                                                                              final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
+    }
+
+    public void updateAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                                       final VulnerableSoftware vulnerableSoftware,
+                                                                       final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void deleteAffectedVersionAttributions(final Vulnerability vulnerability) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability);
+    }
+
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
     }
@@ -735,6 +782,10 @@ public class QueryManager extends AlpineQueryManager {
                                                            String versionEndExcluding, String versionEndIncluding,
                                                            String versionStartExcluding, String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+    }
+
+    public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {
+        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByVulnId(source, vulnId);
     }
 
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {

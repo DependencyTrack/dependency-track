@@ -24,9 +24,6 @@ The internal analyzer relies on a dictionary of vulnerable software. This dictio
 NVD, GitHub Advisories, or VulnDB mirroring is performed. The internal analyzer is applicable to all components with valid 
 CPEs, including application, operating system, and hardware components, and all components with Package URLs.
 
-**NOTE**: Currently, vulnerable software describing affected package is treated as 'append-only' meaning there might be some entries no longer reported by the vulnerability source.
-Fix is under progress and can be tracked via issue [#1815](https://github.com/DependencyTrack/dependency-track/issues/1815).
-
 ### OSS Index Analyzer
 
 OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components. The service 
@@ -52,14 +49,14 @@ VulnDB is a source of vulnerability intelligence that provides its own content. 
 
 ### Snyk Analyzer
 
-It is a service provided by Snyk which identifies vulnerabilities in third-party components using REST API. Snyk returns only direct vulnerabilities for a specific package version identified by Package URL (purl). 
+It is a service provided by Snyk which identifies vulnerabilities in third-party components using REST API. Snyk returns only direct vulnerabilities for a specific package version identified by Package URL (purl).
 This analyzer is applicable to all components with valid Package URLs.
 
 Snyk REST API version is updated every 6 months and can be referred at
 [Snyk REST API for PURL](https://apidocs.snyk.io/?version=2022-10-06#get-/orgs/-org_id-/packages/-purl-/issues) for additional information.
 
-### Analysis Interval Throttle
+### Analysis Result Cache
 
 Dependency-Track contains an internal limiter which prevents repeated requests to remote services when performing
-vulnerability analysis. When a components Package URL or CPE is successfully used for a given analyzer, the action
-and the timestamp is recorded and compared to the interval throttle. The interval throttle defaults to 24 hours.
+vulnerability analysis. When a component's Package URL or CPE is successfully analyzed by a given analyzer, 
+the result is cached. By default, cache entries expire after 12 hours.

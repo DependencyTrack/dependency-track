@@ -167,29 +167,18 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (hash == null) {
             return null;
         }
-        final Query<Component> query;
-        final Map<String, Object> params = new HashMap<>();
-        final String queryFilter;
-        if (hash.length() == 32) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(md5 == :hash)";
-        } else if (hash.length() == 40) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha1 == :hash)";
-        } else if (hash.length() == 64) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
-        } else if (hash.length() == 96) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
-        } else if (hash.length() == 128) {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
-        } else {
-            query = pm.newQuery(Component.class);
-            queryFilter = "(blake3 == :hash)";
-        }
-        params.put("hash", hash);
+
+        final String queryFilter = switch (hash.length()) {
+            case 32 -> "(md5 == :hash)";
+            case 40 -> "(sha1 == :hash)";
+            case 64 -> "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
+            case 96 -> "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
+            case 128 -> "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
+            default -> "(blake3 == :hash)";
+        };
+
+        final Query<Component> query = pm.newQuery(Component.class);;
+        final Map<String, Object> params = Map.of("hash", hash);
         preprocessACLs(query, queryFilter, params, false);
         return execute(query, params);
     }
@@ -213,76 +202,51 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (identity == null) {
             return null;
         }
-        final Query<Component> query;
+
         final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
-            final Map<String, Object> map = new HashMap<>();
-            String queryFilter = "";
-            if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += "(";
+
+            var params = new HashMap<String, Object>();
+            var queryFilterElements = new ArrayList<String>();
+
             if (identity.getGroup() != null) {
-                queryFilter += " group.toLowerCase().matches(:group) ";
-                final String filterString = ".*" + identity.getGroup().toLowerCase() + ".*";
-                map.put("group", filterString);
+                queryFilterElements.add(" group.toLowerCase().matches(:group) ");
+                params.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
             }
             if (identity.getName() != null) {
-                if (identity.getGroup() != null) {
-                    queryFilter += " && ";
-                }
-                queryFilter += " name.toLowerCase().matches(:name) ";
-                final String filterString = ".*" + identity.getName().toLowerCase() + ".*";
-                map.put("name", filterString);
+                queryFilterElements.add(" name.toLowerCase().matches(:name) ");
+                params.put("name", ".*" + identity.getName().toLowerCase() + ".*");
             }
             if (identity.getVersion() != null) {
-                if (identity.getGroup() != null || identity.getName() != null) {
-                    queryFilter += " && ";
-                }
-                queryFilter += " version.toLowerCase().matches(:version) ";
-                final String filterString = ".*" + identity.getVersion().toLowerCase() + ".*";
-                map.put("version", filterString);
+                queryFilterElements.add(" version.toLowerCase().matches(:version) ");
+                params.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
             }
-            if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) queryFilter += ")";
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            preprocessACLs(query, queryFilter, map, false);
-            result = execute(query, map);
+
+            var queryFilter = "(" + String.join(" && ", queryFilterElements) + ")";
+            result = loadComponents(queryFilter, params);
+
         } else if (identity.getPurl() != null) {
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            final Map<String, Object> params = new HashMap<>();
-            final String queryFilter = "(purl.toLowerCase().matches(:purl))";
-            final String filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            params.put("purl", filterString);
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
+            var queryFilter = "(purl.toLowerCase().matches(:purl))";
+            var filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
+            var params = Map.<String, Object>of("purl", filterString);
+            result = loadComponents(queryFilter, params);
+
         } else if (identity.getCpe() != null) {
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            final Map<String, Object> params = new HashMap<>();
-            final String queryFilter = "(cpe.toLowerCase().matches(:cpe))";
-            final String filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            params.put("cpe", filterString);
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
+            var queryFilter = "(cpe.toLowerCase().matches(:cpe))";
+            var filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
+            var params = Map.<String, Object>of("cpe", filterString);
+            result = loadComponents(queryFilter, params);
+
         } else if (identity.getSwidTagId() != null) {
-            query = pm.newQuery(Component.class);
-            if (orderBy == null) {
-                query.setOrdering("id asc");
-            }
-            final Map<String, Object> params = new HashMap<>();
-            final String queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
-            final String filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            params.put("swidTagId", filterString);
-            preprocessACLs(query, queryFilter, params, false);
-            result = execute(query, params);
+            var queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
+            var filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
+            var params = Map.<String, Object>of("swidTagId", filterString);
+            result = loadComponents(queryFilter, params);
+
         } else {
             result = new PaginatedResult();
         }
+
         if (includeMetrics) {
             // Populate each Component object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -308,6 +272,15 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             component.getProject().getUuid();
         }
         return result;
+    }
+
+    private PaginatedResult loadComponents(String queryFilter, Map<String, Object> params) {
+        var query = pm.newQuery(Component.class);
+        if (orderBy == null) {
+            query.setOrdering("id asc");
+        }
+        preprocessACLs(query, queryFilter, params, false);
+        return execute(query, params);
     }
 
     /**

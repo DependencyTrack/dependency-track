@@ -168,13 +168,15 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
      * @param advisories the results to synchronize
      */
-    private void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
+    void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.info("Updating datasource with GitHub advisories");
         try (QueryManager qm = new QueryManager()) {
             for (final GitHubSecurityAdvisory advisory: advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
-                final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
-                final List<VulnerableSoftware> vsList = new ArrayList<>();
+                final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
+                final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
+                final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
+                List<VulnerableSoftware> vsList = new ArrayList<>();
                 for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
                     final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
@@ -193,6 +195,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
                 qm.persist(vsList);
+                vsList.forEach(vs -> qm.updateAffectedVersionAttribution(synchronizedVulnerability, vs, Vulnerability.Source.GITHUB));
+                vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.GITHUB);
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
                 qm.persist(synchronizedVulnerability);
             }

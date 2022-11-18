@@ -45,8 +45,8 @@ analyzed.
 VulnDB is a source of vulnerability intelligence that provides its own content. Refer to 
 [VulnDB (Datasource)]({{ site.baseurl }}{% link _docs/datasources/vulndb.md %}) for additional information.
 
-### Analysis Interval Throttle
+### Analysis Result Cache
 
 Dependency-Track contains an internal limiter which prevents repeated requests to remote services when performing
-vulnerability analysis. When a components Package URL or CPE is successfully used for a given analyzer, the action
-and the timestamp is recorded and compared to the interval throttle. The interval throttle defaults to 24 hours.
+vulnerability analysis. When a component's Package URL or CPE is successfully analyzed by a given analyzer, 
+the result is cached. By default, cache entries expire after 12 hours.

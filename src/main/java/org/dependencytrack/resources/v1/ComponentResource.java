@@ -43,6 +43,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
+import java.util.List;
+
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -419,4 +421,45 @@ public class ComponentResource extends AlpineResource {
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
+    @GET
+    @Path("/dependencyGraph/{componentUuid}/project/{projectUuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns the expanded dependency graph to every occurrence of a component",
+            response = Component.class,
+            responseContainer = "List")
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
+            @ApiResponse(code = 404, message = "- The UUID of the project could not be found\n- The UUID of the component could not be found"),
+            @ApiResponse(code = 409, message = "The component is not part of the dependency Graph")
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
+    public Response getDependencyGraphForComponent(
+            @ApiParam(value = "The UUID of the project to get the expanded dependency graph for", required = true)
+            @PathParam("projectUuid") String projectUuid,
+            @ApiParam(value = "The UUID of the component to get the expanded dependency graph for", required = true)
+            @PathParam("componentUuid") String componentUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final Project project = qm.getObjectByUuid(Project.class, projectUuid);
+            if (project != null) {
+                if (!qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden.").build();
+                }
+                final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+                if (component != null) {
+                    List<Component> components = qm.getDependencyGraphForComponent(project, component);
+                    if (components == null || components.isEmpty()){
+                        return Response.status(Response.Status.CONFLICT).entity("The component is not part of the dependency Graph.").build();
+                    } else {
+                        return Response.ok(components).build();
+                    }
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
+                }
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
+            }
+        }
+    }
 }

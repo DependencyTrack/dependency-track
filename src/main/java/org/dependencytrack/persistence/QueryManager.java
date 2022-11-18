@@ -510,9 +510,6 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().synchronizeLicense(license, commitIndex);
     }
 
-    public License createLicense(String licenseId, String name, String text, String header, String template, boolean isOsiApproved, boolean isFsfLibre, boolean isDeprecatedLicenseId, boolean isCustomLicense, String comment, String seeAlso, boolean commitIndex) {
-        return getLicenseQueryManager().createLicense(licenseId, name, text, header, template, isOsiApproved, isFsfLibre, isDeprecatedLicenseId, isCustomLicense, comment, seeAlso, commitIndex);
-    }
 
     public License createCustomLicense(License license, boolean commitIndex) {
         return getLicenseQueryManager().createCustomLicense(license, commitIndex);

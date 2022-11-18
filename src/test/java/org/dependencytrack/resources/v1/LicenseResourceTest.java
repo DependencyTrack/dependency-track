@@ -163,7 +163,12 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void deleteCustomLicense() {
-        License license = qm.createLicense("Acme-Example-License", "Acme Example", null, null, null, false, false, false, true, null, null, false);
+        License license = new License();
+        license.setLicenseId("Acme-Example-License");
+        license.setName("Acme Example");
+        license.setCustomLicense(true);
+        qm.createCustomLicense(license, false);
+
         Response response = target(V1_LICENSE + "/" + license.getLicenseId())
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -174,13 +179,17 @@ public class LicenseResourceTest extends ResourceTest {
 
     @Test
     public void deleteNotCustomLicense() {
-        License license = qm.createLicense("Acme-Example-License", "Acme Example", null, null, null, false, false, false, false, null, null, false);
-        Response response = target(V1_LICENSE + "/" + license.getLicenseId())
+        License license1 = new License();
+        license1.setLicenseId("Acme-Example-License");
+        license1.setName("Acme Example");
+        License license2 = qm.createCustomLicense(license1, false);
+        license1.setCustomLicense(false);
+        Response response = target(V1_LICENSE + "/" + license1.getLicenseId())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         Assert.assertEquals(409, response.getStatus(), 0);
-        Assert.assertFalse(license.isCustomLicense());
+        Assert.assertFalse(license2.isCustomLicense());
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("Only custom licenses can be deleted.", body);

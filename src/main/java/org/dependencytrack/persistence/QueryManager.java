@@ -511,6 +511,15 @@ public class QueryManager extends AlpineQueryManager {
         return getLicenseQueryManager().synchronizeLicense(license, commitIndex);
     }
 
+
+    public License createCustomLicense(License license, boolean commitIndex) {
+        return getLicenseQueryManager().createCustomLicense(license, commitIndex);
+    }
+
+    public void deleteLicense(final License license, final boolean commitIndex) {
+        getLicenseQueryManager().deleteLicense(license, commitIndex);
+    }
+
     public PaginatedResult getPolicies() {
         return getPolicyQueryManager().getPolicies();
     }

@@ -74,6 +74,44 @@ public class UserResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(UserResource.class);
 
+    /**
+     * Returns the principal for who initiated the request.  If
+     * ALPINE_ENFORCE_AUTHENTICATION is disabled then the admin ManagedUser is
+     * returned.
+     * @return a Principal object
+     * @see alpine.model.ApiKey
+     * @see alpine.model.LdapUser
+     * @see alpine.model.ManagedUser
+     */
+    @Override
+    protected Principal getPrincipal() {
+        if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            // Authentication is not enabled, try returning admin principal
+            try (QueryManager qm = new QueryManager()) {
+                final ManagedUser user = qm.getManagedUser("admin");
+                if (user != null) {
+                    return (Principal) user;
+                }
+            }
+        }
+        return super.getPrincipal();
+    }
+
+    /**
+     * Convenience method that returns true if the principal has the specified permission,
+     * or false if not.  If ALPINE_ENFORCE_AUTHENTICATION is disabled then the
+     * true will always be returned.
+     * @param permission the permission to check
+     * @return true if principal has permission assigned, false if not
+     */
+    @Override
+    protected boolean hasPermission(final String permission) {
+        if (!Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            return true;
+        }
+        return super.hasPermission(permission);
+    }
+
     @POST
     @Path("login")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -305,6 +343,13 @@ public class UserResource extends AlpineResource {
                     return Response.ok(user).build();
                 }
                 return Response.status(401).build();
+            }
+        }
+        // Authentication is not enabled, try returning admin username
+        try (QueryManager qm = new QueryManager()) {
+            final ManagedUser user = qm.getManagedUser("admin");
+            if (user != null) {
+                return Response.ok(user).build();
             }
         }
         // Authentication is not enabled, but we need to return a positive response without any principal data.

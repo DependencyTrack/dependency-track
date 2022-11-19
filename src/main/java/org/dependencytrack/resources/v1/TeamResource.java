@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
+import alpine.model.ManagedUser;
 import alpine.model.Team;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
@@ -293,6 +294,16 @@ public class TeamResource extends AlpineResource {
                     }
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid API key supplied.").build();
+                }
+            }
+        }
+        // Authentication is not enabled, try to return Administrators team
+        try (QueryManager qm = new QueryManager()) {
+            final ManagedUser user = qm.getManagedUser("admin");
+            if (user != null) {
+                if(!user.getTeams().isEmpty()) {
+                    final Team team = user.getTeams().get(0);
+                    return Response.ok(team).build();
                 }
             }
         }

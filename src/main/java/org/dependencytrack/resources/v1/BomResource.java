@@ -18,8 +18,10 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.ManagedUser;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
@@ -76,6 +78,44 @@ import java.util.UUID;
 public class BomResource extends AlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(BomResource.class);
+
+    /**
+     * Returns the principal for who initiated the request.  If
+     * ALPINE_ENFORCE_AUTHENTICATION is disabled then the admin ManagedUser is
+     * returned.
+     * @return a Principal object
+     * @see alpine.model.ApiKey
+     * @see alpine.model.LdapUser
+     * @see alpine.model.ManagedUser
+     */
+    @Override
+    protected Principal getPrincipal() {
+        if (!Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            // Authentication is not enabled, try returning admin principal
+            try (QueryManager qm = new QueryManager()) {
+                final ManagedUser user = qm.getManagedUser("admin");
+                if (user != null) {
+                    return (Principal) user;
+                }
+            }
+        }
+        return super.getPrincipal();
+    }
+
+    /**
+     * Convenience method that returns true if the principal has the specified permission,
+     * or false if not.  If ALPINE_ENFORCE_AUTHENTICATION is disabled then the
+     * true will always be returned.
+     * @param permission the permission to check
+     * @return true if principal has permission assigned, false if not
+     */
+    @Override
+    protected boolean hasPermission(final String permission) {
+        if (!Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+            return true;
+        }
+        return super.hasPermission(permission);
+    }
 
     @GET
     @Path("/cyclonedx/project/{uuid}")

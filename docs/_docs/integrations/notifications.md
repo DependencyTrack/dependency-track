@@ -48,6 +48,7 @@ The following notification publishers are included by default :
 | Webhook    | Publishes notifications to a configurable endpoint  |
 | Email      | Sends notifications to an email address             |
 | Console    | Displays notifications on the system console        |
+| Jira       | Publishes notifications to Jira                     |
 
 ### Templating
 
@@ -369,6 +370,7 @@ To override all default templates, you must have the following [Pebble Templates
 <base directory>/templates/notification/publisher/console.peb
 <base directory>/templates/notification/publisher/webhook.peb
 <base directory>/templates/notification/publisher/cswebex.peb
+<base directory>/templates/notification/publisher/jira.peb
 ```
 
 **A restart is needed for the modification to be taken into account.**
@@ -401,9 +403,11 @@ and publisher to use.
 ![create notification](/images/screenshots/notifications-create.png)
 
 Once the alert is created it can be configured. Start with selecting from the list of available notification groups
-to notify on. Then specify the destination. The destination may be a comma speparated list of email addresses (when the Email publisher is used),
-or a URL. In the case of Slack, Mattermost and Microsoft Teams, this will be the incoming webhook URL generated from each respective
-platform. In the case of the Outbound Webhook publisher, this will be a URL to which to publish the notification.
+to notify on. Then specify the destination:
+- For the Email publisher: it's a comma separated list of email addresses
+- For Slack, Mattermost and Microsoft Teams: it's the incoming webhook URL generated from each respective
+- For Jira: it's the URL for the Jira instance. The Jira alert also asks for the Jira ticket type ('Task', 'Story', etc., refer to the Jira documentation for more details) to be created, along with the project key where the issue will be created
+- For the Outbound Webhook publisher: it's a URL to which to publish the notification
 
 ![configure notification](/images/screenshots/notifications-configure.png)
 

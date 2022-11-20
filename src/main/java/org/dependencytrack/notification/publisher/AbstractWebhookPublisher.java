@@ -21,22 +21,25 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
-import kong.unirest.HttpResponse;
+import kong.unirest.Header;
+import kong.unirest.Headers;
 import kong.unirest.UnirestInstance;
 import org.dependencytrack.common.UnirestFactory;
+import org.dependencytrack.exception.PublisherException;
 
 import javax.json.JsonObject;
+import java.util.stream.Collectors;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
 
     public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = Logger.getLogger(this.getClass());
-        logger.debug("Preparing to publish notification");
+        logger.debug("Preparing to publish " + publisherName + " notification");
         if (config == null) {
             logger.warn("No configuration found. Skipping notification.");
             return;
         }
-        final String destination = config.getString("destination");
+        final String destination = getDestinationUrl(config);
         final String content = prepareTemplate(notification, template);
         if (destination == null || content == null) {
             logger.warn("A destination or template was not found. Skipping notification");
@@ -44,17 +47,43 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         }
         final String mimeType = getTemplateMimeType(config);
         final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse response = ui.post(destination)
-                .header("content-type", mimeType)
-                .header("accept", mimeType)
-                .body(content)
-                .asEmpty();
 
-        if (response.getStatus() < 200 || response.getStatus() > 299) {
+        final var headers = new Headers();
+        headers.add("content-type", mimeType);
+        headers.add("accept", mimeType);
+        final BasicAuthCredentials credentials;
+        try {
+            credentials = getBasicAuthCredentials();
+        } catch (PublisherException e) {
+            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification");
+            return;
+        }
+        if (credentials != null) {
+            headers.setBasicAuth(credentials.user(), credentials.password());
+        }
+
+        final var response = ui.post(destination)
+                .headers(headers.all().stream().collect(Collectors.toMap(Header::getName, Header::getValue)))
+                .body(content)
+                .asString();
+
+        if (!response.isSuccess()) {
             logger.error("An error was encountered publishing notification to " + publisherName);
             logger.error("HTTP Status : " + response.getStatus() + " " + response.getStatusText());
             logger.error("Destination: " + destination);
+            logger.error("Response: " + response.getBody());
             logger.debug(content);
         }
+    }
+
+    protected String getDestinationUrl(final JsonObject config) {
+        return config.getString(CONFIG_DESTINATION);
+    }
+
+    protected BasicAuthCredentials getBasicAuthCredentials() {
+        return null;
+    }
+
+    protected record BasicAuthCredentials(String user, String password) {
     }
 }

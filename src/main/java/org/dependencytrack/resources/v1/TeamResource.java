@@ -297,14 +297,10 @@ public class TeamResource extends ExtendedAlpineResource {
             }
         }
         // Authentication is not enabled, try to return Administrators team
-        try (QueryManager qm = new QueryManager()) {
-            final ManagedUser user = qm.getManagedUser("admin");
-            if (user != null) {
-                if(!user.getTeams().isEmpty()) {
-                    final Team team = user.getTeams().get(0);
-                    return Response.ok(team).build();
-                }
-            }
+        final ManagedUser user = (ManagedUser) getPrincipal();
+        if (user != null && !user.getTeams().isEmpty()) {
+            final Team team = user.getTeams().get(0);
+            return Response.ok(team).build();
         }
         // Authentication is not enabled, but we need to return a positive response without any principal data.
         return Response.ok().build();

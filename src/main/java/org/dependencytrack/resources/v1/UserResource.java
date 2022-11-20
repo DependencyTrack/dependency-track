@@ -307,11 +307,9 @@ public class UserResource extends ExtendedAlpineResource {
             }
         }
         // Authentication is not enabled, try returning admin username
-        try (QueryManager qm = new QueryManager()) {
-            final ManagedUser user = qm.getManagedUser("admin");
-            if (user != null) {
-                return Response.ok(user).build();
-            }
+        final ManagedUser user = (ManagedUser) getPrincipal();
+        if (user != null) {
+            return Response.ok(user).build();
         }
         // Authentication is not enabled, but we need to return a positive response without any principal data.
         return Response.ok().build();

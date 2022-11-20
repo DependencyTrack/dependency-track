@@ -43,7 +43,7 @@ public abstract class ExtendedAlpineResource extends AlpineResource {
      */
     @Override
     protected Principal getPrincipal() {
-        if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
+        if (!Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
             // Authentication is not enabled, try returning admin principal
             try (QueryManager qm = new QueryManager()) {
                 final ManagedUser user = qm.getManagedUser("admin");

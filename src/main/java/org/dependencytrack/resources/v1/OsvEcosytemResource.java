@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -37,7 +36,7 @@ import java.util.List;
 
 @Path("/v1/integration/osv/ecosystem")
 @Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
-public class OsvEcosytemResource extends AlpineResource {
+public class OsvEcosytemResource extends ExtendedAlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

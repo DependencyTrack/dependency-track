@@ -23,7 +23,6 @@ import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -53,7 +52,7 @@ import java.util.List;
  */
 @Path("/v1/permission")
 @Api(value = "permission", authorizations = @Authorization(value = "X-Api-Key"))
-public class PermissionResource extends AlpineResource {
+public class PermissionResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(PermissionResource.class);
 

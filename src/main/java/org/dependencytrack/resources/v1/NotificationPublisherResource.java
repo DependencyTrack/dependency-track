@@ -23,7 +23,6 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.*;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -55,7 +54,7 @@ import java.util.List;
  */
 @Path("/v1/notification/publisher")
 @Api(authorizations = @Authorization(value = "X-Api-Key"))
-public class NotificationPublisherResource extends AlpineResource {
+public class NotificationPublisherResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(NotificationPublisherResource.class);
 

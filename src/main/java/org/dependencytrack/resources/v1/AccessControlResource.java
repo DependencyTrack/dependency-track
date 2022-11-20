@@ -23,7 +23,6 @@ import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -57,7 +56,7 @@ import java.util.List;
  */
 @Path("/v1/acl")
 @Api(value = "acl", authorizations = @Authorization(value = "X-Api-Key"))
-public class AccessControlResource extends AlpineResource {
+public class AccessControlResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(AccessControlResource.class);
 

@@ -23,7 +23,6 @@ import alpine.common.util.BooleanUtil;
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import alpine.server.resources.AlpineResource;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -32,7 +31,7 @@ import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-abstract class AbstractConfigPropertyResource extends AlpineResource {
+abstract class AbstractConfigPropertyResource extends ExtendedAlpineResource {
 
     private final Logger LOGGER = Logger.getLogger(this.getClass()); // Use the classes that extend this, not this class itself
     static final String ENCRYPTED_PLACEHOLDER = "HiddenDecryptedPropertyPlaceholder";

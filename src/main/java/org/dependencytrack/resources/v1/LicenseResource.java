@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -52,7 +51,7 @@ import alpine.common.logging.Logger;
  */
 @Path("/v1/license")
 @Api(value = "license", authorizations = @Authorization(value = "X-Api-Key"))
-public class LicenseResource extends AlpineResource {
+public class LicenseResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseResource.class);
 

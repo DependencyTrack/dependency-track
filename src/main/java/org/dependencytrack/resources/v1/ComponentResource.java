@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.annotations.Api;
@@ -64,7 +63,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/component")
 @Api(value = "component", authorizations = @Authorization(value = "X-Api-Key"))
-public class ComponentResource extends AlpineResource {
+public class ComponentResource extends ExtendedAlpineResource {
 
     @GET
     @Path("/project/{uuid}")

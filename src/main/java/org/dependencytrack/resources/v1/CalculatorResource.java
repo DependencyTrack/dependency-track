@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -43,7 +42,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/calculator")
 @Api(value = "calculator", authorizations = @Authorization(value = "X-Api-Key"))
-public class CalculatorResource extends AlpineResource {
+public class CalculatorResource extends ExtendedAlpineResource {
 
     @GET
     @Path("/cvss")

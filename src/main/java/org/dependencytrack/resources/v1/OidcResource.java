@@ -6,7 +6,6 @@ import alpine.model.OidcGroup;
 import alpine.model.Team;
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import alpine.server.util.OidcUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -40,7 +39,7 @@ import java.util.stream.Collectors;
  */
 @Path("/v1/oidc")
 @Api(value = "oidc", authorizations = @Authorization(value = "X-Api-Key"))
-public class OidcResource extends AlpineResource {
+public class OidcResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(OidcResource.class);
 

@@ -24,7 +24,6 @@ import alpine.model.Team;
 import alpine.server.auth.LdapConnectionWrapper;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.cache.CacheManager;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -60,7 +59,7 @@ import java.util.stream.Collectors;
  */
 @Path("/v1/ldap")
 @Api(value = "ldap", authorizations = @Authorization(value = "X-Api-Key"))
-public class LdapResource extends AlpineResource {
+public class LdapResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(LdapResource.class);
 

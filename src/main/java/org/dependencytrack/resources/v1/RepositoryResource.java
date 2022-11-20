@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.persistence.PaginatedResult;
 import alpine.security.crypto.DataEncryption;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.annotations.Api;
@@ -59,7 +58,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/repository")
 @Api(value = "repository", authorizations = @Authorization(value = "X-Api-Key"))
-public class RepositoryResource extends AlpineResource {
+public class RepositoryResource extends ExtendedAlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

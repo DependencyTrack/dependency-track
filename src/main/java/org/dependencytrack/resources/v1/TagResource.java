@@ -2,7 +2,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -23,7 +22,7 @@ import javax.ws.rs.core.Response;
 
 @Path("/v1/tag")
 @Api(value = "tag", authorizations = @Authorization(value = "X-Api-Key"))
-public class TagResource extends AlpineResource {
+public class TagResource extends ExtendedAlpineResource {
 
     @GET
     @Path("/{policyUuid}")

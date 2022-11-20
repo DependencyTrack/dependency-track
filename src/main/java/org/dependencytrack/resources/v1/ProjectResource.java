@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.jsonwebtoken.lang.Collections;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -67,7 +66,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/project")
 @Api(value = "project", authorizations = @Authorization(value = "X-Api-Key"))
-public class ProjectResource extends AlpineResource {
+public class ProjectResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(ProjectResource.class);
 

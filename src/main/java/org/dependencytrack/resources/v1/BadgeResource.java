@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.BooleanUtil;
 import alpine.model.ConfigProperty;
 import alpine.server.auth.AuthenticationNotRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -48,7 +47,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_EN
  */
 @Path("/v1/badge")
 @Api(value = "badge")
-public class BadgeResource extends AlpineResource {
+public class BadgeResource extends ExtendedAlpineResource {
 
     private static final String SVG_MEDIA_TYPE = "image/svg+xml";
 

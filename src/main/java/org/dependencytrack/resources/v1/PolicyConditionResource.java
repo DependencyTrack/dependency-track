@@ -20,7 +20,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -52,7 +51,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/policy")
 @Api(value = "policyCondition", authorizations = @Authorization(value = "X-Api-Key"))
-public class PolicyConditionResource extends AlpineResource {
+public class PolicyConditionResource extends ExtendedAlpineResource {
 
     @PUT
     @Path("/{uuid}/condition")

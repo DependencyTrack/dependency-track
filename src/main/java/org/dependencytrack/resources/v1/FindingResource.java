@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -60,7 +59,7 @@ import java.util.stream.Collectors;
  */
 @Path("/v1/finding")
 @Api(value = "finding", authorizations = @Authorization(value = "X-Api-Key"))
-public class FindingResource extends AlpineResource {
+public class FindingResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(FindingResource.class);
 

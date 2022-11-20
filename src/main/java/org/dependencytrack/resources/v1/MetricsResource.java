@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.event.framework.Event;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -58,7 +57,7 @@ import java.util.List;
  */
 @Path("/v1/metrics")
 @Api(value = "metrics", authorizations = @Authorization(value = "X-Api-Key"))
-public class MetricsResource extends AlpineResource {
+public class MetricsResource extends ExtendedAlpineResource {
 
     @GET
     @Path("/vulnerability")

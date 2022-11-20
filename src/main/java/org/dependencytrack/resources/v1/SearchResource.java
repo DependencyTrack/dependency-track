@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -46,7 +45,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/search")
 @Api(value = "search", authorizations = @Authorization(value = "X-Api-Key"))
-public class SearchResource extends AlpineResource {
+public class SearchResource extends ExtendedAlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -45,7 +44,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/cwe")
 @Api(value = "cwe", authorizations = @Authorization(value = "X-Api-Key"))
-public class CweResource extends AlpineResource {
+public class CweResource extends ExtendedAlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

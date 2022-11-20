@@ -34,7 +34,6 @@ import alpine.server.auth.JsonWebToken;
 import alpine.server.auth.OidcAuthenticationService;
 import alpine.server.auth.PasswordService;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -70,47 +69,9 @@ import java.util.List;
  */
 @Path("/v1/user")
 @Api(value = "user", authorizations = @Authorization(value = "X-Api-Key"))
-public class UserResource extends AlpineResource {
+public class UserResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(UserResource.class);
-
-    /**
-     * Returns the principal for who initiated the request.  If
-     * ALPINE_ENFORCE_AUTHENTICATION is disabled then the admin ManagedUser is
-     * returned.
-     * @return a Principal object
-     * @see alpine.model.ApiKey
-     * @see alpine.model.LdapUser
-     * @see alpine.model.ManagedUser
-     */
-    @Override
-    protected Principal getPrincipal() {
-        if (Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
-            // Authentication is not enabled, try returning admin principal
-            try (QueryManager qm = new QueryManager()) {
-                final ManagedUser user = qm.getManagedUser("admin");
-                if (user != null) {
-                    return (Principal) user;
-                }
-            }
-        }
-        return super.getPrincipal();
-    }
-
-    /**
-     * Convenience method that returns true if the principal has the specified permission,
-     * or false if not.  If ALPINE_ENFORCE_AUTHENTICATION is disabled then the
-     * true will always be returned.
-     * @param permission the permission to check
-     * @return true if principal has permission assigned, false if not
-     */
-    @Override
-    protected boolean hasPermission(final String permission) {
-        if (!Config.getInstance().getPropertyAsBoolean(Config.AlpineKey.ENFORCE_AUTHENTICATION)) {
-            return true;
-        }
-        return super.hasPermission(permission);
-    }
 
     @POST
     @Path("login")

@@ -24,7 +24,6 @@ import alpine.model.ApiKey;
 import alpine.model.ManagedUser;
 import alpine.model.Team;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -58,7 +57,7 @@ import java.util.List;
  */
 @Path("/v1/team")
 @Api(value = "team", authorizations = @Authorization(value = "X-Api-Key"))
-public class TeamResource extends AlpineResource {
+public class TeamResource extends ExtendedAlpineResource {
 
     private static final Logger LOGGER = Logger.getLogger(TeamResource.class);
 

@@ -25,7 +25,6 @@ import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.UserPrincipal;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -62,7 +61,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("/v1/analysis")
 @Api(value = "analysis", authorizations = @Authorization(value = "X-Api-Key"))
-public class AnalysisResource extends AlpineResource {
+public class AnalysisResource extends ExtendedAlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

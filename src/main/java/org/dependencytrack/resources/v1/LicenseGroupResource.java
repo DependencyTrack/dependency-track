@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
-import alpine.server.resources.AlpineResource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -55,7 +54,7 @@ import java.util.List;
  */
 @Path("/v1/licenseGroup")
 @Api(value = "licenseGroup", authorizations = @Authorization(value = "X-Api-Key"))
-public class LicenseGroupResource extends AlpineResource {
+public class LicenseGroupResource extends ExtendedAlpineResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

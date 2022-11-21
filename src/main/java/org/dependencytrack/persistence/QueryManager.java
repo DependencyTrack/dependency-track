@@ -31,7 +31,6 @@ import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -70,6 +69,7 @@ import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
@@ -1229,23 +1229,19 @@ public class QueryManager extends AlpineQueryManager {
         }
     }
 
-    public List<AliasAttribution> getAllAliasAttributions() {
-        return getVulnerabilityQueryManager().getAllAliasAttributions();
-    }
-
-    public List<AliasAttribution> getAliasAttributionsByIdAndSource(final String vulnId, final Vulnerability.Source source) {
+    public List<VulnerabilityAliasAttribution> getAliasAttributionsByIdAndSource(final String vulnId, final Vulnerability.Source source) {
         return getVulnerabilityQueryManager().getAliasAttributionsByIdAndSource(vulnId, source);
     }
 
-    public List<AliasAttribution> getAliasAttributionsByIdAndAlias(final String vulnId, final String alias) {
-        return getVulnerabilityQueryManager().getAliasAttributionsByIdAndAlias(vulnId, alias);
+    public List<VulnerabilityAliasAttribution> getActiveAliasAttributionsByIdAndAlias(final String vulnId, final String alias) {
+        return getVulnerabilityQueryManager().getActiveAliasAttributionsByIdAndAlias(vulnId, alias);
     }
 
-    public List<AliasAttribution> getAliasAttributionsById(String vulnId) {
+    public List<VulnerabilityAliasAttribution> getAliasAttributionsById(String vulnId) {
         return getVulnerabilityQueryManager().getAliasAttributionsById(vulnId);
     }
 
-    public AliasAttribution getAliasAttributionById(final String vulnId, final String alias, final Vulnerability.Source source) {
+    public VulnerabilityAliasAttribution getAliasAttributionById(final String vulnId, final String alias, final Vulnerability.Source source) {
         return getVulnerabilityQueryManager().getAliasAttributionById(vulnId, alias, source);
     }
 
@@ -1253,7 +1249,4 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().updateAliasAttribution(vulnId, alias, source);
     }
 
-    public void deleteAliasAttribution(final AliasAttribution attribution) {
-        getVulnerabilityQueryManager().deleteAliasAttribution(attribution);
-    }
 }

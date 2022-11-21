@@ -14,11 +14,11 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
@@ -47,9 +47,9 @@ import java.util.zip.ZipInputStream;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
+import static org.dependencytrack.util.VulnerabilityUtil.checkInactiveAttributions;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
-import static org.dependencytrack.util.VulnerabilityUtil.checkInactiveAttributions;
 
 public class OsvDownloadTask implements LoggableSubscriber {
 
@@ -169,7 +169,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     qm.updateAliasAttribution(advisory.getId(), alias, Vulnerability.Source.OSV);
                     //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
                 }
-                List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getId(), Vulnerability.Source.OSV);
+                List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getId(), Vulnerability.Source.OSV);
                 checkInactiveAttributions(qm, existingAttributions, reportedAliases);
             }
 

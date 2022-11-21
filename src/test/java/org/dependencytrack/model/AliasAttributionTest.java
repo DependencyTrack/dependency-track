@@ -29,27 +29,9 @@ public class AliasAttributionTest extends PersistenceCapableTest {
         // OSV reports the same GHSA-123 to alias CVE-123 again to change last seen
         qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.OSV);
 
-        List<AliasAttribution> aliasAttributions = qm.getAllAliasAttributions();
-        Assert.assertNotNull(aliasAttributions);
-        Assert.assertEquals(5, aliasAttributions.size());
-
-        aliasAttributions = qm.getAliasAttributionsById("GHSA-123");
+        List<VulnerabilityAliasAttribution> aliasAttributions = qm.getAliasAttributionsById("GHSA-123");
         Assert.assertNotNull(aliasAttributions);
         Assert.assertEquals(3, aliasAttributions.size());
     }
 
-    @Test
-    public void testAliasAttributionDelete() {
-
-        qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.GITHUB);
-        qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.OSV);
-        qm.updateAliasAttribution("GHSA-123", "CVE-456", Vulnerability.Source.OSV);
-
-        List<AliasAttribution> aliasAttributions = qm.getAllAliasAttributions();
-        Assert.assertEquals(3, aliasAttributions.size());
-
-        qm.deleteAliasAttribution(qm.getAliasAttributionById("GHSA-123", "CVE-123", Vulnerability.Source.OSV));
-        aliasAttributions = qm.getAllAliasAttributions();
-        Assert.assertEquals(2, aliasAttributions.size());
-    }
 }

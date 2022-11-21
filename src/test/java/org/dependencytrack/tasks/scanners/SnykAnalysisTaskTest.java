@@ -6,10 +6,10 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.snyk.SnykParser;
 import org.dependencytrack.persistence.CweImporter;
@@ -24,8 +24,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME;
-import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_CVSS_SOURCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_CVSS_SOURCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_ENABLED;
 
 public class SnykAnalysisTaskTest extends PersistenceCapableTest {
@@ -72,7 +72,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         Assert.assertEquals("2.18.0", vulnerableSoftware.get(0).getVersionStartIncluding());
         Assert.assertEquals("2.29.4", vulnerableSoftware.get(0).getVersionEndExcluding());
 
-        List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsById("SNYK-JS-MOMENT-2944238");
+        List<VulnerabilityAliasAttribution> aliasAttributions = qm.getAliasAttributionsById("SNYK-JS-MOMENT-2944238");
         Assert.assertNotNull(aliasAttributions);
         Assert.assertEquals(2, aliasAttributions.size());
         Assert.assertEquals(Vulnerability.Source.SNYK, aliasAttributions.get(0).getSource());
@@ -241,7 +241,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
         task.handle(component, jsonObject, 200);
 
-        AliasAttribution aliasAttribution = qm.getAliasAttributionById("SNYK-JS-MOMENT-2944238", "GHSA-wc69-rhjr-hc9g", Vulnerability.Source.SNYK);
+        VulnerabilityAliasAttribution aliasAttribution = qm.getAliasAttributionById("SNYK-JS-MOMENT-2944238", "GHSA-wc69-rhjr-hc9g", Vulnerability.Source.SNYK);
         Assert.assertNotNull(aliasAttribution);
         Assert.assertTrue(aliasAttribution.isActive());
 

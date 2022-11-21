@@ -22,7 +22,6 @@ import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.io.FileUtils;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -37,6 +36,7 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -62,7 +62,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -286,13 +285,13 @@ public final class NotificationUtil {
         if (vulnerability.getAliases() != null) {
             for (final Map.Entry<Vulnerability.Source, String> vulnIdBySource : VulnerabilityUtil.getUniqueAliases(vulnerability)) {
                 // active alias attributions
-                List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsByIdAndAlias(vulnerability.getVulnId(), vulnIdBySource.getValue());
-                String[] reportedBy = aliasAttributions.stream().filter(attribution -> attribution.isActive())
-                        .flatMap(at -> Stream.of(at.getSource())).toArray(String[]::new);
+                List<VulnerabilityAliasAttribution> aliasAttributions = qm.getActiveAliasAttributionsByIdAndAlias(vulnerability.getVulnId(), vulnIdBySource.getValue());
+                List<String> reportedBy = aliasAttributions.stream()
+                        .flatMap(at -> Stream.of(at.getSource().name())).toList();
                 aliasesBuilder.add(Json.createObjectBuilder()
                         .add("source", vulnIdBySource.getKey().name())
                         .add("vulnId", vulnIdBySource.getValue())
-                        .add("reportedBy", Json.createArrayBuilder(Arrays.asList(reportedBy)))
+                        .add("reportedBy", Json.createArrayBuilder(reportedBy))
                         .build());
             }
         }

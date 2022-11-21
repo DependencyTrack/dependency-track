@@ -54,6 +54,7 @@
         <class>org.dependencytrack.model.VulnerabilityAlias</class>
         <class>org.dependencytrack.model.VulnerabilityMetrics</class>
         <class>org.dependencytrack.model.VulnerableSoftware</class>
+        <class>org.dependencytrack.model.VulnerabilityAliasAttribution</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
     </persistence-unit>

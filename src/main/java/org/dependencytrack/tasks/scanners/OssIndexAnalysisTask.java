@@ -46,12 +46,12 @@ import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
@@ -326,7 +326,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                     qm.synchronizeVulnerabilityAlias(alias);
                                     // Alias attribution
                                     qm.updateAliasAttribution(reportedVuln.getId(), reportedVuln.getCve(), Vulnerability.Source.OSSINDEX);
-                                    List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(reportedVuln.getId(), Vulnerability.Source.OSSINDEX);
+                                    List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(reportedVuln.getId(), Vulnerability.Source.OSSINDEX);
                                     checkInactiveAttributions(qm, existingAttributions, List.of(reportedVuln.getCve()));
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);

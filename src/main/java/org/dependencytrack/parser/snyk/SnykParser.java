@@ -6,13 +6,13 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.SnykCvssSource;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
@@ -114,7 +114,7 @@ public class SnykParser {
                 qm.updateAliasAttribution(vulnerability.getVulnId(), id, Vulnerability.Source.SNYK);
             }
         }
-        List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(vulnerability.getVulnId(), Vulnerability.Source.SNYK);
+        List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(vulnerability.getVulnId(), Vulnerability.Source.SNYK);
         checkInactiveAttributions(qm, existingAttributions, reportedAliases);
         return vulnerabilityAliasList;
     }

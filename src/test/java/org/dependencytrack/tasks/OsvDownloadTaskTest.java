@@ -21,9 +21,9 @@ import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 
 public class OsvDownloadTaskTest extends PersistenceCapableTest {
     private JSONObject jsonObject;
@@ -113,7 +113,7 @@ public class OsvDownloadTaskTest extends PersistenceCapableTest {
         vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth2"));
         Assert.assertEquals(4, vulnerableSoftware.size());
 
-        List<AliasAttribution> aliasAttributions = qm.getAliasAttributionsById("GHSA-77rv-6vfw-x4gc");
+        List<VulnerabilityAliasAttribution> aliasAttributions = qm.getAliasAttributionsById("GHSA-77rv-6vfw-x4gc");
         Assert.assertNotNull(aliasAttributions);
         Assert.assertEquals(1, aliasAttributions.size());
         Assert.assertEquals("CVE-2019-3778", aliasAttributions.get(0).getAlias());

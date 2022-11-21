@@ -37,11 +37,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.AliasAttribution;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -198,7 +198,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                             qm.updateAliasAttribution(advisory.getGhsaId(), identifier.getRight(), Vulnerability.Source.GITHUB);
                         }
                     }
-                    List<AliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getGhsaId(), Vulnerability.Source.GITHUB);
+                    List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getGhsaId(), Vulnerability.Source.GITHUB);
                     checkInactiveAttributions(qm, existingAttributions, reportedAliases);
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());

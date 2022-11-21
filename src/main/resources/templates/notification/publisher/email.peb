@@ -55,7 +55,7 @@ Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
 Other affected projects:
 {% for affectedProject in notification.subject.affectedProjects %}{% if not (affectedProject.uuid == subject.component.project.uuid) %}
 Project:           [{{ affectedProject.name }} : {{ affectedProject.version }}]
-Project URL:       {{ baseUrl }}/project/{{ affectedProject.uuid }}
+Project URL:       {{ baseUrl }}/projects/{{ affectedProject.uuid }}
 {% endif %}{% endfor %}{% endif %}{% elseif notification.group == "BOM_CONSUMED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

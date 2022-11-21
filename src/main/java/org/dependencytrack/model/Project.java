@@ -109,6 +109,7 @@ public class Project implements Serializable {
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
+    @JsonIgnore
     private long id;
 
     @Persistent
@@ -248,9 +249,9 @@ public class Project implements Serializable {
     @JsonIgnore
     private List<Team> accessTeams;
 
-    @JsonProperty("pid")
-    private Long getParentId() {
-        return (this.getParent() == null)? null : this.getParent().getId();
+    @JsonProperty("parentUuid")
+    private UUID getParentUuid() {
+        return (this.getParent() == null) ? null : this.getParent().getUuid();
     }
 
     private transient ProjectMetrics metrics;

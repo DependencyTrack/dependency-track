@@ -4,6 +4,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.jdo.Query;
 import java.util.List;
 
 public class AliasAttributionTest extends PersistenceCapableTest {
@@ -32,6 +33,38 @@ public class AliasAttributionTest extends PersistenceCapableTest {
         List<VulnerabilityAliasAttribution> aliasAttributions = qm.getAliasAttributionsById("GHSA-123");
         Assert.assertNotNull(aliasAttributions);
         Assert.assertEquals(3, aliasAttributions.size());
+
+        aliasAttributions = qm.getPersistenceManager().newQuery(Query.JDOQL, """
+                SELECT FROM org.dependencytrack.model.VulnerabilityAliasAttribution
+                """).executeList();
+
+        Assert.assertEquals(5, aliasAttributions.size());
+
+    }
+
+    @Test
+    public void testAliasAttributionDelete() {
+
+        qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.GITHUB);
+        qm.updateAliasAttribution("GHSA-123", "CVE-123", Vulnerability.Source.OSV);
+        qm.updateAliasAttribution("GHSA-123", "CVE-456", Vulnerability.Source.OSV);
+
+        List<VulnerabilityAliasAttribution> aliasAttributions = qm.getPersistenceManager().newQuery(Query.JDOQL, """
+                SELECT FROM org.dependencytrack.model.VulnerabilityAliasAttribution
+                """).executeList();
+        Assert.assertEquals(3, aliasAttributions.size());
+
+        //qm.deleteAliasAttribution(
+        VulnerabilityAliasAttribution aliasAttribution =  qm.getAliasAttributionById("GHSA-123", "CVE-123", Vulnerability.Source.OSV);
+        final Query<?> query = qm.getPersistenceManager().newQuery(Query.JDOQL, """
+                DELETE FROM org.dependencytrack.model.VulnerabilityAliasAttribution
+                WHERE vulnId == :vulnId && alias == :alias && source == :source
+                """);
+        query.execute(aliasAttribution.getVulnId(), aliasAttribution.getAlias(), aliasAttribution.getSource());
+        aliasAttributions = qm.getPersistenceManager().newQuery(Query.JDOQL, """
+                SELECT FROM org.dependencytrack.model.VulnerabilityAliasAttribution
+                """).executeList();
+        Assert.assertEquals(2, aliasAttributions.size());
     }
 
 }

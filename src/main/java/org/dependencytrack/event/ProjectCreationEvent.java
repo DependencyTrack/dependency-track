@@ -16,31 +16,33 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.notification;
+package org.dependencytrack.event;
 
-public enum NotificationGroup {
+import alpine.event.framework.AbstractChainableEvent;
 
-    // System Groups
-    CONFIGURATION,
-    DATASOURCE_MIRRORING,
-    REPOSITORY,
-    INTEGRATION,
-    INDEXING_SERVICE,
-    FILE_SYSTEM,
-    ANALYZER,
+import java.util.UUID;
 
-    // Portfolio Groups
-    NEW_VULNERABILITY,
-    NEW_VULNERABLE_DEPENDENCY,
-    //NEW_OUTDATED_COMPONENT,
-    //FIXED_VULNERABILITY,
-    //FIXED_OUTDATED,
-    //GLOBAL_AUDIT_CHANGE,
-    PROJECT_AUDIT_CHANGE,
-    BOM_CONSUMED,
-    BOM_PROCESSED,
-    VEX_CONSUMED,
-    VEX_PROCESSED,
-    POLICY_VIOLATION,
-    NEW_PROJECT
+/**
+ * Defines an event triggered when a new project is created.
+ *
+ * @author Mark Zeman
+ * @since 4.6.x
+ */
+public class ProjectCreationEvent extends AbstractChainableEvent {
+
+  private final UUID projectUuid;
+  private final String projectName;
+  
+  public ProjectCreationEvent(final UUID projectUuid, final String projectName){
+    this.projectUuid = projectUuid;
+    this.projectName = projectName;
+  }
+
+  public UUID getProjectUuid() {
+    return projectUuid;
+  }
+
+  public String getProjectName(){
+    return projectName;
+  }
 }

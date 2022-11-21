@@ -31,14 +31,22 @@ jobs:
           java-version: '17'
           cache: 'maven'
 
+      - name: Setup CycloneDX CLI
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          wget -O "$HOME/.local/bin/cyclonedx" https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.24.2/cyclonedx-linux-x64
+          echo "ef0d3b31d176e02bc594f83e19cfcea053c6bc5b197351f71696e189390f851d $HOME/.local/bin/cyclonedx" | sha256sum -c
+          chmod +x "$HOME/.local/bin/cyclonedx"
+
       - name: Build with Maven
         run: |-
           mvn clean
-          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
           mvn clean -P clean-exclude-wars
-          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+          mvn package -Dmaven.test.skip=true -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
           mvn clean -P clean-exclude-wars
-          mvn cyclonedx:makeBom
+          mvn cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3.1.1
@@ -47,7 +55,6 @@ jobs:
           path: |-
             target/*.jar
             target/bom.json
-            target/bom.xml
 
   build-container:
     runs-on: ubuntu-latest

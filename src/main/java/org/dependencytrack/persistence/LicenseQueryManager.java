@@ -152,4 +152,28 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
         }
         return result;
     }
+
+    /**
+     * Creates a new custom license.
+     * @param license the license to create
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     * @return the created license
+     */
+    public License createCustomLicense(License license, boolean commitIndex) {
+        license.setCustomLicense(true);
+        final License result = persist(license);
+        Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, pm.detachCopy(result)));
+        commitSearchIndex(commitIndex, License.class);
+        return result;
+    }
+
+    /**
+     * Deletes a license.
+     * @param license the license to delete
+     * @param commitIndex specifies if the search index should be committed (an expensive operation)
+     */
+    public void deleteLicense(final License license, final boolean commitIndex) {
+        commitSearchIndex(commitIndex, License.class);
+        delete(license);
+    }
 }

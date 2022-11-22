@@ -18,9 +18,11 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.DefaultObjectGenerator;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -32,6 +34,8 @@ import org.junit.Test;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class LicenseResourceTest extends ResourceTest {
@@ -107,5 +111,87 @@ public class LicenseResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The license could not be found.", body);
+    }
+
+    @Test
+    public void createCustomLicense() {
+        License license = new License();
+        license.setName("Acme Example");
+        license.setLicenseId("Acme-Example-License");
+        Response response = target(V1_LICENSE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(license, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(201, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("Acme Example", json.getString("name"));
+        Assert.assertEquals("Acme-Example-License", json.getString("licenseId"));
+        Assert.assertFalse(json.getBoolean("isOsiApproved"));
+        Assert.assertFalse(json.getBoolean("isFsfLibre"));
+        Assert.assertFalse(json.getBoolean("isDeprecatedLicenseId"));
+        Assert.assertTrue(json.getBoolean("isCustomLicense"));
+        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+    }
+
+    @Test
+    public void createCustomLicenseDuplicate() {
+        License license = new License();
+        license.setName("Apache License 2.0");
+        license.setLicenseId("Apache-2.0");
+        Response response = target(V1_LICENSE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(license, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(409, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("A license with the specified name already exists.", body);
+    }
+
+    @Test
+    public void createCustomLicenseWithoutLicenseId() {
+        License license = new License();
+        license.setName("Acme Example");
+        Response response = target(V1_LICENSE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(license, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void deleteCustomLicense() {
+        License license = new License();
+        license.setLicenseId("Acme-Example-License");
+        license.setName("Acme Example");
+        license.setCustomLicense(true);
+        qm.createCustomLicense(license, false);
+
+        Response response = target(V1_LICENSE + "/" + license.getLicenseId())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(204, response.getStatus(), 0);
+        Assert.assertTrue(license.isCustomLicense());
+    }
+
+    @Test
+    public void deleteNotCustomLicense() {
+        License license1 = new License();
+        license1.setLicenseId("Acme-Example-License");
+        license1.setName("Acme Example");
+        License license2 = qm.createCustomLicense(license1, false);
+        license1.setCustomLicense(false);
+        Response response = target(V1_LICENSE + "/" + license1.getLicenseId())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+        Assert.assertEquals(409, response.getStatus(), 0);
+        Assert.assertFalse(license2.isCustomLicense());
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Only custom licenses can be deleted.", body);
     }
 }

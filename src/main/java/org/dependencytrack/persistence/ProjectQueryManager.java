@@ -439,6 +439,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return the created Project
      */
     public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
+        if (!Boolean.TRUE.equals(project.getParent().isActive())){
+            throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
+        }
         final Project result = persist(project);
         final List<Tag> resolvedTags = resolveTags(tags);
         bind(project, resolvedTags);

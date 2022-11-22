@@ -27,7 +27,12 @@ import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.vo.*;
+import org.dependencytrack.notification.vo.AnalysisDecisionChange;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
+import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
+import org.dependencytrack.notification.vo.NewVulnerableDependency;
+import org.dependencytrack.notification.vo.PolicyViolationIdentified;
+import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -96,13 +101,13 @@ public interface Publisher {
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())) {
                 if (notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm, subject));
                 } else if (notification.getSubject() instanceof final NewVulnerableDependency subject) {
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm , subject));
                 } else if (notification.getSubject() instanceof final AnalysisDecisionChange subject) {
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm , subject));
                 } else if (notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));

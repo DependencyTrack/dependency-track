@@ -12,7 +12,6 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.SnykCvssSource;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.QueryManager;
@@ -81,6 +80,7 @@ public class SnykParser {
     public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, JSONArray problems) {
         List<VulnerabilityAlias> vulnerabilityAliasList = new ArrayList<>();
         List<String> reportedAliases = new ArrayList<>();
+        Date processingTime = new Date();
         for (int i = 0; i < problems.length(); i++) {
             final JSONObject problem = problems.optJSONObject(i);
             String source = problem.optString("source");
@@ -114,8 +114,7 @@ public class SnykParser {
                 qm.updateAliasAttribution(vulnerability.getVulnId(), id, Vulnerability.Source.SNYK);
             }
         }
-        List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(vulnerability.getVulnId(), Vulnerability.Source.SNYK);
-        checkInactiveAttributions(qm, existingAttributions, reportedAliases);
+        checkInactiveAttributions(qm, processingTime, vulnerability.getVulnId(), Vulnerability.Source.SNYK);
         return vulnerabilityAliasList;
     }
 

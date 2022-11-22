@@ -18,7 +18,6 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
@@ -143,6 +142,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
 
             if (advisory.getAliases() != null) {
                 List<String> reportedAliases = new ArrayList<>();
+                Date processingTime = new Date();
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
                     final String alias = advisory.getAliases().get(i);
                     reportedAliases.add(alias);
@@ -169,8 +169,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     qm.updateAliasAttribution(advisory.getId(), alias, Vulnerability.Source.OSV);
                     //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
                 }
-                List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getId(), Vulnerability.Source.OSV);
-                checkInactiveAttributions(qm, existingAttributions, reportedAliases);
+                checkInactiveAttributions(qm, processingTime, advisory.getId(), Vulnerability.Source.OSV);
             }
 
             List<VulnerableSoftware> vsList = new ArrayList<>();

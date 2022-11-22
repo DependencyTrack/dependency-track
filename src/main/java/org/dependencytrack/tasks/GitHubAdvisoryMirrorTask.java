@@ -41,7 +41,6 @@ import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -185,6 +184,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                     if (vs != null) {
                         vsList.add(vs);
                     }
+                    Date processingTime = new Date();
                     for (Pair<String,String> identifier: advisory.getIdentifiers()) {
                         if (identifier != null && identifier.getLeft() != null
                                 && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
@@ -198,8 +198,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
                             qm.updateAliasAttribution(advisory.getGhsaId(), identifier.getRight(), Vulnerability.Source.GITHUB);
                         }
                     }
-                    List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(advisory.getGhsaId(), Vulnerability.Source.GITHUB);
-                    checkInactiveAttributions(qm, existingAttributions, reportedAliases);
+                    checkInactiveAttributions(qm, processingTime, advisory.getGhsaId(), Vulnerability.Source.GITHUB);
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
                 qm.persist(vsList);

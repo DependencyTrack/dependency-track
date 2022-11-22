@@ -51,7 +51,6 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.VulnerabilityAliasAttribution;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.ossindex.OssIndexParser;
@@ -66,6 +65,7 @@ import us.springett.cvss.Score;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -320,14 +320,14 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 // multiple vulnerabilities with sonatype identifiers in the cve field.
                                 if (reportedVuln.getCve() != null && reportedVuln.getCve().startsWith("CVE-")) {
                                     LOGGER.debug("Updating vulnerability alias for " + reportedVuln.getId());
+                                    Date processingTime = new Date();
                                     final VulnerabilityAlias alias = new VulnerabilityAlias();
                                     alias.setSonatypeId(reportedVuln.getId());
                                     alias.setCveId(reportedVuln.getCve());
                                     qm.synchronizeVulnerabilityAlias(alias);
                                     // Alias attribution
                                     qm.updateAliasAttribution(reportedVuln.getId(), reportedVuln.getCve(), Vulnerability.Source.OSSINDEX);
-                                    List<VulnerabilityAliasAttribution> existingAttributions = qm.getAliasAttributionsByIdAndSource(reportedVuln.getId(), Vulnerability.Source.OSSINDEX);
-                                    checkInactiveAttributions(qm, existingAttributions, List.of(reportedVuln.getCve()));
+                                    checkInactiveAttributions(qm, processingTime, reportedVuln.getId(), Vulnerability.Source.OSSINDEX);
                                 }
                                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                                 qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), reportedVuln.getId(), reportedVuln.getReference());

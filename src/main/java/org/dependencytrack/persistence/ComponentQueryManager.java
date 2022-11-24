@@ -542,6 +542,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     public List<Component> getDependencyGraphForComponent(Project project, Component component) {
+        project.setDependencyGraph(new ArrayList<>());
+        if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
+            return project.getDependencyGraph();
+        }
         String queryUuid = "\".*" + component.getUuid().toString() + ".*\"";
         final Query<Component> query = pm.newQuery(Component.class, "project == :project && directDependencies.matches(" + queryUuid + ")");
         List<Component> components = (List<Component>) query.executeWithArray(project);
@@ -556,7 +560,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
             getParentDependency(project, parentNodeComponent.getUuid().toString(), pathComponentsMap);
         }
-        project.setDependencyGraph(new ArrayList<>());
+        if (pathComponentsMap.isEmpty() && project.getDirectDependencies().contains(component.getUuid().toString())){
+            Set<String> set = new HashSet<>();
+            set.add(component.getUuid().toString());
+            pathComponentsMap.put(project.getUuid().toString(), set);
+        }
         if (!pathComponentsMap.isEmpty()){
             loadDependencyGraphPaths(pathComponentsMap, project, component.getUuid().toString());
         }

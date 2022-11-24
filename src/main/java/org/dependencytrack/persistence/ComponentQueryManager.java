@@ -556,6 +556,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
             getParentDependency(project, parentNodeComponent.getUuid().toString(), pathComponentsMap);
         }
+        project.setDependencyGraph(new ArrayList<>());
         if (!pathComponentsMap.isEmpty()){
             loadDependencyGraphPaths(pathComponentsMap, project, component.getUuid().toString());
         }
@@ -581,7 +582,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     private void loadDependencyGraphPaths(Map<String, Set<String>> pathComponentsMap, Project project, String searchDependency) {
-        project.setDependencyGraph(new ArrayList<>());
         JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies())).readArray();
         for (JsonValue directDependency : directDependencies) {
             Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));

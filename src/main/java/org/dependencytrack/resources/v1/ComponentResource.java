@@ -422,7 +422,7 @@ public class ComponentResource extends AlpineResource {
     }
 
     @GET
-    @Path("/dependencyGraph/{componentUuid}/project/{projectUuid}")
+    @Path("/project/{projectUuid}/dependencyGraph/{componentUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Returns the expanded dependency graph to every occurrence of a component",
@@ -431,8 +431,7 @@ public class ComponentResource extends AlpineResource {
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
-            @ApiResponse(code = 404, message = "- The UUID of the project could not be found\n- The UUID of the component could not be found"),
-            @ApiResponse(code = 409, message = "The component is not part of the dependency Graph")
+            @ApiResponse(code = 404, message = "- The UUID of the project could not be found\n- The UUID of the component could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getDependencyGraphForComponent(
@@ -449,11 +448,7 @@ public class ComponentResource extends AlpineResource {
                 final Component component = qm.getObjectByUuid(Component.class, componentUuid);
                 if (component != null) {
                     List<Component> components = qm.getDependencyGraphForComponent(project, component);
-                    if (components == null || components.isEmpty()){
-                        return Response.status(Response.Status.CONFLICT).entity("The component is not part of the dependency Graph.").build();
-                    } else {
-                        return Response.ok(components).build();
-                    }
+                    return Response.ok(components).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
                 }

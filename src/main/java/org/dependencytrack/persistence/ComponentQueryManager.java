@@ -556,6 +556,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
             getParentDependency(project, parentNodeComponent.getUuid().toString(), pathComponentsMap);
         }
+        project.setDependencyGraph(new ArrayList<>());
         if (!pathComponentsMap.isEmpty()){
             loadDependencyGraphPaths(pathComponentsMap, project, component.getUuid().toString());
         }
@@ -581,7 +582,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     private void loadDependencyGraphPaths(Map<String, Set<String>> pathComponentsMap, Project project, String searchDependency) {
-        project.setDependencyGraph(new ArrayList<>());
         JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies())).readArray();
         for (JsonValue directDependency : directDependencies) {
             Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
@@ -591,7 +591,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             if (component.getDirectDependencies() != null && !component.getDirectDependencies().isEmpty()){
                 loadDependencyGraphPaths(pathComponentsMap, component, searchDependency);
             }
-            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization. Implement better way of excluding, if possible. (Reduces response size from ~2GB to ~31MB)
+            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization
             Component transientComponent = new Component();
             transientComponent.setUuid(component.getUuid());
             transientComponent.setName(component.getName());
@@ -619,7 +619,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                     && directDependencyComponent.getDirectDependencies() != null && !directDependencyComponent.getDirectDependencies().isBlank()){
                 loadDependencyGraphPaths(pathComponentsMap, directDependencyComponent, searchDependency);
             }
-            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization. Implement better way of excluding, if possible. (Reduces response size from ~2GB to ~31MB)
+            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization
             Component transientComponent = new Component();
             transientComponent.setUuid(directDependencyComponent.getUuid());
             transientComponent.setName(directDependencyComponent.getName());

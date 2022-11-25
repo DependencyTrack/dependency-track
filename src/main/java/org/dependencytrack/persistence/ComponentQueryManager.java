@@ -546,9 +546,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
             return project.getDependencyGraph();
         }
-        String queryUuid = "\".*" + component.getUuid().toString() + ".*\"";
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && directDependencies.matches(" + queryUuid + ")");
-        List<Component> components = (List<Component>) query.executeWithArray(project);
+        String queryUuid = ".*" + component.getUuid().toString() + ".*";
+        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid)" + " && project == :project");
+        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         Map<String, Set<String>> pathComponentsMap = new HashMap<>();
         for (Component parentNodeComponent : components) {
             if (pathComponentsMap.containsKey(parentNodeComponent.getUuid().toString())) {
@@ -572,9 +572,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     private void getParentDependency(Project project, String uuid, Map<String, Set<String>> pathComponentsMap) {
-        String queryUuid = "\".*" + uuid + ".*\"";
-        final Query<Component> query = pm.newQuery(Component.class, "project == :project && directDependencies.matches(" + queryUuid + ")");
-        List<Component> components = (List<Component>) query.executeWithArray(project);
+        String queryUuid = ".*" + uuid + ".*";
+        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid)" + " && project == :project");
+        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         for (Component component : components) {
             if (pathComponentsMap.containsKey(component.getUuid().toString())) {
                 if (pathComponentsMap.get(component.getUuid().toString()).add(uuid)) {

@@ -35,6 +35,8 @@ Refer to [distributions](../distributions/) for details.
 If minimum requirements are not met, Dependency-Track will not start correctly. However, for systems with Java 17 
 already installed, this method of execution may provide the fastest deployment path.
 
+> These requirements can be disabled by setting the 'system.requirement.check.enabled' property or the 'SYSTEM_REQUIREMENT_CHECK_ENABLED' environment variable to 'false'.
+
 ### Startup
 
 ```bash

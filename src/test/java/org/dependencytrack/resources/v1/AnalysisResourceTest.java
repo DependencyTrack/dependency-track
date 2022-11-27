@@ -193,7 +193,7 @@ public class AnalysisResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
 
         var vulnerability = new Vulnerability();
-        vulnerability.setVulnId("INT-002");
+        vulnerability.setVulnId("INT-003");
         vulnerability.setSource(Vulnerability.Source.INTERNAL);
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));

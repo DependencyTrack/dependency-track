@@ -176,9 +176,9 @@ public class AnalysisResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NOT_FOUND);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
-        assertThat(getPlainTextBody(response)).isEmpty();
+        assertThat(getPlainTextBody(response)).isEqualTo("No analysis exists.");
     }
 
     @Test

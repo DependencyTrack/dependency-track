@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.upgrade.v470;
+package org.dependencytrack.upgrade.v463;
 
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
@@ -25,27 +25,27 @@ import alpine.server.upgrade.AbstractUpgradeItem;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 
-public class v470Updater extends AbstractUpgradeItem {
+public class v463Updater extends AbstractUpgradeItem {
 
-    private static final Logger LOGGER = Logger.getLogger(v470Updater.class);
+    private static final Logger LOGGER = Logger.getLogger(v463Updater.class);
 
     @Override
     public String getSchemaVersion() {
-        return "4.7.0";
+        return "4.6.3";
     }
 
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
-        LOGGER.info("Setting component analysis cache clear cadence to 24H");
+        LOGGER.info("Resetting scanner cache validity period to 12h");
         final PreparedStatement ps = connection.prepareStatement("""
                 UPDATE "CONFIGPROPERTY" SET "PROPERTYVALUE" = ?
                 WHERE "GROUPNAME" = ? AND "PROPERTYNAME" = ?
                 """);
-        ps.setString(1, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE.getDefaultPropertyValue());
-        ps.setString(2, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE.getGroupName());
-        ps.setString(3, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE.getPropertyName());
+        ps.setString(1, SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getDefaultPropertyValue());
+        ps.setString(2, SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName());
+        ps.setString(3, SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
         ps.executeUpdate();
     }
 

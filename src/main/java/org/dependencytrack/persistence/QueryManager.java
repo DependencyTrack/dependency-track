@@ -344,8 +344,12 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(Project project){
-        return getProjectQueryManager().getProjectsWithoutDescendantsOf(project);
+    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project){
+        return getProjectQueryManager().getProjectsWithoutDescendantsOf(excludeInactive, project);
+    }
+
+    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project){
+        return getProjectQueryManager().getProjectsWithoutDescendantsOf(name, excludeInactive, project);
     }
 
     public boolean hasAccess(final Principal principal, final Project project) {

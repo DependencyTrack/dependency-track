@@ -613,13 +613,18 @@ public class ProjectResource extends AlpineResource {
             @ApiResponse(code = 404, message = "The UUID of the project could not be found")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response getProjectsWithoutDescendantsOf(@ApiParam(value = "The UUID of the project which descendants will be excluded", required = true)
-                                @PathParam("uuid") String uuid) {
+    public Response getProjectsWithoutDescendantsOf(
+                                @ApiParam(value = "The UUID of the project which descendants will be excluded", required = true)
+                                @PathParam("uuid") String uuid,
+                                @ApiParam(value = "The optional name of the project to query on", required = false)
+                                @QueryParam("name") String name,
+                                @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
+                                @QueryParam("excludeInactive") boolean excludeInactive) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
-                    final PaginatedResult result = qm.getProjectsWithoutDescendantsOf(project);
+                    final PaginatedResult result = (name != null) ? qm.getProjectsWithoutDescendantsOf(name, excludeInactive, project) : qm.getProjectsWithoutDescendantsOf(excludeInactive, project);
                     return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
                 } else{
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();

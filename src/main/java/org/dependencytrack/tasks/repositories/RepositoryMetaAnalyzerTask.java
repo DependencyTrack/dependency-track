@@ -116,68 +116,8 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
         LOGGER.debug("Analyzing component: " + component.getUuid());
         final IMetaAnalyzer analyzer = IMetaAnalyzer.build(component);
         if(RepositoryType.UNSUPPORTED != analyzer.supportedRepositoryType() && !isRepositoryMetaComponentStillValid(qm, analyzer.supportedRepositoryType(), component.getPurl().getNamespace(), component.getPurl().getName())) {
-            // Retrieve existing Component Analysis Cache in one query :- There will be either no cac or cac without "latestVersion" (otherwise a RepositoryMetaModel would have already been created).
-            // Caching cac without "latestVersion" allow avoiding performing the same call to repository over and over.
-            final Map<String, ComponentAnalysisCache> cacByHost = new HashMap<>();
-            List<ComponentAnalysisCache> cacList = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, analyzer.supportedRepositoryType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString());
-            if (cacList != null && cacList.size() > 0) {
-                cacList.stream().forEach(cac -> cacByHost.put(cac.getTargetHost(), cac));
-            }
             Callable<Void> cacheLoader = () -> {
-                for (final Repository repository: qm.getAllRepositoriesOrdered(analyzer.supportedRepositoryType())) {
-                    // Moved the identification of internal components from the isApplicable() method from the Meta Analyzers
-                    // themselves (which was introduced in https://github.com/DependencyTrack/dependency-track/pull/512)
-                    // and made a global decision here instead. Internal components should only be analyzed using internal
-                    // repositories. Non-internal components should only be analyzed with non-internal repositories. We do not
-                    // want non-internal components being analyzed with internal repositories as internal repositories are not
-                    // the source of truth for these components, even if the repository acts as a proxy to the source of truth.
-                    // This cannot be assumed.
-                    if (repository.isEnabled() && ((component.isInternal() && repository.isInternal()) || (!component.isInternal() && !repository.isInternal()))) {
-                        String purl = component.getPurl().toString();
-                        ComponentAnalysisCache cac = cacByHost.get(repository.getUrl());
-                        MetaModel model = new MetaModel(component);
-                        if (cac != null && isCacheCurrent(cac, component.getPurl().toString())) {
-                            LOGGER.debug("Building repository Metamodel from cache for "+purl);
-                            model.setLatestVersion(StringUtils.trimToNull(cac.getResult().getString(LATEST_VERSION)));
-                            model.setPublishedTimestamp(Date.from(Instant.ofEpochMilli(cac.getResult().getJsonNumber(PUBLISHED_TIMESTAMP).longValue())));
-                        } else {
-                            LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
-                                    + repository.getIdentifier() + " (" + repository.getType() + ")");
-
-                            if (repository.isInternal()) {
-                                try {
-                                    analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), DataEncryption.decryptAsString(repository.getPassword()));
-                                } catch (Exception e) {
-                                    LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
-                                }
-                            }
-
-                            analyzer.setRepositoryBaseUrl(repository.getUrl());
-                            model = analyzer.analyze(component);
-                            qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, repository.getUrl(), repository.getType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString(), new Date(), buildRepositoryComponentAnalysisCacheResult(model));
-                        }
-
-                        if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
-                            // Resolution from repository was successful. Update meta model
-                            final RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
-                            metaComponent.setRepositoryType(repository.getType());
-                            metaComponent.setNamespace(component.getPurl().getNamespace());
-                            metaComponent.setName(component.getPurl().getName());
-                            metaComponent.setPublished(model.getPublishedTimestamp());
-                            metaComponent.setLatestVersion(model.getLatestVersion());
-                            metaComponent.setLastCheck(new Date());
-                            qm.synchronizeRepositoryMetaComponent(metaComponent);
-                            // Since the component metadata found and captured from this repository, return from this
-                            // method without attempting to query additional repositories.
-                            LOGGER.debug("Found component metadata for: " + component.getUuid() + " using repository: "
-                                    + repository.getIdentifier() + " (" + repository.getType() + ")");
-                            break;
-                        }
-                    } else {
-                        LOGGER.debug("Skipping analysis of component: " + component.getUuid() + " using repository: "
-                                + repository.getIdentifier() + " (" + repository.getType() + ")");
-                    }
-                }
+                analyze(qm, component, analyzer);
                 return null;
             };
             boolean cacheStampedeBlockerEnabled = Config.getInstance().getPropertyAsBoolean(ConfigKey.REPO_META_ANALYZER_CACHE_STAMPEDE_BLOCKER_ENABLED);
@@ -189,6 +129,70 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                 } catch (Exception e) {
                     LOGGER.error("Error while fetching component meta model for component(id="+component.getId()+"; purl="+component.getPurl()+") : "+e.getMessage());
                 }
+            }
+        }
+    }
+
+    private void analyze(final QueryManager qm, final Component component, final IMetaAnalyzer analyzer) {
+        // Retrieve existing Component Analysis Cache in one query :- There will be either no cac or cac without "latestVersion" (otherwise a RepositoryMetaModel would have already been created).
+        // Caching cac without "latestVersion" allow avoiding performing the same call to repository over and over.
+        final Map<String, ComponentAnalysisCache> cacByHost = new HashMap<>();
+        List<ComponentAnalysisCache> cacList = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, analyzer.supportedRepositoryType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString());
+        if (cacList != null && cacList.size() > 0) {
+            cacList.stream().forEach(cac -> cacByHost.put(cac.getTargetHost(), cac));
+        }
+        for (final Repository repository: qm.getAllRepositoriesOrdered(analyzer.supportedRepositoryType())) {
+            // Moved the identification of internal components from the isApplicable() method from the Meta Analyzers
+            // themselves (which was introduced in https://github.com/DependencyTrack/dependency-track/pull/512)
+            // and made a global decision here instead. Internal components should only be analyzed using internal
+            // repositories. Non-internal components should only be analyzed with non-internal repositories. We do not
+            // want non-internal components being analyzed with internal repositories as internal repositories are not
+            // the source of truth for these components, even if the repository acts as a proxy to the source of truth.
+            // This cannot be assumed.
+            if (repository.isEnabled() && ((component.isInternal() && repository.isInternal()) || (!component.isInternal() && !repository.isInternal()))) {
+                String purl = component.getPurl().toString();
+                ComponentAnalysisCache cac = cacByHost.get(repository.getUrl());
+                MetaModel model = new MetaModel(component);
+                if (cac != null && isCacheCurrent(cac, component.getPurl().toString())) {
+                    LOGGER.debug("Building repository Metamodel from cache for "+purl);
+                    model.setLatestVersion(StringUtils.trimToNull(cac.getResult().getString(LATEST_VERSION)));
+                    model.setPublishedTimestamp(Date.from(Instant.ofEpochMilli(cac.getResult().getJsonNumber(PUBLISHED_TIMESTAMP).longValue())));
+                } else {
+                    LOGGER.debug("Analyzing component: " + component.getUuid() + " using repository: "
+                            + repository.getIdentifier() + " (" + repository.getType() + ")");
+
+                    if (repository.isInternal()) {
+                        try {
+                            analyzer.setRepositoryUsernameAndPassword(repository.getUsername(), DataEncryption.decryptAsString(repository.getPassword()));
+                        } catch (Exception e) {
+                            LOGGER.error("Failed decrypting password for repository: " + repository.getIdentifier(), e);
+                        }
+                    }
+
+                    analyzer.setRepositoryBaseUrl(repository.getUrl());
+                    model = analyzer.analyze(component);
+                    qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.REPOSITORY, repository.getUrl(), repository.getType().name(), PurlUtil.silentPurlCoordinatesOnly(component.getPurl()).toString(), new Date(), buildRepositoryComponentAnalysisCacheResult(model));
+                }
+
+                if (StringUtils.trimToNull(model.getLatestVersion()) != null) {
+                    // Resolution from repository was successful. Update meta model
+                    final RepositoryMetaComponent metaComponent = new RepositoryMetaComponent();
+                    metaComponent.setRepositoryType(repository.getType());
+                    metaComponent.setNamespace(component.getPurl().getNamespace());
+                    metaComponent.setName(component.getPurl().getName());
+                    metaComponent.setPublished(model.getPublishedTimestamp());
+                    metaComponent.setLatestVersion(model.getLatestVersion());
+                    metaComponent.setLastCheck(new Date());
+                    qm.synchronizeRepositoryMetaComponent(metaComponent);
+                    // Since the component metadata found and captured from this repository, return from this
+                    // method without attempting to query additional repositories.
+                    LOGGER.debug("Found component metadata for: " + component.getUuid() + " using repository: "
+                            + repository.getIdentifier() + " (" + repository.getType() + ")");
+                    break;
+                }
+            } else {
+                LOGGER.debug("Skipping analysis of component: " + component.getUuid() + " using repository: "
+                        + repository.getIdentifier() + " (" + repository.getType() + ")");
             }
         }
     }

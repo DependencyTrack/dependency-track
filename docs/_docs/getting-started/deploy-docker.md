@@ -168,7 +168,7 @@ services:
     # - OSSINDEX_RETRY_BACKOFF_MAX_DURATION=600000
     #
     # Optional configuration for the repository metadata analyzer cache stampede for high concurrency workloads
-    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_ENABLED=false
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_ENABLED=true
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_LOCK_BUCKETS=1000
     # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_MAX_ATTEMPTS=10
     #

@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.upgrade.v463;
+package org.dependencytrack.upgrade.v470;
 
 import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
@@ -27,9 +27,9 @@ import java.sql.PreparedStatement;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 
-public class v463Updater extends AbstractUpgradeItem {
+public class v470Updater extends AbstractUpgradeItem {
 
-    private static final Logger LOGGER = Logger.getLogger(v463Updater.class);
+    private static final Logger LOGGER = Logger.getLogger(v470Updater.class);
 
     @Override
     public String getSchemaVersion() {

@@ -62,44 +62,44 @@ public class CacheStampedeBlocker<K, V> {
     /**
      * Cache name.
      */
-    private String cacheName;
+    private final String cacheName;
 
     /**
      * Striped lock to have a fine-grain lock to reduce contention created by competing threads.
      */
-    private Striped<ReadWriteLock> stripedLock;
+    private final Striped<ReadWriteLock> stripedLock;
 
     /**
      * Cache loaders map.
      */
-    private Map<K, ExpirableCompletableFuture<V>> cacheLoaders;
+    private final Map<K, ExpirableCompletableFuture<V>> cacheLoaders;
 
     /**
      * Cache Loader entry TTL.
      */
-    private long cacheLoaderEntryTTL;
+    private final long cacheLoaderEntryTTL;
 
     /**
      * Flag to block competing threads if computation is ongoing.
      *  False is helpful for loaders returning no value. As long as a thread pass through, there is no need for competing threads to wait.
      *  True is helpful for loaders returning a value.
      */
-    private boolean blockCompetingThreads;
+    private final boolean blockCompetingThreads;
 
     /**
      * Maximum number of retry.
      */
-    private int nbRetryMax;
+    private final int nbRetryMax;
 
     /**
      * Retry instance.
      */
-    private Retry retry;
+    private final Retry retry;
 
     /**
      * Timer instance.
      */
-    private Timer timer = new Timer();
+    private final Timer timer;
 
     public CacheStampedeBlocker(String cacheName, int nbBuckets, boolean blockCompetingThreads) {
         this(cacheName, nbBuckets, blockCompetingThreads, MAX_RETRY_NUMBER, DEFAULT_CACHE_LOADER_ENTRY_TTL_MS);
@@ -127,7 +127,8 @@ public class CacheStampedeBlocker<K, V> {
         RetryRegistry registry = RetryRegistry.of(config);
         retry = registry.retry("cacheStampedeBlocker");
         this.cacheLoaderEntryTTL = cacheLoaderEntryTTL;
-        timer.schedule(
+        this.timer = new Timer(cacheName);
+        this.timer.schedule(
                 new TimerTask() {
                     @Override
                     public void run() {

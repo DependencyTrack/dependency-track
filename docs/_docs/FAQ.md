@@ -17,12 +17,6 @@ Most common reason: You have yet to enable the [Sonatype OSS Index Analyzer](./.
 enabled by default but is necessary to scan dependencies represented by
 [Package URLs](./../terminology/#package-url-purl).
 
-#### Why is Sonatype OSS Index Analyzer disabled by default?
-
-For Dependency-Track v3.0 - v3.8, Sonatype OSS Index Analyzer is disabled and requires an account. See
-[Sonatype OSS Index Analyzer](./../datasources/ossindex/). For Dependency-Track v4.0 and higher, OSS Index is enabled
-by default and does not require an account.
-
 #### I have just enabled OSS Index Analyzer but still don't see results
 
 The analyzers run asynchronously. After you enable an analyzer it is not immediately run.
@@ -38,12 +32,6 @@ components like operating systems, applications, and hardware. That's what CPE w
 dependencies like packages, libraries, and frameworks. In the local mirror there is no mapping from the PURL to CPE/CVE.  
 So the local mirror is used, but not for dependencies represented by PURL. Dependency Track will use the Analyzer best
 suited to analyze a given dependency.
-
-#### I updated Dependency Track and now I can not upload Dependency-Check reports
-
-Starting with Dependency Track v3.6.0 support for Dependency-Check XML reports was disabled by default. It was finally
-removed with v3.7.0. The fundamental concepts of Dependency-Check and Dependency Track are different, so the support
-was dropped. A comparison can be found in the [Dependency Check Comparison](./../odt-odc-comparison/).
 
 #### Dependency Track crashes when run as a container
 
@@ -63,6 +51,8 @@ alternative path to where you want DT temp files to reside.
 
 For auto-provisioned accounts, LDAP synchronization is performed on-demand and utilizes the same async job scheduling queue that all other jobs use. If the system is busy processing other jobs (mirroring the NVD or processing lots of SBOMs simultaneously for example), there might be a slight delay provisioning the account (which includes permission sync). If the LDAP account is manually created in DT, then synchronization has already happened and there shouldn’t be a delay.
 
-#### Breaking changes with Java 11
+#### I'm seeing "PKIX path building failed" errors in the API server logs, what is that and how can I fix it?
 
-Java 11 introduces breaking changes, which is the reason most organizations still use Java 8, and the reason why the DT Docker images still use Java 8 as well.
+Your Dependency-Track instance is most likely configured to connect to services that use TLS certificates
+that are either self-signed, or signed by your organization's internal certificate authority.
+Please refer to the [Internal Certificate Authority](./../getting-started/internal-ca/) documentation.

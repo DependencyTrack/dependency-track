@@ -8,9 +8,14 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 
 import javax.jdo.PersistenceManager;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class TagQueryManager extends QueryManager implements IQueryManager {
+
+    private static final Comparator<Tag> TAG_COMPARATOR = Comparator.comparingInt(
+            (Tag tag) -> tag.getProjects().size()).reversed();
 
     private static final Logger LOGGER = Logger.getLogger(ProjectQueryManager.class);
 
@@ -38,20 +43,19 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
         Policy policy = getObjectByUuid(Policy.class, policyUuid);
         List<Project> projects = policy.getProjects();
 
-        List<Tag> tagsToShow;
-
+        final Stream<Tag> tags;
         if (projects != null && !projects.isEmpty()) {
-            Set<Tag> filteredTags = new HashSet<>();
-            for (Project project : projects) {
-                filteredTags.addAll(project.getTags());
-            }
-            tagsToShow = new ArrayList<>(filteredTags);
+            tags = projects.stream()
+                    .map(Project::getTags)
+                    .flatMap(List::stream)
+                    .distinct();
         } else {
-            List<Tag> tagsQueried = pm.newQuery(Tag.class).executeList();
-            tagsToShow = new ArrayList<>(tagsQueried);
+            tags = pm.newQuery(Tag.class).executeList().stream();
         }
-        tagsToShow.sort(Comparator.comparingInt(tag -> tag.getProjects().size()));
-        Collections.reverse(tagsToShow);
+
+        List<Tag> tagsToShow = tags.sorted(TAG_COMPARATOR).toList();
+
         return (new PaginatedResult()).objects(tagsToShow).total(tagsToShow.size());
     }
+
 }

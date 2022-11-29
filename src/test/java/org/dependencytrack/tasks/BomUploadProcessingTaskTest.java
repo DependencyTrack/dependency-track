@@ -28,14 +28,16 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
 import org.dependencytrack.event.VulnerabilityAnalysisEvent;
-import org.dependencytrack.model.Classifier;
-import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -125,7 +127,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         final byte[] bomBytes = Files.readAllBytes(Paths.get(getClass().getClassLoader().getResource("bom-1.xml").toURI()));
 
         new BomUploadProcessingTask().inform(new BomUploadEvent(project.getUuid(), bomBytes));
-
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 5, Duration.ofSeconds(5));
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();
@@ -145,13 +147,19 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         assertThat(component.getLicenseUrl()).isEqualTo("https://www.apache.org/licenses/LICENSE-2.0.txt");
 
         assertThat(qm.getAllVulnerabilities(component)).hasSize(2);
-
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() >= 5, Duration.ofSeconds(5));
         assertThat(NOTIFICATIONS).satisfiesExactly(
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_CONSUMED.name()),
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_PROCESSED.name()),
-                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name()),
-                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name()),
+                n -> {
+                    assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name());
+                    NewVulnerabilityIdentified nvi = (NewVulnerabilityIdentified) n.getSubject();
+                    assertThat(nvi.getVulnerabilityAnalysisLevel().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+                },
+                n -> {
+                    assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name());
+                    NewVulnerabilityIdentified nvi = (NewVulnerabilityIdentified) n.getSubject();
+                    assertThat(nvi.getVulnerabilityAnalysisLevel().toString().equals(VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+                },
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name())
         );
     }

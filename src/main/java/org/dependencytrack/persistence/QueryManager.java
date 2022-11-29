@@ -30,6 +30,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -67,6 +68,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
@@ -311,8 +313,8 @@ public class QueryManager extends AlpineQueryManager {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// BEGIN WRAPPER METHODS                                                                                      ////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(includeMetrics, excludeInactive);
+    public PaginatedResult getProjects(final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(includeMetrics, excludeInactive, onlyRoot);
     }
 
     public PaginatedResult getProjects(final boolean includeMetrics) {
@@ -331,29 +333,38 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getAllProjects(excludeInactive);
     }
 
-    public PaginatedResult getProjects(final String name, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(name, excludeInactive);
+    public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot);
     }
 
     public Project getProject(final String name, final String version) {
         return getProjectQueryManager().getProject(name, version);
     }
 
-    public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass) {
-        return getProjectQueryManager().getProjects(team, excludeInactive, bypass);
+    public PaginatedResult getProjects(final Team team, final boolean excludeInactive, final boolean bypass, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(team, excludeInactive, bypass, onlyRoot);
+    }
+
+    public PaginatedResult getProjectsWithoutDescendantsOf(Project project){
+        return getProjectQueryManager().getProjectsWithoutDescendantsOf(project);
     }
 
     public boolean hasAccess(final Principal principal, final Project project) {
         return getProjectQueryManager().hasAccess(principal, project);
     }
 
-    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive);
+    public PaginatedResult getProjects(final Tag tag, final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(tag, includeMetrics, excludeInactive, onlyRoot);
     }
 
-    public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive);
+    public PaginatedResult getProjects(final Classifier classifier, final boolean includeMetrics, final boolean excludeInactive, final boolean onlyRoot) {
+        return getProjectQueryManager().getProjects(classifier, includeMetrics, excludeInactive, onlyRoot);
     }
+
+    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive){
+        return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
+    }
+
 
     public PaginatedResult getProjects(final Tag tag) {
         return getProjectQueryManager().getProjects(tag);
@@ -388,9 +399,10 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Project clone(UUID from, String newVersion, boolean includeTags, boolean includeProperties,
-                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory) {
+                         boolean includeComponents, boolean includeServices, boolean includeAuditHistory,
+                         boolean includeACL) {
         return getProjectQueryManager().clone(from, newVersion, includeTags, includeProperties,
-                includeComponents, includeServices, includeAuditHistory);
+                includeComponents, includeServices, includeAuditHistory, includeACL);
     }
 
     public Project updateLastBomImport(Project p, Date date, String bomFormat) {
@@ -497,6 +509,15 @@ public class QueryManager extends AlpineQueryManager {
 
     License synchronizeLicense(License license, boolean commitIndex) {
         return getLicenseQueryManager().synchronizeLicense(license, commitIndex);
+    }
+
+
+    public License createCustomLicense(License license, boolean commitIndex) {
+        return getLicenseQueryManager().createCustomLicense(license, commitIndex);
+    }
+
+    public void deleteLicense(final License license, final boolean commitIndex) {
+        getLicenseQueryManager().deleteLicense(license, commitIndex);
     }
 
     public PaginatedResult getPolicies() {
@@ -682,6 +703,43 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().deleteFindingAttributions(project);
     }
 
+    public List<VulnerableSoftware> reconcileVulnerableSoftware(final Vulnerability vulnerability,
+                                                                final List<VulnerableSoftware> vsListOld,
+                                                                final List<VulnerableSoftware> vsList,
+                                                                final Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().reconcileVulnerableSoftware(vulnerability, vsListOld, vsList, source);
+    }
+
+    public List<AffectedVersionAttribution> getAffectedVersionAttributions(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttributions(vulnerability, vulnerableSoftware);
+    }
+
+    public AffectedVersionAttribution getAffectedVersionAttribution(Vulnerability vulnerability, VulnerableSoftware vulnerableSoftware, Vulnerability.Source source) {
+        return getVulnerabilityQueryManager().getAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void updateAffectedVersionAttributions(final Vulnerability vulnerability,
+                                                                              final List<VulnerableSoftware> vsList,
+                                                                              final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().updateAffectedVersionAttributions(vulnerability, vsList, source);
+    }
+
+    public void updateAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                                       final VulnerableSoftware vulnerableSoftware,
+                                                                       final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().updateAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void deleteAffectedVersionAttribution(final Vulnerability vulnerability,
+                                                 final VulnerableSoftware vulnerableSoftware,
+                                                 final Vulnerability.Source source) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
+    }
+
+    public void deleteAffectedVersionAttributions(final Vulnerability vulnerability) {
+        getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability);
+    }
+
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
     }
@@ -724,6 +782,10 @@ public class QueryManager extends AlpineQueryManager {
                                                            String versionEndExcluding, String versionEndIncluding,
                                                            String versionStartExcluding, String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+    }
+
+    public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {
+        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByVulnId(source, vulnId);
     }
 
     public List<VulnerableSoftware> getAllVulnerableSoftwareByPurl(final PackageURL purl) {
@@ -890,6 +952,14 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getProjects(vulnerability);
     }
 
+    public VulnerabilityAlias synchronizeVulnerabilityAlias(VulnerabilityAlias alias) {
+        return getVulnerabilityQueryManager().synchronizeVulnerabilityAlias(alias);
+    }
+
+    public List<VulnerabilityAlias> getVulnerabilityAliases(Vulnerability vulnerability) {
+        return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnerability);
+    }
+
     List<Analysis> getAnalyses(Project project) {
         return getFindingsQueryManager().getAnalyses(project);
     }
@@ -1054,6 +1124,10 @@ public class QueryManager extends AlpineQueryManager {
         getNotificationQueryManager().removeProjectFromNotificationRules(project);
     }
 
+    public void removeTeamFromNotificationRules(final Team team) {
+        getNotificationQueryManager().removeTeamFromNotificationRules(team);
+    }
+
     /**
      * Determines if a config property is enabled or not.
      * @param configPropertyConstants the property to query
@@ -1073,12 +1147,20 @@ public class QueryManager extends AlpineQueryManager {
         return getCacheQueryManager().getComponentAnalysisCache(cacheType, targetHost, targetType, target);
     }
 
+    public List<ComponentAnalysisCache> getComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetType, String target) {
+        return getCacheQueryManager().getComponentAnalysisCache(cacheType, targetType, target);
+    }
+
     public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
         getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence,  result);
     }
 
     public void clearComponentAnalysisCache() {
         getCacheQueryManager().clearComponentAnalysisCache();
+    }
+
+    public void clearComponentAnalysisCache(Date threshold) {
+        getCacheQueryManager().clearComponentAnalysisCache(threshold);
     }
 
     public void bind(Project project, List<Tag> tags) {

@@ -28,5 +28,6 @@ public enum AnalyzerIdentity {
     OSSINDEX_ANALYZER,
     NPM_AUDIT_ANALYZER,
     VULNDB_ANALYZER,
+    SNYK_ANALYZER,
     NONE
 }

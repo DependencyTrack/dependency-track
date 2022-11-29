@@ -55,6 +55,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * JAX-RS resources for processing components.
@@ -285,7 +286,7 @@ public class ComponentResource extends AlpineResource {
 
             component = qm.createComponent(component, true);
             Event.dispatch(new VulnerabilityAnalysisEvent(component));
-            Event.dispatch(new RepositoryMetaEvent(component));
+            Event.dispatch(new RepositoryMetaEvent(List.of(component)));
             return Response.status(Response.Status.CREATED).entity(component).build();
         }
     }
@@ -369,7 +370,7 @@ public class ComponentResource extends AlpineResource {
 
                 component = qm.updateComponent(component, true);
                 Event.dispatch(new VulnerabilityAnalysisEvent(component));
-                Event.dispatch(new RepositoryMetaEvent(component));
+                Event.dispatch(new RepositoryMetaEvent(List.of(component)));
                 return Response.ok(component).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();

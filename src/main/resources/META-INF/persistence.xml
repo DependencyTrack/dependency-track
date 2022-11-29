@@ -21,6 +21,7 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd" version="2.2">
     <persistence-unit name="Alpine">
+        <class>org.dependencytrack.model.AffectedVersionAttribution</class>
         <class>org.dependencytrack.model.Analysis</class>
         <class>org.dependencytrack.model.AnalysisComment</class>
         <class>org.dependencytrack.model.Bom</class>
@@ -50,6 +51,7 @@
         <class>org.dependencytrack.model.ViolationAnalysisComment</class>
         <class>org.dependencytrack.model.ViolationAnalysisState</class>
         <class>org.dependencytrack.model.Vulnerability</class>
+        <class>org.dependencytrack.model.VulnerabilityAlias</class>
         <class>org.dependencytrack.model.VulnerabilityMetrics</class>
         <class>org.dependencytrack.model.VulnerableSoftware</class>
 

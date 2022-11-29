@@ -23,20 +23,18 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 
-import java.util.Set;
-
 public class AnalysisDecisionChange {
 
     private final Vulnerability vulnerability;
     private final Component component;
-    private final Set<Project> affectedProjects;
+    private final Project affectedProject;
     private final Analysis analysis;
 
     public AnalysisDecisionChange(final Vulnerability vulnerability, final Component component,
-                                  final Set<Project> affectedProjects, final Analysis analysis) {
+                                  final Project affectedProject, final Analysis analysis) {
         this.vulnerability = vulnerability;
         this.component = component;
-        this.affectedProjects = affectedProjects;
+        this.affectedProject = affectedProject;
         this.analysis = analysis;
     }
 
@@ -48,18 +46,11 @@ public class AnalysisDecisionChange {
         return component;
     }
 
-    public Set<Project> getAffectedProjects() {
-        return affectedProjects;
-    }
-
     public Analysis getAnalysis() {
         return analysis;
     }
 
     public Project getProject() {
-        if (affectedProjects != null && affectedProjects.size() == 1) {
-            return affectedProjects.iterator().next();
-        }
-        return null;
+        return affectedProject;
     }
 }

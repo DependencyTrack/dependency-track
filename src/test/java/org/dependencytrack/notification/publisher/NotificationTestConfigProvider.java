@@ -23,6 +23,7 @@ import org.dependencytrack.util.NotificationUtil;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -38,7 +39,12 @@ public interface NotificationTestConfigProvider {
                 .add(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY, publisher.getTemplateMimeType())
                 .add(Publisher.CONFIG_TEMPLATE_KEY, templateContent)
                 .add(Publisher.CONFIG_DESTINATION, destination)
+                .addAll(getExtraConfig())
                 .build();
+    }
+
+    default JsonObjectBuilder getExtraConfig() {
+        return Json.createObjectBuilder();
     }
 
 }

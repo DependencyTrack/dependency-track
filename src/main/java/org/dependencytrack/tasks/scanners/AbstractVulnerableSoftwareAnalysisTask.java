@@ -19,9 +19,9 @@
 package org.dependencytrack.tasks.scanners;
 
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
@@ -52,12 +52,13 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * @param component the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final String targetVersion, final String targetUpdate, final Component component) {
+                                       final String targetVersion, final String targetUpdate, final Component component,
+                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs: vsList) {
             if (compareVersions(vs, targetVersion) && compareUpdate(vs, targetUpdate)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
-                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
+                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
                         qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                     }
                 }

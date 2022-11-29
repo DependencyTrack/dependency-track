@@ -29,6 +29,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -270,6 +271,9 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             final Component component = getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
             final Analysis analysis = getAnalysis(component, vulnerability);
+            final List<VulnerabilityAlias> aliases = detach(getVulnerabilityAliases(vulnerability));
+            aliases.forEach(alias -> alias.setUuid(null));
+            finding.getVulnerability().put("aliases", aliases);
             if (includeSuppressed || analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 finding.getVulnerability().put("description", vulnerability.getDescription());

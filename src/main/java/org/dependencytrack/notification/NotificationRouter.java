@@ -27,12 +27,14 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.notification.publisher.SendMailPublisher;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
+import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.jdo.PersistenceManager;
@@ -75,7 +77,13 @@ public class NotificationRouter implements Subscriber {
                                                                  .add(Publisher.CONFIG_TEMPLATE_KEY, notificationPublisher.getTemplate())
                                                                  .addAll(Json.createObjectBuilder(config))
                                                                          .build();
-                    publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                    if (publisherClass != SendMailPublisher.class || rule.getTeams().isEmpty() || rule.getTeams() == null){
+                        publisher.inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig);
+                    } else {
+                        ((SendMailPublisher)publisher).inform(restrictNotificationToRuleProjects(notification, rule), notificationPublisherConfig, rule.getTeams());
+                    }
+
+
                 } else {
                     LOGGER.error("The defined notification publisher is not assignable from " + Publisher.class.getCanonicalName());
                 }
@@ -98,15 +106,9 @@ public class NotificationRouter implements Subscriber {
             restrictedNotification.setContent(initialNotification.getContent());
             restrictedNotification.setTitle(initialNotification.getTitle());
             restrictedNotification.setTimestamp(initialNotification.getTimestamp());
-            if(initialNotification.getSubject() instanceof NewVulnerabilityIdentified) {
-                NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) initialNotification.getSubject();
+            if(initialNotification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
                 Set<Project> restrictedProjects = subject.getAffectedProjects().stream().filter(project -> ruleProjectsUuids.contains(project.getUuid().toString())).collect(Collectors.toSet());
-                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects);
-                restrictedNotification.setSubject(restrictedSubject);
-            } else if(initialNotification.getSubject() instanceof AnalysisDecisionChange) {
-                AnalysisDecisionChange subject = (AnalysisDecisionChange) initialNotification.getSubject();
-                Set<Project> restrictedProjects = subject.getAffectedProjects().stream().filter(project -> ruleProjectsUuids.contains(project.getUuid().toString())).collect(Collectors.toSet());
-                AnalysisDecisionChange restrictedSubject = new AnalysisDecisionChange(subject.getVulnerability(), subject.getComponent(), restrictedProjects, subject.getAnalysis());
+                NewVulnerabilityIdentified restrictedSubject = new NewVulnerabilityIdentified(subject.getVulnerability(), subject.getComponent(), restrictedProjects, null);
                 restrictedNotification.setSubject(restrictedSubject);
             }
         }
@@ -119,7 +121,6 @@ public class NotificationRouter implements Subscriber {
                 && rule.getProjects().size() > 0;
     }
 
-    @SuppressWarnings("unchecked")
     List<NotificationRule> resolveRules(final Notification notification) {
         // The notification rules to process for this specific notification
         final List<NotificationRule> rules = new ArrayList<>();
@@ -144,24 +145,22 @@ public class NotificationRouter implements Subscriber {
 
             sb.append("enabled == true && scope == :scope"); //todo: improve this - this only works for testing
             query.setFilter(sb.toString());
-            final List<NotificationRule> result = (List<NotificationRule>)query.execute(NotificationScope.valueOf(notification.getScope()));
-
+            query.setParameters(NotificationScope.valueOf(notification.getScope()));
+            final List<NotificationRule> result = query.executeList();
+            pm.detachCopyAll(result);
 
             if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
-                    && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerabilityIdentified) {
-                final NewVulnerabilityIdentified subject = (NewVulnerabilityIdentified) notification.getSubject();
-                /*
-                if the rule specified one or more projects as targets, reduce the execution
-                of the notification down to those projects that the rule matches and which
-                also match project the component is included in.
-                NOTE: This logic is slightly different from what is implemented in limitToProject()
-                 */
+                    && notification.getSubject() instanceof final NewVulnerabilityIdentified subject) {
+                // If the rule specified one or more projects as targets, reduce the execution
+                // of the notification down to those projects that the rule matches and which
+                // also match project the component is included in.
+                // NOTE: This logic is slightly different from what is implemented in limitToProject()
                 for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                         if (rule.getProjects() != null && rule.getProjects().size() > 0
                             && subject.getComponent() != null && subject.getComponent().getProject() != null) {
                             for (final Project project : rule.getProjects()) {
-                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid())) {
+                                if (subject.getComponent().getProject().getUuid().equals(project.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren() && checkIfChildrenAreAffected(project, subject.getComponent().getProject().getUuid())))) {
                                     rules.add(rule);
                                 }
                             }
@@ -171,21 +170,23 @@ public class NotificationRouter implements Subscriber {
                     }
                 }
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
-                    && notification.getSubject() != null && notification.getSubject() instanceof NewVulnerableDependency) {
-                final NewVulnerableDependency subject = (NewVulnerableDependency) notification.getSubject();
+                    && notification.getSubject() instanceof final NewVulnerableDependency subject) {
                 limitToProject(rules, result, notification, subject.getComponent().getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
-                    && notification.getSubject() != null && notification.getSubject() instanceof BomConsumedOrProcessed) {
-                final BomConsumedOrProcessed subject = (BomConsumedOrProcessed) notification.getSubject();
+                    && notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
                 limitToProject(rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
-                    && notification.getSubject() != null && notification.getSubject() instanceof VexConsumedOrProcessed) {
-                final VexConsumedOrProcessed subject = (VexConsumedOrProcessed) notification.getSubject();
+                    && notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
                 limitToProject(rules, result, notification, subject.getProject());
             } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
-                    && notification.getSubject() != null && notification.getSubject() instanceof PolicyViolationIdentified) {
-                final PolicyViolationIdentified subject = (PolicyViolationIdentified) notification.getSubject();
+                    && notification.getSubject() instanceof final PolicyViolationIdentified subject) {
                 limitToProject(rules, result, notification, subject.getProject());
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() instanceof final AnalysisDecisionChange subject) {
+                limitToProject(rules, result, notification, subject.getProject());
+            } else if (NotificationScope.PORTFOLIO.name().equals(notification.getScope())
+                    && notification.getSubject() instanceof final ViolationAnalysisDecisionChange subject) {
+                limitToProject(rules, result, notification, subject.getComponent().getProject());
             } else {
                 for (final NotificationRule rule: result) {
                     if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
@@ -208,7 +209,7 @@ public class NotificationRouter implements Subscriber {
             if (rule.getNotifyOn().contains(NotificationGroup.valueOf(notification.getGroup()))) {
                 if (rule.getProjects() != null && rule.getProjects().size() > 0) {
                     for (final Project project : rule.getProjects()) {
-                        if (project.getUuid().equals(limitToProject.getUuid())) {
+                        if (project.getUuid().equals(limitToProject.getUuid()) || (Boolean.TRUE.equals(rule.isNotifyChildren()) && checkIfChildrenAreAffected(project, limitToProject.getUuid()))) {
                             applicableRules.add(rule);
                         }
                     }
@@ -219,4 +220,17 @@ public class NotificationRouter implements Subscriber {
         }
     }
 
+    private boolean checkIfChildrenAreAffected(Project parent, UUID uuid) {
+        boolean isChild = false;
+        if (parent.getChildren() == null || parent.getChildren().isEmpty()) {
+            return false;
+        }
+        for (Project child : parent.getChildren()) {
+            if ((child.getUuid().equals(uuid) && child.isActive()) || isChild) {
+                return true;
+            }
+            isChild = checkIfChildrenAreAffected(child, uuid);
+        }
+        return isChild;
+    }
 }

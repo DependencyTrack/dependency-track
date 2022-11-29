@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
+import alpine.model.Team;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
@@ -67,6 +68,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setNotificationLevel(level);
         rule.setPublisher(publisher);
         rule.setEnabled(true);
+        rule.setNotifyChildren(true);
         return persist(rule);
     }
 
@@ -79,6 +81,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         final NotificationRule rule = getObjectByUuid(NotificationRule.class, transientRule.getUuid());
         rule.setName(transientRule.getName());
         rule.setEnabled(transientRule.isEnabled());
+        rule.setNotifyChildren(transientRule.isNotifyChildren());
         rule.setNotificationLevel(transientRule.getNotificationLevel());
         rule.setPublisherConfig(transientRule.getPublisherConfig());
         rule.setNotifyOn(transientRule.getNotifyOn());
@@ -200,6 +203,18 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         final Query<NotificationRule> query = pm.newQuery(NotificationRule.class, "projects.contains(:project)");
         for (final NotificationRule rule: (List<NotificationRule>) query.execute(project)) {
             rule.getProjects().remove(project);
+            persist(rule);
+        }
+    }
+
+    /**
+     * Removes teams from NotificationRules
+     */
+    @SuppressWarnings("unchecked")
+    public void removeTeamFromNotificationRules(final Team team) {
+        final Query<NotificationRule> query = pm.newQuery(NotificationRule.class, "teams.contains(:team)");
+        for (final NotificationRule rule: (List<NotificationRule>) query.execute(team)) {
+            rule.getTeams().remove(team);
             persist(rule);
         }
     }

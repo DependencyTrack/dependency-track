@@ -8,11 +8,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+/**
+ * Builder for filters meant to be used with {@link javax.jdo.Query#setFilter} and the query's
+ * parameters that can be passed to {@link alpine.persistence.AbstractAlpineQueryManager#execute}
+ * <br>
+ * Mutable and not threadsafe!
+ */
 class ProjectQueryFilterBuilder {
 
-    final private Map<String, Object> params;
-    final private List<String> filterCriteria;
+    private final Map<String, Object> params;
+    private final List<String> filterCriteria;
 
     ProjectQueryFilterBuilder() {
         this.params = new HashMap<>();
@@ -68,6 +75,18 @@ class ProjectQueryFilterBuilder {
         params.put("tag", tag);
 
         filterCriteria.add("(name.toLowerCase().matches(:name) || tags.contains(:tag))");
+        return this;
+    }
+
+    ProjectQueryFilterBuilder excludeChildProjects() {
+        filterCriteria.add("parent == null");
+        return this;
+    }
+
+    ProjectQueryFilterBuilder withParent(UUID uuid){
+        params.put("parentUuid", uuid);
+
+        filterCriteria.add("parent.uuid == :parentUuid");
         return this;
     }
 

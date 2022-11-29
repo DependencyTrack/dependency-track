@@ -155,6 +155,7 @@ public class BomUploadProcessingTask implements Subscriber {
                     vae.onSuccess(new NewVulnerableDependencyAnalysisEvent(newComponents));
                 }
                 Event.dispatch(vae);
+                Event.dispatch(new RepositoryMetaEvent(detachedFlattenedComponent));
                 LOGGER.info("Processed " + flattenedComponents.size() + " components and " + flattenedServices.size() + " services uploaded to project " + event.getProjectUuid());
                 Notification.dispatch(new Notification()
                         .scope(NotificationScope.PORTFOLIO)
@@ -186,7 +187,6 @@ public class BomUploadProcessingTask implements Subscriber {
         if (isNew) {
             newComponents.add(qm.detach(Component.class, component.getId()));
         }
-        Event.dispatch(new RepositoryMetaEvent(component));
         if (component.getChildren() != null) {
             for (final Component child : component.getChildren()) {
                 processComponent(qm, child, flattenedComponents, newComponents);

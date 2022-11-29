@@ -8,11 +8,13 @@ order: 1
 Dependency-Track integrates with multiple sources of vulnerability intelligence to identify components with known 
 vulnerabilities. The platform employs several methods of vulnerability identification including:
 
-| Analyzer  | Description |
-| ----------|-------------|
-| Internal  | Identifies vulnerable components from an internal directory of vulnerable software|
-| OSS Index | OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components|
-| VulnDB    | VulnDB is a commercial service which identifies vulnerabilities in third-party components|
+| Analyzer  | Description                                                                                            |
+|-----------|--------------------------------------------------------------------------------------------------------|
+| Internal  | Identifies vulnerable components from an internal directory of vulnerable software                     |
+| OSS Index | OSS Index is a service provided by Sonatype which identifies vulnerabilities in third-party components |
+| VulnDB    | VulnDB is a commercial service which identifies vulnerabilities in third-party components              |
+| Snyk      | Snyk is a commercial service which identifies vulnerabilities in third-party components                |
+
 
 Each of the analyzers above can be enabled or disabled independently from one another.
 
@@ -45,8 +47,16 @@ analyzed.
 VulnDB is a source of vulnerability intelligence that provides its own content. Refer to 
 [VulnDB (Datasource)]({{ site.baseurl }}{% link _docs/datasources/vulndb.md %}) for additional information.
 
-### Analysis Interval Throttle
+### Snyk Analyzer
+
+It is a service provided by Snyk which identifies vulnerabilities in third-party components using REST API. Snyk returns only direct vulnerabilities for a specific package version identified by Package URL (purl).
+This analyzer is applicable to all components with valid Package URLs.
+
+Snyk REST API version is updated every 6 months and can be referred at
+[Snyk REST API for PURL](https://apidocs.snyk.io/?version=2022-10-06#get-/orgs/-org_id-/packages/-purl-/issues) for additional information.
+
+### Analysis Result Cache
 
 Dependency-Track contains an internal limiter which prevents repeated requests to remote services when performing
-vulnerability analysis. When a components Package URL or CPE is successfully used for a given analyzer, the action
-and the timestamp is recorded and compared to the interval throttle. The interval throttle defaults to 24 hours.
+vulnerability analysis. When a component's Package URL or CPE is successfully analyzed by a given analyzer, 
+the result is cached. By default, cache entries expire after 12 hours.

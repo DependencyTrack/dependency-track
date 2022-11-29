@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
+import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
@@ -30,6 +31,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.AclMappingRequest;
@@ -75,11 +77,13 @@ public class AccessControlResource extends AlpineResource {
     public Response retrieveProjects (@ApiParam(value = "The UUID of the team to retrieve mappings for", required = true)
                                       @PathParam("uuid") String uuid,
                                       @ApiParam(value = "Optionally excludes inactive projects from being returned", required = false)
-                                      @QueryParam("excludeInactive") boolean excludeInactive) {
+                                      @QueryParam("excludeInactive") boolean excludeInactive,
+                                      @ApiParam(value = "Optionally excludes children projects from being returned", required = false)
+                                      @QueryParam("onlyRoot") boolean onlyRoot) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                final PaginatedResult result = qm.getProjects(team, excludeInactive, true);
+                final PaginatedResult result = qm.getProjects(team, excludeInactive, true, onlyRoot);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();

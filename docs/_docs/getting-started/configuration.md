@@ -5,7 +5,7 @@ chapter: 1
 order: 5
 ---
 
-### Backend
+### API server
 
 The central configuration file `application.properties` resides in the classpath of the WAR by default. 
 This configuration file controls many performance tuning parameters but is most useful for defining
@@ -291,10 +291,17 @@ alpine.ldap.team.synchronization=false
 # Optional
 # Defines whether Prometheus metrics will be exposed.
 # If enabled, metrics will be available via the /metrics endpoint.
-# This endpoint is NOT subject to access control. If protection is desired,
-# it must be enforced in the reverse proxy using basic auth.
-# See also: https://prometheus.io/docs/guides/basic-auth/
 alpine.metrics.enabled=false
+
+# Optional
+# Defines the username required to access metrics.
+# Has no effect when alpine.metrics.auth.password is not set.
+alpine.metrics.auth.username=
+
+# Optional
+# Defines the password required to access metrics.
+# Has no effect when alpine.metrics.auth.username is not set.
+alpine.metrics.auth.password=
 
 # Required
 # Defines if OpenID Connect will be used for user authentication.
@@ -342,6 +349,67 @@ alpine.oidc.team.synchronization=false
 # When using a customizable / on-demand hosted identity provider, name, content, and inclusion in the userinfo endpoint
 # will most likely need to be configured.
 alpine.oidc.teams.claim=groups
+
+# Optional
+# Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
+# The thread pool will only be used when Snyk integration is enabled.
+# A high number may result in a quicker excession of API rate limits, 
+# while a number that is too low may result in vulnerability analyses taking too long.
+snyk.thread.batch.size=10
+
+# Optional
+# Defines the maximum number of requests that the Snyk analyzer would make in a given period. 
+# The default value is 1500
+snyk.limit.for.period=1500
+
+# Optional
+# Defines the maximum number of seconds the thread will wait before timing out.This value is in seconds.
+# Currently the Snyk Analyzer is multithreaded and each thread waits for the permission from the rate limiter.
+# The default value is 60
+snyk.thread.timeout.duration=60
+
+# Optional
+# Defines the time after which the number of permissions are refreshed to the set value by the rate limiter.
+# The rate limiter would refresh the number of permissions available after every "limit refresh period".
+# This value is in seconds. The default value is 60
+snyk.limit.refresh.period=60
+
+# Optional
+#Defines the maximum number of purl sent in a single request to OSS Index.
+# The default value is 128.
+ossindex.request.max.purl=128
+
+# Optional
+#Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding OSSIndex calls.
+# The default value is 50.
+ossindex.retry.backoff.max.attempts=50
+
+# Optional
+#Defines the multiplier used by Resilience4J for exponential backoff retry regarding OSSIndex calls.
+# The default value is 2.
+ossindex.retry.backoff.multiplier=2
+
+# Optional
+#Defines the maximum duration used by Resilience4J for exponential backoff retry regarding OSSIndex calls. This value is in milliseconds
+# The default value is 10 minutes.
+ossindex.retry.backoff.max.duration=600000
+
+# Optional
+#This flag activate the cache stampede blocker for the repository meta analyzer allowing to handle high concurrency workloads when there
+#is a high ratio of duplicate components which can cause unnecessary external calls and index violation on PUBLIC.REPOSITORY_META_COMPONENT_COMPOUND_IDX during cache population.
+# The default value is false as enabling the cache stampede blocker can create useless locking if the portfolio does not have a high ratio of duplicate components.
+repo.meta.analyzer.cacheStampedeBlocker.enabled=false
+
+# Optional
+#The cache stampede blocker uses a striped (partitioned) lock to distribute locks across keys.
+#This parameter defines the number of buckets used by the striped lock. The lock used for a given key is derived from the key hashcode and number of buckets.
+# The default value is 1000.
+repo.meta.analyzer.cacheStampedeBlocker.lock.buckets=1000
+
+# Optional
+#Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding repo meta analyzer cache loading per key.
+# The default value is 10.
+repo.meta.analyzer.cacheStampedeBlocker.max.attempts=10
 ```
 
 #### Proxy Configuration
@@ -389,7 +457,7 @@ This file resides in `<BASE_URL>/static/config.json`.
     "API_BASE_URL": "",
     // Optional
     // Defines the issuer URL to be used for OpenID Connect.
-    // See alpine.oidc.issuer property of the backend.
+    // See alpine.oidc.issuer property of the API server.
     "OIDC_ISSUER": "",
     // Optional
     // Defines the client ID for OpenID Connect.

@@ -97,6 +97,13 @@ public class LicenseTest {
     }
 
     @Test
+    public void testCustomLicense() {
+        License license = new License();
+        license.setCustomLicense(true);
+        Assert.assertTrue(license.isCustomLicense());
+    }
+
+    @Test
     public void testSeeAlso() {
         License license = new License();
         license.setSeeAlso("url #1", "url #2");

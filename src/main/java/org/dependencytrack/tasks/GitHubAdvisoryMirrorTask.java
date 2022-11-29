@@ -33,12 +33,14 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
@@ -59,6 +61,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
@@ -165,21 +168,35 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
      * @param advisories the results to synchronize
      */
-    private void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
+    void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.info("Updating datasource with GitHub advisories");
         try (QueryManager qm = new QueryManager()) {
             for (final GitHubSecurityAdvisory advisory: advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
-                final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mapAdvisoryToVulnerability(qm, advisory), false);
-                final List<VulnerableSoftware> vsList = new ArrayList<>();
+                final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
+                final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
+                final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
+                List<VulnerableSoftware> vsList = new ArrayList<>();
                 for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
-                    VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln);
+                    final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
                         vsList.add(vs);
+                    }
+                    for (Pair<String,String> identifier: advisory.getIdentifiers()) {
+                        if (identifier != null && identifier.getLeft() != null
+                                && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
+                            LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
+                            final VulnerabilityAlias alias = new VulnerabilityAlias();
+                            alias.setGhsaId(advisory.getGhsaId());
+                            alias.setCveId(identifier.getRight());
+                            qm.synchronizeVulnerabilityAlias(alias);
+                        }
                     }
                 }
                 LOGGER.debug("Updating vulnerable software for advisory: " + advisory.getGhsaId());
                 qm.persist(vsList);
+                vsList.forEach(vs -> qm.updateAffectedVersionAttribution(synchronizedVulnerability, vs, Vulnerability.Source.GITHUB));
+                vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.GITHUB);
                 synchronizedVulnerability.setVulnerableSoftware(vsList);
                 qm.persist(synchronizedVulnerability);
             }
@@ -245,7 +262,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * @param vuln the GitHub Vulnerability to map
      * @return a Dependency-Track VulnerableSoftware object
      */
-    private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final GitHubVulnerability vuln) {
+    private VulnerableSoftware mapVulnerabilityToVulnerableSoftware(final QueryManager qm, final GitHubVulnerability vuln, final GitHubSecurityAdvisory advisory) {
         try {
             final PackageURL purl = generatePurlFromGitHubVulnerability(vuln);
             if (purl == null) return null;
@@ -289,13 +306,13 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             vs.setVersionEndExcluding(versionEndExcluding);
             return vs;
         } catch (MalformedPackageURLException e) {
-            LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName());
+            LOGGER.warn("Unable to create purl from GitHub Vulnerability. Skipping " + vuln.getPackageEcosystem() + " : " + vuln.getPackageName() + " for: " + advisory.getGhsaId());
         }
         return null;
     }
 
     private String mapGitHubEcosystemToPurlType(final String ecosystem) {
-        switch (ecosystem) {
+        switch (ecosystem.toUpperCase()) {
             case "MAVEN":  return PackageURL.StandardTypes.MAVEN;
             case "RUST":  return PackageURL.StandardTypes.CARGO;
             case "PIP":  return PackageURL.StandardTypes.PYPI;
@@ -317,7 +334,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             } else if (PackageURL.StandardTypes.MAVEN.equals(purlType) && vuln.getPackageName().contains(":")) {
                 final String[] parts = vuln.getPackageName().split(":");
                 return PackageURLBuilder.aPackageURL().withType(purlType).withNamespace(parts[0]).withName(parts[1]).build();
-            } else if (PackageURL.StandardTypes.GOLANG.equals(purlType) && vuln.getPackageName().contains("/")) {
+            } else if (Set.of(PackageURL.StandardTypes.COMPOSER, PackageURL.StandardTypes.GOLANG).contains(purlType) && vuln.getPackageName().contains("/")) {
                 final String[] parts = vuln.getPackageName().split("/");
                 final String namespace = String.join("/", Arrays.copyOfRange(parts, 0, parts.length - 1));
                 return PackageURLBuilder.aPackageURL().withType(purlType).withNamespace(namespace).withName(parts[parts.length - 1]).build();

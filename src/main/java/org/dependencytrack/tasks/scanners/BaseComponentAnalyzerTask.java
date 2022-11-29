@@ -27,6 +27,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -66,7 +67,7 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         try (QueryManager qm = new QueryManager()) {
             boolean isCacheCurrent = false;
             ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
-            long cacheValidityPeriod = Long.valueOf(cacheClearPeriod.getPropertyValue());
+            long cacheValidityPeriod = Long.parseLong(cacheClearPeriod.getPropertyValue());
             ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
             if (cac != null) {
                 final Date now = new Date();
@@ -84,7 +85,8 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
-    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component, AnalyzerIdentity analyzerIdentity) {
+    protected void applyAnalysisFromCache(Vulnerability.Source source, String targetHost, String target, Component component,
+                                          AnalyzerIdentity analyzerIdentity, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         try (QueryManager qm = new QueryManager()) {
             final ComponentAnalysisCache cac = qm.getComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target);
             if (cac != null) {
@@ -93,12 +95,15 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                     final JsonArray vulns = result.getJsonArray("vulnIds");
                     if (vulns != null) {
                         for (JsonNumber vulnId : vulns.getValuesAs(JsonNumber.class)) {
-                            final Vulnerability vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
-                            final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
-                            if (c == null) continue;
-                            if (vulnerability != null) {
-                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component);
-                                qm.addVulnerability(vulnerability, c, analyzerIdentity);
+                            final Vulnerability vulnerability;
+                            if (vulnId.longValue() != 0) {
+                                vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
+                                final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
+                                if (c == null) continue;
+                                if (vulnerability != null) {
+                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
+                                    qm.addVulnerability(vulnerability, c, analyzerIdentity);
+                                }
                             }
                         }
                     }
@@ -107,7 +112,8 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
-    protected synchronized void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String targetHost, String target, JsonObject result) {
+    protected synchronized void updateAnalysisCacheStats(QueryManager qm, Vulnerability.Source source, String
+            targetHost, String target, JsonObject result) {
         qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, targetHost, source.name(), target, new Date(), result);
     }
 
@@ -124,14 +130,15 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
         }
     }
 
-    protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode, final String statusText) {
+    protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode,
+                                                final String statusText) {
         logger.error("HTTP Status : " + statusCode + " " + statusText);
         logger.error(" - Analyzer URL : " + url);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.ANALYZER)
                 .title(NotificationConstants.Title.ANALYZER_ERROR)
-                .content("An error occurred while communicating with a vulnerability intelligence source. URL: " + url + " HTTP Status: " + statusCode + ". Check log for details." )
+                .content("An error occurred while communicating with a vulnerability intelligence source. URL: " + url + " HTTP Status: " + statusCode + ". Check log for details.")
                 .level(NotificationLevel.ERROR)
         );
     }

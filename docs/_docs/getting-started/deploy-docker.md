@@ -148,10 +148,33 @@ services:
     #
     # Optional metrics properties
     # - ALPINE_METRICS_ENABLED=true
-    # 
+    # - ALPINE_METRICS_AUTH_USERNAME=
+    # - ALPINE_METRICS_AUTH_PASSWORD=
+    #
     # Optional environmental variables to enable default notification publisher templates override and set the base directory to search for templates
     # - DEFAULT_TEMPLATES_OVERRIDE_ENABLED=false
     # - DEFAULT_TEMPLATES_OVERRIDE_BASE_DIRECTORY=/data
+    #
+    # Optional configuration for the Snyk analyzer
+    # - SNYK_THREAD_BATCH_SIZE=10
+    # - SNYK_LIMIT_FOR_PERIOD=1500
+    # - SNYK_THREAD_TIMEOUT_DURATION=60
+    # - SNYK_LIMIT_REFRESH_PERIOD=60
+    #
+    # Optional configuration for the OSS Index analyzer
+    # - OSSINDEX_REQUEST_MAX_PURL=128
+    # - OSSINDEX_RETRY_BACKOFF_MAX_ATTEMPTS=50
+    # - OSSINDEX_RETRY_BACKOFF_MULTIPLIER=2
+    # - OSSINDEX_RETRY_BACKOFF_MAX_DURATION=600000
+    #
+    # Optional configuration for the repository metadata analyzer cache stampede for high concurrency workloads
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_ENABLED=true
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_LOCK_BUCKETS=1000
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_MAX_ATTEMPTS=10
+    #
+    # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
+    # - EXTRA_JAVA_OPTIONS=
+
     deploy:
       resources:
         limits:
@@ -164,7 +187,7 @@ services:
       - '8081:8080'
     volumes:
     # Optional volume mount to override default notification publisher templates
-    # - "/host/path/to/template/base/dir:/data/templates" 
+    # - "/host/path/to/template/base/dir:/data/templates"
       - 'dependency-track:/data'
     restart: unless-stopped
 

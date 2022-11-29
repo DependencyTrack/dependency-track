@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
+import alpine.model.Team;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
@@ -35,6 +36,7 @@ import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.validation.Validator;
@@ -249,6 +251,88 @@ public class NotificationRuleResource extends AlpineResource {
             final List<Project> projects = rule.getProjects();
             if (projects != null && projects.contains(project)) {
                 rule.getProjects().remove(project);
+                qm.persist(rule);
+                return Response.ok(rule).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @POST
+    @Path("/{ruleUuid}/team/{teamUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Adds a team to a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The rule already has the specified team assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The notification rule or team could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response addTeamToRule(
+            @ApiParam(value = "The UUID of the rule to add a team to", required = true)
+            @PathParam("ruleUuid") String ruleUuid,
+            @ApiParam(value = "The UUID of the team to add to the rule", required = true)
+            @PathParam("teamUuid") String teamUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            if (!rule.getPublisher().getName().equals(DefaultNotificationPublishers.EMAIL.getPublisherName())) {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();
+            }
+            final Team team = qm.getObjectByUuid(Team.class, teamUuid);
+            if (team == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
+            }
+            final List<Team> teams = rule.getTeams();
+            if (teams != null && !teams.contains(team)) {
+                rule.getTeams().add(team);
+                qm.persist(rule);
+                return Response.ok(rule).build();
+            }
+            return Response.status(Response.Status.NOT_MODIFIED).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{ruleUuid}/team/{teamUuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Removes a team from a notification rule",
+            response = NotificationRule.class
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 304, message = "The rule does not have the specified team assigned"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "The notification rule or team could not be found")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response removeTeamFromRule(
+            @ApiParam(value = "The UUID of the rule to remove the project from", required = true)
+            @PathParam("ruleUuid") String ruleUuid,
+            @ApiParam(value = "The UUID of the project to remove from the rule", required = true)
+            @PathParam("teamUuid") String teamUuid) {
+        try (QueryManager qm = new QueryManager()) {
+            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+            }
+            if (!rule.getPublisher().getName().equals(DefaultNotificationPublishers.EMAIL.getPublisherName())) {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Team subscriptions are only possible on notification rules with EMAIL publisher.").build();
+            }
+            final Team team = qm.getObjectByUuid(Team.class, teamUuid);
+            if (team == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
+            }
+            final List<Team> teams = rule.getTeams();
+            if (teams != null && teams.contains(team)) {
+                rule.getTeams().remove(team);
                 qm.persist(rule);
                 return Response.ok(rule).build();
             }

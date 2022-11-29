@@ -31,14 +31,14 @@ import java.nio.charset.StandardCharsets;
 public class BadgerTest {
 
     @Test
-    public void generateVulnerabilitiesWithoutMetricsGenerateExpectedSvg() {
+    public void generateVulnerabilitiesWithoutMetricsGenerateExpectedSvg() throws Exception {
         Badger badger = new Badger();
         String svg = badger.generateVulnerabilities(null);
         Assert.assertEquals(strip(svg), strip(expectedSvg("project-vulns-nometrics.svg")));
     }
 
     @Test
-    public void generateVulnerabilitiesWithoutVulnerabilitiesGenerateExpectedSvg() {
+    public void generateVulnerabilitiesWithoutVulnerabilitiesGenerateExpectedSvg() throws Exception {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setVulnerabilities(0);
         Badger badger = new Badger();
@@ -47,7 +47,7 @@ public class BadgerTest {
     }
 
     @Test
-    public void generateVulnerabilitiesWithVulnerabilitiesGenerateExpectedSvg() {
+    public void generateVulnerabilitiesWithVulnerabilitiesGenerateExpectedSvg() throws Exception {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setVulnerabilities(1 + 2 + 3 + 4 + 5);
         metrics.setCritical(1);
@@ -61,14 +61,14 @@ public class BadgerTest {
     }
 
     @Test
-    public void generateViolationsWithoutMetricsGenerateExpectedSvg() {
+    public void generateViolationsWithoutMetricsGenerateExpectedSvg() throws Exception {
         Badger badger = new Badger();
         String svg = badger.generateViolations(null);
         Assert.assertEquals(strip(svg), strip(expectedSvg("project-violations-nometrics.svg")));
     }
 
     @Test
-    public void generateViolationsWithoutViolationsGenerateExpectedSvg() {
+    public void generateViolationsWithoutViolationsGenerateExpectedSvg() throws Exception {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setPolicyViolationsTotal(0);
         Badger badger = new Badger();
@@ -77,7 +77,7 @@ public class BadgerTest {
     }
 
     @Test
-    public void generateViolationsWithViolationsGenerateExpectedSvg() {
+    public void generateViolationsWithViolationsGenerateExpectedSvg() throws Exception {
         ProjectMetrics metrics = new ProjectMetrics();
         metrics.setPolicyViolationsTotal(1 + 2 + 3);
         metrics.setPolicyViolationsFail(1);
@@ -88,14 +88,14 @@ public class BadgerTest {
         Assert.assertEquals(strip(svg), strip(expectedSvg("project-violations.svg")));
     }
 
-    private String expectedSvg(String filename) {
+    private String expectedSvg(String filename) throws Exception {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         URL resource = contextClassLoader.getResource("badge/" + filename);
         if (resource == null) {
             throw new RuntimeException("can't find expected svg filename=" + filename);
         }
         try {
-            return FileUtils.readFileToString(new File(resource.getFile()), StandardCharsets.UTF_8);
+            return FileUtils.readFileToString(new File(resource.toURI()), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("can't load expected svg filename=" + filename);
         }

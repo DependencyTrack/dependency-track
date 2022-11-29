@@ -21,8 +21,13 @@ package org.dependencytrack.tasks;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableSubscriber;
+import alpine.model.ConfigProperty;
 import org.dependencytrack.event.ClearComponentAnalysisCacheEvent;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
+
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * Subscriber task that clears the ComponentAnalysisCache.
@@ -41,7 +46,10 @@ public class ClearComponentAnalysisCacheTask implements LoggableSubscriber {
         if (e instanceof ClearComponentAnalysisCacheEvent) {
             LOGGER.info("Clearing ComponentAnalysisCache");
             try (QueryManager qm = new QueryManager()) {
-                qm.clearComponentAnalysisCache();
+                ConfigProperty cacheClearPeriod = qm.getConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(), ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName());
+                long cacheValidityPeriodMs = Long.parseLong(cacheClearPeriod.getPropertyValue());
+                Date threshold = Date.from(Instant.now().minusMillis(cacheValidityPeriodMs));
+                qm.clearComponentAnalysisCache(threshold);
             } catch (Exception ex) {
                 LOGGER.error("An unknown error occurred while clearing component analysis cache", ex);
             }

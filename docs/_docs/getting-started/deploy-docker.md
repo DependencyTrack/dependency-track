@@ -166,6 +166,12 @@ services:
     # - OSSINDEX_RETRY_BACKOFF_MAX_ATTEMPTS=50
     # - OSSINDEX_RETRY_BACKOFF_MULTIPLIER=2
     # - OSSINDEX_RETRY_BACKOFF_MAX_DURATION=600000
+    #
+    # Optional configuration for the repository metadata analyzer cache stampede for high concurrency workloads
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_ENABLED=true
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_LOCK_BUCKETS=1000
+    # - REPO_META_ANALYZER_CACHESTAMPEDEBLOCKER_MAX_ATTEMPTS=10
+    #
     # Optional environmental variables to provide more JVM arguments to the API Server JVM, i.e. "-XX:ActiveProcessorCount=8"
     # - EXTRA_JAVA_OPTIONS=
 

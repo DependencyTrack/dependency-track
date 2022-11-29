@@ -393,6 +393,23 @@ ossindex.retry.backoff.multiplier=2
 #Defines the maximum duration used by Resilience4J for exponential backoff retry regarding OSSIndex calls. This value is in milliseconds
 # The default value is 10 minutes.
 ossindex.retry.backoff.max.duration=600000
+
+# Optional
+#This flag activate the cache stampede blocker for the repository meta analyzer allowing to handle high concurrency workloads when there
+#is a high ratio of duplicate components which can cause unnecessary external calls and index violation on PUBLIC.REPOSITORY_META_COMPONENT_COMPOUND_IDX during cache population.
+# The default value is false as enabling the cache stampede blocker can create useless locking if the portfolio does not have a high ratio of duplicate components.
+repo.meta.analyzer.cacheStampedeBlocker.enabled=false
+
+# Optional
+#The cache stampede blocker uses a striped (partitioned) lock to distribute locks across keys.
+#This parameter defines the number of buckets used by the striped lock. The lock used for a given key is derived from the key hashcode and number of buckets.
+# The default value is 1000.
+repo.meta.analyzer.cacheStampedeBlocker.lock.buckets=1000
+
+# Optional
+#Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding repo meta analyzer cache loading per key.
+# The default value is 10.
+repo.meta.analyzer.cacheStampedeBlocker.max.attempts=10
 ```
 
 #### Proxy Configuration

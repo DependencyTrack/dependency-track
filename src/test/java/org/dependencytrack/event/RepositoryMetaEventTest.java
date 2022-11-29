@@ -22,18 +22,25 @@ import org.dependencytrack.model.Component;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+
 public class RepositoryMetaEventTest {
 
     @Test
     public void testDefaultConstructor() {
         RepositoryMetaEvent event = new RepositoryMetaEvent();
-        Assert.assertNull(event.getComponent());
+        Assert.assertEquals(Optional.empty(), event.getComponents());
     }
 
     @Test
     public void testComponentConstructor() {
+        List<Component> components = new LinkedList<>();
         Component component = new Component();
-        RepositoryMetaEvent event = new RepositoryMetaEvent(component);
-        Assert.assertEquals(component, event.getComponent());
+        components.add(component);
+        RepositoryMetaEvent event = new RepositoryMetaEvent(components);
+        Assert.assertEquals(components, event.getComponents().get());
     }
 }

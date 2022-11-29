@@ -1147,12 +1147,20 @@ public class QueryManager extends AlpineQueryManager {
         return getCacheQueryManager().getComponentAnalysisCache(cacheType, targetHost, targetType, target);
     }
 
+    public List<ComponentAnalysisCache> getComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetType, String target) {
+        return getCacheQueryManager().getComponentAnalysisCache(cacheType, targetType, target);
+    }
+
     public synchronized void updateComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target, Date lastOccurrence, JsonObject result) {
         getCacheQueryManager().updateComponentAnalysisCache(cacheType, targetHost, targetType, target, lastOccurrence,  result);
     }
 
     public void clearComponentAnalysisCache() {
         getCacheQueryManager().clearComponentAnalysisCache();
+    }
+
+    public void clearComponentAnalysisCache(Date threshold) {
+        getCacheQueryManager().clearComponentAnalysisCache(threshold);
     }
 
     public void bind(Project project, List<Tag> tags) {

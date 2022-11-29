@@ -197,7 +197,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
      */
     public synchronized RepositoryMetaComponent synchronizeRepositoryMetaComponent(final RepositoryMetaComponent transientRepositoryMetaComponent) {
         final RepositoryMetaComponent metaComponent = getRepositoryMetaComponent(transientRepositoryMetaComponent.getRepositoryType(),
-                transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());;
+                transientRepositoryMetaComponent.getNamespace(), transientRepositoryMetaComponent.getName());
         if (metaComponent != null) {
             metaComponent.setRepositoryType(transientRepositoryMetaComponent.getRepositoryType());
             metaComponent.setNamespace(transientRepositoryMetaComponent.getNamespace());

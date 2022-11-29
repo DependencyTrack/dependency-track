@@ -74,11 +74,12 @@ public class IndexEventTest {
 
     @Test
     public void testActions() {
-        Assert.assertEquals(5, IndexEvent.Action.values().length);
+        Assert.assertEquals(6, IndexEvent.Action.values().length);
         Assert.assertEquals("CREATE", IndexEvent.Action.CREATE.name());
         Assert.assertEquals("UPDATE", IndexEvent.Action.UPDATE.name());
         Assert.assertEquals("DELETE", IndexEvent.Action.DELETE.name());
         Assert.assertEquals("COMMIT", IndexEvent.Action.COMMIT.name());
         Assert.assertEquals("REINDEX", IndexEvent.Action.REINDEX.name());
+        Assert.assertEquals("CHECK", IndexEvent.Action.CHECK.name());
     }
 }

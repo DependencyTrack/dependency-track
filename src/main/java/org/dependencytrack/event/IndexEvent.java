@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.AbstractChainableEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
@@ -33,14 +33,15 @@ import org.dependencytrack.model.VulnerableSoftware;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class IndexEvent implements Event {
+public class IndexEvent extends AbstractChainableEvent {
 
     public enum Action {
         CREATE,
         UPDATE,
         DELETE,
         COMMIT,
-        REINDEX
+        REINDEX,
+        CHECK
     }
 
     private final Action action;

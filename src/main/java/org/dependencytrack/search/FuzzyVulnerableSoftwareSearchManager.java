@@ -1,6 +1,7 @@
 package org.dependencytrack.search;
 
 import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import com.google.common.collect.Sets;
@@ -13,6 +14,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
@@ -171,6 +173,8 @@ public class FuzzyVulnerableSoftwareSearchManager {
                     .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
                     .level(NotificationLevel.ERROR)
             );
+            LOGGER.info("Trying to rebuild the corrupted index "+indexManager.getIndexType().name());
+            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexManager.getIndexType().getClazz()));
         } catch (IOException e) {
             LOGGER.error("An I/O Exception occurred while searching Lucene index", e);
             Notification.dispatch(new Notification()

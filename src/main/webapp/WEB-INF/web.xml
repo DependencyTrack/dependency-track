@@ -45,6 +45,9 @@
         <listener-class>org.dependencytrack.event.EventSubsystemInitializer</listener-class>
     </listener>
     <listener>
+        <listener-class>org.dependencytrack.search.IndexInitializer</listener-class>
+    </listener>
+    <listener>
         <listener-class>org.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>
     </listener>
 

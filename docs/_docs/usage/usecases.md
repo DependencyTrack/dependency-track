@@ -1,0 +1,69 @@
+---
+title: Use Cases
+category: Usage
+chapter: 2
+order: 6
+---
+
+Here we provide some practical insights. Sometimes it's hard to begin something new. We don't think usage of Dependency Track shall prove this.
+
+> We provide Windows Powershell Scripts. This are working examples but they aren't ready for automated productive use.
+> Add error management, monitoring etc. to fit your environment.
+
+
+#### Integrate CISAs List of known exploited vulnerabilities
+The [CISA](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) maintains a catalog of known exploited vulnerabilities. They 
+offer a notification service, too. Use the following script to learn if a vulnerability in your aplications is already exploited. For even
+more comfort subscribe to CISA and let the cript trigger by their e-mail.
+
+
+```
+# expecting a Docker Desktop environment, installed as provided
+$urlDT = 'http://localhost:8081'
+$x_api_key = 'GaVkRIERpXU0lVOgo1onSRrIhTNV1eMm'
+
+# get CISAs catalog
+$urlCISA = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
+$catalog = (Invoke-WebRequest -Uri $urlCISA -Method Get).content | ConvertFrom-Json
+
+# compare CISA to DT
+# curl -X GET "http://localhost:8081/api/v1/vulnerability/source/NVD/vuln/CVE-2022-23305/projects" -H  "accept: application/json" -H  "X-Api-Key: GaVkRIERpXU0lVOgo1onSRrIhTNV1eMn"
+
+$headers= @{
+            'accept' = 'application/json'
+            'X-Api-Key' = $x_api_key
+            }
+
+foreach ($vulnerability in $catalog.vulnerabilities)
+    {
+    #call DT 
+    $uri = $urlDT + "/api/v1/vulnerability/source/NVD/vuln/" + $vulnerability.cveID + "/projects"
+    $response = ""
+
+    try {
+        $response = Invoke-WebRequest -Uri $uri -Method Get -Headers $headers -Body $body
+	    $fund = $response | ConvertFrom-Json
+
+        if ($response.StatusCode -eq 200) 
+            { 
+            if ($response.Content -ne "[]") 
+				{
+				'Project affected: ' + $vulnerability.cveID + ' : ' + $fund.name + " v." + $fund.version + " UUID: " + $fund.uuid
+				}
+            else
+                {
+                # not affected
+                # print it just for debug purpose!
+                # $vulnerability.cveID + ': not affected'
+                }
+			}
+        }
+    catch 
+        {
+        'error: ' + $uri + ' / ' + $vulnerability.cveID + " : " + $response
+        $_.Exception.Message
+        $_.ScriptStackTrace
+        }         
+    }
+```
+

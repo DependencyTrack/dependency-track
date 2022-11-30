@@ -156,6 +156,7 @@ public class ModelConverter {
                         }
                     }
                     component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                    component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                 }
             }
         }
@@ -239,16 +240,25 @@ public class ModelConverter {
         if (component.getResolvedLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setId(component.getResolvedLicense().getLicenseId());
+            license.setUrl(component.getLicenseUrl());
             final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (component.getLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setName(component.getLicense());
+            license.setUrl(component.getLicenseUrl());
+            final LicenseChoice licenseChoice = new LicenseChoice();
+            licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
+        } else if (StringUtils.isNotEmpty(component.getLicenseUrl())) {
+            final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
+            license.setUrl(component.getLicenseUrl());
             final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         }
+
 
         if (component.getExternalReferences() != null && component.getExternalReferences().size() > 0) {
             List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();

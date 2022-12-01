@@ -37,16 +37,23 @@ Description:
 {% endfor %}
 {% elseif notification.group == "PROJECT_AUDIT_CHANGE" %}
 Analysis Type:  Project Analysis
+{% if subject.analysis is null %}
+Violation Analysis State:    {{ subject.violationAnalysis.analysisState }}
+Suppressed:        {{ subject.violationAnalysis.suppressed }}
+Policy:  {{ subject.policyViolation.policyCondition.Policy.name }}
+Policy Violation State: {{ subject.policyViolation.policyCondition.Policy.violationState }}
+Policy Condition:   subject == {{ subject.policyViolation.policyCondition.subject }} && value {{ subject.policyViolation.policyCondition.operator }} {{ subject.policyViolation.policyCondition.value }}
+{% else %}
 Analysis State:    {{ subject.analysis.analysisState }}
 Suppressed:        {{ subject.analysis.suppressed }}
 Vulnerability ID:  {{ subject.vulnerability.vulnId }}
 Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
 Severity:          {{ subject.vulnerability.severity }}
 Source:            {{ subject.vulnerability.source }}
+{% endif %}
 Component:         {{ subject.component.toString }}
 Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
-Project:           {{ subject.component.project.name }}
-Version:           {{ subject.component.project.version }}
+Project:           {{ subject.component.project.toString }}
 Description:       {{ subject.component.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.component.project.uuid }}
 {% if  notification.subject.affectedProjects|length > 1%}

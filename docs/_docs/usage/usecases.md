@@ -8,14 +8,23 @@ order: 6
 Here we provide some practical insights. Sometimes it's hard to begin something new. We don't think usage of Dependency Track shall prove this.
 
 > We provide Windows Powershell Scripts. This are working examples but they aren't ready for automated productive use.
-> Add error management, monitoring etc. to fit your environment.
+> Add rights management, error management, monitoring etc. to fit your environment.
+
+#### Preparations
+You need an API-Key to use the REST API of Dependency Track. 
+
+![API-key](/images/screenshots/API-key.png)
+
+To get one, go to the Administration side menue, select Access Management and Teams. If there is no API key present, 
+generate one by clicking at the blue plus icon. With this key in your hand, tha API opens to you. By the way: Using 
+administrative rights is a sign of bad software engeneering. At the other hand it rolls some stones out of your way 
+doing your first steps.
 
 
 #### Integrate CISAs List of known exploited vulnerabilities
 The [CISA](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) maintains a catalog of known exploited vulnerabilities. They 
 offer a notification service, too. Use the following script to learn if a vulnerability in your aplications is already exploited. For even
 more comfort subscribe to CISA and let the cript trigger by their e-mail.
-
 
 ```
 # expecting a Docker Desktop environment, installed as provided

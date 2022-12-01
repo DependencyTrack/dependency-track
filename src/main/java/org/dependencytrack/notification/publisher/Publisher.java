@@ -103,6 +103,9 @@ public interface Publisher {
                 } else if (notification.getSubject() instanceof final AnalysisDecisionChange subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));
+                } else if (notification.getSubject() instanceof final ViolationAnalysisDecisionChange subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));

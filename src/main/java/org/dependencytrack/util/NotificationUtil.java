@@ -161,7 +161,11 @@ public final class NotificationUtil {
                 }
             }
 
+            Project project = analysis.getComponent().getProject();
+
             analysis = qm.detach(Analysis.class, analysis.getId());
+
+            analysis.getComponent().setProject(project); // Project of component is lost after the detach above
 
             // Aliases are lost during the detach above
             analysis.getVulnerability().setAliases(qm.detach(qm.getVulnerabilityAliases(analysis.getVulnerability())));
@@ -204,7 +208,15 @@ public final class NotificationUtil {
                 }
             }
 
+            Project project = violationAnalysis.getComponent().getProject();
+            PolicyViolation policyViolation = violationAnalysis.getPolicyViolation();
+            policyViolation.getPolicyCondition().getPolicy(); // Force loading of policy
+
             violationAnalysis = qm.detach(ViolationAnalysis.class, violationAnalysis.getId());
+
+            violationAnalysis.getComponent().setProject(project); // Project of component is lost after the detach above
+            violationAnalysis.setPolicyViolation(policyViolation); // PolicyCondition and policy of policyViolation is lost after the detach above
+
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(notificationGroup)
@@ -329,6 +341,18 @@ public final class NotificationUtil {
         return analysisBuilder.build();
     }
 
+    public static JsonObject toJson(final ViolationAnalysis violationAnalysis) {
+        final JsonObjectBuilder violationAnalysisBuilder = Json.createObjectBuilder();
+        violationAnalysisBuilder.add("suppressed", violationAnalysis.isSuppressed());
+        JsonUtil.add(violationAnalysisBuilder, "state", violationAnalysis.getAnalysisState());
+        if (violationAnalysis.getProject() != null) {
+            JsonUtil.add(violationAnalysisBuilder, "project", violationAnalysis.getProject().getUuid().toString());
+        }
+        JsonUtil.add(violationAnalysisBuilder, "component", violationAnalysis.getComponent().getUuid().toString());
+        JsonUtil.add(violationAnalysisBuilder, "policyViolation", violationAnalysis.getPolicyViolation().getUuid().toString());
+        return violationAnalysisBuilder.build();
+    }
+
     public static JsonObject toJson(final NewVulnerabilityIdentified vo) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (vo.getComponent() != null) {
@@ -382,6 +406,20 @@ public final class NotificationUtil {
         if (vo.getProject() != null) {
             // Provide the affected project in the form of an array for backwards-compatibility
             builder.add("affectedProjects", Json.createArrayBuilder().add(toJson(vo.getProject())));
+        }
+        return builder.build();
+    }
+
+    public static JsonObject toJson(final ViolationAnalysisDecisionChange vo) {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (vo.getComponent() != null) {
+            builder.add("component", toJson(vo.getComponent()));
+        }
+        if (vo.getPolicyViolation() != null) {
+            builder.add("policyViolation", toJson(vo.getPolicyViolation()));
+        }
+        if (vo.getViolationAnalysis() != null) {
+            builder.add("violationAnalysis", toJson(vo.getViolationAnalysis()));
         }
         return builder.build();
     }

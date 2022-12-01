@@ -42,6 +42,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
+import org.dependencytrack.util.NotificationUtil;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -366,7 +367,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED, project));
         assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
     }
 
@@ -414,7 +415,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET, project));
         assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
     }
 
@@ -490,7 +491,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE, project));
         assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
     }
 
@@ -605,7 +606,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET, project));
         assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
     }
 
@@ -773,7 +774,7 @@ public class AnalysisResourceTest extends ResourceTest {
         assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
-        assertThat(notification.getTitle()).isEqualTo(NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED, project));
         assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
     }
 

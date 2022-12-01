@@ -215,7 +215,7 @@ public final class NotificationUtil {
             violationAnalysis = qm.detach(ViolationAnalysis.class, violationAnalysis.getId());
 
             violationAnalysis.getComponent().setProject(project); // Project of component is lost after the detach above
-            violationAnalysis.setPolicyViolation(policyViolation); // PolicyCondition of policyViolation is lost after the detach above
+            violationAnalysis.setPolicyViolation(policyViolation); // PolicyCondition and policy of policyViolation is lost after the detach above
 
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)

@@ -152,15 +152,12 @@ public class PolicyEngine {
     }
 
     private boolean isPolicyAssignedToParentProject(Policy policy, Project child) {
-        boolean isParentProjectAssigned = false;
         if (child.getParent() == null) {
             return false;
         }
-        if (isParentProjectAssigned || policy.getProjects().stream().anyMatch(p -> p.getId() == child.getParent().getId())) {
+        if (policy.getProjects().stream().anyMatch(p -> p.getId() == child.getParent().getId())) {
             return true;
-        } else {
-            isParentProjectAssigned = isPolicyAssignedToParentProject(policy, child.getParent());
-        }
-        return isParentProjectAssigned;
+        } 
+        return isPolicyAssignedToParentProject(policy, child.getParent());
     }
 }

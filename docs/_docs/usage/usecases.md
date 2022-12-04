@@ -5,10 +5,7 @@ chapter: 2
 order: 6
 ---
 
-Here we provide some practical insights. Sometimes it's hard to begin something new. We don't think usage of Dependency Track shall prove this.
-
-> We provide Windows Powershell Scripts. This are working examples but they aren't ready for automated productive use.
-> Add rights management, error management, monitoring etc. to fit your environment.
+Here we provide some practical examples on how to use Dependency Track and its API. These are working examples but please add rights management, error management, monitoring etc. to fit your environment.
 
 #### Preparations
 You need an API-Key to use the REST API of Dependency Track. 

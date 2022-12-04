@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.common.util.UuidUtil;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
+import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -38,6 +39,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ComponentResourceTest extends ResourceTest {
 
     @Override
@@ -51,18 +54,32 @@ public class ComponentResourceTest extends ResourceTest {
 
     @Test
     public void getComponentsDefaultRequestTest() {
-        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
-        for (int i=0; i<1000; i++) {
+        Response response = target(V1_COMPONENT).request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(405, response.getStatus()); // No longer prohibited in DT 4.0+
+    }
+
+    @Test
+    public void getAllComponentsTest() {
+        final Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        for (int i = 0; i < 1000; i++) {
             Component component = new Component();
             component.setProject(project);
             component.setName("Component Name");
             component.setVersion(String.valueOf(i));
             qm.createComponent(component, false);
         }
-        Response response = target(V1_COMPONENT).request()
+
+        final Response response = target(V1_COMPONENT + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(405, response.getStatus()); // No longer prohibited in DT 4.0+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1000");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(100); // Default page size is 100
     }
 
     @Test
@@ -89,6 +106,172 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The component could not be found.", body);
+    }
+
+    @Test
+    public void getComponentByIdentityWithCoordinatesTest() {
+        final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setGroup("groupA");
+        componentA.setName("nameA");
+        componentA.setVersion("versionA");
+        componentA.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setGroup("groupB");
+        componentB.setName("nameB");
+        componentB.setVersion("versionB");
+        componentB.setCpe("cpe:2.3:a:groupB:nameB:versionB:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/groupB/nameB@versionB?baz=qux");
+        componentB = qm.createComponent(componentB, false);
+
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "groupB")
+                .queryParam("name", "nameB")
+                .queryParam("version", "versionB")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+
+        final JsonObject jsonComponent = json.getJsonObject(0);
+        assertThat(jsonComponent).isNotNull();
+        assertThat(jsonComponent.getString("uuid")).isEqualTo(componentB.getUuid().toString());
+    }
+
+    @Test
+    public void getComponentByIdentityWithPurlTest() {
+        final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setGroup("groupA");
+        componentA.setName("nameA");
+        componentA.setVersion("versionA");
+        componentA.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setGroup("groupB");
+        componentB.setName("nameB");
+        componentB.setVersion("versionB");
+        componentB.setCpe("cpe:2.3:a:groupB:nameB:versionB:*:*:*:*:*:*:*");
+        componentB.setPurl("pkg:maven/groupB/nameB@versionB?baz=qux");
+        componentB = qm.createComponent(componentB, false);
+
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("purl", "pkg:maven/groupB/nameB@versionB")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+
+        final JsonObject jsonComponent = json.getJsonObject(0);
+        assertThat(jsonComponent).isNotNull();
+        assertThat(jsonComponent.getString("uuid")).isEqualTo(componentB.getUuid().toString());
+    }
+
+    @Test
+    public void getComponentByIdentityWithCpeTest() {
+        final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setGroup("groupA");
+        componentA.setName("nameA");
+        componentA.setVersion("versionA");
+        componentA.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setGroup("groupB");
+        componentB.setName("nameB");
+        componentB.setVersion("versionB");
+        componentB.setCpe("cpe:2.3:a:groupB:nameB:versionB:*:*:*:*:*:*:*");
+        componentB.setPurl("pkg:maven/groupB/nameB@versionB?baz=qux");
+        componentB = qm.createComponent(componentB, false);
+
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("cpe", "cpe:2.3:a:groupB:nameB:versionB")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+
+        final JsonObject jsonComponent = json.getJsonObject(0);
+        assertThat(jsonComponent).isNotNull();
+        assertThat(jsonComponent.getString("uuid")).isEqualTo(componentB.getUuid().toString());
+    }
+
+    @Test
+    public void getComponentByIdentityWithProjectTest() {
+        final Project projectA = qm.createProject("projectA", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(projectA);
+        componentA.setGroup("group");
+        componentA.setName("name");
+        componentA.setVersion("version");
+        componentA.setPurl("pkg:maven/group/name@version?foo=bar");
+        qm.createComponent(componentA, false);
+
+        final Project projectB = qm.createProject("projectB", null, "1.0", null, null, null, true, false);
+        var componentB = new Component();
+        componentB.setProject(projectB);
+        componentB.setGroup("group");
+        componentB.setName("name");
+        componentB.setVersion("version");
+        componentB.setPurl("pkg:maven/group/name@version?foo=bar");
+        componentB = qm.createComponent(componentB, false);
+
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("purl", "pkg:maven/group/name@version")
+                .queryParam("project", projectB.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+
+        final JsonObject jsonComponent = json.getJsonObject(0);
+        assertThat(jsonComponent).isNotNull();
+        assertThat(jsonComponent.getString("uuid")).isEqualTo(componentB.getUuid().toString());
+    }
+
+    @Test
+    public void getComponentByIdentityWithProjectWhenProjectDoesNotExistTest() {
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("purl", "pkg:maven/group/name@version")
+                .queryParam("project", UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NOT_FOUND);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThat(getPlainTextBody(response)).contains("The project could not be found");
     }
 
     @Test

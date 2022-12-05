@@ -103,25 +103,45 @@ alpine.database.pool.enabled=true
 # Optional
 # This property controls the maximum size that the pool is allowed to reach,
 # including both idle and in-use connections.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.size=20
+# alpine.database.pool.tx.max.size=
+# alpine.database.pool.nontx.max.size=
 
 # Optional
 # This property controls the minimum number of idle connections in the pool.
 # This value should be equal to or less than alpine.database.pool.max.size.
-# Warning: If the value is less than alpine.database.pool.max.size, 
+# Warning: If the value is less than alpine.database.pool.max.size,
 # alpine.database.pool.idle.timeout will have no effect.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.min.idle=10
+# alpine.database.pool.tx.min.idle=
+# alpine.database.pool.nontx.min.idle=
 
 # Optional
 # This property controls the maximum amount of time that a connection is
 # allowed to sit idle in the pool.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.idle.timeout=300000
+# alpine.database.pool.tx.idle.timeout=
+# alpine.database.pool.nontx.idle.timeout=
 
 # Optional
 # This property controls the maximum lifetime of a connection in the pool.
 # An in-use connection will never be retired, only when it is closed will
 # it then be removed.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.lifetime=600000
+# alpine.database.pool.tx.max.lifetime=
+# alpine.database.pool.nontx.max.lifetime=
 
 # Optional
 # When authentication is enforced, API keys are required for automation, and

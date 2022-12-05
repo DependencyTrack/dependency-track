@@ -6,6 +6,7 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -14,6 +15,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
@@ -74,6 +76,34 @@ public class SnykParser {
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;
+    }
+
+    public List<SnykError> parseErrors(final JSONObject jsonResponse) {
+        if (jsonResponse == null) {
+            return Collections.emptyList();
+        }
+
+        final JSONArray errorsArray = jsonResponse.optJSONArray("errors");
+        if (errorsArray == null) {
+            return Collections.emptyList();
+        }
+
+        final var errors = new ArrayList<SnykError>();
+        for (int i = 0; i < errorsArray.length(); i++) {
+            final JSONObject errorObject = errorsArray.optJSONObject(i);
+            if (errorObject == null) {
+                continue;
+            }
+
+            final String detail = StringUtils.trimToNull(errorObject.optString("detail"));
+            final String status = StringUtils.trimToNull(errorObject.optString("status"));
+
+            if (detail != null || status != null) {
+                errors.add(new SnykError(detail, status));
+            }
+        }
+
+        return errors;
     }
 
     public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, JSONArray problems) {

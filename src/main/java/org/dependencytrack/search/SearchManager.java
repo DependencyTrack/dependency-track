@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -162,7 +163,7 @@ public class SearchManager {
         return searchIndex(VulnerableSoftwareIndexer.getInstance(), queryString, limit);
     }
 
-    public String reindex(List<String> type) {
+    public String reindex(Set<String> type) {
         List<IndexManager.IndexType> indexTypes = type.stream().flatMap(t -> IndexManager.IndexType.getIndexType(t).stream()).toList();
         if(indexTypes.isEmpty()) {
             throw new IllegalArgumentException("No valid index type was provided");

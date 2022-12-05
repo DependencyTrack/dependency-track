@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * JAX-RS resources for processing search requests.
@@ -192,7 +193,7 @@ public class SearchResource extends AlpineResource {
             @ApiResponse(code = 400, message = "No valid index type was provided")
     })
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
-    public Response reindex(@QueryParam("type") List<String> type) {
+    public Response reindex(@QueryParam("type") Set<String> type) {
         if (type == null || type.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("No valid index type was provided").build();
         }

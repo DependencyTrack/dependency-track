@@ -66,7 +66,7 @@ public class IndexTask implements Subscriber {
             } else if (IndexEvent.Action.REINDEX == event.getAction()) {
                 Timer timer = Timer.builder("lucene_index_rebuild")
                         .description("Lucene index rebuild")
-                        .tags("type", ((IndexManager) indexManager).getIndexType().name().toLowerCase())
+                        .tags("type", event.getIndexableClass().getName().toLowerCase())
                         .register(Metrics.getRegistry());
                 Timer.Sample recording = Timer.start();
                 indexManager.reindex();

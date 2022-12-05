@@ -26,6 +26,7 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileDeleteStrategy;
+import org.apache.commons.io.output.NullPrintStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -67,8 +68,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD;
+import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD;
 
 /**
  * The IndexManager is an abstract class that provides wrappers and convenience methods
@@ -107,9 +109,11 @@ public abstract class IndexManager implements AutoCloseable {
         VULNERABLESOFTWARE(VulnerableSoftware.class);
 
         final private Class<?> clazz;
+        final UUID uuid;
 
         IndexType(Class<?> clazz) {
             this.clazz = clazz;
+            this.uuid = UUID.randomUUID();
         }
 
         public Class<?> getClazz() {
@@ -122,6 +126,14 @@ public abstract class IndexManager implements AutoCloseable {
             } catch (Exception e) {
                 return Optional.empty();
             }
+        }
+
+        public static UUID getUuid(Class clazz) {
+            return Arrays.stream(values())
+                    .filter(type -> clazz == type.getClazz())
+                    .map(type -> type.uuid)
+                    .findFirst()
+                    .orElse(UUID.randomUUID());
         }
     }
 
@@ -431,7 +443,11 @@ public abstract class IndexManager implements AutoCloseable {
             luceneIndexDirectory = FSDirectory.open(indexDirectoryFile.toPath());
             checkIndex = new CheckIndex(luceneIndexDirectory);
             checkIndex.setFailFast(true);
-            checkIndex.setInfoStream(System.out);
+            if(LOGGER.isDebugEnabled()) {
+                checkIndex.setInfoStream(System.out);
+            } else {
+                checkIndex.setInfoStream(new NullPrintStream());
+            }
             CheckIndex.Status status = checkIndex.checkIndex();
             if(status.clean) {
                 LOGGER.info("The index "+indexType.name()+" is healthy");
@@ -467,9 +483,10 @@ public abstract class IndexManager implements AutoCloseable {
                     LOGGER.info("(Re)Building index "+indexType.name().toLowerCase());
                     LOGGER.debug("Dispatching event to reindex "+indexType.name().toLowerCase());
                     Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexType.getClazz()));
+                    return;
                 }
                 final ConfigProperty deltaThresholdProperty = qm.getConfigProperty(
-                        INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName());
+                        SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName());
                 double deltaThreshold = Double.parseDouble(deltaThresholdProperty.getPropertyValue());
                 double databaseEntityCount = qm.getCount(indexType.getClazz());
                 LOGGER.info("Database entity count for type "+indexType.name()+" : "+databaseEntityCount);

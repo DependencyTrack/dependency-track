@@ -19,6 +19,7 @@
 package org.dependencytrack.event;
 
 import alpine.event.framework.AbstractChainableEvent;
+import alpine.event.framework.SingletonCapableEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Cpe;
 import org.dependencytrack.model.License;
@@ -26,6 +27,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.search.IndexManager;
 
 /**
  * Defines various Lucene index events.
@@ -33,7 +35,7 @@ import org.dependencytrack.model.VulnerableSoftware;
  * @author Steve Springett
  * @since 3.0.0
  */
-public class IndexEvent extends AbstractChainableEvent {
+public class IndexEvent extends SingletonCapableEvent {
 
     public enum Action {
         CREATE,
@@ -48,43 +50,46 @@ public class IndexEvent extends AbstractChainableEvent {
     private Object indexableObject;
     private Class indexableClass;
 
-
     public IndexEvent(final Action action, final Project project) {
-        this.action = action;
+        this(action, Project.class);
         this.indexableObject = project;
     }
 
     public IndexEvent(final Action action, final Component component) {
-        this.action = action;
+        this(action, Component.class);
         this.indexableObject = component;
     }
 
     public IndexEvent(final Action action, final ServiceComponent service) {
-        this.action = action;
+        this(action, ServiceComponent.class);
         this.indexableObject = service;
     }
 
     public IndexEvent(final Action action, final Vulnerability vulnerability) {
-        this.action = action;
+        this(action, Vulnerability.class);
         this.indexableObject = vulnerability;
     }
 
     public IndexEvent(final Action action, final License license) {
-        this.action = action;
+        this(action, License.class);
         this.indexableObject = license;
     }
 
     public IndexEvent(final Action action, final Cpe cpe) {
-        this.action = action;
+        this(action, Cpe.class);
         this.indexableObject = cpe;
     }
 
     public IndexEvent(final Action action, final VulnerableSoftware vs) {
-        this.action = action;
+        this(action, VulnerableSoftware.class);
         this.indexableObject = vs;
     }
 
     public IndexEvent(final Action action, final Class clazz) {
+        if(action == Action.REINDEX) {
+            this.setSingleton(true);
+            this.setChainIdentifier(IndexManager.IndexType.getUuid(clazz));
+        }
         this.action = action;
         this.indexableClass = clazz;
     }

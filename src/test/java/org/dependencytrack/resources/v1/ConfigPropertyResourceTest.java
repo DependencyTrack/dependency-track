@@ -147,7 +147,7 @@ public class ConfigPropertyResourceTest extends ResourceTest {
 
     @Test
     public void updateBadIndexConsistencyThresholdConfigPropertyTest() {
-        ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), ConfigPropertyConstants.INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName(), "24", IConfigProperty.PropertyType.INTEGER, ConfigPropertyConstants.INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getDescription());
+        ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName(), "24", IConfigProperty.PropertyType.INTEGER, ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getDescription());
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
         request.setPropertyValue("-1");
         Response response = target(V1_CONFIG_PROPERTY).request()

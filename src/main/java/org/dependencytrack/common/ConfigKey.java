@@ -7,9 +7,9 @@ import java.time.Duration;
 public enum ConfigKey implements Config.Key {
 
     SNYK_THREAD_BATCH_SIZE("snyk.thread.batch.size", 10),
-    SNYK_LIMIT_FOR_PERIOD("snyk.limit.for.period", 1500),
-    SNYK_THREAD_TIMEOUT_DURATION("snyk.thread.timeout.duration", 60),
-    SNYK_LIMIT_REFRESH_PERIOD("snyk.limit.refresh.period", 60),
+    SNYK_RATE_LIMIT_REQUESTS("snyk.rate.limit.requests", 1500),
+    SNYK_RATE_LIMIT_TIMEOUT_DURATION("snyk.rate.limit.timeout.duration", 60),
+    SNYK_RATE_LIMIT_PERIOD("snyk.rate.limit.period", 60),
     OSSINDEX_REQUEST_MAX_PURL("ossindex.request.max.purl", 128),
     OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MAX_ATTEMPTS("ossindex.retry.backoff.max.attempts", 10),
     OSSINDEX_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER("ossindex.retry.backoff.multiplier", 2),

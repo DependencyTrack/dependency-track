@@ -373,26 +373,26 @@ alpine.oidc.teams.claim=groups
 # Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
 # The thread pool will only be used when Snyk integration is enabled.
-# A high number may result in a quicker excession of API rate limits, 
+# A high number may result in quicker exceeding of API rate limits,
 # while a number that is too low may result in vulnerability analyses taking too long.
 snyk.thread.batch.size=10
 
 # Optional
-# Defines the maximum number of requests that the Snyk analyzer would make in a given period. 
-# The default value is 1500
-snyk.limit.for.period=1500
+# Defines the maximum number of requests to perform against the Snyk API in a given time period.
+# The time period is defined in snyk.rate.limit.refresh.period.
+# Per default, requests are limited to 1500 per 60 seconds.
+snyk.rate.limit.requests=1500
 
 # Optional
-# Defines the maximum number of seconds the thread will wait before timing out.This value is in seconds.
-# Currently the Snyk Analyzer is multithreaded and each thread waits for the permission from the rate limiter.
-# The default value is 60
-snyk.thread.timeout.duration=60
+# Defines the time period in seconds for which the rate limiting should apply.
+# After each period, the number of allowed requests is reset to the value defined in snyk.rate.limit.requests.
+# Per default, requests are limited to 1500 per 60 seconds.
+snyk.rate.limit.period=60
 
 # Optional
-# Defines the time after which the number of permissions are refreshed to the set value by the rate limiter.
-# The rate limiter would refresh the number of permissions available after every "limit refresh period".
-# This value is in seconds. The default value is 60
-snyk.limit.refresh.period=60
+# Defines the maximum number of seconds to wait before timing out when waiting for a rate limit permit.
+# Currently, the Snyk analyzer is multithreaded and each thread waits for the permits from the rate limiter.
+snyk.rate.limit.timeout.duration=60
 
 # Optional
 #Defines the maximum number of purl sent in a single request to OSS Index.

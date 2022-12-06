@@ -159,9 +159,9 @@ services:
     #
     # Optional configuration for the Snyk analyzer
     # - SNYK_THREAD_BATCH_SIZE=10
-    # - SNYK_LIMIT_FOR_PERIOD=1500
-    # - SNYK_THREAD_TIMEOUT_DURATION=60
-    # - SNYK_LIMIT_REFRESH_PERIOD=60
+    # - SNYK_RATE_LIMIT_REQUESTS=1500
+    # - SNYK_RATE_LIMIT_PERIOD=60
+    # - SNYK_RATE_LIMIT_TIMEOUT_DURATION=60
     #
     # Optional configuration for the OSS Index analyzer
     # - OSSINDEX_REQUEST_MAX_PURL=128

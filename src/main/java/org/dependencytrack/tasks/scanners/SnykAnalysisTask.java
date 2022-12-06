@@ -85,9 +85,9 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             PackageURL.StandardTypes.PYPI
     );
     private static final RateLimiterRegistry RATE_LIMITER_REGISTRY = RateLimiterRegistry.of(RateLimiterConfig.custom()
-            .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_FOR_PERIOD))
-            .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_TIMEOUT_DURATION)))
-            .limitRefreshPeriod(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_REFRESH_PERIOD)))
+            .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RATE_LIMIT_REQUESTS))
+            .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RATE_LIMIT_TIMEOUT_DURATION)))
+            .limitRefreshPeriod(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RATE_LIMIT_PERIOD)))
             .build());
     private static final RateLimiter RATE_LIMITER = RATE_LIMITER_REGISTRY.rateLimiter("SnykAnalysis");
     private static final ExecutorService EXECUTOR;

@@ -103,7 +103,7 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void valueIsUndefinedLicense() {
+    public void valueIsUnresolved() {
         License license = new License();
         license.setName("Apache 2.0");
         license.setLicenseId("Apache-2.0");
@@ -111,7 +111,7 @@ public class LicensePolicyEvaluatorTest extends PersistenceCapableTest {
         license = qm.persist(license);
 
         Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, "undefinedLicense");
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, "unresolved");
 
         Component componentWithLicense = new Component();
         componentWithLicense.setResolvedLicense(license);

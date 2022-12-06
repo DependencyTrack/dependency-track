@@ -55,7 +55,7 @@ public class LicensePolicyEvaluator extends AbstractPolicyEvaluator {
 
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
-            if (condition.getValue().equals("undefinedLicense")) {
+            if (condition.getValue().equals("unresolved")) {
                 if (license == null && PolicyCondition.Operator.IS == condition.getOperator()) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 } else if (license != null && PolicyCondition.Operator.IS_NOT == condition.getOperator()) {

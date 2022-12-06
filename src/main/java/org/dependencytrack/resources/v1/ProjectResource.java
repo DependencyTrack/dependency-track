@@ -128,10 +128,7 @@ public class ProjectResource extends AlpineResource {
     @GET
     @Path("/lookup")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Returns a specific project by its name and version",
-            response = Project.class
-    )
+    @ApiOperation(value = "Returns a specific project by its name and version", response = Project.class, nickname = "getProjectByNameAndVersion")
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),

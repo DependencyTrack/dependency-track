@@ -49,6 +49,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.snyk.SnykParser;
+import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -57,10 +58,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BASE_URL;
 
@@ -72,7 +75,18 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BAS
 public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements CacheableScanTask, Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
-
+    private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
+            PackageURL.StandardTypes.CARGO,
+            "cocoapods", // Not defined in StandardTypes
+            PackageURL.StandardTypes.COMPOSER,
+            PackageURL.StandardTypes.GEM,
+            PackageURL.StandardTypes.GENERIC,
+            PackageURL.StandardTypes.HEX,
+            PackageURL.StandardTypes.MAVEN,
+            PackageURL.StandardTypes.NPM,
+            PackageURL.StandardTypes.NUGET,
+            PackageURL.StandardTypes.PYPI
+    );
     private static final RateLimiterConfig config = RateLimiterConfig.custom()
             .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_FOR_PERIOD))
             .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_TIMEOUT_DURATION)))
@@ -174,11 +188,17 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
      * @return true if SnykAnalysisTask should analyze, false if not
      */
     public boolean isCapable(final Component component) {
-        return component.getPurl() != null
+        final boolean hasValidPurl = component.getPurl() != null
                 && component.getPurl().getScheme() != null
                 && component.getPurl().getType() != null
                 && component.getPurl().getName() != null
                 && component.getPurl().getVersion() != null;
+        if (!hasValidPurl) {
+            return false;
+        }
+
+        return SUPPORTED_PURL_TYPES.stream()
+                .anyMatch(purlType -> purlType.equals(component.getPurl().getType()));
     }
 
     /**
@@ -204,7 +224,15 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                                 handle(component, null, jsonResponse.getStatus());
                             }
                         } else {
-                            handleUnexpectedHttpResponse(LOGGER, apiBaseUrl, jsonResponse.getStatus(), jsonResponse.getStatusText());
+                            final List<SnykError> errors = new SnykParser().parseErrors(jsonResponse.getBody().getObject());
+                            if (!errors.isEmpty()) {
+                                LOGGER.error("Analysis of component %s failed: \n%s".formatted(component.getPurl(),
+                                        errors.stream()
+                                                .map(error -> " - %s: %s (%s)".formatted(error.title(), error.detail(), error.code()))
+                                                .collect(Collectors.joining("\n"))));
+                            } else {
+                                handleUnexpectedHttpResponse(LOGGER, request.getUrl(), jsonResponse.getStatus(), jsonResponse.getStatusText());
+                            }
                         }
                     } catch (UnirestException e) {
                         handleRequestException(LOGGER, e);
@@ -287,4 +315,5 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     public void applyAnalysisFromCache(Component component) {
         applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
     }
+
 }

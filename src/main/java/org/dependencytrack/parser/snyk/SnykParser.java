@@ -6,7 +6,6 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
@@ -95,12 +94,11 @@ public class SnykParser {
                 continue;
             }
 
-            final String detail = StringUtils.trimToNull(errorObject.optString("detail"));
-            final String status = StringUtils.trimToNull(errorObject.optString("status"));
-
-            if (detail != null || status != null) {
-                errors.add(new SnykError(detail, status));
-            }
+            errors.add(new SnykError(
+                    errorObject.optString("code"),
+                    errorObject.optString("title"),
+                    errorObject.optString("detail")
+            ));
         }
 
         return errors;

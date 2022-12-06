@@ -18,5 +18,5 @@
  */
 package org.dependencytrack.parser.snyk.model;
 
-public record SnykError(String detail, String status) {
+public record SnykError(String code, String title, String detail) {
 }

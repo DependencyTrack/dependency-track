@@ -204,39 +204,38 @@ public class SnykParserTest extends PersistenceCapableTest {
     public void testParseErrors() {
         final JSONObject jsonObject = new JSONObject("""
                 {
-                  "errors": [
-                    {
-                      "detail": "foo"
-                    },
-                    {
-                      "status": "bar"
-                    },
-                    {
-                      "detail": "baz",
-                      "status": "qux"
-                    }
-                  ],
-                  "jsonapi": {
-                    "version": "1.0"
-                  }
-                }
+                   "jsonapi": {
+                     "version": "1.0"
+                   },
+                   "errors": [
+                     {
+                       "id": "0f12fd75-c80a-4c15-929b-f7794eb3dd4f",
+                       "links": {
+                         "about": "https://docs.snyk.io/more-info/error-catalog#snyk-ossi-2010-invalid-purl-has-been-provided"
+                       },
+                       "status": "400",
+                       "code": "SNYK-OSSI-2010",
+                       "title": "Invalid PURL has been provided",
+                       "detail": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0%",
+                       "source": {
+                         "pointer": "/orgs/0d581750-c5d7-4acf-9ff9-4a5bae31cbf1/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0%25/issues"
+                       },
+                       "meta": {
+                         "links": [
+                           "https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst"
+                         ]
+                       }
+                     }
+                   ]
+                 }
                 """);
         final List<SnykError> errors = parser.parseErrors(jsonObject);
-        assertThat(errors).hasSize(3);
-        assertThat(errors).satisfiesExactly(
-                error -> {
-                    assertThat(error.detail()).isEqualTo("foo");
-                    assertThat(error.status()).isNull();
-                },
-                error -> {
-                    assertThat(error.detail()).isNull();
-                    assertThat(error.status()).isEqualTo("bar");
-                },
-                error -> {
-                    assertThat(error.detail()).isEqualTo("baz");
-                    assertThat(error.status()).isEqualTo("qux");
-                }
-        );
+        assertThat(errors).hasSize(1);
+
+        final SnykError error = errors.get(0);
+        assertThat(error.code()).isEqualTo("SNYK-OSSI-2010");
+        assertThat(error.title()).isEqualTo("Invalid PURL has been provided");
+        assertThat(error.detail()).isEqualTo("pkg:maven/com.foo.woodstox/woodstox-core@5.0.0%");
     }
 
     @Test

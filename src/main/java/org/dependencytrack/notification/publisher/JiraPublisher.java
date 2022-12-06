@@ -21,7 +21,7 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
-import com.mitchellbosecke.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.PebbleEngine;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.persistence.QueryManager;
 

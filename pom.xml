@@ -92,7 +92,7 @@
         <lib.pebble.version>3.1.6</lib.pebble.version>
         <lib.unirest.version>3.13.11</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
-        <lib.resilience4j.version>1.7.1</lib.resilience4j.version>
+        <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.1.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->

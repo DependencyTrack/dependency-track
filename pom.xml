@@ -93,6 +93,7 @@
         <lib.unirest.version>3.14.1</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
+        <lib.woodstox.version>6.4.0</lib.woodstox.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.1.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -234,7 +235,7 @@
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.3.1</version>
+            <version>${lib.woodstox.version}</version>
         </dependency>
         <!-- Package version parsing -->
         <dependency>

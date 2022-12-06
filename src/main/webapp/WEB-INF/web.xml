@@ -47,6 +47,9 @@
     <listener>
         <listener-class>org.dependencytrack.notification.NotificationSubsystemInitializer</listener-class>
     </listener>
+    <listener>
+        <listener-class>org.dependencytrack.search.IndexSubsystemInitializer</listener-class>
+    </listener>
 
     <filter>
         <filter-name>WhitelistUrlFilter</filter-name>

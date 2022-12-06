@@ -24,6 +24,7 @@ import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.NotificationConstants;
@@ -77,6 +78,8 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
 
         try {
             getIndexWriter().addDocument(doc);
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An error occurred while adding service to index", e);
             Notification.dispatch(new Notification()
@@ -97,6 +100,8 @@ public final class ServiceComponentIndexer extends IndexManager implements Objec
     public void remove(final ServiceComponent service) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.SERVICECOMPONENT_UUID, service.getUuid().toString()));
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An error occurred while removing a service from the index", e);
             Notification.dispatch(new Notification()

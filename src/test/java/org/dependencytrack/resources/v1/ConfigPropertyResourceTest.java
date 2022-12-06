@@ -146,6 +146,19 @@ public class ConfigPropertyResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateBadIndexConsistencyThresholdConfigPropertyTest() {
+        ConfigProperty property = qm.createConfigProperty(ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName(), "24", IConfigProperty.PropertyType.INTEGER, ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getDescription());
+        ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());
+        request.setPropertyValue("-1");
+        Response response = target(V1_CONFIG_PROPERTY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(400, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Lucene index delta threshold ("+request.getPropertyName()+") cannot be inferior to 1 or superior to 100.A value of -1 was provided.", body);
+    }
+
+    @Test
     public void updateConfigPropertyUrlTest() {
         ConfigProperty property = qm.createConfigProperty("my.group", "my.url", "http://localhost", IConfigProperty.PropertyType.URL, "A url");
         ConfigProperty request = qm.detach(ConfigProperty.class, property.getId());

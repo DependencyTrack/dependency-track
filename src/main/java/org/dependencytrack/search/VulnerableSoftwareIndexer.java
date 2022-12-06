@@ -24,6 +24,7 @@ import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
@@ -78,6 +79,8 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
 
         try {
             getIndexWriter().addDocument(doc);
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An error occurred while adding a VulnerableSoftware to the index", e);
             Notification.dispatch(new Notification()
@@ -98,6 +101,8 @@ public final class VulnerableSoftwareIndexer extends IndexManager implements Obj
     public void remove(final VulnerableSoftware vs) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.VULNERABLESOFTWARE_UUID, vs.getUuid().toString()));
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An error occurred while removing a VulnerableSoftware from the index", e);
             Notification.dispatch(new Notification()

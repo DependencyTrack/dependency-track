@@ -235,7 +235,7 @@ public class SnykParserTest extends PersistenceCapableTest {
         final SnykError error = errors.get(0);
         assertThat(error.code()).isEqualTo("SNYK-OSSI-2010");
         assertThat(error.title()).isEqualTo("Invalid PURL has been provided");
-        assertThat(error.detail()).isEqualTo("pkg:maven/com.foo.woodstox/woodstox-core@5.0.0%");
+        assertThat(error.detail()).isEqualTo("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0%");
     }
 
     @Test

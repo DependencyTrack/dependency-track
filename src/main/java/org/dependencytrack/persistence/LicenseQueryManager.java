@@ -23,6 +23,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.PolicyCondition;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -173,7 +174,12 @@ final class LicenseQueryManager extends QueryManager implements IQueryManager {
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */
     public void deleteLicense(final License license, final boolean commitIndex) {
+        final Query<PolicyCondition> query = pm.newQuery(PolicyCondition.class, "subject == :subject && value == :value");
+        List<PolicyCondition> policyConditions = (List<PolicyCondition>)query.execute(PolicyCondition.Subject.LICENSE ,license.getUuid().toString());
         commitSearchIndex(commitIndex, License.class);
         delete(license);
+        for (PolicyCondition policyCondition : policyConditions) {
+            deletePolicyCondition(policyCondition);
+        }
     }
 }

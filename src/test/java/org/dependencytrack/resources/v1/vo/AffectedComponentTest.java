@@ -71,6 +71,20 @@ public class AffectedComponentTest {
         }
 
         @Test
+        public void shouldMapPurlToPurlIdentityEvenWhenNoNamespace() {
+            final var vs = new VulnerableSoftware();
+            vs.setPurlType(PackageURL.StandardTypes.GOLANG);
+            vs.setPurlName("bar");
+            vs.setPurlVersion("baz");
+            vs.setPurlQualifiers("{\"ping\":\"pong\"}");
+            vs.setPurlSubpath("1/2/3");
+
+            final var affectedComponent = new AffectedComponent(vs);
+            assertThat(affectedComponent.getIdentityType()).isEqualTo(AffectedComponent.IdentityType.PURL);
+            assertThat(affectedComponent.getIdentity()).isEqualTo("pkg:golang/bar@baz?ping=pong#1/2/3");
+        }
+
+        @Test
         public void shouldMapPurlFragmentsToPurlIdentity() {
             final var vs = new VulnerableSoftware();
             vs.setPurlType(PackageURL.StandardTypes.GOLANG);

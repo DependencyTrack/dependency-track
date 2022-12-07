@@ -36,7 +36,6 @@ import kong.unirest.GetRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.HttpStatus;
 import kong.unirest.JsonNode;
-import kong.unirest.UnirestException;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -100,6 +99,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                         Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION_SECONDS))
                 ))
                 .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MAX_ATTEMPTS))
+                .retryOnException(exception -> false)
                 .retryOnResult(response -> HttpStatus.TOO_MANY_REQUESTS == response.getStatus())
                 .build());
         RETRY = retryRegistry.retry("snyk-api");
@@ -227,8 +227,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     .whenComplete((result, exception) -> {
                         countDownLatch.countDown();
 
-                        if (exception instanceof final UnirestException ue) {
-                            handleRequestException(LOGGER, ue);
+                        if (exception != null) {
+                            LOGGER.error("An unexpected error occurred while analyzing %s".formatted(component), exception);
                         }
                     });
         }

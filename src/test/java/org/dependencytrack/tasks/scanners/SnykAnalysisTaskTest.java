@@ -19,6 +19,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
+import org.mockserver.matchers.Times;
+import org.mockserver.verify.VerificationTimes;
 
 import javax.jdo.Query;
 import javax.json.Json;
@@ -126,7 +128,11 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyze() {
+    public void testAnalyzeWithRateLimiting() {
+        mockServer
+                .when(request(), Times.exactly(2))
+                .respond(response().withStatusCode(429));
+
         mockServer
                 .when(request()
                         .withMethod("GET")
@@ -293,6 +299,8 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(cacheEntry.getTarget()).isEqualTo("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0");
         assertThat(cacheEntry.getResult())
                 .containsEntry("vulnIds", Json.createArrayBuilder().add(vulnerability.getId()).build());
+
+        mockServer.verify(request(), VerificationTimes.exactly(3));
     }
 
     @Test

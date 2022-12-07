@@ -28,12 +28,15 @@ import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
-import io.github.resilience4j.ratelimiter.RateLimiter;
-import io.github.resilience4j.ratelimiter.RateLimiterConfig;
-import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpResponse;
+import kong.unirest.HttpStatus;
 import kong.unirest.JsonNode;
+import kong.unirest.UnirestException;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -64,6 +67,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+
 /**
  * Subscriber task that performs an analysis of component using Snyk vulnerability REST API.
  *
@@ -84,18 +89,29 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             PackageURL.StandardTypes.NUGET,
             PackageURL.StandardTypes.PYPI
     );
-    private static final RateLimiterRegistry RATE_LIMITER_REGISTRY = RateLimiterRegistry.of(RateLimiterConfig.custom()
-            .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RATE_LIMIT_REQUESTS))
-            .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RATE_LIMIT_TIMEOUT_DURATION)))
-            .limitRefreshPeriod(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RATE_LIMIT_PERIOD)))
-            .build());
-    private static final RateLimiter RATE_LIMITER = RATE_LIMITER_REGISTRY.rateLimiter("SnykAnalysis");
+    private static final Retry RETRY;
     private static final ExecutorService EXECUTOR;
 
     static {
+        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<HttpResponse<?>>custom()
+                .intervalFunction(ofExponentialBackoff(
+                        Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_INITIAL_DURATION_SECONDS)),
+                        Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
+                        Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION_SECONDS))
+                ))
+                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MAX_ATTEMPTS))
+                .retryOnResult(response -> HttpStatus.TOO_MANY_REQUESTS == response.getStatus())
+                .build());
+        RETRY = retryRegistry.retry("snyk-api");
+        RETRY.getEventPublisher()
+                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s".formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
+                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s".formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
+        TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
+                .bindTo(Metrics.getRegistry());
+
         // The number of threads to be used for Snyk analyzer are configurable.
         // Default is 10. Can be set based on user requirements.
-        final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_BATCH_SIZE);
+        final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_POOL_SIZE);
         final var threadFactory = new BasicThreadFactory.Builder()
                 .namingPattern(SnykAnalysisTask.class.getSimpleName() + "-%d")
                 .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
@@ -207,12 +223,14 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             }
 
             CompletableFuture
-                    .runAsync(RateLimiter.decorateRunnable(RATE_LIMITER, () -> analyzeComponent(component)), EXECUTOR)
-                    .exceptionally(exception -> {
-                        handleRequestException(LOGGER, (Exception) exception);
-                        return null;
-                    })
-                    .whenComplete((result, exception) -> countDownLatch.countDown());
+                    .runAsync(() -> analyzeComponent(component), EXECUTOR)
+                    .whenComplete((result, exception) -> {
+                        countDownLatch.countDown();
+
+                        if (exception instanceof final UnirestException ue) {
+                            handleRequestException(LOGGER, ue);
+                        }
+                    });
         }
 
         try {
@@ -256,7 +274,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 .header(HttpHeaders.AUTHORIZATION, apiToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api+json");
 
-        final HttpResponse<JsonNode> response = request.asJson();
+        final HttpResponse<JsonNode> response = RETRY.executeSupplier(request::asJson);
         checkSunsetHeader(response);
         if (response.isSuccess()) {
             handle(component, response.getBody().getObject());
@@ -275,10 +293,11 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
 
     private void checkSunsetHeader(final HttpResponse<?> response) {
         final String sunsetHeader = response.getHeaders().getFirst("Sunset");
-        if (sunsetHeader != null) {
+        if (sunsetHeader != null && !sunsetHeader.isBlank()) {
             LOGGER.warn("""
                     Snyk is indicating that the API version %s has been deprecated and will no longer \
-                    be supported as of %s. Please migrate to a newer version of the Snyk API.
+                    be supported as of %s. Please migrate to a newer version of the Snyk API. \
+                    Refer to https://apidocs.snyk.io for supported versions.
                     """.formatted(apiVersion, sunsetHeader));
         }
     }

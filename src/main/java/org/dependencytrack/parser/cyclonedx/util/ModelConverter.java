@@ -329,6 +329,17 @@ public class ModelConverter {
             } else {
                 cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
             }
+            if (project.getExternalReferences() != null && project.getExternalReferences().size() > 0) {
+                List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();
+                project.getExternalReferences().stream().forEach(externalReference -> {
+                    org.cyclonedx.model.ExternalReference ref = new org.cyclonedx.model.ExternalReference();
+                    ref.setUrl(externalReference.getUrl());
+                    ref.setType(externalReference.getType());
+                    ref.setComment(externalReference.getComment());
+                    references.add(ref);
+                });
+                cycloneComponent.setExternalReferences(references);
+            }
             metadata.setComponent(cycloneComponent);
         }
         return metadata;
@@ -686,6 +697,27 @@ public class ModelConverter {
                     c1.setDirectDependencies(jsonArray.toString());
                 }
             }
+        }
+    }
+
+    public static List<ExternalReference> convertBomMetadataExternalReferences(Bom bom) {
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null) {
+            org.cyclonedx.model.Component cycloneDxComponent = bom.getMetadata().getComponent();
+            if (cycloneDxComponent.getExternalReferences() != null && cycloneDxComponent.getExternalReferences().size() > 0) {
+                List<ExternalReference> references = new ArrayList<>();
+                for (org.cyclonedx.model.ExternalReference cycloneDxRef : cycloneDxComponent.getExternalReferences()) {
+                    ExternalReference ref = new ExternalReference();
+                    ref.setType(cycloneDxRef.getType());
+                    ref.setUrl(cycloneDxRef.getUrl());
+                    ref.setComment(cycloneDxRef.getComment());
+                    references.add(ref);
+                }
+                return references;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 

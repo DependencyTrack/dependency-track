@@ -2,7 +2,7 @@
 title: U.S. Executive Order 14028
 category: Usage
 chapter: 2
-order: 6
+order: 7
 ---
 
 Since its inception in 2013, OWASP Dependency-Track has been at the forefront of analyzing bill of materials for cybersecurity

@@ -76,7 +76,6 @@ public class AffectedComponent {
             identityType = IdentityType.PURL;
             identity = vs.getPurl();
         } else if (vs.getPurlType() != null
-                && vs.getPurlNamespace() != null
                 && vs.getPurlName() != null) {
             TreeMap<String, String> qualifiers = null;
             if (vs.getPurlQualifiers() != null) {

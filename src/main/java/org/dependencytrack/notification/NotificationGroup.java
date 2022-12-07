@@ -42,5 +42,5 @@ public enum NotificationGroup {
     VEX_CONSUMED,
     VEX_PROCESSED,
     POLICY_VIOLATION,
-    NEW_PROJECT
+    PROJECT_CREATED
 }

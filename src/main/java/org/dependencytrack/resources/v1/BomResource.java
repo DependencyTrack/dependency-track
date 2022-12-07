@@ -35,7 +35,6 @@ import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.BomUploadEvent;
-import org.dependencytrack.event.ProjectCreationEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
@@ -227,8 +226,6 @@ public class BomResource extends AlpineResource {
                         project = qm.createProject(StringUtils.trimToNull(request.getProjectName()), null, StringUtils.trimToNull(request.getProjectVersion()), null, null, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
-                        final ProjectCreationEvent projectCreationEvent = new ProjectCreationEvent(project.getUuid(), project.getName());
-                        Event.dispatch(projectCreationEvent);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }
@@ -273,8 +270,6 @@ public class BomResource extends AlpineResource {
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, null, null, null, true, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
-                        final ProjectCreationEvent projectCreationEvent = new ProjectCreationEvent(project.getUuid(), project.getName());
-                        Event.dispatch(projectCreationEvent);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
                     }

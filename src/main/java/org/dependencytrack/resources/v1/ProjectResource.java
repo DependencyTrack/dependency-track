@@ -34,7 +34,6 @@ import io.swagger.annotations.ResponseHeader;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
-import org.dependencytrack.event.ProjectCreationEvent;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
@@ -254,8 +253,6 @@ public class ProjectResource extends AlpineResource {
             if (project == null) {
                 try {
                     project = qm.createProject(jsonProject, jsonProject.getTags(), true);
-                    final ProjectCreationEvent projectCreationEvent = new ProjectCreationEvent(project.getUuid(), project.getName());
-                    Event.dispatch(projectCreationEvent);
                 } catch (IllegalArgumentException e){
                     LOGGER.debug(e.getMessage());
                     return Response.status(Response.Status.CONFLICT).entity("An inactive Parent cannot be selected as parent").build();

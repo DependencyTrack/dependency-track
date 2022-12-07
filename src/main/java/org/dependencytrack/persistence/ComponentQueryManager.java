@@ -586,6 +586,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setPurlCoordinates(entry.getValue().getPurlCoordinates());
             transientComponent.setDependencyGraph(entry.getValue().getDependencyGraph());
             transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
+            final RepositoryType type = RepositoryType.resolve(transientComponent.getPurl());
+            if (RepositoryType.UNSUPPORTED != type) {
+                final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, transientComponent.getPurl().getNamespace(), transientComponent.getPurl().getName());
+                transientComponent.setRepositoryMeta(repoMetaComponent);
+            }
             dependencyGraph.put(entry.getKey(), transientComponent);
         }
         return dependencyGraph;

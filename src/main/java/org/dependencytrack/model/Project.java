@@ -47,6 +47,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
+import javax.jdo.annotations.Serialized;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -249,6 +250,11 @@ public class Project implements Serializable {
     @JsonIgnore
     private List<Team> accessTeams;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "EXTERNAL_REFERENCES")
+    @Serialized
+    private List<ExternalReference> externalReferences;
+
     @JsonProperty("parentUuid")
     private UUID getParentUuid() {
         return (this.getParent() == null) ? null : this.getParent().getUuid();
@@ -427,6 +433,14 @@ public class Project implements Serializable {
 
     public void setLastInheritedRiskScore(Double lastInheritedRiskScore) {
         this.lastInheritedRiskScore = lastInheritedRiskScore;
+    }
+
+    public List<ExternalReference> getExternalReferences() {
+        return externalReferences;
+    }
+
+    public void setExternalReferences(List<ExternalReference> externalReferences) {
+        this.externalReferences = externalReferences;
     }
 
     public Boolean isActive() {

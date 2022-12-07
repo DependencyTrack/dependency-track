@@ -26,6 +26,8 @@ import alpine.event.framework.Event;
 import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
@@ -38,6 +40,7 @@ import kong.unirest.HttpStatus;
 import kong.unirest.JsonNode;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.common.ConfigKey;
@@ -48,6 +51,8 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.snyk.SnykParser;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
@@ -124,6 +129,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     private String apiOrgId;
     private String apiToken;
     private String apiVersion;
+    private volatile String apiVersionSunset;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     /**
@@ -245,6 +251,21 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
+        if (apiVersionSunset != null) {
+            final var message = """
+                    Snyk is indicating that the API version %s has been deprecated and will no longer \
+                    be supported as of %s. Please migrate to a newer version of the Snyk API. \
+                    Refer to https://apidocs.snyk.io for supported versions.
+                    """.formatted(apiVersion, apiVersionSunset);
+            LOGGER.warn(message);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.SYSTEM)
+                    .level(NotificationLevel.WARNING)
+                    .group(NotificationGroup.ANALYZER)
+                    .title("Snyk API version %s is deprecated".formatted(apiVersion))
+                    .content(message));
+        }
     }
 
     /**
@@ -275,7 +296,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 .header(HttpHeaders.ACCEPT, "application/vnd.api+json");
 
         final HttpResponse<JsonNode> response = RETRY.executeSupplier(request::asJson);
-        checkSunsetHeader(response);
+        apiVersionSunset = StringUtils.trimToNull(response.getHeaders().getFirst("Sunset"));
         if (response.isSuccess()) {
             handle(component, response.getBody().getObject());
         } else {
@@ -288,17 +309,6 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             } else {
                 handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
             }
-        }
-    }
-
-    private void checkSunsetHeader(final HttpResponse<?> response) {
-        final String sunsetHeader = response.getHeaders().getFirst("Sunset");
-        if (sunsetHeader != null && !sunsetHeader.isBlank()) {
-            LOGGER.warn("""
-                    Snyk is indicating that the API version %s has been deprecated and will no longer \
-                    be supported as of %s. Please migrate to a newer version of the Snyk API. \
-                    Refer to https://apidocs.snyk.io for supported versions.
-                    """.formatted(apiVersion, sunsetHeader));
         }
     }
 

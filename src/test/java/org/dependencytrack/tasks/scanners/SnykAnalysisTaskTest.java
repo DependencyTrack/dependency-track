@@ -1,6 +1,11 @@
 package org.dependencytrack.tasks.scanners;
 
 import alpine.model.IConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
+import alpine.notification.NotificationService;
+import alpine.notification.Subscriber;
+import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
 import org.apache.http.HttpHeaders;
@@ -13,6 +18,8 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -25,11 +32,14 @@ import org.mockserver.verify.VerificationTimes;
 import javax.jdo.Query;
 import javax.json.Json;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_VERSION;
@@ -46,6 +56,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @BeforeClass
     public static void beforeClass() {
+        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
         mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
@@ -86,11 +97,13 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
     @After
     public void tearDown() {
         mockServer.reset();
+        NOTIFICATIONS.clear();
     }
 
     @AfterClass
     public static void afterClass() {
         mockServer.stop();
+        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
     @Test
@@ -510,6 +523,72 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(vulnerabilities).hasSize(1);
 
         mockServer.verifyZeroInteractions();
+    }
+
+    @Test
+    public void testAnalyzeWithDeprecatedApiVersion() throws Exception {
+        mockServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/rest/.+"))
+                .respond(response()
+                        .withStatusCode(200)
+                        .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
+                        .withHeader("Sunset", "Wed, 11 Nov 2021 11:11:11 GMT")
+                        .withBody("""
+                                {
+                                   "jsonapi": {
+                                     "version": "1.0"
+                                   },
+                                   "data": [],
+                                   "links": {
+                                     "self": "/orgs/da563045-a462-421a-ae47-53239fe46612/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues?version=2022-11-14&limit=1000&offset=0"
+                                   },
+                                   "meta": {
+                                     "package": {
+                                       "name": "woodstox-core",
+                                       "type": "maven",
+                                       "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@6.4.0",
+                                       "version": "6.4.0"
+                                     }
+                                   }
+                                 }
+                                """));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.woodstox");
+        component.setName("woodstox-core");
+        component.setVersion("5.0.0");
+        component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
+        component = qm.createComponent(component, false);
+
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() > 0, Duration.ofSeconds(5));
+        assertThat(NOTIFICATIONS).anySatisfy(notification -> {
+            assertThat(notification.getScope()).isEqualTo(NotificationScope.SYSTEM.name());
+            assertThat(notification.getLevel()).isEqualTo(NotificationLevel.WARNING);
+            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.ANALYZER.name());
+            assertThat(notification.getTitle()).isNotEmpty();
+            assertThat(notification.getContent()).contains("Wed, 11 Nov 2021 11:11:11 GMT");
+            assertThat(notification.getSubject()).isNull();
+        });
+    }
+
+    private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
+
+    public static class NotificationSubscriber implements Subscriber {
+
+        @Override
+        public void inform(final Notification notification) {
+            NOTIFICATIONS.add(notification);
+        }
+
     }
 
 }

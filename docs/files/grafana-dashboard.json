@@ -576,6 +576,7 @@
             }
           },
           "mappings": [],
+          "max": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -736,6 +737,18 @@
           "legendFormat": "Non-Heap",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"heap\"})",
+          "hide": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "C"
         }
       ],
       "title": "Memory Usage",

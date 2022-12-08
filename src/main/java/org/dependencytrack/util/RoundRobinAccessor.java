@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RoundRobinAccessor<T> {
 
     private final List<T> list;
-    final AtomicInteger index;
+    private final AtomicInteger index;
 
     public RoundRobinAccessor(final List<T> list) {
         this(list, new AtomicInteger());

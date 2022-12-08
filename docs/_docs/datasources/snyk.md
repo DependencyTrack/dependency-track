@@ -24,7 +24,7 @@ To configure the Snyk integration, navigate to *Analyzers* -> *Snyk (Beta)* in t
 | API Token | Authentication token for the REST API. <br/>Multiple tokens may be provided by separating them with semicolons (see [Using multiple Tokens](#using-multiple-tokens)). <br/>Refer to [Authentication for API] for details on how to generate tokens. |
 | API Version | Version of the Snyk REST API to use. |
 
-![Snyk Configuration](../../images/snyk-configuration.png)
+![Snyk Configuration](../../images/screenshots/snyk-configuration.png)
 
 ### Rate Limiting
 

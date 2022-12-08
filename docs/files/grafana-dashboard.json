@@ -73,6 +73,19 @@
   "liveNow": false,
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 47,
+      "panels": [],
+      "title": "Summary",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -95,6 +108,12 @@
           "unit": "s"
         },
         "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 1
       },
       "id": 20,
       "options": {
@@ -162,7 +181,7 @@
         "h": 6,
         "w": 5,
         "x": 6,
-        "y": 0
+        "y": 1
       },
       "id": 22,
       "options": {
@@ -230,7 +249,7 @@
         "h": 3,
         "w": 5,
         "x": 11,
-        "y": 0
+        "y": 1
       },
       "id": 24,
       "links": [],
@@ -296,7 +315,7 @@
         "h": 6,
         "w": 4,
         "x": 16,
-        "y": 0
+        "y": 1
       },
       "id": 16,
       "options": {
@@ -354,7 +373,7 @@
         "h": 6,
         "w": 4,
         "x": 20,
-        "y": 0
+        "y": 1
       },
       "id": 38,
       "options": {
@@ -412,7 +431,7 @@
         "h": 3,
         "w": 6,
         "x": 0,
-        "y": 3
+        "y": 4
       },
       "id": 40,
       "options": {
@@ -485,7 +504,7 @@
         "h": 3,
         "w": 5,
         "x": 11,
-        "y": 3
+        "y": 4
       },
       "id": 45,
       "links": [],
@@ -530,7 +549,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 7
       },
       "id": 32,
       "panels": [],
@@ -576,6 +595,7 @@
             }
           },
           "mappings": [],
+          "max": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -593,7 +613,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 34,
       "options": {
@@ -695,7 +715,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 7
+        "y": 8
       },
       "id": 36,
       "options": {
@@ -721,7 +741,7 @@
           },
           "editorMode": "code",
           "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"heap\"})",
-          "legendFormat": "Heap",
+          "legendFormat": "Heap Usage",
           "range": true,
           "refId": "A"
         },
@@ -736,6 +756,18 @@
           "legendFormat": "Non-Heap",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"heap\"})",
+          "hide": false,
+          "legendFormat": "Heap Size",
+          "range": true,
+          "refId": "C"
         }
       ],
       "title": "Memory Usage",
@@ -796,7 +828,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 16
       },
       "id": 26,
       "options": {
@@ -896,7 +928,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 16
       },
       "id": 28,
       "options": {
@@ -935,7 +967,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 24
       },
       "id": 10,
       "panels": [],
@@ -997,7 +1029,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 24
+        "y": 25
       },
       "id": 6,
       "options": {
@@ -1098,7 +1130,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 24
+        "y": 25
       },
       "id": 4,
       "options": {
@@ -1203,7 +1235,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 24
+        "y": 25
       },
       "id": 30,
       "options": {
@@ -1309,7 +1341,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 33
       },
       "id": 2,
       "options": {
@@ -1351,7 +1383,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 43
       },
       "id": 12,
       "panels": [],
@@ -1417,7 +1449,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 43
+        "y": 44
       },
       "id": 42,
       "options": {
@@ -1506,7 +1538,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 43
+        "y": 44
       },
       "id": 43,
       "options": {
@@ -1599,7 +1631,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 43
+        "y": 44
       },
       "id": 44,
       "options": {
@@ -1696,7 +1728,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 52
       },
       "id": 8,
       "options": {

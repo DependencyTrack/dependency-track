@@ -722,7 +722,7 @@
           },
           "editorMode": "code",
           "expr": "sum(jvm_memory_used_bytes{instance=\"$instance\", area=\"heap\"})",
-          "legendFormat": "Heap",
+          "legendFormat": "Heap Usage",
           "range": true,
           "refId": "A"
         },
@@ -746,7 +746,7 @@
           "editorMode": "code",
           "expr": "sum(jvm_memory_max_bytes{instance=\"$instance\", area=\"heap\"})",
           "hide": false,
-          "legendFormat": "__auto",
+          "legendFormat": "Heap Size",
           "range": true,
           "refId": "C"
         }

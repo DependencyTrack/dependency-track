@@ -46,25 +46,29 @@ public class RoundRobinAccessorTest {
         final var accessor = new RoundRobinAccessor<>(List.of("foo", "bar", "baz"));
 
         final var countDownLatch = new CountDownLatch(3_000_000);
-        final var executor = Executors.newFixedThreadPool(10);
 
         final var fooCounter = new AtomicInteger();
         final var barCounter = new AtomicInteger();
         final var bazCounter = new AtomicInteger();
 
-        for (int i = 0; i < 3_000_000; i++) {
-            executor.submit(() -> {
-                switch (accessor.get()) {
-                    case "foo" -> fooCounter.incrementAndGet();
-                    case "bar" -> barCounter.incrementAndGet();
-                    case "baz" -> bazCounter.incrementAndGet();
-                }
+        final var executor = Executors.newFixedThreadPool(10);
+        try {
+            for (int i = 0; i < 3_000_000; i++) {
+                executor.submit(() -> {
+                    switch (accessor.get()) {
+                        case "foo" -> fooCounter.incrementAndGet();
+                        case "bar" -> barCounter.incrementAndGet();
+                        case "baz" -> bazCounter.incrementAndGet();
+                    }
 
-                countDownLatch.countDown();
-            });
+                    countDownLatch.countDown();
+                });
+            }
+
+            assertThat(countDownLatch.await(15, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            executor.shutdownNow();
         }
-
-        assertThat(countDownLatch.await(15, TimeUnit.SECONDS)).isTrue();
 
         // Verify that the values have been evenly distributed.
         // Unsure as to how to best test the order here...

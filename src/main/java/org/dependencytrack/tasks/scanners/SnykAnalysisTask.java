@@ -57,6 +57,7 @@ import org.dependencytrack.parser.snyk.SnykParser;
 import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+import org.dependencytrack.util.RoundRobinAccessor;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -69,6 +70,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
@@ -127,7 +129,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
 
     private String apiBaseUrl;
     private String apiOrgId;
-    private String apiToken;
+    private Supplier<String> apiTokenSupplier;
     private String apiVersion;
     private volatile String apiVersionSunset;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
@@ -177,7 +179,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 apiVersion = apiVersionProperty.getPropertyValue();
 
                 try {
-                    apiToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                    final String decryptedToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                    apiTokenSupplier = createTokenSupplier(decryptedToken);
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred decrypting the Snyk API Token; Skipping", ex);
                     return;
@@ -292,14 +295,14 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
         final String encodedPurl = URLEncoder.encode(component.getPurl().getCoordinates(), StandardCharsets.UTF_8);
         final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s".formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
         final GetRequest request = UnirestFactory.getUnirestInstance().get(requestUrl)
-                .header(HttpHeaders.AUTHORIZATION, apiToken)
+                .header(HttpHeaders.AUTHORIZATION, "token " + apiTokenSupplier.get())
                 .header(HttpHeaders.ACCEPT, "application/vnd.api+json");
 
         final HttpResponse<JsonNode> response = RETRY.executeSupplier(request::asJson);
         apiVersionSunset = StringUtils.trimToNull(response.getHeaders().getFirst("Sunset"));
         if (response.isSuccess()) {
             handle(component, response.getBody().getObject());
-        } else {
+        } else if (response.getBody() != null) {
             final List<SnykError> errors = new SnykParser().parseErrors(response.getBody().getObject());
             if (!errors.isEmpty()) {
                 LOGGER.error("Analysis of component %s failed with HTTP status %d: \n%s"
@@ -309,6 +312,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             } else {
                 handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
             }
+        } else {
+            handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
         }
     }
 
@@ -360,6 +365,17 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             apiBaseUrl = UrlUtil.normalize(property.getPropertyValue());
             return Optional.of(apiBaseUrl);
         }
+    }
+
+    private Supplier<String> createTokenSupplier(final String tokenValue) {
+        final String[] tokens = tokenValue.split(";");
+        if (tokens.length > 1) {
+            LOGGER.debug("Will use %d tokens in round robin".formatted(tokens.length));
+            final var roundRobinAccessor = new RoundRobinAccessor<>(List.of(tokens));
+            return roundRobinAccessor::get;
+        }
+
+        return apiTokenSupplier = () -> tokenValue;
     }
 
 }

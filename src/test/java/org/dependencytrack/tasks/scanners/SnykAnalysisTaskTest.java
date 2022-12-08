@@ -1,5 +1,24 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.tasks.scanners;
 
+import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
@@ -33,6 +52,7 @@ import javax.jdo.Query;
 import javax.json.Json;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -578,6 +598,45 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
             assertThat(notification.getContent()).contains("Wed, 11 Nov 2021 11:11:11 GMT");
             assertThat(notification.getSubject()).isNull();
         });
+    }
+
+    @Test
+    public void testAnalyzeWithMultipleTokens() throws Exception {
+        final ConfigProperty configProperty =  qm.getConfigProperty(
+                SCANNER_SNYK_API_TOKEN.getGroupName(),
+                SCANNER_SNYK_API_TOKEN.getPropertyName());
+       configProperty.setPropertyValue(DataEncryption.encryptAsString("token1;token2;token3;token4;token5"));
+       qm.persist(configProperty);
+
+        mockServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/rest/.+"))
+                .respond(response()
+                        .withStatusCode(404));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        final var components = new ArrayList<Component>();
+        for (int i = 0; i < 100; i++) {
+            var component = new Component();
+            component.setProject(project);
+            component.setGroup("com.fasterxml.woodstox");
+            component.setName("component" + i);
+            component.setVersion("5.0.0");
+            component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
+            components.add(qm.createComponent(component, false));
+        }
+
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(components));
+
+        mockServer.verify(request().withHeader("Authorization", "token token1"), VerificationTimes.exactly(20));
+        mockServer.verify(request().withHeader("Authorization", "token token2"), VerificationTimes.exactly(20));
+        mockServer.verify(request().withHeader("Authorization", "token token3"), VerificationTimes.exactly(20));
+        mockServer.verify(request().withHeader("Authorization", "token token4"), VerificationTimes.exactly(20));
+        mockServer.verify(request().withHeader("Authorization", "token token5"), VerificationTimes.exactly(20));
     }
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();

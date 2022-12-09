@@ -25,6 +25,8 @@ Exposed metrics include various general purpose system and JVM statistics (CPU a
 garbage collector activity etc.), but also some related to Dependency-Track's internal event and notification system.
 More metrics covering other areas of Dependency-Track will be added in future versions.
 
+#### Event and Notification System
+
 Event and notification metrics include the following:
 
 ```yaml
@@ -93,6 +95,20 @@ Executor metrics are a good way to monitor how busy an API server instance is, a
 doing keeping up with the work it's being exposed to. For example, a constantly maxed-out `executor_active_threads` 
 value combined with a high number of `executor_queued_tasks` may indicate that the configured `alpine.worker.pool.size` 
 is too small for the workload at hand.
+
+#### Retries
+
+Dependency-Track will occasionally retry requests to external services. Metrics about this behavior are
+exposed in the following format:
+
+```
+resilience4j_retry_calls_total{kind="successful_with_retry",name="snyk-api",} 42.0
+resilience4j_retry_calls_total{kind="failed_without_retry",name="snyk-api",} 0.0
+resilience4j_retry_calls_total{kind="failed_with_retry",name="snyk-api",} 0.0
+resilience4j_retry_calls_total{kind="successful_without_retry",name="snyk-api",} 9014.0
+```
+
+Where `name` describes the remote endpoint that Dependency-Track uses retries for.
 
 ### Grafana Dashboard
 

@@ -21,20 +21,23 @@ package org.dependencytrack.tasks.scanners;
 import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.common.metrics.Metrics;
+import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
-import io.github.resilience4j.ratelimiter.RateLimiter;
-import io.github.resilience4j.ratelimiter.RateLimiterConfig;
-import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpResponse;
+import kong.unirest.HttpStatus;
 import kong.unirest.JsonNode;
-import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -48,21 +51,29 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.parser.snyk.SnykParser;
+import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
+import org.dependencytrack.util.RoundRobinAccessor;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BASE_URL;
+import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
 
 /**
  * Subscriber task that performs an analysis of component using Snyk vulnerability REST API.
@@ -72,20 +83,42 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BAS
 public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements CacheableScanTask, Subscriber {
 
     private static final Logger LOGGER = Logger.getLogger(SnykAnalysisTask.class);
-
-    private static final RateLimiterConfig config = RateLimiterConfig.custom()
-            .limitForPeriod(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_FOR_PERIOD))
-            .timeoutDuration(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_TIMEOUT_DURATION)))
-            .limitRefreshPeriod(Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_LIMIT_REFRESH_PERIOD)))
-            .build();
-    RateLimiterRegistry registry = RateLimiterRegistry.of(config);
-    RateLimiter limiter = registry.rateLimiter("SnykAnalysis");
+    private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
+            PackageURL.StandardTypes.CARGO,
+            "cocoapods", // Not defined in StandardTypes
+            PackageURL.StandardTypes.COMPOSER,
+            PackageURL.StandardTypes.GEM,
+            PackageURL.StandardTypes.GENERIC,
+            PackageURL.StandardTypes.HEX,
+            PackageURL.StandardTypes.MAVEN,
+            PackageURL.StandardTypes.NPM,
+            PackageURL.StandardTypes.NUGET,
+            PackageURL.StandardTypes.PYPI
+    );
+    private static final Retry RETRY;
     private static final ExecutorService EXECUTOR;
 
     static {
+        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<HttpResponse<?>>custom()
+                .intervalFunction(ofExponentialBackoff(
+                        Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_INITIAL_DURATION_SECONDS)),
+                        Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
+                        Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MAX_DURATION_SECONDS))
+                ))
+                .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MAX_ATTEMPTS))
+                .retryOnException(exception -> false)
+                .retryOnResult(response -> HttpStatus.TOO_MANY_REQUESTS == response.getStatus())
+                .build());
+        RETRY = retryRegistry.retry("snyk-api");
+        RETRY.getEventPublisher()
+                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s".formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
+                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s".formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
+        TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
+                .bindTo(Metrics.getRegistry());
+
         // The number of threads to be used for Snyk analyzer are configurable.
         // Default is 10. Can be set based on user requirements.
-        final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_BATCH_SIZE);
+        final int threadPoolSize = Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_THREAD_POOL_SIZE);
         final var threadFactory = new BasicThreadFactory.Builder()
                 .namingPattern(SnykAnalysisTask.class.getSimpleName() + "-%d")
                 .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
@@ -95,20 +128,17 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     }
 
     private String apiBaseUrl;
-    private String apiEndPoint = "/issues?";
-    private String apiToken;
-    private Long duration = 0L;
+    private String apiOrgId;
+    private Supplier<String> apiTokenSupplier;
+    private String apiVersion;
+    private volatile String apiVersionSunset;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
-
-    public AnalyzerIdentity getAnalyzerIdentity() {
-        return AnalyzerIdentity.SNYK_ANALYZER;
-    }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void inform(final Event e) {
-        Instant start = Instant.now();
         if (e instanceof final SnykAnalysisEvent event) {
             if (!super.isEnabled(ConfigPropertyConstants.SCANNER_SNYK_ENABLED)) {
                 return;
@@ -126,31 +156,33 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                         ConfigPropertyConstants.SCANNER_SNYK_API_VERSION.getGroupName(),
                         ConfigPropertyConstants.SCANNER_SNYK_API_VERSION.getPropertyName()
                 );
-                if (apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
-                    LOGGER.error("Please provide API token for use with Snyk");
+
+                if (getApiBaseUrl().isEmpty()) {
+                    LOGGER.warn("No API base URL provided; Skipping");
                     return;
                 }
                 if (orgIdProperty == null || orgIdProperty.getPropertyValue() == null) {
-                    LOGGER.error("Please provide organization ID to access Snyk");
+                    LOGGER.warn("No API organization ID provided; Skipping");
+                    return;
+                }
+                if (apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
+                    LOGGER.warn("No API token provided; Skipping");
                     return;
                 }
                 if (apiVersionProperty == null || apiVersionProperty.getPropertyValue() == null) {
-                    LOGGER.error("Please provide Snyk API version");
+                    LOGGER.warn("No API version provided; Skipping");
                     return;
                 }
-                String baseUrl = qm.getConfigProperty(
-                        SCANNER_SNYK_BASE_URL.getGroupName(),
-                        SCANNER_SNYK_BASE_URL.getPropertyName()).getPropertyValue();
-                if (baseUrl != null && baseUrl.endsWith("/")) {
-                    baseUrl = StringUtils.chop(baseUrl);
-                }
+
+                apiBaseUrl = getApiBaseUrl().get();
+                apiOrgId = orgIdProperty.getPropertyValue();
+                apiVersion = apiVersionProperty.getPropertyValue();
+
                 try {
-                    apiToken = "token " + DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
-                    apiEndPoint += "version=" + apiVersionProperty.getPropertyValue().trim();
-                    String orgId = orgIdProperty.getPropertyValue();
-                    apiBaseUrl = baseUrl + "/rest/orgs/" + orgId + "/packages/";
+                    final String decryptedToken = DataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+                    apiTokenSupplier = createTokenSupplier(decryptedToken);
                 } catch (Exception ex) {
-                    LOGGER.error("An error occurred decrypting the Snyk API Token. Skipping", ex);
+                    LOGGER.error("An error occurred decrypting the Snyk API Token; Skipping", ex);
                     return;
                 }
             }
@@ -159,70 +191,57 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             if (!event.getComponents().isEmpty()) {
                 analyze(event.getComponents());
             }
-            Instant end = Instant.now();
             LOGGER.info("Snyk vulnerability analysis complete");
-            long timeElapsed = Duration.between(start, end).toMillis();
-            timeElapsed += duration;
-            LOGGER.info("Time taken to complete snyk vulnerability analysis task: " + timeElapsed + " milliseconds");
         }
     }
 
     /**
-     * Determines if the {@link SnykAnalysisTask} is capable of analyzing the specified Component.
-     *
-     * @param component the Component to analyze
-     * @return true if SnykAnalysisTask should analyze, false if not
+     * {@inheritDoc}
      */
+    @Override
+    public AnalyzerIdentity getAnalyzerIdentity() {
+        return AnalyzerIdentity.SNYK_ANALYZER;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean isCapable(final Component component) {
-        return component.getPurl() != null
+        final boolean hasValidPurl = component.getPurl() != null
                 && component.getPurl().getScheme() != null
                 && component.getPurl().getType() != null
                 && component.getPurl().getName() != null
                 && component.getPurl().getVersion() != null;
+
+        return hasValidPurl && SUPPORTED_PURL_TYPES.stream()
+                .anyMatch(purlType -> purlType.equals(component.getPurl().getType()));
     }
 
     /**
-     * Analyzes a list of Components.
-     *
-     * @param components a list of Components
+     * {@inheritDoc}
      */
+    @Override
     public void analyze(final List<Component> components) {
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        CountDownLatch countDownLatch = new CountDownLatch(components.size());
+        final var countDownLatch = new CountDownLatch(components.size());
         for (final Component component : components) {
-            Runnable analysisUtil = () -> {
-                try {
-                    final String snykUrl = apiBaseUrl + URLEncoder.encode(component.getPurlCoordinates().toString(), StandardCharsets.UTF_8) + apiEndPoint;
-                    try {
-                        final GetRequest request = ui.get(snykUrl)
-                                .header(HttpHeaders.AUTHORIZATION, this.apiToken);
-                        final HttpResponse<JsonNode> jsonResponse = request.asJson();
-                        if (jsonResponse.getStatus() == 200 || jsonResponse.getStatus() == 404) {
-                            if (jsonResponse.getStatus() == 200) {
-                                handle(component, jsonResponse.getBody().getObject(), jsonResponse.getStatus());
-                            } else if (jsonResponse.getStatus() == 404) {
-                                handle(component, null, jsonResponse.getStatus());
-                            }
-                        } else {
-                            handleUnexpectedHttpResponse(LOGGER, apiBaseUrl, jsonResponse.getStatus(), jsonResponse.getStatusText());
-                        }
-                    } catch (UnirestException e) {
-                        handleRequestException(LOGGER, e);
-                    }
-                } finally {
-                    countDownLatch.countDown();
-                }
-            };
-            analysisUtil = RateLimiter.decorateRunnable(limiter, analysisUtil);
-            Instant startThread = Instant.now();
-            if (!isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString())) {
-                EXECUTOR.execute(analysisUtil);
-            } else {
-                applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
+            if (isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().getCoordinates())) {
+                applyAnalysisFromCache(component);
+                countDownLatch.countDown();
+                continue;
             }
-            Instant endThread = Instant.now();
-            duration += Duration.between(startThread, endThread).toMillis();
+
+            CompletableFuture
+                    .runAsync(() -> analyzeComponent(component), EXECUTOR)
+                    .whenComplete((result, exception) -> {
+                        countDownLatch.countDown();
+
+                        if (exception != null) {
+                            LOGGER.error("An unexpected error occurred while analyzing %s".formatted(component), exception);
+                        }
+                    });
         }
+
         try {
             if (!countDownLatch.await(60, TimeUnit.MINUTES)) {
                 // Depending on the system load, it may take a while for the queued events
@@ -230,61 +249,133 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 // while for the processing of the respective event to complete.
                 // It is unlikely though that either of these situations causes a block for
                 // over 60 minutes. If that happens, the system is under-resourced.
-                LOGGER.debug("The Analysis for project :" + components.get(0).getProject().getName() + "took longer than expected");
+                LOGGER.warn("The Analysis for project :" + components.get(0).getProject().getName() + "took longer than expected");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-    }
 
-
-    public void handle(Component component, JSONObject object, int responseCode) {
-
-        try (QueryManager qm = new QueryManager()) {
-            if (responseCode == 200) {
-                String purl = null;
-                final JSONObject metaInfo = object.optJSONObject("meta");
-                if (metaInfo != null) {
-                    purl = metaInfo.optJSONObject("package").optString("url");
-                    if (purl == null) {
-                        purl = component.getPurlCoordinates().toString();
-                    }
-                }
-                final JSONArray data = object.optJSONArray("data");
-                if (data != null) {
-                    SnykParser snykParser = new SnykParser();
-                    for (int count = 0; count < data.length(); count++) {
-                        Vulnerability synchronizedVulnerability = snykParser.parse(data, qm, purl, count);
-                        addVulnerabilityToCache(component, synchronizedVulnerability);
-                        final Component componentPersisted = qm.getObjectByUuid(Component.class, component.getUuid());
-                        if (componentPersisted != null && synchronizedVulnerability.getVulnId() != null) {
-                            NotificationUtil.analyzeNotificationCriteria(qm, synchronizedVulnerability, componentPersisted, vulnerabilityAnalysisLevel);
-                            qm.addVulnerability(synchronizedVulnerability, componentPersisted, this.getAnalyzerIdentity());
-                            LOGGER.debug("Snyk vulnerability added : " + synchronizedVulnerability.getVulnId() + " to component " + component.getName());
-                        }
-                        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
-                    }
-                }
-                if (component.getPurl() != null && apiBaseUrl != null) {
-                    updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
-                }
-            } else if (responseCode == 404) {
-                Vulnerability vulnerability = new Vulnerability();
-                addVulnerabilityToCache(component, vulnerability);
-                if (component.getPurl() != null && apiBaseUrl != null) {
-                    updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
-                }
-            }
+        if (apiVersionSunset != null) {
+            final var message = """
+                    Snyk is indicating that the API version %s has been deprecated and will no longer \
+                    be supported as of %s. Please migrate to a newer version of the Snyk API. \
+                    Refer to https://apidocs.snyk.io for supported versions.
+                    """.formatted(apiVersion, apiVersionSunset);
+            LOGGER.warn(message);
+            Notification.dispatch(new Notification()
+                    .scope(NotificationScope.SYSTEM)
+                    .level(NotificationLevel.WARNING)
+                    .group(NotificationGroup.ANALYZER)
+                    .title("Snyk API version %s is deprecated".formatted(apiVersion))
+                    .content(message));
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public boolean shouldAnalyze(PackageURL packageUrl) {
-        return !isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, packageUrl.toString());
+    public boolean shouldAnalyze(final PackageURL packageUrl) {
+        return getApiBaseUrl()
+                .map(baseUrl -> !isCacheCurrent(Vulnerability.Source.SNYK, apiBaseUrl, packageUrl.getCoordinates()))
+                .orElse(false);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void applyAnalysisFromCache(Component component) {
-        applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
+    public void applyAnalysisFromCache(final Component component) {
+        getApiBaseUrl().ifPresent(baseUrl ->
+                applyAnalysisFromCache(Vulnerability.Source.SNYK, apiBaseUrl,
+                        component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
     }
+
+    private void analyzeComponent(final Component component) {
+        final String encodedPurl = URLEncoder.encode(component.getPurl().getCoordinates(), StandardCharsets.UTF_8);
+        final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s".formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
+        final GetRequest request = UnirestFactory.getUnirestInstance().get(requestUrl)
+                .header(HttpHeaders.AUTHORIZATION, "token " + apiTokenSupplier.get())
+                .header(HttpHeaders.ACCEPT, "application/vnd.api+json");
+
+        final HttpResponse<JsonNode> response = RETRY.executeSupplier(request::asJson);
+        apiVersionSunset = StringUtils.trimToNull(response.getHeaders().getFirst("Sunset"));
+        if (response.isSuccess()) {
+            handle(component, response.getBody().getObject());
+        } else if (response.getBody() != null) {
+            final List<SnykError> errors = new SnykParser().parseErrors(response.getBody().getObject());
+            if (!errors.isEmpty()) {
+                LOGGER.error("Analysis of component %s failed with HTTP status %d: \n%s"
+                        .formatted(component.getPurl(), response.getStatus(), errors.stream()
+                                .map(error -> " - %s: %s (%s)".formatted(error.title(), error.detail(), error.code()))
+                                .collect(Collectors.joining("\n"))));
+            } else {
+                handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
+            }
+        } else {
+            handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
+        }
+    }
+
+    private void handle(final Component component, final JSONObject object) {
+        try (QueryManager qm = new QueryManager()) {
+            String purl = null;
+            final JSONObject metaInfo = object.optJSONObject("meta");
+            if (metaInfo != null) {
+                purl = metaInfo.optJSONObject("package").optString("url");
+                if (purl == null) {
+                    purl = component.getPurlCoordinates().toString();
+                }
+            }
+            final JSONArray data = object.optJSONArray("data");
+            if (data != null && !data.isEmpty()) {
+                final var snykParser = new SnykParser();
+                for (int count = 0; count < data.length(); count++) {
+                    Vulnerability synchronizedVulnerability = snykParser.parse(data, qm, purl, count);
+                    addVulnerabilityToCache(component, synchronizedVulnerability);
+                    final Component componentPersisted = qm.getObjectByUuid(Component.class, component.getUuid());
+                    if (componentPersisted != null && synchronizedVulnerability.getVulnId() != null) {
+                        NotificationUtil.analyzeNotificationCriteria(qm, synchronizedVulnerability, componentPersisted, vulnerabilityAnalysisLevel);
+                        qm.addVulnerability(synchronizedVulnerability, componentPersisted, this.getAnalyzerIdentity());
+                        LOGGER.debug("Snyk vulnerability added : " + synchronizedVulnerability.getVulnId() + " to component " + component.getName());
+                    }
+                    Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+                }
+            } else {
+                addNoVulnerabilityToCache(component);
+            }
+            updateAnalysisCacheStats(qm, Vulnerability.Source.SNYK, apiBaseUrl, component.getPurl().getCoordinates(), component.getCacheResult());
+        }
+    }
+
+    private Optional<String> getApiBaseUrl() {
+        if (apiBaseUrl != null) {
+            return Optional.of(apiBaseUrl);
+        }
+
+        try (final var qm = new QueryManager()) {
+            final ConfigProperty property = qm.getConfigProperty(
+                    ConfigPropertyConstants.SCANNER_SNYK_BASE_URL.getGroupName(),
+                    ConfigPropertyConstants.SCANNER_SNYK_BASE_URL.getPropertyName()
+            );
+            if (property == null) {
+                return Optional.empty();
+            }
+
+            apiBaseUrl = UrlUtil.normalize(property.getPropertyValue());
+            return Optional.of(apiBaseUrl);
+        }
+    }
+
+    private Supplier<String> createTokenSupplier(final String tokenValue) {
+        final String[] tokens = tokenValue.split(";");
+        if (tokens.length > 1) {
+            LOGGER.debug("Will use %d tokens in round robin".formatted(tokens.length));
+            final var roundRobinAccessor = new RoundRobinAccessor<>(List.of(tokens));
+            return roundRobinAccessor::get;
+        }
+
+        return apiTokenSupplier = () -> tokenValue;
+    }
+
 }

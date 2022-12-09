@@ -14,6 +14,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 
 import java.math.BigDecimal;
@@ -74,6 +75,33 @@ public class SnykParser {
             qm.persist(synchronizedVulnerability);
         }
         return synchronizedVulnerability;
+    }
+
+    public List<SnykError> parseErrors(final JSONObject jsonResponse) {
+        if (jsonResponse == null) {
+            return Collections.emptyList();
+        }
+
+        final JSONArray errorsArray = jsonResponse.optJSONArray("errors");
+        if (errorsArray == null) {
+            return Collections.emptyList();
+        }
+
+        final var errors = new ArrayList<SnykError>();
+        for (int i = 0; i < errorsArray.length(); i++) {
+            final JSONObject errorObject = errorsArray.optJSONObject(i);
+            if (errorObject == null) {
+                continue;
+            }
+
+            errors.add(new SnykError(
+                    errorObject.optString("code"),
+                    errorObject.optString("title"),
+                    errorObject.optString("detail")
+            ));
+        }
+
+        return errors;
     }
 
     public List<VulnerabilityAlias> computeAliases(Vulnerability vulnerability, QueryManager qm, JSONArray problems) {

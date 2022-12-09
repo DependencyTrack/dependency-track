@@ -96,14 +96,12 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
                     if (vulns != null) {
                         for (JsonNumber vulnId : vulns.getValuesAs(JsonNumber.class)) {
                             final Vulnerability vulnerability;
-                            if (vulnId.longValue() != 0) {
-                                vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
-                                final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
-                                if (c == null) continue;
-                                if (vulnerability != null) {
-                                    NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
-                                    qm.addVulnerability(vulnerability, c, analyzerIdentity);
-                                }
+                            vulnerability = qm.getObjectById(Vulnerability.class, vulnId.longValue());
+                            final Component c = qm.getObjectByUuid(Component.class, component.getUuid());
+                            if (c == null) continue;
+                            if (vulnerability != null) {
+                                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
+                                qm.addVulnerability(vulnerability, c, analyzerIdentity);
                             }
                         }
                     }
@@ -128,6 +126,12 @@ public abstract class BaseComponentAnalyzerTask implements ScanTask {
             final JsonArray vulns = vulnsBuilder.add(Json.createValue(vulnerability.getId())).build();
             component.setCacheResult(Json.createObjectBuilder(result).add("vulnIds", vulns).build());
         }
+    }
+
+    protected void addNoVulnerabilityToCache(final Component component) {
+        component.setCacheResult(Json.createObjectBuilder()
+                .add("vulnIds", Json.createArrayBuilder())
+                .build());
     }
 
     protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode,

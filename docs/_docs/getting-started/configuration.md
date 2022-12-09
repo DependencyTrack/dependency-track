@@ -373,26 +373,29 @@ alpine.oidc.teams.claim=groups
 # Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
 # The thread pool will only be used when Snyk integration is enabled.
-# A high number may result in a quicker excession of API rate limits, 
-# while a number that is too low may result in vulnerability analyses taking too long.
-snyk.thread.batch.size=10
+# A high number may result in quicker exceeding of API rate limits,
+# while a number that is too low may result in vulnerability analyses taking longer.
+snyk.thread.pool.size=10
 
 # Optional
-# Defines the maximum number of requests that the Snyk analyzer would make in a given period. 
-# The default value is 1500
-snyk.limit.for.period=1500
+# Defines the maximum amount of retries to perform for each request to the Snyk API.
+# Retries are performed with increasing delays between attempts using an exponential backoff strategy.
+# The initial duration defined in snyk.retry.exponential.backoff.initial.duration.seconds will be
+# multiplied with the value defined in snyk.retry.exponential.backoff.multiplier after each retry attempt,
+# until the maximum duration defined in snyk.retry.exponential.backoff.max.duration.seconds is reached.
+snyk.retry.max.attempts=6
 
 # Optional
-# Defines the maximum number of seconds the thread will wait before timing out.This value is in seconds.
-# Currently the Snyk Analyzer is multithreaded and each thread waits for the permission from the rate limiter.
-# The default value is 60
-snyk.thread.timeout.duration=60
+# Defines the multiplier for the exponential backoff retry strategy.
+snyk.retry.exponential.backoff.multiplier=2
 
 # Optional
-# Defines the time after which the number of permissions are refreshed to the set value by the rate limiter.
-# The rate limiter would refresh the number of permissions available after every "limit refresh period".
-# This value is in seconds. The default value is 60
-snyk.limit.refresh.period=60
+# Defines the duration in seconds to wait before attempting the first retry.
+snyk.retry.exponential.backoff.initial.duration.seconds=1
+
+# Optional
+# Defines the maximum duration in seconds to wait before attempting the next retry.
+snyk.retry.exponential.backoff.max.duration.seconds=60
 
 # Optional
 #Defines the maximum number of purl sent in a single request to OSS Index.

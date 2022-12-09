@@ -354,6 +354,10 @@ public class Component implements Serializable {
     @JsonIgnore
     private transient JsonObject cacheResult;
 
+    private transient List<Component> dependencyGraph;
+
+    private transient boolean expandDependencyGraph;
+
     public long getId() {
         return id;
     }
@@ -765,6 +769,22 @@ public class Component implements Serializable {
 
     public void setCacheResult(JsonObject cacheResult) {
         this.cacheResult = cacheResult;
+    }
+
+    public List<Component> getDependencyGraph() {
+        return dependencyGraph;
+    }
+
+    public void setDependencyGraph(List<Component> dependencyGraph) {
+        this.dependencyGraph = dependencyGraph;
+    }
+
+    public boolean isExpandDependencyGraph() {
+        return expandDependencyGraph;
+    }
+
+    public void setExpandDependencyGraph(boolean expandDependencyGraph) {
+        this.expandDependencyGraph = expandDependencyGraph;
     }
 
     @Override

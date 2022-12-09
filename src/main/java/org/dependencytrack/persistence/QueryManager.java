@@ -506,6 +506,10 @@ public class QueryManager extends AlpineQueryManager {
         getComponentQueryManager().recursivelyDelete(component, commitIndex);
     }
 
+    public List<Component> getDependencyGraphForComponent(Project project, Component component) {
+        return getComponentQueryManager().getDependencyGraphForComponent(project, component);
+    }
+
     public PaginatedResult getLicenses() {
         return getLicenseQueryManager().getLicenses();
     }

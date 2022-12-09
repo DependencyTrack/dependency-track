@@ -262,6 +262,9 @@ public class Project implements Serializable {
 
     private transient ProjectMetrics metrics;
 
+    @JsonIgnore
+    private transient List<Component> dependencyGraph;
+
     public long getId() {
         return id;
     }
@@ -472,6 +475,14 @@ public class Project implements Serializable {
             this.accessTeams = new ArrayList<>();
         }
         this.accessTeams.add(accessTeam);
+    }
+
+    public List<Component> getDependencyGraph() {
+        return dependencyGraph;
+    }
+
+    public void setDependencyGraph(List<Component> dependencyGraph) {
+        this.dependencyGraph = dependencyGraph;
     }
 
     @Override

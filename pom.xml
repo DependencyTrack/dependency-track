@@ -85,6 +85,7 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.cpe-parser.version>2.0.2</lib.cpe-parser.version>
         <lib.cvss-calculator.version>1.4.1</lib.cvss-calculator.version>
+        <lib.owasp-rr-calculator.version>1.0.1-SNAPSHOT</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>7.3.0</lib.cyclonedx-java.version>
         <lib.jaxb.runtime.version>2.3.6</lib.jaxb.runtime.version>
         <lib.lucene.version>8.11.2</lib.lucene.version>
@@ -94,6 +95,7 @@
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
         <lib.woodstox.version>6.4.0</lib.woodstox.version>
+        <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.1.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -144,6 +146,12 @@
             <groupId>us.springett</groupId>
             <artifactId>cvss-calculator</artifactId>
             <version>${lib.cvss-calculator.version}</version>
+        </dependency>
+        <!-- OWASP Risk Rating calculator -->
+        <dependency>
+            <groupId>us.springett</groupId>
+            <artifactId>owasp-risk-rating-calculator</artifactId>
+            <version>${lib.owasp-rr-calculator.version}</version>
         </dependency>
         <!-- CPE Parser -->
         <dependency>
@@ -304,6 +312,11 @@
             <artifactId>junit</artifactId>
             <version>${lib.junit.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>pl.pragmatists</groupId>
+            <artifactId>JUnitParams</artifactId>
+            <version>${lib.junit-params.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>

@@ -51,6 +51,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
+import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONArray;
 
 import java.util.ArrayList;
@@ -589,7 +590,15 @@ public class ModelConverter {
             }
             cdxVulnerability.addRating(rating);
         }
-        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null) {
+        if (vulnerability.getOwaspLikelihoodScore() != null && vulnerability.getOwaspTechnicalImpactScore() != null && vulnerability.getOwaspBusinessImpactScore() != null) {
+            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            rating.setSeverity(convertDtSeverityToCdxSeverity(VulnerabilityUtil.normalizedOwaspScore(vulnerability.getOwaspLikelihoodScore().doubleValue(), vulnerability.getOwaspTechnicalImpactScore().doubleValue(), vulnerability.getOwaspBusinessImpactScore().doubleValue())));
+            rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+            rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OWASP);
+            rating.setVector(vulnerability.getOwaspVector());
+            cdxVulnerability.addRating(rating);
+        }
+        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null && vulnerability.getOwaspLikelihoodScore() == null) {
             org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(vulnerability.getSeverity()));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));

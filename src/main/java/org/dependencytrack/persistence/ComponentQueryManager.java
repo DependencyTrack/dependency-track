@@ -547,7 +547,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             return project.getDependencyGraph();
         }
         String queryUuid = ".*" + component.getUuid().toString() + ".*";
-        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid)" + " && project == :project");
+        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
         List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         Map<String, Set<String>> pathComponentsMap = new HashMap<>();
         for (Component parentNodeComponent : components) {
@@ -573,7 +573,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
 
     private void getParentDependency(Project project, String uuid, Map<String, Set<String>> pathComponentsMap) {
         String queryUuid = ".*" + uuid + ".*";
-        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid)" + " && project == :project");
+        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
         List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         for (Component component : components) {
             if (pathComponentsMap.containsKey(component.getUuid().toString())) {
@@ -594,7 +594,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         for (JsonValue directDependency : directDependencies) {
             Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
             if (pathComponentsMap.containsKey(component.getUuid().toString()) && !component.getUuid().toString().equals(searchDependency)) {
-                component.setExpand(true);
+                component.setExpandDependencyGraph(true);
             }
             if (component.getDirectDependencies() != null && !component.getDirectDependencies().isEmpty()){
                 loadDependencyGraphPaths(pathComponentsMap, component, searchDependency);
@@ -607,7 +607,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setDirectDependencies(component.getDirectDependencies());
             transientComponent.setPurlCoordinates(component.getPurlCoordinates());
             transientComponent.setDependencyGraph(component.getDependencyGraph());
-            transientComponent.setExpand(component.isExpand());
+            transientComponent.setExpandDependencyGraph(component.isExpandDependencyGraph());
 
             project.getDependencyGraph().add(transientComponent);
         }
@@ -619,7 +619,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         for (JsonValue directDependency : directDependencies) {
             Component directDependencyComponent = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
             if (pathComponentsMap.containsKey(directDependencyComponent.getUuid().toString()) && !directDependencyComponent.getUuid().toString().equals(searchDependency)) {
-                directDependencyComponent.setExpand(true);
+                directDependencyComponent.setExpandDependencyGraph(true);
             }
             if (( pathComponentsMap.containsKey(directDependencyComponent.getUuid().toString()) || pathComponentsMap.containsKey(component.getUuid().toString()) )
                     && !(pathComponentsMap.get(component.getUuid().toString()) != null && pathComponentsMap.get(component.getUuid().toString()).contains(directDependencyComponent.getUuid().toString())
@@ -635,7 +635,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setDirectDependencies(directDependencyComponent.getDirectDependencies());
             transientComponent.setPurlCoordinates(directDependencyComponent.getPurlCoordinates());
             transientComponent.setDependencyGraph(directDependencyComponent.getDependencyGraph());
-            transientComponent.setExpand(directDependencyComponent.isExpand());
+            transientComponent.setExpandDependencyGraph(directDependencyComponent.isExpandDependencyGraph());
 
             component.getDependencyGraph().add(transientComponent);
         }

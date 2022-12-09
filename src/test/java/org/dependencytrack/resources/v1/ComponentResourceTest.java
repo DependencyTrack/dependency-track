@@ -236,4 +236,120 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertEquals(204, response.getStatus(), 0);
     }
 
+    @Test
+    public void getDependencyGraphForComponentTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+
+        Component component1 = new Component();
+        component1.setProject(project);
+        component1.setName("Component1");
+        component1 = qm.createComponent(component1, false);
+
+        Component component1_1 = new Component();
+        component1_1.setProject(project);
+        component1_1.setName("Component1_1");
+        component1_1 = qm.createComponent(component1_1, false);
+
+        Component component1_1_1 = new Component();
+        component1_1_1.setProject(project);
+        component1_1_1.setName("Component1_1_1");
+        component1_1_1 = qm.createComponent(component1_1_1, false);
+
+        Component component1_2 = new Component();
+        component1_2.setProject(project);
+        component1_2.setName("Component1_2");
+        component1_2 = qm.createComponent(component1_2, false);
+
+        Component component2 = new Component();
+        component2.setProject(project);
+        component2.setName("Component2");
+        component2 = qm.createComponent(component2, false);
+
+        Component component2_1 = new Component();
+        component2_1.setProject(project);
+        component2_1.setName("Component2_1");
+        component2_1 = qm.createComponent(component2_1, false);
+
+        Component component2_1_1 = new Component();
+        component2_1_1.setProject(project);
+        component2_1_1.setName("Component2_1_1");
+        component2_1_1 = qm.createComponent(component2_1_1, false);
+
+        project.setDirectDependencies("[{\"uuid\":\"" + component1.getUuid() + "\"}, {\"uuid\":\"" + component2.getUuid() + "\"}]");
+        component1.setDirectDependencies("[{\"uuid\":\"" + component1_1.getUuid() + "\"}, {\"uuid\":\"" + component1_2.getUuid() + "\"}]");
+        component1_1.setDirectDependencies("[{\"uuid\":\"" + component1_1_1.getUuid() + "\"}]");
+        component2.setDirectDependencies("[{\"uuid\":\"" + component2_1.getUuid() + "\"}]");
+        component2_1.setDirectDependencies("[{\"uuid\":\"" + component2_1_1.getUuid() + "\"}]");
+
+        Response response = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component1_1_1.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        JsonArray json = parseJsonArray(response);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertTrue(json.getJsonObject(0).getBoolean("expandDependencyGraph"));
+        Assert.assertTrue(json.getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0).getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0).getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(1).getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.getJsonObject(1).getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.getJsonObject(1).getJsonArray("dependencyGraph").getJsonObject(0).getBoolean("expandDependencyGraph"));
+        Assert.assertThrows(NullPointerException.class, () -> json.getJsonObject(1).getJsonArray("dependencyGraph").getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0));
+    }
+
+    @Test
+    public void getDependencyGraphForComponentInvalidProjectUuidTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+        Response response = target(V1_COMPONENT + "/project/" + UUID.randomUUID() + "/dependencyGraph/" + component.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
+    @Test
+    public void getDependencyGraphForComponentInvalidComponentUuidTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Response response = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + UUID.randomUUID())
+                .request().header(X_API_KEY, apiKey).get();
+        Assert.assertEquals(404, response.getStatus(), 0);
+    }
+
+    @Test
+    public void getDependencyGraphForComponentNoDependencyGraphTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+        Response responseWithComponent = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        JsonArray json = parseJsonArray(responseWithComponent);
+        Assert.assertEquals(200, responseWithComponent.getStatus(), 0);
+        Assert.assertEquals(0, json.size());
+    }
+
+    @Test
+    public void getDependencyGraphForComponentIsNotComponentOfProject() {
+        Project projectWithComponent = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(projectWithComponent);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+        projectWithComponent.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
+        Project projectWithoutComponent = qm.createProject("Acme Library", null, null, null, null, null, true, false);
+        Response responseWithComponent = target(V1_COMPONENT + "/project/" + projectWithComponent.getUuid() + "/dependencyGraph/" + component.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        JsonArray jsonWithComponent = parseJsonArray(responseWithComponent);
+        Assert.assertEquals(200, responseWithComponent.getStatus(), 0);
+        Assert.assertEquals(1, jsonWithComponent.size());
+        Response responseWithoutComponent = target(V1_COMPONENT + "/project/" + projectWithoutComponent.getUuid() + "/dependencyGraph/" + component.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        JsonArray jsonWithoutComponent = parseJsonArray(responseWithoutComponent);
+        Assert.assertEquals(200, responseWithoutComponent.getStatus(), 0);
+        Assert.assertEquals(0, jsonWithoutComponent.size());
+    }
+
 }

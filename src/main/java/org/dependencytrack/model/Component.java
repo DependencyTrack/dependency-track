@@ -349,7 +349,7 @@ public class Component implements Serializable {
 
     private transient List<Component> dependencyGraph;
 
-    private transient boolean expand;
+    private transient boolean expandDependencyGraph;
 
     public long getId() {
         return id;
@@ -764,12 +764,12 @@ public class Component implements Serializable {
         this.dependencyGraph = dependencyGraph;
     }
 
-    public boolean isExpand() {
-        return expand;
+    public boolean isExpandDependencyGraph() {
+        return expandDependencyGraph;
     }
 
-    public void setExpand(boolean expand) {
-        this.expand = expand;
+    public void setExpandDependencyGraph(boolean expandDependencyGraph) {
+        this.expandDependencyGraph = expandDependencyGraph;
     }
 
     @Override

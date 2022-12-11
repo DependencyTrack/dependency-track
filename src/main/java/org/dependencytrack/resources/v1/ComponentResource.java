@@ -155,8 +155,20 @@ public class ComponentResource extends AlpineResource {
                                            @ApiParam(value = "The cpe of the component")
                                            @QueryParam("cpe") String cpe,
                                            @ApiParam(value = "The swidTagId of the component")
-                                           @QueryParam("swidTagId") String swidTagId) {
+                                           @QueryParam("swidTagId") String swidTagId,
+                                           @ApiParam(value = "The project the component belongs to")
+                                           @QueryParam("project") String projectUuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            Project project = null;
+            if (projectUuid != null) {
+                project = qm.getObjectByUuid(Project.class, projectUuid);
+                if (project == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                }
+                if (!qm.hasAccess(super.getPrincipal(), project)) {
+                    return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
+                }
+            }
             PackageURL packageURL = null;
             if (purl != null) {
                 try {
@@ -172,7 +184,7 @@ public class ComponentResource extends AlpineResource {
                     && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
-                final PaginatedResult result = qm.getComponents(identity, true);
+                final PaginatedResult result = qm.getComponents(identity, project, true);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             }
         }

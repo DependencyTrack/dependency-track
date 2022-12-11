@@ -195,60 +195,64 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @return a list of components
      */
     public PaginatedResult getComponents(ComponentIdentity identity) {
-        return getComponents(identity, false);
+        return getComponents(identity, null, false);
+    }
+
+    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
+        return getComponents(identity, null, includeMetrics);
     }
 
     /**
      * Returns Components by their identity.
      * @param identity the ComponentIdentity to query against
+     * @param project The {@link Project} the {@link Component}s shall belong to
      * @param includeMetrics whether or not to include component metrics or not
      * @return a list of components
      */
-    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
+    public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics) {
         if (identity == null) {
             return null;
         }
 
+        final var queryFilterElements = new ArrayList<String>();
+        final var queryParams = new HashMap<String, Object>();
+
+        if (project != null) {
+            queryFilterElements.add(" project == :project ");
+            queryParams.put("project", project);
+        }
+
         final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
-
-            var params = new HashMap<String, Object>();
-            var queryFilterElements = new ArrayList<String>();
-
             if (identity.getGroup() != null) {
                 queryFilterElements.add(" group.toLowerCase().matches(:group) ");
-                params.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
+                queryParams.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
             }
             if (identity.getName() != null) {
                 queryFilterElements.add(" name.toLowerCase().matches(:name) ");
-                params.put("name", ".*" + identity.getName().toLowerCase() + ".*");
+                queryParams.put("name", ".*" + identity.getName().toLowerCase() + ".*");
             }
             if (identity.getVersion() != null) {
                 queryFilterElements.add(" version.toLowerCase().matches(:version) ");
-                params.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
+                queryParams.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
             }
 
-            var queryFilter = "(" + String.join(" && ", queryFilterElements) + ")";
-            result = loadComponents(queryFilter, params);
-
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getPurl() != null) {
-            var queryFilter = "(purl.toLowerCase().matches(:purl))";
-            var filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            var params = Map.<String, Object>of("purl", filterString);
-            result = loadComponents(queryFilter, params);
+            queryFilterElements.add("purl.toLowerCase().matches(:purl)");
+            queryParams.put("purl", ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*");
 
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getCpe() != null) {
-            var queryFilter = "(cpe.toLowerCase().matches(:cpe))";
-            var filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            var params = Map.<String, Object>of("cpe", filterString);
-            result = loadComponents(queryFilter, params);
+            queryFilterElements.add("cpe.toLowerCase().matches(:cpe)");
+            queryParams.put("cpe", ".*" + identity.getCpe().toLowerCase() + ".*");
 
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getSwidTagId() != null) {
-            var queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
-            var filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            var params = Map.<String, Object>of("swidTagId", filterString);
-            result = loadComponents(queryFilter, params);
+            queryFilterElements.add("swidTagId.toLowerCase().matches(:swidTagId)");
+            queryParams.put("swidTagId", ".*" + identity.getSwidTagId().toLowerCase() + ".*");
 
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else {
             result = new PaginatedResult();
         }

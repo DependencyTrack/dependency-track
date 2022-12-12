@@ -25,6 +25,8 @@ import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -37,6 +39,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,6 +109,37 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The component could not be found.", body);
+    }
+
+    @Test
+    public void getComponentByUuidWithRepositoryMetaDataTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("ABC");
+        component.setPurl("pkg:maven/org.acme/abc");
+        RepositoryMetaComponent meta = new RepositoryMetaComponent();
+        Date lastCheck = new Date();
+        meta.setLastCheck(lastCheck);
+        meta.setNamespace("org.acme");
+        meta.setName("abc");
+        meta.setLatestVersion("2.0.0");
+        meta.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta);
+        component = qm.createComponent(component, false);
+        Response response = target(V1_COMPONENT + "/" + component.getUuid())
+                .queryParam("includeRepositoryMetaData", true)
+                .request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals("MAVEN", json.getJsonObject("repositoryMeta").getString("repositoryType"));
+        Assert.assertEquals("org.acme", json.getJsonObject("repositoryMeta").getString("namespace"));
+        Assert.assertEquals("abc", json.getJsonObject("repositoryMeta").getString("name"));
+        Assert.assertEquals("2.0.0", json.getJsonObject("repositoryMeta").getString("latestVersion"));
+        Assert.assertEquals(lastCheck.getTime(), json.getJsonObject("repositoryMeta").getJsonNumber("lastCheck").longValue());
     }
 
     @Test

@@ -54,7 +54,8 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
       "uuid": "b815b581-fec1-4374-a871-68862a8f8d52",
       "name": "timespan",
       "version": "2.3.0",
-      "purl": "pkg:npm/timespan@2.3.0"
+      "purl": "pkg:npm/timespan@2.3.0",
+      "latestVersion": "3.2.0"
     },
     "vulnerability": {
       "uuid": "115b80bb-46c4-41d1-9f10-8a175d4abb46",

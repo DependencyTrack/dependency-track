@@ -21,17 +21,21 @@ package org.dependencytrack.event;
 import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 public class RepositoryMetaEvent implements Event {
 
-    private Component component;
+    private Optional<List<Component>> components = Optional.empty();
 
     public RepositoryMetaEvent() { }
 
-    public RepositoryMetaEvent(final Component component) {
-        this.component = component;
+    public RepositoryMetaEvent(final List<Component> components) {
+        this.components = Optional.of(Collections.unmodifiableList(components));
     }
 
-    public Component getComponent() {
-        return component;
+    public Optional<List<Component>> getComponents() {
+        return components;
     }
 }

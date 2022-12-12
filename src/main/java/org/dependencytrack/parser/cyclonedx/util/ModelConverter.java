@@ -156,6 +156,7 @@ public class ModelConverter {
                         }
                     }
                     component.setLicense(StringUtils.trimToNull(cycloneLicense.getName()));
+                    component.setLicenseUrl(StringUtils.trimToNull(cycloneLicense.getUrl()));
                 }
             }
         }
@@ -239,16 +240,25 @@ public class ModelConverter {
         if (component.getResolvedLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setId(component.getResolvedLicense().getLicenseId());
+            license.setUrl(component.getLicenseUrl());
             final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         } else if (component.getLicense() != null) {
             final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
             license.setName(component.getLicense());
+            license.setUrl(component.getLicenseUrl());
+            final LicenseChoice licenseChoice = new LicenseChoice();
+            licenseChoice.addLicense(license);
+            cycloneComponent.setLicenseChoice(licenseChoice);
+        } else if (StringUtils.isNotEmpty(component.getLicenseUrl())) {
+            final org.cyclonedx.model.License license = new org.cyclonedx.model.License();
+            license.setUrl(component.getLicenseUrl());
             final LicenseChoice licenseChoice = new LicenseChoice();
             licenseChoice.addLicense(license);
             cycloneComponent.setLicenseChoice(licenseChoice);
         }
+
 
         if (component.getExternalReferences() != null && component.getExternalReferences().size() > 0) {
             List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();
@@ -318,6 +328,17 @@ public class ModelConverter {
                 cycloneComponent.setType(org.cyclonedx.model.Component.Type.valueOf(project.getClassifier().name()));
             } else {
                 cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
+            }
+            if (project.getExternalReferences() != null && project.getExternalReferences().size() > 0) {
+                List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();
+                project.getExternalReferences().stream().forEach(externalReference -> {
+                    org.cyclonedx.model.ExternalReference ref = new org.cyclonedx.model.ExternalReference();
+                    ref.setUrl(externalReference.getUrl());
+                    ref.setType(externalReference.getType());
+                    ref.setComment(externalReference.getComment());
+                    references.add(ref);
+                });
+                cycloneComponent.setExternalReferences(references);
             }
             metadata.setComponent(cycloneComponent);
         }
@@ -676,6 +697,27 @@ public class ModelConverter {
                     c1.setDirectDependencies(jsonArray.toString());
                 }
             }
+        }
+    }
+
+    public static List<ExternalReference> convertBomMetadataExternalReferences(Bom bom) {
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null) {
+            org.cyclonedx.model.Component cycloneDxComponent = bom.getMetadata().getComponent();
+            if (cycloneDxComponent.getExternalReferences() != null && cycloneDxComponent.getExternalReferences().size() > 0) {
+                List<ExternalReference> references = new ArrayList<>();
+                for (org.cyclonedx.model.ExternalReference cycloneDxRef : cycloneDxComponent.getExternalReferences()) {
+                    ExternalReference ref = new ExternalReference();
+                    ref.setType(cycloneDxRef.getType());
+                    ref.setUrl(cycloneDxRef.getUrl());
+                    ref.setComment(cycloneDxRef.getComment());
+                    references.add(ref);
+                }
+                return references;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 

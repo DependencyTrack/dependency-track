@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.0" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" version="1">
+    <metadata>
+        <component type="application" bom-ref="acme">
+            <publisher>DependencyTrack</publisher>
+            <name>Acme example</name>
+            <externalReferences>
+                <reference type="build-system">
+                    <url>https://acme.example</url>
+                </reference>
+                <reference type="distribution">
+                    <url>https://acme.example</url>
+                </reference>
+                <reference type="issue-tracker">
+                    <url>https://acme.example</url>
+                </reference>
+                <reference type="vcs">
+                    <url>https://acme.example</url>
+                </reference>
+            </externalReferences>
+        </component>
+    </metadata>
     <components>
         <component type="application">
 			<author>Example Author</author>
@@ -16,6 +36,7 @@
             <licenses>
                 <license>
                     <id>Apache-2.0</id>
+                    <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
                 </license>
             </licenses>
             <copyright>Copyright Example Inc. All rights reserved.</copyright>

@@ -102,8 +102,10 @@ public class AnalysisResource extends AlpineResource {
             if (vulnerability == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();
             }
-
             final Analysis analysis = qm.getAnalysis(component, vulnerability);
+            if (analysis == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("No analysis exists.").build();
+            }
             return Response.ok(analysis).build();
         }
     }

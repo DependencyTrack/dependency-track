@@ -24,6 +24,7 @@ import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.notification.NotificationConstants;
@@ -87,6 +88,8 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
 
         try {
             getIndexWriter().addDocument(doc);
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An error occurred while adding a project to the index", e);
             Notification.dispatch(new Notification()
@@ -107,6 +110,8 @@ public final class ProjectIndexer extends IndexManager implements ObjectIndexer<
     public void remove(final Project project) {
         try {
             getIndexWriter().deleteDocuments(new Term(IndexConstants.PROJECT_UUID, project.getUuid().toString()));
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An error occurred while removing a project from the index", e);
             Notification.dispatch(new Notification()

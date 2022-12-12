@@ -103,25 +103,45 @@ alpine.database.pool.enabled=true
 # Optional
 # This property controls the maximum size that the pool is allowed to reach,
 # including both idle and in-use connections.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.size=20
+# alpine.database.pool.tx.max.size=
+# alpine.database.pool.nontx.max.size=
 
 # Optional
 # This property controls the minimum number of idle connections in the pool.
 # This value should be equal to or less than alpine.database.pool.max.size.
-# Warning: If the value is less than alpine.database.pool.max.size, 
+# Warning: If the value is less than alpine.database.pool.max.size,
 # alpine.database.pool.idle.timeout will have no effect.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.min.idle=10
+# alpine.database.pool.tx.min.idle=
+# alpine.database.pool.nontx.min.idle=
 
 # Optional
 # This property controls the maximum amount of time that a connection is
 # allowed to sit idle in the pool.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.idle.timeout=300000
+# alpine.database.pool.tx.idle.timeout=
+# alpine.database.pool.nontx.idle.timeout=
 
 # Optional
 # This property controls the maximum lifetime of a connection in the pool.
 # An in-use connection will never be retired, only when it is closed will
 # it then be removed.
+# The property can be set globally for both transactional and non-transactional
+# connection pool, or for each pool type separately. When both global and pool-specific
+# properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.lifetime=600000
+# alpine.database.pool.tx.max.lifetime=
+# alpine.database.pool.nontx.max.lifetime=
 
 # Optional
 # When authentication is enforced, API keys are required for automation, and
@@ -353,26 +373,29 @@ alpine.oidc.teams.claim=groups
 # Optional
 # Defines the size of the thread pool used to perform requests to the Snyk API in parallel.
 # The thread pool will only be used when Snyk integration is enabled.
-# A high number may result in a quicker excession of API rate limits, 
-# while a number that is too low may result in vulnerability analyses taking too long.
-snyk.thread.batch.size=10
+# A high number may result in quicker exceeding of API rate limits,
+# while a number that is too low may result in vulnerability analyses taking longer.
+snyk.thread.pool.size=10
 
 # Optional
-# Defines the maximum number of requests that the Snyk analyzer would make in a given period. 
-# The default value is 1500
-snyk.limit.for.period=1500
+# Defines the maximum amount of retries to perform for each request to the Snyk API.
+# Retries are performed with increasing delays between attempts using an exponential backoff strategy.
+# The initial duration defined in snyk.retry.exponential.backoff.initial.duration.seconds will be
+# multiplied with the value defined in snyk.retry.exponential.backoff.multiplier after each retry attempt,
+# until the maximum duration defined in snyk.retry.exponential.backoff.max.duration.seconds is reached.
+snyk.retry.max.attempts=6
 
 # Optional
-# Defines the maximum number of seconds the thread will wait before timing out.This value is in seconds.
-# Currently the Snyk Analyzer is multithreaded and each thread waits for the permission from the rate limiter.
-# The default value is 60
-snyk.thread.timeout.duration=60
+# Defines the multiplier for the exponential backoff retry strategy.
+snyk.retry.exponential.backoff.multiplier=2
 
 # Optional
-# Defines the time after which the number of permissions are refreshed to the set value by the rate limiter.
-# The rate limiter would refresh the number of permissions available after every "limit refresh period".
-# This value is in seconds. The default value is 60
-snyk.limit.refresh.period=60
+# Defines the duration in seconds to wait before attempting the first retry.
+snyk.retry.exponential.backoff.initial.duration.seconds=1
+
+# Optional
+# Defines the maximum duration in seconds to wait before attempting the next retry.
+snyk.retry.exponential.backoff.max.duration.seconds=60
 
 # Optional
 #Defines the maximum number of purl sent in a single request to OSS Index.
@@ -393,6 +416,23 @@ ossindex.retry.backoff.multiplier=2
 #Defines the maximum duration used by Resilience4J for exponential backoff retry regarding OSSIndex calls. This value is in milliseconds
 # The default value is 10 minutes.
 ossindex.retry.backoff.max.duration=600000
+
+# Optional
+#This flag activate the cache stampede blocker for the repository meta analyzer allowing to handle high concurrency workloads when there
+#is a high ratio of duplicate components which can cause unnecessary external calls and index violation on PUBLIC.REPOSITORY_META_COMPONENT_COMPOUND_IDX during cache population.
+# The default value is false as enabling the cache stampede blocker can create useless locking if the portfolio does not have a high ratio of duplicate components.
+repo.meta.analyzer.cacheStampedeBlocker.enabled=false
+
+# Optional
+#The cache stampede blocker uses a striped (partitioned) lock to distribute locks across keys.
+#This parameter defines the number of buckets used by the striped lock. The lock used for a given key is derived from the key hashcode and number of buckets.
+# The default value is 1000.
+repo.meta.analyzer.cacheStampedeBlocker.lock.buckets=1000
+
+# Optional
+#Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding repo meta analyzer cache loading per key.
+# The default value is 10.
+repo.meta.analyzer.cacheStampedeBlocker.max.attempts=10
 ```
 
 #### Proxy Configuration

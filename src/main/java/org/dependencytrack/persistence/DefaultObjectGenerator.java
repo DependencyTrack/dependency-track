@@ -66,27 +66,6 @@ public class DefaultObjectGenerator implements ServletContextListener {
             return;
         }
 
-        if (!IndexManager.exists(IndexManager.IndexType.LICENSE)) {
-            LOGGER.info("Dispatching event to reindex licenses");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, License.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.PROJECT)) {
-            LOGGER.info("Dispatching event to reindex projects");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Project.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.COMPONENT)) {
-            LOGGER.info("Dispatching event to reindex components");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Component.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.VULNERABILITY)) {
-            LOGGER.info("Dispatching event to reindex vulnerabilities");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, Vulnerability.class));
-        }
-        if (!IndexManager.exists(IndexManager.IndexType.VULNERABLESOFTWARE)) {
-            LOGGER.info("Dispatching event to reindex vulnerablesoftware");
-            Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, VulnerableSoftware.class));
-        }
-
         loadDefaultPermissions();
         loadDefaultPersonas();
         loadDefaultLicenses();

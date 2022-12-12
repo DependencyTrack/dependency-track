@@ -32,11 +32,15 @@ import org.dependencytrack.search.SearchManager;
 import org.dependencytrack.search.SearchResult;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * JAX-RS resources for processing search requests.
@@ -175,6 +179,30 @@ public class SearchResource extends AlpineResource {
             final SearchManager searchManager = new SearchManager();
             final SearchResult searchResult = searchManager.searchVulnerableSoftwareIndex(query, 1000);
             return Response.ok(searchResult).build();
+        }
+    }
+
+    @Path("/reindex")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Rebuild lucene indexes for search operations"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 400, message = "No valid index type was provided")
+    })
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    public Response reindex(@QueryParam("type") Set<String> type) {
+        if (type == null || type.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("No valid index type was provided").build();
+        }
+        try {
+            final SearchManager searchManager = new SearchManager();
+            String chainIdentifier = searchManager.reindex(type);
+            return Response.ok(Collections.singletonMap("token", chainIdentifier)).build();
+        } catch (IllegalArgumentException exception) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(exception.getMessage()).build();
         }
     }
 }

@@ -20,7 +20,7 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import kong.unirest.Header;
 import kong.unirest.Headers;
 import kong.unirest.UnirestInstance;

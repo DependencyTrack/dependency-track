@@ -559,11 +559,10 @@ public class ProjectResourceTest extends ResourceTest {
                 .get(Response.class);
 
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
-        Assert.assertEquals("DEF", json.getJsonObject(1).getString("name"));
     }
 
     //todo: add clone tests

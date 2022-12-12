@@ -283,6 +283,13 @@ public class Component implements Serializable {
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
     private String license;
 
+    @Persistent
+    @Column(name = "LICENSE_URL", jdbcType = "VARCHAR")
+    @Size(max = 255)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.URL, message = "The license URL must be a valid URL")
+    private String licenseUrl;
+
     @Persistent(defaultFetchGroup = "true", cacheable = "false")
     @Column(name = "LICENSE_ID")
     private License resolvedLicense;
@@ -346,6 +353,10 @@ public class Component implements Serializable {
 
     @JsonIgnore
     private transient JsonObject cacheResult;
+
+    private transient List<Component> dependencyGraph;
+
+    private transient boolean expandDependencyGraph;
 
     public long getId() {
         return id;
@@ -614,6 +625,14 @@ public class Component implements Serializable {
         this.license = StringUtils.abbreviate(license, 255);
     }
 
+    public String getLicenseUrl() {
+        return licenseUrl;
+    }
+
+    public void setLicenseUrl(String licenseUrl) {
+        this.licenseUrl = StringUtils.abbreviate(licenseUrl, 255);
+    }
+
     public License getResolvedLicense() {
         return resolvedLicense;
     }
@@ -750,6 +769,22 @@ public class Component implements Serializable {
 
     public void setCacheResult(JsonObject cacheResult) {
         this.cacheResult = cacheResult;
+    }
+
+    public List<Component> getDependencyGraph() {
+        return dependencyGraph;
+    }
+
+    public void setDependencyGraph(List<Component> dependencyGraph) {
+        this.dependencyGraph = dependencyGraph;
+    }
+
+    public boolean isExpandDependencyGraph() {
+        return expandDependencyGraph;
+    }
+
+    public void setExpandDependencyGraph(boolean expandDependencyGraph) {
+        this.expandDependencyGraph = expandDependencyGraph;
     }
 
     @Override

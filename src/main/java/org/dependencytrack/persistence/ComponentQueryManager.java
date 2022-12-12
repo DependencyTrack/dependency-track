@@ -37,10 +37,16 @@ import org.dependencytrack.model.RepositoryType;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import javax.json.Json;
+import javax.json.JsonValue;
+import javax.json.JsonArray;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
@@ -189,60 +195,64 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @return a list of components
      */
     public PaginatedResult getComponents(ComponentIdentity identity) {
-        return getComponents(identity, false);
+        return getComponents(identity, null, false);
+    }
+
+    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
+        return getComponents(identity, null, includeMetrics);
     }
 
     /**
      * Returns Components by their identity.
      * @param identity the ComponentIdentity to query against
+     * @param project The {@link Project} the {@link Component}s shall belong to
      * @param includeMetrics whether or not to include component metrics or not
      * @return a list of components
      */
-    public PaginatedResult getComponents(ComponentIdentity identity, boolean includeMetrics) {
+    public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics) {
         if (identity == null) {
             return null;
         }
 
+        final var queryFilterElements = new ArrayList<String>();
+        final var queryParams = new HashMap<String, Object>();
+
+        if (project != null) {
+            queryFilterElements.add(" project == :project ");
+            queryParams.put("project", project);
+        }
+
         final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {
-
-            var params = new HashMap<String, Object>();
-            var queryFilterElements = new ArrayList<String>();
-
             if (identity.getGroup() != null) {
                 queryFilterElements.add(" group.toLowerCase().matches(:group) ");
-                params.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
+                queryParams.put("group", ".*" + identity.getGroup().toLowerCase() + ".*");
             }
             if (identity.getName() != null) {
                 queryFilterElements.add(" name.toLowerCase().matches(:name) ");
-                params.put("name", ".*" + identity.getName().toLowerCase() + ".*");
+                queryParams.put("name", ".*" + identity.getName().toLowerCase() + ".*");
             }
             if (identity.getVersion() != null) {
                 queryFilterElements.add(" version.toLowerCase().matches(:version) ");
-                params.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
+                queryParams.put("version", ".*" + identity.getVersion().toLowerCase() + ".*");
             }
 
-            var queryFilter = "(" + String.join(" && ", queryFilterElements) + ")";
-            result = loadComponents(queryFilter, params);
-
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getPurl() != null) {
-            var queryFilter = "(purl.toLowerCase().matches(:purl))";
-            var filterString = ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*";
-            var params = Map.<String, Object>of("purl", filterString);
-            result = loadComponents(queryFilter, params);
+            queryFilterElements.add("purl.toLowerCase().matches(:purl)");
+            queryParams.put("purl", ".*" + identity.getPurl().canonicalize().toLowerCase() + ".*");
 
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getCpe() != null) {
-            var queryFilter = "(cpe.toLowerCase().matches(:cpe))";
-            var filterString = ".*" + identity.getCpe().toLowerCase() + ".*";
-            var params = Map.<String, Object>of("cpe", filterString);
-            result = loadComponents(queryFilter, params);
+            queryFilterElements.add("cpe.toLowerCase().matches(:cpe)");
+            queryParams.put("cpe", ".*" + identity.getCpe().toLowerCase() + ".*");
 
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else if (identity.getSwidTagId() != null) {
-            var queryFilter = "(swidTagId.toLowerCase().matches(:swidTagId))";
-            var filterString = ".*" + identity.getSwidTagId().toLowerCase() + ".*";
-            var params = Map.<String, Object>of("swidTagId", filterString);
-            result = loadComponents(queryFilter, params);
+            queryFilterElements.add("swidTagId.toLowerCase().matches(:swidTagId)");
+            queryParams.put("swidTagId", ".*" + identity.getSwidTagId().toLowerCase() + ".*");
 
+            result = loadComponents("(" + String.join(" && ", queryFilterElements) + ")", queryParams);
         } else {
             result = new PaginatedResult();
         }
@@ -532,6 +542,106 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
         } else {
             query.setFilter(inputFilter);
+        }
+    }
+
+    public List<Component> getDependencyGraphForComponent(Project project, Component component) {
+        project.setDependencyGraph(new ArrayList<>());
+        if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
+            return project.getDependencyGraph();
+        }
+        String queryUuid = ".*" + component.getUuid().toString() + ".*";
+        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
+        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
+        Map<String, Set<String>> pathComponentsMap = new HashMap<>();
+        for (Component parentNodeComponent : components) {
+            if (pathComponentsMap.containsKey(parentNodeComponent.getUuid().toString())) {
+                pathComponentsMap.get(parentNodeComponent.getUuid().toString()).add(component.getUuid().toString());
+            } else {
+                Set<String> set = new HashSet<>();
+                set.add(component.getUuid().toString());
+                pathComponentsMap.put(parentNodeComponent.getUuid().toString(), set);
+            }
+            getParentDependency(project, parentNodeComponent.getUuid().toString(), pathComponentsMap);
+        }
+        if (pathComponentsMap.isEmpty() && project.getDirectDependencies().contains(component.getUuid().toString())){
+            Set<String> set = new HashSet<>();
+            set.add(component.getUuid().toString());
+            pathComponentsMap.put(project.getUuid().toString(), set);
+        }
+        if (!pathComponentsMap.isEmpty()){
+            loadDependencyGraphPaths(pathComponentsMap, project, component.getUuid().toString());
+        }
+        return project.getDependencyGraph();
+    }
+
+    private void getParentDependency(Project project, String uuid, Map<String, Set<String>> pathComponentsMap) {
+        String queryUuid = ".*" + uuid + ".*";
+        final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
+        List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
+        for (Component component : components) {
+            if (pathComponentsMap.containsKey(component.getUuid().toString())) {
+                if (pathComponentsMap.get(component.getUuid().toString()).add(uuid)) {
+                    getParentDependency(project, component.getUuid().toString(), pathComponentsMap);
+                }
+            } else {
+                Set<String> set = new HashSet<>();
+                set.add(uuid);
+                pathComponentsMap.put(component.getUuid().toString(), set);
+                getParentDependency(project, component.getUuid().toString(), pathComponentsMap);
+            }
+        }
+    }
+
+    private void loadDependencyGraphPaths(Map<String, Set<String>> pathComponentsMap, Project project, String searchDependency) {
+        JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies())).readArray();
+        for (JsonValue directDependency : directDependencies) {
+            Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
+            if (pathComponentsMap.containsKey(component.getUuid().toString()) && !component.getUuid().toString().equals(searchDependency)) {
+                component.setExpandDependencyGraph(true);
+            }
+            if (component.getDirectDependencies() != null && !component.getDirectDependencies().isEmpty()){
+                loadDependencyGraphPaths(pathComponentsMap, component, searchDependency);
+            }
+            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization
+            Component transientComponent = new Component();
+            transientComponent.setUuid(component.getUuid());
+            transientComponent.setName(component.getName());
+            transientComponent.setVersion(component.getVersion());
+            transientComponent.setDirectDependencies(component.getDirectDependencies());
+            transientComponent.setPurlCoordinates(component.getPurlCoordinates());
+            transientComponent.setDependencyGraph(component.getDependencyGraph());
+            transientComponent.setExpandDependencyGraph(component.isExpandDependencyGraph());
+
+            project.getDependencyGraph().add(transientComponent);
+        }
+    }
+
+    private void loadDependencyGraphPaths(Map<String, Set<String>> pathComponentsMap, Component component, String searchDependency) {
+        component.setDependencyGraph(new ArrayList<>());
+        JsonArray directDependencies = Json.createReader(new StringReader(component.getDirectDependencies())).readArray();
+        for (JsonValue directDependency : directDependencies) {
+            Component directDependencyComponent = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
+            if (pathComponentsMap.containsKey(directDependencyComponent.getUuid().toString()) && !directDependencyComponent.getUuid().toString().equals(searchDependency)) {
+                directDependencyComponent.setExpandDependencyGraph(true);
+            }
+            if (( pathComponentsMap.containsKey(directDependencyComponent.getUuid().toString()) || pathComponentsMap.containsKey(component.getUuid().toString()) )
+                    && !(pathComponentsMap.get(component.getUuid().toString()) != null && pathComponentsMap.get(component.getUuid().toString()).contains(directDependencyComponent.getUuid().toString())
+                    && pathComponentsMap.get(directDependencyComponent.getUuid().toString()) != null && pathComponentsMap.get(directDependencyComponent.getUuid().toString()).contains(component.getUuid().toString()))
+                    && directDependencyComponent.getDirectDependencies() != null && !directDependencyComponent.getDirectDependencies().isBlank()){
+                loadDependencyGraphPaths(pathComponentsMap, directDependencyComponent, searchDependency);
+            }
+            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization
+            Component transientComponent = new Component();
+            transientComponent.setUuid(directDependencyComponent.getUuid());
+            transientComponent.setName(directDependencyComponent.getName());
+            transientComponent.setVersion(directDependencyComponent.getVersion());
+            transientComponent.setDirectDependencies(directDependencyComponent.getDirectDependencies());
+            transientComponent.setPurlCoordinates(directDependencyComponent.getPurlCoordinates());
+            transientComponent.setDependencyGraph(directDependencyComponent.getDependencyGraph());
+            transientComponent.setExpandDependencyGraph(directDependencyComponent.isExpandDependencyGraph());
+
+            component.getDependencyGraph().add(transientComponent);
         }
     }
 }

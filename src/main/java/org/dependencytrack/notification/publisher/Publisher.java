@@ -22,8 +22,8 @@ import alpine.common.logging.Logger;
 import alpine.common.util.UrlUtil;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
-import com.mitchellbosecke.pebble.PebbleEngine;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.notification.NotificationScope;
@@ -33,6 +33,7 @@ import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
+import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
@@ -107,7 +108,10 @@ public interface Publisher {
                     context.put("subjectJson", NotificationUtil.toJson(qm , subject));
                 } else if (notification.getSubject() instanceof final AnalysisDecisionChange subject) {
                     context.put("subject", subject);
-                    context.put("subjectJson", NotificationUtil.toJson(qm , subject));
+                    context.put("subjectJson", NotificationUtil.toJson(qm, subject));
+                } else if (notification.getSubject() instanceof final ViolationAnalysisDecisionChange subject) {
+                    context.put("subject", subject);
+                    context.put("subjectJson", NotificationUtil.toJson(subject));
                 } else if (notification.getSubject() instanceof final BomConsumedOrProcessed subject) {
                     context.put("subject", subject);
                     context.put("subjectJson", NotificationUtil.toJson(subject));

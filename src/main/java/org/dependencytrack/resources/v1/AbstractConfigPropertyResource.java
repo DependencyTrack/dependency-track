@@ -63,6 +63,9 @@ abstract class AbstractConfigPropertyResource extends AlpineResource {
                 if(ConfigPropertyConstants.TASK_SCHEDULER_LDAP_SYNC_CADENCE.getGroupName().equals(json.getGroupName()) && propertyValue <= 0) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("A Task scheduler cadence ("+json.getPropertyName()+") cannot be inferior to one hour.A value of "+propertyValue+" was provided.").build();
                 }
+                if(ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName().equals(json.getPropertyName()) && (propertyValue < 1 || propertyValue > 100)) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Lucene index delta threshold ("+json.getPropertyName()+") cannot be inferior to 1 or superior to 100.A value of "+propertyValue+" was provided.").build();
+                }
                 property.setPropertyValue(String.valueOf(propertyValue));
             } catch (NumberFormatException e) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The property expected an integer and an integer was not sent.").build();

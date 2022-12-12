@@ -126,7 +126,7 @@ public class ComponentResource extends AlpineResource {
                 final Project project = component.getProject();
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
-                    if (includeRepositoryMetaData) {
+                    if (includeRepositoryMetaData && detachedComponent.getPurl() != null) {
                         final RepositoryType type = RepositoryType.resolve(detachedComponent.getPurl());
                         if (RepositoryType.UNSUPPORTED != type) {
                             final RepositoryMetaComponent repoMetaComponent = qm.getRepositoryMetaComponent(type, detachedComponent.getPurl().getNamespace(), detachedComponent.getPurl().getName());

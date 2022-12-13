@@ -157,6 +157,7 @@ public class PolicyResource extends AlpineResource {
                 policy.setName(StringUtils.trimToNull(jsonPolicy.getName()));
                 policy.setOperator(jsonPolicy.getOperator());
                 policy.setViolationState(jsonPolicy.getViolationState());
+                policy.setIncludeChildren(jsonPolicy.isIncludeChildren());
                 policy = qm.persist(policy);
                 return Response.ok(policy).build();
             } else {

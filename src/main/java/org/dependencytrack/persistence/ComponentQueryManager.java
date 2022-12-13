@@ -394,16 +394,20 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Component result = pm.getObjectById(Component.class, component.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        try {
+            final Component result = pm.getObjectById(Component.class, component.getId());
+            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+            deleteAnalysisTrail(component);
+            deleteViolationAnalysisTrail(component);
+            deleteMetrics(component);
+            deleteFindingAttributions(component);
+            deletePolicyViolations(component);
+            delete(component);
+            commitSearchIndex(commitIndex, Component.class);
+        } catch (javax.jdo.JDOObjectNotFoundException | org.datanucleus.exceptions.NucleusObjectNotFoundException ignored) {
 
-        deleteAnalysisTrail(component);
-        deleteViolationAnalysisTrail(component);
-        deleteMetrics(component);
-        deleteFindingAttributions(component);
-        deletePolicyViolations(component);
-        delete(component);
-        commitSearchIndex(commitIndex, Component.class);
+        }
+
     }
 
     /**

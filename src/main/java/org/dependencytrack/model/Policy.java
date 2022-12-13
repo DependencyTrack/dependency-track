@@ -135,6 +135,13 @@ public class Policy implements Serializable {
     @NotNull
     private UUID uuid;
 
+    /**
+     * Include the children of the projects in the policy evaluation.
+     */
+    @Persistent
+    @Column(name = "INCLUDE_CHILDREN", allowsNull = "true") // New column, must allow nulls on existing data bases)
+    private boolean includeChildren;
+
     public long getId() {
         return id;
     }
@@ -208,5 +215,13 @@ public class Policy implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public boolean isIncludeChildren() {
+        return includeChildren;
+    }
+
+    public void setIncludeChildren(boolean includeChildren) {
+        this.includeChildren = includeChildren;
     }
 }

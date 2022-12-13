@@ -147,6 +147,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getAllVulnerabilities(component)).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(
+                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_CONSUMED.name()),
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_PROCESSED.name()),
                 n -> {

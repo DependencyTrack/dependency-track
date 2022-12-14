@@ -19,6 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.notification.Notification;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
@@ -37,9 +38,11 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,6 +56,8 @@ public class ProjectResourceTest extends ResourceTest {
                         .register(AuthenticationFilter.class)))
                 .build();
     }
+
+    private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
     @Test
     public void getProjectsDefaultRequestTest() {
@@ -227,7 +232,7 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createProjectTest() {
+    public void createProjectTest(){
         Project project = new Project();
         project.setName("Acme Example");
         project.setVersion("1.0");

@@ -300,6 +300,35 @@ public class FindingResourceTest extends ResourceTest {
         Assert.assertEquals("3.0.0", json.getJsonObject(2).getJsonObject("component").getString("latestVersion"));
     }
 
+    @Test
+    public void getFindingsByProjectWithComponentLatestVersionWithoutRepositoryMetaComponent() {
+        Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component c1 = createComponent(p1, "Component A", "1.0");
+        c1.setPurl("pkg:/maven/org.acme/component-a@1.0.0");
+
+        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
+        Response response = target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(1, json.size());
+        Assert.assertEquals("Component A", json.getJsonObject(0).getJsonObject("component").getString("name"));
+        Assert.assertEquals("1.0", json.getJsonObject(0).getJsonObject("component").getString("version"));
+        Assert.assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assert.assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getInt("cweId"));
+        Assert.assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
+        Assert.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
+        Assert.assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        Assert.assertFalse(json.getJsonObject(0).getJsonObject("analysis").getBoolean("isSuppressed"));
+        Assert.assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v1.getUuid().toString(), json.getJsonObject(0).getString("matrix"));
+        Assert.assertThrows(NullPointerException.class, () -> json.getJsonObject(0).getJsonObject("component").getString("latestVersion"));
+    }
+
     private Component createComponent(Project project, String name, String version) {
         Component component = new Component();
         component.setProject(project);

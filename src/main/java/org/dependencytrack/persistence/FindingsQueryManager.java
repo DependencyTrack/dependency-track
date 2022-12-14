@@ -286,7 +286,9 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                     final RepositoryType type = RepositoryType.resolve(purl);
                     if (RepositoryType.UNSUPPORTED != type) {
                         final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
-                        finding.getComponent().put("latestVersion", repoMetaComponent.getLatestVersion());
+                        if (repoMetaComponent != null) {
+                            finding.getComponent().put("latestVersion", repoMetaComponent.getLatestVersion());
+                        }
                     }
                 }
                 findings.add(finding);

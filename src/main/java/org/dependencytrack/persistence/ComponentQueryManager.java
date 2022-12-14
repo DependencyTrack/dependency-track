@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
 import alpine.model.Team;
@@ -49,6 +50,8 @@ import javax.json.JsonValue;
 import javax.json.JsonArray;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
+
+    private static final Logger LOGGER = Logger.getLogger(ComponentQueryManager.class);
 
     /**
      * Constructs a new QueryManager.
@@ -404,8 +407,8 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             deletePolicyViolations(component);
             delete(component);
             commitSearchIndex(commitIndex, Component.class);
-        } catch (javax.jdo.JDOObjectNotFoundException | org.datanucleus.exceptions.NucleusObjectNotFoundException ignored) {
-
+        } catch (javax.jdo.JDOObjectNotFoundException | org.datanucleus.exceptions.NucleusObjectNotFoundException e) {
+            LOGGER.warn("Deletion of component failed because it didn't exist anymore.");
         }
 
     }

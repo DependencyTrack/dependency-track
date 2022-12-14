@@ -212,8 +212,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         Assert.assertEquals("The project could not be found.", body);
     }
 
-    //@Test
-    // TODO: The workaround for Jersey (DELETE with body) no longer throws an exception, but produces a 400. Unable to test at this time
+    @Test
     public void deletePropertyTest() {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         ProjectProperty property = qm.createProjectProperty(project, "mygroup", "prop1", "value1", IConfigProperty.PropertyType.STRING, null);

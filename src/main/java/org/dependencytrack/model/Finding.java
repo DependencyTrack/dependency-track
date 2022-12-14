@@ -65,9 +65,9 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"SEVERITY\"," +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
-            "\"VULNERABILITY\".\"OWASPLIKELIHOODSCORE\"," +
-            "\"VULNERABILITY\".\"OWASPTECHNICALIMPACTSCORE\"," +
-            "\"VULNERABILITY\".\"OWASPBUSINESSIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRLIKELIHOODSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRTECHNICALIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRBUSINESSIMPACTSCORE\"," +
             "\"VULNERABILITY\".\"EPSSSCORE\"," +
             "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
             "\"VULNERABILITY\".\"CWES\"," +

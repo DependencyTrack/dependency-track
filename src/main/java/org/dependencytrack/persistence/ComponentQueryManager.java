@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence;
 
+import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.model.ApiKey;
 import alpine.model.Team;
@@ -49,6 +50,8 @@ import javax.json.JsonValue;
 import javax.json.JsonArray;
 
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
+
+    private static final Logger LOGGER = Logger.getLogger(ComponentQueryManager.class);
 
     /**
      * Constructs a new QueryManager.
@@ -394,16 +397,20 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             }
         }
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
-        final Component result = pm.getObjectById(Component.class, component.getId());
-        Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+        try {
+            final Component result = pm.getObjectById(Component.class, component.getId());
+            Event.dispatch(new IndexEvent(IndexEvent.Action.DELETE, pm.detachCopy(result)));
+            deleteAnalysisTrail(component);
+            deleteViolationAnalysisTrail(component);
+            deleteMetrics(component);
+            deleteFindingAttributions(component);
+            deletePolicyViolations(component);
+            delete(component);
+            commitSearchIndex(commitIndex, Component.class);
+        } catch (javax.jdo.JDOObjectNotFoundException | org.datanucleus.exceptions.NucleusObjectNotFoundException e) {
+            LOGGER.warn("Deletion of component failed because it didn't exist anymore.");
+        }
 
-        deleteAnalysisTrail(component);
-        deleteViolationAnalysisTrail(component);
-        deleteMetrics(component);
-        deleteFindingAttributions(component);
-        deletePolicyViolations(component);
-        delete(component);
-        commitSearchIndex(commitIndex, Component.class);
     }
 
     /**

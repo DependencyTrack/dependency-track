@@ -53,3 +53,6 @@ This document describes the process of releasing a new version of Dependency-Tra
   - [ ] Update the release [changelog](docs/_posts) with the collected hashes and SBOMs
   - [ ] Create PR back into the release branch and get it merged
 - [ ] Change the deployment branch for [GitHub Pages](https://github.com/DependencyTrack/dependency-track/settings/pages) to the new release branch
+- [ ] Update *Dependency-Track Version* options in issue templates
+  - [ ] [Defect Report](https://github.com/DependencyTrack/dependency-track/blob/master/.github/ISSUE_TEMPLATE/defect-report.yml)
+  - [ ] [Enhancement Request](https://github.com/DependencyTrack/dependency-track/blob/master/.github/ISSUE_TEMPLATE/enhancement-request.yml)

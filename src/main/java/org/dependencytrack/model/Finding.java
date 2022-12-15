@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.VulnerabilityUtil;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,6 +65,9 @@ public class Finding implements Serializable {
             "\"VULNERABILITY\".\"SEVERITY\"," +
             "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
             "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRLIKELIHOODSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRTECHNICALIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRBUSINESSIMPACTSCORE\"," +
             "\"VULNERABILITY\".\"EPSSSCORE\"," +
             "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
             "\"VULNERABILITY\".\"CWES\"," +
@@ -109,27 +113,30 @@ public class Finding implements Serializable {
         optValue(vulnerability, "subtitle", o[10]);
         //optValue(vulnerability, "description", o[11]); // CLOB - handle this in QueryManager
         //optValue(vulnerability, "recommendation", o[12]); // CLOB - handle this in QueryManager
-        final Severity severity = VulnerabilityUtil.getSeverity(o[13], o[14], o[15]);
+        final Severity severity = VulnerabilityUtil.getSeverity(o[13], (BigDecimal) o[14], (BigDecimal) o[15], (BigDecimal) o[16], (BigDecimal) o[17], (BigDecimal) o[18]);
         optValue(vulnerability, "cvssV2BaseScore", o[14]);
         optValue(vulnerability, "cvssV3BaseScore", o[15]);
+        optValue(vulnerability, "owaspLikelihoodScore", o[16]);
+        optValue(vulnerability, "owaspTechnicalImpactScore", o[17]);
+        optValue(vulnerability, "owaspBusinessImpactScore", o[18]);
         optValue(vulnerability, "severity", severity.name());
         optValue(vulnerability, "severityRank", severity.ordinal());
-        optValue(vulnerability, "epssScore", o[16]);
-        optValue(vulnerability, "epssPercentile", o[17]);
-        final List<Cwe> cwes = getCwes(o[18]);
+        optValue(vulnerability, "epssScore", o[19]);
+        optValue(vulnerability, "epssPercentile", o[20]);
+        final List<Cwe> cwes = getCwes(o[21]);
         if (cwes != null && !cwes.isEmpty()) {
             // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!
             optValue(vulnerability, "cweId", cwes.get(0).getCweId());
             optValue(vulnerability, "cweName", cwes.get(0).getName());
         }
         optValue(vulnerability, "cwes", cwes);
-        optValue(attribution, "analyzerIdentity", o[19]);
-        optValue(attribution, "attributedOn", o[20]);
-        optValue(attribution, "alternateIdentifier", o[21]);
-        optValue(attribution, "referenceUrl", o[22]);
+        optValue(attribution, "analyzerIdentity", o[22]);
+        optValue(attribution, "attributedOn", o[23]);
+        optValue(attribution, "alternateIdentifier", o[24]);
+        optValue(attribution, "referenceUrl", o[25]);
 
-        optValue(analysis, "state", o[23]);
-        optValue(analysis, "isSuppressed", o[24], false);
+        optValue(analysis, "state", o[26]);
+        optValue(analysis, "isSuppressed", o[27], false);
     }
 
     public Map getComponent() {

@@ -485,6 +485,33 @@ with OpenSSL like this:
 openssl rand 32 > secret.key
 ```
 
+> Note that the default key format has changed in version 4.7. While existing keys using the old format will continue
+> to work, keys for new instances will be generated in the new format. Old keys may be converted using the following
+> [JShell](https://docs.oracle.com/en/java/javase/17/jshell/introduction-jshell.html) script:
+> ```java
+> import java.io.ObjectInputStream;
+> import java.nio.file.Files;
+> import java.nio.file.Paths;
+> import javax.crypto.SecretKey;
+> String inputFilePath = System.getProperty("secret.key.input")
+> String outputFilePath = System.getProperty("secret.key.output");
+> SecretKey secretKey = null;
+> System.out.println("Reading old key from " + inputFilePath);
+> try (var fis = Files.newInputStream(Paths.get(inputFilePath));
+>      var ois = new ObjectInputStream(fis)) {
+>     secretKey = (SecretKey) ois.readObject();
+> }
+> System.out.println("Writing new key to " + outputFilePath);
+> try (var fos = Files.newOutputStream(Paths.get(outputFilePath))) {
+>     fos.write(secretKey.getEncoded());
+> }
+> /exit
+> ```
+> Example execution:
+> ```shell
+> jshell -R"-Dsecret.key.input=$HOME/.dependency-track/keys/secret.key" -R"-Dsecret.key.output=secret.key.new" convert-key.jsh
+> ```
+
 ### Frontend
 
 The frontend uses a static `config.json` file that is dynamically requested and evaluated via AJAX.

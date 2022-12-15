@@ -27,6 +27,7 @@ import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.ServletDeploymentContext;
 import org.junit.Assert;
 import org.junit.Test;
+import us.springett.owasp.riskrating.Level;
 
 import javax.json.JsonObject;
 import javax.ws.rs.core.Response;
@@ -85,5 +86,37 @@ public class CalculatorResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("An invalid CVSSv2 or CVSSv3 vector submitted.", body);
+    }
+
+    @Test
+    public void getOwaspRRScoresTest() {
+        Response response = target(V1_CALCULATOR + "/owasp")
+                .queryParam("vector", "SL:1/M:1/O:0/S:2/ED:1/EE:1/A:1/ID:1/LC:2/LI:1/LAV:1/LAC:1/FD:1/RD:1/NC:2/PV:3")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals(1.0, json.getJsonNumber("likelihoodScore").doubleValue(), 0);
+        Assert.assertEquals(1.25, json.getJsonNumber("technicalImpactScore").doubleValue(), 0);
+        Assert.assertEquals(1.75, json.getJsonNumber("businessImpactScore").doubleValue(), 0);
+        Assert.assertEquals(Level.LOW.name(), json.getJsonString("likelihood").getString());
+        Assert.assertEquals(Level.LOW.name(), json.getJsonString("technicalImpact").getString());
+        Assert.assertEquals(Level.LOW.name(), json.getJsonString("businessImpact").getString());
+    }
+
+    @Test
+    public void getOwaspScoresInvalidTest() {
+        Response response = target(V1_CALCULATOR + "/owasp")
+                .queryParam("vector", "foobar")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assert.assertEquals(400, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("Provided vector foobar does not match OWASP RR Vector pattern SL:\\d/M:\\d/O:\\d/S:\\d/ED:\\d/EE:\\d/A:\\d/ID:\\d/LC:\\d/LI:\\d/LAV:\\d/LAC:\\d/FD:\\d/RD:\\d/NC:\\d/PV:\\d", body);
     }
 }

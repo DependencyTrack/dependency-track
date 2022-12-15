@@ -29,6 +29,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
@@ -1262,6 +1263,20 @@ public class QueryManager extends AlpineQueryManager {
                 trx.rollback();
             }
         }
+    }
+
+    public void recursivelyDeleteTeam(Team team) {
+        pm.setProperty("datanucleus.query.sql.allowAll", true);
+        final Transaction trx = pm.currentTransaction();
+        pm.currentTransaction().begin();
+        pm.deletePersistentAll(team.getApiKeys());
+        String aclDeleteQuery = """
+            DELETE FROM PROJECT_ACCESS_TEAMS WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
+        """;
+        final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
+        query.executeWithArray(team.getId());
+        pm.deletePersistent(team);
+        pm.currentTransaction().commit();
     }
 
 }

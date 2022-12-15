@@ -101,9 +101,13 @@
         <lib.jdbc-driver.postgresql.version>42.5.1</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.cyclonedx.projectType>application</plugin.cyclonedx.projectType>
+        <plugin.cyclonedx.outputFormat>json</plugin.cyclonedx.outputFormat>
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
+        <!-- CycloneDX CLI -->
+        <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
+        <services.bom.merge.skip>true</services.bom.merge.skip>
     </properties>
 
     <repositories>
@@ -365,6 +369,31 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>merge-services-bom</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${cyclonedx-cli.path}</executable>
+                            <arguments>
+                                <argument>merge</argument>
+                                <argument>--input-files</argument>
+                                <argument>${project.build.directory}/bom.json</argument>
+                                <argument>${project.basedir}/src/main/resources/services.bom.json</argument>
+                                <argument>--output-file</argument>
+                                <argument>${project.build.directory}/bom.json</argument>
+                            </arguments>
+                            <skip>${services.bom.merge.skip}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>

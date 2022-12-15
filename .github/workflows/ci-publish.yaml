@@ -84,5 +84,4 @@ jobs:
             target/dependency-track-apiserver.jar \
             target/dependency-track-bundled.jar \
             target/checksums.txt \
-            target/bom.json \
-            target/bom.xml
+            target/bom.json

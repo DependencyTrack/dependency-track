@@ -417,6 +417,29 @@
       ]
     },
     {
+      "bom-ref": "service:dev.osv",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://google.com"
+        ]
+      },
+      "group": "dev.osv",
+      "name": "OSV",
+      "description": "OSV is a distributed vulnerability database for Open Source",
+      "endpoints": [
+        "https://osv-vulnerabilities.storage.googleapis.com"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
       "bom-ref": "service:org.pypi",
       "provider": {
         "name": "Python Software Foundation",
@@ -436,6 +459,29 @@
         "https://pypi.org/pypi/"
       ],
       "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:io.snyk",
+      "provider": {
+        "name": "Snyk",
+        "url": [
+          "https://snyk.io"
+        ]
+      },
+      "group": "io.snyk",
+      "name": "Snyk",
+      "description": "Snyk is a developer security platform. Integrating directly into development tools, workflows, and automation pipelines, Snyk makes it easy for teams to find, prioritize, and fix security vulnerabilities in code, dependencies, containers, and infrastructure as code. Supported by industry-leading application and security intelligence, Snyk puts security expertise in any developer's toolkit.",
+      "endpoints": [
+        "https://api.snyk.io"
+      ],
+      "authenticated": true,
       "x-trust-boundary": true,
       "data": [
         {

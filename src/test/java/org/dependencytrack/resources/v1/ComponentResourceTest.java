@@ -470,20 +470,14 @@ public class ComponentResourceTest extends ResourceTest {
         JsonObject json = parseJsonObject(response);
         Assert.assertEquals(200, response.getStatus(), 0);
 
-        JsonObject jsonObject_component1 = json.get(component1.getUuid().toString()).asJsonObject();
-        JsonObject jsonObject_component1_1 = json.get(jsonObject_component1.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
-        JsonObject jsonObject_component1_1_1 = json.get(jsonObject_component1_1.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
-        JsonObject jsonObject_component2 = json.get(component2.getUuid().toString()).asJsonObject();
-        JsonObject jsonObject_component2_1 = json.get(jsonObject_component2.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
-        JsonObject jsonObject_component2_1_1 = json.get(jsonObject_component2_1.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
-
-        Assert.assertTrue(jsonObject_component1.getBoolean("expandDependencyGraph"));
-        Assert.assertTrue(jsonObject_component1_1.getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(jsonObject_component1_1_1.getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(jsonObject_component2.getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(jsonObject_component2_1.getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(jsonObject_component2_1_1.getBoolean("expandDependencyGraph"));
-        Assert.assertThrows(NullPointerException.class, () -> json.get(jsonObject_component2_1_1.getJsonArray("dependencyGraph").getString(0)).asJsonObject());
+        Assert.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.get(component2.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.get(component2_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(json.get(component2_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Component finalComponent2_1_1_1 = component2_1_1_1;
+        Assert.assertThrows(NullPointerException.class, () -> json.get(finalComponent2_1_1_1.getUuid().toString()).asJsonObject().asJsonObject());
     }
 
     @Test

@@ -570,7 +570,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 set.add(component.getUuid().toString());
                 parentNodeComponent.setDependencyGraph(set);
             }
-            getParentDependenciesOfComponent(project, parentNodeComponent.getUuid().toString(), dependencyGraph);
+            getParentDependenciesOfComponent(project, parentNodeComponent, dependencyGraph, component);
         }
         if (!dependencyGraph.isEmpty() || project.getDirectDependencies().contains(component.getUuid().toString())){
             dependencyGraph.put(component.getUuid().toString(), component);
@@ -591,22 +591,24 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         return dependencyGraph;
     }
 
-    private void getParentDependenciesOfComponent(Project project, String uuid, Map<String, Component> dependencyGraph) {
-        String queryUuid = ".*" + uuid + ".*";
+    private void getParentDependenciesOfComponent(Project project, Component parentNode, Map<String, Component> dependencyGraph, Component searchedComponent) {
+        String queryUuid = ".*" + parentNode.getUuid().toString() + ".*";
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
         List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         for (Component component : components) {
-            component.setExpandDependencyGraph(true);
-            if (dependencyGraph.containsKey(component.getUuid().toString())) {
-                if (component.getDependencyGraph().add(uuid)) {
-                    getParentDependenciesOfComponent(project, component.getUuid().toString(), dependencyGraph);
+            if (component.getUuid() != searchedComponent.getUuid()) {
+                component.setExpandDependencyGraph(true);
+                if (dependencyGraph.containsKey(component.getUuid().toString())) {
+                    if (component.getDependencyGraph().add(component.getUuid().toString())) {
+                        getParentDependenciesOfComponent(project, component, dependencyGraph, searchedComponent);
+                    }
+                } else {
+                    dependencyGraph.put(component.getUuid().toString(), component);
+                    Set<String> set = new HashSet<>();
+                    set.add(component.getUuid().toString());
+                    component.setDependencyGraph(set);
+                    getParentDependenciesOfComponent(project, component, dependencyGraph, searchedComponent);
                 }
-            } else {
-                dependencyGraph.put(component.getUuid().toString(), component);
-                Set<String> set = new HashSet<>();
-                set.add(uuid);
-                component.setDependencyGraph(set);
-                getParentDependenciesOfComponent(project, component.getUuid().toString(), dependencyGraph);
             }
         }
     }

@@ -438,11 +438,6 @@ public class ComponentResourceTest extends ResourceTest {
         component1_1_1.setName("Component1_1_1");
         component1_1_1 = qm.createComponent(component1_1_1, false);
 
-        Component component1_2 = new Component();
-        component1_2.setProject(project);
-        component1_2.setName("Component1_2");
-        component1_2 = qm.createComponent(component1_2, false);
-
         Component component2 = new Component();
         component2.setProject(project);
         component2.setName("Component2");
@@ -458,23 +453,37 @@ public class ComponentResourceTest extends ResourceTest {
         component2_1_1.setName("Component2_1_1");
         component2_1_1 = qm.createComponent(component2_1_1, false);
 
+        Component component2_1_1_1 = new Component();
+        component2_1_1_1.setProject(project);
+        component2_1_1_1.setName("Component2_1_1");
+        component2_1_1_1 = qm.createComponent(component2_1_1_1, false);
+
         project.setDirectDependencies("[{\"uuid\":\"" + component1.getUuid() + "\"}, {\"uuid\":\"" + component2.getUuid() + "\"}]");
-        component1.setDirectDependencies("[{\"uuid\":\"" + component1_1.getUuid() + "\"}, {\"uuid\":\"" + component1_2.getUuid() + "\"}]");
+        component1.setDirectDependencies("[{\"uuid\":\"" + component1_1.getUuid() + "\"}]");
         component1_1.setDirectDependencies("[{\"uuid\":\"" + component1_1_1.getUuid() + "\"}]");
         component2.setDirectDependencies("[{\"uuid\":\"" + component2_1.getUuid() + "\"}]");
         component2_1.setDirectDependencies("[{\"uuid\":\"" + component2_1_1.getUuid() + "\"}]");
+        component2_1_1.setDirectDependencies("[{\"uuid\":\"" + component2_1_1_1.getUuid() + "\"}]");
 
         Response response = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component1_1_1.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
-        JsonArray json = parseJsonArray(response);
+        JsonObject json = parseJsonObject(response);
         Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertTrue(json.getJsonObject(0).getBoolean("expandDependencyGraph"));
-        Assert.assertTrue(json.getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0).getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0).getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(1).getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.getJsonObject(1).getBoolean("expandDependencyGraph"));
-        Assert.assertFalse(json.getJsonObject(1).getJsonArray("dependencyGraph").getJsonObject(0).getBoolean("expandDependencyGraph"));
-        Assert.assertThrows(NullPointerException.class, () -> json.getJsonObject(1).getJsonArray("dependencyGraph").getJsonObject(0).getJsonArray("dependencyGraph").getJsonObject(0));
+
+        JsonObject jsonObject_component1 = json.get(component1.getUuid().toString()).asJsonObject();
+        JsonObject jsonObject_component1_1 = json.get(jsonObject_component1.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
+        JsonObject jsonObject_component1_1_1 = json.get(jsonObject_component1_1.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
+        JsonObject jsonObject_component2 = json.get(component2.getUuid().toString()).asJsonObject();
+        JsonObject jsonObject_component2_1 = json.get(jsonObject_component2.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
+        JsonObject jsonObject_component2_1_1 = json.get(jsonObject_component2_1.getJsonArray("dependencyGraph").getString(0)).asJsonObject();
+
+        Assert.assertTrue(jsonObject_component1.getBoolean("expandDependencyGraph"));
+        Assert.assertTrue(jsonObject_component1_1.getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(jsonObject_component1_1_1.getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(jsonObject_component2.getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(jsonObject_component2_1.getBoolean("expandDependencyGraph"));
+        Assert.assertFalse(jsonObject_component2_1_1.getBoolean("expandDependencyGraph"));
+        Assert.assertThrows(NullPointerException.class, () -> json.get(jsonObject_component2_1_1.getJsonArray("dependencyGraph").getString(0)).asJsonObject());
     }
 
     @Test
@@ -506,10 +515,10 @@ public class ComponentResourceTest extends ResourceTest {
         component.setName("My Component");
         component.setVersion("1.0");
         component = qm.createComponent(component, false);
-        Response responseWithComponent = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
+        Response response = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
-        JsonArray json = parseJsonArray(responseWithComponent);
-        Assert.assertEquals(200, responseWithComponent.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertEquals(200, response.getStatus(), 0);
         Assert.assertEquals(0, json.size());
     }
 
@@ -525,12 +534,12 @@ public class ComponentResourceTest extends ResourceTest {
         Project projectWithoutComponent = qm.createProject("Acme Library", null, null, null, null, null, true, false);
         Response responseWithComponent = target(V1_COMPONENT + "/project/" + projectWithComponent.getUuid() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
-        JsonArray jsonWithComponent = parseJsonArray(responseWithComponent);
+        JsonObject jsonWithComponent = parseJsonObject(responseWithComponent);
         Assert.assertEquals(200, responseWithComponent.getStatus(), 0);
         Assert.assertEquals(1, jsonWithComponent.size());
         Response responseWithoutComponent = target(V1_COMPONENT + "/project/" + projectWithoutComponent.getUuid() + "/dependencyGraph/" + component.getUuid())
                 .request().header(X_API_KEY, apiKey).get();
-        JsonArray jsonWithoutComponent = parseJsonArray(responseWithoutComponent);
+        JsonObject jsonWithoutComponent = parseJsonObject(responseWithoutComponent);
         Assert.assertEquals(200, responseWithoutComponent.getStatus(), 0);
         Assert.assertEquals(0, jsonWithoutComponent.size());
     }

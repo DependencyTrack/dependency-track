@@ -552,103 +552,95 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
     }
 
-    public List<Component> getDependencyGraphForComponent(Project project, Component component) {
-        project.setDependencyGraph(new ArrayList<>());
+    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
+        Map<String, Component> dependencyGraph = new HashMap<>();
         if (project.getDirectDependencies() == null || project.getDirectDependencies().isBlank()) {
-            return project.getDependencyGraph();
+            return dependencyGraph;
         }
         String queryUuid = ".*" + component.getUuid().toString() + ".*";
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
         List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
-        Map<String, Set<String>> pathComponentsMap = new HashMap<>();
         for (Component parentNodeComponent : components) {
-            if (pathComponentsMap.containsKey(parentNodeComponent.getUuid().toString())) {
-                pathComponentsMap.get(parentNodeComponent.getUuid().toString()).add(component.getUuid().toString());
+            parentNodeComponent.setExpandDependencyGraph(true);
+            if (dependencyGraph.containsKey(parentNodeComponent.getUuid().toString())) {
+                parentNodeComponent.getDependencyGraph().add(component.getUuid().toString());
             } else {
+                dependencyGraph.put(parentNodeComponent.getUuid().toString(), parentNodeComponent);
                 Set<String> set = new HashSet<>();
                 set.add(component.getUuid().toString());
-                pathComponentsMap.put(parentNodeComponent.getUuid().toString(), set);
+                parentNodeComponent.setDependencyGraph(set);
             }
-            getParentDependency(project, parentNodeComponent.getUuid().toString(), pathComponentsMap);
+            getParentDependenciesOfComponent(project, parentNodeComponent.getUuid().toString(), dependencyGraph);
         }
-        if (pathComponentsMap.isEmpty() && project.getDirectDependencies().contains(component.getUuid().toString())){
-            Set<String> set = new HashSet<>();
-            set.add(component.getUuid().toString());
-            pathComponentsMap.put(project.getUuid().toString(), set);
+        if (!dependencyGraph.isEmpty() || project.getDirectDependencies().contains(component.getUuid().toString())){
+            dependencyGraph.put(component.getUuid().toString(), component);
+            getRootDependencies(dependencyGraph, project);
+            getDirectDependenciesForPathDependencies(dependencyGraph);
         }
-        if (!pathComponentsMap.isEmpty()){
-            loadDependencyGraphPaths(pathComponentsMap, project, component.getUuid().toString());
+        // Reduce size of JSON response
+        for (Component c : dependencyGraph.values()) {
+            Component transientComponent = new Component();
+            transientComponent.setUuid(c.getUuid());
+            transientComponent.setName(c.getName());
+            transientComponent.setVersion(c.getVersion());
+            transientComponent.setPurlCoordinates(c.getPurlCoordinates());
+            transientComponent.setDependencyGraph(c.getDependencyGraph());
+            transientComponent.setExpandDependencyGraph(c.isExpandDependencyGraph());
+            dependencyGraph.put(c.getUuid().toString(), transientComponent);
         }
-        return project.getDependencyGraph();
+        return dependencyGraph;
     }
 
-    private void getParentDependency(Project project, String uuid, Map<String, Set<String>> pathComponentsMap) {
+    private void getParentDependenciesOfComponent(Project project, String uuid, Map<String, Component> dependencyGraph) {
         String queryUuid = ".*" + uuid + ".*";
         final Query<Component> query = pm.newQuery(Component.class, "directDependencies.matches(:queryUuid) && project == :project");
         List<Component> components = (List<Component>) query.executeWithArray(queryUuid, project);
         for (Component component : components) {
-            if (pathComponentsMap.containsKey(component.getUuid().toString())) {
-                if (pathComponentsMap.get(component.getUuid().toString()).add(uuid)) {
-                    getParentDependency(project, component.getUuid().toString(), pathComponentsMap);
+            component.setExpandDependencyGraph(true);
+            if (dependencyGraph.containsKey(component.getUuid().toString())) {
+                if (component.getDependencyGraph().add(uuid)) {
+                    getParentDependenciesOfComponent(project, component.getUuid().toString(), dependencyGraph);
                 }
             } else {
+                dependencyGraph.put(component.getUuid().toString(), component);
                 Set<String> set = new HashSet<>();
                 set.add(uuid);
-                pathComponentsMap.put(component.getUuid().toString(), set);
-                getParentDependency(project, component.getUuid().toString(), pathComponentsMap);
+                component.setDependencyGraph(set);
+                getParentDependenciesOfComponent(project, component.getUuid().toString(), dependencyGraph);
             }
         }
     }
 
-    private void loadDependencyGraphPaths(Map<String, Set<String>> pathComponentsMap, Project project, String searchDependency) {
+    private void getRootDependencies(Map<String, Component> dependencyGraph, Project project) {
         JsonArray directDependencies = Json.createReader(new StringReader(project.getDirectDependencies())).readArray();
         for (JsonValue directDependency : directDependencies) {
-            Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
-            if (pathComponentsMap.containsKey(component.getUuid().toString()) && !component.getUuid().toString().equals(searchDependency)) {
-                component.setExpandDependencyGraph(true);
+            if (!dependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid"))) {
+                Component component = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
+                dependencyGraph.put(component.getUuid().toString(), component);
             }
-            if (component.getDirectDependencies() != null && !component.getDirectDependencies().isEmpty()){
-                loadDependencyGraphPaths(pathComponentsMap, component, searchDependency);
-            }
-            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization
-            Component transientComponent = new Component();
-            transientComponent.setUuid(component.getUuid());
-            transientComponent.setName(component.getName());
-            transientComponent.setVersion(component.getVersion());
-            transientComponent.setDirectDependencies(component.getDirectDependencies());
-            transientComponent.setPurlCoordinates(component.getPurlCoordinates());
-            transientComponent.setDependencyGraph(component.getDependencyGraph());
-            transientComponent.setExpandDependencyGraph(component.isExpandDependencyGraph());
-
-            project.getDependencyGraph().add(transientComponent);
         }
+        getDirectDependenciesForPathDependencies(dependencyGraph);
     }
 
-    private void loadDependencyGraphPaths(Map<String, Set<String>> pathComponentsMap, Component component, String searchDependency) {
-        component.setDependencyGraph(new ArrayList<>());
-        JsonArray directDependencies = Json.createReader(new StringReader(component.getDirectDependencies())).readArray();
-        for (JsonValue directDependency : directDependencies) {
-            Component directDependencyComponent = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
-            if (pathComponentsMap.containsKey(directDependencyComponent.getUuid().toString()) && !directDependencyComponent.getUuid().toString().equals(searchDependency)) {
-                directDependencyComponent.setExpandDependencyGraph(true);
+    private void getDirectDependenciesForPathDependencies(Map<String, Component> dependencyGraph) {
+        Map<String, Component> addToDependencyGraph = new HashMap<>();
+        for (Component component : dependencyGraph.values()) {
+            if (component.getDirectDependencies() != null && !component.getDirectDependencies().isEmpty()) {
+                JsonArray directDependencies = Json.createReader(new StringReader(component.getDirectDependencies())).readArray();
+                for (JsonValue directDependency : directDependencies) {
+                    if (component.getDependencyGraph() == null) {
+                        component.setDependencyGraph(new HashSet<>());
+                    }
+                    if (!dependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid")) && !addToDependencyGraph.containsKey(directDependency.asJsonObject().getString("uuid"))) {
+                        Component childNode = this.getObjectByUuid(Component.class, directDependency.asJsonObject().getString("uuid"));
+                        addToDependencyGraph.put(childNode.getUuid().toString(), childNode);
+                        component.getDependencyGraph().add(childNode.getUuid().toString());
+                    } else {
+                        component.getDependencyGraph().add(directDependency.asJsonObject().getString("uuid"));
+                    }
+                }
             }
-            if (( pathComponentsMap.containsKey(directDependencyComponent.getUuid().toString()) || pathComponentsMap.containsKey(component.getUuid().toString()) )
-                    && !(pathComponentsMap.get(component.getUuid().toString()) != null && pathComponentsMap.get(component.getUuid().toString()).contains(directDependencyComponent.getUuid().toString())
-                    && pathComponentsMap.get(directDependencyComponent.getUuid().toString()) != null && pathComponentsMap.get(directDependencyComponent.getUuid().toString()).contains(component.getUuid().toString()))
-                    && directDependencyComponent.getDirectDependencies() != null && !directDependencyComponent.getDirectDependencies().isBlank()){
-                loadDependencyGraphPaths(pathComponentsMap, directDependencyComponent, searchDependency);
-            }
-            // Saves huge amount of data, because it excludes unnecessary fields in JSON serialization
-            Component transientComponent = new Component();
-            transientComponent.setUuid(directDependencyComponent.getUuid());
-            transientComponent.setName(directDependencyComponent.getName());
-            transientComponent.setVersion(directDependencyComponent.getVersion());
-            transientComponent.setDirectDependencies(directDependencyComponent.getDirectDependencies());
-            transientComponent.setPurlCoordinates(directDependencyComponent.getPurlCoordinates());
-            transientComponent.setDependencyGraph(directDependencyComponent.getDependencyGraph());
-            transientComponent.setExpandDependencyGraph(directDependencyComponent.isExpandDependencyGraph());
-
-            component.getDependencyGraph().add(transientComponent);
         }
+        dependencyGraph.putAll(addToDependencyGraph);
     }
 }

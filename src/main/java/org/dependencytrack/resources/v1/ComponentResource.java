@@ -44,6 +44,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
@@ -57,7 +58,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 /**
  * JAX-RS resources for processing components.
@@ -443,7 +443,7 @@ public class ComponentResource extends AlpineResource {
     @ApiOperation(
             value = "Returns the expanded dependency graph to every occurrence of a component",
             response = Component.class,
-            responseContainer = "List")
+            responseContainer = "Map")
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 403, message = "Access to the specified project is forbidden"),
@@ -463,8 +463,8 @@ public class ComponentResource extends AlpineResource {
                 }
                 final Component component = qm.getObjectByUuid(Component.class, componentUuid);
                 if (component != null) {
-                    List<Component> components = qm.getDependencyGraphForComponent(project, component);
-                    return Response.ok(components).build();
+                    Map<String, Component> dependencyGraph = qm.getDependencyGraphForComponent(project, component);
+                    return Response.ok(dependencyGraph).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the component could not be found.").build();
                 }

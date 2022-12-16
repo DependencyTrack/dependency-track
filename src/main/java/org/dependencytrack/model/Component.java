@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.Set;
 
 /**
  * Model class for tracking individual components.
@@ -354,7 +355,7 @@ public class Component implements Serializable {
     @JsonIgnore
     private transient JsonObject cacheResult;
 
-    private transient List<Component> dependencyGraph;
+    private transient Set<String> dependencyGraph;
 
     private transient boolean expandDependencyGraph;
 
@@ -771,11 +772,11 @@ public class Component implements Serializable {
         this.cacheResult = cacheResult;
     }
 
-    public List<Component> getDependencyGraph() {
+    public Set<String> getDependencyGraph() {
         return dependencyGraph;
     }
 
-    public void setDependencyGraph(List<Component> dependencyGraph) {
+    public void setDependencyGraph(Set<String> dependencyGraph) {
         this.dependencyGraph = dependencyGraph;
     }
 

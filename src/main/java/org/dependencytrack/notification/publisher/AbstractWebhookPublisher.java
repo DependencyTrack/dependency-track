@@ -55,7 +55,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         try {
             credentials = getBasicAuthCredentials();
         } catch (PublisherException e) {
-            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification");
+            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
             return;
         }
         if (credentials != null) {

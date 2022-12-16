@@ -20,7 +20,7 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import kong.unirest.Header;
 import kong.unirest.Headers;
 import kong.unirest.UnirestInstance;
@@ -55,7 +55,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         try {
             credentials = getBasicAuthCredentials();
         } catch (PublisherException e) {
-            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification");
+            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
             return;
         }
         if (credentials != null) {

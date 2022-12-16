@@ -19,8 +19,7 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
-import com.mitchellbosecke.pebble.PebbleEngine;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.PebbleEngine;
 
 import javax.json.JsonObject;
 

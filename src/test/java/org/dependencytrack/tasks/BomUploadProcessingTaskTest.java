@@ -131,6 +131,8 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getClassifier()).isEqualTo(Classifier.APPLICATION);
         assertThat(project.getLastBomImport()).isNotNull();
+        assertThat(project.getExternalReferences()).isNotNull();
+        assertThat(project.getExternalReferences()).hasSize(4);
 
         final List<Component> components = qm.getAllComponents(project);
         assertThat(components).hasSize(1);
@@ -148,6 +150,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         assertThat(qm.getAllVulnerabilities(component)).hasSize(2);
         assertThat(NOTIFICATIONS).satisfiesExactly(
+                n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_CONSUMED.name()),
                 n -> assertThat(n.getGroup()).isEqualTo(NotificationGroup.BOM_PROCESSED.name()),
                 n -> {

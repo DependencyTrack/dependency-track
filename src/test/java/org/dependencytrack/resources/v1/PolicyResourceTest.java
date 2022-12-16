@@ -113,6 +113,7 @@ public class PolicyResourceTest extends ResourceTest {
         assertThat(json.getString("operator")).isEqualTo("ANY");
         assertThat(json.getString("violationState")).isEqualTo("INFO");
         assertThat(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(json.getBoolean("includeChildren")).isEqualTo(false);
     }
 
     @Test
@@ -120,6 +121,7 @@ public class PolicyResourceTest extends ResourceTest {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
 
         policy.setViolationState(Policy.ViolationState.FAIL);
+        policy.setIncludeChildren(true);
         final Response response = target(V1_POLICY)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -132,6 +134,7 @@ public class PolicyResourceTest extends ResourceTest {
         assertThat(json.getString("name")).isEqualTo("policy");
         assertThat(json.getString("operator")).isEqualTo("ANY");
         assertThat(json.getString("violationState")).isEqualTo("FAIL");
+        assertThat(json.getBoolean("includeChildren")).isEqualTo(true);
     }
 
     @Test

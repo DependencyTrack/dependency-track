@@ -18,9 +18,13 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.event.framework.EventService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.search.IndexManager;
+import org.dependencytrack.tasks.IndexTask;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -106,6 +110,29 @@ public class SearchResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
         Assert.assertNotNull(json);
+    }
+
+    @Test
+    public void reindexWithBadIndexTypes() {
+        Response response = target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", "BAD_TYPE_2").request()
+                .header(X_API_KEY, apiKey)
+                .post(null,Response.class);
+        Assert.assertEquals(400, response.getStatus(), 0);
+        String body = getPlainTextBody(response);
+        Assert.assertEquals("No valid index type was provided", body);
+    }
+
+    @Test
+    public void reindexWithMixedIndexTypes() {
+        EventService.getInstance().subscribe(IndexEvent.class, IndexTask.class);
+        Response response = target(V1_SEARCH + "/reindex").queryParam("type", "BAD_TYPE_1", IndexManager.IndexType.VULNERABILITY.name(), IndexManager.IndexType.LICENSE).request()
+                .header(X_API_KEY, apiKey)
+                .post(null,Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        String token = json.getString("token");
+        Assert.assertNotNull(token);
     }
 
 }

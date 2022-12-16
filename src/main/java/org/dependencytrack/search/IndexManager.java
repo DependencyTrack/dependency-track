@@ -20,10 +20,13 @@ package org.dependencytrack.search;
 
 import alpine.Config;
 import alpine.common.logging.Logger;
+import alpine.event.framework.Event;
+import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileDeleteStrategy;
+import org.apache.commons.io.output.NullPrintStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -31,6 +34,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.CheckIndex;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -43,15 +47,30 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.SimpleFSDirectory;
+import org.apache.lucene.store.FSDirectory;
+import org.dependencytrack.event.IndexEvent;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Cpe;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ServiceComponent;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.QueryManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD;
 
 /**
  * The IndexManager is an abstract class that provides wrappers and convenience methods
@@ -81,13 +100,41 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.0.0
      */
     public enum IndexType {
-        PROJECT,
-        COMPONENT,
-        SERVICECOMPONENT,
-        VULNERABILITY,
-        LICENSE,
-        CPE,
-        VULNERABLESOFTWARE,
+        PROJECT(Project.class),
+        COMPONENT(Component.class),
+        SERVICECOMPONENT(ServiceComponent.class),
+        VULNERABILITY(Vulnerability.class),
+        LICENSE(License.class),
+        CPE(Cpe.class),
+        VULNERABLESOFTWARE(VulnerableSoftware.class);
+
+        final private Class<?> clazz;
+        final UUID uuid;
+
+        IndexType(Class<?> clazz) {
+            this.clazz = clazz;
+            this.uuid = UUID.randomUUID();
+        }
+
+        public Class<?> getClazz() {
+            return clazz;
+        }
+
+        public static Optional<IndexType> getIndexType(String type) {
+            try {
+                return Optional.of(valueOf(type));
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+        }
+
+        public static UUID getUuid(Class clazz) {
+            return Arrays.stream(values())
+                    .filter(type -> clazz == type.getClazz())
+                    .map(type -> type.uuid)
+                    .findFirst()
+                    .orElse(UUID.randomUUID());
+        }
     }
 
     /**
@@ -105,7 +152,7 @@ public abstract class IndexManager implements AutoCloseable {
      * @return the index type
      * @since 3.0.0
      */
-    protected IndexType getIndexType() {
+    public IndexType getIndexType() {
         return indexType;
     }
 
@@ -129,7 +176,7 @@ public abstract class IndexManager implements AutoCloseable {
                 );
             }
         }
-        return new SimpleFSDirectory(indexDir.toPath());
+        return FSDirectory.open(indexDir.toPath());
     }
 
     /**
@@ -157,14 +204,7 @@ public abstract class IndexManager implements AutoCloseable {
         return iwriter;
     }
 
-    /**
-     * Returns an {@link IndexSearcher} by opening the index directory first, if necessary.
-     *
-     * @return an {@link IndexSearcher}
-     * @throws IOException when the index directory cannot be opened
-     * @since 3.0.0
-     */
-    protected synchronized IndexSearcher getIndexSearcher() throws IOException {
+    private void ensureDirectoryReaderOpen() throws IOException {
         if (searchReader == null) {
             searchReader = DirectoryReader.open(getDirectory());
         } else {
@@ -173,6 +213,17 @@ public abstract class IndexManager implements AutoCloseable {
                 searchReader = changedReader;
             }
         }
+    }
+
+    /**
+     * Returns an {@link IndexSearcher} by opening the index directory first, if necessary.
+     *
+     * @return an {@link IndexSearcher}
+     * @throws IOException when the index directory cannot be opened
+     * @since 3.0.0
+     */
+    protected synchronized IndexSearcher getIndexSearcher() throws IOException {
+        ensureDirectoryReaderOpen();
         return new IndexSearcher(searchReader);
     }
 
@@ -196,6 +247,8 @@ public abstract class IndexManager implements AutoCloseable {
     public void commit() {
         try {
             getIndexWriter().commit();
+        } catch (CorruptIndexException e) {
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("Error committing index", e);
             Notification.dispatch(new Notification()
@@ -206,6 +259,19 @@ public abstract class IndexManager implements AutoCloseable {
                     .level(NotificationLevel.ERROR)
             );
         }
+    }
+
+    protected void handleCorruptIndexException(CorruptIndexException e) {
+        LOGGER.error("Corrupted Lucene index detected", e);
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.INDEXING_SERVICE)
+                .title(NotificationConstants.Title.CORE_INDEXING_SERVICES + "(" + indexType.name().toLowerCase() + ")")
+                .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
+                .level(NotificationLevel.ERROR)
+        );
+        LOGGER.info("Trying to rebuild the corrupted index " + indexType.name());
+        Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexType.getClazz()));
     }
 
     /**
@@ -278,14 +344,7 @@ public abstract class IndexManager implements AutoCloseable {
                 list.add(getIndexSearcher().doc(hit.doc));
             }
         } catch (CorruptIndexException e) {
-            LOGGER.error("Corrupted Lucene index detected", e);
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.INDEXING_SERVICE)
-                    .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
-                    .content("Corrupted Lucene index detected. Check log for details. " + e.getMessage())
-                    .level(NotificationLevel.ERROR)
-            );
+            handleCorruptIndexException(e);
         } catch (IOException e) {
             LOGGER.error("An I/O exception occurred while searching Lucene index", e);
             Notification.dispatch(new Notification()
@@ -319,7 +378,17 @@ public abstract class IndexManager implements AutoCloseable {
      * @since 3.4.0
      */
     public void reindex() {
-        delete(indexType);
+        try {
+            LOGGER.info("Deleting " + indexType.name().toLowerCase() + " index");
+            // Cleaner way of purging the index
+            // Essentially a call to deleteAll() is equivalent to creating a new IndexWriter with IndexWriterConfig.OpenMode.CREATE
+            // It will abort all pending work, trash everything in memory and ensure proper locking on the IndexWriter object
+            getIndexWriter().deleteAll();
+            getIndexWriter().commit();
+        } catch (IOException e) {
+            LOGGER.error("An error occurred deleting cleanly the " + indexType.name().toLowerCase() + " index. Forcing delete", e);
+            delete(indexType);
+        }
     }
 
     /**
@@ -339,10 +408,111 @@ public abstract class IndexManager implements AutoCloseable {
     }
 
     /**
-     * Returns if the index directory exists or not.
-     * @since 3.4.0
+     * Ensure that all lucene indexes are healthy.
      */
-    public static boolean exists(final IndexType indexType) {
-        return getIndexDirectory(indexType).exists();
+    public static void ensureIndexesExists() {
+        Arrays.stream(IndexManager.IndexType.values()).forEach(indexType -> {
+            if (!isIndexHealthy(indexType)) {
+                LOGGER.info("(Re)Building index "+indexType.name().toLowerCase());
+                LOGGER.debug("Dispatching event to reindex "+indexType.name().toLowerCase());
+                Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexType.getClazz()));
+            }
+        });
+    }
+
+    /**
+     * Check that the index exists and is not corrupted
+     */
+    private static boolean isIndexHealthy(final IndexType indexType) {
+        LOGGER.info("Checking the health of index "+indexType.name());
+        File indexDirectoryFile = getIndexDirectory(indexType);
+        LOGGER.debug("Checking FS directory "+indexDirectoryFile.toPath());
+        if(!indexDirectoryFile.exists()) {
+            LOGGER.warn("The index "+indexType.name()+" does not exist");
+            return false;
+        }
+        LOGGER.debug("Checking lucene index health");
+        Directory luceneIndexDirectory = null;
+        CheckIndex checkIndex = null;
+        try {
+            File writeLock = Path.of(indexDirectoryFile.getAbsolutePath(), IndexWriter.WRITE_LOCK_NAME).toFile();
+            if (writeLock.exists()) {
+                LOGGER.debug("Stale lock file detected. Deleting it");
+                writeLock.delete();
+            }
+            luceneIndexDirectory = FSDirectory.open(indexDirectoryFile.toPath());
+            checkIndex = new CheckIndex(luceneIndexDirectory);
+            checkIndex.setFailFast(true);
+            if(LOGGER.isDebugEnabled()) {
+                checkIndex.setInfoStream(System.out);
+            } else {
+                checkIndex.setInfoStream(new NullPrintStream());
+            }
+            CheckIndex.Status status = checkIndex.checkIndex();
+            if(status.clean) {
+                LOGGER.info("The index "+indexType.name()+" is healthy");
+            } else {
+                LOGGER.error("The index " + indexType.name().toLowerCase() + " seems to be corrupted");
+            }
+            return status.clean;
+        } catch (IOException | CheckIndex.CheckIndexException e) {
+            LOGGER.error("The index " + indexType.name().toLowerCase() + " seems to be corrupted", e);
+            return false;
+        } finally {
+            try {
+                if (luceneIndexDirectory != null) {
+                    luceneIndexDirectory.close();
+                }
+                if (checkIndex != null) {
+                    checkIndex.close();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Check that the index exists, is not corrupted and is consistent with the database.
+     */
+    public static void checkIndexesConsistency() {
+        Arrays.stream(IndexType.values()).forEach(indexType -> {
+            try (QueryManager qm = new QueryManager()) {
+                LOGGER.info("Checking the index " + indexType.name().toLowerCase());
+                if (!isIndexHealthy(indexType)) {
+                    LOGGER.info("(Re)Building index "+indexType.name().toLowerCase());
+                    LOGGER.debug("Dispatching event to reindex "+indexType.name().toLowerCase());
+                    Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexType.getClazz()));
+                    return;
+                }
+                final ConfigProperty deltaThresholdProperty = qm.getConfigProperty(
+                        SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getGroupName(), SEARCH_INDEXES_CONSISTENCY_CHECK_DELTA_THRESHOLD.getPropertyName());
+                double deltaThreshold = Double.parseDouble(deltaThresholdProperty.getPropertyValue());
+                double databaseEntityCount = qm.getCount(indexType.getClazz());
+                LOGGER.info("Database entity count for type "+indexType.name()+" : "+databaseEntityCount);
+                IndexManager indexManager = IndexManagerFactory.getIndexManager(indexType.getClazz());
+                indexManager.ensureDirectoryReaderOpen();
+                double indexDocumentCount = indexManager.searchReader.numDocs();
+                LOGGER.info("Index document count for type "+indexType.name()+" : "+indexDocumentCount);
+                double max = Math.max(Math.max(databaseEntityCount, indexDocumentCount),1);
+                double delta = 100 * (Math.abs(databaseEntityCount-indexDocumentCount) / max);
+                delta = Math.max(Math.round(delta), 1);
+                LOGGER.info("Delta ratio for type "+indexType.name()+" : "+delta+"%");
+                if(delta > deltaThreshold) {
+                    LOGGER.info("Delta ratio is above the threshold of "+deltaThresholdProperty.getPropertyValue()+"%");
+                    LOGGER.debug("Dispatching event to reindex "+indexType.name().toLowerCase());
+                    Event.dispatch(new IndexEvent(IndexEvent.Action.REINDEX, indexType.getClazz()));
+                }
+            } catch (IOException e) {
+                LOGGER.error("An I/O exception occurred while trying to read Lucene index", e);
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.INDEXING_SERVICE)
+                        .title(NotificationConstants.Title.CORE_INDEXING_SERVICES)
+                        .content("An I/O exception occurred while searching Lucene index. Check log for details. " + e.getMessage())
+                        .level(NotificationLevel.ERROR)
+                );
+            }
+        });
     }
 }

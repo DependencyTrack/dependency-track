@@ -306,6 +306,9 @@ public final class NotificationUtil {
         JsonUtil.add(vulnerabilityBuilder, "recommendation", vulnerability.getRecommendation());
         JsonUtil.add(vulnerabilityBuilder, "cvssv2", vulnerability.getCvssV2BaseScore());
         JsonUtil.add(vulnerabilityBuilder, "cvssv3", vulnerability.getCvssV3BaseScore());
+        JsonUtil.add(vulnerabilityBuilder, "owaspRRLikelihood", vulnerability.getOwaspRRLikelihoodScore());
+        JsonUtil.add(vulnerabilityBuilder, "owaspRRTechnicalImpact", vulnerability.getOwaspRRTechnicalImpactScore());
+        JsonUtil.add(vulnerabilityBuilder, "owaspRRBusinessImpact", vulnerability.getOwaspRRBusinessImpactScore());
         JsonUtil.add(vulnerabilityBuilder, "severity",  vulnerability.getSeverity());
         final JsonArrayBuilder cwesBuilder = Json.createArrayBuilder();
         if (vulnerability.getCwes() != null) {

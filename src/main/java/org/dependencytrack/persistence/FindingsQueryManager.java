@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
+import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
@@ -30,6 +31,8 @@ import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.RepositoryMetaComponent;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -278,6 +281,16 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
                 finding.getVulnerability().put("description", vulnerability.getDescription());
                 finding.getVulnerability().put("recommendation", vulnerability.getRecommendation());
+                final PackageURL purl = component.getPurl();
+                if (purl != null) {
+                    final RepositoryType type = RepositoryType.resolve(purl);
+                    if (RepositoryType.UNSUPPORTED != type) {
+                        final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, purl.getNamespace(), purl.getName());
+                        if (repoMetaComponent != null) {
+                            finding.getComponent().put("latestVersion", repoMetaComponent.getLatestVersion());
+                        }
+                    }
+                }
                 findings.add(finding);
             }
         }

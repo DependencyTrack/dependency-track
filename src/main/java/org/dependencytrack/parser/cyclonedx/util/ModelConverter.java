@@ -51,6 +51,7 @@ import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 import org.dependencytrack.util.PurlUtil;
+import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONArray;
 
 import java.util.ArrayList;
@@ -329,6 +330,17 @@ public class ModelConverter {
             } else {
                 cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
             }
+            if (project.getExternalReferences() != null && project.getExternalReferences().size() > 0) {
+                List<org.cyclonedx.model.ExternalReference> references = new ArrayList<>();
+                project.getExternalReferences().stream().forEach(externalReference -> {
+                    org.cyclonedx.model.ExternalReference ref = new org.cyclonedx.model.ExternalReference();
+                    ref.setUrl(externalReference.getUrl());
+                    ref.setType(externalReference.getType());
+                    ref.setComment(externalReference.getComment());
+                    references.add(ref);
+                });
+                cycloneComponent.setExternalReferences(references);
+            }
             metadata.setComponent(cycloneComponent);
         }
         return metadata;
@@ -578,7 +590,15 @@ public class ModelConverter {
             }
             cdxVulnerability.addRating(rating);
         }
-        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null) {
+        if (vulnerability.getOwaspRRLikelihoodScore() != null && vulnerability.getOwaspRRTechnicalImpactScore() != null && vulnerability.getOwaspRRBusinessImpactScore() != null) {
+            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            rating.setSeverity(convertDtSeverityToCdxSeverity(VulnerabilityUtil.normalizedOwaspRRScore(vulnerability.getOwaspRRLikelihoodScore().doubleValue(), vulnerability.getOwaspRRTechnicalImpactScore().doubleValue(), vulnerability.getOwaspRRBusinessImpactScore().doubleValue())));
+            rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+            rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OWASP);
+            rating.setVector(vulnerability.getOwaspRRVector());
+            cdxVulnerability.addRating(rating);
+        }
+        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null && vulnerability.getOwaspRRLikelihoodScore() == null) {
             org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(vulnerability.getSeverity()));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
@@ -599,13 +619,21 @@ public class ModelConverter {
         cdxVulnerability.setPublished(vulnerability.getPublished());
         cdxVulnerability.setUpdated(vulnerability.getUpdated());
 
-        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant) {
+        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant || CycloneDXExporter.Variant.VDR == variant) {
             final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
             final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
             affect.setRef(component.getUuid().toString());
             affects.add(affect);
             cdxVulnerability.setAffects(affects);
         } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
+            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
+            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(project.getUuid().toString());
+            affects.add(affect);
+            cdxVulnerability.setAffects(affects);
+        }
+
+        if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
             final Analysis analysis = qm.getAnalysis(
                     qm.getObjectByUuid(Component.class, component.getUuid()),
                     qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
@@ -629,13 +657,8 @@ public class ModelConverter {
                 cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
                 cdxVulnerability.setAnalysis(cdxAnalysis);
             }
-
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(project.getUuid().toString());
-            affects.add(affect);
-            cdxVulnerability.setAffects(affects);
         }
+
         return cdxVulnerability;
     }
 
@@ -686,6 +709,27 @@ public class ModelConverter {
                     c1.setDirectDependencies(jsonArray.toString());
                 }
             }
+        }
+    }
+
+    public static List<ExternalReference> convertBomMetadataExternalReferences(Bom bom) {
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null) {
+            org.cyclonedx.model.Component cycloneDxComponent = bom.getMetadata().getComponent();
+            if (cycloneDxComponent.getExternalReferences() != null && cycloneDxComponent.getExternalReferences().size() > 0) {
+                List<ExternalReference> references = new ArrayList<>();
+                for (org.cyclonedx.model.ExternalReference cycloneDxRef : cycloneDxComponent.getExternalReferences()) {
+                    ExternalReference ref = new ExternalReference();
+                    ref.setType(cycloneDxRef.getType());
+                    ref.setUrl(cycloneDxRef.getUrl());
+                    ref.setComment(cycloneDxRef.getComment());
+                    references.add(ref);
+                }
+                return references;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 

@@ -106,7 +106,7 @@ public class PolicyEngine {
         if (policy.getProjects() == null || policy.getProjects().size() == 0) {
             return false;
         }
-        return policy.getProjects().stream().anyMatch(p -> p.getId() == project.getId());
+        return (policy.getProjects().stream().anyMatch(p -> p.getId() == project.getId()) || (Boolean.TRUE.equals(policy.isIncludeChildren()) && isPolicyAssignedToParentProject(policy, project)));
     }
 
     private List<PolicyViolation> createPolicyViolations(final QueryManager qm, final List<PolicyConditionViolation> pcvList) {
@@ -149,5 +149,15 @@ public class PolicyEngine {
             return policy.getTags().stream().anyMatch(p -> p.getId() == projectTag.getId());
         }
         return false;
+    }
+
+    private boolean isPolicyAssignedToParentProject(Policy policy, Project child) {
+        if (child.getParent() == null) {
+            return false;
+        }
+        if (policy.getProjects().stream().anyMatch(p -> p.getId() == child.getParent().getId())) {
+            return true;
+        } 
+        return isPolicyAssignedToParentProject(policy, child.getParent());
     }
 }

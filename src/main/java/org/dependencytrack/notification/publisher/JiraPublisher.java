@@ -21,7 +21,7 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
-import com.mitchellbosecke.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.PebbleEngine;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.persistence.QueryManager;
 
@@ -29,6 +29,7 @@ import javax.json.JsonObject;
 import java.util.Map;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
+import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
 
 /**
@@ -46,7 +47,7 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
     @Override
     public void inform(final Notification notification, final JsonObject config) {
         jiraTicketType = config.getString("jiraTicketType");
-        jiraProjectKey = config.getString("jiraProjectKey");
+        jiraProjectKey = config.getString(CONFIG_DESTINATION);
         publish(DefaultNotificationPublishers.JIRA.getPublisherName(), getTemplate(config), notification, config);
     }
 
@@ -57,8 +58,13 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
 
     @Override
     public String getDestinationUrl(final JsonObject config) {
-        final String baseUrl = super.getDestinationUrl(config);
-        return (baseUrl.endsWith("/") ? baseUrl : baseUrl + '/') + "rest/api/2/issue";
+        try (final QueryManager qm = new QueryManager()) {
+            final String baseUrl = qm.getConfigProperty(JIRA_URL.getGroupName(), JIRA_URL.getPropertyName()).getPropertyValue();
+            return (baseUrl.endsWith("/") ? baseUrl : baseUrl + '/') + "rest/api/2/issue";
+        } catch (final Exception e) {
+            throw new PublisherException("An error occurred during the retrieval of the Jira URL", e);
+        }
+
     }
 
     @Override

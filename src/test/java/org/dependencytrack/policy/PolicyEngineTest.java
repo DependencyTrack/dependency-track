@@ -73,4 +73,59 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
         Assert.assertEquals(0, violations.size());
     }
+
+    @Test
+    public void hasPolicyAssignedToParentProject() {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        policy.setIncludeChildren(true);
+        Project parent = qm.createProject("Parent", null, "1", null, null, null, true, false);
+        Project child = qm.createProject("Child", null, "2", null, parent, null, true, false);
+        Project grandchild = qm.createProject("Grandchild", null, "3", null, child, null, true, false);
+        policy.setProjects(List.of(parent));
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(grandchild);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(parent);
+        qm.persist(child);
+        qm.persist(grandchild);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assert.assertEquals(1, violations.size());
+    }
+
+    @Test
+    public void noPolicyAssignedToParentProject() {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        Project parent = qm.createProject("Parent", null, "1", null, null, null, true, false);
+        Project child = qm.createProject("Child", null, "2", null, parent, null, true, false);
+        Project grandchild = qm.createProject("Grandchild", null, "3", null, child, null, true, false);
+        policy.setProjects(List.of(parent));
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(grandchild);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(parent);
+        qm.persist(child);
+        qm.persist(grandchild);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assert.assertEquals(0, violations.size());
+    }
 }

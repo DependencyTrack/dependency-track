@@ -25,6 +25,128 @@ Exposed metrics include various general purpose system and JVM statistics (CPU a
 garbage collector activity etc.), but also some related to Dependency-Track's internal event and notification system.
 More metrics covering other areas of Dependency-Track will be added in future versions.
 
+#### Database
+
+Metrics of the ORM used by the Dependency-Track API server are exposed under the `datanucleus` namespace. 
+They provide a high-level overview of how many, and which kind of persistence operations are performend:
+
+```yaml
+# HELP datanucleus_transactions_rolledback_total Total number of rolled-back transactions
+# TYPE datanucleus_transactions_rolledback_total counter
+datanucleus_transactions_rolledback_total 0.0
+# HELP datanucleus_queries_failed_total Total number of queries that completed with an error
+# TYPE datanucleus_queries_failed_total counter
+datanucleus_queries_failed_total 0.0
+# HELP datanucleus_query_execution_time_ms_avg Average query execution time in milliseconds
+# TYPE datanucleus_query_execution_time_ms_avg gauge
+datanucleus_query_execution_time_ms_avg 0.0
+# HELP datanucleus_transaction_execution_time_ms_avg Average transaction execution time in milliseconds
+# TYPE datanucleus_transaction_execution_time_ms_avg gauge
+datanucleus_transaction_execution_time_ms_avg 77.0
+# HELP datanucleus_datastore_reads_total Total number of read operations from the datastore
+# TYPE datanucleus_datastore_reads_total counter
+datanucleus_datastore_reads_total 5650.0
+# HELP datanucleus_datastore_writes_total Total number of write operations to the datastore
+# TYPE datanucleus_datastore_writes_total counter
+datanucleus_datastore_writes_total 1045.0
+# HELP datanucleus_object_deletes_total Total number of objects deleted from the datastore
+# TYPE datanucleus_object_deletes_total counter
+datanucleus_object_deletes_total 0.0
+# HELP datanucleus_transactions_total Total number of transactions
+# TYPE datanucleus_transactions_total counter
+datanucleus_transactions_total 1107.0
+# HELP datanucleus_queries_active Number of currently active queries
+# TYPE datanucleus_queries_active gauge
+datanucleus_queries_active 0.0
+# HELP datanucleus_queries_executed_total Total number of executed queries
+# TYPE datanucleus_queries_executed_total counter
+datanucleus_queries_executed_total 4095.0
+# HELP datanucleus_connections_active Number of currently active managed datastore connections
+# TYPE datanucleus_connections_active gauge
+datanucleus_connections_active 0.0
+# HELP datanucleus_object_inserts_total Total number of objects inserted into the datastore
+# TYPE datanucleus_object_inserts_total counter
+datanucleus_object_inserts_total 6.0
+# HELP datanucleus_object_fetches_total Total number of objects fetched from the datastore
+# TYPE datanucleus_object_fetches_total counter
+datanucleus_object_fetches_total 981.0
+# HELP datanucleus_transactions_active_total Number of currently active transactions
+# TYPE datanucleus_transactions_active_total counter
+datanucleus_transactions_active_total 0.0
+# HELP datanucleus_object_updates_total Total number of objects updated in the datastore
+# TYPE datanucleus_object_updates_total counter
+datanucleus_object_updates_total 1039.0
+# HELP datanucleus_transactions_committed_total Total number of committed transactions
+# TYPE datanucleus_transactions_committed_total counter
+datanucleus_transactions_committed_total 1107.0
+```
+
+Additionally, metrics about the database connection pools are exposed under the `hikaricp` namespace.
+Monitoring these metrics is essential for tweaking the connection pool configuration (see [Connection Pooling]):
+
+```yaml
+# HELP hikaricp_connections Total connections
+# TYPE hikaricp_connections gauge
+hikaricp_connections{pool="non-transactional",} 13.0
+hikaricp_connections{pool="transactional",} 12.0
+# HELP hikaricp_connections_usage_seconds Connection usage time
+# TYPE hikaricp_connections_usage_seconds summary
+hikaricp_connections_usage_seconds_count{pool="non-transactional",} 5888.0
+hikaricp_connections_usage_seconds_sum{pool="non-transactional",} 60.928
+hikaricp_connections_usage_seconds_count{pool="transactional",} 138.0
+hikaricp_connections_usage_seconds_sum{pool="transactional",} 0.036
+# HELP hikaricp_connections_usage_seconds_max Connection usage time
+# TYPE hikaricp_connections_usage_seconds_max gauge
+hikaricp_connections_usage_seconds_max{pool="non-transactional",} 1.319
+hikaricp_connections_usage_seconds_max{pool="transactional",} 0.007
+# HELP hikaricp_connections_min Min connections
+# TYPE hikaricp_connections_min gauge
+hikaricp_connections_min{pool="non-transactional",} 10.0
+hikaricp_connections_min{pool="transactional",} 10.0
+# HELP hikaricp_connections_pending Pending threads
+# TYPE hikaricp_connections_pending gauge
+hikaricp_connections_pending{pool="non-transactional",} 0.0
+hikaricp_connections_pending{pool="transactional",} 0.0
+# HELP hikaricp_connections_idle Idle connections
+# TYPE hikaricp_connections_idle gauge
+hikaricp_connections_idle{pool="non-transactional",} 13.0
+hikaricp_connections_idle{pool="transactional",} 12.0
+# HELP hikaricp_connections_timeout_total Connection timeout total count
+# TYPE hikaricp_connections_timeout_total counter
+hikaricp_connections_timeout_total{pool="non-transactional",} 0.0
+hikaricp_connections_timeout_total{pool="transactional",} 0.0
+# HELP hikaricp_connections_creation_seconds_max Connection creation time
+# TYPE hikaricp_connections_creation_seconds_max gauge
+hikaricp_connections_creation_seconds_max{pool="non-transactional",} 0.0
+hikaricp_connections_creation_seconds_max{pool="transactional",} 0.0
+# HELP hikaricp_connections_creation_seconds Connection creation time
+# TYPE hikaricp_connections_creation_seconds summary
+hikaricp_connections_creation_seconds_count{pool="non-transactional",} 12.0
+hikaricp_connections_creation_seconds_sum{pool="non-transactional",} 0.0
+hikaricp_connections_creation_seconds_count{pool="transactional",} 11.0
+hikaricp_connections_creation_seconds_sum{pool="transactional",} 0.0
+# HELP hikaricp_connections_active Active connections
+# TYPE hikaricp_connections_active gauge
+hikaricp_connections_active{pool="non-transactional",} 0.0
+hikaricp_connections_active{pool="transactional",} 0.0
+# HELP hikaricp_connections_max Max connections
+# TYPE hikaricp_connections_max gauge
+hikaricp_connections_max{pool="non-transactional",} 20.0
+hikaricp_connections_max{pool="transactional",} 20.0
+# HELP hikaricp_connections_acquire_seconds Connection acquire time
+# TYPE hikaricp_connections_acquire_seconds summary
+hikaricp_connections_acquire_seconds_count{pool="non-transactional",} 5888.0
+hikaricp_connections_acquire_seconds_sum{pool="non-transactional",} 0.009996981
+hikaricp_connections_acquire_seconds_count{pool="transactional",} 138.0
+hikaricp_connections_acquire_seconds_sum{pool="transactional",} 4.68092E-4
+# HELP hikaricp_connections_acquire_seconds_max Connection acquire time
+# TYPE hikaricp_connections_acquire_seconds_max gauge
+hikaricp_connections_acquire_seconds_max{pool="non-transactional",} 1.41889E-4
+hikaricp_connections_acquire_seconds_max{pool="transactional",} 1.77837E-4
+```
+
+#### Event and Notification System
+
 Event and notification metrics include the following:
 
 ```yaml
@@ -94,6 +216,20 @@ doing keeping up with the work it's being exposed to. For example, a constantly 
 value combined with a high number of `executor_queued_tasks` may indicate that the configured `alpine.worker.pool.size` 
 is too small for the workload at hand.
 
+#### Retries
+
+Dependency-Track will occasionally retry requests to external services. Metrics about this behavior are
+exposed in the following format:
+
+```
+resilience4j_retry_calls_total{kind="successful_with_retry",name="snyk-api",} 42.0
+resilience4j_retry_calls_total{kind="failed_without_retry",name="snyk-api",} 0.0
+resilience4j_retry_calls_total{kind="failed_with_retry",name="snyk-api",} 0.0
+resilience4j_retry_calls_total{kind="successful_without_retry",name="snyk-api",} 9014.0
+```
+
+Where `name` describes the remote endpoint that Dependency-Track uses retries for.
+
 ### Grafana Dashboard
 
 Because [Micrometer](https://micrometer.io/) is used to collect and expose metrics, common Grafana dashboards for
@@ -111,6 +247,7 @@ An [example dashboard] is provided as a quickstart. Refer to the [Grafana docume
 
 [community integrations]: {{ site.baseurl }}{% link _docs/integrations/community-integrations.md %}
 [Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
+[Connection Pooling]: {{ site.baseurl }}{% link _docs/getting-started/database-support.md %}#connection-pooling
 [dependency-track-exporter]: https://github.com/jetstack/dependency-track-exporter
 [example dashboard]: {{ site.baseurl }}/files/grafana-dashboard.json
 [executors]: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html

@@ -29,6 +29,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
@@ -82,6 +83,7 @@ import javax.json.JsonObject;
 import java.security.Principal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -486,6 +488,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponents(identity, includeMetrics);
     }
 
+    public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics) {
+        return getComponentQueryManager().getComponents(identity, project, includeMetrics);
+    }
+
     public Component createComponent(Component component, boolean commitIndex) {
         return getComponentQueryManager().createComponent(component, commitIndex);
     }
@@ -504,6 +510,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public void recursivelyDelete(Component component, boolean commitIndex) {
         getComponentQueryManager().recursivelyDelete(component, commitIndex);
+    }
+
+    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
+        return getComponentQueryManager().getDependencyGraphForComponent(project, component);
     }
 
     public PaginatedResult getLicenses() {
@@ -1254,6 +1264,20 @@ public class QueryManager extends AlpineQueryManager {
                 trx.rollback();
             }
         }
+    }
+
+    public void recursivelyDeleteTeam(Team team) {
+        pm.setProperty("datanucleus.query.sql.allowAll", true);
+        final Transaction trx = pm.currentTransaction();
+        pm.currentTransaction().begin();
+        pm.deletePersistentAll(team.getApiKeys());
+        String aclDeleteQuery = """
+            DELETE FROM PROJECT_ACCESS_TEAMS WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
+        """;
+        final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
+        query.executeWithArray(team.getId());
+        pm.deletePersistent(team);
+        pm.currentTransaction().commit();
     }
 
 }

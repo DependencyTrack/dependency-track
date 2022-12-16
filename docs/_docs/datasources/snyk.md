@@ -14,26 +14,53 @@ but it does consume vulnerabilities on a 'as-identified' basis.
 
 The Snyk integration is disabled by default.
 
-### Authentication
-
-User must get API token from Snyk. You can find your token in your [General Account Settings](https://snyk.io/account/) after you register with Snyk and log in. See [Authentication for API](https://docs.snyk.io/snyk-api-info/authentication-for-api).
-
-Provide the token (**without** 'token' prefixed) in the configuration as shown below.
-
 ### Configuration
 
-**Organization ID** can be set at in the [Settings](https://docs.snyk.io/products/snyk-code/cli-for-snyk-code/before-you-start-set-the-organization-for-the-cli-tests/finding-the-snyk-id-and-internal-name-of-an-organization) page of the Organization on the Web UI.
+To configure the Snyk integration, navigate to *Analyzers* -> *Snyk (Beta)* in the administration panel.
 
-**Snyk base URL** is set by default, can be changed per requirement.
+|:---|:----|
+| Base URL | Base URL of the Snyk REST API. Defaults to `https://api.snyk.io`. |
+| Organization ID | The Snyk-internal organization ID. <br/>Refer to [Finding the Snyk ID and internal name of an Organization] for details on how to find it. |
+| API Token | Authentication token for the REST API. <br/>Multiple tokens may be provided by separating them with semicolons (see [Using multiple Tokens](#using-multiple-tokens)). <br/>Refer to [Authentication for API] for details on how to generate tokens. |
+| API Version | Version of the Snyk REST API to use. |
 
-**Snyk API version** is set by default to latest version. It is updated every 6 months and might get expired causing API communication failure in which case it will be updated in next upcoming DT release.<br/>
-User can change it manually here. Please refer [API](https://apidocs.snyk.io/?version=2022-10-06#overview) to submit the correct version.<br/>
-**Number of threads for Snyk Analyzer to use** Snyk analyzer is implemented with multithreading model to complete the analysis faster. The number of threads that would be used is configurable. By default, it is set to 10. The value can be overridden by exporting this environment variable: `SNYK_THREAD_BATCH_SIZE`. The value can be set based on the configuration of the machine. <br/>
-To avoid running into rate limiting issues from the Snyk purl api server, the Snyk Analyzer currently makes use of client side rate limiting functionality. There are three configurable values for this: <br/>
-**Maximum number of requests allowed in a period of time** The maximum number of requests that the analyzer would make in a given period. This value is configurable by exporting the environment variable: `SNYK_LIMIT_FOR_PERIOD`. The default value for this is 1500<br/>
-**Timeout duration for a waiting thread** Currently the Snyk Analyzer is multithreaded. And each thread waits for the permission from the rate limiter. This is the maximum number of seconds the thread will wait before timing out. This property can be configured by exporting the environment variable: `SNYK_THREAD_TIMEOUT_DURATION`. The default value is 60 seconds.<br/>
-**Limit refresh period** The rate limiter would refresh the number of permissions available after every "limit refresh period". This value is in seconds and is configured with the environment variable: `SNYK_LIMIT_REFRESH_PERIOD`. The default value for this property is 60 seconds.<br/>
-![](../../images/snyk-configuration.png)
+![Snyk Configuration](../../images/screenshots/snyk-configuration.png)
+
+### Rate Limiting
+
+The Snyk REST API is subject to rate limiting. At the time of writing, it allows for up to 1620 requests per minute, *per authentication token*.
+These numbers may change over time, and Snyk does explicitly **not** consider changes to the quota to be breaking changes.
+The current applicable rate limit can be found in Snyk's [REST API documentation].
+
+Dependency-Track can deal with this limitation in multiple ways.
+
+#### Retries
+
+Rate limited requests are generally handled simply by retrying them, with an exponentially increasing delay between attempts.
+Per default, requests will be retried up to 7 times, with delays between attempts increasing as follows:
+
+| Retry Attempt | Delay before Attempt |
+|:--------------|:---------------------|
+| 1             | 1s                   |
+| 2             | 2s                   |
+| 3             | 4s                   |
+| 4             | 8s                   |
+| 5             | 16s                  |
+| 6             | 32s                  |
+| 7             | 60s                  |
+
+This behavior works fine for the majority of users, but can be customized if desired. Refer to [Configuration] for details.
+By monitoring metrics of this retry mechanism, it's possible to assess how often requests had to be retried (see [Monitoring]).
+If requests have to be retried frequently, providing multiple authentication tokens (see below) can help.
+
+#### Using multiple Tokens
+
+In addition to retries, Dependency-Track can make use of multiple authentication tokens. When more than one token is
+provided, token usage will be evenly distributed across requests in [round-robin](https://en.wikipedia.org/wiki/Round-robin_scheduling) fashion.
+Using multiple tokens can improve throughput, as it becomes less likely that requests are rate limited and have to be retried.
+
+To provide more than one token, simply concatenate the tokens with `;` (e.g. `token1;token2;token3`), 
+and insert them in the *API Token* field of the configuration page as usual.
 
 ### Understanding Snyk's CVSS analysis
 
@@ -42,3 +69,9 @@ The majority of vulnerabilities published by Snyk originate from proprietary res
 When evaluating the severity of a vulnerability, it's important to note that there is no single CVSS vector - there are multiple CVSS vectors defined by multiple vendors, with the National Vulnerability Database (NVD) being one of them.
 
 **NOTE:** For Beta version, user can select either from NVD or SNYK to prioritize the cvss vectors.
+
+[Authentication for API]: https://docs.snyk.io/snyk-api-info/authentication-for-api
+[Configuration]: {{ site.baseurl }}{% link _docs/getting-started/configuration.md %}
+[Finding the Snyk ID and internal name of an Organization]: https://docs.snyk.io/products/snyk-code/cli-for-snyk-code/before-you-start-set-the-organization-for-the-cli-tests/finding-the-snyk-id-and-internal-name-of-an-organization
+[Monitoring]: {{ site.baseurl }}{% link _docs/getting-started/monitoring.md %}#retries
+[REST API documentation]: https://apidocs.snyk.io

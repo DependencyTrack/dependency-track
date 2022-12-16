@@ -20,7 +20,7 @@ package org.dependencytrack.notification;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
-import com.mitchellbosecke.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.PebbleEngine;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Component;

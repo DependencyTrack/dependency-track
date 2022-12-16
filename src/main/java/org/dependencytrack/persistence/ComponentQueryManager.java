@@ -578,15 +578,15 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             getDirectDependenciesForPathDependencies(dependencyGraph);
         }
         // Reduce size of JSON response
-        for (Component c : dependencyGraph.values()) {
+        for (Map.Entry<String, Component> entry : dependencyGraph.entrySet()) {
             Component transientComponent = new Component();
-            transientComponent.setUuid(c.getUuid());
-            transientComponent.setName(c.getName());
-            transientComponent.setVersion(c.getVersion());
-            transientComponent.setPurlCoordinates(c.getPurlCoordinates());
-            transientComponent.setDependencyGraph(c.getDependencyGraph());
-            transientComponent.setExpandDependencyGraph(c.isExpandDependencyGraph());
-            dependencyGraph.put(c.getUuid().toString(), transientComponent);
+            transientComponent.setUuid(entry.getValue().getUuid());
+            transientComponent.setName(entry.getValue().getName());
+            transientComponent.setVersion(entry.getValue().getVersion());
+            transientComponent.setPurlCoordinates(entry.getValue().getPurlCoordinates());
+            transientComponent.setDependencyGraph(entry.getValue().getDependencyGraph());
+            transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
+            dependencyGraph.put(entry.getKey(), transientComponent);
         }
         return dependencyGraph;
     }

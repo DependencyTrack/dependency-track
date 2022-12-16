@@ -83,6 +83,7 @@ import javax.json.JsonObject;
 import java.security.Principal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -511,7 +512,7 @@ public class QueryManager extends AlpineQueryManager {
         getComponentQueryManager().recursivelyDelete(component, commitIndex);
     }
 
-    public List<Component> getDependencyGraphForComponent(Project project, Component component) {
+    public Map<String, Component> getDependencyGraphForComponent(Project project, Component component) {
         return getComponentQueryManager().getDependencyGraphForComponent(project, component);
     }
 

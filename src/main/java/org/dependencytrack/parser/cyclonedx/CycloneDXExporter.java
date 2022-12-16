@@ -44,6 +44,7 @@ public class CycloneDXExporter {
     public enum Variant {
         INVENTORY,
         INVENTORY_WITH_VULNERABILITIES,
+        VDR,
         VEX
     }
 
@@ -58,7 +59,10 @@ public class CycloneDXExporter {
     public Bom create(final Project project) {
         final List<Component> components = qm.getAllComponents(project);
         final List<ServiceComponent> services = qm.getAllServiceComponents(project);
-        final List<Finding> findings = (Variant.INVENTORY_WITH_VULNERABILITIES == variant || Variant.VEX == variant) ? qm.getFindings(project, true) : null;
+        final List<Finding> findings = switch (variant) {
+            case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> qm.getFindings(project, true);
+            default -> null;
+        };
         return create(components, services, findings, project);
     }
 

@@ -115,6 +115,8 @@ public class BomResource extends AlpineResource {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             } else if (variant.equalsIgnoreCase("withVulnerabilities")) {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES, qm);
+            } else if (variant.equalsIgnoreCase("vdr")) {
+                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VDR, qm);
             } else {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM variant specified.").build();
             }

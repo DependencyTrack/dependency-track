@@ -619,13 +619,21 @@ public class ModelConverter {
         cdxVulnerability.setPublished(vulnerability.getPublished());
         cdxVulnerability.setUpdated(vulnerability.getUpdated());
 
-        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant) {
+        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant || CycloneDXExporter.Variant.VDR == variant) {
             final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
             final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
             affect.setRef(component.getUuid().toString());
             affects.add(affect);
             cdxVulnerability.setAffects(affects);
         } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
+            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
+            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(project.getUuid().toString());
+            affects.add(affect);
+            cdxVulnerability.setAffects(affects);
+        }
+
+        if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
             final Analysis analysis = qm.getAnalysis(
                     qm.getObjectByUuid(Component.class, component.getUuid()),
                     qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
@@ -649,13 +657,8 @@ public class ModelConverter {
                 cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
                 cdxVulnerability.setAnalysis(cdxAnalysis);
             }
-
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(project.getUuid().toString());
-            affects.add(affect);
-            cdxVulnerability.setAffects(affects);
         }
+
         return cdxVulnerability;
     }
 

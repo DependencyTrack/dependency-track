@@ -62,6 +62,12 @@ alpine.worker.thread.multiplier=4
 # directories.
 alpine.data.directory=~/.dependency-track
 
+# Optional
+# Defines the path to the secret key to be used for data encryption and decryption.
+# The key will be generated upon first startup if it does not exist.
+# Default is "<alpine.data.directory>/keys/secret.key".
+# alpine.secret.key.path=/var/run/secrets/secret.key
+
 # Required
 # Defines the interval (in seconds) to log general heath information. If value
 # equals 0, watchdog logging will be disabled.
@@ -104,7 +110,7 @@ alpine.database.pool.enabled=true
 # This property controls the maximum size that the pool is allowed to reach,
 # including both idle and in-use connections.
 # The property can be set globally for both transactional and non-transactional
-# connection pool, or for each pool type separately. When both global and pool-specific
+# connection pools, or for each pool type separately. When both global and pool-specific
 # properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.size=20
 # alpine.database.pool.tx.max.size=
@@ -116,7 +122,7 @@ alpine.database.pool.max.size=20
 # Warning: If the value is less than alpine.database.pool.max.size,
 # alpine.database.pool.idle.timeout will have no effect.
 # The property can be set globally for both transactional and non-transactional
-# connection pool, or for each pool type separately. When both global and pool-specific
+# connection pools, or for each pool type separately. When both global and pool-specific
 # properties are set, the pool-specific properties take precedence.
 alpine.database.pool.min.idle=10
 # alpine.database.pool.tx.min.idle=
@@ -126,7 +132,7 @@ alpine.database.pool.min.idle=10
 # This property controls the maximum amount of time that a connection is
 # allowed to sit idle in the pool.
 # The property can be set globally for both transactional and non-transactional
-# connection pool, or for each pool type separately. When both global and pool-specific
+# connection pools, or for each pool type separately. When both global and pool-specific
 # properties are set, the pool-specific properties take precedence.
 alpine.database.pool.idle.timeout=300000
 # alpine.database.pool.tx.idle.timeout=
@@ -137,7 +143,7 @@ alpine.database.pool.idle.timeout=300000
 # An in-use connection will never be retired, only when it is closed will
 # it then be removed.
 # The property can be set globally for both transactional and non-transactional
-# connection pool, or for each pool type separately. When both global and pool-specific
+# connection pools, or for each pool type separately. When both global and pool-specific
 # properties are set, the pool-specific properties take precedence.
 alpine.database.pool.max.lifetime=600000
 # alpine.database.pool.tx.max.lifetime=
@@ -461,6 +467,50 @@ java -Xmx4G -DdependencyTrack.logging.level=DEBUG -jar dependency-track-embedded
 
 For Docker deployments, simply set the `LOGGING_LEVEL` environment variable to one of
 INFO, WARN, ERROR, DEBUG, or TRACE.
+
+#### Secret Key
+
+Dependency-Track will encrypt certain confidential data (e.g. access tokens for external service providers) with AES256
+prior to storing it in the database. The secret key used for encrypting and decrypting will be automatically generated
+when Dependency-Track starts for the first time, and is placed in `<alpine.data.directory>/keys/secret.key`
+(`/data/.dependency-track/keys/secret.key` for containerized deployments).
+
+Starting with Dependency-Track 4.7, it is possible to change the location of the secret key via the `alpine.secret.key.path`
+property. This makes it possible to use Kubernetes secrets for example, to mount secrets into the custom location.
+
+Secret keys may be generated manually upfront instead of relying on Dependency-Track to do it. This can be achieved
+with OpenSSL like this:
+
+```shell
+openssl rand 32 > secret.key
+```
+
+> Note that the default key format has changed in version 4.7. While existing keys using the old format will continue
+> to work, keys for new instances will be generated in the new format. Old keys may be converted using the following
+> [JShell](https://docs.oracle.com/en/java/javase/17/jshell/introduction-jshell.html) script:
+> ```java
+> import java.io.ObjectInputStream;
+> import java.nio.file.Files;
+> import java.nio.file.Paths;
+> import javax.crypto.SecretKey;
+> String inputFilePath = System.getProperty("secret.key.input")
+> String outputFilePath = System.getProperty("secret.key.output");
+> SecretKey secretKey = null;
+> System.out.println("Reading old key from " + inputFilePath);
+> try (var fis = Files.newInputStream(Paths.get(inputFilePath));
+>      var ois = new ObjectInputStream(fis)) {
+>     secretKey = (SecretKey) ois.readObject();
+> }
+> System.out.println("Writing new key to " + outputFilePath);
+> try (var fos = Files.newOutputStream(Paths.get(outputFilePath))) {
+>     fos.write(secretKey.getEncoded());
+> }
+> /exit
+> ```
+> Example execution:
+> ```shell
+> jshell -R"-Dsecret.key.input=$HOME/.dependency-track/keys/secret.key" -R"-Dsecret.key.output=secret.key.new" convert-key.jsh
+> ```
 
 ### Frontend
 

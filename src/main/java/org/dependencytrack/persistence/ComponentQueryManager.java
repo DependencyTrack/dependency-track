@@ -583,13 +583,20 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             transientComponent.setUuid(entry.getValue().getUuid());
             transientComponent.setName(entry.getValue().getName());
             transientComponent.setVersion(entry.getValue().getVersion());
+            transientComponent.setPurl(entry.getValue().getPurl());
             transientComponent.setPurlCoordinates(entry.getValue().getPurlCoordinates());
             transientComponent.setDependencyGraph(entry.getValue().getDependencyGraph());
             transientComponent.setExpandDependencyGraph(entry.getValue().isExpandDependencyGraph());
-            final RepositoryType type = RepositoryType.resolve(transientComponent.getPurl());
-            if (RepositoryType.UNSUPPORTED != type) {
-                final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, transientComponent.getPurl().getNamespace(), transientComponent.getPurl().getName());
-                transientComponent.setRepositoryMeta(repoMetaComponent);
+            if (transientComponent.getPurl() != null) {
+                final RepositoryType type = RepositoryType.resolve(transientComponent.getPurl());
+                if (RepositoryType.UNSUPPORTED != type) {
+                    final RepositoryMetaComponent repoMetaComponent = getRepositoryMetaComponent(type, transientComponent.getPurl().getNamespace(), transientComponent.getPurl().getName());
+                    if (repoMetaComponent != null) {
+                        RepositoryMetaComponent transientRepoMetaComponent = new RepositoryMetaComponent();
+                        transientRepoMetaComponent.setLatestVersion(repoMetaComponent.getLatestVersion());
+                        transientComponent.setRepositoryMeta(transientRepoMetaComponent);
+                    }
+                }
             }
             dependencyGraph.put(entry.getKey(), transientComponent);
         }

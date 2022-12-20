@@ -515,6 +515,70 @@ public class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getDependencyGraphForComponentTestWithRepositoryMetaData() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+
+        Component component1 = new Component();
+        component1.setProject(project);
+        component1.setName("Component1");
+        component1.setVersion("1.0.0");
+        component1.setPurl("pkg:maven/org.acme/component1");
+        RepositoryMetaComponent meta1 = new RepositoryMetaComponent();
+        Date lastCheck = new Date();
+        meta1.setLastCheck(lastCheck);
+        meta1.setNamespace("org.acme");
+        meta1.setName("component1");
+        meta1.setLatestVersion("2.0.0");
+        meta1.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta1);
+        component1 = qm.createComponent(component1, false);
+
+        Component component1_1 = new Component();
+        component1_1.setProject(project);
+        component1_1.setName("Component1_1");
+        component1_1.setVersion("2.0.0");
+        component1_1.setPurl("pkg:maven/org.acme/component1_1");
+        RepositoryMetaComponent meta1_1 = new RepositoryMetaComponent();
+        meta1_1.setLastCheck(lastCheck);
+        meta1_1.setNamespace("org.acme");
+        meta1_1.setName("component1_1");
+        meta1_1.setLatestVersion("3.0.0");
+        meta1_1.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta1_1);
+        component1_1 = qm.createComponent(component1_1, false);
+
+        Component component1_1_1 = new Component();
+        component1_1_1.setProject(project);
+        component1_1_1.setName("Component1_1_1");
+        component1_1_1.setVersion("3.0.0");
+        component1_1_1.setPurl("pkg:maven/org.acme/component1_1_1");
+        RepositoryMetaComponent meta1_1_1 = new RepositoryMetaComponent();
+        meta1_1_1.setLastCheck(lastCheck);
+        meta1_1_1.setNamespace("org.acme");
+        meta1_1_1.setName("component1_1_1");
+        meta1_1_1.setLatestVersion("4.0.0");
+        meta1_1_1.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta1_1_1);
+        component1_1_1 = qm.createComponent(component1_1_1, false);
+
+        project.setDirectDependencies("[{\"uuid\":\"" + component1.getUuid() + "\"}]");
+        component1.setDirectDependencies("[{\"uuid\":\"" + component1_1.getUuid() + "\"}]");
+        component1_1.setDirectDependencies("[{\"uuid\":\"" + component1_1_1.getUuid() + "\"}]");
+
+        Response response = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component1_1_1.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        JsonObject json = parseJsonObject(response);
+        Assert.assertEquals(200, response.getStatus(), 0);
+
+        Assert.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertEquals("2.0.0", json.get(component1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assert.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertEquals("3.0.0", json.get(component1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assert.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertEquals("4.0.0", json.get(component1_1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+    }
+
+    @Test
     public void getDependencyGraphForComponentInvalidProjectUuidTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();

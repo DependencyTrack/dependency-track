@@ -489,8 +489,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         if (!active && Boolean.TRUE.equals(project.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive, if active children are present.");
-        } else {
-            project.setActive(active);
         }
         project.setActive(active);
 

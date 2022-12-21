@@ -487,10 +487,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setVersion(version);
         project.setPurl(purl);
 
-        if (!active && project.isActive() && hasActiveChild(project)){
+        if (!active && Boolean.TRUE.equals(project.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive, if active children are present.");
-        } else {
-            project.setActive(active);
         }
         project.setActive(active);
 
@@ -522,10 +520,8 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         project.setPurl(transientProject.getPurl());
         project.setSwidTagId(transientProject.getSwidTagId());
 
-        if (project.isActive() && !Boolean.TRUE.equals(transientProject.isActive()) && hasActiveChild(project)){
+        if (Boolean.TRUE.equals(project.isActive()) && !Boolean.TRUE.equals(transientProject.isActive()) && hasActiveChild(project)){
             throw new IllegalArgumentException("Project cannot be set to inactive if active children are present.");
-        } else {
-            project.setActive(transientProject.isActive());
         }
         project.setActive(transientProject.isActive());
 
@@ -1091,7 +1087,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         boolean hasActiveChild = false;
         if (project.getChildren() != null){
             for (Project child: project.getChildren()) {
-                if (child.isActive() || hasActiveChild) {
+                if (Boolean.TRUE.equals(child.isActive()) || hasActiveChild) {
                     return true;
                 } else {
                     hasActiveChild = hasActiveChild(child);

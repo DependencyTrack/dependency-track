@@ -316,6 +316,24 @@ public class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    public void updateProjectTestIsActiveEqualsNull() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        project.setDescription("Test project");
+        project.setActive(null);
+        Assert.assertNull(project.isActive());
+        Response response = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(project, MediaType.APPLICATION_JSON));
+        Assert.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals("1.0", json.getString("version"));
+        Assert.assertEquals("Test project", json.getString("description"));
+    }
+
+    @Test
     public void updateProjectTagsTest() {
         final var tags = Stream.of("tag1", "tag2").map(qm::createTag).collect(Collectors.toUnmodifiableList());
         final var p1 = qm.createProject("ABC", "Test project", "1.0", tags, null, null, true, false);

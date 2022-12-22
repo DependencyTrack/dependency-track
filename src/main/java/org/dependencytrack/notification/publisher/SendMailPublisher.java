@@ -27,12 +27,15 @@ import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.notification.Notification;
 import alpine.security.crypto.DataEncryption;
+import alpine.server.auth.LdapConnectionWrapper;
 import alpine.server.mail.SendMail;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.json.JsonObject;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -130,6 +133,30 @@ public class SendMailPublisher implements Publisher {
     }
 
     static String[] parseDestination(final JsonObject config, final List<Team> teams) {
+        final LdapConnectionWrapper ldap = new LdapConnectionWrapper();
+        DirContext dirContext = null;
+        try {
+            dirContext = ldap.createDirContext();
+            DirContext finalDirContext = dirContext;
+            teams.forEach(team -> {
+                if (team.getLdapUsers() != null) {
+                    team.getLdapUsers().forEach(ldapUser -> {
+                        try {
+                            String email = ldap.getAttribute(finalDirContext, ldapUser.getDN(), LdapConnectionWrapper.ATTRIBUTE_MAIL);
+                            if (email != null) {
+                                ldapUser.setEmail(email);
+                            }
+                        } catch (NamingException e) {
+                            LOGGER.error("Error occurred during LDAP email retrieval for user: " + ldapUser.getDN(), e);
+                        }
+                    });
+                }
+            });
+        } catch (NamingException e) {
+            LOGGER.error("Error occurred during attempt to create directory service context", e);
+        } finally {
+            ldap.closeQuietly(dirContext);
+        }
         String[] destination = teams.stream().flatMap(
                 team -> Stream.of(
                                 Arrays.stream(config.getString("destination").split(",")).filter(Predicate.not(String::isEmpty)),

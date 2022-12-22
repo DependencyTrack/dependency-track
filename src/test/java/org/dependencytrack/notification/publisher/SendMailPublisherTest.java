@@ -51,6 +51,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser = new LdapUser();
     ldapUser.setUsername("ldapUserTest");
+    ldapUser.setDN("ldapUserTest");
     ldapUser.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers = new ArrayList<>();
     ldapUsers.add(ldapUser);
@@ -83,6 +84,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser1 = new LdapUser();
     ldapUser1.setUsername("ldapUserTest");
+    ldapUser1.setDN("ldapUserTest1");
     ldapUser1.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers1 = new ArrayList<>();
     ldapUsers1.add(ldapUser1);
@@ -108,6 +110,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser2 = new LdapUser();
     ldapUser2.setUsername("ldapUserTest");
+    ldapUser2.setDN("ldapUserTest2");
     ldapUser2.setEmail("anotherLdapUser@Test.com");
     List<LdapUser> ldapUsers2 = new ArrayList<>();
     ldapUsers2.add(ldapUser2);
@@ -140,6 +143,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser1 = new LdapUser();
     ldapUser1.setUsername("ldapUserTest");
+    ldapUser1.setDN("ldapUserTest1");
     ldapUser1.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers1 = new ArrayList<>();
     ldapUsers1.add(ldapUser1);
@@ -165,6 +169,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser2 = new LdapUser();
     ldapUser2.setUsername("ldapUserTest");
+    ldapUser2.setDN("ldapUserTest2");
     ldapUser2.setEmail("anotherLdapUser@Test.com");
     List<LdapUser> ldapUsers2 = new ArrayList<>();
     ldapUsers2.add(ldapUser2);
@@ -198,6 +203,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser = new LdapUser();
     ldapUser.setUsername("ldapUserTest");
+    ldapUser.setDN("ldapUserTest");
     ldapUser.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers = new ArrayList<>();
     ldapUsers.add(ldapUser);
@@ -245,6 +251,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser = new LdapUser();
     ldapUser.setUsername("ldapUserTest");
+    ldapUser.setDN("ldapUserTest");
     List<LdapUser> ldapUsers = new ArrayList<>();
     ldapUsers.add(ldapUser);
 
@@ -273,6 +280,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser = new LdapUser();
     ldapUser.setUsername("ldapUserTest");
+    ldapUser.setDN("ldapUserTest");
     ldapUser.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers = new ArrayList<>();
     ldapUsers.add(ldapUser);
@@ -299,6 +307,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser = new LdapUser();
     ldapUser.setUsername("ldapUserTest");
+    ldapUser.setDN("ldapUserTest");
     ldapUser.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers = new ArrayList<>();
     ldapUsers.add(ldapUser);
@@ -352,6 +361,7 @@ public class SendMailPublisherTest {
 
     LdapUser ldapUser = new LdapUser();
     ldapUser.setUsername("ldapUserTest");
+    ldapUser.setDN("ldapUserTest");
     ldapUser.setEmail("ldapUser@Test.com");
     List<LdapUser> ldapUsers = new ArrayList<>();
     ldapUsers.add(ldapUser);

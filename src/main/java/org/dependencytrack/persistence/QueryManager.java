@@ -1208,6 +1208,18 @@ public class QueryManager extends AlpineQueryManager {
         commitSearchIndex(true, clazz);
     }
 
+    public boolean hasAccessManagementPermission(final Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("principal");
+        } else if (principal instanceof UserPrincipal) {
+            return hasAccessManagementPermission((UserPrincipal)principal);
+        } else if (principal instanceof ApiKey) {
+            return hasAccessManagementPermission((ApiKey)principal);
+        } else {
+            throw new UnsupportedOperationException(principal.getClass().getName());
+        }
+    }
+
     public boolean hasAccessManagementPermission(final UserPrincipal userPrincipal) {
         return getProjectQueryManager().hasAccessManagementPermission(userPrincipal);
     }
@@ -1246,6 +1258,15 @@ public class QueryManager extends AlpineQueryManager {
         }
     }
 
+    private static List<Team> getTeams(final Principal principal) {
+        if (principal instanceof UserPrincipal) {
+            final UserPrincipal userPrincipal = ((UserPrincipal) principal);
+            return userPrincipal.getTeams();
+        } else {
+            final ApiKey apiKey = ((ApiKey) principal);
+            return apiKey.getTeams();
+        }
+    }
 
     /**
      * Extra team filter when ACL management is enable
@@ -1255,22 +1276,11 @@ public class QueryManager extends AlpineQueryManager {
     protected <T> void preprocessACLs(final Query<T> query, final String inputFilter, final Map<String, Object> params,
                                       final boolean bypass, final String accessTeamsPath) {
         if (principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
-            final List<Team> teams;
-            if (principal instanceof UserPrincipal) {
-                final UserPrincipal userPrincipal = ((UserPrincipal) principal);
-                teams = userPrincipal.getTeams();
-                if (hasAccessManagementPermission(userPrincipal)) {
-                    query.setFilter(inputFilter);
-                    return;
-                }
-            } else {
-                final ApiKey apiKey = ((ApiKey) principal);
-                teams = apiKey.getTeams();
-                if (hasAccessManagementPermission(apiKey)) {
-                    query.setFilter(inputFilter);
-                    return;
-                }
+            if (hasAccessManagementPermission(principal)) {
+                query.setFilter(inputFilter);
+                return;
             }
+            final List<Team> teams = getTeams(principal);
             if (teams != null && teams.size() > 0) {
                 final StringBuilder sb = new StringBuilder();
                 for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {

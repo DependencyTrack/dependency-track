@@ -29,6 +29,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
@@ -1242,6 +1243,52 @@ public class QueryManager extends AlpineQueryManager {
             query.setParameters(uuid);
             query.getFetchPlan().setGroups(fetchGroups);
             return query.executeUnique();
+        }
+    }
+
+
+    /**
+     * Extra team filter when ACL management is enable
+     * 
+     * @param T Candidate class for the query
+     */
+    protected <T> void preprocessACLs(final Query<T> query, final String inputFilter, final Map<String, Object> params,
+                                      final boolean bypass, final String accessTeamsPath) {
+        if (principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && !bypass) {
+            final List<Team> teams;
+            if (principal instanceof UserPrincipal) {
+                final UserPrincipal userPrincipal = ((UserPrincipal) principal);
+                teams = userPrincipal.getTeams();
+                if (hasAccessManagementPermission(userPrincipal)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            } else {
+                final ApiKey apiKey = ((ApiKey) principal);
+                teams = apiKey.getTeams();
+                if (hasAccessManagementPermission(apiKey)) {
+                    query.setFilter(inputFilter);
+                    return;
+                }
+            }
+            if (teams != null && teams.size() > 0) {
+                final StringBuilder sb = new StringBuilder();
+                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
+                    final Team team = getObjectById(Team.class, teams.get(i).getId());
+                    if (sb.length() > 0) {
+                        sb.append(" || ");
+                    }
+                    sb.append(accessTeamsPath).append(".contains(:team").append(i).append(")");
+                    params.put("team" + i, team);
+                }
+                if (inputFilter != null) {
+                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
+                } else {
+                    query.setFilter(sb.toString());
+                }
+            }
+        } else if (StringUtils.trimToNull(inputFilter) != null) {
+            query.setFilter(inputFilter);
         }
     }
 

@@ -1281,7 +1281,7 @@ public class QueryManager extends AlpineQueryManager {
                     sb.append(accessTeamsPath).append(".contains(:team").append(i).append(")");
                     params.put("team" + i, team);
                 }
-                if (inputFilter != null) {
+                if (StringUtils.trimToNull(inputFilter) != null) {
                     query.setFilter(inputFilter + " && (" + sb.toString() + ")");
                 } else {
                     query.setFilter(sb.toString());

@@ -57,7 +57,6 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -161,10 +160,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     public List<Project> getAllProjects(boolean excludeInactive) {
         final Query<Project> query = pm.newQuery(Project.class);
+        String queryFilter = null;
         if (excludeInactive) {
-            query.setFilter("active == true || active == null");
+            queryFilter = "active == true || active == null";
         }
         query.setOrdering("id asc");
+
+        preprocessACLs(query, queryFilter);
         return query.executeList();
     }
 
@@ -212,7 +214,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, false);
-        query.setFilter(queryFilter);
         query.setRange(0, 1);
         return singleResult(query.executeWithMap(params));
     }
@@ -818,6 +819,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         } else {
             return true;
         }
+    }
+
+    /**
+     * Extra team filter when ACL management is enable
+     */
+    private void preprocessACLs(final Query<Project> query, final String inputFilter) {
+        preprocessACLs(query, inputFilter, new HashMap<String, Object>(), false);
     }
 
     /**

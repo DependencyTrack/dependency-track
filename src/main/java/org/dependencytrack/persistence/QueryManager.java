@@ -1280,7 +1280,7 @@ public class QueryManager extends AlpineQueryManager {
                 query.setFilter(inputFilter);
                 return;
             }
-            final List<Team> teams = getTeams(principal);
+            final List<Team> teams = QueryManager.getTeams(principal);
             if (teams != null && teams.size() > 0) {
                 final StringBuilder sb = new StringBuilder();
                 for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {

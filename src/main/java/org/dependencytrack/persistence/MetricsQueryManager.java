@@ -22,16 +22,20 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.VulnerabilityMetrics;
+import org.dependencytrack.util.MetricsUtils;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 
 public class MetricsQueryManager extends QueryManager implements IQueryManager {
 
@@ -63,6 +67,20 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * Retrieve all the projects suitable for portfolio
+     */
+    private List<Project> getProjectsForPortfolio() {
+        if (principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)) {
+            if (hasAccessManagementPermission(principal)) {
+                return null;
+            }
+
+            return getAllProjects(true);
+        }
+        return null;   
+    }
+
+    /**
      * Retrieves the most recent PortfolioMetrics.
      * @return a PortfolioMetrics object
      */
@@ -89,6 +107,12 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
      */
     @SuppressWarnings("unchecked")
     public List<PortfolioMetrics> getPortfolioMetricsSince(Date since) {
+        final List<Project> projects = getProjectsForPortfolio();
+        if (projects != null) {
+            final var metrics = getProjectMetricsSince(projects, since);
+            return MetricsUtils.sum(metrics, true);
+        }
+
         final Query<PortfolioMetrics> query = pm.newQuery(PortfolioMetrics.class, "lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
         return (List<PortfolioMetrics>)query.execute(since);
@@ -112,20 +136,45 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
      * @return a PaginatedResult object
      */
     public PaginatedResult getProjectMetrics(Project project) {
-        final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class, "project == :project");
+        final List<Project> projects = new ArrayList<>();
+        projects.add(project);
+        return getProjectMetrics(projects);
+    }
+
+    /**
+     * Retrieves ProjectMetrics in descending order starting with the most recent.
+     * @param projects the Projects to retrieve metrics for
+     * @return a PaginatedResult object
+     */
+    public PaginatedResult getProjectMetrics(List<Project> projects) {
+        final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class, ":project.contains(project)");
         query.setOrdering("lastOccurrence desc");
-        return execute(query, project);
+        return execute(query, projects);
     }
 
     /**
      * Retrieves ProjectMetrics in ascending order starting with the oldest since the date specified.
+     * @param project the Project to retrieve metrics for
+     * @since first date for lookup
+     * @return a List of metrics
+     */
+    public List<ProjectMetrics> getProjectMetricsSince(Project project, Date since) {
+        final List<Project> projects = new ArrayList<>();
+        projects.add(project);
+        return getProjectMetricsSince(projects, since);
+    }
+
+    /**
+     * Retrieves ProjectMetrics in ascending order starting with the oldest since the date specified.
+     * @param projects the Projects to retrieve metrics for
+     * @since first date for lookup
      * @return a List of metrics
      */
     @SuppressWarnings("unchecked")
-    public List<ProjectMetrics> getProjectMetricsSince(Project project, Date since) {
-        final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class, "project == :project && lastOccurrence >= :since");
+    public List<ProjectMetrics> getProjectMetricsSince(List<Project> projects, Date since) {
+        final Query<ProjectMetrics> query = pm.newQuery(ProjectMetrics.class, ":project.contains(project) && lastOccurrence >= :since");
         query.setOrdering("lastOccurrence asc");
-        return (List<ProjectMetrics>)query.execute(project, since);
+        return (List<ProjectMetrics>)query.execute(projects, since);
     }
 
     /**

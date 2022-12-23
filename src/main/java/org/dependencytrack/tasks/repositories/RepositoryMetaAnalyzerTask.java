@@ -94,15 +94,16 @@ public class RepositoryMetaAnalyzerTask implements Subscriber {
                     LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components");
                 }
             } else {
+                LOGGER.info("Analyzing portfolio component repository metadata");
                 try (final QueryManager qm = new QueryManager()) {
                     final List<Project> projects = qm.getAllProjects(true);
                     for (final Project project: projects) {
                         final List<Component> components = qm.getAllComponents(project);
-                        LOGGER.info("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                        LOGGER.debug("Performing component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                         for (final Component component: components) {
                             analyze(qm, component);
                         }
-                        LOGGER.info("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
+                        LOGGER.debug("Completed component repository metadata analysis against " + components.size() + " components in project: " + project.getUuid());
                     }
                 }
                 LOGGER.info("Portfolio component repository metadata analysis complete");

@@ -57,7 +57,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
     }
 
     private void updateMetrics(final UUID uuid) throws Exception {
-        LOGGER.info("Executing metrics update for project " + uuid);
+        LOGGER.debug("Executing metrics update for project " + uuid);
         final var counters = new Counters();
 
         try (final QueryManager qm = new QueryManager()) {
@@ -146,7 +146,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
             }
         }
 
-        LOGGER.info("Completed metrics update for project " + uuid + " in " +
+        LOGGER.debug("Completed metrics update for project " + uuid + " in " +
                 DurationFormatUtils.formatDuration(new Date().getTime() - counters.measuredAt.getTime(), "mm:ss:SS"));
     }
 

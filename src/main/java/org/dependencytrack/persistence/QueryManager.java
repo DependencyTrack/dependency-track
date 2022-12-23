@@ -1267,7 +1267,12 @@ public class QueryManager extends AlpineQueryManager {
     /**
      * Extra team filter when ACL management is enable
      * 
-     * @param T Candidate class for the query
+     * @param query The query to adapt for ACL
+     * @param inputFilter Query filter, will be completed if relevant and applied 
+     * @param params Map of named parameters
+     * @param bypass When true, access management acl is bypassed
+     * @param accessTeamsPath Pass the the project teams for access
+     * @param <T> Candidate class for the query
      */
     protected <T> void preprocessACLs(final Query<T> query, final String inputFilter, final Map<String, Object> params,
                                       final boolean bypass, final String accessTeamsPath) {

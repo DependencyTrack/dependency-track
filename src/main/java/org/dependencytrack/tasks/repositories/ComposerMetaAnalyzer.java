@@ -46,6 +46,10 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private static final Logger LOGGER = Logger.getLogger(ComposerMetaAnalyzer.class);
     private static final String DEFAULT_BASE_URL = "https://repo.packagist.org";
+
+    /**
+     * @see <a href="https://packagist.org/apidoc#get-package-metadata-v1">Packagist's API doc for "Getting package data - Using the Composer v1 metadata (DEPRECATED)"</a>
+     */
     private static final String API_URL = "/p/%s/%s.json";
 
     ComposerMetaAnalyzer() {
@@ -94,11 +98,16 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 return meta;
             }
 
-            final JSONObject composerPackage = response
+            final String expectedResponsePackage = component.getPurl().getNamespace() + "/" + component.getPurl().getName();
+            final JSONObject responsePackages = response
                     .getBody()
                     .getObject()
-                    .getJSONObject("packages")
-                    .getJSONObject(component.getPurl().getNamespace() + "/" + component.getPurl().getName());
+                    .getJSONObject("packages");
+            if (!responsePackages.has(expectedResponsePackage)) {
+                // the package no longer exists - like this one: https://repo.packagist.org/p/magento/adobe-ims.json
+                return meta;
+            }
+            final JSONObject composerPackage = responsePackages.getJSONObject(expectedResponsePackage);
 
             final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
             final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");

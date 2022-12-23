@@ -96,6 +96,34 @@ public class ComposerMetaAnalyzerTest {
         );
     }
 
+    @Test
+    public void testAnalyzerGetsUnexpectedResponseContentCausingLatestVersionBeingNull() throws Exception {
+        Component component = new Component();
+        ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
+
+        component.setPurl(new PackageURL("pkg:composer/magento/adobe-ims@v1.0.0"));
+        final File packagistFile = getResourceFile("magento", "adobe-ims");
+
+        analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
+        new MockServerClient("localhost", mockServer.getPort())
+                .when(
+                        request()
+                                .withMethod("GET")
+                                .withPath("/p/magento/adobe-ims.json")
+                )
+                .respond(
+                        response()
+                                .withStatusCode(200)
+                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                .withBody(getTestData(packagistFile))
+                );
+
+        analyzer.analyze(component);
+        MetaModel metaModel = analyzer.analyze(component);
+
+        Assert.assertNull(metaModel.getLatestVersion());
+    }
+
     private static File getResourceFile(String namespace, String name) throws Exception{
         return new File(
                 Thread.currentThread().getContextClassLoader()

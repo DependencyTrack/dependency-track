@@ -20,7 +20,6 @@ public final class MetricsUtils {
 
     /**
      * Sum project metrics
-     * Assumes projects metrics are sorted by first occurence
      * @param projectMetrics List of project metrics to sum
      * @param isSorted Pass true if project metrics is already sorted by getFirstOccurrence date
      */

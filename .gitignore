@@ -11,3 +11,5 @@ target/
 .classpath
 .project
 .idea/
+.vscode/
+

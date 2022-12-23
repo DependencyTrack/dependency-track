@@ -26,11 +26,11 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.CallbackEvent;
 import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
-import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.MetricsUtils;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -108,41 +108,7 @@ public class PortfolioMetricsUpdateTask implements Subscriber {
                         continue;
                     }
 
-                    counters.critical += metrics.getCritical();
-                    counters.high += metrics.getHigh();
-                    counters.medium += metrics.getMedium();
-                    counters.low += metrics.getLow();
-                    counters.unassigned += metrics.getUnassigned();
-                    counters.vulnerabilities += metrics.getVulnerabilities();
-
-                    counters.findingsTotal += metrics.getFindingsTotal();
-                    counters.findingsAudited += metrics.getFindingsAudited();
-                    counters.findingsUnaudited += metrics.getFindingsUnaudited();
-                    counters.suppressions += metrics.getSuppressed();
-                    counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                    counters.projects++;
-                    if (metrics.getVulnerabilities() > 0) {
-                        counters.vulnerableProjects++;
-                    }
-                    counters.components += metrics.getComponents();
-                    counters.vulnerableComponents += metrics.getVulnerableComponents();
-
-                    counters.policyViolationsFail += metrics.getPolicyViolationsFail();
-                    counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
-                    counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
-                    counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
-                    counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
-                    counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();
-                    counters.policyViolationsSecurityTotal += metrics.getPolicyViolationsSecurityTotal();
-                    counters.policyViolationsSecurityAudited += metrics.getPolicyViolationsSecurityAudited();
-                    counters.policyViolationsSecurityUnaudited += metrics.getPolicyViolationsSecurityUnaudited();
-                    counters.policyViolationsLicenseTotal += metrics.getPolicyViolationsLicenseTotal();
-                    counters.policyViolationsLicenseAudited += metrics.getPolicyViolationsLicenseAudited();
-                    counters.policyViolationsLicenseUnaudited += metrics.getPolicyViolationsLicenseUnaudited();
-                    counters.policyViolationsOperationalTotal += metrics.getPolicyViolationsOperationalTotal();
-                    counters.policyViolationsOperationalAudited += metrics.getPolicyViolationsOperationalAudited();
-                    counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
+                    MetricsUtils.add(counters, metrics);                    
                 }
 
                 LOGGER.debug("Fetching next " + BATCH_SIZE + " projects");

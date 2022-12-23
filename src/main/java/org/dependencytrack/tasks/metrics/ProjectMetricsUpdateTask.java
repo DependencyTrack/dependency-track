@@ -23,11 +23,11 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.dependencytrack.event.ProjectMetricsUpdateEvent;
-import org.dependencytrack.metrics.Metrics;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.MetricsUtils;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -87,39 +87,7 @@ public class ProjectMetricsUpdateTask implements Subscriber {
                         continue;
                     }
 
-                    counters.critical += componentCounters.critical;
-                    counters.high += componentCounters.high;
-                    counters.medium += componentCounters.medium;
-                    counters.low += componentCounters.low;
-                    counters.unassigned += componentCounters.unassigned;
-                    counters.vulnerabilities += componentCounters.vulnerabilities;
-
-                    counters.findingsTotal += componentCounters.findingsTotal;
-                    counters.findingsAudited += componentCounters.findingsAudited;
-                    counters.findingsUnaudited += componentCounters.findingsUnaudited;
-                    counters.suppressions += componentCounters.suppressions;
-                    counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                    counters.components++;
-                    if (componentCounters.vulnerabilities > 0) {
-                        counters.vulnerableComponents += 1;
-                    }
-
-                    counters.policyViolationsFail += componentCounters.policyViolationsFail;
-                    counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
-                    counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
-                    counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
-                    counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
-                    counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;
-                    counters.policyViolationsSecurityTotal += componentCounters.policyViolationsSecurityTotal;
-                    counters.policyViolationsSecurityAudited += componentCounters.policyViolationsSecurityAudited;
-                    counters.policyViolationsSecurityUnaudited += componentCounters.policyViolationsSecurityUnaudited;
-                    counters.policyViolationsLicenseTotal += componentCounters.policyViolationsLicenseTotal;
-                    counters.policyViolationsLicenseAudited += componentCounters.policyViolationsLicenseAudited;
-                    counters.policyViolationsLicenseUnaudited += componentCounters.policyViolationsLicenseUnaudited;
-                    counters.policyViolationsOperationalTotal += componentCounters.policyViolationsOperationalTotal;
-                    counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
-                    counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
+                    MetricsUtils.add(counters, componentCounters);                    
                 }
 
                 LOGGER.debug("Fetching next components page for project " + uuid);

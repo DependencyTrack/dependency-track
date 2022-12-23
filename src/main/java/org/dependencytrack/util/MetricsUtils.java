@@ -73,41 +73,7 @@ public final class MetricsUtils {
                     continue;
                 }
 
-                counters.critical += metrics.getCritical();
-                counters.high += metrics.getHigh();
-                counters.medium += metrics.getMedium();
-                counters.low += metrics.getLow();
-                counters.unassigned += metrics.getUnassigned();
-                counters.vulnerabilities += metrics.getVulnerabilities();
-        
-                counters.findingsTotal += metrics.getFindingsTotal();
-                counters.findingsAudited += metrics.getFindingsAudited();
-                counters.findingsUnaudited += metrics.getFindingsUnaudited();
-                counters.suppressions += metrics.getSuppressed();
-                counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
-
-                counters.projects++;
-                if (metrics.getVulnerabilities() > 0) {
-                    counters.vulnerableProjects++;
-                }
-                counters.components += metrics.getComponents();
-                counters.vulnerableComponents += metrics.getVulnerableComponents();
-        
-                counters.policyViolationsFail += metrics.getPolicyViolationsFail();
-                counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
-                counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
-                counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
-                counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
-                counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();
-                counters.policyViolationsSecurityTotal += metrics.getPolicyViolationsSecurityTotal();
-                counters.policyViolationsSecurityAudited += metrics.getPolicyViolationsSecurityAudited();
-                counters.policyViolationsSecurityUnaudited += metrics.getPolicyViolationsSecurityUnaudited();
-                counters.policyViolationsLicenseTotal += metrics.getPolicyViolationsLicenseTotal();
-                counters.policyViolationsLicenseAudited += metrics.getPolicyViolationsLicenseAudited();
-                counters.policyViolationsLicenseUnaudited += metrics.getPolicyViolationsLicenseUnaudited();
-                counters.policyViolationsOperationalTotal += metrics.getPolicyViolationsOperationalTotal();
-                counters.policyViolationsOperationalAudited += metrics.getPolicyViolationsOperationalAudited();
-                counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
+                add(counters, metrics);
             }
         }
 
@@ -117,4 +83,79 @@ public final class MetricsUtils {
             .collect(Collectors.toList());
         return results;
     }
+
+    public static void add(Counters counters, Counters componentCounters) {
+        counters.critical += componentCounters.critical;
+        counters.high += componentCounters.high;
+        counters.medium += componentCounters.medium;
+        counters.low += componentCounters.low;
+        counters.unassigned += componentCounters.unassigned;
+        counters.vulnerabilities += componentCounters.vulnerabilities;
+
+        counters.findingsTotal += componentCounters.findingsTotal;
+        counters.findingsAudited += componentCounters.findingsAudited;
+        counters.findingsUnaudited += componentCounters.findingsUnaudited;
+        counters.suppressions += componentCounters.suppressions;
+        counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+        counters.components++;
+        if (componentCounters.vulnerabilities > 0) {
+            counters.vulnerableComponents += 1;
+        }
+
+        counters.policyViolationsFail += componentCounters.policyViolationsFail;
+        counters.policyViolationsWarn += componentCounters.policyViolationsWarn;
+        counters.policyViolationsInfo += componentCounters.policyViolationsInfo;
+        counters.policyViolationsTotal += componentCounters.policyViolationsTotal;
+        counters.policyViolationsAudited += componentCounters.policyViolationsAudited;
+        counters.policyViolationsUnaudited += componentCounters.policyViolationsUnaudited;
+        counters.policyViolationsSecurityTotal += componentCounters.policyViolationsSecurityTotal;
+        counters.policyViolationsSecurityAudited += componentCounters.policyViolationsSecurityAudited;
+        counters.policyViolationsSecurityUnaudited += componentCounters.policyViolationsSecurityUnaudited;
+        counters.policyViolationsLicenseTotal += componentCounters.policyViolationsLicenseTotal;
+        counters.policyViolationsLicenseAudited += componentCounters.policyViolationsLicenseAudited;
+        counters.policyViolationsLicenseUnaudited += componentCounters.policyViolationsLicenseUnaudited;
+        counters.policyViolationsOperationalTotal += componentCounters.policyViolationsOperationalTotal;
+        counters.policyViolationsOperationalAudited += componentCounters.policyViolationsOperationalAudited;
+        counters.policyViolationsOperationalUnaudited += componentCounters.policyViolationsOperationalUnaudited;
+    }
+
+    public static void add(Counters counters, ProjectMetrics metrics) {
+        counters.critical += metrics.getCritical();
+        counters.high += metrics.getHigh();
+        counters.medium += metrics.getMedium();
+        counters.low += metrics.getLow();
+        counters.unassigned += metrics.getUnassigned();
+        counters.vulnerabilities += metrics.getVulnerabilities();
+
+        counters.findingsTotal += metrics.getFindingsTotal();
+        counters.findingsAudited += metrics.getFindingsAudited();
+        counters.findingsUnaudited += metrics.getFindingsUnaudited();
+        counters.suppressions += metrics.getSuppressed();
+        counters.inheritedRiskScore = Metrics.inheritedRiskScore(counters.critical, counters.high, counters.medium, counters.low, counters.unassigned);
+
+        counters.projects++;
+        if (metrics.getVulnerabilities() > 0) {
+            counters.vulnerableProjects++;
+        }
+        counters.components += metrics.getComponents();
+        counters.vulnerableComponents += metrics.getVulnerableComponents();
+
+        counters.policyViolationsFail += metrics.getPolicyViolationsFail();
+        counters.policyViolationsWarn += metrics.getPolicyViolationsWarn();
+        counters.policyViolationsInfo += metrics.getPolicyViolationsInfo();
+        counters.policyViolationsTotal += metrics.getPolicyViolationsTotal();
+        counters.policyViolationsAudited += metrics.getPolicyViolationsAudited();
+        counters.policyViolationsUnaudited += metrics.getPolicyViolationsUnaudited();
+        counters.policyViolationsSecurityTotal += metrics.getPolicyViolationsSecurityTotal();
+        counters.policyViolationsSecurityAudited += metrics.getPolicyViolationsSecurityAudited();
+        counters.policyViolationsSecurityUnaudited += metrics.getPolicyViolationsSecurityUnaudited();
+        counters.policyViolationsLicenseTotal += metrics.getPolicyViolationsLicenseTotal();
+        counters.policyViolationsLicenseAudited += metrics.getPolicyViolationsLicenseAudited();
+        counters.policyViolationsLicenseUnaudited += metrics.getPolicyViolationsLicenseUnaudited();
+        counters.policyViolationsOperationalTotal += metrics.getPolicyViolationsOperationalTotal();
+        counters.policyViolationsOperationalAudited += metrics.getPolicyViolationsOperationalAudited();
+        counters.policyViolationsOperationalUnaudited += metrics.getPolicyViolationsOperationalUnaudited();
+    }
+
 }

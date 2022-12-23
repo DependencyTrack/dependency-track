@@ -825,7 +825,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * Extra team filter when ACL management is enable
      */
     private void preprocessACLs(final Query<Project> query, final String inputFilter) {
-        preprocessACLs(query, inputFilter, new HashMap<String, Object>(), false);
+        final var params = new HashMap<String, Object>();
+        preprocessACLs(query, inputFilter, params, false);
+        query.setNamedParameters(params);
     }
 
     /**

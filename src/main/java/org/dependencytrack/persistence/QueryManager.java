@@ -1024,10 +1024,6 @@ public class QueryManager extends AlpineQueryManager {
         return getMetricsQueryManager().getMostRecentPortfolioMetrics();
     }
 
-    public PaginatedResult getPortfolioMetrics() {
-        return getMetricsQueryManager().getPortfolioMetrics();
-    }
-
     public List<PortfolioMetrics> getPortfolioMetricsSince(Date since) {
         return getMetricsQueryManager().getPortfolioMetricsSince(since);
     }
@@ -1283,19 +1279,22 @@ public class QueryManager extends AlpineQueryManager {
             final List<Team> teams = QueryManager.getTeams(principal);
             if (teams != null && teams.size() > 0) {
                 final StringBuilder sb = new StringBuilder();
-                for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
-                    final Team team = getObjectById(Team.class, teams.get(i).getId());
+                int i = 0;
+                for (final var lazzyTeam : teams) {
                     if (sb.length() > 0) {
                         sb.append(" || ");
                     }
+                    final Team team = getObjectById(Team.class, lazzyTeam.getId());
                     sb.append(accessTeamsPath).append(".contains(:team").append(i).append(")");
                     params.put("team" + i, team);
+                    i++;
                 }
+
                 if (StringUtils.trimToNull(inputFilter) != null) {
-                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
-                } else {
-                    query.setFilter(sb.toString());
+                    sb.insert(0, "(" + inputFilter + ") && (");
+                    sb.append(")");
                 }
+                query.setFilter(sb.toString());
             }
         } else if (StringUtils.trimToNull(inputFilter) != null) {
             query.setFilter(inputFilter);

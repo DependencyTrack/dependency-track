@@ -32,9 +32,12 @@ import org.dependencytrack.util.MetricsUtils;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.function.Supplier;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class MetricsQueryManager extends QueryManager implements IQueryManager {
@@ -85,20 +88,27 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
      * @return a PortfolioMetrics object
      */
     public PortfolioMetrics getMostRecentPortfolioMetrics() {
+        final List<Project> projects = getProjectsForPortfolio();
+        if (projects != null) {
+            // This will trigger multiple concurrent requests on DB
+            // It might probably be more efficient to rewrite as JDO query
+            final List<ProjectMetrics> lastMetrics = projects.stream()
+                .map(p -> getMostRecentProjectMetricsSupplier(p))
+                .map(CompletableFuture::supplyAsync)
+                .collect(Collectors.toList()).stream() // Fires the async calls
+                .map(CompletableFuture::join).collect(Collectors.toList());
+
+            final List<PortfolioMetrics> portfolioMetrics = MetricsUtils.sum(lastMetrics, false);
+            var last = portfolioMetrics.stream()
+                .reduce((i, j) -> j)
+                .orElse(null);
+            return last;
+        }
+
         final Query<PortfolioMetrics> query = pm.newQuery(PortfolioMetrics.class);
         query.setOrdering("lastOccurrence desc");
         query.setRange(0, 1);
         return singleResult(query.execute());
-    }
-
-    /**
-     * Retrieves PortfolioMetrics in descending order starting with the most recent.
-     * @return a PaginatedResult object
-     */
-    public PaginatedResult getPortfolioMetrics() {
-        final Query<PortfolioMetrics> query = pm.newQuery(PortfolioMetrics.class);
-        query.setOrdering("lastOccurrence desc");
-        return execute(query);
     }
 
     /**
@@ -128,6 +138,10 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
         query.setOrdering("lastOccurrence desc");
         query.setRange(0, 1);
         return singleResult(query.execute(project));
+    }
+
+    private Supplier<ProjectMetrics> getMostRecentProjectMetricsSupplier(Project project) {
+        return () -> getMostRecentProjectMetrics(project);
     }
 
     /**

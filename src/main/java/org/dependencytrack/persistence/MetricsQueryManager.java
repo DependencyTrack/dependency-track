@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.DependencyMetrics;
@@ -32,12 +33,9 @@ import org.dependencytrack.util.MetricsUtils;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.function.Supplier;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class MetricsQueryManager extends QueryManager implements IQueryManager {
@@ -90,19 +88,13 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
     public PortfolioMetrics getMostRecentPortfolioMetrics() {
         final List<Project> projects = getProjectsForPortfolio();
         if (projects != null) {
-            // This will trigger multiple concurrent requests on DB
-            // It might probably be more efficient to rewrite as JDO query
-            final List<ProjectMetrics> lastMetrics = projects.stream()
-                .map(p -> getMostRecentProjectMetricsSupplier(p))
-                .map(CompletableFuture::supplyAsync)
-                .collect(Collectors.toList()).stream() // Fires the async calls
-                .map(CompletableFuture::join).collect(Collectors.toList());
+            // Fetch up to 2 days to ensure metrics have been computed
+            final List<ProjectMetrics> lastMetrics = getProjectMetricsSince(projects, DateUtils.addDays(new Date(), -2));
 
-            final List<PortfolioMetrics> portfolioMetrics = MetricsUtils.sum(lastMetrics, false);
-            var last = portfolioMetrics.stream()
+            final List<PortfolioMetrics> portfolioMetrics = MetricsUtils.sum(lastMetrics, true);
+            return portfolioMetrics.stream()
                 .reduce((i, j) -> j)
                 .orElse(null);
-            return last;
         }
 
         final Query<PortfolioMetrics> query = pm.newQuery(PortfolioMetrics.class);
@@ -138,10 +130,6 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
         query.setOrdering("lastOccurrence desc");
         query.setRange(0, 1);
         return singleResult(query.execute(project));
-    }
-
-    private Supplier<ProjectMetrics> getMostRecentProjectMetricsSupplier(Project project) {
-        return () -> getMostRecentProjectMetrics(project);
     }
 
     /**

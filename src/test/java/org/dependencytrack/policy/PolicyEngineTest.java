@@ -179,5 +179,14 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(components);
         Assert.assertEquals(3, violations.size());
+        PolicyViolation policyViolation = violations.get(0);
+        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assert.assertEquals(PolicyCondition.Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
+        policyViolation = violations.get(1);
+        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assert.assertEquals(PolicyCondition.Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
+        policyViolation = violations.get(2);
+        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assert.assertEquals(PolicyCondition.Subject.PACKAGE_URL, policyViolation.getPolicyCondition().getSubject());
     }
 }

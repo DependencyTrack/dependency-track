@@ -24,6 +24,7 @@ import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 public class PolicyEngineTest extends PersistenceCapableTest {
 
@@ -127,5 +128,56 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         PolicyEngine policyEngine = new PolicyEngine();
         List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
         Assert.assertEquals(0, violations.size());
+    }
+
+    @Test
+    public void issue1924() {
+        Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:deb");
+        Project project = qm.createProject("My Project", null, "1", null, null, null, true, false);
+        qm.persist(project);
+        ArrayList<Component> components = new ArrayList<>();
+        Component component = new Component();
+        component.setName("OpenSSL");
+        component.setVersion("3.0.2-0ubuntu1.6");
+        component.setPurl("pkg:deb/openssl@3.0.2-0ubuntu1.6");
+        component.setProject(project);
+        components.add(component);
+        qm.persist(component);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("1");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        vulnerability = new Vulnerability();
+        vulnerability.setVulnId("2");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        component = new Component();
+        component.setName("Log4J");
+        component.setVersion("1.2.16");
+        component.setPurl("pkg:mvn/log4j/log4j@1.2.16");
+        component.setProject(project);
+        components.add(component);
+        qm.persist(component);
+        vulnerability = new Vulnerability();
+        vulnerability.setVulnId("3");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        vulnerability = new Vulnerability();
+        vulnerability.setVulnId("4");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(components);
+        Assert.assertEquals(3, violations.size());
     }
 }

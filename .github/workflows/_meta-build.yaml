@@ -48,6 +48,17 @@ jobs:
           mvn clean -P clean-exclude-wars
           mvn cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
+      - name: Create Checksums
+        run: |-
+          pushd target
+          echo "# SHA1" >> checksums.txt
+          sha1sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
+          echo "# SHA256" >> checksums.txt
+          sha256sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
+          echo "# SHA512" >> checksums.txt
+          sha512sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
+          popd
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3.1.1
         with:
@@ -55,6 +66,7 @@ jobs:
           path: |-
             target/*.jar
             target/bom.json
+            target/checksums.txt
 
   build-container:
     runs-on: ubuntu-latest

@@ -55,17 +55,6 @@ jobs:
           name: assembled-wars
           path: target
 
-      - name: Create Checksums and SBOM
-        run: |-
-          pushd target
-          echo "# SHA1" >> checksums.txt
-          sha1sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
-          echo "# SHA256" >> checksums.txt
-          sha256sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
-          echo "# SHA512" >> checksums.txt
-          sha512sum dependency-track-apiserver.jar dependency-track-bundled.jar >> checksums.txt
-          popd
-
       - name: Update Release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}

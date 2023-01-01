@@ -73,6 +73,7 @@ jobs:
             target/checksums.txt
 
   provenance:
+    if: github.event_name != 'pull_request'
     needs:
       - build-java
     permissions:

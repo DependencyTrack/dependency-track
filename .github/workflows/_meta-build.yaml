@@ -10,7 +10,7 @@ on:
         type: boolean
         required: false
         default: false
-        description: "publish and scan the container image once its build"
+        description: "publish and scan the container image once its built"
     secrets:
       registry-0-usr:
         required: true

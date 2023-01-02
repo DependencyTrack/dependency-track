@@ -11,10 +11,10 @@ This document describes the process of releasing a new version of Dependency-Tra
   - [ ] MySQL
   - [ ] PostgreSQL
 - [ ] Ensure that a [changelog](docs/_posts) entry for the release exists and is complete
-- [ ] Bump to `version` field in [`docs/_config.yml`](docs/_config.yml) to the new version
+- [ ] Bump the `version` field in [`docs/_config.yml`](docs/_config.yml) to the new version
 - [ ] When API server and frontend shall be released together
   - [ ] Release the frontend first
-  - [ ] Bump to the `frontend.version` property in `pom.xml` accordingly to the new version
+  - [ ] Bump to the `frontend.version` property in `pom.xml` according to the new version
 
 ## Releasing
 

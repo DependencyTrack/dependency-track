@@ -71,7 +71,9 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
      * Retrieve all the projects suitable for portfolio
      */
     private List<Project> getProjectsForPortfolio() {
-        if (principal != null && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)) {
+        if (principal != null
+                && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
+                && isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_PORTFOLIOMETRICS_ENABLED)) {
             if (hasAccessManagementPermission(principal)) {
                 return null;
             }

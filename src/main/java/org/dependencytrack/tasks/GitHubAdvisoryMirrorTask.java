@@ -169,7 +169,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
      * @param advisories the results to synchronize
      */
     void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
-        LOGGER.info("Updating datasource with GitHub advisories");
+        LOGGER.debug("Updating datasource with GitHub advisories");
         try (QueryManager qm = new QueryManager()) {
             for (final GitHubSecurityAdvisory advisory: advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());

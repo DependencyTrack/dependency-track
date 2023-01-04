@@ -91,9 +91,8 @@ public class DefectDojoClient {
                 ArrayList dojoTests = jsonToList(dojoArray);
                 String nextUrl = "";
                 while (dojoObj.get("next") != null ) {
-                    LOGGER.error("Make the subsequent pagination call on " + dojoObj.get("next"));
                     nextUrl = dojoObj.get("next").toString();
-                    LOGGER.debug("Make the subsequent pagination call on " + nextUrl);
+                    LOGGER.debug("Making the subsequent pagination call on " + nextUrl);
                     response = ui.get(nextUrl)
                             .header("accept", "application/json")
                             .header("Authorization", "Token " + token)
@@ -104,7 +103,7 @@ public class DefectDojoClient {
                     dojoArray = dojoObj.getJSONArray("results");
                     dojoTests.addAll(jsonToList(dojoArray));
                 }
-                LOGGER.debug("Successfully retrieve the test list ");
+                LOGGER.debug("Successfully retrieved the test list ");
                 return dojoTests;
             }
         } else {

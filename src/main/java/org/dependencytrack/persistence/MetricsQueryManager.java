@@ -76,7 +76,7 @@ public class MetricsQueryManager extends QueryManager implements IQueryManager {
                 return null;
             }
 
-            return getAllProjects(true);
+            return getAllProjects(true, true);
         }
         return null;   
     }

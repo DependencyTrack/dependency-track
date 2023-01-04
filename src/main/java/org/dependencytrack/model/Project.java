@@ -89,6 +89,9 @@ import java.util.UUID;
                 @Persistent(name = "tags"),
                 @Persistent(name = "accessTeams")
         }),
+        @FetchGroup(name = "ID", members = {
+                @Persistent(name = "id")
+        }),
         @FetchGroup(name = "METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
@@ -105,6 +108,7 @@ public class Project implements Serializable {
      */
     public enum FetchGroup {
         ALL,
+        ID,
         METRICS_UPDATE
     }
 

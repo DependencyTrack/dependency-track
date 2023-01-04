@@ -159,6 +159,15 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return a List of Projects
      */
     public List<Project> getAllProjects(boolean excludeInactive) {
+        return getAllProjects(excludeInactive, false);
+    }
+
+    /**
+     * Returns a list of all projects.
+     * This method if designed NOT to provide paginated results.
+     * @return a List of Projects
+     */
+    public List<Project> getAllProjects(boolean excludeInactive, boolean onlyId) {
         final Query<Project> query = pm.newQuery(Project.class);
         String queryFilter = null;
         if (excludeInactive) {
@@ -167,6 +176,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         query.setOrdering("id asc");
 
         preprocessACLs(query, queryFilter);
+        if (onlyId) {
+            query.getFetchPlan().setGroup(Project.FetchGroup.ID.name());
+        }
         return query.executeList();
     }
 

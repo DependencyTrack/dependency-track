@@ -336,6 +336,10 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getAllProjects(excludeInactive);
     }
 
+    public List<Project> getAllProjects(boolean excludeInactive, boolean onlyId) {
+        return getProjectQueryManager().getAllProjects(excludeInactive, onlyId);
+    }
+
     public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot) {
         return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot);
     }

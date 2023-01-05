@@ -16,7 +16,7 @@
 [![Pulls - Bundled](https://img.shields.io/docker/pulls/dependencytrack/bundled.svg?label=Docker%20Pulls%20%28Bundled%29)](https://hub.docker.com/r/dependencytrack/bundled/)
 [![Pulls - Legacy](https://img.shields.io/docker/pulls/owasp/dependency-track.svg?label=Docker%20Pulls%20%28OWASP%20Legacy%29)](https://hub.docker.com/r/owasp/dependency-track/)
 
-![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-black-text.svg?sanitize=true)
+![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/3.8%20-%204.7/dt-logo-black-text.svg?sanitize=true)
 
 
 Dependency-Track is an intelligent [Component Analysis] platform that allows organizations to
@@ -27,13 +27,6 @@ provides capabilities that traditional Software Composition Analysis (SCA) solut
 Dependency-Track monitors component usage across all versions of every application in its portfolio in order to
 proactively identify risk across an organization. The platform has an API-first design and is ideal for use in
 CI/CD environments.
-
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=cQuk6jKTrTs">
-    <img style="border:0" width="720" height="405" src="https://raw.githubusercontent.com/DependencyTrack/dependency-track/master/docs/images/promo-glitch.png">
-  </a>
-</p>
-
 
 ## Ecosystem Overview
 ![alt text](./docs/images/integrations.png)
@@ -60,6 +53,8 @@ CI/CD environments.
   * [National Vulnerability Database] (NVD)
   * [GitHub Advisories]
   * [Sonatype OSS Index]
+  * [Snyk]
+  * [OSV]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
 * Robust policy engine with support for global and per-project policies
@@ -215,6 +210,8 @@ the [notices] file for more information.
   [National Vulnerability Database]: https://nvd.nist.gov
   [GitHub Advisories]: https://www.github.com/advisories
   [Sonatype OSS Index]: https://ossindex.sonatype.org
+  [Snyk]: https://snyk.io
+  [OSV]: https://osv.dev
   [VulnDB]: https://vulndb.cyberriskanalytics.com
   [Risk Based Security]: https://www.riskbasedsecurity.com
   [Component Analysis]: https://owasp.org/www-community/Component_Analysis

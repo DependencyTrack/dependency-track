@@ -38,6 +38,8 @@ CI/CD environments.
   * [National Vulnerability Database] (NVD)
   * [GitHub Advisories]
   * [Sonatype OSS Index]
+  * [Snyk]
+  * [OSV]
   * [VulnDB] from [Risk Based Security]
   * More coming soon.
 * Helps to prioritize mitigation by incorporating support for the [Exploit Prediction Scoring System (EPSS)]
@@ -77,6 +79,8 @@ CI/CD environments.
 [National Vulnerability Database]: https://nvd.nist.gov
 [GitHub Advisories]: https://www.github.com/advisories
 [Sonatype OSS Index]: https://ossindex.sonatype.org
+[Snyk]: https://snyk.io
+[OSV]: https://osv.dev
 [VulnDB]: https://vulndb.cyberriskanalytics.com
 [Risk Based Security]: https://www.riskbasedsecurity.com
 [Component Analysis]: https://owasp.org/www-community/Component_Analysis

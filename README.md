@@ -16,7 +16,7 @@
 [![Pulls - Bundled](https://img.shields.io/docker/pulls/dependencytrack/bundled.svg?label=Docker%20Pulls%20%28Bundled%29)](https://hub.docker.com/r/dependencytrack/bundled/)
 [![Pulls - Legacy](https://img.shields.io/docker/pulls/owasp/dependency-track.svg?label=Docker%20Pulls%20%28OWASP%20Legacy%29)](https://hub.docker.com/r/owasp/dependency-track/)
 
-![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/3.8%20-%204.7/dt-logo-black-text.svg?sanitize=true)
+![logo preview](https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo.svg?sanitize=true)
 
 
 Dependency-Track is an intelligent [Component Analysis] platform that allows organizations to

@@ -116,7 +116,7 @@ public class NotificationRouter implements Subscriber {
     }
 
     private boolean canRestrictNotificationToRuleProjects(Notification initialNotification, NotificationRule rule) {
-        return (initialNotification.getSubject() instanceof NewVulnerabilityIdentified || initialNotification.getSubject() instanceof AnalysisDecisionChange) &&
+        return (initialNotification.getSubject() instanceof NewVulnerabilityIdentified) &&
                 rule.getProjects() != null
                 && rule.getProjects().size() > 0;
     }

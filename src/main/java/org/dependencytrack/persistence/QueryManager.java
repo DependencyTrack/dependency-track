@@ -1272,7 +1272,7 @@ public class QueryManager extends AlpineQueryManager {
         pm.currentTransaction().begin();
         pm.deletePersistentAll(team.getApiKeys());
         String aclDeleteQuery = """
-            DELETE FROM PROJECT_ACCESS_TEAMS WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
+            DELETE FROM \"PROJECT_ACCESS_TEAMS\" WHERE \"PROJECT_ACCESS_TEAMS\".\"TEAM_ID\" = ?      
         """;
         final Query query = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, aclDeleteQuery);
         query.executeWithArray(team.getId());

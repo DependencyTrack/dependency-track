@@ -30,6 +30,7 @@ import com.github.packageurl.PackageURL;
 import org.apache.http.HttpHeaders;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.event.SnykAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
@@ -637,6 +638,35 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
         mockServer.verify(request().withHeader("Authorization", "token token3"), VerificationTimes.exactly(20));
         mockServer.verify(request().withHeader("Authorization", "token token4"), VerificationTimes.exactly(20));
         mockServer.verify(request().withHeader("Authorization", "token token5"), VerificationTimes.exactly(20));
+    }
+
+    @Test
+    public void testSendsUserAgent() throws Exception {
+        mockServer
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/rest/.+"))
+                .respond(response()
+                        .withStatusCode(404));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.woodstox");
+        component.setName("woodstox-core");
+        component.setVersion("5.0.0");
+        component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
+        component = qm.createComponent(component, false);
+
+        new SnykAnalysisTask().inform(new SnykAnalysisEvent(component));
+
+        mockServer.verify(
+            request().withHeader("User-Agent", ManagedHttpClientFactory.getUserAgent()),
+            VerificationTimes.once()
+        );
     }
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();

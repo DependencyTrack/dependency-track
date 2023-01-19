@@ -44,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.common.ConfigKey;
+import org.dependencytrack.common.ManagedHttpClientFactory;
 import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.SnykAnalysisEvent;
@@ -295,6 +296,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
         final String encodedPurl = URLEncoder.encode(component.getPurl().getCoordinates(), StandardCharsets.UTF_8);
         final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s".formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
         final GetRequest request = UnirestFactory.getUnirestInstance().get(requestUrl)
+                .header(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent())
                 .header(HttpHeaders.AUTHORIZATION, "token " + apiTokenSupplier.get())
                 .header(HttpHeaders.ACCEPT, "application/vnd.api+json");
 

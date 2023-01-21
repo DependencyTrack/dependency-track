@@ -284,6 +284,11 @@ public class Component implements Serializable {
     private String license;
 
     @Persistent
+    @Column(name = "LICENSE_EXPRESSION", jdbcType = "CLOB", allowsNull = "true")
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license expression may only contain printable characters")
+    private String licenseExpression;
+
+    @Persistent
     @Column(name = "LICENSE_URL", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -623,6 +628,14 @@ public class Component implements Serializable {
 
     public void setLicense(String license) {
         this.license = StringUtils.abbreviate(license, 255);
+    }
+
+    public String getLicenseExpression() {
+        return licenseExpression;
+    }
+
+    public void setLicenseExpression(String licenseExpression) {
+        this.licenseExpression = licenseExpression;
     }
 
     public String getLicenseUrl() {

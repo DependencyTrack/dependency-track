@@ -93,6 +93,9 @@ import java.util.UUID;
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "PARENT", members = {
+                @Persistent(name = "parent")
         })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -105,7 +108,8 @@ public class Project implements Serializable {
      */
     public enum FetchGroup {
         ALL,
-        METRICS_UPDATE
+        METRICS_UPDATE,
+        PARENT
     }
 
     @PrimaryKey

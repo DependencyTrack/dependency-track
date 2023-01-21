@@ -24,7 +24,6 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.dependencytrack.model.Policy.Operator;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.parser.spdx.expression.model.SpdxExpression;
 import org.dependencytrack.parser.spdx.expression.model.SpdxExpressionOperation;

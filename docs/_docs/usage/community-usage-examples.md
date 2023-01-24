@@ -62,6 +62,9 @@ The FIRST [exploit prediction scoring system](https://www.first.org/epss/) (EPSS
 efforts, by giving estimations of the likelihood that vulnerabilities are being exploited in the wild.
 Dependency-Track has native support for EPSS, and surfaces this data directly in the UI, or in its REST API.
 
+> Note that EPSS is only supported for published CVEs. Vulnerabilities sourced from [GitHub Advisories], [OSV], 
+> or [Snyk] will not have EPSS scores assigned to them.
+
 The following Powershell script may be used to create an Excel report of all vulnerable components in the Dependency-Track
 portfolio, where both the CVSSv3 and EPSS scores exceed a given threshold. For each vulnerable component, the report
 will include identifiers of the component, the vulnerability it is affected by, the project the component belongs to,
@@ -147,3 +150,7 @@ catch
     $_.ScriptStackTrace
 }
 ```
+
+[GitHub Advisories]: {{ site.baseurl }}{% link _docs/datasources/github-advisories.md %}
+[OSV]: {{ site.baseurl }}{% link _docs/datasources/osv.md %}
+[Snyk]: {{ site.baseurl }}{% link _docs/datasources/snyk.md %}

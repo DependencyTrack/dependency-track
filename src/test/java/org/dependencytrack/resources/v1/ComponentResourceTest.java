@@ -19,11 +19,14 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.ConfigProperty;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -538,4 +541,221 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertEquals(0, jsonWithoutComponent.size());
     }
 
+    @Test
+    public void getComponentByHashWithAcl() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("ABC");
+        component.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+        component = qm.createComponent(component, false);
+        Team team = qm.createTeam("Team Acme", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+        Response response = target(V1_COMPONENT + "/hash/" + component.getSha1())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "0");
+
+        project.addAccessTeam(team);
+
+        Response response1 = target(V1_COMPONENT + "/hash/" + component.getSha1())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus(), 0);
+        Assert.assertEquals(response1.getHeaderString(TOTAL_COUNT_HEADER), "1");
+    }
+
+    @Test
+    public void getComponentOfChildrenProjectByHashWithAcl() {
+        Project project = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, project, null, true, false);
+        Project grandchild = qm.createProject("GHI", null, "1.0", null, child, null, true, false);
+        Project noAccess = qm.createProject("No Access",  null, "1.0", null, null, null, true, false);
+
+        Component childComponent = new Component();
+        childComponent.setProject(child);
+        childComponent.setName("ABC");
+        childComponent.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+        childComponent = qm.createComponent(childComponent, false);
+
+        Component grandchildComponent = new Component();
+        grandchildComponent.setProject(grandchild);
+        grandchildComponent.setName("ABC");
+        grandchildComponent.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+        grandchildComponent = qm.createComponent(grandchildComponent, false);
+
+        Component noAccessComponent = new Component();
+        noAccessComponent.setProject(noAccess);
+        noAccessComponent.setName("ABC");
+        noAccessComponent.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+        noAccessComponent = qm.createComponent(noAccessComponent, false);
+
+        Team team = qm.createTeam("Team Acme", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+        Response response = target(V1_COMPONENT + "/hash/" + grandchildComponent.getSha1())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "0");
+
+        project.addAccessTeam(team);
+
+        Response response1 = target(V1_COMPONENT + "/hash/" + childComponent.getSha1())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus(), 0);
+        Assert.assertEquals(response1.getHeaderString(TOTAL_COUNT_HEADER), "2");
+
+        Response response2 = target(V1_COMPONENT + "/hash/" + grandchildComponent.getSha1())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response2.getStatus(), 0);
+        Assert.assertEquals(response2.getHeaderString(TOTAL_COUNT_HEADER), "2");
+
+        team.getApiKeys().get(0).setTeams(null);
+
+        Response response3 = target(V1_COMPONENT + "/hash/" + grandchildComponent.getSha1())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response3.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(0), response3.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void getComponentByIdentityWithAcl() {
+        final Project project = qm.createProject("project", null, "1.0", null, null, null, true, false);
+        var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setGroup("groupA");
+        componentA.setName("nameA");
+        componentA.setVersion("versionA");
+        componentA.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        componentA.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(componentA, false);
+        Team team = qm.createTeam("TeamA", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "groupA")
+                .queryParam("name", "nameA")
+                .queryParam("version", "versionA")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "0");
+
+        project.addAccessTeam(team);
+
+        final Response response1 = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "groupA")
+                .queryParam("name", "nameA")
+                .queryParam("version", "versionA")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus());
+        Assert.assertEquals(response1.getHeaderString(TOTAL_COUNT_HEADER), "1");
+    }
+
+    @Test
+    public void getComponentOfChildrenProjectByIdentityWithAcl() {
+        Project project = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, project, null, true, false);
+        Project grandchild = qm.createProject("GHI", null, "1.0", null, child, null, true, false);
+        Project noAccess = qm.createProject("No Access",  null, "1.0", null, null, null, true, false);
+
+        var childComponent = new Component();
+        childComponent.setProject(child);
+        childComponent.setGroup("groupA");
+        childComponent.setName("nameA");
+        childComponent.setVersion("versionA");
+        childComponent.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        childComponent.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(childComponent, false);
+
+        var grandchildComponent = new Component();
+        grandchildComponent.setProject(grandchild);
+        grandchildComponent.setGroup("groupA");
+        grandchildComponent.setName("nameA");
+        grandchildComponent.setVersion("versionA");
+        grandchildComponent.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        grandchildComponent.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(grandchildComponent, false);
+
+        Component noAccessComponent = new Component();
+        noAccessComponent.setProject(noAccess);
+        noAccessComponent.setGroup("groupA");
+        noAccessComponent.setName("nameA");
+        noAccessComponent.setVersion("versionA");
+        noAccessComponent.setCpe("cpe:2.3:a:groupA:nameA:versionA:*:*:*:*:*:*:*");
+        noAccessComponent.setPurl("pkg:maven/groupA/nameA@versionA?foo=bar");
+        qm.createComponent(noAccessComponent, false);
+
+        Team team = qm.createTeam("TeamA", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+        final Response response = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "groupA")
+                .queryParam("name", "nameA")
+                .queryParam("version", "versionA")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(response.getHeaderString(TOTAL_COUNT_HEADER), "0");
+
+        project.addAccessTeam(team);
+
+        final Response response1 = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "groupA")
+                .queryParam("name", "nameA")
+                .queryParam("version", "versionA")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus());
+        Assert.assertEquals(response1.getHeaderString(TOTAL_COUNT_HEADER), "2");
+
+        team.getApiKeys().get(0).setTeams(null);
+
+        Response response3 = target(V1_COMPONENT + "/identity")
+                .queryParam("group", "groupA")
+                .queryParam("name", "nameA")
+                .queryParam("version", "versionA")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response3.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(0), response3.getHeaderString(TOTAL_COUNT_HEADER));
+    }
 }

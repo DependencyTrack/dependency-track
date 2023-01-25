@@ -27,6 +27,7 @@ import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
@@ -52,6 +53,24 @@ import javax.json.JsonArray;
 final class ComponentQueryManager extends QueryManager implements IQueryManager {
 
     private static final Logger LOGGER = Logger.getLogger(ComponentQueryManager.class);
+
+    public static final String QUERY_ACL_1 = """
+            SELECT *
+            FROM (WITH RECURSIVE "DESCENDANTS" ("ID", "NAME") AS
+                (SELECT "PROJECT"."ID",
+                "PROJECT"."NAME"
+                 FROM "PROJECT"
+            """;
+
+    public static final String QUERY_ACL_2 = """
+            UNION ALL
+                SELECT "CHILD"."ID",
+                "CHILD"."NAME"
+                FROM "PROJECT" "CHILD"
+                     JOIN "DESCENDANTS"
+                         ON "DESCENDANTS"."ID" = "CHILD"."PARENT_PROJECT_ID")
+            SELECT "DESCENDANTS"."ID", "DESCENDANTS"."NAME" FROM "DESCENDANTS") alias
+            """;
 
     /**
      * Constructs a new QueryManager.
@@ -187,7 +206,8 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         };
 
         final Query<Component> query = pm.newQuery(Component.class);;
-        final Map<String, Object> params = Map.of("hash", hash);
+        final Map<String, Object> params = new HashMap<>();
+        params.put("hash", hash);
         preprocessACLs(query, queryFilter, params, false);
         return execute(query, params);
     }
@@ -531,20 +551,65 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                     return;
                 }
             }
+            // Query every project that the teams have access to
+            final Map<String, Object> tempParams = new HashMap<>();
+            final Query<Project> queryAclProjects = pm.newQuery(Project.class);
             if (teams != null && teams.size() > 0) {
-                final StringBuilder sb = new StringBuilder();
+                final StringBuilder stringBuilderAclProjects = new StringBuilder();
                 for (int i = 0, teamsSize = teams.size(); i < teamsSize; i++) {
                     final Team team = super.getObjectById(Team.class, teams.get(i).getId());
-                    sb.append(" project.accessTeams.contains(:team").append(i).append(") ");
-                    params.put("team" + i, team);
+                    stringBuilderAclProjects.append(" accessTeams.contains(:team").append(i).append(") ");
+                    tempParams.put("team" + i, team);
                     if (i < teamsSize-1) {
-                        sb.append(" || ");
+                        stringBuilderAclProjects.append(" || ");
                     }
                 }
-                if (inputFilter != null) {
-                    query.setFilter(inputFilter + " && (" + sb.toString() + ")");
+                queryAclProjects.setFilter(stringBuilderAclProjects.toString());
+            } else {
+                if (inputFilter != null && !inputFilter.isEmpty()) {
+                    query.setFilter(inputFilter + " && false");
                 } else {
-                    query.setFilter(sb.toString());
+                    query.setFilter("false");
+                }
+                return;
+            }
+            List<Project> result = (List<Project>) queryAclProjects.executeWithMap(tempParams);
+            // Query the descendants of the projects that the teams have access to
+            if (result != null && !result.isEmpty()) {
+                final StringBuilder stringBuilderDescendants = new StringBuilder();
+                stringBuilderDescendants.append("WHERE");
+                int i = 0, teamSize = result.size();
+                for (Project project : result) {
+                    stringBuilderDescendants.append(" ID = ").append(project.getId()).append(" ");
+                    if (i < teamSize-1) {
+                        stringBuilderDescendants.append(" OR");
+                    }
+                    i++;
+                }
+                stringBuilderDescendants.append("\n");
+                final Query<Object[]> queryDescendants = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
+                final List<Object[]> list = queryDescendants.executeList();
+                // Add queried projects and descendants to the input filter of the query
+                if (list != null && !list.isEmpty()) {
+                    final StringBuilder stringBuilderInputFilter = new StringBuilder();
+                    for (int j = 0, resultSize = list.size(); j < resultSize; j++) {
+                        stringBuilderInputFilter.append(" project.id == :id").append(j);
+                        params.put("id" + j, list.get(j)[0]);
+                        if (j < resultSize-1) {
+                            stringBuilderInputFilter.append(" || ");
+                        }
+                    }
+                    if (inputFilter != null && !inputFilter.isEmpty()) {
+                        query.setFilter(inputFilter + " && (" + stringBuilderInputFilter.toString() + ")");
+                    } else {
+                        query.setFilter(stringBuilderInputFilter.toString());
+                    }
+                }
+            } else {
+                if (inputFilter != null && !inputFilter.isEmpty()){
+                    query.setFilter(inputFilter +" && false");
+                } else {
+                    query.setFilter("false");
                 }
             }
         } else {

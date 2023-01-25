@@ -19,10 +19,13 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
+import alpine.model.ConfigProperty;
+import alpine.model.Team;
 import alpine.notification.Notification;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -604,6 +607,117 @@ public class ProjectResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assert.assertNotNull(json);
         Assert.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+    }
+
+    @Test
+    public void getProjectWithAclEnabled() {
+        Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
+        Team team = qm.createTeam("Team ABC", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+       Response response = target(V1_PROJECT + "/" + project.getUuid())
+               .request()
+               .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+               .get(Response.class);
+        Assert.assertEquals(403, response.getStatus(), 0);
+
+        project.addAccessTeam(team);
+
+        Response response1 = target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus(), 0);
+    }
+
+    @Test
+    public void getChildrenProjectWithAclEnabled() {
+        Project project = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, project, null, true, false);
+        Project grandchild = qm.createProject("GHI", null, "1.0", null, child, null, true, false);
+
+        Team team = qm.createTeam("Team ABC", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+        Response response = target(V1_PROJECT + "/" + grandchild.getUuid())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(403, response.getStatus(), 0);
+
+        project.addAccessTeam(team);
+
+        Response response1 = target(V1_PROJECT + "/" + child.getUuid())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus(), 0);
+
+        Response response2 = target(V1_PROJECT + "/" + grandchild.getUuid())
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response2.getStatus(), 0);
+    }
+
+    @Test
+    public void getProjectsWithAclEnabled() {
+        Project project = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
+        Project child = qm.createProject("DEF", null, "1.0", null, null, null, true, false);
+        Project grandchild = qm.createProject("GHI", null, "1.0", null, null, null, true, false);
+        Project noAccess = qm.createProject("No Access",  null, "1.0", null, null, null, true, false);
+        Team team = qm.createTeam("Team ABC", true);
+        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToogle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToogle.setPropertyValue("true");
+            qm.persist(aclToogle);
+        }
+        Response response = target(V1_PROJECT + "/")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(0), response.getHeaderString(TOTAL_COUNT_HEADER));
+
+        project.addAccessTeam(team);
+
+        Response response1 = target(V1_PROJECT + "/")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response1.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(1), response1.getHeaderString(TOTAL_COUNT_HEADER));
+
+        child.setParent(project);
+        grandchild.setParent(child);
+
+        Response response2 = target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response2.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(3), response2.getHeaderString(TOTAL_COUNT_HEADER));
+
+        team.getApiKeys().get(0).setTeams(null);
+
+        Response response3 = target(V1_PROJECT + "/")
+                .request()
+                .header(X_API_KEY, team.getApiKeys().get(0).getKey())
+                .get(Response.class);
+        Assert.assertEquals(200, response3.getStatus(), 0);
+        Assert.assertEquals(String.valueOf(0), response3.getHeaderString(TOTAL_COUNT_HEADER));
     }
 
     //todo: add clone tests

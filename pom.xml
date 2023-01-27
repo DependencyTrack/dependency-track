@@ -395,6 +395,8 @@
                 <version>3.1.2</version>
                 <configuration>
                     <configLocation>${project.basedir}/.checkstyle.xml</configLocation>
+                    <includeResources>false</includeResources>
+                    <includeTestResources>false</includeTestResources>
                 </configuration>
                 <executions>
                     <execution>

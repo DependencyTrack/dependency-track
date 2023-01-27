@@ -77,4 +77,30 @@ public class PackageURLPolicyEvaluatorTest extends PersistenceCapableTest {
         Assert.assertEquals(0, violations.size());
     }
 
+    @Test
+    public void issue1925_matches() throws Exception {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0");
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0?type=jar"));
+        component.setPurlCoordinates(new PackageURL("pkg:generic/acme/example-component@1.0"));
+        PolicyEvaluator evaluator = new PackageURLPolicyEvaluator();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(1, violations.size());
+        PolicyConditionViolation violation = violations.get(0);
+        Assert.assertEquals(component, violation.getComponent());
+        Assert.assertEquals(condition, violation.getPolicyCondition());
+    }
+
+    @Test
+    public void issue1925_no_match() throws Exception {
+        Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:generic/acme/example-component@1.0");
+        Component component = new Component();
+        component.setPurl(new PackageURL("pkg:generic/acme/example-component@1.0?type=jar"));
+        component.setPurlCoordinates(new PackageURL("pkg:generic/acme/example-component@1.0"));
+        PolicyEvaluator evaluator = new PackageURLPolicyEvaluator();
+        List<PolicyConditionViolation> violations = evaluator.evaluate(policy, component);
+        Assert.assertEquals(0, violations.size());
+    }
 }

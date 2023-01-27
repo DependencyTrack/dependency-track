@@ -95,7 +95,7 @@
         <lib.unirest.version>3.14.1</lib.unirest.version>
         <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
-        <lib.woodstox.version>6.4.0</lib.woodstox.version>
+        <lib.woodstox.version>6.5.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>

@@ -25,7 +25,6 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DateUtil;
 import org.json.JSONObject;
-import us.springett.parsers.cpe.Cpe;
 
 import java.util.Date;
 import java.util.List;

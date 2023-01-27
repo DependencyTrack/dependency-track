@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.model.ConfigProperty;
-import alpine.model.IConfigProperty;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

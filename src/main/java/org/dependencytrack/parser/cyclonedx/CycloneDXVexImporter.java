@@ -23,7 +23,6 @@ import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
 import org.cyclonedx.util.ObjectLocator;
 import org.dependencytrack.model.Analysis;
-import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -34,6 +33,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.AnalysisCommentUtil;
+
 import java.util.List;
 
 public class CycloneDXVexImporter {

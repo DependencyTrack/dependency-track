@@ -63,7 +63,7 @@ public class PolicyCondition implements Serializable {
     }
 
     public enum Subject {
-        //AGE,
+        AGE,
         //ANALYZER,
         //BOM,
         COORDINATES,

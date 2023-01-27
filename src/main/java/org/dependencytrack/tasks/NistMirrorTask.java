@@ -82,7 +82,7 @@ public class NistMirrorTask implements LoggableSubscriber {
     private static final String CVE_JSON_11_MODIFIED_META = "/json/cve/1.1/nvdcve-1.1-modified.meta";
     private static final String CVE_JSON_11_BASE_META = "/json/cve/1.1/nvdcve-1.1-%d.meta";
     private static final int START_YEAR = 2002;
-    private static final int END_YEAR = Calendar.getInstance().get(Calendar.YEAR);
+    private final int endYear = Calendar.getInstance().get(Calendar.YEAR);
 
     private final boolean isEnabled;
     private String nvdFeedsUrl;
@@ -132,7 +132,7 @@ public class NistMirrorTask implements LoggableSubscriber {
         LOGGER.info("Downloading files at " + currentDate);
         doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_URL, ResourceType.CVE_MODIFIED_DATA);
         doDownload(this.nvdFeedsUrl + CVE_JSON_11_MODIFIED_META, ResourceType.CVE_META);
-        for (int i = END_YEAR; i >= START_YEAR; i--) {
+        for (int i = endYear; i >= START_YEAR; i--) {
             // Download JSON 1.1 year feeds in reverse order
             final String json11BaseUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_URL.replace("%d", String.valueOf(i));
             final String cve11BaseMetaUrl = this.nvdFeedsUrl + CVE_JSON_11_BASE_META.replace("%d", String.valueOf(i));

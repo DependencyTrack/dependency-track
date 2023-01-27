@@ -80,19 +80,19 @@ public class PolicyEngine {
                     || isPolicyAssignedToProjectTag(policy, component.getProject())) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
                 final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
-                int policiesViolated = 0;
+                int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
                     if (policyConditionViolations.addAll(evaluator.evaluate(policy, component))) {
-                        policiesViolated++;
+                        policyConditionsViolated++;
                     }
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {
-                    if (policiesViolated > 0) {
+                    if (policyConditionsViolated > 0) {
                         policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                     }
                 } else if (Policy.Operator.ALL == policy.getOperator()) {
-                    if (policiesViolated == policy.getPolicyConditions().size()) {
+                    if (policyConditionsViolated == policy.getPolicyConditions().size()) {
                         policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                     }
                 }

@@ -1,0 +1,5 @@
+ignoreRules = [
+    "UnnecessaryFinal", # Being explicit with final is a good thing
+    "Var",              # Recommends @Var annotations instead of final
+    "YodaCondition"     # Encourages behavior that could lead to NPEs
+]

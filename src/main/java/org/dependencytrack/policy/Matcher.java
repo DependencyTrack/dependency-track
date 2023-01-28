@@ -22,7 +22,7 @@ package org.dependencytrack.policy;
  * Reusable methods that PolicyEvaluator implementations can extend.
  *
  * @author Roland Asmann
- * @since 4.0.0
+ * @since 4.8.0
  */
 public final class Matcher {
 

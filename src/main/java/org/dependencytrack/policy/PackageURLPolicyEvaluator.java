@@ -55,19 +55,12 @@ public class PackageURLPolicyEvaluator extends AbstractPolicyEvaluator {
         }
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
-            String comparisonValueAsRegEx = condition.getValue();
-            if (!comparisonValueAsRegEx.startsWith("^") && !comparisonValueAsRegEx.startsWith(".*")) {
-                comparisonValueAsRegEx = ".*" + comparisonValueAsRegEx;
-            }
-            if (!comparisonValueAsRegEx.endsWith("$") && !comparisonValueAsRegEx.endsWith(".*")) {
-                comparisonValueAsRegEx += ".*";
-            }
             if (PolicyCondition.Operator.MATCHES == condition.getOperator()) {
-                if (component.getPurl().canonicalize().matches(comparisonValueAsRegEx)) {
+                if (Matcher.matches(component.getPurl().canonicalize(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
-                if (!component.getPurl().canonicalize().matches(comparisonValueAsRegEx)) {
+                if (!Matcher.matches(component.getPurl().canonicalize(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             }

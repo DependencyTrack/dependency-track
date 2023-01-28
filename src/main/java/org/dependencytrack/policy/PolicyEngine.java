@@ -66,7 +66,7 @@ public class PolicyEngine {
             final List<Policy> policies = qm.getAllPolicies();
             for (final Component c: components) {
                 final Component component = qm.getObjectById(Component.class, c.getId());
-                violations = this.evaluate(qm, policies, component);
+                violations.addAll(this.evaluate(qm, policies, component));
             }
         }
         LOGGER.info("Policy analysis complete");
@@ -80,16 +80,19 @@ public class PolicyEngine {
                     || isPolicyAssignedToProjectTag(policy, component.getProject())) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() +") against policy (" + policy.getUuid() + ")");
                 final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
+                int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
-                    policyConditionViolations.addAll(evaluator.evaluate(policy, component));
+                    if (policyConditionViolations.addAll(evaluator.evaluate(policy, component))) {
+                        policyConditionsViolated++;
+                    }
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {
-                    if (policyConditionViolations.size() > 0) {
+                    if (policyConditionsViolated > 0) {
                         policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                     }
                 } else if (Policy.Operator.ALL == policy.getOperator()) {
-                    if (policyConditionViolations.size() == policy.getPolicyConditions().size()) {
+                    if (policyConditionsViolated == policy.getPolicyConditions().size()) {
                         policyViolations.addAll(createPolicyViolations(qm, policyConditionViolations));
                     }
                 }

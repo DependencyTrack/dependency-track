@@ -74,22 +74,11 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
             return true;
         }
         final String p = StringUtils.trimToNull(part);
-        if (PolicyCondition.Operator.MATCHES == operator) {
-            if (p != null) {
-                if ("*".equals(conditionValue)) {
-                    return true;
-                } else if (conditionValue != null && p.contains(conditionValue)) {
-                    return true;
-                }
-            }
-        } else if (PolicyCondition.Operator.NO_MATCH == operator) {
-            if (p != null) {
-                if ("*".equals(conditionValue)) {
-                    return false;
-                } else if (conditionValue != null && p.contains(conditionValue)) {
-                    return false;
-                }
-                return true;
+        if (p != null) {
+            if (PolicyCondition.Operator.MATCHES == operator) {
+                return org.dependencytrack.policy.Matcher.matches(p, conditionValue);
+            } else if (PolicyCondition.Operator.NO_MATCH == operator) {
+                return !org.dependencytrack.policy.Matcher.matches(p, conditionValue);
             }
         }
         return false;

@@ -56,11 +56,11 @@ public class SwidTagIdPolicyEvaluator extends AbstractPolicyEvaluator {
         for (final PolicyCondition condition: super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition (" + condition.getUuid() + ")");
             if (PolicyCondition.Operator.MATCHES == condition.getOperator()) {
-                if (component.getSwidTagId() != null && component.getSwidTagId().contains(condition.getValue())) {
+                if (Matcher.matches(component.getSwidTagId(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             } else if (PolicyCondition.Operator.NO_MATCH == condition.getOperator()) {
-                if (component.getSwidTagId() != null && !component.getSwidTagId().contains(condition.getValue())) {
+                if (!Matcher.matches(component.getSwidTagId(), condition.getValue())) {
                     violations.add(new PolicyConditionViolation(condition, component));
                 }
             }

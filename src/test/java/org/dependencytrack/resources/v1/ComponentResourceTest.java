@@ -25,6 +25,8 @@ import org.apache.http.HttpStatus;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryMetaComponent;
+import org.dependencytrack.model.RepositoryType;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.test.DeploymentContext;
@@ -37,6 +39,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,6 +109,37 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
         Assert.assertEquals("The component could not be found.", body);
+    }
+
+    @Test
+    public void getComponentByUuidWithRepositoryMetaDataTest() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("ABC");
+        component.setPurl("pkg:maven/org.acme/abc");
+        RepositoryMetaComponent meta = new RepositoryMetaComponent();
+        Date lastCheck = new Date();
+        meta.setLastCheck(lastCheck);
+        meta.setNamespace("org.acme");
+        meta.setName("abc");
+        meta.setLatestVersion("2.0.0");
+        meta.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta);
+        component = qm.createComponent(component, false);
+        Response response = target(V1_COMPONENT + "/" + component.getUuid())
+                .queryParam("includeRepositoryMetaData", true)
+                .request().header(X_API_KEY, apiKey).get(Response.class);
+        Assert.assertEquals(200, response.getStatus(), 0);
+        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assert.assertNotNull(json);
+        Assert.assertEquals("ABC", json.getString("name"));
+        Assert.assertEquals("MAVEN", json.getJsonObject("repositoryMeta").getString("repositoryType"));
+        Assert.assertEquals("org.acme", json.getJsonObject("repositoryMeta").getString("namespace"));
+        Assert.assertEquals("abc", json.getJsonObject("repositoryMeta").getString("name"));
+        Assert.assertEquals("2.0.0", json.getJsonObject("repositoryMeta").getString("latestVersion"));
+        Assert.assertEquals(lastCheck.getTime(), json.getJsonObject("repositoryMeta").getJsonNumber("lastCheck").longValue());
     }
 
     @Test
@@ -478,6 +512,70 @@ public class ComponentResourceTest extends ResourceTest {
         Assert.assertFalse(json.get(component2_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
         Component finalComponent2_1_1_1 = component2_1_1_1;
         Assert.assertThrows(NullPointerException.class, () -> json.get(finalComponent2_1_1_1.getUuid().toString()).asJsonObject().asJsonObject());
+    }
+
+    @Test
+    public void getDependencyGraphForComponentTestWithRepositoryMetaData() {
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
+
+        Component component1 = new Component();
+        component1.setProject(project);
+        component1.setName("Component1");
+        component1.setVersion("1.0.0");
+        component1.setPurl("pkg:maven/org.acme/component1");
+        RepositoryMetaComponent meta1 = new RepositoryMetaComponent();
+        Date lastCheck = new Date();
+        meta1.setLastCheck(lastCheck);
+        meta1.setNamespace("org.acme");
+        meta1.setName("component1");
+        meta1.setLatestVersion("2.0.0");
+        meta1.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta1);
+        component1 = qm.createComponent(component1, false);
+
+        Component component1_1 = new Component();
+        component1_1.setProject(project);
+        component1_1.setName("Component1_1");
+        component1_1.setVersion("2.0.0");
+        component1_1.setPurl("pkg:maven/org.acme/component1_1");
+        RepositoryMetaComponent meta1_1 = new RepositoryMetaComponent();
+        meta1_1.setLastCheck(lastCheck);
+        meta1_1.setNamespace("org.acme");
+        meta1_1.setName("component1_1");
+        meta1_1.setLatestVersion("3.0.0");
+        meta1_1.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta1_1);
+        component1_1 = qm.createComponent(component1_1, false);
+
+        Component component1_1_1 = new Component();
+        component1_1_1.setProject(project);
+        component1_1_1.setName("Component1_1_1");
+        component1_1_1.setVersion("3.0.0");
+        component1_1_1.setPurl("pkg:maven/org.acme/component1_1_1");
+        RepositoryMetaComponent meta1_1_1 = new RepositoryMetaComponent();
+        meta1_1_1.setLastCheck(lastCheck);
+        meta1_1_1.setNamespace("org.acme");
+        meta1_1_1.setName("component1_1_1");
+        meta1_1_1.setLatestVersion("4.0.0");
+        meta1_1_1.setRepositoryType(RepositoryType.MAVEN);
+        qm.persist(meta1_1_1);
+        component1_1_1 = qm.createComponent(component1_1_1, false);
+
+        project.setDirectDependencies("[{\"uuid\":\"" + component1.getUuid() + "\"}]");
+        component1.setDirectDependencies("[{\"uuid\":\"" + component1_1.getUuid() + "\"}]");
+        component1_1.setDirectDependencies("[{\"uuid\":\"" + component1_1_1.getUuid() + "\"}]");
+
+        Response response = target(V1_COMPONENT + "/project/" + project.getUuid() + "/dependencyGraph/" + component1_1_1.getUuid())
+                .request().header(X_API_KEY, apiKey).get();
+        JsonObject json = parseJsonObject(response);
+        Assert.assertEquals(200, response.getStatus(), 0);
+
+        Assert.assertTrue(json.get(component1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertEquals("2.0.0", json.get(component1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assert.assertTrue(json.get(component1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertEquals("3.0.0", json.get(component1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
+        Assert.assertFalse(json.get(component1_1_1.getUuid().toString()).asJsonObject().getBoolean("expandDependencyGraph"));
+        Assert.assertEquals("4.0.0", json.get(component1_1_1.getUuid().toString()).asJsonObject().get("repositoryMeta").asJsonObject().getString("latestVersion"));
     }
 
     @Test

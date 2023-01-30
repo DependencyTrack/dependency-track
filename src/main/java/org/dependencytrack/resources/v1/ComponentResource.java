@@ -40,6 +40,8 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
@@ -115,13 +117,22 @@ public class ComponentResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByUuid(
             @ApiParam(value = "The UUID of the component to retrieve", required = true)
-            @PathParam("uuid") String uuid) {
+            @PathParam("uuid") String uuid,
+            @ApiParam(value = "Optionally includes third-party metadata about the component from external repositories", required = false)
+            @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 final Project project = component.getProject();
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
+                    if (includeRepositoryMetaData && detachedComponent.getPurl() != null) {
+                        final RepositoryType type = RepositoryType.resolve(detachedComponent.getPurl());
+                        if (RepositoryType.UNSUPPORTED != type) {
+                            final RepositoryMetaComponent repoMetaComponent = qm.getRepositoryMetaComponent(type, detachedComponent.getPurl().getNamespace(), detachedComponent.getPurl().getName());
+                            detachedComponent.setRepositoryMeta(repoMetaComponent);
+                        }
+                    }
                     return Response.ok(detachedComponent).build();
                 } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified component is forbidden").build();

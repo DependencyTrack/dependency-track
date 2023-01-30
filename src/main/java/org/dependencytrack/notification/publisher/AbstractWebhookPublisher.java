@@ -20,17 +20,25 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.common.logging.Logger;
 import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import kong.unirest.Header;
-import kong.unirest.Headers;
-import kong.unirest.UnirestInstance;
-import org.dependencytrack.common.UnirestFactory;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.exception.PublisherException;
+import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.util.HttpUtil;
+import org.slf4j.LoggerFactory;
 
 import javax.json.JsonObject;
-import java.util.stream.Collectors;
+import java.io.IOException;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AbstractWebhookPublisher.class);
 
     public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
         final Logger logger = Logger.getLogger(this.getClass());
@@ -46,33 +54,31 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             return;
         }
         final String mimeType = getTemplateMimeType(config);
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-
-        final var headers = new Headers();
-        headers.add("content-type", mimeType);
-        headers.add("accept", mimeType);
-        final BasicAuthCredentials credentials;
         try {
-            credentials = getBasicAuthCredentials();
-        } catch (PublisherException e) {
-            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
-            return;
-        }
-        if (credentials != null) {
-            headers.setBasicAuth(credentials.user(), credentials.password());
-        }
-
-        final var response = ui.post(destination)
-                .headers(headers.all().stream().collect(Collectors.toMap(Header::getName, Header::getValue)))
-                .body(content)
-                .asString();
-
-        if (!response.isSuccess()) {
-            logger.error("An error was encountered publishing notification to " + publisherName);
-            logger.error("HTTP Status : " + response.getStatus() + " " + response.getStatusText());
-            logger.error("Destination: " + destination);
-            logger.error("Response: " + response.getBody());
-            logger.debug(content);
+            HttpPost request = new HttpPost(destination);
+            request.addHeader("content-type", mimeType);
+            request.addHeader("accept", mimeType);
+            final BasicAuthCredentials credentials;
+            try {
+                credentials = getBasicAuthCredentials();
+            } catch (PublisherException e) {
+                logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
+                return;
+            }
+            if (credentials != null) {
+                request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(credentials.user(), credentials.password()));
+            }
+            request.setEntity(new StringEntity(content));
+            final CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
+            if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
+                logger.error("An error was encountered publishing notification to " + publisherName);
+                logger.error("HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+                logger.error("Destination: " + destination);
+                logger.error("Response: " + EntityUtils.toString(response.getEntity()));
+                logger.debug(content);
+            }
+        }catch (IOException ex){
+            handleRequestException(LOGGER, ex);
         }
     }
 
@@ -85,5 +91,16 @@ public abstract class AbstractWebhookPublisher implements Publisher {
     }
 
     protected record BasicAuthCredentials(String user, String password) {
+    }
+
+    protected void handleRequestException(final org.slf4j.Logger logger, final Exception e) {
+        logger.error("Request failure", e);
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.REPOSITORY)
+                .title(NotificationConstants.Title.REPO_ERROR)
+                .content("An error occurred publishing notification. Check log for details. " + e.getMessage())
+                .level(NotificationLevel.ERROR)
+        );
     }
 }

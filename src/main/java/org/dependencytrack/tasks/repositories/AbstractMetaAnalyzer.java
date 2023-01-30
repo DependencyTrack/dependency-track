@@ -22,10 +22,17 @@ import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.util.HttpUtil;
+
+import java.io.IOException;
 
 /**
  * Base abstract class that all IMetaAnalyzer implementations should likely extend.
@@ -82,6 +89,15 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
                 .content("An error occurred while communicating with an " + supportedRepositoryType().name() + " repository. Check log for details. " + e.getMessage())
                 .level(NotificationLevel.ERROR)
         );
+    }
+
+    protected CloseableHttpResponse processHttpRequest(String url) throws IOException {
+        final HttpUriRequest request = new HttpGet(url);
+        request.addHeader("accept", "application/json");
+        if (username != null || password != null) {
+            request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
+        }
+        return HttpClientPool.getClient().execute(request);
     }
 
 }

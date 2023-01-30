@@ -1,7 +1,7 @@
 package org.dependencytrack.parser.osv;
 
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.junit.Assert;

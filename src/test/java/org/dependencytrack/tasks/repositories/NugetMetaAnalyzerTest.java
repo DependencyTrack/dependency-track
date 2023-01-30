@@ -79,10 +79,10 @@ public class NugetMetaAnalyzerTest {
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                                 .withBody(mockIndexResponse)
                 );
+        String encodedBasicHeader = "Basic OnBhc3N3b3Jk";
 
-        String encodedBasicHeader = "Basic bnVsbDpwYXNzd29yZA==";
         String mockVersionResponse = readResourceFileToString("/unit/tasks/repositories/https---localhost-1080-v3-flat2" +
-                "-nunitprivate-index.json");
+               "-nunitprivate-index.json");
         new MockServerClient("localhost", mockServer.getPort())
                 .when(
                         request()
@@ -112,18 +112,15 @@ public class NugetMetaAnalyzerTest {
                                 .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                                 .withBody(mockRegistrationResponse)
                 );
-
         Component component = new Component();
         component.setPurl(new PackageURL("pkg:nuget/NUnitPrivate@5.0.1"));
         NugetMetaAnalyzer analyzer = new NugetMetaAnalyzer();
         analyzer.setRepositoryUsernameAndPassword(null, "password");
         analyzer.setRepositoryBaseUrl("http://localhost:1080");
         MetaModel metaModel = analyzer.analyze(component);
-
         Assert.assertEquals("5.0.2", metaModel.getLatestVersion());
         Assert.assertNotNull(metaModel.getPublishedTimestamp());
     }
-
     private String readResourceFileToString(String fileName) throws Exception {
         return Files.readString(Paths.get(getClass().getResource(fileName).toURI()));
     }

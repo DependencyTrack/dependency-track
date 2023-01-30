@@ -29,12 +29,13 @@ import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.UnirestInstance;
-import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.tuple.Pair;
-import org.dependencytrack.common.UnirestFactory;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.GitHubAdvisoryMirrorEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.model.Cwe;
@@ -51,6 +52,7 @@ import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
 import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.github.graphql.model.PageableList;
 import org.dependencytrack.persistence.QueryManager;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -97,7 +99,11 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             if (this.accessToken != null) {
                 final long start = System.currentTimeMillis();
                 LOGGER.info("Starting GitHub Advisory mirroring task");
-                retrieveAdvisories(null);
+                try {
+                    retrieveAdvisories(null);
+                } catch (IOException ex) {
+                    handleRequestException(LOGGER, ex);
+                }
                 final long end = System.currentTimeMillis();
                 LOGGER.info("GitHub Advisory mirroring complete");
                 LOGGER.info("Time spent (total): " + (end - start) + "ms");
@@ -123,23 +129,28 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         }
     }
 
-    private void retrieveAdvisories(final String advisoriesEndCursor) {
+    private void retrieveAdvisories(final String advisoriesEndCursor) throws IOException {
         final String queryTemplate = generateQueryTemplate(advisoriesEndCursor);
-        final UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        final HttpResponse<JsonNode> response = ui.post(GITHUB_GRAPHQL_URL)
-                .header("Authorization", "bearer " + accessToken)
-                .header("content-type", "application/json")
-                .header("accept", "application/json")
-                .body(new JSONObject().put("query", queryTemplate))
-                .asJson();
-        if (response.getStatus() < 200 || response.getStatus() > 299) {
+        HttpPost request = new HttpPost(GITHUB_GRAPHQL_URL);
+        request.addHeader("Authorization", "bearer " + accessToken);
+        request.addHeader("content-type", "application/json");
+        request.addHeader("accept", "application/json");
+        JSONObject jsonBody = new JSONObject();
+        jsonBody.put("query", queryTemplate);
+        StringEntity stringEntity = new StringEntity(jsonBody.toString());
+        request.setEntity(stringEntity);
+        CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
+
+        if (response.getStatusLine().getStatusCode() < HttpStatus.SC_OK || response.getStatusLine().getStatusCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
             LOGGER.error("An error was encountered retrieving advisories");
-            LOGGER.error("HTTP Status : " + response.getStatus() + " " + response.getStatusText());
+            LOGGER.error("HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
             LOGGER.debug(queryTemplate);
             mirroredWithoutErrors = false;
         } else {
             GitHubSecurityAdvisoryParser parser = new GitHubSecurityAdvisoryParser();
-            final PageableList pageableList = parser.parse(response.getBody().getObject());
+            String responseString = EntityUtils.toString(response.getEntity());
+            JSONObject jsonObject = new JSONObject(responseString);
+            final PageableList pageableList = parser.parse(jsonObject);
             updateDatasource(pageableList.getAdvisories());
             if (pageableList.isHasNextPage()) {
                 retrieveAdvisories(pageableList.getEndCursor());
@@ -346,4 +357,14 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         return null;
     }
 
+    protected void handleRequestException(final Logger logger, final Exception e) {
+        logger.error("Request failure", e);
+        Notification.dispatch(new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.ANALYZER)
+                .title(NotificationConstants.Title.ANALYZER_ERROR)
+                .content("An error occurred while communicating with a vulnerability intelligence source. Check log for details. " + e.getMessage())
+                .level(NotificationLevel.ERROR)
+        );
+    }
 }

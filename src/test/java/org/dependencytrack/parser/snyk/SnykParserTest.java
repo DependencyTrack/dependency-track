@@ -19,8 +19,8 @@
 package org.dependencytrack.parser.snyk;
 
 import alpine.model.IConfigProperty;
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.snyk.model.SnykError;

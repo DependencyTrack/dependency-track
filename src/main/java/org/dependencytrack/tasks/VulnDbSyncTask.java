@@ -190,7 +190,6 @@ public class VulnDbSyncTask implements LoggableSubscriber {
             vs.setVersionStartExcluding(null);
             vs.setVersionStartIncluding(null);
             vs = qm.persist(vs);
-            //Event.dispatch(new IndexEvent(IndexEvent.Action.CREATE, qm.detach(VulnerableSoftware.class, vs.getId())));
             return vs;
         } catch (CpeParsingException | CpeEncodingException e) {
             LOGGER.warn("An error occurred while parsing: " + cpe.toCpe23FS() + " - The CPE is invalid and will be discarded.");

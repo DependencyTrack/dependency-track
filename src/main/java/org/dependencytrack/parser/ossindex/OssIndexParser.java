@@ -19,9 +19,9 @@
 package org.dependencytrack.parser.ossindex;
 
 import alpine.common.logging.Logger;
-import kong.unirest.JsonNode;
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 
@@ -41,17 +41,31 @@ public class OssIndexParser {
     /**
      * Parses the JSON response from Sonatype OSS Index
      *
-     * @param jsonNode the JSON node to parse
+     * @param responseString the response as a String to parse
      * @return an ComponentReport object
      */
-    public List<ComponentReport> parse(final JsonNode jsonNode) {
-        LOGGER.debug("Parsing JSON node");
+    public List<ComponentReport> parse(final String responseString) {
+        LOGGER.debug("Parsing JSON response");
+        JSONArray arr = null;
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = new JSONObject(responseString);
+        } catch (JSONException ex) {
+            arr = new JSONArray(responseString);
+        } catch (Exception ex) {
+            LOGGER.error("failed in parsing response");
+        }
+        if (jsonObject != null) {
+            arr = new JSONArray();
+            arr.put(jsonObject);
+        }
         final List<ComponentReport> componentReports = new ArrayList<>();
-        final JSONArray resultArray = jsonNode.getArray();
-        for (int i = 0; i < resultArray.length(); i++) {
-            final JSONObject object = resultArray.getJSONObject(i);
-            final ComponentReport componentReport = parse(object);
-            componentReports.add(componentReport);
+        if (arr != null) {
+            for (int i = 0; i < arr.length(); i++) {
+                final JSONObject object = arr.getJSONObject(i);
+                final ComponentReport componentReport = parse(object);
+                componentReports.add(componentReport);
+            }
         }
         return componentReports;
     }

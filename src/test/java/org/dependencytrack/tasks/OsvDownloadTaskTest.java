@@ -17,16 +17,13 @@ package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
-import kong.unirest.json.JSONObject;
+import org.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.parser.github.graphql.model.GitHubSecurityAdvisory;
-import org.dependencytrack.parser.github.graphql.model.GitHubVulnerability;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.persistence.CweImporter;
@@ -39,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Consumer;
 

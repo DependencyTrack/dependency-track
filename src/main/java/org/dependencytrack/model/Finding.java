@@ -89,6 +89,46 @@ public class Finding implements Serializable {
             "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
             "WHERE \"COMPONENT\".\"PROJECT_ID\" = ?";
 
+    public static final String QUERY_ALL_FINDINGS = "SELECT " +
+            "\"COMPONENT\".\"UUID\"," +
+            "\"COMPONENT\".\"NAME\"," +
+            "\"COMPONENT\".\"GROUP\"," +
+            "\"COMPONENT\".\"VERSION\"," +
+            "\"COMPONENT\".\"PURL\"," +
+            "\"COMPONENT\".\"CPE\"," +
+            "\"VULNERABILITY\".\"UUID\"," +
+            "\"VULNERABILITY\".\"SOURCE\"," +
+            "\"VULNERABILITY\".\"VULNID\"," +
+            "\"VULNERABILITY\".\"TITLE\"," +
+            "\"VULNERABILITY\".\"SUBTITLE\"," +
+            "\"VULNERABILITY\".\"DESCRIPTION\"," +
+            "\"VULNERABILITY\".\"RECOMMENDATION\"," +
+            "\"VULNERABILITY\".\"SEVERITY\"," +
+            "\"VULNERABILITY\".\"CVSSV2BASESCORE\"," +
+            "\"VULNERABILITY\".\"CVSSV3BASESCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRLIKELIHOODSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRTECHNICALIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"OWASPRRBUSINESSIMPACTSCORE\"," +
+            "\"VULNERABILITY\".\"EPSSSCORE\"," +
+            "\"VULNERABILITY\".\"EPSSPERCENTILE\"," +
+            "\"VULNERABILITY\".\"CWES\"," +
+            "\"FINDINGATTRIBUTION\".\"ANALYZERIDENTITY\"," +
+            "\"FINDINGATTRIBUTION\".\"ATTRIBUTED_ON\"," +
+            "\"FINDINGATTRIBUTION\".\"ALT_ID\"," +
+            "\"FINDINGATTRIBUTION\".\"REFERENCE_URL\"," +
+            "\"ANALYSIS\".\"STATE\"," +
+            "\"ANALYSIS\".\"SUPPRESSED\"," +
+            "\"VULNERABILITY\".\"PUBLISHED\"," +
+            "\"PROJECT\".\"UUID\"," +
+            "\"PROJECT\".\"NAME\"," +
+            "\"PROJECT\".\"VERSION\"" +
+            "FROM \"COMPONENT\" " +
+            "INNER JOIN \"COMPONENTS_VULNERABILITIES\" ON (\"COMPONENT\".\"ID\" = \"COMPONENTS_VULNERABILITIES\".\"COMPONENT_ID\") " +
+            "INNER JOIN \"VULNERABILITY\" ON (\"COMPONENTS_VULNERABILITIES\".\"VULNERABILITY_ID\" = \"VULNERABILITY\".\"ID\") " +
+            "INNER JOIN \"FINDINGATTRIBUTION\" ON (\"COMPONENT\".\"ID\" = \"FINDINGATTRIBUTION\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"FINDINGATTRIBUTION\".\"VULNERABILITY_ID\")" +
+            "LEFT JOIN \"ANALYSIS\" ON (\"COMPONENT\".\"ID\" = \"ANALYSIS\".\"COMPONENT_ID\") AND (\"VULNERABILITY\".\"ID\" = \"ANALYSIS\".\"VULNERABILITY_ID\") AND (\"COMPONENT\".\"PROJECT_ID\" = \"ANALYSIS\".\"PROJECT_ID\") " +
+            "INNER JOIN \"PROJECT\" ON (\"COMPONENT\".\"PROJECT_ID\" = \"PROJECT\".\"ID\")";
+
     private UUID project;
     private Map<String, Object> component = new LinkedHashMap<>();
     private Map<String, Object> vulnerability = new LinkedHashMap<>();
@@ -98,8 +138,8 @@ public class Finding implements Serializable {
     /**
      * Constructs a new Finding object. The generic Object array passed as an argument is the
      * individual values for each row in a resultset. The order of these must match the order
-     * of the columns being queried in {@link #QUERY}.
-     * @param o An array of values specific to an individual row returned from {@link #QUERY}
+     * of the columns being queried in {@link #QUERY} or {@link #QUERY_ALL_FINDINGS}.
+     * @param o An array of values specific to an individual row returned from {@link #QUERY} or {@link #QUERY_ALL_FINDINGS}
      */
     public Finding(UUID project, Object... o) {
         this.project = project;
@@ -142,6 +182,11 @@ public class Finding implements Serializable {
 
         optValue(analysis, "state", o[26]);
         optValue(analysis, "isSuppressed", o[27], false);
+        if (o.length > 30) {
+            optValue(vulnerability, "published", o[28]);
+            optValue(component, "projectName", o[30]);
+            optValue(component, "projectVersion", o[31]);
+        }
     }
 
     public Map getComponent() {

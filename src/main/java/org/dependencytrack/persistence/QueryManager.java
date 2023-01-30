@@ -48,6 +48,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.FindingAttribution;
+import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.NotificationPublisher;
@@ -1030,6 +1031,14 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Finding> getFindings(Project project, boolean includeSuppressed) {
         return getFindingsQueryManager().getFindings(project, includeSuppressed);
+    }
+
+    public List<Finding> getAllFindings(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+        return getFindingsQueryManager().getAllFindings(filters, showSuppressed, showInactive);
+    }
+
+    public List<GroupedFinding> getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
+        return getFindingsQueryManager().getAllFindingsGroupedByVulnerability(filters, showInactive);
     }
 
     public List<VulnerabilityMetrics> getVulnerabilityMetrics() {

@@ -36,6 +36,7 @@ import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
+import org.dependencytrack.model.GroupedFinding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
@@ -48,7 +49,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -177,5 +180,115 @@ public class FindingResource extends AlpineResource {
         }
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all findings",
+            response = Finding.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+    public Response getAllFindings(@ApiParam(value = "Show inactive projects")
+                                   @QueryParam("showInactive") boolean showInactive,
+                                   @ApiParam(value = "Show suppressed findings")
+                                   @QueryParam("showSuppressed") boolean showSuppressed,
+                                   @ApiParam(value = "Filter by severity")
+                                   @QueryParam("severity") String severity,
+                                   @ApiParam(value = "Filter by analysis status")
+                                   @QueryParam("analysisStatus") String analysisStatus,
+                                   @ApiParam(value = "Filter by vendor response")
+                                   @QueryParam("vendorResponse") String vendorResponse,
+                                   @ApiParam(value = "Filter published from this date")
+                                   @QueryParam("publishDateFrom") String publishDateFrom,
+                                   @ApiParam(value = "Filter published to this date")
+                                   @QueryParam("publishDateTo") String publishDateTo,
+                                   @ApiParam(value = "Filter attributed on from this date")
+                                   @QueryParam("attributedOnDateFrom") String attributedOnDateFrom,
+                                   @ApiParam(value = "Filter attributed on to this date")
+                                   @QueryParam("attributedOnDateTo") String attributedOnDateTo,
+                                   @ApiParam(value = "Filter the text input in these fields")
+                                   @QueryParam("textSearchField") String textSearchField,
+                                   @ApiParam(value = "Filter by this text input")
+                                   @QueryParam("textSearchInput") String textSearchInput,
+                                   @ApiParam(value = "Filter CVSS from this value")
+                                   @QueryParam("cvssFrom") String cvssFrom,
+                                   @ApiParam(value = "Filter CVSS from this Value")
+                                   @QueryParam("cvssTo") String cvssTo) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Map<String, String> filters = new HashMap<>();
+            filters.put("severity", severity);
+            filters.put("analysisStatus", analysisStatus);
+            filters.put("vendorResponse", vendorResponse);
+            filters.put("publishDateFrom", publishDateFrom);
+            filters.put("publishDateTo", publishDateTo);
+            filters.put("attributedOnDateFrom", attributedOnDateFrom);
+            filters.put("attributedOnDateTo", attributedOnDateTo);
+            filters.put("textSearchField", textSearchField);
+            filters.put("textSearchInput", textSearchInput);
+            filters.put("cvssFrom", cvssFrom);
+            filters.put("cvssTo", cvssTo);
+            final List<Finding> findings = qm.getAllFindings(filters, showSuppressed, showInactive);
+            return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+        }
+    }
+
+    @GET
+    @Path("/grouped")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Returns a list of all findings grouped by vulnerability",
+            response = GroupedFinding.class,
+            responseContainer = "List",
+            responseHeaders = @ResponseHeader(name = TOTAL_COUNT_HEADER, response = Long.class, description = "The total number of findings")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
+    public Response getAllFindings(@ApiParam(value = "Show inactive projects")
+                                   @QueryParam("showInactive") boolean showInactive,
+                                   @ApiParam(value = "Filter by severity")
+                                   @QueryParam("severity") String severity,
+                                   @ApiParam(value = "Filter published from this date")
+                                   @QueryParam("publishDateFrom") String publishDateFrom,
+                                   @ApiParam(value = "Filter published to this date")
+                                   @QueryParam("publishDateTo") String publishDateTo,
+                                   @ApiParam(value = "Filter the text input in these fields")
+                                   @QueryParam("textSearchField") String textSearchField,
+                                   @ApiParam(value = "Filter by this text input")
+                                   @QueryParam("textSearchInput") String textSearchInput,
+                                   @ApiParam(value = "Filter CVSS from this value")
+                                   @QueryParam("cvssFrom") String cvssFrom,
+                                   @ApiParam(value = "Filter CVSS to this value")
+                                   @QueryParam("cvssTo") String cvssTo,
+                                   @ApiParam(value = "Filter occurrences in projects from this value")
+                                   @QueryParam("occurrencesFrom") String occurrencesFrom,
+                                   @ApiParam(value = "Filter occurrences in projects to this value")
+                                   @QueryParam("occurrencesTo") String occurrencesTo,
+                                   @ApiParam(value = "Filter first attributed on and last attributed on from this date")
+                                   @QueryParam("aggregatedAttributedOnDateFrom") String aggregatedAttributedOnDateFrom,
+                                   @ApiParam(value = "Filter first attributed on and last attributed on to this date")
+                                   @QueryParam("aggregatedAttributedOnDateTo") String aggregatedAttributedOnDateTo) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Map<String, String> filters = new HashMap<>();
+            filters.put("severity", severity);
+            filters.put("publishDateFrom", publishDateFrom);
+            filters.put("publishDateTo", publishDateTo);
+            filters.put("textSearchField", textSearchField);
+            filters.put("textSearchInput", textSearchInput);
+            filters.put("cvssFrom", cvssFrom);
+            filters.put("cvssTo", cvssTo);
+            filters.put("occurrencesFrom", occurrencesFrom);
+            filters.put("occurrencesTo", occurrencesTo);
+            filters.put("aggregatedAttributedOnDateFrom", aggregatedAttributedOnDateFrom);
+            filters.put("aggregatedAttributedOnDateTo", aggregatedAttributedOnDateTo);
+            final List<GroupedFinding> findings = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);
+            return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
+        }
+    }
 
 }

@@ -44,11 +44,13 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
 import org.dependencytrack.util.InternalComponentIdentificationUtil;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
+import alpine.Config;
+import org.dependencytrack.common.ConfigKey;
+
+import com.segment.analytics.Analytics;
+import com.segment.analytics.messages.TrackMessage;
 
 /**
  * Subscriber task that performs processing of bill-of-material (bom)
@@ -93,6 +95,14 @@ public class BomUploadProcessingTask implements Subscriber {
                         cycloneDxBom = parser.parse(bomBytes);
                         bomSpecVersion = cycloneDxBom.getSpecVersion();
                         bomVersion = cycloneDxBom.getVersion();
+                        final String segmentWriteKey = Config.getInstance().getProperty(ConfigKey.SYSTEM_SEGMENT_WRITE_KEY);
+                        Analytics analytics = Analytics.builder(segmentWriteKey).build();
+                        Map<String, String> map = new HashMap();
+                        map.put("project_id", Long.toString(project.getId()));
+                        map.put("bom_version", Integer.toString(bomVersion));
+                        analytics.enqueue(TrackMessage.builder("BOM Uploaded")
+                                .properties(map)
+                                .anonymousId(UUID.randomUUID()));
                         if (project.getClassifier() == null) {
                             final var classifier = Optional.ofNullable(cycloneDxBom.getMetadata())
                                 .map(org.cyclonedx.model.Metadata::getComponent)

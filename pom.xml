@@ -365,6 +365,11 @@
             <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.segment.analytics.java</groupId>
+            <artifactId>analytics</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,0 +1,82 @@
+version: '3.7'
+
+#####################################################
+# This Docker Compose file contains two services
+#    Dependency-Track API Server
+#    Dependency-Track FrontEnd
+#####################################################
+
+volumes:
+  dependency-track: null
+  postgres_db_data: null
+
+services:
+  dtrack-apiserver:
+    image: dependencytrack/apiserver
+    environment:
+      # The Dependency-Track container can be configured using any of the
+      # available configuration properties defined in:
+      # https://docs.dependencytrack.org/getting-started/configuration/
+      # All properties are upper case with periods replaced by underscores.
+      #
+      # Database Properties
+      - ALPINE_DATABASE_MODE=external
+      - ALPINE_DATABASE_URL=jdbc:postgresql://dtrack-db:5432/dtrack?ssl=true&sslmode=require
+      - ALPINE_DATABASE_DRIVER=org.postgresql.Driver
+      - ALPINE_DATABASE_USERNAME=postgres
+      - ALPINE_DATABASE_PASSWORD=dtrack
+    # - ALPINE_DATABASE_POOL_ENABLED=true
+    # - ALPINE_DATABASE_POOL_MAX_SIZE=20
+    # - ALPINE_DATABASE_POOL_MIN_IDLE=10
+    # - ALPINE_DATABASE_POOL_IDLE_TIMEOUT=300000
+    # - ALPINE_DATABASE_POOL_MAX_LIFETIME=600000
+      - SYSTEM_SEGMENT_WRITE_KEY=insert-your-key-here
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      - '8081:8080'
+    depends_on:
+      - dtrack-db
+    volumes:
+      # Optional volume mount to override default notification publisher templates
+      # - "/host/path/to/template/base/dir:/data/templates"
+      - 'dependency-track:/data'
+    restart: unless-stopped
+
+  dtrack-frontend:
+    image: dependencytrack/frontend
+    depends_on:
+      - dtrack-apiserver
+    environment:
+      # The base URL of the API server.
+      # NOTE:
+      #   * This URL must be reachable by the browsers of your users.
+      #   * The frontend container itself does NOT communicate with the API server directly, it just serves static files.
+      #   * When deploying to dedicated servers, please use the external IP or domain of the API server.
+      - API_BASE_URL=http://localhost:8081
+      # volumes:
+      # - "/host/path/to/config.json:/app/static/config.json"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  dtrack-db:
+    image: postgres:alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=dtrack
+      - POSTGRES_DB=dtrack
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5435:5432"
+    command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key -c listen_addresses='*'
+    volumes:
+      - ./postgres_ssl/server.crt:/var/lib/postgresql/server.crt
+      - ./postgres_ssl/server.key:/var/lib/postgresql/server.key
+      - postgres_db_data:/var/lib/postgresql/data

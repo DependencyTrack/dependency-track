@@ -1,0 +1,1 @@
+sudo rm -f server.* privkey.pem

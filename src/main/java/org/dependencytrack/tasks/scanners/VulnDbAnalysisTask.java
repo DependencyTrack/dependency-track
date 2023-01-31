@@ -104,7 +104,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
             final VulnDbAnalysisEvent event = (VulnDbAnalysisEvent) e;
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting VulnDB analysis task");
-            if (event.getComponents().size() > 0) {
+            if (!event.getComponents().isEmpty()) {
                 analyze(event.getComponents());
             }
             LOGGER.info("VulnDB analysis complete");
@@ -129,6 +129,10 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     public void analyze(final List<Component> components) {
         final VulnDBUtil api = new VulnDBUtil(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
         for (final Component component : components) {
+            if (isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
+                applyAnalysisFromCache(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe(),component, AnalyzerIdentity.VULNDB_ANALYZER, vulnerabilityAnalysisLevel);
+            }else
+            {
             if (!component.isInternal() && isCapable(component)
                     && !isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())) {
                 int page = 1;
@@ -143,6 +147,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                         return;
                     }
                 }
+            }
             }
         }
     }
@@ -162,7 +167,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(vulnerableComponent, vulnerability);
             }
-            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, vulnerableComponent.getCpe(), component.getCacheResult());
+            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, vulnerableComponent.getCpe(), vulnerableComponent.getCacheResult());
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }

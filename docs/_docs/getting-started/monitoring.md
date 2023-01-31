@@ -15,7 +15,7 @@ system metrics via Prometheus is crucial for observability.
 > the application itself, not the data managed by it. If exposition of portfolio statistics via Prometheus is desired,
 > refer to [community integrations] like Jetstack's [dependency-track-exporter].
 
-To enable metrics exposition, set the `alpine.metrics.enable` property to `true` (see [Configuration]). 
+To enable metrics exposition, set the `alpine.metrics.enabled` property to `true` (see [Configuration]).
 Metrics will be exposed in the `/metrics` endpoint, and can optionally be protected using 
 basic authentication via `alpine.metrics.auth.username` and `alpine.metrics.auth.password`.
 

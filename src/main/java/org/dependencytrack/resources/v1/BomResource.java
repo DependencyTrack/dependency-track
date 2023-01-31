@@ -59,6 +59,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
@@ -307,9 +308,14 @@ public class BomResource extends AlpineResource {
                 return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
             }
             final byte[] decoded = Base64.getDecoder().decode(encodedBomData);
-            final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), decoded);
-            Event.dispatch(bomUploadEvent);
-            return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
+            try (final ByteArrayInputStream bain = new ByteArrayInputStream(decoded)) {
+                final byte[] content = IOUtils.toByteArray(new BOMInputStream((bain)));
+                final BomUploadEvent bomUploadEvent = new BomUploadEvent(project.getUuid(), content);
+                Event.dispatch(bomUploadEvent);
+                return Response.ok(Collections.singletonMap("token", bomUploadEvent.getChainIdentifier())).build();
+            } catch (IOException e) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
         }

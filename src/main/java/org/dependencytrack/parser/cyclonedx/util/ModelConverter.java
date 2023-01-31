@@ -663,8 +663,11 @@ public class ModelConverter {
     }
 
     /**
-     * Converts a parsed Bom to a native list of Dependency-Track component object
+     * Converts a parsed Bom to a native list of Dependency-Track component objects
+     * @param qm
      * @param bom the Bom to convert
+     * @param project The project based on the BOM
+     * @param components All known {@link Component}s from the BOM
      * @return a List of Component object
      */
     public static void generateDependencies(final QueryManager qm, final Bom bom, final Project project, final List<Component> components) {
@@ -675,7 +678,7 @@ public class ModelConverter {
             final JSONArray jsonArray = new JSONArray();
             if (targetDep != null && targetDep.getDependencies() != null) {
                 for (final org.cyclonedx.model.Dependency directDep : targetDep.getDependencies()) {
-                    final Component c = getComponentFromBomRef(directDep.getRef(), components);
+                    final Component c = getComponentFromBomRef(directDep.getRef(), components, false);
                     if (c != null) {
                         final ComponentIdentity ci = new ComponentIdentity(c);
                         jsonArray.put(ci.toJSON());
@@ -690,13 +693,17 @@ public class ModelConverter {
         }
         // Get transitive last. It is possible that some CycloneDX implementations may not properly specify direct
         // dependencies. As a result, it is not possible to distinguish between direct and transitive.
-        for (final Component c1: components) {
-            if (c1.getBomRef() != null) {
+
+        // Flatten the components to remove and need for repeated recursion
+        Map<String, Component> flatComponents = flattenComponents(components);
+
+        for (final Map.Entry<String, Component> c1: flatComponents.entrySet()) {
+            if (c1.getKey() != null) {
                 final JSONArray jsonArray = new JSONArray();
-                final org.cyclonedx.model.Dependency d1 = getDependencyFromBomRef(c1.getBomRef(), bom.getDependencies());
+                final org.cyclonedx.model.Dependency d1 = getDependencyFromBomRef(c1.getKey(), bom.getDependencies());
                 if (d1 != null && d1.getDependencies() != null) {
                     for (final org.cyclonedx.model.Dependency d2: d1.getDependencies()) {
-                        final Component c2 = getComponentFromBomRef(d2.getRef(), components);
+                        final Component c2 = flatComponents.get(d2.getRef());
                         if (c2 != null) {
                             final ComponentIdentity ci = new ComponentIdentity(c2);
                             jsonArray.put(ci.toJSON());
@@ -704,9 +711,9 @@ public class ModelConverter {
                     }
                 }
                 if (jsonArray.isEmpty()) {
-                    c1.setDirectDependencies(null);
+                    c1.getValue().setDirectDependencies(null);
                 } else {
-                    c1.setDirectDependencies(jsonArray.toString());
+                    c1.getValue().setDirectDependencies(jsonArray.toString());
                 }
             }
         }
@@ -733,11 +740,23 @@ public class ModelConverter {
         }
     }
 
-    private static Component getComponentFromBomRef(final String bomRef, final List<Component> components) {
-        if (components != null) {
+    /**
+     * Attempts to find a component from the bom-ref, optionally scanning through and children to do so
+     * @param bomRef The bom-ref to search for
+     * @param components The list of components to search within
+     * @param recursive Whether to recurse through any child components
+     * @return The component with the target bom-ref, or <code>null</code> is it is not found
+     */
+    private static Component getComponentFromBomRef(final String bomRef, final Collection<Component> components, boolean recursive) {
+        if (components != null && bomRef != null) {
             for (Component c : components) {
-                if (bomRef != null && bomRef.equals(c.getBomRef())) {
+                if (bomRef.equals(c.getBomRef())) {
                     return c;
+                } else if (recursive) {
+                    Component result = getComponentFromBomRef(bomRef, c.getChildren(), false);
+                    if (result != null) {
+                        return result;
+                    }
                 }
             }
         }
@@ -924,5 +943,23 @@ public class ModelConverter {
             default:
                 return AnalysisJustification.NOT_SET;
         }
+    }
+
+    /**
+     * Recurse through the list of components to generate a map keyed on their bom-ref
+     * @param components The components to process
+     * @return A Map of every component found keyed on their bom-ref
+     */
+    private static Map<String, Component> flattenComponents(final Collection<Component> components) {
+        Map<String, Component> result = new HashMap<>(components.size());
+
+        for (Component comp : components) {
+            result.put(comp.getBomRef(), comp);
+            if (comp.getChildren() != null) {
+                result.putAll(flattenComponents(comp.getChildren()));
+            }
+        }
+
+        return result;
     }
 }

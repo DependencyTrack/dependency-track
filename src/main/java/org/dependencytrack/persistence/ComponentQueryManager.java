@@ -567,20 +567,23 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 queryAclProjects.setFilter(stringBuilderAclProjects.toString());
             } else {
                 if (inputFilter != null && !inputFilter.isEmpty()) {
-                    query.setFilter(inputFilter + " && false");
+                    query.setFilter(inputFilter + " && :false");
                 } else {
-                    query.setFilter("false");
+                    query.setFilter(":false");
                 }
+                params.put("false", false);
                 return;
             }
             List<Project> result = (List<Project>) queryAclProjects.executeWithMap(tempParams);
             // Query the descendants of the projects that the teams have access to
             if (result != null && !result.isEmpty()) {
                 final StringBuilder stringBuilderDescendants = new StringBuilder();
+                final Map<String, Object> descendantsParams = new HashMap<>();
                 stringBuilderDescendants.append("WHERE");
                 int i = 0, teamSize = result.size();
                 for (Project project : result) {
-                    stringBuilderDescendants.append(" ID = ").append(project.getId()).append(" ");
+                    stringBuilderDescendants.append(" ID = :id").append(i).append(" ");
+                    descendantsParams.put("id" + i, project.getId());
                     if (i < teamSize-1) {
                         stringBuilderDescendants.append(" OR");
                     }
@@ -588,6 +591,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 }
                 stringBuilderDescendants.append("\n");
                 final Query<Object[]> queryDescendants = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
+                queryDescendants.setNamedParameters(descendantsParams);
                 final List<Object[]> list = queryDescendants.executeList();
                 // Add queried projects and descendants to the input filter of the query
                 if (list != null && !list.isEmpty()) {
@@ -607,10 +611,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 }
             } else {
                 if (inputFilter != null && !inputFilter.isEmpty()){
-                    query.setFilter(inputFilter +" && false");
+                    query.setFilter(inputFilter +" && :false");
                 } else {
-                    query.setFilter("false");
+                    query.setFilter(":false");
                 }
+                params.put("false", false);
             }
         } else {
             query.setFilter(inputFilter);

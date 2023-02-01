@@ -83,16 +83,16 @@ public class MavenMetaAnalyzer extends AbstractMetaAnalyzer {
                     if (entity != null) {
                         try (InputStream in = entity.getContent()) {
                             final Document document = XmlUtil.buildSecureDocumentBuilder().parse(in);
-                            final XPathFactory xpathFactory = XPathFactory.newInstance();
+                            final var xpathFactory = XPathFactory.newInstance();
                             final XPath xpath = xpathFactory.newXPath();
 
                             final XPathExpression releaseExpression = xpath.compile("/metadata/versioning/release");
                             final XPathExpression latestExpression = xpath.compile("/metadata/versioning/latest");
-                            final String release = (String) releaseExpression.evaluate(document, XPathConstants.STRING);
+                            final var release = (String) releaseExpression.evaluate(document, XPathConstants.STRING);
                             final String latest = (String) latestExpression.evaluate(document, XPathConstants.STRING);
 
                             final XPathExpression lastUpdatedExpression = xpath.compile("/metadata/versioning/lastUpdated");
-                            final String lastUpdated = (String) lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
+                            final var lastUpdated = (String) lastUpdatedExpression.evaluate(document, XPathConstants.STRING);
 
                             meta.setLatestVersion(release != null ? release : latest);
                             if (lastUpdated != null) {

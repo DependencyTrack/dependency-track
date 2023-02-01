@@ -50,7 +50,7 @@ public class FortifySscClient {
 
     public String generateOneTimeUploadToken(final String citoken) {
         LOGGER.debug("Generating one-time upload token");
-        HttpPost request = new HttpPost(baseURL + "/api/v1/fileTokens");
+        var request = new HttpPost(baseURL + "/api/v1/fileTokens");
         final JSONObject payload = new JSONObject().put("fileTokenType", "UPLOAD");
         request.addHeader("Content-Type", "application/json");
         request.addHeader("Authorization", "FortifyToken " + Base64.getEncoder().encodeToString(citoken.getBytes(StandardCharsets.UTF_8)));
@@ -79,7 +79,7 @@ public class FortifySscClient {
     public void uploadDependencyTrackFindings(final String token, final String applicationVersion, final InputStream findingsJson) {
         try {
             LOGGER.debug("Uploading Dependency-Track findings to Fortify SSC");
-            URIBuilder builder = new URIBuilder(baseURL + "/upload/resultFileUpload.html");
+            var builder = new URIBuilder(baseURL + "/upload/resultFileUpload.html");
             builder.setParameter("engineType", "DEPENDENCY_TRACK").setParameter("mat", token).setParameter("entityId", applicationVersion);
             HttpPost request = new HttpPost(builder.build());
             request.addHeader("accept", "application/xml");

@@ -54,7 +54,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
         }
         final String mimeType = getTemplateMimeType(config);
         try {
-            HttpPost request = new HttpPost(destination);
+            var request = new HttpPost(destination);
             request.addHeader("content-type", mimeType);
             request.addHeader("accept", mimeType);
             final BasicAuthCredentials credentials;
@@ -92,7 +92,7 @@ public abstract class AbstractWebhookPublisher implements Publisher {
     protected record BasicAuthCredentials(String user, String password) {
     }
 
-    protected void handleRequestException(final org.slf4j.Logger logger, final Exception e) {
+    protected void handleRequestException(final Logger logger, final Exception e) {
         logger.error("Request failure", e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)

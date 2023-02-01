@@ -19,6 +19,7 @@
 package org.dependencytrack.integrations.defectdojo;
 
 import alpine.common.logging.Logger;
+import com.google.common.base.Throwables;
 import org.apache.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -193,8 +194,7 @@ public class DefectDojoClient {
                 uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
         }catch (IOException ex){
-            LOGGER.error("Error while sending request from reimport DT findings defectDojo Client" + ex.getMessage());
-            LOGGER.error("Error while sending request from reimport DT findings defectDojo Client" + ex.getStackTrace());
+            LOGGER.error("Error while sending request from reimport DT findings defectDojo Client" + ex.getMessage()+" with stack trace: "+ Throwables.getStackTraceAsString(ex));
         }
     }
 

@@ -69,7 +69,7 @@ public class GoModulesMetaAnalyzer extends AbstractMetaAnalyzer {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity()!=null) {
                     String responseString = EntityUtils.toString(response.getEntity());
-                    final JSONObject responseJson = new org.json.JSONObject(responseString);
+                    final var responseJson = new JSONObject(responseString);
                     meta.setLatestVersion(responseJson.getString("Version"));
 
                     // Module versions are prefixed with "v" in the Go ecosystem.

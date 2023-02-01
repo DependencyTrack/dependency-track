@@ -108,7 +108,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
                     String responseString = EntityUtils.toString(response.getEntity());
-                    JSONObject jsonObject = new JSONObject(responseString);
+                    var jsonObject = new JSONObject(responseString);
                     final JSONArray versions = jsonObject.getJSONArray("versions");
                     final String latest = findLatestVersion(versions); // get the last version in the array
                     meta.setLatestVersion(latest);
@@ -143,7 +143,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     private boolean performLastPublishedCheck(final MetaModel meta, final Component component) {
         final String url = String.format(registrationUrl, component.getPurl().getName().toLowerCase(), meta.getLatestVersion());
         try (final CloseableHttpResponse response = processHttpRequest(url)) {
-            if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 if (response.getEntity() != null) {
                     String stringResponse = EntityUtils.toString(response.getEntity());
                     if (!stringResponse.equalsIgnoreCase("") && !stringResponse.equalsIgnoreCase("{}")) {
@@ -168,7 +168,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         final String url = baseUrl + INDEX_URL;
         try {
             try (final CloseableHttpResponse response = processHttpRequest(url)) {
-                if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     if(response.getEntity()!=null){
                     String responseString = EntityUtils.toString(response.getEntity());
                         JSONObject responseJson = new JSONObject(responseString);

@@ -3,6 +3,7 @@ package org.dependencytrack.model.VulnDb;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -87,7 +88,7 @@ public class VulnDbParser {
     }
 
     public <T> Results<T> parse(File file, Class<? extends ApiObject> apiObject) throws IOException {
-        String jsonData = new String(Files.readAllBytes(Paths.get(file.toURI())));
+        String jsonData = new String(Files.readAllBytes(Paths.get(file.toURI())), Charset.defaultCharset());
         Object result = null;
         try{
             result = new JSONObject(jsonData);

@@ -135,9 +135,9 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         request.addHeader("Authorization", "bearer " + accessToken);
         request.addHeader("content-type", "application/json");
         request.addHeader("accept", "application/json");
-        JSONObject jsonBody = new JSONObject();
+        var jsonBody = new JSONObject();
         jsonBody.put("query", queryTemplate);
-        StringEntity stringEntity = new StringEntity(jsonBody.toString());
+        var stringEntity = new StringEntity(jsonBody.toString());
         request.setEntity(stringEntity);
         CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
 
@@ -147,9 +147,9 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             LOGGER.debug(queryTemplate);
             mirroredWithoutErrors = false;
         } else {
-            GitHubSecurityAdvisoryParser parser = new GitHubSecurityAdvisoryParser();
+            var parser = new GitHubSecurityAdvisoryParser();
             String responseString = EntityUtils.toString(response.getEntity());
-            JSONObject jsonObject = new JSONObject(responseString);
+            var jsonObject = new JSONObject(responseString);
             final PageableList pageableList = parser.parse(jsonObject);
             updateDatasource(pageableList.getAdvisories());
             if (pageableList.isHasNextPage()) {

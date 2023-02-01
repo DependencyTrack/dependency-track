@@ -78,7 +78,7 @@ public class NpmMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                     if (response.getEntity()!=null) {
                         String responseString = EntityUtils.toString(response.getEntity());
-                        JSONObject jsonObject = new JSONObject(responseString);
+                        var jsonObject = new JSONObject(responseString);
                         final String latest = jsonObject.optString("latest");
                         if (latest != null) {
                             meta.setLatestVersion(latest);

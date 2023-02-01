@@ -1,6 +1,7 @@
 package org.dependencytrack.util;
 
 import oauth.signpost.OAuthConsumer;
+import org.apache.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import oauth.signpost.basic.DefaultOAuthConsumer;
@@ -69,9 +70,9 @@ public class VulnDBUtil {
         Results results;
         try{
         if (response != null) {
-            if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                 String responseString = EntityUtils.toString(response.getEntity());
-                JSONObject jsonObject = new JSONObject(responseString);
+                var jsonObject = new JSONObject(responseString);
                 results = parse(jsonObject, clazz);
                 return results;
             } else {

@@ -66,7 +66,7 @@ public class CweImporter {
             final DocumentBuilder builder = factory.newDocumentBuilder();
 
             final Document doc = builder.parse(is);
-            final XPathFactory xPathfactory = XPathFactory.newInstance();
+            final var xPathfactory = XPathFactory.newInstance();
             final XPath xpath = xPathfactory.newXPath();
 
             final XPathExpression expr1 = xpath.compile("/Weakness_Catalog/Categories/Category");

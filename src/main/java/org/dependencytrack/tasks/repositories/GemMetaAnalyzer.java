@@ -70,7 +70,7 @@ public class GemMetaAnalyzer extends AbstractMetaAnalyzer {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
                     if(response.getEntity()!=null){
                         String responseString = EntityUtils.toString(response.getEntity());
-                        JSONObject jsonObject = new JSONObject(responseString);
+                        var jsonObject = new JSONObject(responseString);
                         final String latest = jsonObject.getString("version");
                         meta.setLatestVersion(latest);
                     }

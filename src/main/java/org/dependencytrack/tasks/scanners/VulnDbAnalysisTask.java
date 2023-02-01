@@ -99,7 +99,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                     return;
                 }
             }
-            final VulnDbAnalysisEvent event = (VulnDbAnalysisEvent) e;
+            final var event = (VulnDbAnalysisEvent) e;
             vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
             LOGGER.info("Starting VulnDB analysis task");
             if (!event.getComponents().isEmpty()) {
@@ -125,7 +125,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        final VulnDBUtil api = new VulnDBUtil(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
+        final var api = new VulnDBUtil(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
         for (final Component component : components) {
             if(isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())){
                 applyAnalysisFromCache(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe(),component, AnalyzerIdentity.VULNDB_ANALYZER, vulnerabilityAnalysisLevel);

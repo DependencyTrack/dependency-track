@@ -19,7 +19,6 @@
 package org.dependencytrack.tasks.scanners;
 
 import alpine.common.logging.Logger;
-import alpine.common.util.UrlUtil;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
@@ -36,7 +35,6 @@ import org.dependencytrack.util.VulnDBUtil;
 import us.springett.vulndbdatamirror.parser.model.Results;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Subscriber task that performs an analysis of component using VulnDB REST API.
@@ -46,12 +44,8 @@ import java.util.Optional;
  */
 public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Subscriber {
 
-    public VulnDbAnalysisTask(String apiBaseUrl) {
-        this.apiBaseUrl = apiBaseUrl;
-    }
 
     private static final Logger LOGGER = Logger.getLogger(VulnDbAnalysisTask.class);
-    private static final String TARGET_HOST = "https://vulndb.cyberriskanalytics.com/";
     private static final int PAGE_SIZE = 100;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
     private String apiConsumerKey;
@@ -61,6 +55,10 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
 
     public AnalyzerIdentity getAnalyzerIdentity() {
         return AnalyzerIdentity.VULNDB_ANALYZER;
+    }
+
+    public VulnDbAnalysisTask(String apiBaseUrl){
+        this.apiBaseUrl = apiBaseUrl;
     }
 
     /**
@@ -129,12 +127,12 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     public void analyze(final List<Component> components) {
         final VulnDBUtil api = new VulnDBUtil(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
         for (final Component component : components) {
-            if (isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
+            if(isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())){
                 applyAnalysisFromCache(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe(),component, AnalyzerIdentity.VULNDB_ANALYZER, vulnerabilityAnalysisLevel);
-            }else
-            {
+            } else if (!component.isInternal() && isCapable(component)
+                    && !isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
             if (!component.isInternal() && isCapable(component)
-                    && !isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())) {
+                    && !isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
                 int page = 1;
                 boolean more = true;
                 while (more) {
@@ -167,7 +165,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(vulnerableComponent, vulnerability);
             }
-            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, vulnerableComponent.getCpe(), vulnerableComponent.getCacheResult());
+            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, apiBaseUrl, vulnerableComponent.getCpe(), vulnerableComponent.getCacheResult());
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }

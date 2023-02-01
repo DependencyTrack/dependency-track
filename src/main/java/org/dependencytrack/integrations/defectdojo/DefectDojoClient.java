@@ -41,6 +41,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -87,8 +88,7 @@ public class DefectDojoClient {
                 uploader.handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException ex) {
-            LOGGER.error("Error while sending request from upload DT findings defectDojo Client" + ex.getMessage());
-            LOGGER.error("Error while sending request from upload DT findings defectDojo Client" + ex.getStackTrace());
+            LOGGER.error("Error while sending request from upload DT findings defectDojo Client" + ex.getMessage()+" Stack trace: "+ Arrays.toString(ex.getStackTrace()));
         }
     }
 

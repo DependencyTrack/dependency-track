@@ -92,10 +92,10 @@
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
-        <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
         <lib.woodstox.version>6.5.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
+        <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -225,40 +225,37 @@
             <artifactId>pebble</artifactId>
             <version>${lib.pebble.version}</version>
         </dependency>
-        <!-- VulnDB data mirroring and parsing -->
-        <dependency>
-            <groupId>us.springett</groupId>
-            <artifactId>vulndb-data-mirror</artifactId>
-            <version>${lib.vulndb-data-mirror.version}</version>
-            <!-- Exclude transitive version so Dependency-Track can manage independently -->
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.openunirest</groupId>
-                    <artifactId>open-unirest-java</artifactId>
-                </exclusion>
 
-                <exclusion>
-                    <groupId>com.google.code.gson</groupId>
-                    <artifactId>gson</artifactId>
-                    </exclusion>
-            </exclusions>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
         </dependency>
+
+        <dependency>
+            <groupId>oauth.signpost</groupId>
+            <artifactId>signpost-core</artifactId>
+            <version>${lib.signpost-core.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>4.5.14</version>
+        </dependency>
+
+
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
             <version>${lib.woodstox.version}</version>
         </dependency>
-        <!-- Package version parsing -->
+
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
             <version>3.8.7</version>
-        </dependency>
-        <!-- adding this dependency to resolve snyk issue-->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.8.9</version>
         </dependency>
         <!-- Bundle JDBC drivers -->
         <dependency>

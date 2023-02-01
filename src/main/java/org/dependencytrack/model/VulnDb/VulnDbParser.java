@@ -1,121 +1,64 @@
-package org.dependencytrack.util;
+package org.dependencytrack.model.VulnDb;
 
-import oauth.signpost.OAuthConsumer;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import oauth.signpost.basic.DefaultOAuthConsumer;
-import oauth.signpost.exception.OAuthException;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.util.EntityUtils;
-import org.dependencytrack.common.HttpClientPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.dependencytrack.model.VulnDb.Cpe;
-import org.dependencytrack.model.VulnDb.Product;
-import org.dependencytrack.model.VulnDb.Results;
-import org.dependencytrack.model.VulnDb.Vendor;
-import org.dependencytrack.model.VulnDb.Version;
-import org.dependencytrack.model.VulnDb.ApiObject;
-import org.dependencytrack.model.VulnDb.Vulnerability;
-import org.dependencytrack.model.VulnDb.Classification;
-import org.dependencytrack.model.VulnDb.Author;
-import org.dependencytrack.model.VulnDb.CvssV2Metric;
-import org.dependencytrack.model.VulnDb.CvssV3Metric;
-import org.dependencytrack.model.VulnDb.NvdAdditionalInfo;
-import org.dependencytrack.model.VulnDb.ExternalText;
-import org.dependencytrack.model.VulnDb.ExternalReference;
-
+import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.dependencytrack.model.VulnDb.ApiObject;
+import org.dependencytrack.model.VulnDb.Author;
+import org.dependencytrack.model.VulnDb.Cpe;
+import org.dependencytrack.model.VulnDb.Classification;
+import org.dependencytrack.model.VulnDb.CvssV2Metric;
+import org.dependencytrack.model.VulnDb.CvssV3Metric;
+import org.dependencytrack.model.VulnDb.ExternalReference;
+import org.dependencytrack.model.VulnDb.ExternalText;
+import org.dependencytrack.model.VulnDb.NvdAdditionalInfo;
+import org.dependencytrack.model.VulnDb.Product;
+import org.dependencytrack.model.VulnDb.Results;
+import org.dependencytrack.model.VulnDb.Status;
+import org.dependencytrack.model.VulnDb.Vendor;
+import org.dependencytrack.model.VulnDb.Version;
+import org.dependencytrack.model.VulnDb.Vulnerability;
 
-public class VulnDBUtil {
+public class VulnDbParser {
+    private static final Logger LOGGER = LoggerFactory.getLogger(VulnDbParser.class);
 
-    private final String consumerKey;
-    private final String consumerSecret;
-
-    private final String apiBaseUrl;
-
-
-    public VulnDBUtil(String consumerKey, String consumerSecret, String apiBaseUrl) {
-        this.consumerKey = consumerKey;
-        this.consumerSecret = consumerSecret;
-        this.apiBaseUrl = apiBaseUrl;
+    public VulnDbParser() {
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VulnDBUtil.class);
-
-    public Results getVulnerabilitiesByCpe(String cpe, int size, int page) {
-        String encodedCpe = cpe;
-
-        try {
-            encodedCpe = URLEncoder.encode(cpe, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException var6) {
-            LOGGER.error("An error occurred while URL encoding a CPE", var6);
-        }
-
-        return this.getResults(apiBaseUrl+"/api/v1/vulnerabilities/find_by_cpe?&cpe=" + encodedCpe, Vulnerability.class, size, page);
+    public Status parseStatus(JSONObject root) {
+        LOGGER.debug("Parsing JSON node");
+        Status status = new Status();
+        status.setOrganizationName(root.optString("organization_name"));
+        status.setUserNameRequesting(root.optString("user_name_requesting"));
+        status.setUserEmailRequesting(root.optString("user_email_address_requesting"));
+        status.setSubscriptionEndDate(root.optString("subscription_end_date"));
+        status.setApiCallsAllowedPerMonth(root.optString("number_of_api_calls_allowed_per_month"));
+        status.setApiCallsMadeThisMonth(root.optString("number_of_api_calls_made_this_month"));
+        status.setVulnDbStatistics(root.optString("vulndb_statistics"));
+        status.setRawStatus(root.toString());
+        return status;
     }
 
-    private Results getResults(String url, Class clazz, int size, int page) {
-        String modifiedUrl = url.contains("?") ? url + "&" : url + "?";
-        CloseableHttpResponse response = this.makeRequest(modifiedUrl + "size=" + size + "&page=" + page);
-        Results results;
-        try{
-        if (response != null) {
-            if (response.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_OK) {
-                String responseString = EntityUtils.toString(response.getEntity());
-                JSONObject jsonObject = new JSONObject(responseString);
-                results = parse(jsonObject, clazz);
-                return results;
-            } else {
-                results = new Results();
-                results.setErrorCondition("An unexpected response was returned from VulnDB. Request unsuccessful: " + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
-                this.logHttpResponseError(response);
-                return results;
-            }
-        } else {
-            results = new Results();
-            results.setErrorCondition("No response was returned from VulnDB. No further information is available.");
-            return results;
-        }
-    }catch (IOException ex){
-            LOGGER.error("An error occurred making request: " + url);
-            return null;
-        }
-    }
-
-    private CloseableHttpResponse makeRequest(String url) {
-        try {
-            OAuthConsumer consumer = new DefaultOAuthConsumer(this.consumerKey, this.consumerSecret);
-            String signed = consumer.sign(url);
-            HttpGet request = new HttpGet(signed);
-            request.addHeader("X-User-Agent", "VulnDB Data Mirror (https://github.com/stevespringett/vulndb-data-mirror)");
-            return HttpClientPool.getClient().execute(request);
-        } catch (IOException | OAuthException var4) {
-            LOGGER.error("An error occurred making request: " + url, var4);
-            return null;
-        }
-    }
-
-    private void logHttpResponseError(CloseableHttpResponse response) {
-        LOGGER.error("Response was not successful: " + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
-        System.err.println("\n" + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
-    }
-
-    public <T> Results<T> parse(JSONObject jsonResponse, Class<? extends ApiObject> apiObject) {
-        LOGGER.debug("Parsing JSON response");
+    public <T> Results<T> parse(Object jsonNode, Class<? extends ApiObject> apiObject) {
+        LOGGER.debug("Parsing JSON node");
         Results<T> results = new Results();
-        results.setPage(jsonResponse.getInt("current_page"));
-        results.setTotal(jsonResponse.getInt("total_entries"));
-        results.setRawResults(jsonResponse.toString());
-        JSONArray rso = jsonResponse.getJSONArray("results");
+        JSONObject root;
+            root = (JSONObject) jsonNode;
+
+        results.setPage(root.getInt("current_page"));
+        results.setTotal(root.getInt("total_entries"));
+        results.setRawResults(jsonNode.toString());
+        JSONArray rso = root.getJSONArray("results");
         if (Product.class == apiObject) {
             results.setResults(this.parseProducts(rso));
         } else if (Vendor.class == apiObject) {
@@ -127,6 +70,53 @@ public class VulnDBUtil {
         }
 
         return results;
+    }
+
+    public <T> Results<T> parse(String jsonData, Class<? extends ApiObject> apiObject) {
+        Object result = null;
+        try{
+            result = new JSONObject(jsonData);
+        }catch (JSONException ex){
+            result = new JSONArray(jsonData);
+        }
+        if(result instanceof JSONObject){
+            return this.parse((JSONObject)result, apiObject);
+        } else{
+            return this.parse((JSONArray) result, apiObject);
+        }
+    }
+
+    public <T> Results<T> parse(File file, Class<? extends ApiObject> apiObject) throws IOException {
+        String jsonData = new String(Files.readAllBytes(Paths.get(file.toURI())));
+        Object result = null;
+        try{
+            result = new JSONObject(jsonData);
+        }catch (JSONException ex){
+            result = new JSONArray(jsonData);
+        }
+        if(result instanceof JSONObject){
+            return this.parse((JSONObject)result, apiObject);
+        } else{
+            return this.parse((JSONArray) result, apiObject);
+        }
+
+    }
+
+    private List<Cpe> parseCpes(JSONArray rso) {
+        List<Cpe> cpes = null;
+        if (rso != null) {
+            cpes = new ArrayList();
+
+            for(int i = 0; i < rso.length(); ++i) {
+                JSONObject object = rso.getJSONObject(i);
+                Cpe cpe = new Cpe();
+                cpe.setCpe(StringUtils.trimToNull(object.optString("cpe", (String)null)));
+                cpe.setType(StringUtils.trimToNull(object.optString("type", (String)null)));
+                cpes.add(cpe);
+            }
+        }
+
+        return cpes;
     }
 
     private List<Product> parseProducts(JSONArray rso) {
@@ -195,23 +185,6 @@ public class VulnDBUtil {
         }
 
         return versions;
-    }
-
-    private List<Cpe> parseCpes(JSONArray rso) {
-        List<Cpe> cpes = null;
-        if (rso != null) {
-            cpes = new ArrayList();
-
-            for(int i = 0; i < rso.length(); ++i) {
-                JSONObject object = rso.getJSONObject(i);
-                Cpe cpe = new Cpe();
-                cpe.setCpe(StringUtils.trimToNull(object.optString("cpe", (String)null)));
-                cpe.setType(StringUtils.trimToNull(object.optString("type", (String)null)));
-                cpes.add(cpe);
-            }
-        }
-
-        return cpes;
     }
 
     private List<Vulnerability> parseVulnerabilities(JSONArray rso) {
@@ -353,3 +326,4 @@ public class VulnDBUtil {
         return vulnerabilities;
     }
 }
+

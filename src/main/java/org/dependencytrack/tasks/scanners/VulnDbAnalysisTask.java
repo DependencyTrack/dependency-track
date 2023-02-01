@@ -32,7 +32,7 @@ import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.VulnDBUtil;
-import us.springett.vulndbdatamirror.parser.model.Results;
+import org.dependencytrack.model.VulnDb.Results;
 
 import java.util.List;
 
@@ -154,7 +154,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
-            for (us.springett.vulndbdatamirror.parser.model.Vulnerability vulnDbVuln : (List<us.springett.vulndbdatamirror.parser.model.Vulnerability>) results.getResults()) {
+            for (org.dependencytrack.model.VulnDb.Vulnerability vulnDbVuln : (List<org.dependencytrack.model.VulnDb.Vulnerability>) results.getResults()) {
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.getId()));
                 if (vulnerability == null) {
                     vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);

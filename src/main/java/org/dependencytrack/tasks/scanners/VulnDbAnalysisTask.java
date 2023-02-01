@@ -116,7 +116,10 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     public void analyze(final List<Component> components) {
         final VulnDbApi api = new VulnDbApi(this.apiConsumerKey, this.apiConsumerSecret, UnirestFactory.getUnirestInstance());
         for (final Component component: components) {
-            if (!component.isInternal() && isCapable(component)
+            if(isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())){
+                applyAnalysisFromCache(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe(),component, AnalyzerIdentity.VULNDB_ANALYZER, vulnerabilityAnalysisLevel);
+            }
+            else if (!component.isInternal() && isCapable(component)
                     && !isCacheCurrent(Vulnerability.Source.VULNDB, TARGET_HOST, component.getCpe())) {
                 int page = 1;
                 boolean more = true;
@@ -149,7 +152,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 qm.addVulnerability(vulnerability, vulnerableComponent, this.getAnalyzerIdentity());
                 addVulnerabilityToCache(vulnerableComponent, vulnerability);
             }
-            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, vulnerableComponent.getCpe(), component.getCacheResult());
+            updateAnalysisCacheStats(qm, Vulnerability.Source.VULNDB, TARGET_HOST, vulnerableComponent.getCpe(), vulnerableComponent.getCacheResult());
             return results.getPage() * PAGE_SIZE < results.getTotal();
         }
     }

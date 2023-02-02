@@ -88,19 +88,18 @@ public class VulnDbParser {
     }
 
     public <T> Results<T> parse(File file, Class<? extends ApiObject> apiObject) throws IOException {
-        String jsonData = new String(Files.readAllBytes(Paths.get(file.toURI())), Charset.defaultCharset());
-        Object result = null;
-        try{
-            result = new JSONObject(jsonData);
-        }catch (JSONException ex){
-            result = new JSONArray(jsonData);
-        }
-        if(result instanceof JSONObject){
-            return this.parse((JSONObject)result, apiObject);
-        } else{
-            return this.parse((JSONArray) result, apiObject);
-        }
-
+            String jsonData = Files.readString(Paths.get(file.toURI()), Charset.defaultCharset());
+            Object result = null;
+            try{
+                result = new JSONObject(jsonData);
+            }catch (JSONException ex){
+                result = new JSONArray(jsonData);
+            }
+            if(result instanceof JSONObject){
+                return this.parse((JSONObject)result, apiObject);
+            } else{
+                return this.parse((JSONArray) result, apiObject);
+            }
     }
 
     private List<Cpe> parseCpes(JSONArray rso) {

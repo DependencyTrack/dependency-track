@@ -2,6 +2,8 @@ package org.dependencytrack.util;
 
 import oauth.signpost.OAuthConsumer;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.utils.URIBuilder;
+import org.dependencytrack.tasks.scanners.BaseComponentAnalyzerTask;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import oauth.signpost.basic.DefaultOAuthConsumer;
@@ -31,9 +33,11 @@ import org.dependencytrack.model.VulnDb.ExternalReference;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class VulnDBUtil {
@@ -96,11 +100,12 @@ public class VulnDBUtil {
         try {
             OAuthConsumer consumer = new DefaultOAuthConsumer(this.consumerKey, this.consumerSecret);
             String signed = consumer.sign(url);
-            HttpGet request = new HttpGet(signed);
+            URIBuilder uriBuilder = new URIBuilder(signed);
+            HttpGet request = new HttpGet(uriBuilder.build().toString());
             request.addHeader("X-User-Agent", "VulnDB Data Mirror (https://github.com/stevespringett/vulndb-data-mirror)");
             return HttpClientPool.getClient().execute(request);
-        } catch (IOException | OAuthException var4) {
-            LOGGER.error("An error occurred making request: " + url, var4);
+        } catch (IOException | OAuthException | URISyntaxException var4) {
+            LOGGER.error("An error occurred making request: " + url, var4.getMessage()+ "stack trace: "+ Arrays.toString(var4.getStackTrace()));
             return null;
         }
     }

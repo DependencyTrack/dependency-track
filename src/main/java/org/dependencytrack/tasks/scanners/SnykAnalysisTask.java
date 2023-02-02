@@ -38,6 +38,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -63,6 +64,7 @@ import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.RoundRobinAccessor;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -298,11 +300,12 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     private void analyzeComponent(final Component component) {
         final String encodedPurl = URLEncoder.encode(component.getPurl().getCoordinates(), StandardCharsets.UTF_8);
         final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s".formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
-        final HttpUriRequest request = new HttpGet(requestUrl);
+        try {
+        URIBuilder uriBuilder =  new URIBuilder(requestUrl);
+        final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
         request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
         request.setHeader(HttpHeaders.AUTHORIZATION, "token " + apiTokenSupplier.get());
         request.setHeader(HttpHeaders.ACCEPT, "application/vnd.api+json");
-        try {
             final CloseableHttpResponse response = RETRY.executeSupplier(() -> {
                 try {
                     return HttpClientPool.getClient().execute(request);
@@ -337,7 +340,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
             } else {
                 handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
-        }catch (IOException ex){
+        }catch (IOException | URISyntaxException ex){
             handleRequestException(LOGGER, ex);
         }
     }

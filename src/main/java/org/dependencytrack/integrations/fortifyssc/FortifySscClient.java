@@ -19,6 +19,7 @@
 package org.dependencytrack.integrations.fortifyssc;
 
 import alpine.common.logging.Logger;
+import org.apache.http.entity.ContentType;
 import org.json.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -84,7 +85,7 @@ public class FortifySscClient {
             HttpPost request = new HttpPost(builder.build());
             request.addHeader("accept", "application/xml");
             HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
-                    .addBinaryBody("files[]", findingsJson, org.apache.http.entity.ContentType.APPLICATION_JSON, "findings.json")
+                    .addBinaryBody("files[]", findingsJson, ContentType.APPLICATION_JSON, "findings.json")
                     .build();
             request.setEntity(data);
             CloseableHttpResponse response = HttpClientPool.getClient().execute(request);

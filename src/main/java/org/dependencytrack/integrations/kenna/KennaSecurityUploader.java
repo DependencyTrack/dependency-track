@@ -27,6 +27,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.message.BasicNameValuePair;
@@ -103,7 +104,7 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
             nameValuePairList.add(new BasicNameValuePair("run", "true"));
             request.setEntity(new UrlEncodedFormEntity(nameValuePairList, StandardCharsets.UTF_8));
             HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
-                    .addBinaryBody("file", payload, org.apache.http.entity.ContentType.APPLICATION_JSON, "findings.json")
+                    .addBinaryBody("file", payload, ContentType.APPLICATION_JSON, "findings.json")
                     .build();
             request.setEntity(data);
             final CloseableHttpResponse response = HttpClientPool.getClient().execute(request);

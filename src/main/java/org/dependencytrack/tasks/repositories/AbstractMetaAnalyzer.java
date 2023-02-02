@@ -25,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
+import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationConstants;
@@ -33,6 +35,7 @@ import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.HttpUtil;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  * Base abstract class that all IMetaAnalyzer implementations should likely extend.
@@ -47,7 +50,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     protected String username;
 
     protected String password;
-
+    private static final Logger LOGGER = Logger.getLogger(AbstractMetaAnalyzer.class);
     /**
      * {@inheritDoc}
      */
@@ -92,12 +95,18 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     }
 
     protected CloseableHttpResponse processHttpRequest(String url) throws IOException {
-        final HttpUriRequest request = new HttpGet(url);
-        request.addHeader("accept", "application/json");
-        if (username != null || password != null) {
-            request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
+        try {
+            URIBuilder uriBuilder = new URIBuilder(url);
+            final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
+            request.addHeader("accept", "application/json");
+            if (username != null || password != null) {
+                request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
+            }
+            return HttpClientPool.getClient().execute(request);
+        }catch (URISyntaxException ex){
+            handleRequestException(LOGGER, ex);
+            return null;
         }
-        return HttpClientPool.getClient().execute(request);
     }
 
 }

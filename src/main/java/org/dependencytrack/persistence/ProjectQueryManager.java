@@ -28,6 +28,7 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
+import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -55,6 +56,9 @@ import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.security.Principal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -68,21 +72,20 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     private static final Logger LOGGER = Logger.getLogger(ProjectQueryManager.class);
 
     public static final String QUERY_ACL_1 = """
-            SELECT *
-            FROM (WITH RECURSIVE "DESCENDANTS" ("ID", "NAME") AS
-                (SELECT "PROJECT"."ID",
-                "PROJECT"."NAME"
-                 FROM "PROJECT"
+            "DESCENDANTS" ("ID", "NAME") AS
+                            (SELECT "PROJECT"."ID",
+                            "PROJECT"."NAME"
+                             FROM "PROJECT"
             """;
 
     public static final String QUERY_ACL_2 = """
             UNION ALL
-                SELECT "CHILD"."ID",
-                "CHILD"."NAME"
-                FROM "PROJECT" "CHILD"
-                     JOIN "DESCENDANTS"
-                         ON "DESCENDANTS"."ID" = "CHILD"."PARENT_PROJECT_ID")
-            SELECT "DESCENDANTS"."ID", "DESCENDANTS"."NAME" FROM "DESCENDANTS") alias
+            SELECT "CHILD"."ID",
+                            "CHILD"."NAME"
+                            FROM "PROJECT" "CHILD"
+                                 JOIN "DESCENDANTS"
+                                     ON "DESCENDANTS"."ID" = "CHILD"."PARENT_PROJECT_ID")
+                        SELECT "DESCENDANTS"."ID", "DESCENDANTS"."NAME" FROM "DESCENDANTS"
             """;
 
     /**
@@ -887,30 +890,71 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             // Query the descendants of the projects that the teams have access to
             if (result != null && !result.isEmpty()) {
                 final StringBuilder stringBuilderDescendants = new StringBuilder();
-                final Map<String, Object> descendantsParams = new HashMap<>();
+                final List<Long> parameters = new ArrayList<>();
                 stringBuilderDescendants.append("WHERE");
                 int i = 0, teamSize = result.size();
                 for (Project project : result) {
-                    stringBuilderDescendants.append(" ID = :id").append(i).append(" ");
-                    descendantsParams.put("id" + i, project.getId());
+                    stringBuilderDescendants.append(" \"ID\" = ?").append(" ");
+                    parameters.add(project.getId());
                     if (i < teamSize-1) {
                         stringBuilderDescendants.append(" OR");
                     }
                     i++;
                 }
                 stringBuilderDescendants.append("\n");
-                final Query<Object[]> queryDescendants = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
-                queryDescendants.setNamedParameters(descendantsParams);
-                final List<Object[]> list = queryDescendants.executeList();
+                final List<Long> results = new ArrayList<>();
+
+                // Querying the descendants of projects requires a CTE (Common Table Expression), which needs to be at the top-level of the query for Microsoft SQL Server.
+                // Because of JDO, queries are only allowed to start with "SELECT", so the "WITH" clause for the CTE in MSSQL cannot be at top level.
+                // Activating the JDO property that queries don't have to start with "SELECT" does not help in this case, because JDO queries that do not start with "SELECT" only return "true", so no data can be fetched this way.
+                // To circumvent this problem, the query is executed via the direct connection to the database and not via JDO.
+                Connection connection = null;
+                PreparedStatement preparedStatement = null;
+                ResultSet rs = null;
+                try {
+                    connection = (Connection) pm.getDataStoreConnection();
+                    if (DbUtil.isMssql() || DbUtil.isOracle()) { // Microsoft SQL Server and Oracle DB already imply the "RECURSIVE" keyword in the "WITH" clause, therefore it is not needed in the query
+                        preparedStatement = connection.prepareStatement("WITH " + QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
+                    } else { // Other Databases need the "RECURSIVE" keyword in the "WITH" clause to correctly execute the query
+                        preparedStatement = connection.prepareStatement("WITH RECURSIVE " + QUERY_ACL_1 + stringBuilderDescendants + QUERY_ACL_2);
+                    }
+                    int j = 1;
+                    for (Long id : parameters) {
+                        preparedStatement.setLong(j, id);
+                        j++;
+                    }
+                    preparedStatement.execute();
+                    rs = preparedStatement.getResultSet();
+                    while (rs.next()) {
+                        results.add(rs.getLong(1));
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage());
+                    if (inputFilter != null && !inputFilter.isEmpty()) {
+                        query.setFilter(inputFilter + " && :false");
+                    } else {
+                        query.setFilter(":false");
+                    }
+                    params.put("false", false);
+                    return;
+                } finally {
+                    DbUtil.close(rs);
+                    DbUtil.close(preparedStatement);
+                    DbUtil.close(connection);
+                }
+
                 // Add queried projects and descendants to the input filter of the query
-                if (list != null && !list.isEmpty()) {
+                if (results != null && !results.isEmpty()) {
                     final StringBuilder stringBuilderInputFilter = new StringBuilder();
-                    for (int j = 0, resultSize = list.size(); j < resultSize; j++) {
+                    int j = 0;
+                    int resultSize = results.size();
+                    for (Long id : results) {
                         stringBuilderInputFilter.append(" id == :id").append(j);
-                        params.put("id" + j, list.get(j)[0]);
+                        params.put("id" + j, id);
                         if (j < resultSize-1) {
                             stringBuilderInputFilter.append(" || ");
                         }
+                        j++;
                     }
                     if (inputFilter != null && !inputFilter.isEmpty()) {
                         query.setFilter(inputFilter + " && (" + stringBuilderInputFilter.toString() + ")");

@@ -116,6 +116,8 @@ public class BomResource extends AlpineResource {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             } else if (variant.equalsIgnoreCase("withVulnerabilities")) {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES, qm);
+            } else if (variant.equalsIgnoreCase("license")) {
+                exporter = new CycloneDXExporter(CycloneDXExporter.Variant.LICENSE_ATTESTATION, qm);
             } else if (variant.equalsIgnoreCase("vdr")) {
                 exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VDR, qm);
             } else {
@@ -123,6 +125,10 @@ public class BomResource extends AlpineResource {
             }
 
             try {
+                if (variant.equalsIgnoreCase("license")) {
+                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.TEXT), MediaType.APPLICATION_OCTET_STREAM)
+                            .header("content-disposition","attachment; filename=\"" + project.getUuid() + "-license-attestation.txt\"").build();
+                }
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
                     if (download) {
                         return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON), MediaType.APPLICATION_OCTET_STREAM)

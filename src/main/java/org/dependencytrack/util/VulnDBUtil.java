@@ -1,9 +1,11 @@
 package org.dependencytrack.util;
 
 import oauth.signpost.OAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
-import org.dependencytrack.tasks.scanners.BaseComponentAnalyzerTask;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import oauth.signpost.basic.DefaultOAuthConsumer;
@@ -15,20 +17,20 @@ import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.dependencytrack.model.VulnDb.Cpe;
-import org.dependencytrack.model.VulnDb.Product;
-import org.dependencytrack.model.VulnDb.Results;
-import org.dependencytrack.model.VulnDb.Vendor;
-import org.dependencytrack.model.VulnDb.Version;
-import org.dependencytrack.model.VulnDb.ApiObject;
-import org.dependencytrack.model.VulnDb.Vulnerability;
-import org.dependencytrack.model.VulnDb.Classification;
-import org.dependencytrack.model.VulnDb.Author;
-import org.dependencytrack.model.VulnDb.CvssV2Metric;
-import org.dependencytrack.model.VulnDb.CvssV3Metric;
-import org.dependencytrack.model.VulnDb.NvdAdditionalInfo;
-import org.dependencytrack.model.VulnDb.ExternalText;
-import org.dependencytrack.model.VulnDb.ExternalReference;
+import org.dependencytrack.model.vuln_vb.Cpe;
+import org.dependencytrack.model.vuln_vb.Product;
+import org.dependencytrack.model.vuln_vb.Results;
+import org.dependencytrack.model.vuln_vb.Vendor;
+import org.dependencytrack.model.vuln_vb.Version;
+import org.dependencytrack.model.vuln_vb.ApiObject;
+import org.dependencytrack.model.vuln_vb.Vulnerability;
+import org.dependencytrack.model.vuln_vb.Classification;
+import org.dependencytrack.model.vuln_vb.Author;
+import org.dependencytrack.model.vuln_vb.CvssV2Metric;
+import org.dependencytrack.model.vuln_vb.CvssV3Metric;
+import org.dependencytrack.model.vuln_vb.NvdAdditionalInfo;
+import org.dependencytrack.model.vuln_vb.ExternalText;
+import org.dependencytrack.model.vuln_vb.ExternalReference;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +39,6 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class VulnDBUtil {
@@ -56,19 +57,20 @@ public class VulnDBUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VulnDBUtil.class);
 
-    public Results getVulnerabilitiesByCpe(String cpe, int size, int page) {
+    public Results getVulnerabilitiesByCpe(String cpe, int size, int page) throws IOException, OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException, OAuthCommunicationException {
         String encodedCpe = cpe;
 
         try {
             encodedCpe = URLEncoder.encode(cpe, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException var6) {
-            LOGGER.error("An error occurred while URL encoding a CPE", var6);
+            LOGGER.warn("An error occurred while URL encoding a CPE", var6);
+            throw new UnsupportedEncodingException();
         }
 
         return this.getResults(apiBaseUrl+"/api/v1/vulnerabilities/find_by_cpe?&cpe=" + encodedCpe, Vulnerability.class, size, page);
     }
 
-    private Results getResults(String url, Class clazz, int size, int page) {
+    private Results getResults(String url, Class clazz, int size, int page) throws IOException, OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException, OAuthCommunicationException {
         String modifiedUrl = url.contains("?") ? url + "&" : url + "?";
         CloseableHttpResponse response = this.makeRequest(modifiedUrl + "size=" + size + "&page=" + page);
         Results results;
@@ -91,12 +93,11 @@ public class VulnDBUtil {
             return results;
         }
     }catch (IOException ex){
-            LOGGER.error("An error occurred making request: " + url);
-            return null;
+            throw ex;
         }
     }
 
-    private CloseableHttpResponse makeRequest(String url) {
+    private CloseableHttpResponse makeRequest(String url) throws OAuthMessageSignerException, OAuthExpectationFailedException, IOException, URISyntaxException, OAuthCommunicationException {
         try {
             OAuthConsumer consumer = new DefaultOAuthConsumer(this.consumerKey, this.consumerSecret);
             String signed = consumer.sign(url);
@@ -105,8 +106,7 @@ public class VulnDBUtil {
             request.addHeader("X-User-Agent", "VulnDB Data Mirror (https://github.com/stevespringett/vulndb-data-mirror)");
             return HttpClientPool.getClient().execute(request);
         } catch (IOException | OAuthException | URISyntaxException var4) {
-            LOGGER.error("An error occurred making request: " + url, var4.getMessage()+ "stack trace: "+ Arrays.toString(var4.getStackTrace()));
-            return null;
+            throw var4;
         }
     }
 

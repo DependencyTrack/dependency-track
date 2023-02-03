@@ -1,4 +1,4 @@
-package org.dependencytrack.model.VulnDb;
+package org.dependencytrack.model.vuln_vb;
 
 import us.springett.cvss.CvssV2;
 

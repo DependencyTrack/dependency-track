@@ -45,7 +45,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
 
 public class KennaSecurityUploader extends AbstractIntegrationPoint implements PortfolioFindingUploader {
 

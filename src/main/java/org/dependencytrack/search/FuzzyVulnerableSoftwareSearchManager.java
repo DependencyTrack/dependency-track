@@ -27,7 +27,16 @@ import us.springett.parsers.cpe.exceptions.CpeValidationException;
 import us.springett.parsers.cpe.values.Part;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Set;
+import java.util.Objects;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 
 public class FuzzyVulnerableSoftwareSearchManager {
 

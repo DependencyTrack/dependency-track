@@ -26,7 +26,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
-import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.notification.NotificationConstants;

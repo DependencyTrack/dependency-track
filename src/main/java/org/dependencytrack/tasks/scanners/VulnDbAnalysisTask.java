@@ -23,17 +23,22 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
 import org.dependencytrack.event.VulnDbAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.model.vuln_vb.Results;
 import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.VulnDBUtil;
-import org.dependencytrack.model.VulnDb.Results;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -136,13 +141,19 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
                 int page = 1;
                 boolean more = true;
                 while (more) {
+                    try{
                     final Results results = api.getVulnerabilitiesByCpe(component.getCpe(), PAGE_SIZE, page);
                     if (results.isSuccessful()) {
                         more = processResults(results, component);
                         page++;
                     } else {
-                        LOGGER.error(results.getErrorCondition());
+                        LOGGER.warn(results.getErrorCondition());
+                        handleRequestException(LOGGER, new Exception(results.getErrorCondition()));
                         return;
+                    }
+                }catch (IOException | OAuthMessageSignerException | OAuthExpectationFailedException |
+                        URISyntaxException | OAuthCommunicationException ex){
+                        handleRequestException(LOGGER, ex);
                     }
                 }
             }
@@ -154,7 +165,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
-            for (org.dependencytrack.model.VulnDb.Vulnerability vulnDbVuln : (List<org.dependencytrack.model.VulnDb.Vulnerability>) results.getResults()) {
+            for (org.dependencytrack.model.vuln_vb.Vulnerability vulnDbVuln : (List<org.dependencytrack.model.vuln_vb.Vulnerability>) results.getResults()) {
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.getId()));
                 if (vulnerability == null) {
                     vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);

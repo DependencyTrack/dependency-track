@@ -1,8 +1,5 @@
-package org.dependencytrack.model.VulnDb;
+package org.dependencytrack.model.vuln_vb;
 
-
-import org.dependencytrack.model.VulnDb.ApiObject;
-import org.dependencytrack.model.VulnDb.Version;
 
 import java.util.ArrayList;
 import java.util.List;

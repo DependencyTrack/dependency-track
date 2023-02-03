@@ -50,7 +50,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.ConfigPropertyConstants.*;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_OAUTH1_CONSUMER_KEY;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET;
+
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 

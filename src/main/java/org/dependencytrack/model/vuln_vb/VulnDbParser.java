@@ -1,4 +1,4 @@
-package org.dependencytrack.model.VulnDb;
+package org.dependencytrack.model.vuln_vb;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,21 +14,6 @@ import org.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.dependencytrack.model.VulnDb.ApiObject;
-import org.dependencytrack.model.VulnDb.Author;
-import org.dependencytrack.model.VulnDb.Cpe;
-import org.dependencytrack.model.VulnDb.Classification;
-import org.dependencytrack.model.VulnDb.CvssV2Metric;
-import org.dependencytrack.model.VulnDb.CvssV3Metric;
-import org.dependencytrack.model.VulnDb.ExternalReference;
-import org.dependencytrack.model.VulnDb.ExternalText;
-import org.dependencytrack.model.VulnDb.NvdAdditionalInfo;
-import org.dependencytrack.model.VulnDb.Product;
-import org.dependencytrack.model.VulnDb.Results;
-import org.dependencytrack.model.VulnDb.Status;
-import org.dependencytrack.model.VulnDb.Vendor;
-import org.dependencytrack.model.VulnDb.Version;
-import org.dependencytrack.model.VulnDb.Vulnerability;
 
 public class VulnDbParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(VulnDbParser.class);

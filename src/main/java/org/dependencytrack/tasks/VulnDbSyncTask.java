@@ -37,11 +37,11 @@ import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
-import org.dependencytrack.model.vuln_vb.VulnDbParser;
-import org.dependencytrack.model.vuln_vb.Product;
-import org.dependencytrack.model.vuln_vb.Results;
-import org.dependencytrack.model.vuln_vb.Vendor;
-import org.dependencytrack.model.vuln_vb.Version;
+import org.dependencytrack.model.vulndb.VulnDbParser;
+import org.dependencytrack.model.vulndb.Product;
+import org.dependencytrack.model.vulndb.Results;
+import org.dependencytrack.model.vulndb.Vendor;
+import org.dependencytrack.model.vulndb.Version;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +84,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                     LOGGER.info("Parsing: " + file.getName());
                     final VulnDbParser parser = new VulnDbParser();
                     try {
-                        final Results results = parser.parse(file, org.dependencytrack.model.vuln_vb.Vulnerability.class);
+                        final Results results = parser.parse(file, org.dependencytrack.model.vulndb.Vulnerability.class);
                         updateDatasource(results);
                     } catch (IOException ex) {
                         LOGGER.error("An error occurred while parsing VulnDB payload: " + file.getName(), ex);
@@ -121,8 +121,8 @@ public class VulnDbSyncTask implements LoggableSubscriber {
         LOGGER.info("Updating datasource with VulnDB vulnerabilities");
         try (QueryManager qm = new QueryManager()) {
             for (final Object o: results.getResults()) {
-                if (o instanceof org.dependencytrack.model.vuln_vb.Vulnerability) {
-                    final org.dependencytrack.model.vuln_vb.Vulnerability vulnDbVuln = (org.dependencytrack.model.vuln_vb.Vulnerability)o;
+                if (o instanceof org.dependencytrack.model.vulndb.Vulnerability) {
+                    final org.dependencytrack.model.vulndb.Vulnerability vulnDbVuln = (org.dependencytrack.model.vulndb.Vulnerability)o;
                     final org.dependencytrack.model.Vulnerability vulnerability = ModelConverter.convert(qm, vulnDbVuln);
                     final Vulnerability synchronizeVulnerability = qm.synchronizeVulnerability(vulnerability, false);
                     final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(synchronizeVulnerability.getSource(), synchronizeVulnerability.getVulnId()));
@@ -137,7 +137,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
     }
 
     public static List<VulnerableSoftware> parseCpes(final QueryManager qm, final Vulnerability vulnerability,
-                                                     final org.dependencytrack.model.vuln_vb.Vulnerability vulnDbVuln) {
+                                                     final org.dependencytrack.model.vulndb.Vulnerability vulnDbVuln) {
         // cpe:2.3:a:belavier_commerce:abantecart:1.2.8:*:*:*:*:*:*:*
         final List<VulnerableSoftware> vsList = new ArrayList<>();
         if (vulnDbVuln.getVendors() != null) {
@@ -149,7 +149,7 @@ public class VulnDbSyncTask implements LoggableSubscriber {
                                 if (version != null) {
                                     if (version.isAffected()) {
                                         if (version.getCpes() != null) {
-                                            for (org.dependencytrack.model.vuln_vb.Cpe cpeObject : version.getCpes()) {
+                                            for (org.dependencytrack.model.vulndb.Cpe cpeObject : version.getCpes()) {
                                                 try {
                                                     final Cpe cpe = CpeParser.parse(cpeObject.getCpe(), true);
                                                     final VulnerableSoftware vs = generateVulnerableSoftware(qm, cpe, vulnerability);

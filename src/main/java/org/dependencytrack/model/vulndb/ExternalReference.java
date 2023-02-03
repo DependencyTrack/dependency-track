@@ -1,4 +1,4 @@
-package org.dependencytrack.model.vuln_vb;
+package org.dependencytrack.model.vulndb;
 
 public class ExternalReference {
     private String type;

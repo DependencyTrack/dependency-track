@@ -31,7 +31,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.dependencytrack.model.vuln_vb.Results;
+import org.dependencytrack.model.vulndb.Results;
 import org.dependencytrack.parser.vulndb.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
@@ -165,7 +165,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
-            for (org.dependencytrack.model.vuln_vb.Vulnerability vulnDbVuln : (List<org.dependencytrack.model.vuln_vb.Vulnerability>) results.getResults()) {
+            for (org.dependencytrack.model.vulndb.Vulnerability vulnDbVuln : (List<org.dependencytrack.model.vulndb.Vulnerability>) results.getResults()) {
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.getId()));
                 if (vulnerability == null) {
                     vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);

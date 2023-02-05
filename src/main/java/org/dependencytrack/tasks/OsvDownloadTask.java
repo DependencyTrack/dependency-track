@@ -14,11 +14,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
-import org.dependencytrack.model.Cwe;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityAlias;
-import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.model.*;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
@@ -31,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -138,7 +133,18 @@ public class OsvDownloadTask implements LoggableSubscriber {
             LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
             final Vulnerability vulnerability = mapAdvisoryToVulnerability(qm, advisory);
             final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
-            final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+            final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());;
+            final Vulnerability.Source vulnerabilitySource = extractSource(advisory.getId());
+            final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
+                case NVD -> ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
+                case GITHUB -> ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+                default -> VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+            };
+            final boolean vulnAuthoritativeSourceEnabled = Boolean.valueOf(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
+            Vulnerability synchronizedVulnerability = existingVulnerability;
+            if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
+               synchronizedVulnerability  = qm.synchronizeVulnerability(vulnerability, false);
+            }
 
             if (advisory.getAliases() != null) {
                 for (int i = 0; i < advisory.getAliases().size(); i++) {
@@ -148,17 +154,16 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     // OSV will use IDs of other vulnerability databases for its
                     // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
                     // that we don't falsely report GHSA IDs as stemming from OSV.
-                    final Vulnerability.Source advisorySource = extractSource(advisory.getId());
-                    switch (advisorySource) {
+                    switch (vulnerabilitySource) {
                         case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
                         case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
                         default -> vulnerabilityAlias.setOsvId(advisory.getId());
                     }
 
-                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != advisorySource) {
+                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != vulnerabilitySource) {
                         vulnerabilityAlias.setCveId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != advisorySource) {
+                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != vulnerabilitySource) {
                         vulnerabilityAlias.setGhsaId(alias);
                         qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
                     }
@@ -181,6 +186,12 @@ public class OsvDownloadTask implements LoggableSubscriber {
             qm.persist(synchronizedVulnerability);
         }
         Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+    }
+
+    private boolean shouldUpdateExistingVulnerability(Vulnerability existingVulnerability, Vulnerability.Source vulnerabilitySource, boolean vulnAuthoritativeSourceEnabled) {
+        return (Vulnerability.Source.OSV == vulnerabilitySource) // Non GHSA nor NVD
+                || (existingVulnerability == null) // Vuln is not replicated yet or declared by authoritative source with appropriate state
+                || (existingVulnerability != null && !vulnAuthoritativeSourceEnabled); // Vuln has been replicated but authoritative source is disabled
     }
 
     public Vulnerability mapAdvisoryToVulnerability(final QueryManager qm, final OsvAdvisory advisory) {

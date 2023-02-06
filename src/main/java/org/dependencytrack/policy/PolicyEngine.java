@@ -55,6 +55,7 @@ public class PolicyEngine {
         evaluators.add(new CpePolicyEvaluator());
         evaluators.add(new SwidTagIdPolicyEvaluator());
         evaluators.add(new VersionPolicyEvaluator());
+        evaluators.add(new ComponentAgePolicyEvaluator());
         evaluators.add(new ComponentHashPolicyEvaluator());
         evaluators.add(new CwePolicyEvaluator());
     }
@@ -130,6 +131,7 @@ public class PolicyEngine {
             case CWE:
             case SEVERITY:
                 return PolicyViolation.Type.SECURITY;
+            case AGE:
             case COORDINATES:
             case PACKAGE_URL:
             case CPE:

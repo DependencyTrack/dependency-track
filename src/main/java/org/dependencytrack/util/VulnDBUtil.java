@@ -1,3 +1,21 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) Steve Springett. All Rights Reserved.
+ */
 package org.dependencytrack.util;
 
 import oauth.signpost.OAuthConsumer;
@@ -41,6 +59,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ * Util class needed by VulnDBAnalysis Task to get vulnerabilities by the cpe provided. The result obtained from the api
+ * call are parsed and processed before being returned . Class brought over from the vulndb-data-mirror repo:
+ * <a href="https://github.com/stevespringett/vulndb-data-mirror">...</a> and refactored to use the apache http client
+ * instead of the Unirest client it was using in the source repo.
+ */
 public class VulnDBUtil {
 
     private final String consumerKey;
@@ -70,7 +94,9 @@ public class VulnDBUtil {
         return this.getResults(apiBaseUrl+"/api/v1/vulnerabilities/find_by_cpe?&cpe=" + encodedCpe, Vulnerability.class, size, page);
     }
 
-    private Results getResults(String url, Class clazz, int size, int page) throws IOException, OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException, OAuthCommunicationException {
+    private Results getResults(String url, Class clazz, int size, int page) throws IOException,
+            OAuthMessageSignerException, OAuthExpectationFailedException, URISyntaxException,
+            OAuthCommunicationException {
         String modifiedUrl = url.contains("?") ? url + "&" : url + "?";
         CloseableHttpResponse response = this.makeRequest(modifiedUrl + "size=" + size + "&page=" + page);
         Results results;

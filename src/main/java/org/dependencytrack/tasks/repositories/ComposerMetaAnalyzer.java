@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import com.github.packageurl.PackageURL;
 import org.json.JSONObject;
 import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.apache.maven.artifact.versioning.ComparableVersion;

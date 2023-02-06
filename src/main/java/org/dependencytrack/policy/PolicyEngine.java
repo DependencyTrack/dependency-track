@@ -29,6 +29,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -45,6 +46,14 @@ public class PolicyEngine {
     private static final Logger LOGGER = Logger.getLogger(PolicyEngine.class);
 
     private final List<PolicyEvaluator> evaluators = new ArrayList<>();
+
+    private final Comparator<PolicyCondition> policyConditionComparator = new Comparator<PolicyCondition>() {
+
+        @Override
+        public int compare(PolicyCondition pc1, PolicyCondition pc2) {
+            return Long.valueOf(pc1.getId()).compareTo(Long.valueOf(pc2.getId()));
+        }
+    };
 
     public PolicyEngine() {
         evaluators.add(new SeverityPolicyEvaluator());
@@ -84,8 +93,11 @@ public class PolicyEngine {
                 int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
-                    if (policyConditionViolations.addAll(evaluator.evaluate(policy, component))) {
-                        policyConditionsViolated++;
+                    final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
+                    if (!policyConditionViolationsFromEvaluator.isEmpty()) {
+                        policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
+                        policyConditionsViolated += policyConditionViolationsFromEvaluator.stream()
+                                .map(pcv -> pcv.getPolicyCondition()).sorted(policyConditionComparator).distinct().count();
                     }
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {

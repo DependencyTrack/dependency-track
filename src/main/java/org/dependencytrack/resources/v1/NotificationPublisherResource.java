@@ -48,7 +48,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.validation.Validator;
 
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;

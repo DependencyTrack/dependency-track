@@ -424,7 +424,17 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         }
         preprocessACLs(queryFilter, params);
         if (isGroupedByVulnerabilities) {
-            queryFilter.append(" GROUP BY \"VULNERABILITY\".\"ID\"");
+            queryFilter.append("""
+                    GROUP BY "VULNERABILITY"."ID",\s
+                             "VULNERABILITY"."SOURCE",\s
+                             "VULNERABILITY"."VULNID",\s
+                             "VULNERABILITY"."TITLE",\s
+                             "VULNERABILITY"."SEVERITY",
+                             "FINDINGATTRIBUTION"."ANALYZERIDENTITY",
+                             "VULNERABILITY"."PUBLISHED",
+                             "VULNERABILITY"."CWES",
+                             "VULNERABILITY"."CVSSV3BASESCORE"
+                    """);
             StringBuilder aggregateFilter = new StringBuilder();
             processAggregateFilters(filters, aggregateFilter, params);
             queryFilter.append(aggregateFilter);
@@ -474,12 +484,21 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             } else {
                 queryFilter.append(" AND (");
             }
-            queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
-            String value = filter;
-            if (isDate) {
-                value += (fromValue ? " 00:00:00" : " 23:59:59");
+            if (DbUtil.isPostgreSQL()) {
+                queryFilter.append(column).append(fromValue ? " >= " : " <= ");
+                if (isDate) {
+                    queryFilter.append("TO_TIMESTAMP('").append(filter).append(fromValue ? " 00:00:00" : " 23:59:59").append("', 'YYYY-MM-DD HH24:MI:SS')");
+                } else {
+                    queryFilter.append("CAST('").append(filter).append("' AS NUMERIC)");
+                }
+            } else {
+                queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
+                String value = filter;
+                if (isDate) {
+                    value += (fromValue ? " 00:00:00" : " 23:59:59");
+                }
+                params.put(paramName, value);
             }
-            params.put(paramName, value);
             queryFilter.append(")");
         }
     }
@@ -491,10 +510,15 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             } else {
                 queryFilter.append(isMin ? " AND (" : " OR ");
             }
-            queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
-            String value = filter;
-            value += (fromValue ? " 00:00:00" : " 23:59:59");
-            params.put(paramName, value);
+            if (DbUtil.isPostgreSQL()) {
+                queryFilter.append(column).append(fromValue ? " >= " : " <= ");
+                queryFilter.append("TO_TIMESTAMP('").append(filter).append(fromValue ? " 00:00:00" : " 23:59:59").append("', 'YYYY-MM-DD HH24:MI:SS')");
+            } else {
+                queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
+                String value = filter;
+                value += (fromValue ? " 00:00:00" : " 23:59:59");
+                params.put(paramName, value);
+            }
             if (!isMin) {
                 queryFilter.append(")");
             }

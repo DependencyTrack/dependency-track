@@ -96,7 +96,7 @@ public class PolicyEngine {
                     final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
                     if (!policyConditionViolationsFromEvaluator.isEmpty()) {
                         policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
-                        policyConditionsViolated += policyConditionViolationsFromEvaluator.stream()
+                        policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
                                 .map(pcv -> pcv.getPolicyCondition()).sorted(policyConditionComparator).distinct().count();
                     }
                 }

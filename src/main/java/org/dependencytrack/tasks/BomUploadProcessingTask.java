@@ -74,6 +74,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 
                 if (project == null) {
                     LOGGER.warn("Ignoring BOM Upload event for no longer existing project " + event.getProjectUuid());
+                    return;
                 }
                 
                 final List<Component> components;

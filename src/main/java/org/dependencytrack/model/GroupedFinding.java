@@ -19,7 +19,10 @@
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.dependencytrack.util.VulnerabilityUtil;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,10 +44,14 @@ public class GroupedFinding implements Serializable {
                 "VULNERABILITY"."VULNID",
                 "VULNERABILITY"."TITLE",
                 "VULNERABILITY"."SEVERITY",
+                "VULNERABILITY"."CVSSV2BASESCORE",
+                "VULNERABILITY"."CVSSV3BASESCORE",
+                "VULNERABILITY"."OWASPRRLIKELIHOODSCORE",
+                "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE",
+                "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE",
                 "FINDINGATTRIBUTION"."ANALYZERIDENTITY",
                 "VULNERABILITY"."PUBLISHED",
                 "VULNERABILITY"."CWES",
-                "VULNERABILITY"."CVSSV3BASESCORE",
                 COUNT(DISTINCT "PROJECT"."ID") AS "AFFECTED_PROJECT_COUNT",
                 MIN("AFFECTEDVERSIONATTRIBUTION"."FIRST_SEEN") AS "FIRST_OCCURRENCE",
                 MAX("AFFECTEDVERSIONATTRIBUTION"."LAST_SEEN") AS "LAST_OCCURRENCE"
@@ -64,14 +71,14 @@ public class GroupedFinding implements Serializable {
         optValue(vulnerability, "source", o[0]);
         optValue(vulnerability, "vulnId", o[1]);
         optValue(vulnerability, "title", o[2]);
-        optValue(vulnerability, "severity", o[3]);
-        optValue(attribution, "analyzerIdentity", o[4]);
-        optValue(vulnerability, "published", o[5]);
-        optValue(vulnerability, "cwes", Finding.getCwes(o[6]));
-        optValue(vulnerability, "cvssV3BaseScore", o[7]);
-        optValue(vulnerability, "affectedProjectCount", o[8]);
-        optValue(attribution, "firstOccurrence", o[9]);
-        optValue(attribution, "lastOccurrence", o[10]);
+        optValue(vulnerability, "severity", VulnerabilityUtil.getSeverity(o[3], (BigDecimal) o[4], (BigDecimal) o[5], (BigDecimal) o[6], (BigDecimal) o[7], (BigDecimal) o[8]));
+        optValue(vulnerability, "cvssV3BaseScore", o[5]);
+        optValue(attribution, "analyzerIdentity", o[9]);
+        optValue(vulnerability, "published", o[10]);
+        optValue(vulnerability, "cwes", Finding.getCwes(o[11]));
+        optValue(vulnerability, "affectedProjectCount", o[12]);
+        optValue(attribution, "firstOccurrence", o[13]);
+        optValue(attribution, "lastOccurrence", o[14]);
     }
 
     public Map getVulnerability() {

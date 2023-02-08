@@ -35,7 +35,7 @@ public class GroupedFindingTest extends PersistenceCapableTest {
     private Date lastOccurrence = new Date();
 
     private GroupedFinding groupedFinding = new GroupedFinding("vuln-source", "vuln-vulnId", "vuln-title",
-            Severity.HIGH, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, BigDecimal.valueOf(8.4), 3, firstOccurrence, lastOccurrence);
+            Severity.HIGH, null, BigDecimal.valueOf(8.4), null, null, null, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, 3, firstOccurrence, lastOccurrence);
 
 
     @Test

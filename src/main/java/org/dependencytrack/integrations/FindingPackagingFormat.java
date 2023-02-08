@@ -35,7 +35,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL
 public class FindingPackagingFormat {
 
     /** FPF is versioned. If the format changes, the version needs to be bumped. */
-    private static final String FPF_VERSION = "1.1";
+    private static final String FPF_VERSION = "1.2";
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_TIMESTAMP = "timestamp";

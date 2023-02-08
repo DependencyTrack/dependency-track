@@ -262,21 +262,22 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             } else {
                 queryFilter.append(" AND (");
             }
+            String value = filter;
             if (DbUtil.isPostgreSQL()) {
                 queryFilter.append(column).append(fromValue ? " >= " : " <= ");
                 if (isDate) {
-                    queryFilter.append("TO_TIMESTAMP('").append(filter).append(fromValue ? " 00:00:00" : " 23:59:59").append("', 'YYYY-MM-DD HH24:MI:SS')");
+                    queryFilter.append("TO_TIMESTAMP(:").append(paramName).append(", 'YYYY-MM-DD HH24:MI:SS')");
+                    value += (fromValue ? " 00:00:00" : " 23:59:59");
                 } else {
-                    queryFilter.append("CAST('").append(filter).append("' AS NUMERIC)");
+                    queryFilter.append("CAST(:").append(paramName).append(" AS NUMERIC)");
                 }
             } else {
                 queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
-                String value = filter;
                 if (isDate) {
                     value += (fromValue ? " 00:00:00" : " 23:59:59");
                 }
-                params.put(paramName, value);
             }
+            params.put(paramName, value);
             queryFilter.append(")");
         }
     }
@@ -290,13 +291,11 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             }
             if (DbUtil.isPostgreSQL()) {
                 queryFilter.append(column).append(fromValue ? " >= " : " <= ");
-                queryFilter.append("TO_TIMESTAMP('").append(filter).append(fromValue ? " 00:00:00" : " 23:59:59").append("', 'YYYY-MM-DD HH24:MI:SS')");
+                queryFilter.append("TO_TIMESTAMP(:").append(paramName).append(", 'YYYY-MM-DD HH24:MI:SS')");
             } else {
                 queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
-                String value = filter;
-                value += (fromValue ? " 00:00:00" : " 23:59:59");
-                params.put(paramName, value);
             }
+            params.put(paramName, filter + (fromValue ? " 00:00:00" : " 23:59:59"));
             if (!isMin) {
                 queryFilter.append(")");
             }

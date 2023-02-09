@@ -34,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("/v1/integration/osv/ecosystem")
 @Api(value = "ecosystem", authorizations = @Authorization(value = "X-Api-Key"))
@@ -42,7 +43,7 @@ public class OsvEcosytemResource extends AlpineResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Returns a list of all ecosystems in OSV",
+            value = "Returns a list of all not-yet-selected ecosystems in OSV",
             response = String.class,
             responseContainer = "List"
     )
@@ -52,7 +53,10 @@ public class OsvEcosytemResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
     public Response getAllEcosystems() {
         OsvDownloadTask osvDownloadTask = new OsvDownloadTask();
-        final List<String> ecosystems = osvDownloadTask.getEcosystems();
+        var selectedEcosystems = osvDownloadTask.getSelectedEcosystems();
+        final List<String> ecosystems = osvDownloadTask.getEcosystems().stream()
+                .filter(element -> !selectedEcosystems.contains(element))
+                .collect(Collectors.toList());
         return Response.ok(ecosystems).build();
     }
 }

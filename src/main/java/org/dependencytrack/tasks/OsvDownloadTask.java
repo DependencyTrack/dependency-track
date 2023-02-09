@@ -313,6 +313,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
         return vs;
     }
 
+    public List<String> getSelectedEcosystems() {
+        return this.ecosystems.stream().toList();
+    }
+
     public List<String> getEcosystems() {
         ArrayList<String> ecosystems = new ArrayList<>();
         String url = this.osvBaseUrl + "ecosystems.txt";

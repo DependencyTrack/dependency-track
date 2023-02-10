@@ -32,7 +32,7 @@
     just leave it empty for now. The maintainers are happy to assist you in figuring it out!
 -->
 
-- [ ] I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/github-templates/CONTRIBUTING.md#pull-requests)
+- [ ] I have read and understand the [contributing guidelines](../CONTRIBUTING.md#pull-requests)
 - [ ] This PR fixes a defect, and I have provided tests to verify that the fix is effective
 - [ ] This PR implements an enhancement, and I have provided tests to verify that it works as intended
 - [ ] This PR introduces changes to the database model, and I have added corresponding [update logic](https://github.com/DependencyTrack/dependency-track/tree/master/src/main/java/org/dependencytrack/upgrade)

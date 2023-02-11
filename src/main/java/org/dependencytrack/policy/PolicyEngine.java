@@ -84,8 +84,14 @@ public class PolicyEngine {
                 int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
-                    if (policyConditionViolations.addAll(evaluator.evaluate(policy, component))) {
-                        policyConditionsViolated++;
+                    final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
+                    if (!policyConditionViolationsFromEvaluator.isEmpty()) {
+                        policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
+                        policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
+                                .map(pcv -> pcv.getPolicyCondition().getId())
+                                .sorted()
+                                .distinct()
+                                .count();
                     }
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {

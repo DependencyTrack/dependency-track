@@ -97,6 +97,7 @@
         <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
         <lib.woodstox.version>6.5.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
+        <lib.log4j-over-slf4j.version>2.0.6</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -309,6 +310,12 @@
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-micrometer</artifactId>
             <version>${lib.resilience4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>${lib.log4j-over-slf4j.version}</version>
         </dependency>
 
         <!-- Test Dependencies -->

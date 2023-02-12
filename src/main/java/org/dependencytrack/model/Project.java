@@ -24,7 +24,6 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -258,11 +257,6 @@ public class Project implements Serializable {
     @Column(name = "EXTERNAL_REFERENCES")
     @Serialized
     private List<ExternalReference> externalReferences;
-
-    @JsonProperty("parentUuid")
-    private UUID getParentUuid() {
-        return (this.getParent() == null) ? null : this.getParent().getUuid();
-    }
 
     private transient ProjectMetrics metrics;
 

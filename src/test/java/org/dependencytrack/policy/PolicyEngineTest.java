@@ -19,20 +19,25 @@
 package org.dependencytrack.policy;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.Policy;
-import org.dependencytrack.model.Severity;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.LicenseGroup;
+import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+
 public class PolicyEngineTest extends PersistenceCapableTest {
 
     @Test
@@ -195,5 +200,61 @@ public class PolicyEngineTest extends PersistenceCapableTest {
         policyViolation = violations.get(2);
         Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
         Assert.assertEquals(PolicyCondition.Subject.PACKAGE_URL, policyViolation.getPolicyCondition().getSubject());
+    }
+
+    @Test
+    public void issue2455() {
+        Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
+
+        License license = new License();
+        license.setName("Apache 2.0");
+        license.setLicenseId("Apache-2.0");
+        license.setUuid(UUID.randomUUID());
+        license = qm.persist(license);
+        LicenseGroup lg = qm.createLicenseGroup("Test License Group 1");
+        lg.setLicenses(Collections.singletonList(license));
+        lg = qm.persist(lg);
+        lg = qm.detach(LicenseGroup.class, lg.getId());
+        license = qm.detach(License.class, license.getId());
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+
+        license = new License();
+        license.setName("MIT");
+        license.setLicenseId("MIT");
+        license.setUuid(UUID.randomUUID());
+        license = qm.persist(license);
+        lg = qm.createLicenseGroup("Test License Group 2");
+        lg.setLicenses(Collections.singletonList(license));
+        lg = qm.persist(lg);
+        lg = qm.detach(LicenseGroup.class, lg.getId());
+        license = qm.detach(License.class, license.getId());
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+
+        Project project = qm.createProject("My Project", null, "1", null, null, null, true, false);
+        qm.persist(project);
+
+        license = new License();
+        license.setName("LGPL");
+        license.setLicenseId("LGPL");
+        license.setUuid(UUID.randomUUID());
+        license = qm.persist(license);
+        ArrayList<Component> components = new ArrayList<>();
+        Component component = new Component();
+        component.setName("Log4J");
+        component.setVersion("2.0.0");
+        component.setProject(project);
+        component.setResolvedLicense(license);
+        components.add(component);
+        qm.persist(component);
+
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(components);
+        Assert.assertEquals(2, violations.size());
+        PolicyViolation policyViolation = violations.get(0);
+        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assert.assertEquals(PolicyCondition.Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
+        policyViolation = violations.get(1);
+        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        Assert.assertEquals(PolicyCondition.Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
     }
 }

@@ -96,6 +96,7 @@
         <lib.woodstox.version>6.5.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
+        <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
         <!-- Leave at 8.0.29 until https://github.com/datanucleus/datanucleus-rdbms/issues/446 is resolved! -->
@@ -229,7 +230,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
+            <version>${lib.httpclient.version}</version>
         </dependency>
 
         <dependency>
@@ -242,7 +243,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <version>4.5.14</version>
+            <version>${lib.httpclient.version}</version>
         </dependency>
 
 

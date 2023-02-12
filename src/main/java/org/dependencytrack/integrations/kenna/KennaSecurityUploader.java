@@ -45,9 +45,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_CONNECTOR_ID;
-
+import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_TOKEN;
 
 public class KennaSecurityUploader extends AbstractIntegrationPoint implements PortfolioFindingUploader {
@@ -110,20 +109,18 @@ public class KennaSecurityUploader extends AbstractIntegrationPoint implements P
                     .addBinaryBody("file", payload, ContentType.APPLICATION_JSON, "findings.json")
                     .build();
             request.setEntity(data);
-            final CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && response.getEntity() != null) {
-                String responseString = EntityUtils.toString(response.getEntity());
-                final JSONObject root = new JSONObject(responseString);
-                if (root.getString("success").equals("true")) {
-                    LOGGER.debug("Successfully uploaded KDI");
-                    return;
+            try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && response.getEntity() != null) {
+                    String responseString = EntityUtils.toString(response.getEntity());
+                    final JSONObject root = new JSONObject(responseString);
+                    if (root.getString("success").equals("true")) {
+                        LOGGER.debug("Successfully uploaded KDI");
+                        return;
+                    }
+                    LOGGER.warn("An unexpected response was received uploading findings to Kenna Security");
+                } else {
+                    handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 }
-                LOGGER.warn("An unexpected response was received uploading findings to Kenna Security");
-            } else {
-                LOGGER.warn("Kenna uploader did not receive expected response while attempting to upload "
-                        + "Dependency-Track findings. HTTP response code: "
-                        + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());
-                handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to Kenna Security", e);

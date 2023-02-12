@@ -154,3 +154,6 @@ public class FortifySscClientTest {
         client.uploadDependencyTrackFindings(token, applicationVersion, new NullInputStream(16));
     }
 }
+
+//another test to write:
+// request in the current master

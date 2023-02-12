@@ -54,7 +54,6 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_OAUTH1_CONSUMER_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET;
-
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -126,8 +125,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
                 .when(request()
                         .withMethod("GET")
                         .withPath("/api/v1/vulnerabilities/find_by_cpe")
-                        .withHeader(new Header("X-User-Agent", "VulnDB Data Mirror (https://github.com/stevespringett/vulndb-data-mirror)"))
-                        .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*" ))
+                        .withHeader(new Header("X-User-Agent", "Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
+                        .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
                 .respond(response()
                         .withStatusCode(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
@@ -250,8 +249,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
                 .when(request()
                         .withMethod("GET")
                         .withPath("/api/v1/vulnerabilities/find_by_cpe")
-                        .withHeader(new Header("X-User-Agent", "VulnDB Data Mirror (https://github.com/stevespringett/vulndb-data-mirror)"))
-                        .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*" ))
+                        .withHeader(new Header("X-User-Agent", "Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
+                        .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
                 .respond(response()
                         .withStatusCode(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")

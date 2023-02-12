@@ -36,8 +36,8 @@ import java.util.List;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 

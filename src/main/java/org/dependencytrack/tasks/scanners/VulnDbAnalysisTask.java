@@ -31,11 +31,11 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
-import org.dependencytrack.model.vulndb.Results;
 import org.dependencytrack.parser.vulndb.ModelConverter;
+import org.dependencytrack.parser.vulndb.VulnDbClient;
+import org.dependencytrack.parser.vulndb.model.Results;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-import org.dependencytrack.util.VulnDBUtil;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -62,8 +62,12 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
         return AnalyzerIdentity.VULNDB_ANALYZER;
     }
 
-    public VulnDbAnalysisTask(String apiBaseUrl){
+    public VulnDbAnalysisTask(String apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
+    }
+
+    public VulnDbAnalysisTask() {
+        this("https://vulndb.cyberriskanalytics.com");
     }
 
     /**
@@ -130,33 +134,33 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
      * @param components a list of Components
      */
     public void analyze(final List<Component> components) {
-        final var api = new VulnDBUtil(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
+        final var api = new VulnDbClient(this.apiConsumerKey, this.apiConsumerSecret, this.apiBaseUrl);
         for (final Component component : components) {
-            if(isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())){
-                applyAnalysisFromCache(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe(),component, AnalyzerIdentity.VULNDB_ANALYZER, vulnerabilityAnalysisLevel);
+            if (isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
+                applyAnalysisFromCache(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe(), component, AnalyzerIdentity.VULNDB_ANALYZER, vulnerabilityAnalysisLevel);
             } else if (!component.isInternal() && isCapable(component)
                     && !isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
-            if (!component.isInternal() && isCapable(component)
-                    && !isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
-                int page = 1;
-                boolean more = true;
-                while (more) {
-                    try{
-                    final Results results = api.getVulnerabilitiesByCpe(component.getCpe(), PAGE_SIZE, page);
-                    if (results.isSuccessful()) {
-                        more = processResults(results, component);
-                        page++;
-                    } else {
-                        LOGGER.warn(results.getErrorCondition());
-                        handleRequestException(LOGGER, new Exception(results.getErrorCondition()));
-                        return;
-                    }
-                }catch (IOException | OAuthMessageSignerException | OAuthExpectationFailedException |
-                        URISyntaxException | OAuthCommunicationException ex){
-                        handleRequestException(LOGGER, ex);
+                if (!component.isInternal() && isCapable(component)
+                        && !isCacheCurrent(Vulnerability.Source.VULNDB, apiBaseUrl, component.getCpe())) {
+                    int page = 1;
+                    boolean more = true;
+                    while (more) {
+                        try {
+                            final Results results = api.getVulnerabilitiesByCpe(component.getCpe(), PAGE_SIZE, page);
+                            if (results.isSuccessful()) {
+                                more = processResults(results, component);
+                                page++;
+                            } else {
+                                LOGGER.warn(results.getErrorCondition());
+                                handleRequestException(LOGGER, new Exception(results.getErrorCondition()));
+                                return;
+                            }
+                        } catch (IOException | OAuthMessageSignerException | OAuthExpectationFailedException |
+                                 URISyntaxException | OAuthCommunicationException ex) {
+                            handleRequestException(LOGGER, ex);
+                        }
                     }
                 }
-            }
             }
         }
     }
@@ -165,8 +169,8 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private boolean processResults(final Results results, final Component component) {
         try (final QueryManager qm = new QueryManager()) {
             final Component vulnerableComponent = qm.getObjectByUuid(Component.class, component.getUuid()); // Refresh component and attach to current pm.
-            for (org.dependencytrack.model.vulndb.Vulnerability vulnDbVuln : (List<org.dependencytrack.model.vulndb.Vulnerability>) results.getResults()) {
-                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.getId()));
+            for (org.dependencytrack.parser.vulndb.model.Vulnerability vulnDbVuln : (List<org.dependencytrack.parser.vulndb.model.Vulnerability>) results.getResults()) {
+                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(Vulnerability.Source.VULNDB, String.valueOf(vulnDbVuln.id()));
                 if (vulnerability == null) {
                     vulnerability = qm.createVulnerability(ModelConverter.convert(qm, vulnDbVuln), false);
                 } else {

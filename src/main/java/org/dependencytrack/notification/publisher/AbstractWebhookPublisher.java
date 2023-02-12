@@ -19,7 +19,6 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
-import alpine.notification.NotificationLevel;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -27,9 +26,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.exception.PublisherException;
-import org.dependencytrack.notification.NotificationConstants;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,46 +34,46 @@ import javax.json.JsonObject;
 import java.io.IOException;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractWebhookPublisher.class);
     public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
-
-        LOGGER.debug("Preparing to publish " + publisherName + " notification");
+        final Logger logger = LoggerFactory.getLogger(AbstractWebhookPublisher.class);
+        logger.debug("Preparing to publish " + publisherName + " notification");
         if (config == null) {
-            LOGGER.warn("No configuration found. Skipping notification.");
+            logger.warn("No configuration found. Skipping notification.");
             return;
         }
         final String destination = getDestinationUrl(config);
         final String content = prepareTemplate(notification, template);
         if (destination == null || content == null) {
-            LOGGER.warn("A destination or template was not found. Skipping notification");
+            logger.warn("A destination or template was not found. Skipping notification");
             return;
         }
         final String mimeType = getTemplateMimeType(config);
+        var request = new HttpPost(destination);
+        request.addHeader("content-type", mimeType);
+        request.addHeader("accept", mimeType);
+        final BasicAuthCredentials credentials;
         try {
-            var request = new HttpPost(destination);
-            request.addHeader("content-type", mimeType);
-            request.addHeader("accept", mimeType);
-            final BasicAuthCredentials credentials;
-            try {
-                credentials = getBasicAuthCredentials();
-            } catch (PublisherException e) {
-                LOGGER.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
-                return;
-            }
-            if (credentials != null) {
-                request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(credentials.user(), credentials.password()));
-            }
+            credentials = getBasicAuthCredentials();
+        } catch (PublisherException e) {
+            logger.warn("An error occurred during the retrieval of credentials needed for notification publication. Skipping notification", e);
+            return;
+        }
+        if (credentials != null) {
+            request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(credentials.user(), credentials.password()));
+        }
+
+        try {
             request.setEntity(new StringEntity(content));
-            final CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
-            if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
-                LOGGER.error("An error was encountered publishing notification to " + publisherName);
-                LOGGER.error("HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
-                LOGGER.error("Destination: " + destination);
-                LOGGER.error("Response: " + EntityUtils.toString(response.getEntity()));
-                LOGGER.debug(content);
+            try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+                if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() >= 300) {
+                    logger.error("An error was encountered publishing notification to " + publisherName +
+                            "with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase() +
+                            " Destination: " + destination + " Response: " + EntityUtils.toString(response.getEntity()));
+                    logger.debug(content);
+                }
             }
-        }catch (IOException ex){
-            handleRequestException(LOGGER, ex);
+        } catch (IOException ex) {
+            handleRequestException(logger, ex);
         }
     }
 
@@ -94,12 +90,5 @@ public abstract class AbstractWebhookPublisher implements Publisher {
 
     protected void handleRequestException(final Logger logger, final Exception e) {
         logger.error("Request failure", e);
-        Notification.dispatch(new Notification()
-                .scope(NotificationScope.SYSTEM)
-                .group(NotificationGroup.REPOSITORY)
-                .title(NotificationConstants.Title.REPO_ERROR)
-                .content("An error occurred publishing notification. Check log for details. " + e.getMessage())
-                .level(NotificationLevel.ERROR)
-        );
     }
 }

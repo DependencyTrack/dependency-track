@@ -19,11 +19,10 @@
 package org.dependencytrack.parser.ossindex;
 
 import alpine.common.logging.Logger;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,26 +45,12 @@ public class OssIndexParser {
      */
     public List<ComponentReport> parse(final String responseString) {
         LOGGER.debug("Parsing JSON response");
-        JSONArray arr = null;
-        JSONObject jsonObject = null;
-        try {
-            jsonObject = new JSONObject(responseString);
-        } catch (JSONException ex) {
-            arr = new JSONArray(responseString);
-        } catch (Exception ex) {
-            LOGGER.error("failed in parsing response");
-        }
-        if (jsonObject != null) {
-            arr = new JSONArray();
-            arr.put(jsonObject);
-        }
+        JSONArray arr = new JSONArray(responseString);
         final List<ComponentReport> componentReports = new ArrayList<>();
-        if (arr != null) {
-            for (int i = 0; i < arr.length(); i++) {
-                final JSONObject object = arr.getJSONObject(i);
-                final ComponentReport componentReport = parse(object);
-                componentReports.add(componentReport);
-            }
+        for (int i = 0; i < arr.length(); i++) {
+            final JSONObject object = arr.getJSONObject(i);
+            final ComponentReport componentReport = parse(object);
+            componentReports.add(componentReport);
         }
         return componentReports;
     }

@@ -33,20 +33,17 @@ import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.dependencytrack.common.HttpClientPool;
-import org.dependencytrack.util.HttpUtil;
-import org.json.JSONObject;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.http.HttpHeaders;
 import org.dependencytrack.common.ConfigKey;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
-import org.dependencytrack.event.ComponentMetricsUpdateEvent;
 import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -59,7 +56,9 @@ import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.NotificationUtil;
+import org.json.JSONObject;
 import us.springett.cvss.Cvss;
 import us.springett.cvss.CvssV2;
 import us.springett.cvss.CvssV3;
@@ -206,8 +205,13 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             if (!CollectionUtils.isEmpty(coordinates)) {
                 final JSONObject json = new JSONObject();
                 json.put("coordinates", coordinates);
-                final List<ComponentReport> report = ossIndexRetryer.executeSupplier(() -> submit(json));
-                processResults(report, paginatedList);
+                try {
+                    final List<ComponentReport> report = ossIndexRetryer.executeCheckedSupplier(() -> submit(json));
+                    processResults(report, paginatedList);
+                } catch (Throwable ex) {
+                    LOGGER.error("An error occurred while executing scan for coordinates" + json + " exception: " + ex);
+                    return;
+                }
 
                 LOGGER.info("Analyzing " + coordinates.size() + " component(s)");
             }
@@ -251,17 +255,16 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     /**
      * Submits the payload to the Sonatype OSS Index service
      */
-    private List<ComponentReport> submit(final JSONObject payload) {
+    private List<ComponentReport> submit(final JSONObject payload) throws IOException {
         HttpPost request = new HttpPost(API_BASE_URL);
         request.addHeader(HttpHeaders.ACCEPT, "application/json");
         request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
         request.addHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
-        try {
         request.setEntity(new StringEntity(payload.toString()));
         if (apiUsername != null && apiToken != null) {
             request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(apiUsername, apiToken));
         }
-            final CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
+        try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             HttpEntity responseEntity = response.getEntity();
             String responseString = EntityUtils.toString(responseEntity);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -270,11 +273,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             } else {
                 handleUnexpectedHttpResponse(LOGGER, API_BASE_URL, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
-            return new ArrayList<>();
-        } catch (IOException ex) {
-            handleRequestException(LOGGER, ex);
-            return null;
         }
+        return new ArrayList<>();
+
     }
 
     private void processResults(final List<ComponentReport> report, final List<Component> componentsScanned) {
@@ -336,7 +337,6 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        Event.dispatch(new ComponentMetricsUpdateEvent(component.getUuid()));
                         updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, API_BASE_URL, component.getPurl().toString(), component.getCacheResult());
                     }
                 }

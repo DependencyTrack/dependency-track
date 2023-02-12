@@ -49,7 +49,6 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     protected String username;
 
     protected String password;
-    private static final Logger LOGGER = Logger.getLogger(AbstractMetaAnalyzer.class);
     /**
      * {@inheritDoc}
      */
@@ -94,6 +93,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     }
 
     protected CloseableHttpResponse processHttpRequest(String url) throws IOException {
+        final Logger logger = Logger.getLogger(AbstractMetaAnalyzer.class);
         try {
             URIBuilder uriBuilder = new URIBuilder(url);
             final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
@@ -103,7 +103,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
             }
             return HttpClientPool.getClient().execute(request);
         }catch (URISyntaxException ex){
-            handleRequestException(LOGGER, ex);
+            handleRequestException(logger, ex);
             return null;
         }
     }

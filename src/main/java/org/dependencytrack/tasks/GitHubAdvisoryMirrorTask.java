@@ -82,7 +82,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
     public GitHubAdvisoryMirrorTask() {
         try (final QueryManager qm = new QueryManager()) {
             final ConfigProperty enabled = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED.getPropertyName());
-            this.isEnabled = enabled != null && Boolean.valueOf(enabled.getPropertyValue());
+            this.isEnabled = enabled != null && Boolean.parseBoolean(enabled.getPropertyValue());
 
             final ConfigProperty accessToken = qm.getConfigProperty(VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getGroupName(), VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN.getPropertyName());
             if (accessToken != null) {
@@ -139,63 +139,64 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         jsonBody.put("query", queryTemplate);
         var stringEntity = new StringEntity(jsonBody.toString());
         request.setEntity(stringEntity);
-        CloseableHttpResponse response = HttpClientPool.getClient().execute(request);
-
-        if (response.getStatusLine().getStatusCode() < HttpStatus.SC_OK || response.getStatusLine().getStatusCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
-            LOGGER.error("An error was encountered retrieving advisories");
-            LOGGER.error("HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
-            LOGGER.debug(queryTemplate);
-            mirroredWithoutErrors = false;
-        } else {
-            var parser = new GitHubSecurityAdvisoryParser();
-            String responseString = EntityUtils.toString(response.getEntity());
-            var jsonObject = new JSONObject(responseString);
-            final PageableList pageableList = parser.parse(jsonObject);
-            updateDatasource(pageableList.getAdvisories());
-            if (pageableList.isHasNextPage()) {
-                retrieveAdvisories(pageableList.getEndCursor());
+        try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
+            if (response.getStatusLine().getStatusCode() < HttpStatus.SC_OK || response.getStatusLine().getStatusCode() >= HttpStatus.SC_MULTIPLE_CHOICES) {
+                LOGGER.error("An error was encountered retrieving advisories with HTTP Status : " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+                LOGGER.debug(queryTemplate);
+                mirroredWithoutErrors = false;
+            } else {
+                var parser = new GitHubSecurityAdvisoryParser();
+                String responseString = EntityUtils.toString(response.getEntity());
+                var jsonObject = new JSONObject(responseString);
+                final PageableList pageableList = parser.parse(jsonObject);
+                updateDatasource(pageableList.getAdvisories());
+                if (pageableList.isHasNextPage()) {
+                    retrieveAdvisories(pageableList.getEndCursor());
+                }
             }
-        }
-        if (mirroredWithoutErrors) {
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.DATASOURCE_MIRRORING)
-                    .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                    .content("Mirroring of GitHub Advisories completed successfully")
-                    .level(NotificationLevel.INFORMATIONAL)
-            );
-        } else {
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.SYSTEM)
-                    .group(NotificationGroup.DATASOURCE_MIRRORING)
-                    .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
-                    .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
-                    .level(NotificationLevel.ERROR)
-            );
+
+            if (mirroredWithoutErrors) {
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                        .content("Mirroring of GitHub Advisories completed successfully")
+                        .level(NotificationLevel.INFORMATIONAL)
+                );
+            } else {
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.SYSTEM)
+                        .group(NotificationGroup.DATASOURCE_MIRRORING)
+                        .title(NotificationConstants.Title.GITHUB_ADVISORY_MIRROR)
+                        .content("An error occurred mirroring the contents of GitHub Advisories. Check log for details.")
+                        .level(NotificationLevel.ERROR)
+                );
+            }
         }
     }
 
     /**
      * Synchronizes the advisories that were downloaded with the internal Dependency-Track database.
+     *
      * @param advisories the results to synchronize
      */
     void updateDatasource(final List<GitHubSecurityAdvisory> advisories) {
         LOGGER.debug("Updating datasource with GitHub advisories");
         try (QueryManager qm = new QueryManager()) {
-            for (final GitHubSecurityAdvisory advisory: advisories) {
+            for (final GitHubSecurityAdvisory advisory : advisories) {
                 LOGGER.debug("Synchronizing GitHub advisory: " + advisory.getGhsaId());
                 final Vulnerability mappedVulnerability = mapAdvisoryToVulnerability(qm, advisory);
                 final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(mappedVulnerability.getSource(), mappedVulnerability.getVulnId()));
                 final Vulnerability synchronizedVulnerability = qm.synchronizeVulnerability(mappedVulnerability, false);
                 List<VulnerableSoftware> vsList = new ArrayList<>();
-                for (GitHubVulnerability ghvuln: advisory.getVulnerabilities()) {
+                for (GitHubVulnerability ghvuln : advisory.getVulnerabilities()) {
                     final VulnerableSoftware vs = mapVulnerabilityToVulnerableSoftware(qm, ghvuln, advisory);
                     if (vs != null) {
                         vsList.add(vs);
                     }
-                    for (Pair<String,String> identifier: advisory.getIdentifiers()) {
+                    for (Pair<String, String> identifier : advisory.getIdentifiers()) {
                         if (identifier != null && identifier.getLeft() != null
-                                && "CVE".equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
+                                && "CVE" .equalsIgnoreCase(identifier.getLeft()) && identifier.getLeft().startsWith("CVE")) {
                             LOGGER.debug("Updating vulnerability alias for " + advisory.getGhsaId());
                             final VulnerabilityAlias alias = new VulnerabilityAlias();
                             alias.setGhsaId(advisory.getGhsaId());
@@ -217,6 +218,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
     /**
      * Helper method that maps an GitHub SecurityAdvisory object to a Dependency-Track vulnerability object.
+     *
      * @param advisory the GitHub SecurityAdvisory to map
      * @return a Dependency-Track Vulnerability object
      */
@@ -241,7 +243,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         //vuln.setVulnerableVersions(advisory.getVulnerableVersions());
         //vuln.setPatchedVersions(advisory.getPatchedVersions());
         if (advisory.getCwes() != null) {
-            for (int i=0; i<advisory.getCwes().size(); i++) {
+            for (int i = 0; i < advisory.getCwes().size(); i++) {
                 final Cwe cwe = CweResolver.getInstance().resolve(qm, advisory.getCwes().get(i));
                 if (cwe != null) {
                     vuln.addCwe(cwe);
@@ -269,7 +271,8 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
     /**
      * Helper method that maps an GitHub Vulnerability object to a Dependency-Track VulnerableSoftware object.
-     * @param qm a QueryManager
+     *
+     * @param qm   a QueryManager
      * @param vuln the GitHub Vulnerability to map
      * @return a Dependency-Track VulnerableSoftware object
      */
@@ -283,7 +286,7 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
             String versionEndExcluding = null;
             if (vuln.getVulnerableVersionRange() != null) {
                 final String[] parts = Arrays.stream(vuln.getVulnerableVersionRange().split(",")).map(String::trim).toArray(String[]::new);
-                for (String part: parts) {
+                for (String part : parts) {
                     if (part.startsWith(">=")) {
                         versionStartIncluding = part.replace(">=", "").trim();
                     } else if (part.startsWith(">")) {
@@ -325,15 +328,24 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
 
     private String mapGitHubEcosystemToPurlType(final String ecosystem) {
         switch (ecosystem.toUpperCase()) {
-            case "MAVEN":  return PackageURL.StandardTypes.MAVEN;
-            case "RUST":  return PackageURL.StandardTypes.CARGO;
-            case "PIP":  return PackageURL.StandardTypes.PYPI;
-            case "RUBYGEMS":  return PackageURL.StandardTypes.GEM;
-            case "GO":  return PackageURL.StandardTypes.GOLANG;
-            case "NPM":  return PackageURL.StandardTypes.NPM;
-            case "COMPOSER":  return PackageURL.StandardTypes.COMPOSER;
-            case "NUGET":  return PackageURL.StandardTypes.NUGET;
-            default: return null;
+            case "MAVEN":
+                return PackageURL.StandardTypes.MAVEN;
+            case "RUST":
+                return PackageURL.StandardTypes.CARGO;
+            case "PIP":
+                return PackageURL.StandardTypes.PYPI;
+            case "RUBYGEMS":
+                return PackageURL.StandardTypes.GEM;
+            case "GO":
+                return PackageURL.StandardTypes.GOLANG;
+            case "NPM":
+                return PackageURL.StandardTypes.NPM;
+            case "COMPOSER":
+                return PackageURL.StandardTypes.COMPOSER;
+            case "NUGET":
+                return PackageURL.StandardTypes.NUGET;
+            default:
+                return null;
         }
     }
 

@@ -63,8 +63,6 @@ import org.dependencytrack.util.RoundRobinAccessor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -333,10 +331,8 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 }
             }
-        } catch (IOException | URISyntaxException ex) {
+        } catch (Throwable  ex) {
             handleRequestException(LOGGER, ex);
-        } catch (Throwable ex) {
-            LOGGER.error("An error occurred while executing scan for coordinates" + component.getPurl().getCoordinates() + " exception: " + ex);
         }
     }
 

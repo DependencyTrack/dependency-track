@@ -35,7 +35,7 @@ import java.io.IOException;
 
 public abstract class AbstractWebhookPublisher implements Publisher {
     public void publish(final String publisherName, final PebbleTemplate template, final Notification notification, final JsonObject config) {
-        final Logger logger = LoggerFactory.getLogger(AbstractWebhookPublisher.class);
+        final Logger logger = LoggerFactory.getLogger(getClass());
         logger.debug("Preparing to publish " + publisherName + " notification");
         if (config == null) {
             logger.warn("No configuration found. Skipping notification.");

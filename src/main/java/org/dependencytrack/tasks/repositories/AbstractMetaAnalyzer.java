@@ -93,7 +93,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     }
 
     protected CloseableHttpResponse processHttpRequest(String url) throws IOException {
-        final Logger logger = Logger.getLogger(AbstractMetaAnalyzer.class);
+        final Logger logger = Logger.getLogger(getClass());
         try {
             URIBuilder uriBuilder = new URIBuilder(url);
             final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());

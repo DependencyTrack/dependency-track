@@ -209,7 +209,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                     final List<ComponentReport> report = ossIndexRetryer.executeCheckedSupplier(() -> submit(json));
                     processResults(report, paginatedList);
                 } catch (Throwable ex) {
-                    LOGGER.error("An error occurred while executing scan for coordinates" + json + " exception: " + ex);
+                    handleRequestException(LOGGER, ex);
                     return;
                 }
 

@@ -84,7 +84,7 @@ public class FortifySscClient {
             HttpPost request = new HttpPost(builder.build());
             request.addHeader("accept", "application/xml");
             HttpEntity data = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
-                    .addBinaryBody("files[]", findingsJson, ContentType.APPLICATION_JSON, "findings.json")
+                    .addBinaryBody("files[]", findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json")
                     .build();
             request.setEntity(data);
             try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {

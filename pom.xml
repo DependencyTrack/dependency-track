@@ -244,7 +244,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <version>${lib.httpclien.version}</version>
+            <version>${lib.httpclient.version}</version>
         </dependency>
 
 

@@ -55,6 +55,7 @@ public class PolicyEngine {
         evaluators.add(new CpePolicyEvaluator());
         evaluators.add(new SwidTagIdPolicyEvaluator());
         evaluators.add(new VersionPolicyEvaluator());
+        evaluators.add(new ComponentAgePolicyEvaluator());
         evaluators.add(new ComponentHashPolicyEvaluator());
         evaluators.add(new CwePolicyEvaluator());
     }
@@ -83,8 +84,14 @@ public class PolicyEngine {
                 int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
-                    if (policyConditionViolations.addAll(evaluator.evaluate(policy, component))) {
-                        policyConditionsViolated++;
+                    final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
+                    if (!policyConditionViolationsFromEvaluator.isEmpty()) {
+                        policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
+                        policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
+                                .map(pcv -> pcv.getPolicyCondition().getId())
+                                .sorted()
+                                .distinct()
+                                .count();
                     }
                 }
                 if (Policy.Operator.ANY == policy.getOperator()) {
@@ -130,6 +137,7 @@ public class PolicyEngine {
             case CWE:
             case SEVERITY:
                 return PolicyViolation.Type.SECURITY;
+            case AGE:
             case COORDINATES:
             case PACKAGE_URL:
             case CPE:

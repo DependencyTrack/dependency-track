@@ -19,25 +19,18 @@
 package org.dependencytrack.persistence;
 
 import alpine.common.logging.Logger;
-import alpine.event.framework.Event;
 import alpine.model.ManagedUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.server.auth.PasswordService;
 import org.dependencytrack.RequirementsVerifier;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.IndexEvent;
-import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.License;
-import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryType;
-import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.persistence.defaults.DefaultLicenseGroupImporter;
-import org.dependencytrack.search.IndexManager;
 import org.dependencytrack.util.NotificationUtil;
 
 import javax.servlet.ServletContextEvent;

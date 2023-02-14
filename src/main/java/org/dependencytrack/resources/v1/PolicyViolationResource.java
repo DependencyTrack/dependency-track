@@ -44,6 +44,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * JAX-RS resources for processing policy violations.
@@ -68,9 +70,36 @@ public class PolicyViolationResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
     public Response getViolations(@ApiParam(value = "Optionally includes suppressed violations")
-                                  @QueryParam("suppressed") boolean suppressed) {
+                                  @QueryParam("suppressed") boolean suppressed,
+                                  @ApiParam(value = "Optionally includes inactive projects")
+                                  @QueryParam("showInactive") boolean showInactive,
+                                  @ApiParam(value = "Filter by violation state")
+                                  @QueryParam("violationState") String violationState,
+                                  @ApiParam(value = "Filter by risk type")
+                                  @QueryParam("riskType") String riskType,
+                                  @ApiParam(value = "Filter by policy")
+                                  @QueryParam("policy") String policy,
+                                  @ApiParam(value = "Filter by analysis state")
+                                  @QueryParam("analysisState") String analysisState,
+                                  @ApiParam(value = "Filter occurred on from")
+                                  @QueryParam("occurredOnDateFrom") String occurredOnDateFrom,
+                                  @ApiParam(value = "Filter occurred on to")
+                                  @QueryParam("occurredOnDateTo") String occurredOnDateTo,
+                                  @ApiParam(value = "Filter the text input in these fields")
+                                  @QueryParam("textSearchField") String textSearchField,
+                                  @ApiParam(value = "Filter by this text input")
+                                  @QueryParam("textSearchInput") String textSearchInput) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final PaginatedResult result = qm.getPolicyViolations(suppressed);
+            Map<String, String> filters = new HashMap<>();
+            filters.put("violationState", violationState);
+            filters.put("riskType", riskType);
+            filters.put("policy", policy);
+            filters.put("analysisState", analysisState);
+            filters.put("occurredOnDateFrom", occurredOnDateFrom);
+            filters.put("occurredOnDateTo", occurredOnDateTo);
+            filters.put("textSearchField", textSearchField);
+            filters.put("textSearchInput", textSearchInput);
+            final PaginatedResult result = qm.getPolicyViolations(suppressed, showInactive, filters);
             return Response.ok(detachViolations(qm, result.getList(PolicyViolation.class)))
                     .header(TOTAL_COUNT_HEADER, result.getTotal())
                     .build();

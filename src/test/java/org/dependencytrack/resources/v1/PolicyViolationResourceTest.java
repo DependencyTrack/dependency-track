@@ -18,12 +18,14 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import alpine.server.filters.AuthorizationFilter;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -309,6 +311,140 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
         assertThat(getPlainTextBody(response)).contains("component could not be found");
+    }
+
+    @Test
+    public void getViolationsWithAclEnabledTest() {
+        initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        final Project child = qm.createProject("Acme Example - Child", null, "1.0", null, null, null, true, false);
+        final Project grandchild = qm.createProject("Acme Example - Grandchild", null, "1.0", null, null, null, true, false);
+        final Project noAccess = qm.createProject("Acme Example - No Access", null, "1.0", null, null, null, true, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        var component1 = new Component();
+        component1.setProject(child);
+        component1.setName("Acme Component");
+        component1.setVersion("1.0");
+        component1 = qm.createComponent(component1, false);
+
+        var component2 = new Component();
+        component2.setProject(grandchild);
+        component2.setName("Acme Component");
+        component2.setVersion("1.0");
+        component2 = qm.createComponent(component2, false);
+
+        var component3 = new Component();
+        component3.setProject(noAccess);
+        component3.setName("Acme Component");
+        component3.setVersion("1.0");
+        component3 = qm.createComponent(component3, false);
+
+        final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+
+        var violation = new PolicyViolation();
+        violation.setType(PolicyViolation.Type.OPERATIONAL);
+        violation.setComponent(component);
+        violation.setPolicyCondition(condition);
+        violation.setTimestamp(new Date());
+        violation = qm.persist(violation);
+
+        var violation1 = new PolicyViolation();
+        violation1.setType(PolicyViolation.Type.OPERATIONAL);
+        violation1.setComponent(component1);
+        violation1.setPolicyCondition(condition);
+        violation1.setTimestamp(new Date());
+        violation1 = qm.persist(violation1);
+
+        var violation2 = new PolicyViolation();
+        violation2.setType(PolicyViolation.Type.OPERATIONAL);
+        violation2.setComponent(component2);
+        violation2.setPolicyCondition(condition);
+        violation2.setTimestamp(new Date());
+        violation2 = qm.persist(violation2);
+
+        var violation3 = new PolicyViolation();
+        violation3.setType(PolicyViolation.Type.OPERATIONAL);
+        violation3.setComponent(component3);
+        violation3.setPolicyCondition(condition);
+        violation3.setTimestamp(new Date());
+        violation3 = qm.persist(violation3);
+
+        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        if (aclToggle == null) {
+            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+        } else {
+            aclToggle.setPropertyValue("true");
+            qm.persist(aclToggle);
+        }
+
+        project.addAccessTeam(team);
+
+        final Response response = target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray).hasSize(1);
+
+        final JsonObject jsonObject = jsonArray.getJsonObject(0);
+        assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
+        assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObject.getJsonObject("project").getString("uuid")).isEqualTo(project.getUuid().toString());
+
+        child.setParent(project);
+        grandchild.setParent(child);
+
+        final Response response1 = target(V1_POLICY_VIOLATION)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response1.getStatus()).isEqualTo(200);
+        assertThat(response1.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+
+        final JsonArray jsonArray1 = parseJsonArray(response1);
+        assertThat(jsonArray1).hasSize(3);
+
+        final JsonObject jsonObject1 = jsonArray1.getJsonObject(0);
+        assertThat(jsonObject1.getString("uuid")).isEqualTo(violation2.getUuid().toString());
+        assertThat(jsonObject1.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject1.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObject1.getJsonObject("project").getString("uuid")).isEqualTo(grandchild.getUuid().toString());
+
+        final JsonObject jsonObject2 = jsonArray1.getJsonObject(1);
+        assertThat(jsonObject2.getString("uuid")).isEqualTo(violation1.getUuid().toString());
+        assertThat(jsonObject2.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject2.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject2.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject2.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject2.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObject2.getJsonObject("project").getString("uuid")).isEqualTo(child.getUuid().toString());
+
+        final JsonObject jsonObject3 = jsonArray1.getJsonObject(2);
+        assertThat(jsonObject3.getString("uuid")).isEqualTo(violation.getUuid().toString());
+        assertThat(jsonObject3.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
+        assertThat(jsonObject3.getJsonObject("policyCondition")).isNotNull();
+        assertThat(jsonObject3.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
+        assertThat(jsonObject3.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
+        assertThat(jsonObject3.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObject3.getJsonObject("project").getString("uuid")).isEqualTo(project.getUuid().toString());
     }
 
 }

@@ -707,7 +707,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
                 switch (inputFilter[i].toLowerCase()) {
                     case "policy_name" -> filterBuilder.append("policyCondition.policy.name");
                     case "component" -> filterBuilder.append("component.name");
-                    case "license" -> filterBuilder.append("component.resolvedLicense.licenseId");
+                    case "license" -> filterBuilder.append("component.resolvedLicense.licenseId.toLowerCase().matches(:").append(paramName).append(") || component.license");
                     case "project_name" -> filterBuilder.append("project.name.toLowerCase().matches(:").append(paramName).append(") || project.version");
                 }
                 filterBuilder.append(".toLowerCase().matches(:").append(paramName).append(")");

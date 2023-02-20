@@ -19,7 +19,16 @@
 package org.dependencytrack.policy;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.*;
+import org.dependencytrack.model.Component;
+import org.dependencytrack.model.License;
+import org.dependencytrack.model.LicenseGroup;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+
 public class PolicyEngineTest extends PersistenceCapableTest {
 
     @Test

@@ -92,11 +92,11 @@
         <lib.lucene.version>8.11.2</lib.lucene.version>
         <lib.packageurl.version>1.4.1</lib.packageurl.version>
         <lib.pebble.version>3.2.0</lib.pebble.version>
-        <lib.unirest.version>3.14.1</lib.unirest.version>
-        <lib.vulndb-data-mirror.version>1.0.1</lib.vulndb-data-mirror.version>
         <lib.resilience4j.version>2.0.1</lib.resilience4j.version>
         <lib.woodstox.version>6.5.0</lib.woodstox.version>
         <lib.junit-params.version>1.1.1</lib.junit-params.version>
+        <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
+        <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.log4j-over-slf4j.version>2.0.6</lib.log4j-over-slf4j.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>11.2.3.jre17</lib.jdbc-driver.mssql.version>
@@ -227,31 +227,33 @@
             <artifactId>pebble</artifactId>
             <version>${lib.pebble.version}</version>
         </dependency>
-        <!-- VulnDB data mirroring and parsing -->
+
         <dependency>
-            <groupId>us.springett</groupId>
-            <artifactId>vulndb-data-mirror</artifactId>
-            <version>${lib.vulndb-data-mirror.version}</version>
-            <!-- Exclude transitive version so Dependency-Track can manage independently -->
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.openunirest</groupId>
-                    <artifactId>open-unirest-java</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${lib.httpclient.version}</version>
         </dependency>
-        <!-- Unirest -->
+
         <dependency>
-            <groupId>com.konghq</groupId>
-            <artifactId>unirest-java</artifactId>
-            <version>${lib.unirest.version}</version>
+            <groupId>oauth.signpost</groupId>
+            <artifactId>signpost-core</artifactId>
+            <version>${lib.signpost-core.version}</version>
+            <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpmime</artifactId>
+            <version>${lib.httpclient.version}</version>
+        </dependency>
+
+
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
             <version>${lib.woodstox.version}</version>
         </dependency>
-        <!-- Package version parsing -->
+
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
@@ -347,7 +349,16 @@
             <artifactId>mockito-core</artifactId>
             <version>${lib.mockito.version}</version>
             <scope>test</scope>
+
         </dependency>
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
+            <version>2.35.0</version>
+            <scope>test</scope>
+        </dependency>
+
+
         <dependency>
             <groupId>com.github.stefanbirkner</groupId>
             <artifactId>system-rules</artifactId>

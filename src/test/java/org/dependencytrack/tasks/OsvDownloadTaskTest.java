@@ -18,7 +18,7 @@ package org.dependencytrack.tasks;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
-import kong.unirest.json.JSONObject;
+import org.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.AffectedVersionAttribution;

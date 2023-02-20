@@ -34,18 +34,19 @@ import io.github.resilience4j.micrometer.tagged.TaggedRetryMetrics;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
-import kong.unirest.GetRequest;
-import kong.unirest.HttpResponse;
-import kong.unirest.HttpStatus;
-import kong.unirest.JsonNode;
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.util.EntityUtils;
 import org.dependencytrack.common.ConfigKey;
+import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.common.ManagedHttpClientFactory;
-import org.dependencytrack.common.UnirestFactory;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.SnykAnalysisEvent;
 import org.dependencytrack.model.Component;
@@ -59,6 +60,8 @@ import org.dependencytrack.parser.snyk.model.SnykError;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.RoundRobinAccessor;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -100,7 +103,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     private static final ExecutorService EXECUTOR;
 
     static {
-        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<HttpResponse<?>>custom()
+        final RetryRegistry retryRegistry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
                 .intervalFunction(ofExponentialBackoff(
                         Duration.ofSeconds(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_INITIAL_DURATION_SECONDS)),
                         Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_EXPONENTIAL_BACKOFF_MULTIPLIER),
@@ -108,12 +111,12 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                 ))
                 .maxAttempts(Config.getInstance().getPropertyAsInt(ConfigKey.SNYK_RETRY_MAX_ATTEMPTS))
                 .retryOnException(exception -> false)
-                .retryOnResult(response -> HttpStatus.TOO_MANY_REQUESTS == response.getStatus())
+                .retryOnResult(response -> 429 == response.getStatusLine().getStatusCode())
                 .build());
         RETRY = retryRegistry.retry("snyk-api");
         RETRY.getEventPublisher()
-                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s".formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
-                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s".formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
+                .onRetry(event -> LOGGER.debug("Will execute retry #%d in %s" .formatted(event.getNumberOfRetryAttempts(), event.getWaitInterval())))
+                .onError(event -> LOGGER.error("Retry failed after %d attempts: %s" .formatted(event.getNumberOfRetryAttempts(), event.getLastThrowable())));
         TaggedRetryMetrics.ofRetryRegistry(retryRegistry)
                 .bindTo(Metrics.getRegistry());
 
@@ -238,7 +241,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                         countDownLatch.countDown();
 
                         if (exception != null) {
-                            LOGGER.error("An unexpected error occurred while analyzing %s".formatted(component), exception);
+                            LOGGER.error("An unexpected error occurred while analyzing %s" .formatted(component), exception);
                         }
                     });
         }
@@ -267,7 +270,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
                     .scope(NotificationScope.SYSTEM)
                     .level(NotificationLevel.WARNING)
                     .group(NotificationGroup.ANALYZER)
-                    .title("Snyk API version %s is deprecated".formatted(apiVersion))
+                    .title("Snyk API version %s is deprecated" .formatted(apiVersion))
                     .content(message));
         }
     }
@@ -294,28 +297,42 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
 
     private void analyzeComponent(final Component component) {
         final String encodedPurl = URLEncoder.encode(component.getPurl().getCoordinates(), StandardCharsets.UTF_8);
-        final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s".formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
-        final GetRequest request = UnirestFactory.getUnirestInstance().get(requestUrl)
-                .header(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent())
-                .header(HttpHeaders.AUTHORIZATION, "token " + apiTokenSupplier.get())
-                .header(HttpHeaders.ACCEPT, "application/vnd.api+json");
-
-        final HttpResponse<JsonNode> response = RETRY.executeSupplier(request::asJson);
-        apiVersionSunset = StringUtils.trimToNull(response.getHeaders().getFirst("Sunset"));
-        if (response.isSuccess()) {
-            handle(component, response.getBody().getObject());
-        } else if (response.getBody() != null) {
-            final List<SnykError> errors = new SnykParser().parseErrors(response.getBody().getObject());
-            if (!errors.isEmpty()) {
-                LOGGER.error("Analysis of component %s failed with HTTP status %d: \n%s"
-                        .formatted(component.getPurl(), response.getStatus(), errors.stream()
-                                .map(error -> " - %s: %s (%s)".formatted(error.title(), error.detail(), error.code()))
-                                .collect(Collectors.joining("\n"))));
-            } else {
-                handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
+        final String requestUrl = "%s/rest/orgs/%s/packages/%s/issues?version=%s" .formatted(apiBaseUrl, apiOrgId, encodedPurl, apiVersion);
+        try {
+            URIBuilder uriBuilder = new URIBuilder(requestUrl);
+            final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
+            request.setHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
+            request.setHeader(HttpHeaders.AUTHORIZATION, "token " + apiTokenSupplier.get());
+            request.setHeader(HttpHeaders.ACCEPT, "application/vnd.api+json");
+            try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+                Header header = response.getFirstHeader("Sunset");
+                if (header != null) {
+                    apiVersionSunset = StringUtils.trimToNull(header.getValue());
+                } else {
+                    apiVersionSunset = null;
+                }
+                if (response.getStatusLine().getStatusCode() >= HttpStatus.SC_OK && response.getStatusLine().getStatusCode() < HttpStatus.SC_MULTIPLE_CHOICES) {
+                    String responseString = EntityUtils.toString(response.getEntity());
+                    JSONObject responseJson = new JSONObject(responseString);
+                    handle(component, responseJson);
+                } else if (response.getEntity() != null) {
+                    String responseString = EntityUtils.toString(response.getEntity());
+                    JSONObject responseJson = new JSONObject(responseString);
+                    final List<SnykError> errors = new SnykParser().parseErrors(responseJson);
+                    if (!errors.isEmpty()) {
+                        LOGGER.error("Analysis of component %s failed with HTTP status %d: \n%s"
+                                .formatted(component.getPurl(), response.getStatusLine().getStatusCode(), errors.stream()
+                                        .map(error -> " - %s: %s (%s)" .formatted(error.title(), error.detail(), error.code()))
+                                        .collect(Collectors.joining("\n"))));
+                    } else {
+                        handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    }
+                } else {
+                    handleUnexpectedHttpResponse(LOGGER, request.getURI().toString(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                }
             }
-        } else {
-            handleUnexpectedHttpResponse(LOGGER, request.getUrl(), response.getStatus(), response.getStatusText());
+        } catch (Throwable  ex) {
+            handleRequestException(LOGGER, ex);
         }
     }
 
@@ -372,7 +389,7 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
     private Supplier<String> createTokenSupplier(final String tokenValue) {
         final String[] tokens = tokenValue.split(";");
         if (tokens.length > 1) {
-            LOGGER.debug("Will use %d tokens in round robin".formatted(tokens.length));
+            LOGGER.debug("Will use %d tokens in round robin" .formatted(tokens.length));
             final var roundRobinAccessor = new RoundRobinAccessor<>(List.of(tokens));
             return roundRobinAccessor::get;
         }

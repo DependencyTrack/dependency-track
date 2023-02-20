@@ -24,11 +24,13 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.resources.AlpineResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+
 import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.Api;
+
 import io.swagger.annotations.Authorization;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -45,6 +47,8 @@ import org.dependencytrack.util.NotificationUtil;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.validation.Validator;
+
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -54,6 +58,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;

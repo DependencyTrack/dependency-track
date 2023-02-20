@@ -16,22 +16,12 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.common;
+package org.dependencytrack.parser.vulndb.model;
 
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
-
-public final class UnirestFactory {
-
-    private static final UnirestInstance UNIREST_INSTANCE = Unirest.primaryInstance();
-    static {
-        UNIREST_INSTANCE.config().httpClient(ManagedHttpClientFactory.newManagedHttpClient().getHttpClient());
-    }
-
-    private UnirestFactory() {
-    }
-
-    public static UnirestInstance getUnirestInstance() {
-        return UNIREST_INSTANCE;
-    }
+/**
+ * The response from VulnDB Vulnerability API will respond with 0 or more nvd_additional_information.
+ * This record defines the NvdAdditionalInfo objects returned.
+ * Record created to replace the model class defined here: <a href="https://github.com/stevespringett/vulndb-data-mirror">...</a>
+ */
+public record NvdAdditionalInfo(String summary, String cweId, String cveId) {
 }

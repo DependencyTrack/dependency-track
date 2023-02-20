@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.parser.osv;
 
-import kong.unirest.json.JSONArray;
-import kong.unirest.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;

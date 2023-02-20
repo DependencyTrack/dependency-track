@@ -24,7 +24,8 @@ import alpine.event.framework.LoggableSubscriber;
 import alpine.model.ConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import kong.unirest.json.JSONObject;
+import org.apache.http.HttpStatus;
+import org.json.JSONObject;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -108,7 +109,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     HttpUriRequest request = new HttpGet(url);
                     try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                         final StatusLine status = response.getStatusLine();
-                        if (status.getStatusCode() == 200) {
+                        if (status.getStatusCode() == HttpStatus.SC_OK) {
                             try (InputStream in = response.getEntity().getContent();
                                  ZipInputStream zipInput = new ZipInputStream(in)) {
                                 unzipFolder(zipInput);
@@ -352,7 +353,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         HttpUriRequest request = new HttpGet(url);
         try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
             final StatusLine status = response.getStatusLine();
-            if (status.getStatusCode() == 200) {
+            if (status.getStatusCode() == HttpStatus.SC_OK) {
                 try (InputStream in = response.getEntity().getContent();
                      Scanner scanner = new Scanner(in, StandardCharsets.UTF_8)) {
                     while (scanner.hasNextLine()) {

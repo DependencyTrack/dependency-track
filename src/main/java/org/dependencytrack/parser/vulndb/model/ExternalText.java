@@ -16,24 +16,12 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) Steve Springett. All Rights Reserved.
  */
-package org.dependencytrack.common;
+package org.dependencytrack.parser.vulndb.model;
 
-import kong.unirest.UnirestInstance;
-import org.junit.Assert;
-import org.junit.Test;
-
-public class UnirestFactoryTest {
-
-    @Test
-    public void instanceTest() {
-        UnirestInstance ui1 = UnirestFactory.getUnirestInstance();
-        UnirestInstance ui2 = UnirestFactory.getUnirestInstance();
-        Assert.assertSame(ui1, ui2);
-    }
-
-    @Test
-    public void httpClientTest() {
-        UnirestInstance ui = UnirestFactory.getUnirestInstance();
-        Assert.assertNotSame(ui.config().getClient().getClient(), ManagedHttpClientFactory.newManagedHttpClient());
-    }
+/**
+ * The response from VulnDB Vulnerability API will respond with 0 or more external
+ * texts. This record defines the ExternalText objects returned.
+ * Record created to replace the model class defined here: <a href="https://github.com/stevespringett/vulndb-data-mirror">...</a>
+ */
+public record ExternalText(String type, String value) {
 }

@@ -262,7 +262,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                      }
                                    ],
                                    "links": {
-                                     "self": "/orgs/fd53e445-dc38-4b25-9c8a-5f68ed79f537/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues?version=2022-11-14&limit=1000&offset=0"
+                                     "self": "/orgs/fd53e445-dc38-4b25-9c8a-5f68ed79f537/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues?version=2023-01-04&limit=1000&offset=0"
                                    },
                                    "meta": {
                                      "package": {
@@ -354,7 +354,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                    },
                                    "data": [],
                                    "links": {
-                                     "self": "/orgs/da563045-a462-421a-ae47-53239fe46612/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues?version=2022-11-14&limit=1000&offset=0"
+                                     "self": "/orgs/da563045-a462-421a-ae47-53239fe46612/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues?version=2023-01-04&limit=1000&offset=0"
                                    },
                                    "meta": {
                                      "package": {
@@ -563,7 +563,7 @@ public class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                    },
                                    "data": [],
                                    "links": {
-                                     "self": "/orgs/da563045-a462-421a-ae47-53239fe46612/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues?version=2022-11-14&limit=1000&offset=0"
+                                     "self": "/orgs/da563045-a462-421a-ae47-53239fe46612/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues?version=2023-01-04&limit=1000&offset=0"
                                    },
                                    "meta": {
                                      "package": {
